@@ -5,6 +5,7 @@
 */
 #include "client_model.h"
 
+#include "base/singleton_interface.h"
 #include "scripting/platform.h"
 #include "scripting/singleton_interface.h"
 #include "scripting/space.h"
@@ -244,7 +245,8 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
     }
 
     if (m_screenName.has_value()) {
-        auto output = base::get_output(kwinApp()->get_base().get_outputs(), client->screen());
+        auto output = base::get_output(base::singleton_interface::platform->get_outputs(),
+                                       client->screen());
         if (!output || output->name() != m_screenName) {
             return false;
         }

@@ -377,16 +377,6 @@ int effects_handler_wrap::desktopGridHeight() const
     return desktopGridSize().height();
 }
 
-int effects_handler_wrap::workspaceWidth() const
-{
-    return desktopGridWidth() * kwinApp()->get_base().topology.size.width();
-}
-
-int effects_handler_wrap::workspaceHeight() const
-{
-    return desktopGridHeight() * kwinApp()->get_base().topology.size.height();
-}
-
 bool effects_handler_wrap::optionRollOverDesktops() const
 {
     return options.qobject->isRollOverDesktops();

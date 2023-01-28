@@ -720,7 +720,7 @@ protected:
             return;
         }
 
-        auto const& screenSize = kwinApp()->get_base().topology.size;
+        auto const& screenSize = this->platform.base.topology.size;
         const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
 
         uint damagedPixels = 0;
@@ -777,7 +777,7 @@ protected:
         const QRect r = region.boundingRect();
         glEnable(GL_SCISSOR_TEST);
         glScissor(r.x(),
-                  kwinApp()->get_base().topology.size.height() - r.y() - r.height(),
+                  this->platform.base.topology.size.height() - r.y() - r.height(),
                   r.width(),
                   r.height());
         render::scene<Platform>::paintDesktop(desktop, mask, region, data);
@@ -964,7 +964,7 @@ private:
         const float scaleFactor = 1.1 * std::tan(fovY * M_PI / 360.0f) / yMax;
 
         QMatrix4x4 matrix;
-        auto const& space_size = kwinApp()->get_base().topology.size;
+        auto const& space_size = this->platform.base.topology.size;
         matrix.translate(xMin * scaleFactor, yMax * scaleFactor, -1.1);
         matrix.scale((xMax - xMin) * scaleFactor / space_size.width(),
                      -(yMax - yMin) * scaleFactor / space_size.height(),

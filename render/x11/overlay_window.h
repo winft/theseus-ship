@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb/proto.h"
-#include "main.h"
 #include "render/compositor.h"
 
 #include <QRegion>
@@ -69,7 +68,7 @@ public:
         if (m_window == XCB_WINDOW_NONE) {
             return false;
         }
-        resize(kwinApp()->get_base().topology.size);
+        resize(compositor.platform.base.topology.size);
         return true;
     }
 
@@ -81,7 +80,7 @@ public:
 
         setNoneBackgroundPixmap(m_window);
         m_shape = QRegion();
-        setShape(QRect({}, kwinApp()->get_base().topology.size));
+        setShape(QRect({}, compositor.platform.base.topology.size));
         if (window != XCB_WINDOW_NONE) {
             setNoneBackgroundPixmap(window);
             setupInputShape(window);
@@ -107,7 +106,7 @@ public:
         Q_ASSERT(m_window != XCB_WINDOW_NONE);
         xcb_unmap_window(compositor.platform.base.x11_data.connection, m_window);
         m_shown = false;
-        setShape(QRect({}, kwinApp()->get_base().topology.size));
+        setShape(QRect({}, compositor.platform.base.topology.size));
     }
 
     void setShape(const QRegion& reg)
@@ -148,7 +147,7 @@ public:
         if (m_window == XCB_WINDOW_NONE)
             return;
         // reset the overlay shape
-        auto const& space_size = kwinApp()->get_base().topology.size;
+        auto const& space_size = compositor.platform.base.topology.size;
         xcb_rectangle_t rec = {0,
                                0,
                                static_cast<uint16_t>(space_size.width()),

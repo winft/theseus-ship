@@ -45,8 +45,6 @@ public:
     X11TestApplication(int& argc, char** argv);
     ~X11TestApplication() override;
 
-    base::platform& get_base() override;
-
     void start();
 
     using base_t = base::backend::x11::platform;
@@ -71,11 +69,6 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
 
 X11TestApplication::~X11TestApplication()
 {
-}
-
-base::platform& X11TestApplication::get_base()
-{
-    return base;
 }
 
 void X11TestApplication::start()
@@ -108,8 +101,7 @@ void X11TimestampUpdateTest::testGrabAfterServerTime()
     KWin::base::x11::ungrab_keyboard(s_app->base.x11_data.connection);
 
     // now let's change the timestamp
-    KWin::base::x11::advance_time(KWin::kwinApp()->get_base().x11_data,
-                                  s_app->base.x11_data.time + 5 * 60 * 1000);
+    KWin::base::x11::advance_time(s_app->base.x11_data, s_app->base.x11_data.time + 5 * 60 * 1000);
 
     // now grab keyboard should fail
     QCOMPARE(KWin::base::x11::grab_keyboard(s_app->base.x11_data), false);
@@ -133,8 +125,7 @@ void X11TimestampUpdateTest::testBeforeLastGrabTime()
 
     // now go to past
     auto const timestamp = s_app->base.x11_data.time;
-    KWin::base::x11::set_time(KWin::kwinApp()->get_base().x11_data,
-                              s_app->base.x11_data.time - 5 * 60 * 1000);
+    KWin::base::x11::set_time(s_app->base.x11_data, s_app->base.x11_data.time - 5 * 60 * 1000);
     QCOMPARE(s_app->base.x11_data.time, timestamp - 5 * 60 * 1000);
 
     // now grab keyboard should fail

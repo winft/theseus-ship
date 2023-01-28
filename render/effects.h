@@ -118,8 +118,6 @@ public:
     QString currentActivity() const override;
     int desktopGridWidth() const override;
     int desktopGridHeight() const override;
-    int workspaceWidth() const override;
-    int workspaceHeight() const override;
 
     bool optionRollOverDesktops() const override;
 
@@ -919,6 +917,16 @@ public:
     QSize desktopGridSize() const override
     {
         return compositor.space->virtual_desktop_manager->grid().size();
+    }
+
+    int workspaceWidth() const override
+    {
+        return desktopGridWidth() * compositor.platform.base.topology.size.width();
+    }
+
+    int workspaceHeight() const override
+    {
+        return desktopGridHeight() * compositor.platform.base.topology.size.height();
     }
 
     int desktopAtCoords(QPoint coords) const override

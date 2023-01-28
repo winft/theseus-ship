@@ -39,8 +39,6 @@ public:
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 
-    base::platform& get_base() override;
-
     void start(base::operation_mode mode,
                std::string const& socket_name,
                base::wayland::start_options flags,

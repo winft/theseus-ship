@@ -59,7 +59,7 @@ void TestDontCrashUseractionsMenu::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // force style to breeze as that's the one which triggered the crash
-    QVERIFY(kwinApp()->setStyle(QStringLiteral("breeze")));
+    QVERIFY(Test::app()->setStyle(QStringLiteral("breeze")));
 
     Test::app()->start();
     Test::app()->set_outputs(2);

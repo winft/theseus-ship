@@ -43,8 +43,6 @@ class KWIN_EXPORT Application : public  QApplication
 public:
     ~Application() override;
 
-    virtual base::platform& get_base() = 0;
-
     void setupEventFilters();
     void setupTranslator();
     void setupCommandLine(QCommandLineParser *parser);
@@ -67,11 +65,6 @@ protected:
 
     static int crashes;
 };
-
-inline static Application *kwinApp()
-{
-    return static_cast<Application*>(QCoreApplication::instance());
-}
 
 }
 

@@ -41,11 +41,6 @@ QSize space::workspaceSize() const
     return QSize(workspaceWidth(), workspaceHeight());
 }
 
-QSize space::displaySize() const
-{
-    return kwinApp()->get_base().topology.size;
-}
-
 int space::displayWidth() const
 {
     return displaySize().width();
@@ -98,19 +93,14 @@ int space::workspaceWidth() const
     return desktopGridWidth() * displayWidth();
 }
 
-int space::numScreens() const
-{
-    return kwinApp()->get_base().get_outputs().size();
-}
-
 QRect space::virtualScreenGeometry() const
 {
-    return QRect({}, kwinApp()->get_base().topology.size);
+    return QRect({}, displaySize());
 }
 
 QSize space::virtualScreenSize() const
 {
-    return kwinApp()->get_base().topology.size;
+    return displaySize();
 }
 
 qt_script_space::qt_script_space()

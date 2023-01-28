@@ -38,7 +38,7 @@ client::client(global_selection globals)
 
     connection->setSocketFd(sx[1]);
 
-    thread.reset(new QThread(kwinApp()));
+    thread.reset(new QThread(Test::app()));
     connection->moveToThread(thread.get());
     thread->start();
 

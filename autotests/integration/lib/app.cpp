@@ -138,11 +138,6 @@ WaylandTestApplication::~WaylandTestApplication()
     base->render->compositor.reset();
 }
 
-base::platform& WaylandTestApplication::get_base()
-{
-    return *base;
-}
-
 void WaylandTestApplication::start()
 {
     prepare_start();

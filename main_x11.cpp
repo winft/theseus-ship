@@ -205,11 +205,6 @@ void ApplicationX11::lostSelection()
     quit();
 }
 
-base::platform& ApplicationX11::get_base()
-{
-    return base;
-}
-
 void ApplicationX11::start()
 {
     prepare_start();
@@ -283,7 +278,7 @@ void ApplicationX11::start()
 
         // Trigger possible errors, there's still a chance to abort.
         base::x11::xcb::sync(base.x11_data.connection);
-        kwinApp()->notifyKSplash();
+        notifyKSplash();
     });
 
     // we need to do an XSync here, otherwise the QPA might crash us later on

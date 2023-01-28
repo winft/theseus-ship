@@ -50,8 +50,6 @@ public:
                            char** argv);
     ~WaylandTestApplication() override;
 
-    base::platform& get_base() override;
-
     void start();
 
     /// Sets @ref count horizontally lined up outputs with a default size of 1280x1024 at scale 1.

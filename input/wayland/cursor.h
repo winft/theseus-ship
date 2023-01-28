@@ -66,6 +66,7 @@ public:
     }
 
     std::unique_ptr<cursor_image_t> cursor_image;
+    Redirect& redirect;
 
 protected:
     void do_set_pos() override
@@ -124,7 +125,6 @@ private:
     }
 
     Qt::MouseButtons m_currentButtons{Qt::NoButton};
-    Redirect& redirect;
 };
 
 }

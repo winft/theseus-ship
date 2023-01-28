@@ -7,7 +7,6 @@
 
 #include "config-kwin.h"
 #include "input/platform.h"
-#include "main.h"
 
 #include <KGlobalAccel>
 #include <memory>
@@ -56,7 +55,7 @@ public:
     {
         QObject::connect(KGlobalAccel::self(),
                          &KGlobalAccel::globalShortcutActiveChanged,
-                         kwinApp(),
+                         qobject.get(),
                          [this, action](QAction* triggeredAction, bool /*active*/) {
                              if (triggeredAction != action) {
                                  return;

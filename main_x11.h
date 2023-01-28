@@ -37,8 +37,6 @@ public:
     ApplicationX11(int &argc, char **argv);
     ~ApplicationX11() override;
 
-    base::platform& get_base() override;
-
     void start();
 
     void setReplace(bool replace);

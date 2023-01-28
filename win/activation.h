@@ -879,13 +879,13 @@ void activate_window_direction(Space& space, win::direction direction)
             auto opposite = [&] {
                 switch (direction) {
                 case direction::north:
-                    return QPoint(curPos.x(), kwinApp()->get_base().topology.size.height());
+                    return QPoint(curPos.x(), space.base.topology.size.height());
                 case direction::south:
                     return QPoint(curPos.x(), 0);
                 case direction::east:
                     return QPoint(0, curPos.y());
                 case direction::west:
-                    return QPoint(kwinApp()->get_base().topology.size.width(), curPos.y());
+                    return QPoint(space.base.topology.size.width(), curPos.y());
                 default:
                     Q_UNREACHABLE();
                 }

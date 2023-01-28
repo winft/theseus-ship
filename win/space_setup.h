@@ -61,13 +61,14 @@ void init_space(Space& space)
                      space.qobject.get(),
                      [&](auto const& name) { store_session(space, name, sm_save_phase2); });
 
-    auto& base = kwinApp()->get_base();
-    QObject::connect(
-        &base, &base::platform::topology_changed, space.qobject.get(), [&](auto old, auto topo) {
-            if (old.size != topo.size) {
-                space.resize(topo.size);
-            }
-        });
+    QObject::connect(&space.base,
+                     &base::platform::topology_changed,
+                     space.qobject.get(),
+                     [&](auto old, auto topo) {
+                         if (old.size != topo.size) {
+                             space.resize(topo.size);
+                         }
+                     });
 
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientRemoved,

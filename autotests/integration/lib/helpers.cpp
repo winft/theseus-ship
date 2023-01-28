@@ -41,7 +41,7 @@ output::output(QRect const& geometry, double scale)
 
 WaylandTestApplication* app()
 {
-    return static_cast<WaylandTestApplication*>(kwinApp());
+    return static_cast<WaylandTestApplication*>(qApp);
 }
 
 input::wayland::cursor<space::input_t>* cursor()
@@ -480,7 +480,7 @@ void pointer_motion_absolute(QPointF const& position, uint32_t time)
 
     event.time_msec = time;
 
-    auto const screens_size = kwinApp()->get_base().topology.size;
+    auto const screens_size = test_app->base->topology.size;
     event.x = position.x() / screens_size.width();
     event.y = position.y() / screens_size.height();
 
@@ -588,7 +588,7 @@ KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_keyboard
 
 QPointF get_relative_touch_position(QPointF const& pos)
 {
-    auto output = base::get_nearest_output(kwinApp()->get_base().get_outputs(), pos.toPoint());
+    auto output = base::get_nearest_output(app()->base->get_outputs(), pos.toPoint());
     assert(output);
 
     auto output_size = output->geometry().size();

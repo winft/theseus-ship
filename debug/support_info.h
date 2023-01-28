@@ -8,7 +8,6 @@
 #include "base/options.h"
 #include "base/platform.h"
 #include "base/x11/xcb/extensions.h"
-#include "main.h"
 #include "win/deco/bridge.h"
 
 #include <config-kwin.h>
@@ -168,7 +167,7 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("Active screen follows mouse: "));
     support.append(space.base.options->get_current_output_follows_mouse() ? yes : no);
 
-    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto const& outputs = space.base.get_outputs();
     support.append(QStringLiteral("Number of Screens: %1\n\n").arg(outputs.size()));
     for (size_t i = 0; i < outputs.size(); ++i) {
         auto const output = outputs.at(i);

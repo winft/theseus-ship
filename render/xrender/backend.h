@@ -34,6 +34,7 @@ public:
         : overlay_window{std::make_unique<typename compositor_t::overlay_window_t>(
             *scene.platform.compositor)}
         , x11_data{scene.platform.base.x11_data}
+        , scene{scene}
     {
         if (!base::x11::xcb::extensions::self()->is_render_available()) {
             throw std::runtime_error("No XRender extension available");
@@ -62,7 +63,7 @@ public:
 
     void present(paint_type mask, QRegion const& damage)
     {
-        auto const& space_size = kwinApp()->get_base().topology.size;
+        auto const& space_size = scene.platform.base.topology.size;
 
         if (flags(mask & paint_type::screen_region)) {
             // Use the damage region as the clip region for the root window
@@ -205,7 +206,7 @@ private:
     void createBuffer()
     {
         xcb_pixmap_t pixmap = xcb_generate_id(x11_data.connection);
-        auto const& space_size = kwinApp()->get_base().topology.size;
+        auto const& space_size = scene.platform.base.topology.size;
         xcb_create_pixmap(
             x11_data.connection,
             base::x11::xcb::default_depth(x11_data.connection, x11_data.screen_number),
@@ -228,6 +229,7 @@ private:
     xcb_render_picture_t m_front{XCB_RENDER_PICTURE_NONE};
     xcb_render_pictformat_t m_format{0};
     base::x11::data& x11_data;
+    Scene& scene;
 };
 
 }

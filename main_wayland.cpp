@@ -172,11 +172,6 @@ ApplicationWayland::~ApplicationWayland()
     base->render->compositor.reset();
 }
 
-base::platform& ApplicationWayland::get_base()
-{
-    return *base;
-}
-
 void ApplicationWayland::start(base::operation_mode mode,
                                std::string const& socket_name,
                                base::wayland::start_options flags,

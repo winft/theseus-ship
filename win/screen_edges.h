@@ -741,7 +741,7 @@ private:
             auto const interimDesktop = desktop;
             desktop = vds->toLeft(desktop, vds->isNavigationWrappingAround());
             if (desktop != interimDesktop)
-                pos.setX(kwinApp()->get_base().topology.size.width() - 1 - OFFSET);
+                pos.setX(edger->space.base.topology.size.width() - 1 - OFFSET);
         } else if (isRight()) {
             auto const interimDesktop = desktop;
             desktop = vds->toRight(desktop, vds->isNavigationWrappingAround());
@@ -753,7 +753,7 @@ private:
             auto const interimDesktop = desktop;
             desktop = vds->above(desktop, vds->isNavigationWrappingAround());
             if (desktop != interimDesktop)
-                pos.setY(kwinApp()->get_base().topology.size.height() - 1 - OFFSET);
+                pos.setY(edger->space.base.topology.size.height() - 1 - OFFSET);
         } else if (isBottom()) {
             auto const interimDesktop = desktop;
             desktop = vds->below(desktop, vds->isNavigationWrappingAround());
@@ -1372,7 +1372,7 @@ public:
         auto oldEdges = std::move(edges);
         assert(edges.empty());
 
-        auto const fullArea = QRect({}, kwinApp()->get_base().topology.size);
+        auto const fullArea = QRect({}, space.base.topology.size);
         QRegion processedRegion;
         for (auto output : outputs) {
             auto const screen = QRegion(output->geometry()).subtracted(processedRegion);

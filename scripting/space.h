@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "debug/support_info.h"
 #include "kwin_export.h"
-#include "main.h"
 #include "win/activation.h"
 #include "win/active_window.h"
 #include "win/move.h"
@@ -165,9 +164,9 @@ public:
     QSize workspaceSize() const;
     int displayWidth() const;
     int displayHeight() const;
-    QSize displaySize() const;
+    virtual QSize displaySize() const = 0;
     virtual int activeScreen() const = 0;
-    int numScreens() const;
+    virtual int numScreens() const = 0;
     QStringList activityList() const;
     QSize virtualScreenSize() const;
     QRect virtualScreenGeometry() const;
@@ -589,7 +588,7 @@ public:
                          this,
                          &space::desktopLayoutChanged);
 
-        auto& base = kwinApp()->get_base();
+        auto& base = ref_space->base;
         QObject::connect(
             &base, &base::platform::topology_changed, this, [this](auto old_topo, auto new_topo) {
                 if (old_topo.size != new_topo.size) {
@@ -665,6 +664,11 @@ public:
         return ref_space->virtual_desktop_manager->grid().size();
     }
 
+    QSize displaySize() const override
+    {
+        return ref_space->base.topology.size;
+    }
+
     int activeScreen() const override
     {
         auto output = win::get_current_output(*ref_space);
@@ -672,6 +676,11 @@ public:
             return 0;
         }
         return base::get_output_index(ref_space->base.outputs, *output);
+    }
+
+    int numScreens() const override
+    {
+        return ref_space->base.outputs.size();
     }
 
     void sendClientToScreen(window* win, int screen) override

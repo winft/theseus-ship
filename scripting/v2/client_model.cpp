@@ -10,6 +10,7 @@
 #include "scripting/space.h"
 #include "scripting/window.h"
 
+#include "base/singleton_interface.h"
 #include "config-kwin.h"
 #include "win/singleton_interface.h"
 #include "win/space.h"
@@ -297,7 +298,7 @@ abstract_level* abstract_level::create(const QList<client_model::LevelRestrictio
         return nullptr;
     }
     case client_model::ScreenRestriction: {
-        auto screen_count = kwinApp()->get_base().get_outputs().size();
+        auto screen_count = base::singleton_interface::platform->get_outputs().size();
         for (size_t i = 0; i < screen_count; ++i) {
             auto childLevel = create(childRestrictions, childrenRestrictions, model, currentLevel);
             if (!childLevel) {
@@ -378,13 +379,13 @@ fork_level::fork_level(const QList<client_model::LevelRestriction>& childRestric
             this,
             &fork_level::desktopCountChanged);
 
-    auto& base = kwinApp()->get_base();
-    QObject::connect(&base, &base::platform::output_added, this, [this, &base] {
-        auto count = base.get_outputs().size();
+    auto base = base::singleton_interface::platform;
+    QObject::connect(base, &base::platform::output_added, this, [this, base] {
+        auto count = base->get_outputs().size();
         screenCountChanged(count - 1, count);
     });
-    QObject::connect(&base, &base::platform::output_removed, this, [this, &base] {
-        auto count = base.get_outputs().size();
+    QObject::connect(base, &base::platform::output_removed, this, [this, base] {
+        auto count = base->get_outputs().size();
         screenCountChanged(count + 1, count);
     });
 }
