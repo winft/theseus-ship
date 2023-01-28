@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
-#include "main.h"
 #include "render/compositor_start.h"
 #include "win/wayland/surface.h"
 #include "win/wayland/xwl_window.h"
@@ -80,9 +79,8 @@ public:
     /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
      *  indicate a critical error happened at runtime.
      */
-    xwayland(Application* app, Space& space, std::function<void(int code)> status_callback)
+    xwayland(Space& space, std::function<void(int code)> status_callback)
         : core{&space}
-        , app{app}
         , space{space}
         , status_callback{status_callback}
     {
@@ -270,7 +268,7 @@ private:
         space.atoms = std::make_unique<base::x11::atoms>(core.x11.connection);
         core.x11.atoms = space.atoms.get();
         event_filter = std::make_unique<base::x11::xcb_event_filter<Space>>(space);
-        app->installNativeEventFilter(event_filter.get());
+        qApp->installNativeEventFilter(event_filter.get());
 
         QObject::connect(
             space.qobject.get(),
@@ -332,7 +330,6 @@ private:
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
     std::unique_ptr<base::x11::xcb_event_filter<Space>> event_filter;
 
-    Application* app;
     Space& space;
     std::function<void(int code)> status_callback;
 };

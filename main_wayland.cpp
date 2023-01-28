@@ -253,7 +253,7 @@ void ApplicationWayland::create_xwayland()
     };
 
     try {
-        base->xwayland = std::make_unique<xwl::xwayland<wayland_space>>(this, *base->space, status_callback);
+        base->xwayland = std::make_unique<xwl::xwayland<wayland_space>>(*base->space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());
