@@ -71,10 +71,6 @@ public:
      */
     static void createAboutData();
 
-    bool isTerminating() const {
-        return m_terminating;
-    }
-
     static void setupMalloc();
     static void setupLocalizedString();
     virtual void notifyKSplash() {}
@@ -92,15 +88,7 @@ protected:
 
     void prepare_start();
 
-    void setTerminating() {
-        m_terminating = true;
-    }
-
-protected:
     static int crashes;
-
-private:
-    bool m_terminating = false;
 };
 
 inline static Application *kwinApp()

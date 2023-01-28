@@ -120,8 +120,6 @@ WaylandTestApplication::~WaylandTestApplication()
     wlr_pointer_finish(pointer);
     wlr_touch_finish(touch);
 
-    setTerminating();
-
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
     if (effects) {

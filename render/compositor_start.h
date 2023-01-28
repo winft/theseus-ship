@@ -79,12 +79,6 @@ void compositor_start_scene(Compositor& comp)
     assert(comp.space);
     assert(!comp.scene);
 
-    if (kwinApp()->isTerminating()) {
-        // Don't start while KWin is terminating. An event to restart might be lingering
-        // in the event queue due to graphics reset.
-        return;
-    }
-
     if (comp.state != state::off) {
         return;
     }

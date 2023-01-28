@@ -142,7 +142,6 @@ ApplicationWayland::ApplicationWayland(int &argc, char **argv)
 
 ApplicationWayland::~ApplicationWayland()
 {
-    setTerminating();
     if (!base->server) {
         return;
     }
