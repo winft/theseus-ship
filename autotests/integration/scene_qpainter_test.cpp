@@ -58,7 +58,7 @@ private Q_SLOTS:
     void testX11Window();
 };
 
-using qpainter_scene_t = render::qpainter::scene<decltype(Test::app()->base.render)::element_type>;
+using qpainter_scene_t = render::qpainter::scene<decltype(Test::app()->base->render)::element_type>;
 
 void SceneQPainterTest::cleanup()
 {
@@ -71,10 +71,11 @@ void SceneQPainterTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering
-    auto config = Test::app()->base.config.main;
+    auto config = Test::app()->base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
-                                  .listOfKnownEffects();
+    auto const builtinNames
+        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
+              .listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -95,7 +96,7 @@ void SceneQPainterTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QVERIFY(Test::app()->base.render->compositor);
+    QVERIFY(Test::app()->base->render->compositor);
 }
 
 void SceneQPainterTest::init()
@@ -106,28 +107,30 @@ void SceneQPainterTest::init()
 void SceneQPainterTest::testStartFrame()
 {
     // this test verifies that the initial rendering is correct
-    render::full_repaint(*Test::app()->base.render->compositor);
-    auto scene = dynamic_cast<qpainter_scene_t*>(Test::app()->base.render->compositor->scene.get());
+    render::full_repaint(*Test::app()->base->render->compositor);
+    auto scene
+        = dynamic_cast<qpainter_scene_t*>(Test::app()->base->render->compositor->scene.get());
     QVERIFY(scene);
-    QCOMPARE(Test::app()->base.render->selected_compositor(), QPainterCompositing);
+    QCOMPARE(Test::app()->base->render->selected_compositor(), QPainterCompositing);
 
     // now let's render a reference image for comparison
     QImage referenceImage(QSize(1280, 1024), QImage::Format_RGB32);
     referenceImage.fill(Qt::black);
 
     QPainter p(&referenceImage);
-    auto& sw_cursor = Test::app()->base.render->compositor->software_cursor;
+    auto& sw_cursor = Test::app()->base->render->compositor->software_cursor;
     auto const cursorImage = sw_cursor->image();
 
     QVERIFY(!cursorImage.isNull());
     p.drawImage(Test::cursor()->pos() - sw_cursor->hotspot(), cursorImage);
-    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base.outputs.at(0)));
+    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base->outputs.at(0)));
 }
 
 void SceneQPainterTest::testCursorMoving()
 {
     // this test verifies that rendering is correct also after moving the cursor a few times
-    auto scene = dynamic_cast<qpainter_scene_t*>(Test::app()->base.render->compositor->scene.get());
+    auto scene
+        = dynamic_cast<qpainter_scene_t*>(Test::app()->base->render->compositor->scene.get());
     QVERIFY(scene);
 
     auto surface = Test::create_surface();
@@ -170,12 +173,12 @@ void SceneQPainterTest::testCursorMoving()
     QImage referenceImage(QSize(1280, 1024), QImage::Format_RGB32);
     referenceImage.fill(Qt::black);
     QPainter p(&referenceImage);
-    auto& sw_cursor = Test::app()->base.render->compositor->software_cursor;
+    auto& sw_cursor = Test::app()->base->render->compositor->software_cursor;
     auto const cursorImage = sw_cursor->image();
 
     QVERIFY(!cursorImage.isNull());
     p.drawImage(QPoint(45, 45) - sw_cursor->hotspot(), cursorImage);
-    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base.outputs.at(0)));
+    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base->outputs.at(0)));
 }
 
 void SceneQPainterTest::testWindow()
@@ -196,7 +199,8 @@ void SceneQPainterTest::testWindow()
     QSignalSpy frameRenderedSpy(s.get(), &Wrapland::Client::Surface::frameRendered);
     QVERIFY(frameRenderedSpy.isValid());
 
-    auto scene = dynamic_cast<qpainter_scene_t*>(Test::app()->base.render->compositor->scene.get());
+    auto scene
+        = dynamic_cast<qpainter_scene_t*>(Test::app()->base->render->compositor->scene.get());
     QVERIFY(scene);
 
     // now let's map the window
@@ -223,7 +227,7 @@ void SceneQPainterTest::testWindow()
     painter.fillRect(cursor->pos().x() - 5, cursor->pos().y() - 5, 10, 10, Qt::red);
 
     QEXPECT_FAIL("", "Screen buffer is for unknown reason different with cursor", Continue);
-    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base.outputs.at(0)));
+    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base->outputs.at(0)));
 
     // let's move the cursor again
     cursor->set_pos(10, 10);
@@ -233,7 +237,7 @@ void SceneQPainterTest::testWindow()
     painter.fillRect(5, 5, 10, 10, Qt::red);
 
     QEXPECT_FAIL("", "Screen buffer is for unknown reason different with cursor", Continue);
-    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base.outputs.at(0)));
+    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base->outputs.at(0)));
 }
 
 void SceneQPainterTest::testWindowScaled()
@@ -256,7 +260,8 @@ void SceneQPainterTest::testWindowScaled()
     QSignalSpy pointerEnteredSpy(p.get(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
 
-    auto scene = dynamic_cast<qpainter_scene_t*>(Test::app()->base.render->compositor->scene.get());
+    auto scene
+        = dynamic_cast<qpainter_scene_t*>(Test::app()->base->render->compositor->scene.get());
     QVERIFY(scene);
 
     // now let's set a cursor image
@@ -289,7 +294,7 @@ void SceneQPainterTest::testWindowScaled()
     painter.fillRect(100, 150, 100, 100, Qt::red);
     painter.fillRect(5, 5, 10, 10, Qt::red); // cursor
 
-    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base.outputs.at(0)));
+    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base->outputs.at(0)));
 }
 
 void SceneQPainterTest::testCompositorRestart()
@@ -312,16 +317,17 @@ void SceneQPainterTest::testCompositorRestart()
 
     // now let's try to reinitialize the compositing scene
     auto oldScene
-        = dynamic_cast<qpainter_scene_t*>(Test::app()->base.render->compositor->scene.get());
+        = dynamic_cast<qpainter_scene_t*>(Test::app()->base->render->compositor->scene.get());
     QVERIFY(oldScene);
 
-    Test::app()->base.render->compositor->reinitialize();
+    Test::app()->base->render->compositor->reinitialize();
 
-    auto scene = dynamic_cast<qpainter_scene_t*>(Test::app()->base.render->compositor->scene.get());
+    auto scene
+        = dynamic_cast<qpainter_scene_t*>(Test::app()->base->render->compositor->scene.get());
     QVERIFY(scene);
 
     // this should directly trigger a frame
-    render::full_repaint(*Test::app()->base.render->compositor);
+    render::full_repaint(*Test::app()->base->render->compositor);
     QVERIFY(frameRenderedSpy.wait());
 
     // render reference image
@@ -330,11 +336,11 @@ void SceneQPainterTest::testCompositorRestart()
     QPainter painter(&referenceImage);
     painter.fillRect(0, 0, 200, 300, Qt::blue);
 
-    auto& sw_cursor = Test::app()->base.render->compositor->software_cursor;
+    auto& sw_cursor = Test::app()->base->render->compositor->software_cursor;
     auto const cursorImage = sw_cursor->image();
     QVERIFY(!cursorImage.isNull());
     painter.drawImage(QPoint(400, 400) - sw_cursor->hotspot(), cursorImage);
-    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base.outputs.at(0)));
+    QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(Test::app()->base->outputs.at(0)));
 }
 
 struct XcbConnectionDeleter {
@@ -368,11 +374,11 @@ void SceneQPainterTest::testX11Window()
     QVERIFY(!xcb_connection_has_error(c.data()));
     const QRect windowGeometry(0, 0, 100, 200);
     xcb_window_t w = xcb_generate_id(c.data());
-    uint32_t value = base::x11::get_default_screen(Test::app()->base.x11_data)->white_pixel;
+    uint32_t value = base::x11::get_default_screen(Test::app()->base->x11_data)->white_pixel;
     xcb_create_window(c.data(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      Test::app()->base.x11_data.root_window,
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -391,13 +397,13 @@ void SceneQPainterTest::testX11Window()
     xcb_flush(c.data());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QCOMPARE(win::frame_to_client_size(client, client->geo.size()), QSize(100, 200));
@@ -437,15 +443,16 @@ void SceneQPainterTest::testX11Window()
     // For the frame signal.
     surface->commit();
 
-    auto scene = dynamic_cast<qpainter_scene_t*>(Test::app()->base.render->compositor->scene.get());
+    auto scene
+        = dynamic_cast<qpainter_scene_t*>(Test::app()->base->render->compositor->scene.get());
     QVERIFY(scene);
 
     // this should directly trigger a frame
-    render::full_repaint(*Test::app()->base.render->compositor);
+    render::full_repaint(*Test::app()->base->render->compositor);
     QVERIFY(frameRenderedSpy.wait());
 
     auto const startPos = win::frame_to_client_pos(client, client->geo.pos());
-    auto image = scene->backend()->bufferForScreen(Test::app()->base.outputs.at(0));
+    auto image = scene->backend()->bufferForScreen(Test::app()->base->outputs.at(0));
     QCOMPARE(image->copy(QRect(startPos, win::frame_to_client_size(client, client->geo.size()))),
              compareImage);
 

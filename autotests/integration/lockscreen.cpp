@@ -186,7 +186,7 @@ Test::wayland_window* LockScreenTest::showWindow()
     auto c = Test::render_and_wait_for_shown(surface_holder, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
-    COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
 
 #undef VERIFY
 #undef COMPARE
@@ -207,7 +207,7 @@ void LockScreenTest::initTestCase()
     QVERIFY(startup_spy.wait());
     Test::test_outputs_default();
 
-    auto& scene = Test::app()->base.render->compositor->scene;
+    auto& scene = Test::app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }
@@ -237,14 +237,14 @@ void LockScreenTest::testStackingOrder()
 {
     // This test verifies that the lockscreen greeter is placed above other windows.
 
-    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     LOCK QVERIFY(clientAddedSpy.wait());
 
     auto window_id = clientAddedSpy.first().first().value<quint32>();
-    auto client = Test::get_wayland_window(Test::app()->base.space->windows_map.at(window_id));
+    auto client = Test::get_wayland_window(Test::app()->base->space->windows_map.at(window_id));
     QVERIFY(client);
     QVERIFY(client->isLockScreen());
     QCOMPARE(win::get_layer(*client), win::layer::unmanaged);
@@ -450,7 +450,7 @@ void LockScreenTest::testKeyboard()
 
 void LockScreenTest::testScreenEdge()
 {
-    QSignalSpy screenEdgeSpy(Test::app()->base.space->edges->qobject.get(),
+    QSignalSpy screenEdgeSpy(Test::app()->base->space->edges->qobject.get(),
                              &win::screen_edger_qobject::approaching);
     QVERIFY(screenEdgeSpy.isValid());
     QCOMPARE(screenEdgeSpy.count(), 0);
@@ -562,7 +562,7 @@ void LockScreenTest::testEffectsKeyboardAutorepeat()
     effects->grabKeyboard(effect.get());
 
     // We need to configure the key repeat first. It is only enabled on libinput.
-    Test::app()->base.server->seat()->keyboards().set_repeat_info(25, 300);
+    Test::app()->base->server->seat()->keyboards().set_repeat_info(25, 300);
 
     quint32 timestamp = 1;
 
@@ -605,8 +605,8 @@ void LockScreenTest::testMoveWindow()
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
     quint32 timestamp = 1;
 
-    win::active_window_move(*Test::app()->base.space);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), c);
+    win::active_window_move(*Test::app()->base->space);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->move_resize_window), c);
     QVERIFY(win::is_move(c));
 
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
@@ -621,14 +621,14 @@ void LockScreenTest::testMoveWindow()
 
     // While locking our window should continue to be in move resize.
     LOCK;
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->move_resize_window), c);
     QVERIFY(win::is_move(c));
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
     Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     UNLOCK
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->move_resize_window), c);
     QVERIFY(win::is_move(c));
 
     Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
@@ -649,7 +649,7 @@ void LockScreenTest::testPointerShortcut()
     QVERIFY(actionSpy.isValid());
 
     input::platform_register_pointer_shortcut(
-        *Test::app()->base.input, Qt::MetaModifier, Qt::LeftButton, action.get());
+        *Test::app()->base->input, Qt::MetaModifier, Qt::LeftButton, action.get());
 
     // Try to trigger the shortcut.
     quint32 timestamp = 1;
@@ -705,7 +705,7 @@ void LockScreenTest::testAxisShortcut()
     }
 
     input::platform_register_axis_shortcut(
-        *Test::app()->base.input, Qt::MetaModifier, axisDirection, action.get());
+        *Test::app()->base->input, Qt::MetaModifier, axisDirection, action.get());
 
     // Try to trigger the shortcut.
     quint32 timestamp = 1;

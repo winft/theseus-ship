@@ -62,7 +62,7 @@ void XWaylandInputTest::initTestCase()
 void XWaylandInputTest::init()
 {
     Test::cursor()->set_pos(QPoint(640, 512));
-    QVERIFY(Test::app()->base.space->windows.empty());
+    QVERIFY(Test::app()->base->space->windows.empty());
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
@@ -151,7 +151,7 @@ void XWaylandInputTest::testPointerEnterLeave()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      Test::app()->base.x11_data.root_window,
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -168,20 +168,20 @@ void XWaylandInputTest::testPointerEnterLeave()
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     NETWinInfo info(c.get(),
                     w,
-                    Test::app()->base.x11_data.root_window,
+                    Test::app()->base->x11_data.root_window,
                     NET::WMAllProperties,
                     NET::WM2AllProperties);
     info.setWindowType(NET::Normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.last().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
@@ -200,8 +200,8 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(!client->geo.frame.contains(Test::cursor()->pos()));
     QVERIFY(enteredSpy.isEmpty());
     Test::cursor()->set_pos(client->geo.frame.center());
-    QCOMPARE(Test::app()->base.server->seat()->pointers().get_focus().surface, client->surface);
-    QVERIFY(!Test::app()->base.server->seat()->pointers().get_focus().devices.empty());
+    QCOMPARE(Test::app()->base->server->seat()->pointers().get_focus().surface, client->surface);
+    QVERIFY(!Test::app()->base->server->seat()->pointers().get_focus().devices.empty());
     QVERIFY(enteredSpy.wait());
 
     // move out of window

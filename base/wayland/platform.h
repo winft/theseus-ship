@@ -46,28 +46,8 @@ public:
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
-
-    platform(platform&& other) noexcept
-        : base::platform(std::move(other.config))
-    {
-        *this = std::move(other);
-    }
-
-    platform& operator=(platform&& other) noexcept
-    {
-        server = std::move(other.server);
-        drm_lease_device = std::move(other.drm_lease_device);
-
-        all_outputs = std::move(other.all_outputs);
-        outputs = std::move(other.outputs);
-
-        render = std::move(other.render);
-        input = std::move(other.input);
-        space = std::move(other.space);
-        xwayland = std::move(other.xwayland);
-
-        return *this;
-    }
+    platform(platform&& other) = delete;
+    platform& operator=(platform&& other) = delete;
 
     void enable_output(output_t* output)
     {

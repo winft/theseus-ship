@@ -46,7 +46,7 @@ WaylandTestApplication* app()
 
 input::wayland::cursor<space::input_t>* cursor()
 {
-    return app()->base.space->input->cursor.get();
+    return app()->base->space->input->cursor.get();
 }
 
 void setup_wayland_connection(global_selection globals)
@@ -61,17 +61,17 @@ void destroy_wayland_connection()
 
 base::output* get_output(size_t index)
 {
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base->get_outputs();
     assert(index < outputs.size());
     return outputs.at(index);
 }
 
 void set_current_output(int index)
 {
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base->get_outputs();
     auto output = base::get_output(outputs, index);
     QVERIFY(output);
-    base::set_current_output(Test::app()->base, output);
+    base::set_current_output(*Test::app()->base, output);
 }
 
 void test_outputs_default()
@@ -81,7 +81,7 @@ void test_outputs_default()
 
 void test_outputs_geometries(std::vector<QRect> const& geometries)
 {
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base->get_outputs();
     QCOMPARE(outputs.size(), geometries.size());
 
     size_t index = 0;
@@ -184,7 +184,7 @@ wayland_window* render_and_wait_for_shown(client const& clt,
                                           QImage::Format const& format,
                                           int timeout)
 {
-    QSignalSpy clientAddedSpy(app()->base.space->qobject.get(),
+    QSignalSpy clientAddedSpy(app()->base->space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     if (!clientAddedSpy.isValid()) {
         return nullptr;
@@ -196,7 +196,7 @@ wayland_window* render_and_wait_for_shown(client const& clt,
     }
 
     auto win_id = clientAddedSpy.first().first().value<quint32>();
-    return std::get<wayland_window*>(app()->base.space->windows_map.at(win_id));
+    return std::get<wayland_window*>(app()->base->space->windows_map.at(win_id));
 }
 
 void flush_wayland_connection()

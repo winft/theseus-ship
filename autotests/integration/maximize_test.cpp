@@ -86,11 +86,11 @@ void TestMaximized::cleanup()
     Test::destroy_wayland_connection();
 
     // adjust config
-    auto group = Test::app()->base.config.main->group("Windows");
+    auto group = Test::app()->base->config.main->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", false);
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.options->qobject->borderlessMaximizedWindows(), false);
+    win::space_reconfigure(*Test::app()->base->space);
+    QCOMPARE(Test::app()->base->options->qobject->borderlessMaximizedWindows(), false);
 }
 
 void TestMaximized::testMaximizedPassedToDeco()
@@ -120,8 +120,8 @@ void TestMaximized::testMaximizedPassedToDeco()
 
     // When there are no borders, there is no change to them when maximizing.
     // TODO: we should test both cases with fixed fake decoration for autotests.
-    auto const hasBorders
-        = Test::app()->base.space->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
+    auto const hasBorders = Test::app()->base->space->deco->settings()->borderSize()
+        != KDecoration2::BorderSize::None;
 
     // now maximize
     QSignalSpy bordersChangedSpy(decoration, &KDecoration2::Decoration::bordersChanged);
@@ -133,7 +133,7 @@ void TestMaximized::testMaximizedPassedToDeco()
                                        &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryShapeChangedSpy.isValid());
 
-    win::active_window_maximize(*Test::app()->base.space);
+    win::active_window_maximize(*Test::app()->base->space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
 
@@ -158,7 +158,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     QVERIFY(decoration->borderTop() != 0);
 
     // now unmaximize again
-    win::active_window_maximize(*Test::app()->base.space);
+    win::active_window_maximize(*Test::app()->base->space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -226,11 +226,11 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     // with BorderlessMaximizedWindows
 
     // adjust config
-    auto group = Test::app()->base.config.main->group("Windows");
+    auto group = Test::app()->base->config.main->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.options->qobject->borderlessMaximizedWindows(), true);
+    win::space_reconfigure(*Test::app()->base->space);
+    QCOMPARE(Test::app()->base->options->qobject->borderlessMaximizedWindows(), true);
 
     // Create the test client.
     std::unique_ptr<Surface> surface(Test::create_surface());
@@ -283,11 +283,11 @@ void TestMaximized::testBorderlessMaximizedWindow()
     // decoration when the borderless maximized option is on.
 
     // Enable the borderless maximized windows option.
-    auto group = Test::app()->base.config.main->group("Windows");
+    auto group = Test::app()->base->config.main->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.options->qobject->borderlessMaximizedWindows(), true);
+    win::space_reconfigure(*Test::app()->base->space);
+    QCOMPARE(Test::app()->base->options->qobject->borderlessMaximizedWindows(), true);
 
     // Create the test client.
     std::unique_ptr<Surface> surface(Test::create_surface());
@@ -333,7 +333,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
 
     // Maximize the client.
     const QRect maximizeRestoreGeometry = client->geo.frame;
-    win::active_window_maximize(*Test::app()->base.space);
+    win::active_window_maximize(*Test::app()->base->space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -356,7 +356,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     QVERIFY(!win::decoration(client));
 
     // Restore the client.
-    win::active_window_maximize(*Test::app()->base.space);
+    win::active_window_maximize(*Test::app()->base->space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
 
@@ -384,11 +384,11 @@ void TestMaximized::testBorderlessMaximizedWindowNoClientSideDecoration()
     // clients to render client-side decorations instead (BUG 405385)
 
     // adjust config
-    auto group = Test::app()->base.config.main->group("Windows");
+    auto group = Test::app()->base->config.main->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.options->qobject->borderlessMaximizedWindows(), true);
+    win::space_reconfigure(*Test::app()->base->space);
+    QCOMPARE(Test::app()->base->options->qobject->borderlessMaximizedWindows(), true);
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> xdgShellToplevel(Test::create_xdg_shell_toplevel(surface));

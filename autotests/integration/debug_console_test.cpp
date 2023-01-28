@@ -94,7 +94,7 @@ void DebugConsoleTest::topLevelTest_data()
 void DebugConsoleTest::topLevelTest()
 {
     auto model = std::unique_ptr<debug::wayland_console_model>(
-        debug::wayland_console_model::create(*Test::app()->base.space));
+        debug::wayland_console_model::create(*Test::app()->base->space));
     QCOMPARE(model->rowCount(QModelIndex()), 4);
     QCOMPARE(model->columnCount(QModelIndex()), 2);
     QFETCH(int, row);
@@ -114,7 +114,7 @@ void DebugConsoleTest::topLevelTest()
 void DebugConsoleTest::testX11Client()
 {
     auto model = std::unique_ptr<debug::wayland_console_model>(
-        debug::wayland_console_model::create(*Test::app()->base.space));
+        debug::wayland_console_model::create(*Test::app()->base->space));
     QModelIndex x11TopLevelIndex = model->index(0, 0, QModelIndex());
     QVERIFY(x11TopLevelIndex.isValid());
     // we don't have any windows yet
@@ -180,7 +180,7 @@ void DebugConsoleTest::testX11Client()
 
     // creating a second model should be initialized directly with the X11 child
     auto model2 = std::unique_ptr<debug::wayland_console_model>(
-        debug::wayland_console_model::create(*Test::app()->base.space));
+        debug::wayland_console_model::create(*Test::app()->base->space));
     QVERIFY(model2->hasChildren(model2->index(0, 0, QModelIndex())));
 
     // now close the window again, it should be removed from the model
@@ -204,7 +204,7 @@ void DebugConsoleTest::testX11Client()
 void DebugConsoleTest::testX11Unmanaged()
 {
     auto model = std::unique_ptr<debug::wayland_console_model>(
-        debug::wayland_console_model::create(*Test::app()->base.space));
+        debug::wayland_console_model::create(*Test::app()->base->space));
     QModelIndex unmanagedTopLevelIndex = model->index(1, 0, QModelIndex());
     QVERIFY(unmanagedTopLevelIndex.isValid());
     // we don't have any windows yet
@@ -222,8 +222,8 @@ void DebugConsoleTest::testX11Unmanaged()
 
     // let's create an override redirect window
     const uint32_t values[] = {true};
-    base::x11::xcb::window window(Test::app()->base.x11_data.connection,
-                                  Test::app()->base.x11_data.root_window,
+    base::x11::xcb::window window(Test::app()->base->x11_data.connection,
+                                  Test::app()->base->x11_data.root_window,
                                   QRect(0, 0, 10, 10),
                                   XCB_CW_OVERRIDE_REDIRECT,
                                   values);
@@ -276,7 +276,7 @@ void DebugConsoleTest::testX11Unmanaged()
 
     // creating a second model should be initialized directly with the X11 child
     auto model2 = std::unique_ptr<debug::wayland_console_model>(
-        debug::wayland_console_model::create(*Test::app()->base.space));
+        debug::wayland_console_model::create(*Test::app()->base->space));
     QVERIFY(model2->hasChildren(model2->index(1, 0, QModelIndex())));
 
     // now close the window again, it should be removed from the model
@@ -299,7 +299,7 @@ void DebugConsoleTest::testX11Unmanaged()
 void DebugConsoleTest::testWaylandClient()
 {
     auto model = std::unique_ptr<debug::wayland_console_model>(
-        debug::wayland_console_model::create(*Test::app()->base.space));
+        debug::wayland_console_model::create(*Test::app()->base->space));
     QModelIndex waylandTopLevelIndex = model->index(2, 0, QModelIndex());
     QVERIFY(waylandTopLevelIndex.isValid());
 
@@ -374,7 +374,7 @@ void DebugConsoleTest::testWaylandClient()
 
     // creating a second model should be initialized directly with the X11 child
     auto model2 = std::unique_ptr<debug::wayland_console_model>(
-        debug::wayland_console_model::create(*Test::app()->base.space));
+        debug::wayland_console_model::create(*Test::app()->base->space));
     QVERIFY(model2->hasChildren(model2->index(2, 0, QModelIndex())));
 
     // now close the window again, it should be removed from the model
@@ -433,7 +433,7 @@ protected:
 void DebugConsoleTest::testInternalWindow()
 {
     auto model = std::unique_ptr<debug::wayland_console_model>(
-        debug::wayland_console_model::create(*Test::app()->base.space));
+        debug::wayland_console_model::create(*Test::app()->base->space));
     QModelIndex internalTopLevelIndex = model->index(3, 0, QModelIndex());
     QVERIFY(internalTopLevelIndex.isValid());
 
@@ -508,11 +508,11 @@ void DebugConsoleTest::testClosingDebugConsole()
     // this test verifies that the DebugConsole gets destroyed when closing the window
     // BUG: 369858
 
-    auto console = new debug::console(*Test::app()->base.space);
+    auto console = new debug::console(*Test::app()->base->space);
     QSignalSpy destroyedSpy(console, &QObject::destroyed);
     QVERIFY(destroyedSpy.isValid());
 
-    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     console->show();
@@ -520,7 +520,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     QTRY_COMPARE(clientAddedSpy.count(), 1);
 
     auto win_id = clientAddedSpy.first().first().value<quint32>();
-    auto c = Test::get_internal_window(Test::app()->base.space->windows_map.at(win_id));
+    auto c = Test::get_internal_window(Test::app()->base->space->windows_map.at(win_id));
     QVERIFY(c);
     QVERIFY(c->isInternal());
     QCOMPARE(c->internalWindow(), console->windowHandle());

@@ -63,12 +63,13 @@ void ScreenEdgeTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // empty config to have defaults
-    auto config = Test::app()->base.config.main;
+    auto config = Test::app()->base->config.main;
 
     // disable all effects to prevent them grabbing edges
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
-                                  .listOfKnownEffects();
+    auto const builtinNames
+        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
+              .listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -80,19 +81,19 @@ void ScreenEdgeTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    QVERIFY(Test::app()->base.space->scripting);
+    QVERIFY(Test::app()->base->space->scripting);
 
-    Test::app()->base.space->edges->time_threshold = 0;
-    Test::app()->base.space->edges->reactivate_threshold = 0;
+    Test::app()->base->space->edges->time_threshold = 0;
+    Test::app()->base->space->edges->reactivate_threshold = 0;
 }
 
 void ScreenEdgeTest::init()
 {
     Test::cursor()->set_pos(640, 512);
-    if (Test::app()->base.space->showing_desktop) {
-        win::toggle_show_desktop(*Test::app()->base.space);
+    if (Test::app()->base->space->showing_desktop) {
+        win::toggle_show_desktop(*Test::app()->base->space);
     }
-    QVERIFY(!Test::app()->base.space->showing_desktop);
+    QVERIFY(!Test::app()->base->space->showing_desktop);
 }
 
 void ScreenEdgeTest::cleanup()
@@ -103,9 +104,9 @@ void ScreenEdgeTest::cleanup()
                                  QFINDTESTDATA("./scripts/touchScreenedge.js")};
     for (const QString& script : scripts) {
         if (!script.isEmpty()) {
-            if (Test::app()->base.space->scripting->isScriptLoaded(script)) {
-                QVERIFY(Test::app()->base.space->scripting->unloadScript(script));
-                QTRY_VERIFY(!Test::app()->base.space->scripting->isScriptLoaded(script));
+            if (Test::app()->base->space->scripting->isScriptLoaded(script)) {
+                QVERIFY(Test::app()->base->space->scripting->unloadScript(script));
+                QTRY_VERIFY(!Test::app()->base->space->scripting->isScriptLoaded(script));
             }
         }
     }
@@ -135,16 +136,16 @@ void ScreenEdgeTest::testEdge()
     QVERIFY(!scriptToLoad.isEmpty());
 
     // mock the config
-    auto config = Test::app()->base.config.main;
+    auto config = Test::app()->base->config.main;
     QFETCH(KWin::ElectricBorder, edge);
     config->group(QLatin1String("Script-") + scriptToLoad).writeEntry("Edge", int(edge));
     config->sync();
 
-    QVERIFY(!Test::app()->base.space->scripting->isScriptLoaded(scriptToLoad));
-    const int id = Test::app()->base.space->scripting->loadScript(scriptToLoad);
+    QVERIFY(!Test::app()->base->space->scripting->isScriptLoaded(scriptToLoad));
+    const int id = Test::app()->base->space->scripting->loadScript(scriptToLoad);
     QVERIFY(id != -1);
-    QVERIFY(Test::app()->base.space->scripting->isScriptLoaded(scriptToLoad));
-    auto s = Test::app()->base.space->scripting->findScript(scriptToLoad);
+    QVERIFY(Test::app()->base->space->scripting->isScriptLoaded(scriptToLoad));
+    auto s = Test::app()->base->space->scripting->findScript(scriptToLoad);
     QVERIFY(s);
     QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());
@@ -154,7 +155,7 @@ void ScreenEdgeTest::testEdge()
     QCOMPARE(runningChangedSpy.first().first().toBool(), true);
 
     // triggering the edge will result in show desktop being triggered
-    QSignalSpy showDesktopSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy showDesktopSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::showingDesktopChanged);
     QVERIFY(showDesktopSpy.isValid());
 
@@ -162,7 +163,7 @@ void ScreenEdgeTest::testEdge()
     QFETCH(QPoint, triggerPos);
     Test::cursor()->set_pos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 1);
-    QVERIFY(Test::app()->base.space->showing_desktop);
+    QVERIFY(Test::app()->base->space->showing_desktop);
 }
 
 void ScreenEdgeTest::testTouchEdge_data()
@@ -186,16 +187,16 @@ void ScreenEdgeTest::testTouchEdge()
     QVERIFY(!scriptToLoad.isEmpty());
 
     // mock the config
-    auto config = Test::app()->base.config.main;
+    auto config = Test::app()->base->config.main;
     QFETCH(KWin::ElectricBorder, edge);
     config->group(QLatin1String("Script-") + scriptToLoad).writeEntry("Edge", int(edge));
     config->sync();
 
-    QVERIFY(!Test::app()->base.space->scripting->isScriptLoaded(scriptToLoad));
-    auto const id = Test::app()->base.space->scripting->loadScript(scriptToLoad);
+    QVERIFY(!Test::app()->base->space->scripting->isScriptLoaded(scriptToLoad));
+    auto const id = Test::app()->base->space->scripting->loadScript(scriptToLoad);
     QVERIFY(id != -1);
-    QVERIFY(Test::app()->base.space->scripting->isScriptLoaded(scriptToLoad));
-    auto s = Test::app()->base.space->scripting->findScript(scriptToLoad);
+    QVERIFY(Test::app()->base->space->scripting->isScriptLoaded(scriptToLoad));
+    auto s = Test::app()->base->space->scripting->findScript(scriptToLoad);
     QVERIFY(s);
     QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());
@@ -204,7 +205,7 @@ void ScreenEdgeTest::testTouchEdge()
     QCOMPARE(runningChangedSpy.count(), 1);
     QCOMPARE(runningChangedSpy.first().first().toBool(), true);
     // triggering the edge will result in show desktop being triggered
-    QSignalSpy showDesktopSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy showDesktopSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::showingDesktopChanged);
     QVERIFY(showDesktopSpy.isValid());
 
@@ -217,12 +218,12 @@ void ScreenEdgeTest::testTouchEdge()
     Test::touch_up(0, timestamp++);
     QVERIFY(showDesktopSpy.wait());
     QCOMPARE(showDesktopSpy.count(), 1);
-    QVERIFY(Test::app()->base.space->showing_desktop);
+    QVERIFY(Test::app()->base->space->showing_desktop);
 }
 
 void ScreenEdgeTest::triggerConfigReload()
 {
-    win::space_reconfigure(*Test::app()->base.space);
+    win::space_reconfigure(*Test::app()->base->space);
 }
 
 void ScreenEdgeTest::testEdgeUnregister()
@@ -230,8 +231,8 @@ void ScreenEdgeTest::testEdgeUnregister()
     const QString scriptToLoad = QFINDTESTDATA("./scripts/screenedgeunregister.js");
     QVERIFY(!scriptToLoad.isEmpty());
 
-    Test::app()->base.space->scripting->loadScript(scriptToLoad);
-    auto s = Test::app()->base.space->scripting->findScript(scriptToLoad);
+    Test::app()->base->space->scripting->loadScript(scriptToLoad);
+    auto s = Test::app()->base->space->scripting->findScript(scriptToLoad);
     auto configGroup = s->config();
     configGroup.writeEntry("Edge", int(KWin::ElectricLeft));
     configGroup.sync();
@@ -241,7 +242,7 @@ void ScreenEdgeTest::testEdgeUnregister()
     s->run();
     QVERIFY(runningChangedSpy.wait());
 
-    QSignalSpy showDesktopSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy showDesktopSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::showingDesktopChanged);
     QVERIFY(showDesktopSpy.isValid());
 
@@ -251,7 +252,7 @@ void ScreenEdgeTest::testEdgeUnregister()
 
     // reset
     Test::cursor()->set_pos(500, 500);
-    win::toggle_show_desktop(*Test::app()->base.space);
+    win::toggle_show_desktop(*Test::app()->base->space);
     showDesktopSpy.clear();
 
     // trigger again, to show that retriggering works
@@ -260,7 +261,7 @@ void ScreenEdgeTest::testEdgeUnregister()
 
     // reset
     Test::cursor()->set_pos(500, 500);
-    win::toggle_show_desktop(*Test::app()->base.space);
+    win::toggle_show_desktop(*Test::app()->base->space);
     showDesktopSpy.clear();
 
     // make the script unregister the edge
@@ -277,15 +278,15 @@ void ScreenEdgeTest::testDeclarativeTouchEdge()
 {
     const QString scriptToLoad = QFINDTESTDATA("./scripts/screenedgetouch.qml");
     QVERIFY(!scriptToLoad.isEmpty());
-    QVERIFY(Test::app()->base.space->scripting->loadDeclarativeScript(scriptToLoad) != -1);
-    QVERIFY(Test::app()->base.space->scripting->isScriptLoaded(scriptToLoad));
+    QVERIFY(Test::app()->base->space->scripting->loadDeclarativeScript(scriptToLoad) != -1);
+    QVERIFY(Test::app()->base->space->scripting->isScriptLoaded(scriptToLoad));
 
-    auto s = Test::app()->base.space->scripting->findScript(scriptToLoad);
+    auto s = Test::app()->base->space->scripting->findScript(scriptToLoad);
     QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
     s->run();
     QTRY_COMPARE(runningChangedSpy.count(), 1);
 
-    QSignalSpy showDesktopSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy showDesktopSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::showingDesktopChanged);
     QVERIFY(showDesktopSpy.isValid());
 

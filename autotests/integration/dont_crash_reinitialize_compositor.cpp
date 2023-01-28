@@ -52,10 +52,11 @@ void DontCrashReinitializeCompositorTest::initTestCase()
     QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    auto config = Test::app()->base.config.main;
+    auto config = Test::app()->base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
-                                  .listOfKnownEffects();
+    auto const builtinNames
+        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
+              .listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -70,7 +71,7 @@ void DontCrashReinitializeCompositorTest::initTestCase()
     QVERIFY(startup_spy.count() || startup_spy.wait());
     Test::test_outputs_default();
 
-    auto& scene = Test::app()->base.render->compositor->scene;
+    auto& scene = Test::app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }
@@ -83,7 +84,7 @@ void DontCrashReinitializeCompositorTest::init()
 void DontCrashReinitializeCompositorTest::cleanup()
 {
     // Unload all effects.
-    auto& effectsImpl = Test::app()->base.render->compositor->effects;
+    auto& effectsImpl = Test::app()->base->render->compositor->effects;
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -107,7 +108,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     // a window.
 
     // Make sure that we have the right effects ptr.
-    auto& effectsImpl = Test::app()->base.render->compositor->effects;
+    auto& effectsImpl = Test::app()->base->render->compositor->effects;
     QVERIFY(effectsImpl);
 
     // Create the test client.
@@ -141,7 +142,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     QTRY_VERIFY(effect->isActive());
 
     // Re-initialize the compositor, effects will be destroyed and created again.
-    Test::app()->base.render->compositor->reinitialize();
+    Test::app()->base->render->compositor->reinitialize();
 
     // By this time, KWin should still be alive.
 }

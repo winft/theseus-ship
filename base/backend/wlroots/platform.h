@@ -77,7 +77,6 @@ public:
     using abstract_type = base::wayland::platform;
     using output_t = wlroots::output;
 
-    platform(base::config config);
     platform(base::config config,
              std::string const& socket_name,
              base::wayland::start_options flags,
@@ -85,8 +84,8 @@ public:
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
-    platform(platform&& other) noexcept;
-    platform& operator=(platform&& other) noexcept;
+    platform(platform&& other) = delete;
+    platform& operator=(platform&& other) = delete;
     ~platform() override;
 
     clockid_t get_clockid() const override;

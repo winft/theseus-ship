@@ -54,7 +54,7 @@ private Q_SLOTS:
 
 wayland_window* get_wayland_window_from_id(uint32_t id)
 {
-    return Test::get_wayland_window(Test::app()->base.space->windows_map.at(id));
+    return Test::get_wayland_window(Test::app()->base->space->windows_map.at(id));
 }
 
 void layer_shell_test::initTestCase()
@@ -173,7 +173,7 @@ QRect target_geo(QRect const& area_geo,
 void layer_shell_test::test_create()
 {
     // Tries to create multiple kinds of layer surfaces.
-    QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
+    QSignalSpy window_spy(Test::app()->base->space->qobject.get(),
                           &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
@@ -205,7 +205,7 @@ void layer_shell_test::test_create()
     QVERIFY(win::has_alpha(*window));
 
     // By default layer surfaces have keyboard interactivity set to none.
-    QVERIFY(!Test::app()->base.space->stacking.active);
+    QVERIFY(!Test::app()->base->space->stacking.active);
 
     QVERIFY(!window->isMaximizable());
     QVERIFY(!window->isMovable());
@@ -250,7 +250,7 @@ void layer_shell_test::test_create()
     QVERIFY(window2->isShown());
     QCOMPARE(window2->isHiddenInternal(), false);
     QCOMPARE(window2->render_data.ready_for_painting, true);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window2);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), window2);
 
     // Surface is centered.
     QCOMPARE(window2->geo.frame,
@@ -330,7 +330,7 @@ void layer_shell_test::test_geo_data()
 void layer_shell_test::test_geo()
 {
     // Checks various standard geometries.
-    QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
+    QSignalSpy window_spy(Test::app()->base->space->qobject.get(),
                           &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
@@ -372,17 +372,17 @@ void layer_shell_test::test_geo()
 void layer_shell_test::test_output_change()
 {
     // Checks that output changes are handled correctly.
-    QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
+    QSignalSpy window_spy(Test::app()->base->space->qobject.get(),
                           &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
     auto const output_geo = QRect(2000, 0, 1000, 500);
     auto wlr_out = wlr_headless_add_output(
-        Test::app()->base.backend, output_geo.width(), output_geo.height());
-    QCOMPARE(Test::app()->base.outputs.size(), 3);
+        Test::app()->base->backend, output_geo.width(), output_geo.height());
+    QCOMPARE(Test::app()->base->outputs.size(), 3);
 
-    Test::app()->base.all_outputs.back()->force_geometry(output_geo);
-    base::update_output_topology(Test::app()->base);
+    Test::app()->base->all_outputs.back()->force_geometry(output_geo);
+    base::update_output_topology(*Test::app()->base);
 
     QTRY_COMPARE(Test::get_client().interfaces.outputs.size(), 3);
     QTRY_COMPARE(Test::get_client().interfaces.outputs.at(2)->geometry(), output_geo);
@@ -418,14 +418,14 @@ void layer_shell_test::test_output_change()
     QCOMPARE(window->geo.frame,
              target_geo(output_geo, render_size, QMargins(), align::center, align::center));
 
-    QSignalSpy topology_spy(&Test::app()->base, &base::platform::topology_changed);
+    QSignalSpy topology_spy(Test::app()->base.get(), &base::platform::topology_changed);
     QVERIFY(topology_spy.isValid());
 
     // Now let's change the size of the output.
     auto output_geo2 = output_geo;
     output_geo2.setWidth(800);
-    Test::app()->base.all_outputs.back()->force_geometry(output_geo2);
-    base::update_output_topology(Test::app()->base);
+    Test::app()->base->all_outputs.back()->force_geometry(output_geo2);
+    base::update_output_topology(*Test::app()->base);
     QCOMPARE(topology_spy.count(), 1);
 
     QVERIFY(configure_spy.wait());
@@ -444,7 +444,7 @@ void layer_shell_test::test_output_change()
 void layer_shell_test::test_popup()
 {
     // Checks popup creation.
-    QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
+    QSignalSpy window_spy(Test::app()->base->space->qobject.get(),
                           &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_spy.isValid());
 

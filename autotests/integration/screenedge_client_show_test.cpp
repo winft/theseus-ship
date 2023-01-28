@@ -53,7 +53,7 @@ void ScreenEdgeClientShowTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // set custom config which disable touch edge
-    KConfigGroup group = Test::app()->base.config.main->group("TabBox");
+    KConfigGroup group = Test::app()->base->config.main->group("TabBox");
     group.writeEntry(QStringLiteral("TouchBorderActivate"), "9");
     group.sync();
 
@@ -118,7 +118,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      Test::app()->base.x11_data.root_window,
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -135,20 +135,20 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     NETWinInfo info(c.get(),
                     w,
-                    Test::app()->base.x11_data.root_window,
+                    Test::app()->base->x11_data.root_window,
                     NET::WMAllProperties,
                     NET::WM2AllProperties);
     info.setWindowType(NET::Dock);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
     QCOMPARE(client->geo.frame, windowGeometry);
@@ -242,7 +242,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      Test::app()->base.x11_data.root_window,
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -259,20 +259,20 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     NETWinInfo info(c.get(),
                     w,
-                    Test::app()->base.x11_data.root_window,
+                    Test::app()->base->x11_data.root_window,
                     NET::WMAllProperties,
                     NET::WM2AllProperties);
     info.setWindowType(NET::Dock);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.last().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
     QCOMPARE(client->geo.frame, windowGeometry);

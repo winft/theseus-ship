@@ -56,7 +56,7 @@ void TabBoxTest::initTestCase()
     QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    auto c = Test::app()->base.config.main;
+    auto c = Test::app()->base->config.main;
     c->group("TabBox").writeEntry("ShowTabBox", false);
     c->sync();
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
@@ -107,14 +107,14 @@ void TabBoxTest::testCapsLock()
     QVERIFY(c3);
     QVERIFY(c3->control->active);
 
-    QTRY_COMPARE(Test::app()->base.space->stacking.order.stack,
+    QTRY_COMPARE(Test::app()->base->space->stacking.order.stack,
                  (std::deque<Test::space::window_t>{c1, c2, c3}));
 
     // Setup tabbox signal spies
-    QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox->qobject.get(),
+    QSignalSpy tabboxAddedSpy(Test::app()->base->space->tabbox->qobject.get(),
                               &win::tabbox_qobject::tabbox_added);
     QVERIFY(tabboxAddedSpy.isValid());
-    QSignalSpy tabboxClosedSpy(Test::app()->base.space->tabbox->qobject.get(),
+    QSignalSpy tabboxClosedSpy(Test::app()->base->space->tabbox->qobject.get(),
                                &win::tabbox_qobject::tabbox_closed);
     QVERIFY(tabboxClosedSpy.isValid());
 
@@ -122,34 +122,34 @@ void TabBoxTest::testCapsLock()
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base.input),
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base->input),
              Qt::ShiftModifier);
 
     // press alt+tab
     Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base.input),
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base->input),
              Qt::ShiftModifier | Qt::AltModifier);
     Test::keyboard_key_pressed(KEY_TAB, timestamp++);
     Test::keyboard_key_released(KEY_TAB, timestamp++);
 
     QVERIFY(tabboxAddedSpy.wait());
-    QVERIFY(Test::app()->base.space->tabbox->is_grabbed());
+    QVERIFY(Test::app()->base->space->tabbox->is_grabbed());
 
     // release alt
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
     QCOMPARE(tabboxClosedSpy.count(), 1);
-    QCOMPARE(Test::app()->base.space->tabbox->is_grabbed(), false);
+    QCOMPARE(Test::app()->base->space->tabbox->is_grabbed(), false);
 
     // release caps lock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base.input), Qt::NoModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base->input), Qt::NoModifier);
     QCOMPARE(tabboxClosedSpy.count(), 1);
-    QCOMPARE(Test::app()->base.space->tabbox->is_grabbed(), false);
+    QCOMPARE(Test::app()->base->space->tabbox->is_grabbed(), false);
 
     // Has walked backwards to the previously lowest client in the stacking order.
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c1);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c1);
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{c2, c3, c1}));
 
     surface3.reset();
@@ -191,28 +191,28 @@ void TabBoxTest::testMoveForward()
     QVERIFY(c3->control->active);
 
     // Setup tabbox signal spies
-    QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox->qobject.get(),
+    QSignalSpy tabboxAddedSpy(Test::app()->base->space->tabbox->qobject.get(),
                               &win::tabbox_qobject::tabbox_added);
     QVERIFY(tabboxAddedSpy.isValid());
-    QSignalSpy tabboxClosedSpy(Test::app()->base.space->tabbox->qobject.get(),
+    QSignalSpy tabboxClosedSpy(Test::app()->base->space->tabbox->qobject.get(),
                                &win::tabbox_qobject::tabbox_closed);
     QVERIFY(tabboxClosedSpy.isValid());
 
     // press alt+tab
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base.input), Qt::AltModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base->input), Qt::AltModifier);
     Test::keyboard_key_pressed(KEY_TAB, timestamp++);
     Test::keyboard_key_released(KEY_TAB, timestamp++);
 
     QVERIFY(tabboxAddedSpy.wait());
-    QVERIFY(Test::app()->base.space->tabbox->is_grabbed());
+    QVERIFY(Test::app()->base->space->tabbox->is_grabbed());
 
     // release alt
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
     QCOMPARE(tabboxClosedSpy.count(), 1);
-    QCOMPARE(Test::app()->base.space->tabbox->is_grabbed(), false);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c2);
+    QCOMPARE(Test::app()->base->space->tabbox->is_grabbed(), false);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c2);
 
     surface3.reset();
     QVERIFY(Test::wait_for_destroyed(c3));
@@ -253,33 +253,33 @@ void TabBoxTest::testMoveBackward()
     QVERIFY(c3->control->active);
 
     // Setup tabbox signal spies
-    QSignalSpy tabboxAddedSpy(Test::app()->base.space->tabbox->qobject.get(),
+    QSignalSpy tabboxAddedSpy(Test::app()->base->space->tabbox->qobject.get(),
                               &win::tabbox_qobject::tabbox_added);
     QVERIFY(tabboxAddedSpy.isValid());
-    QSignalSpy tabboxClosedSpy(Test::app()->base.space->tabbox->qobject.get(),
+    QSignalSpy tabboxClosedSpy(Test::app()->base->space->tabbox->qobject.get(),
                                &win::tabbox_qobject::tabbox_closed);
     QVERIFY(tabboxClosedSpy.isValid());
 
     // press alt+shift+tab
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base.input), Qt::AltModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base->input), Qt::AltModifier);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base.input),
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(*Test::app()->base->input),
              Qt::AltModifier | Qt::ShiftModifier);
     Test::keyboard_key_pressed(KEY_TAB, timestamp++);
     Test::keyboard_key_released(KEY_TAB, timestamp++);
 
     QVERIFY(tabboxAddedSpy.wait());
-    QVERIFY(Test::app()->base.space->tabbox->is_grabbed());
+    QVERIFY(Test::app()->base->space->tabbox->is_grabbed());
 
     // release alt
     Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
     QCOMPARE(tabboxClosedSpy.count(), 0);
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
     QCOMPARE(tabboxClosedSpy.count(), 1);
-    QCOMPARE(Test::app()->base.space->tabbox->is_grabbed(), false);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c1);
+    QCOMPARE(Test::app()->base->space->tabbox->is_grabbed(), false);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c1);
 
     surface3.reset();
     QVERIFY(Test::wait_for_destroyed(c3));

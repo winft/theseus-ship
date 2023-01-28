@@ -74,14 +74,14 @@ void TestIdleInhibition::cleanup()
 {
     Test::destroy_wayland_connection();
 
-    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
     vd_manager->setCount(1);
     QCOMPARE(vd_manager->count(), 1u);
 }
 
 void TestIdleInhibition::testInhibit()
 {
-    auto& idle = Test::app()->base.input->idle;
+    auto& idle = Test::app()->base->input->idle;
     QCOMPARE(idle.inhibit_count, 0);
 
     // now create window
@@ -148,12 +148,12 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
     // This test verifies that the idle inhibitor object is not honored when
     // the associated surface is not on the current virtual desktop.
 
-    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
     vd_manager->setCount(2);
     QCOMPARE(vd_manager->count(), 2u);
 
     // Get reference to the idle interface.
-    auto& idle = Test::app()->base.input->idle;
+    auto& idle = Test::app()->base->input->idle;
     QCOMPARE(idle.inhibit_count, 0);
 
     // Create the test client.
@@ -204,7 +204,7 @@ void TestIdleInhibition::testDontInhibitWhenMinimized()
     // associated surface is minimized.
 
     // Get reference to the idle interface.
-    auto& idle = Test::app()->base.input->idle;
+    auto& idle = Test::app()->base->input->idle;
     QCOMPARE(idle.inhibit_count, 0);
 
     // Create the test client.
@@ -245,7 +245,7 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
     // when the associated client is unmapped.
 
     // Get reference to the idle interface.
-    auto& idle = Test::app()->base.input->idle;
+    auto& idle = Test::app()->base->input->idle;
     QCOMPARE(idle.inhibit_count, 0);
 
     // Create the test client.
@@ -298,12 +298,12 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     // This test verifies that the idle inhibitor object is not honored by KWin
     // when the associated surface leaves the current virtual desktop.
 
-    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
     vd_manager->setCount(2);
     QCOMPARE(vd_manager->count(), 2u);
 
     // Get reference to the idle interface.
-    auto& idle = Test::app()->base.input->idle;
+    auto& idle = Test::app()->base->input->idle;
     QCOMPARE(idle.inhibit_count, 0);
 
     // Create the test client.

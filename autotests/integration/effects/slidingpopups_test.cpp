@@ -64,10 +64,11 @@ void SlidingPopupsTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering
-    auto config = Test::app()->base.config.main;
+    auto config = Test::app()->base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
-                                  .listOfKnownEffects();
+    auto const builtinNames
+        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
+              .listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -83,9 +84,9 @@ void SlidingPopupsTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    QVERIFY(Test::app()->base.render->compositor);
+    QVERIFY(Test::app()->base->render->compositor);
 
-    auto& scene = Test::app()->base.render->compositor->scene;
+    auto& scene = Test::app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }
@@ -98,7 +99,7 @@ void SlidingPopupsTest::init()
 void SlidingPopupsTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    auto& e = Test::app()->base.render->compositor->effects;
+    auto& e = Test::app()->base->render->compositor->effects;
     while (!e->loadedEffects().isEmpty()) {
         const QString effect = e->loadedEffects().constFirst();
         e->unloadEffect(effect);
@@ -152,7 +153,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     // this test verifies that slidingpopups effect grabs the window added role
     // independently of the sequence how the effects are loaded.
     // see BUG 336866
-    auto& e = Test::app()->base.render->compositor->effects;
+    auto& e = Test::app()->base->render->compositor->effects;
     // find the effectsloader
     auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);
@@ -196,7 +197,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      Test::app()->base.x11_data.root_window,
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -212,7 +213,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     NETWinInfo winInfo(
-        c.get(), w, Test::app()->base.x11_data.root_window, NET::Properties(), NET::Properties2());
+        c.get(), w, Test::app()->base->x11_data.root_window, NET::Properties(), NET::Properties2());
     winInfo.setWindowType(NET::Normal);
 
     // and get the slide atom
@@ -232,13 +233,13 @@ void SlidingPopupsTest::testWithOtherEffect()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(win::is_normal(client));
@@ -311,7 +312,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     // independently of the sequence how the effects are loaded.
     // see BUG 336866
     // the test is like testWithOtherEffect, but simulates using a Wayland window
-    auto& e = Test::app()->base.render->compositor->effects;
+    auto& e = Test::app()->base->render->compositor->effects;
     // find the effectsloader
     auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);

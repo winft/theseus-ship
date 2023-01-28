@@ -55,7 +55,7 @@ void DontCrashAuroraeDestroyDecoTest::initTestCase()
     QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    auto config = Test::app()->base.config.main;
+    auto config = Test::app()->base->config.main;
     config->group("org.kde.kdecoration2").writeEntry("library", "org.kde.kwin.aurorae");
     config->sync();
 
@@ -68,7 +68,7 @@ void DontCrashAuroraeDestroyDecoTest::initTestCase()
     QVERIFY(startup_spy.wait());
     Test::test_outputs_default();
 
-    auto& scene = Test::app()->base.render->compositor->scene;
+    auto& scene = Test::app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }
@@ -85,12 +85,12 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     // see BUG 362772
 
     // first adjust the config
-    auto group = Test::app()->base.config.main->group("Windows");
+    auto group = Test::app()->base->config.main->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
 
-    win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(Test::app()->base.options->qobject->borderlessMaximizedWindows(), true);
+    win::space_reconfigure(*Test::app()->base->space);
+    QCOMPARE(Test::app()->base->options->qobject->borderlessMaximizedWindows(), true);
 
     // create an xcb window
     xcb_connection_t* c = xcb_connect(nullptr, nullptr);
@@ -100,7 +100,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     xcb_create_window(c,
                       XCB_COPY_FROM_PARENT,
                       w,
-                      Test::app()->base.x11_data.root_window,
+                      Test::app()->base->x11_data.root_window,
                       0,
                       0,
                       100,
@@ -114,13 +114,13 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     xcb_flush(c);
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(win::decoration(client) != nullptr);

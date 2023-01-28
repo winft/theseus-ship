@@ -81,13 +81,13 @@ void ColorCorrectNightColorTest::testConfigRead()
     const bool activeDefault = true;
     const int modeDefault = 0;
 
-    auto cfgGroup = Test::app()->base.config.main->group("NightColor");
+    auto cfgGroup = Test::app()->base->config.main->group("NightColor");
 
     cfgGroup.writeEntry("Active", activeDefault);
     cfgGroup.writeEntry("Mode", modeDefault);
 
     cfgGroup.sync();
-    auto& manager = Test::app()->base.render->night_color;
+    auto& manager = Test::app()->base->render->night_color;
     manager->reconfigure();
 
     QCOMPARE(manager->data.enabled, activeDefault);

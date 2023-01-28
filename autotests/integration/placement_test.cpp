@@ -121,17 +121,17 @@ void TestPlacement::initTestCase()
 
 void TestPlacement::setPlacementPolicy(win::placement policy)
 {
-    auto group = Test::app()->base.config.main->group("Windows");
+    auto group = Test::app()->base->config.main->group("Windows");
     group.writeEntry("Placement", policy_to_string(policy));
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
+    win::space_reconfigure(*Test::app()->base->space);
 }
 
 PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
 {
     PlaceWindowResult rc;
 
-    QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
+    QSignalSpy window_spy(Test::app()->base->space->qobject.get(),
                           &win::space::qobject_t::wayland_window_added);
     assert(window_spy.isValid());
 
@@ -155,7 +155,7 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
     cfgdata = rc.toplevel->get_configure_data();
 
     auto window_id = window_spy.first().first().value<quint32>();
-    auto window = Test::get_wayland_window(Test::app()->base.space->windows_map.at(window_id));
+    auto window = Test::get_wayland_window(Test::app()->base->space->windows_map.at(window_id));
 
     assert(first_size.isEmpty() || first_size == cfgdata.size);
     rc.initiallyConfiguredSize = cfgdata.size;
@@ -279,10 +279,10 @@ void TestPlacement::testPlaceCentered()
 {
     // This test verifies that Centered placement policy works.
 
-    auto group = Test::app()->base.config.main->group("Windows");
+    auto group = Test::app()->base->config.main->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::centered));
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
+    win::space_reconfigure(*Test::app()->base->space);
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
@@ -298,10 +298,10 @@ void TestPlacement::testPlaceUnderMouse()
 {
     // This test verifies that Under Mouse placement policy works.
 
-    auto group = Test::app()->base.config.main->group("Windows");
+    auto group = Test::app()->base->config.main->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::under_mouse));
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
+    win::space_reconfigure(*Test::app()->base->space);
 
     Test::cursor()->set_pos(QPoint(200, 300));
     QCOMPARE(Test::cursor()->pos(), QPoint(200, 300));
@@ -320,10 +320,10 @@ void TestPlacement::testPlaceRandom()
 {
     // This test verifies that Random placement policy works.
 
-    auto group = Test::app()->base.config.main->group("Windows");
+    auto group = Test::app()->base->config.main->group("Windows");
     group.writeEntry("Placement", policy_to_string(win::placement::random));
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
+    win::space_reconfigure(*Test::app()->base->space);
 
     std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));

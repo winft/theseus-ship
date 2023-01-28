@@ -52,7 +52,7 @@ void DontCrashNoBorder::initTestCase()
     QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    auto config = Test::app()->base.config.main;
+    auto config = Test::app()->base->config.main;
     config->group("org.kde.kdecoration2").writeEntry("NoPlugin", true);
     config->sync();
 
@@ -65,7 +65,7 @@ void DontCrashNoBorder::initTestCase()
     QVERIFY(startup_spy.size() || startup_spy.wait());
     Test::test_outputs_default();
 
-    auto& scene = Test::app()->base.render->compositor->scene;
+    auto& scene = Test::app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }
@@ -106,7 +106,7 @@ void DontCrashNoBorder::testCreateWindow()
     // let's render
     auto c = Test::render_and_wait_for_shown(surface, QSize(500, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QVERIFY(!win::decoration(c));
 }
 

@@ -91,7 +91,7 @@ private:
 
 Test::space::x11_window* get_x11_window_from_id(uint32_t id)
 {
-    return Test::get_x11_window(Test::app()->base.space->windows_map.at(id));
+    return Test::get_x11_window(Test::app()->base->space->windows_map.at(id));
 }
 
 void QuickTilingTest::initTestCase()
@@ -102,7 +102,7 @@ void QuickTilingTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // set custom config which disables the Outline
-    auto group = Test::app()->base.config.main->group("Outline");
+    auto group = Test::app()->base->config.main->group("Outline");
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
     group.sync();
 
@@ -211,7 +211,7 @@ void QuickTilingTest::testQuickTiling()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -255,12 +255,12 @@ void QuickTilingTest::testQuickTiling()
     QCOMPARE(c->geo.frame, expectedGeometry);
 
     // send window to other screen
-    QCOMPARE(c->topo.central_output, Test::app()->base.outputs.at(0));
+    QCOMPARE(c->topo.central_output, Test::app()->base->outputs.at(0));
 
-    auto output = base::get_output(Test::app()->base.outputs, 1);
+    auto output = base::get_output(Test::app()->base->outputs, 1);
     QVERIFY(output);
-    win::send_to_screen(*Test::app()->base.space, c, *output);
-    QCOMPARE(c->topo.central_output, Test::app()->base.outputs.at(1));
+    win::send_to_screen(*Test::app()->base->space, c, *output);
+    QCOMPARE(c->topo.central_output, Test::app()->base->outputs.at(1));
 
     // quick tile should not be changed
     QCOMPARE(c->control->quicktiling, mode);
@@ -291,7 +291,7 @@ void QuickTilingTest::testQuickMaximizing()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -406,7 +406,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -415,7 +415,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QVERIFY(quickTileChangedSpy.isValid());
 
     win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
-    QCOMPARE(c, Test::get_wayland_window(Test::app()->base.space->move_resize_window));
+    QCOMPARE(c, Test::get_wayland_window(Test::app()->base->space->move_resize_window));
     QCOMPARE(Test::cursor()->pos(), QPoint(49, 24));
 
     QFETCH(QPoint, targetPos);
@@ -441,7 +441,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     Test::keyboard_key_pressed(KEY_ENTER, timestamp++);
     Test::keyboard_key_released(KEY_ENTER, timestamp++);
     QCOMPARE(Test::cursor()->pos(), targetPos);
-    QVERIFY(!Test::app()->base.space->move_resize_window);
+    QVERIFY(!Test::app()->base->space->move_resize_window);
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
     QTEST(c->control->quicktiling, "expectedMode");
@@ -485,7 +485,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -498,7 +498,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QVERIFY(quickTileChangedSpy.isValid());
 
     win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
-    QCOMPARE(c, Test::get_wayland_window(Test::app()->base.space->move_resize_window));
+    QCOMPARE(c, Test::get_wayland_window(Test::app()->base->space->move_resize_window));
     QCOMPARE(Test::cursor()->pos(), QPoint(49, 24));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
@@ -509,7 +509,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QCOMPARE(Test::cursor()->pos(), targetPos);
-    QVERIFY(!Test::app()->base.space->move_resize_window);
+    QVERIFY(!Test::app()->base->space->move_resize_window);
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
     QTEST(c->control->quicktiling, "expectedMode");
@@ -569,7 +569,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     auto const decoration = win::decoration(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QCOMPARE(c->geo.frame,
              QRect(-decoration->borderLeft(),
                    0,
@@ -591,18 +591,18 @@ void QuickTilingTest::testQuickTilingTouchMove()
         QPointF(c->geo.frame.center().x(), c->geo.frame.y() + decoration->borderTop() / 2),
         timestamp++);
     QVERIFY(configureRequestedSpy.wait());
-    QCOMPARE(c, Test::get_wayland_window(Test::app()->base.space->move_resize_window));
+    QCOMPARE(c, Test::get_wayland_window(Test::app()->base->space->move_resize_window));
     QCOMPARE(configureRequestedSpy.count(), 3);
 
     QFETCH(QPoint, targetPos);
     Test::touch_motion(0, targetPos, timestamp++);
     Test::touch_up(0, timestamp++);
-    QVERIFY(!Test::app()->base.space->move_resize_window);
+    QVERIFY(!Test::app()->base->space->move_resize_window);
 
     // When there are no borders, there is no change to them when quick-tiling.
     // TODO: we should test both cases with fixed fake decoration for autotests.
-    auto const hasBorders
-        = Test::app()->base.space->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
+    auto const hasBorders = Test::app()->base->space->deco->settings()->borderSize()
+        != KDecoration2::BorderSize::None;
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
     QTEST(c->control->quicktiling, "expectedMode");
@@ -655,7 +655,7 @@ void QuickTilingTest::testX11QuickTiling()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      Test::app()->base.x11_data.root_window,
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -674,7 +674,7 @@ void QuickTilingTest::testX11QuickTiling()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -698,13 +698,13 @@ void QuickTilingTest::testX11QuickTiling()
     QCOMPARE(client->geo.restore.max, origGeo);
     QCOMPARE(quickTileChangedSpy.count(), 1);
 
-    QCOMPARE(client->topo.central_output, Test::app()->base.outputs.at(0));
+    QCOMPARE(client->topo.central_output, Test::app()->base->outputs.at(0));
     QFETCH(win::quicktiles, modeAfterToggle);
 
     // quick tile to same edge again should also act like send to screen
     win::set_quicktile_mode(client, mode, true);
     QTEST(static_cast<int>(
-              base::get_output_index(Test::app()->base.outputs, *client->topo.central_output)),
+              base::get_output_index(Test::app()->base->outputs, *client->topo.central_output)),
           "screen");
     QCOMPARE(client->control->quicktiling, modeAfterToggle);
     QCOMPARE(client->geo.restore.max.isValid(), modeAfterToggle != win::quicktiles::none);
@@ -752,7 +752,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      Test::app()->base.x11_data.root_window,
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -771,7 +771,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -869,7 +869,7 @@ void QuickTilingTest::testShortcut()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -964,7 +964,7 @@ void QuickTilingTest::testScript()
     // Map the client.
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -979,7 +979,7 @@ void QuickTilingTest::testScript()
     QSignalSpy geometryChangedSpy(c->qobject.get(), &win::window_qobject::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
 
-    QVERIFY(Test::app()->base.space->scripting);
+    QVERIFY(Test::app()->base->space->scripting);
     QTemporaryFile tmpFile;
     QVERIFY(tmpFile.open());
     QTextStream out(&tmpFile);
@@ -991,10 +991,10 @@ void QuickTilingTest::testScript()
     QFETCH(win::quicktiles, expectedMode);
     QFETCH(QRect, expectedGeometry);
 
-    auto const id = Test::app()->base.space->scripting->loadScript(tmpFile.fileName());
+    auto const id = Test::app()->base->space->scripting->loadScript(tmpFile.fileName());
     QVERIFY(id != -1);
-    QVERIFY(Test::app()->base.space->scripting->isScriptLoaded(tmpFile.fileName()));
-    auto s = Test::app()->base.space->scripting->findScript(tmpFile.fileName());
+    QVERIFY(Test::app()->base->space->scripting->isScriptLoaded(tmpFile.fileName()));
+    auto s = Test::app()->base->space->scripting->findScript(tmpFile.fileName());
     QVERIFY(s);
     QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());

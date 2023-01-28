@@ -59,10 +59,11 @@ void FadeTest::initTestCase()
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering
-    auto config = Test::app()->base.config.main;
+    auto config = Test::app()->base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*effects, *Test::app()->base.render->compositor)
-                                  .listOfKnownEffects();
+    auto const builtinNames
+        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
+              .listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -74,7 +75,7 @@ void FadeTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    QVERIFY(Test::app()->base.render->compositor);
+    QVERIFY(Test::app()->base->render->compositor);
 }
 
 void FadeTest::init()
@@ -82,7 +83,7 @@ void FadeTest::init()
     Test::setup_wayland_connection();
 
     // load the translucency effect
-    auto& e = Test::app()->base.render->compositor->effects;
+    auto& e = Test::app()->base->render->compositor->effects;
     // find the effectsloader
     auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);
@@ -101,7 +102,7 @@ void FadeTest::init()
 void FadeTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    auto& e = Test::app()->base.render->compositor->effects;
+    auto& e = Test::app()->base->render->compositor->effects;
     if (e->isEffectLoaded(QStringLiteral("kwin4_effect_fade"))) {
         e->unloadEffect(QStringLiteral("kwin4_effect_fade"));
     }

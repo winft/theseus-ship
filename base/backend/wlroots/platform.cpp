@@ -87,11 +87,6 @@ void handle_new_output(struct wl_listener* listener, void* data)
     }
 }
 
-platform::platform(base::config config)
-    : wayland::platform(std::move(config))
-{
-}
-
 platform::platform(base::config config,
                    std::string const& socket_name,
                    base::wayland::start_options flags,
@@ -131,34 +126,6 @@ platform::platform(base::config config,
     if (auto drm = get_drm_backend(backend)) {
         setup_drm_leasing(server->display.get(), drm);
     }
-}
-
-platform::platform(platform&& other) noexcept
-    : wayland::platform(std::move(other.config))
-{
-    *this = std::move(other);
-}
-
-platform& platform::operator=(platform&& other) noexcept
-{
-    backend = other.backend;
-    other.backend = nullptr;
-
-    destroyed = std::move(other.destroyed);
-    destroyed->receiver = this;
-
-    new_output = std::move(other.new_output);
-    new_output->receiver = this;
-
-    leases = std::move(other.leases);
-    non_desktop_outputs = std::move(other.non_desktop_outputs);
-
-    singleton_interface::platform = this;
-    Q_EMIT singleton_interface::app_singleton->platform_created();
-
-    wayland::platform::operator=(std::move(other));
-
-    return *this;
 }
 
 platform::~platform()

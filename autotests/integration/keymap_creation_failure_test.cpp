@@ -62,8 +62,8 @@ void KeymapCreationFailureTest::initTestCase()
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 
-    Test::app()->base.input->xkb.setConfig(KSharedConfig::openConfig({}, KConfig::SimpleConfig));
-    auto layoutGroup = Test::app()->base.input->config.xkb->group("Layout");
+    Test::app()->base->input->xkb.setConfig(KSharedConfig::openConfig({}, KConfig::SimpleConfig));
+    auto layoutGroup = Test::app()->base->input->config.xkb->group("Layout");
     layoutGroup.writeEntry("LayoutList", QStringLiteral("no"));
     layoutGroup.writeEntry("Model", "no");
     layoutGroup.writeEntry("Options", "no");

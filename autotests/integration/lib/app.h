@@ -35,7 +35,7 @@ public:
     using wayland_space = win::wayland::space<base::wayland::platform>;
 
     using base_t = base::backend::wlroots::platform;
-    base_t base;
+    std::unique_ptr<base_t> base;
 
     wlr_pointer* pointer{nullptr};
     wlr_keyboard* keyboard{nullptr};

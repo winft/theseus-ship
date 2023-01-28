@@ -51,7 +51,7 @@ void DontCrashGlxgearsTest::testGlxgears()
     // closing a glxgears window through Aurorae themes used to crash KWin
     // Let's make sure that doesn't happen anymore
 
-    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
 
@@ -62,9 +62,9 @@ void DontCrashGlxgearsTest::testGlxgears()
 
     QVERIFY(clientAddedSpy.wait());
     QCOMPARE(clientAddedSpy.count(), 1);
-    QCOMPARE(Test::app()->base.space->windows.size(), 1);
+    QCOMPARE(Test::app()->base->space->windows.size(), 1);
 
-    auto glxgearsClient = Test::get_x11_window(Test::app()->base.space->windows.front());
+    auto glxgearsClient = Test::get_x11_window(Test::app()->base->space->windows.front());
     QVERIFY(glxgearsClient);
     QVERIFY(win::decoration(glxgearsClient));
     QSignalSpy closedSpy(glxgearsClient->qobject.get(), &win::window_qobject::closed);
@@ -95,7 +95,7 @@ void DontCrashGlxgearsTest::testGlxgears()
 
     QVERIFY(closedSpy.wait());
     QCOMPARE(closedSpy.count(), 1);
-    xcb_flush(Test::app()->base.x11_data.connection);
+    xcb_flush(Test::app()->base->x11_data.connection);
 
     if (glxgears.state() == QProcess::Running) {
         QVERIFY(glxgears.waitForFinished());

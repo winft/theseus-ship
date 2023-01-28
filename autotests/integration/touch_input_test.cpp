@@ -125,7 +125,7 @@ Test::wayland_window* TouchInputTest::showWindow(bool decorated)
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
-    COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
 
 #undef VERIFY
 #undef COMPARE

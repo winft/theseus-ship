@@ -121,7 +121,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      Test::app()->base.x11_data.root_window,
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -141,13 +141,13 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(win::decoration(client));
@@ -155,13 +155,13 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     // verify that it gets the keyboard focus
     if (!client->surface) {
         // we don't have a surface yet, so focused keyboard surface if set is not ours
-        QVERIFY(!Test::app()->base.server->seat()->keyboards().get_focus().surface);
+        QVERIFY(!Test::app()->base->server->seat()->keyboards().get_focus().surface);
         QSignalSpy surfaceChangedSpy(client->qobject.get(), &win::window_qobject::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());
         QVERIFY(surfaceChangedSpy.wait());
     }
     QVERIFY(client->surface);
-    QCOMPARE(Test::app()->base.server->seat()->keyboards().get_focus().surface, client->surface);
+    QCOMPARE(Test::app()->base->server->seat()->keyboards().get_focus().surface, client->surface);
 
     // now that should also give it to us on client side
     QVERIFY(plasmaWindowCreatedSpy.wait());
@@ -284,7 +284,7 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     QVERIFY(plasmaWindowCreatedSpy.isValid());
 
     // this time we use a QSignalSpy on XdgShellClient as it'a a little bit more complex setup
-    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
@@ -292,12 +292,12 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
 
     // The lock screen creates one client per screen.
-    auto outputs_count = Test::app()->base.get_outputs().size();
+    auto outputs_count = Test::app()->base->get_outputs().size();
     QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
     QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
     QCOMPARE(clientAddedSpy.count(), outputs_count);
 
-    QVERIFY(Test::get_wayland_window(Test::app()->base.space->windows_map.at(
+    QVERIFY(Test::get_wayland_window(Test::app()->base->space->windows_map.at(
                                          clientAddedSpy.first().first().value<quint32>()))
                 ->isLockScreen());
 
@@ -401,7 +401,7 @@ struct x11_test_window {
         xcb_create_window(client.connection,
                           XCB_COPY_FROM_PARENT,
                           client.window,
-                          Test::app()->base.x11_data.root_window,
+                          Test::app()->base->x11_data.root_window,
                           geo.x(),
                           geo.y(),
                           geo.width(),
@@ -420,20 +420,20 @@ struct x11_test_window {
         xcb_map_window(client.connection, client.window);
         xcb_flush(client.connection);
 
-        QSignalSpy window_spy(Test::app()->base.space->qobject.get(),
+        QSignalSpy window_spy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::clientAdded);
         QVERIFY(window_spy.isValid());
         QVERIFY(window_spy.wait());
 
         auto window_id = window_spy.first().first().value<quint32>();
-        server.window = Test::get_x11_window(Test::app()->base.space->windows_map.at(window_id));
+        server.window = Test::get_x11_window(Test::app()->base->space->windows_map.at(window_id));
         QVERIFY(server.window);
         QCOMPARE(server.window->xcb_windows.client, client.window);
         QVERIFY(win::decoration(server.window));
         QVERIFY(server.window->control->active);
 
         if (!server.window->surface) {
-            QVERIFY(!Test::app()->base.server->seat()->keyboards().get_focus().surface);
+            QVERIFY(!Test::app()->base->server->seat()->keyboards().get_focus().surface);
             QSignalSpy surface_spy(server.window->qobject.get(),
                                    &win::window_qobject::surfaceChanged);
             QVERIFY(surface_spy.isValid());
@@ -499,7 +499,7 @@ void PlasmaWindowTest::test_send_to_output()
 
     wayland_test_window test_window(this);
 
-    auto& outputs = Test::app()->base.outputs;
+    auto& outputs = Test::app()->base->outputs;
     QCOMPARE(outputs.size(), 2);
 
     QCOMPARE(Test::get_output(0), test_window.server.window->topo.central_output);
@@ -539,7 +539,7 @@ void PlasmaWindowTest::test_stacking_order()
 
     auto compare_stacks = [&, this]() {
         auto const& plasma_stack = m_windowManagement->stacking_order_uuid();
-        auto const& unfiltered_stack = Test::app()->base.space->stacking.order.stack;
+        auto const& unfiltered_stack = Test::app()->base->space->stacking.order.stack;
         auto stack = std::decay_t<decltype(unfiltered_stack)>();
 
         std::copy_if(unfiltered_stack.begin(),
@@ -585,7 +585,7 @@ void PlasmaWindowTest::test_stacking_order()
     compare_stacks();
 
     // Now raise the Xwayland window.
-    win::raise_window(*Test::app()->base.space,
+    win::raise_window(*Test::app()->base->space,
                       std::get<x11_test_window>(windows.at(1)).server.window);
 
     QVERIFY(stacking_spy.wait());
