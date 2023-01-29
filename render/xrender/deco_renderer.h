@@ -25,16 +25,21 @@ enum class DecorationPart : int {
 class deco_render_data : public win::deco::render_data
 {
 public:
+    deco_render_data(base::x11::data const& x11_data)
+        : x11{x11_data}
+    {
+    }
+
     ~deco_render_data() override
     {
         for (int i = 0; i < int(DecorationPart::Count); ++i) {
             if (pixmaps[i] != XCB_PIXMAP_NONE) {
-                xcb_free_pixmap(connection(), pixmaps[i]);
+                xcb_free_pixmap(x11.connection, pixmaps[i]);
             }
             delete pictures[i];
         }
         if (gc != 0) {
-            xcb_free_gc(connection(), gc);
+            xcb_free_gc(x11.connection, gc);
         }
     }
 
@@ -51,15 +56,16 @@ public:
     XRenderPicture* pictures[int(DecorationPart::Count)];
     xcb_pixmap_t pixmaps[int(DecorationPart::Count)];
     xcb_gcontext_t gc{XCB_NONE};
+    base::x11::data const& x11;
 };
 
 class deco_renderer : public win::deco::render_injector
 {
 public:
-    explicit deco_renderer(win::deco::render_window window)
+    explicit deco_renderer(base::x11::data const& x11_data, win::deco::render_window window)
         : win::deco::render_injector(std::move(window))
     {
-        this->data = std::make_unique<deco_render_data>();
+        this->data = std::make_unique<deco_render_data>(x11_data);
 
         auto& data = get_data();
         for (int i = 0; i < int(DecorationPart::Count); ++i) {
@@ -88,22 +94,21 @@ public:
         const QRect bottom(QPoint(0, left.y() + left.height()),
                            m_sizes[int(DecorationPart::Bottom)]);
 
-        xcb_connection_t* c = connection();
         auto& data = get_data();
+        auto c = data.x11.connection;
 
         if (data.gc == 0) {
-            data.gc = xcb_generate_id(connection());
+            data.gc = xcb_generate_id(c);
             xcb_create_gc(c, data.gc, data.pixmaps[int(DecorationPart::Top)], 0, nullptr);
         }
-        auto renderPart = [this, c](const QRect& geo, const QPoint& offset, int index) {
+        auto renderPart = [this, &data](const QRect& geo, const QPoint& offset, int index) {
             if (!geo.isValid()) {
                 return;
             }
 
-            auto& data = get_data();
             auto image = this->renderToImage(geo);
             Q_ASSERT(image.devicePixelRatio() == 1);
-            xcb_put_image(c,
+            xcb_put_image(data.x11.connection,
                           XCB_IMAGE_FORMAT_Z_PIXMAP,
                           data.pixmaps[index],
                           data.gc,
@@ -134,10 +139,10 @@ private:
     {
         QRect left, top, right, bottom;
         this->window.layout_rects(left, top, right, bottom);
-        xcb_connection_t* c = connection();
 
-        auto checkAndCreate = [this, c](int border, const QRect& rect) {
+        auto checkAndCreate = [this](int border, const QRect& rect) {
             auto& data = get_data();
+            auto c = data.x11.connection;
             const QSize size = rect.size();
 
             if (m_sizes[border] != size) {
@@ -147,11 +152,11 @@ private:
                 }
                 delete data.pictures[border];
                 if (!size.isEmpty()) {
-                    data.pixmaps[border] = xcb_generate_id(connection());
-                    xcb_create_pixmap(connection(),
+                    data.pixmaps[border] = xcb_generate_id(c);
+                    xcb_create_pixmap(c,
                                       32,
                                       data.pixmaps[border],
-                                      rootWindow(),
+                                      data.x11.root_window,
                                       size.width(),
                                       size.height());
                     data.pictures[border] = new XRenderPicture(data.pixmaps[border], 32);
@@ -165,7 +170,7 @@ private:
             }
             // fill transparent
             xcb_rectangle_t r = {0, 0, uint16_t(size.width()), uint16_t(size.height())};
-            xcb_render_fill_rectangles(connection(),
+            xcb_render_fill_rectangles(c,
                                        XCB_RENDER_PICT_OP_SRC,
                                        *data.pictures[border],
                                        preMultiply(Qt::transparent),

@@ -7,9 +7,6 @@
 
 #include "app.h"
 
-#include "base/wayland/server.h"
-#include "main.h"
-
 #include <QThread>
 #include <QtTest>
 #include <Wrapland/Client/connection_thread.h>
@@ -28,7 +25,7 @@ client::client(global_selection globals)
     int sx[2];
     QVERIFY(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) >= 0);
 
-    app()->base.server->display->createClient(sx[0]);
+    app()->base->server->display->createClient(sx[0]);
 
     // Setup connection.
     connection = new Clt::ConnectionThread;
@@ -38,7 +35,7 @@ client::client(global_selection globals)
 
     connection->setSocketFd(sx[1]);
 
-    thread.reset(new QThread(kwinApp()));
+    thread.reset(new QThread(Test::app()));
     connection->moveToThread(thread.get());
     thread->start();
 

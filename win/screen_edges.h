@@ -741,7 +741,7 @@ private:
             auto const interimDesktop = desktop;
             desktop = vds->toLeft(desktop, vds->isNavigationWrappingAround());
             if (desktop != interimDesktop)
-                pos.setX(kwinApp()->get_base().topology.size.width() - 1 - OFFSET);
+                pos.setX(edger->space.base.topology.size.width() - 1 - OFFSET);
         } else if (isRight()) {
             auto const interimDesktop = desktop;
             desktop = vds->toRight(desktop, vds->isNavigationWrappingAround());
@@ -753,7 +753,7 @@ private:
             auto const interimDesktop = desktop;
             desktop = vds->above(desktop, vds->isNavigationWrappingAround());
             if (desktop != interimDesktop)
-                pos.setY(kwinApp()->get_base().topology.size.height() - 1 - OFFSET);
+                pos.setY(edger->space.base.topology.size.height() - 1 - OFFSET);
         } else if (isBottom()) {
             auto const interimDesktop = desktop;
             desktop = vds->below(desktop, vds->isNavigationWrappingAround());
@@ -911,13 +911,13 @@ public:
                                  .height();
         corner_offset = 4 * gridUnit;
 
-        config = kwinApp()->config();
+        config = space.base.config.main;
 
         reconfigure();
         updateLayout();
         recreateEdges();
 
-        QObject::connect(kwinApp()->options->qobject.get(),
+        QObject::connect(space.base.options->qobject.get(),
                          &base::options_qobject::configChanged,
                          qobject.get(),
                          [this] { reconfigure(); });
@@ -1131,7 +1131,7 @@ public:
      */
     void ensureOnTop()
     {
-        base::x11::xcb::restack_windows_with_raise(windows());
+        base::x11::xcb::restack_windows_with_raise(space.base.x11_data.connection, windows());
     }
 
     bool isEntered(QMouseEvent* event)
@@ -1216,8 +1216,9 @@ public:
                 continue;
             }
             if (edge->reserved_count > 0 && edge->window_id() == window) {
-                kwinApp()->update_x11_time_from_clock();
-                edge->check(point, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
+                base::x11::update_time_from_clock(space.base);
+                edge->check(
+                    point, QDateTime::fromMSecsSinceEpoch(space.base.x11_data.time, Qt::UTC), true);
                 return true;
             }
         }
@@ -1371,7 +1372,7 @@ public:
         auto oldEdges = std::move(edges);
         assert(edges.empty());
 
-        auto const fullArea = QRect({}, kwinApp()->get_base().topology.size);
+        auto const fullArea = QRect({}, space.base.topology.size);
         QRegion processedRegion;
         for (auto output : outputs) {
             auto const screen = QRegion(output->geometry()).subtracted(processedRegion);

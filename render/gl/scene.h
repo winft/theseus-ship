@@ -59,14 +59,15 @@ public:
         Resetting,
     };
 
-    SyncObject()
+    SyncObject() = default;
+
+    SyncObject(xcb_connection_t* con, xcb_window_t root_window)
+        : con{con}
     {
         m_state = Ready;
 
-        auto const con = connection();
-
         m_fence = xcb_generate_id(con);
-        xcb_sync_create_fence(con, rootWindow(), m_fence, false);
+        xcb_sync_create_fence(con, root_window, m_fence, false);
         xcb_flush(con);
 
         m_sync = glImportSyncEXT(GL_SYNC_X11_FENCE_EXT, m_fence, 0);
@@ -84,13 +85,13 @@ public:
             trigger();
             // The flush is necessary!
             // The trigger command needs to be sent to the X server.
-            xcb_flush(connection());
+            xcb_flush(con);
         }
-        xcb_sync_destroy_fence(connection(), m_fence);
+        xcb_sync_destroy_fence(con, m_fence);
         glDeleteSync(m_sync);
 
         if (m_state == Resetting)
-            xcb_discard_reply(connection(), m_reset_cookie.sequence);
+            xcb_discard_reply(con, m_reset_cookie.sequence);
     }
 
     State state() const
@@ -106,7 +107,7 @@ public:
         if (m_state == Resetting)
             finishResetting();
 
-        xcb_sync_trigger_fence(connection(), m_fence);
+        xcb_sync_trigger_fence(con, m_fence);
         m_state = TriggerSent;
     }
 
@@ -158,16 +159,14 @@ public:
     {
         Q_ASSERT(m_state == Done);
 
-        xcb_connection_t* const c = connection();
-
         // Send the reset request along with a sync request.
         // We use the cookie to ensure that the server has processed the reset
         // request before we trigger the fence and call glWaitSync().
         // Otherwise there is a race condition between the reset finishing and
         // the glWaitSync() call.
-        xcb_sync_reset_fence(c, m_fence);
-        m_reset_cookie = xcb_get_input_focus(c);
-        xcb_flush(c);
+        xcb_sync_reset_fence(con, m_fence);
+        m_reset_cookie = xcb_get_input_focus(con);
+        xcb_flush(con);
 
         m_state = Resetting;
     }
@@ -175,7 +174,7 @@ public:
     void finishResetting()
     {
         Q_ASSERT(m_state == Resetting);
-        free(xcb_get_input_focus_reply(connection(), m_reset_cookie, nullptr));
+        free(xcb_get_input_focus_reply(con, m_reset_cookie, nullptr));
         m_state = Ready;
     }
 
@@ -184,6 +183,7 @@ private:
     GLsync m_sync;
     xcb_sync_fence_t m_fence;
     xcb_get_input_focus_cookie_t m_reset_cookie;
+    xcb_connection_t* con;
 };
 
 /**
@@ -194,6 +194,11 @@ class SyncManager
 {
 public:
     enum { MaxFences = 4 };
+
+    SyncManager(base::x11::data const& data)
+    {
+        m_fences.fill(SyncObject(data.connection, data.root_window));
+    }
 
     SyncObject* nextFence()
     {
@@ -270,8 +275,8 @@ public:
         auto glPlatform = GLPlatform::instance();
 
         // set strict binding
-        if (kwinApp()->options->qobject->isGlStrictBindingFollowsDriver()) {
-            kwinApp()->options->qobject->setGlStrictBinding(!glPlatform->supports(LooseBinding));
+        if (platform.base.options->qobject->isGlStrictBindingFollowsDriver()) {
+            platform.base.options->qobject->setGlStrictBinding(!glPlatform->supports(LooseBinding));
         }
 
         bool haveSyncObjects = glPlatform->isGLES()
@@ -279,13 +284,13 @@ public:
             : hasGLVersion(3, 2) || hasGLExtension("GL_ARB_sync");
 
         if (hasGLExtension("GL_EXT_x11_sync_object") && haveSyncObjects
-            && kwinApp()->operationMode() == Application::OperationModeX11) {
+            && this->platform.base.operation_mode == base::operation_mode::x11) {
             const QByteArray useExplicitSync = qgetenv("KWIN_EXPLICIT_SYNC");
 
             if (useExplicitSync != "0") {
                 qCDebug(KWIN_CORE)
                     << "Initializing fences for synchronization with the X command stream";
-                m_syncManager = new SyncManager;
+                m_syncManager = new SyncManager(platform.base.x11_data);
             } else {
                 qCDebug(KWIN_CORE) << "Explicit synchronization with the X command stream disabled "
                                       "by environment variable";
@@ -594,7 +599,7 @@ protected:
                          QRegion region,
                          WindowPaintData& data) override
     {
-        if (kwinApp()->is_screen_locked()) {
+        if (base::wayland::is_screen_locked(this->platform.base)) {
             if (std::visit(overload{[&](auto&& win) {
                                if constexpr (requires(decltype(win) win) { win.isLockScreen(); }) {
                                    if (win->isLockScreen()) {
@@ -707,7 +712,7 @@ protected:
         if (m_backend->supportsBufferAge())
             return;
 
-        if (kwinApp()->operationMode() == Application::OperationModeX11
+        if (this->platform.base.operation_mode == base::operation_mode::x11
             && GLPlatform::instance()->driver() == Driver_NVidia) {
             // Nvidia's X11 driver supports fast full buffer copies. So no need to extend damage.
             // TODO: Do we really need to check this here? Could we just run it anyway or does maybe
@@ -715,7 +720,7 @@ protected:
             return;
         }
 
-        auto const& screenSize = kwinApp()->get_base().topology.size;
+        auto const& screenSize = this->platform.base.topology.size;
         const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
 
         uint damagedPixels = 0;
@@ -772,7 +777,7 @@ protected:
         const QRect r = region.boundingRect();
         glEnable(GL_SCISSOR_TEST);
         glScissor(r.x(),
-                  kwinApp()->get_base().topology.size.height() - r.y() - r.height(),
+                  this->platform.base.topology.size.height() - r.y() - r.height(),
                   r.width(),
                   r.height());
         render::scene<Platform>::paintDesktop(desktop, mask, region, data);
@@ -959,7 +964,7 @@ private:
         const float scaleFactor = 1.1 * std::tan(fovY * M_PI / 360.0f) / yMax;
 
         QMatrix4x4 matrix;
-        auto const& space_size = kwinApp()->get_base().topology.size;
+        auto const& space_size = this->platform.base.topology.size;
         matrix.translate(xMin * scaleFactor, yMax * scaleFactor, -1.1);
         matrix.scale((xMax - xMin) * scaleFactor / space_size.width(),
                      -(yMax - yMin) * scaleFactor / space_size.height(),

@@ -719,13 +719,17 @@ public:
 
     QByteArray readProperty(long atom, long type, int format) const override
     {
-        if (!kwinApp()->x11Connection()) {
-            return QByteArray();
-        }
         return std::visit(overload{[&](auto&& win) -> QByteArray {
+                              if (!win->space.base.x11_data.connection) {
+                                  return {};
+                              }
                               if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
                                   return x11::read_window_property(
-                                      win->xcb_windows.client, atom, type, format);
+                                      win->space.base.x11_data.connection,
+                                      win->xcb_windows.client,
+                                      atom,
+                                      type,
+                                      format);
                               }
                               return {};
                           }},
@@ -734,22 +738,16 @@ public:
 
     void deleteProperty(long atom) const override
     {
-        auto deleteWindowProperty = [](xcb_window_t win, long int atom) {
-            if (win == XCB_WINDOW_NONE) {
-                return;
-            }
-            xcb_delete_property(kwinApp()->x11Connection(), win, atom);
-        };
-
-        if (kwinApp()->x11Connection()) {
-            return std::visit(
-                overload{[&](auto&& ref_win) {
-                    if constexpr (requires(decltype(ref_win) win) { win->xcb_windows; }) {
-                        deleteWindowProperty(ref_win->xcb_windows.client, atom);
-                    }
-                }},
-                *window.ref_win);
-        }
+        return std::visit(overload{[&](auto&& ref_win) {
+                              if constexpr (requires(decltype(ref_win) win) { win->xcb_windows; }) {
+                                  auto& xcb_win = ref_win->xcb_windows.client;
+                                  if (xcb_win != XCB_WINDOW_NONE) {
+                                      xcb_delete_property(
+                                          ref_win->space.base.x11_data.connection, xcb_win, atom);
+                                  }
+                              }
+                          }},
+                          *window.ref_win);
     }
 
     EffectWindow* findModal() override

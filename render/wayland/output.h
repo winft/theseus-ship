@@ -11,7 +11,6 @@
 #include "base/logging.h"
 #include "base/seat/session.h"
 #include "debug/perf/ftrace.h"
-#include "main.h"
 #include "render/gl/scene.h"
 #include "render/gl/timer_query.h"
 #include "win/remnant.h"
@@ -43,7 +42,7 @@ template<typename Output>
 bool output_waiting_for_event(Output const& out)
 {
     return out.delay_timer.isActive() || out.swap_pending || !out.base.is_dpms_on()
-        || !kwinApp()->session->isActiveSession();
+        || !out.platform.base.session->isActiveSession();
 }
 
 template<typename Base, typename Platform>
@@ -396,6 +395,7 @@ private:
         }
 
         idle = false;
+        auto const screen_lock_filtered = base::wayland::is_screen_locked(platform.base);
 
         // Skip windows that are not yet ready for being painted and if screen is locked skip
         // windows that are neither lockscreen nor inputmethod windows.
@@ -403,20 +403,20 @@ private:
         // TODO? This cannot be used so carelessly - needs protections against broken clients, the
         // window should not get focus before it's displayed, handle unredirected windows properly
         // and so on.
-        remove_all_if(windows, [](auto& win) {
+        remove_all_if(windows, [screen_lock_filtered](auto& win) {
             return std::visit(
                 overload{[&](auto&& win) {
-                    auto screen_lock_filtered = kwinApp()->is_screen_locked();
-                    if (screen_lock_filtered) {
+                    auto filtered = screen_lock_filtered;
+                    if (filtered) {
                         if constexpr (requires(decltype(win) win) { win->isLockScreen(); }) {
-                            screen_lock_filtered &= !win->isLockScreen();
+                            filtered &= !win->isLockScreen();
                         }
                         if constexpr (requires(decltype(win) win) { win->isInputMethod(); }) {
-                            screen_lock_filtered &= !win->isInputMethod();
+                            filtered &= !win->isInputMethod();
                         }
                     }
 
-                    return !win->render_data.ready_for_painting || screen_lock_filtered;
+                    return !win->render_data.ready_for_painting || filtered;
                 }},
                 win);
         });

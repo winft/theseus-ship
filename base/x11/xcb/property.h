@@ -30,14 +30,9 @@ class property : public wrapper<property_data,
                                 uint32_t>
 {
 public:
-    property()
-        : wrapper<property_data,
-                  uint8_t,
-                  xcb_window_t,
-                  xcb_atom_t,
-                  xcb_atom_t,
-                  uint32_t,
-                  uint32_t>()
+    explicit property(xcb_connection_t* con)
+        : wrapper<property_data, uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t>(
+            con)
         , m_type(XCB_ATOM_NONE)
     {
     }
@@ -47,13 +42,15 @@ public:
         , m_type(other.m_type)
     {
     }
-    explicit property(uint8_t _delete,
-                      xcb_window_t window,
-                      xcb_atom_t prop,
-                      xcb_atom_t type,
-                      uint32_t long_offset,
-                      uint32_t long_length)
+    property(xcb_connection_t* con,
+             uint8_t _delete,
+             xcb_window_t window,
+             xcb_atom_t prop,
+             xcb_atom_t type,
+             uint32_t long_offset,
+             uint32_t long_length)
         : wrapper<property_data, uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t>(
+            con,
             window,
             _delete,
             window,
@@ -254,9 +251,13 @@ private:
 class string_property : public property
 {
 public:
-    string_property() = default;
-    explicit string_property(xcb_window_t w, xcb_atom_t p)
-        : property(false, w, p, XCB_ATOM_STRING, 0, 10000)
+    explicit string_property(xcb_connection_t* con)
+        : property(con)
+    {
+    }
+
+    string_property(xcb_connection_t* con, xcb_window_t w, xcb_atom_t p)
+        : property(con, false, w, p, XCB_ATOM_STRING, 0, 10000)
     {
     }
     operator QByteArray()
@@ -268,8 +269,8 @@ public:
 class transient_for : public property
 {
 public:
-    explicit transient_for(xcb_window_t window)
-        : property(0, window, XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW, 0, 1)
+    transient_for(xcb_connection_t* con, xcb_window_t window)
+        : property(con, 0, window, XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW, 0, 1)
     {
     }
 

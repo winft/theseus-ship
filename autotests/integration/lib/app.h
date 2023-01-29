@@ -9,6 +9,7 @@
 #include "client.h"
 #include "helpers.h"
 
+#include "base/app_singleton.h"
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
 #include "base/wayland/server.h"
@@ -34,7 +35,7 @@ public:
     using wayland_space = win::wayland::space<base::wayland::platform>;
 
     using base_t = base::backend::wlroots::platform;
-    base_t base;
+    std::unique_ptr<base_t> base;
 
     wlr_pointer* pointer{nullptr};
     wlr_keyboard* keyboard{nullptr};
@@ -42,16 +43,12 @@ public:
 
     std::vector<Test::client> clients;
 
-    WaylandTestApplication(OperationMode mode,
+    WaylandTestApplication(base::operation_mode mode,
                            std::string const& socket_name,
                            base::wayland::start_options flags,
                            int& argc,
                            char** argv);
     ~WaylandTestApplication() override;
-
-    bool is_screen_locked() const override;
-
-    base::platform& get_base() override;
 
     void start();
 
@@ -59,6 +56,9 @@ public:
     void set_outputs(size_t count);
     void set_outputs(std::vector<QRect> const& geometries);
     void set_outputs(std::vector<Test::output> const& outputs);
+
+Q_SIGNALS:
+    void startup_finished();
 
 private:
     void handle_server_addons_created();
@@ -79,10 +79,11 @@ int create_test(std::string const& test_name,
     try {
         prepare_app_env(argv[0]);
 #ifdef NO_XWAYLAND
-        auto mode = KWin::Application::OperationModeWaylandOnly;
+        auto mode = KWin::base::operation_mode::wayland;
 #else
-        auto mode = KWin::Application::OperationModeXwayland;
+        auto mode = KWin::base::operation_mode::xwayland;
 #endif
+        KWin::base::app_singleton app_singleton;
         auto way_app = WaylandTestApplication(mode, sock_name, flags, argc, argv);
         prepare_sys_env(sock_name);
         Test test;

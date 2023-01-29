@@ -64,7 +64,7 @@ public:
         register_x11_selection(this, QSize(8192, 8192));
         register_xfixes(this);
 
-        auto xcb_con = kwinApp()->x11Connection();
+        auto xcb_con = space.base.x11_data.connection;
         xcb_change_property(xcb_con,
                             XCB_PROP_MODE_REPLACE,
                             data.window,

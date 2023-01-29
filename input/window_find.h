@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "main.h"
 #include "win/geo.h"
 #include "win/wayland/input.h"
 #include "win/x11/stacking.h"
@@ -14,37 +13,10 @@ namespace KWin::input
 {
 
 template<typename Redirect>
-auto find_window(Redirect const& redirect, QPoint const& pos)
-    -> std::optional<typename Redirect::window_t>
-{
-    // TODO: check whether the unmanaged wants input events at all
-    if (!kwinApp()->is_screen_locked()) {
-        // if an effect overrides the cursor we don't have a window to focus
-        if (redirect.platform.base.render->compositor->effects
-            && redirect.platform.base.render->compositor->effects->isMouseInterception()) {
-            return {};
-        }
-
-        auto const& unmanaged = win::x11::get_unmanageds(redirect.space);
-        for (auto const& win : unmanaged) {
-            if (std::visit(overload{[&](auto&& win) {
-                               return win::input_geometry(win).contains(pos)
-                                   && win::wayland::accepts_input(win, pos);
-                           }},
-                           win)) {
-                return win;
-            }
-        }
-    }
-
-    return find_controlled_window(redirect, pos);
-}
-
-template<typename Redirect>
 auto find_controlled_window(Redirect const& redirect, QPoint const& pos)
     -> std::optional<typename Redirect::window_t>
 {
-    auto const isScreenLocked = kwinApp()->is_screen_locked();
+    auto const isScreenLocked = base::wayland::is_screen_locked(redirect.platform.base);
     auto const& stacking = redirect.space.stacking.order.stack;
     if (stacking.empty()) {
         return {};
@@ -95,4 +67,32 @@ auto find_controlled_window(Redirect const& redirect, QPoint const& pos)
 
     return {};
 }
+
+template<typename Redirect>
+auto find_window(Redirect const& redirect, QPoint const& pos)
+    -> std::optional<typename Redirect::window_t>
+{
+    // TODO: check whether the unmanaged wants input events at all
+    if (!base::wayland::is_screen_locked(redirect.platform.base)) {
+        // if an effect overrides the cursor we don't have a window to focus
+        if (redirect.platform.base.render->compositor->effects
+            && redirect.platform.base.render->compositor->effects->isMouseInterception()) {
+            return {};
+        }
+
+        auto const& unmanaged = win::x11::get_unmanageds(redirect.space);
+        for (auto const& win : unmanaged) {
+            if (std::visit(overload{[&](auto&& win) {
+                               return win::input_geometry(win).contains(pos)
+                                   && win::wayland::accepts_input(win, pos);
+                           }},
+                           win)) {
+                return win;
+            }
+        }
+    }
+
+    return find_controlled_window(redirect, pos);
+}
+
 }

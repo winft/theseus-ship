@@ -71,12 +71,12 @@ private Q_SLOTS:
 
 void TestDbusInterface::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    Test::app()->base.space->virtual_desktop_manager->setCount(4);
+    Test::app()->base->space->virtual_desktop_manager->setCount(4);
 }
 
 void TestDbusInterface::init()
@@ -112,7 +112,7 @@ void TestDbusInterface::testGetWindowInfoInvalidUuid()
 
 void TestDbusInterface::testGetWindowInfoXdgShellClient()
 {
-    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
@@ -127,7 +127,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(clientAddedSpy.wait());
 
     auto client_id = clientAddedSpy.first().first().value<quint32>();
-    auto client = Test::get_wayland_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_wayland_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
 
     // let's get the window info
@@ -205,7 +205,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     // window geometry changes
 
     QCOMPARE(win::get_desktop(*client), 1);
-    win::send_window_to_desktop(*Test::app()->base.space, client, 2, false);
+    win::send_window_to_desktop(*Test::app()->base->space, client, 2, false);
     QCOMPARE(win::get_desktop(*client), 2);
     reply = getWindowInfo(client->meta.internal_id);
     reply.waitForFinished();
@@ -254,7 +254,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -270,20 +270,21 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     xcb_icccm_set_wm_class(c.get(), w, 7, "foo\0bar");
-    NETWinInfo winInfo(c.get(), w, rootWindow(), NET::Properties(), NET::Properties2());
+    NETWinInfo winInfo(
+        c.get(), w, Test::app()->base->x11_data.root_window, NET::Properties(), NET::Properties2());
     winInfo.setName("Some caption");
     winInfo.setDesktopFileName("org.kde.foo");
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QCOMPARE(win::frame_to_client_size(client, client->geo.size()), windowGeometry.size());

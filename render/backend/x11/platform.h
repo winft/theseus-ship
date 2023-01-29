@@ -58,7 +58,7 @@ public:
             throw std::exception();
         }
 
-        XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
+        XRenderUtils::init(this->base.x11_data.connection, this->base.x11_data.root_window);
     }
 
     gl::backend<gl::scene<abstract_type>, abstract_type>*
@@ -69,7 +69,7 @@ public:
             return gl_backend.get();
         }
 
-        if (kwinApp()->options->qobject->glPlatformInterface() == EglPlatformInterface) {
+        if (this->base.options->qobject->glPlatformInterface() == EglPlatformInterface) {
             qCWarning(KWIN_CORE) << "Requested EGL on X11 backend, but support has been removed. "
                                     "Trying GLX instead.";
         }
@@ -95,7 +95,7 @@ public:
     {
         // first off, check whether we figured that we'll crash on detection because of a buggy
         // driver
-        KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
+        KConfigGroup gl_workaround_group(this->base.config.main, "Compositing");
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
         if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL")
             && gl_workaround_group.readEntry(unsafeKey, false))
@@ -130,7 +130,7 @@ public:
     {
         // first off, check whether we figured that we'll crash on detection because of a buggy
         // driver
-        KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
+        KConfigGroup gl_workaround_group(this->base.config.main, "Compositing");
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
         if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL")
             && gl_workaround_group.readEntry(unsafeKey, false))
@@ -163,7 +163,7 @@ public:
     void createOpenGLSafePoint(OpenGLSafePoint safePoint) override
     {
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-        auto group = KConfigGroup(kwinApp()->config(), "Compositing");
+        auto group = KConfigGroup(this->base.config.main, "Compositing");
         switch (safePoint) {
         case OpenGLSafePoint::PreInit:
             group.writeEntry(unsafeKey, true);
@@ -180,7 +180,7 @@ public:
                 m_openGLFreezeProtection->setInterval(15000);
                 m_openGLFreezeProtection->setSingleShot(true);
                 m_openGLFreezeProtection->start();
-                const QString configName = kwinApp()->config()->name();
+                const QString configName = this->base.config.main->name();
                 m_openGLFreezeProtection->moveToThread(m_openGLFreezeProtectionThread.get());
                 QObject::connect(
                     m_openGLFreezeProtection,
@@ -221,7 +221,7 @@ public:
 
     outline_visual* create_non_composited_outline(render::outline* outline) override
     {
-        return new non_composited_outline(outline);
+        return new non_composited_outline(this->base.x11_data, outline);
     }
 
     void invertScreen() override
@@ -235,14 +235,15 @@ public:
             return;
         }
 
-        base::x11::xcb::randr::screen_resources res(rootWindow());
+        base::x11::xcb::randr::screen_resources res(this->base.x11_data.connection,
+                                                    this->base.x11_data.root_window);
         if (res.is_null()) {
             return;
         }
 
         for (int j = 0; j < res->num_crtcs; ++j) {
             auto crtc = res.crtcs()[j];
-            base::x11::xcb::randr::crtc_gamma gamma(crtc);
+            base::x11::xcb::randr::crtc_gamma gamma(this->base.x11_data.connection, crtc);
             if (gamma.is_null()) {
                 continue;
             }
@@ -261,7 +262,8 @@ public:
                     invert(green);
                     invert(blue);
                 }
-                xcb_randr_set_crtc_gamma(connection(), crtc, gamma->size, red, green, blue);
+                xcb_randr_set_crtc_gamma(
+                    this->base.x11_data.connection, crtc, gamma->size, red, green, blue);
             }
         }
     }

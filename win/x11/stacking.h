@@ -12,7 +12,6 @@
 
 #include "base/output_helpers.h"
 #include "base/x11/xcb/helpers.h"
-#include "main.h"
 #include "win/activation.h"
 
 #include <deque>
@@ -43,11 +42,13 @@ auto get_unmanageds(Space const& space) -> std::vector<typename Space::window_t>
 template<typename Space>
 void render_stack_unmanaged_windows(Space& space)
 {
-    if (!kwinApp()->x11Connection()) {
+    auto const& x11_data = space.base.x11_data;
+    if (!x11_data.connection) {
         return;
     }
 
-    auto xcbtree = std::make_unique<base::x11::xcb::tree>(kwinApp()->x11RootWindow());
+    auto xcbtree
+        = std::make_unique<base::x11::xcb::tree>(x11_data.connection, x11_data.root_window);
     if (xcbtree->is_null()) {
         return;
     }
@@ -135,7 +136,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     // TODO isn't it too inefficient to restack always all clients?
     // TODO don't restack not visible windows?
     Q_ASSERT(stack.at(0) == space.root_info->supportWindow());
-    base::x11::xcb::restack_windows(stack);
+    base::x11::xcb::restack_windows(space.base.x11_data.connection, stack);
 
     if (propagate_new_clients) {
         // TODO this is still not completely in the map order

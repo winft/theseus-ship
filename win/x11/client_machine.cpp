@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "client_machine.h"
 
 #include "base/logging.h"
-#include "main.h"
 
 #include <NETWM>
 
@@ -173,18 +172,23 @@ void get_addr_info_wrapper::compare()
     Q_EMIT finished();
 }
 
-void client_machine::resolve(xcb_window_t window, xcb_window_t clientLeader)
+void client_machine::resolve(base::x11::data const& x11_data,
+                             xcb_window_t window,
+                             xcb_window_t clientLeader)
 {
     if (m_resolved) {
         return;
     }
-    QByteArray name
-        = NETWinInfo(connection(), window, rootWindow(), NET::Properties(), NET::WM2ClientMachine)
-              .clientMachine();
+    QByteArray name = NETWinInfo(x11_data.connection,
+                                 window,
+                                 x11_data.root_window,
+                                 NET::Properties(),
+                                 NET::WM2ClientMachine)
+                          .clientMachine();
     if (name.isEmpty() && clientLeader && clientLeader != window) {
-        name = NETWinInfo(connection(),
+        name = NETWinInfo(x11_data.connection,
                           clientLeader,
-                          rootWindow(),
+                          x11_data.root_window,
                           NET::Properties(),
                           NET::WM2ClientMachine)
                    .clientMachine();

@@ -19,7 +19,8 @@
 namespace KWin::win::x11
 {
 
-inline void send_client_message(xcb_window_t w,
+inline void send_client_message(base::x11::data const& data,
+                                xcb_window_t w,
                                 xcb_atom_t a,
                                 xcb_atom_t protocol,
                                 uint32_t data1 = 0,
@@ -33,18 +34,18 @@ inline void send_client_message(xcb_window_t w,
     ev.type = a;
     ev.format = 32;
     ev.data.data32[0] = protocol;
-    ev.data.data32[1] = xTime();
+    ev.data.data32[1] = data.time;
     ev.data.data32[2] = data1;
     ev.data.data32[3] = data2;
     ev.data.data32[4] = data3;
     uint32_t eventMask = 0;
 
-    if (w == rootWindow()) {
+    if (w == data.root_window) {
         eventMask = XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
     }
 
-    xcb_send_event(connection(), false, w, eventMask, reinterpret_cast<const char*>(&ev));
-    xcb_flush(connection());
+    xcb_send_event(data.connection, false, w, eventMask, reinterpret_cast<const char*>(&ev));
+    xcb_flush(data.connection);
 }
 
 template<typename Win>
@@ -107,7 +108,7 @@ void ping(Win* win)
         // Can't ping :(
         return;
     }
-    if (kwinApp()->options->qobject->killPingTimeout() == 0) {
+    if (win->space.base.options->qobject->killPingTimeout() == 0) {
         // Turned off
         return;
     }
@@ -137,9 +138,9 @@ void ping(Win* win)
 
     // We'll run the timer twice, at first we'll desaturate the window
     // and the second time we'll show the "do you want to kill" prompt.
-    win->ping_timer->start(kwinApp()->options->qobject->killPingTimeout() / 2);
+    win->ping_timer->start(win->space.base.options->qobject->killPingTimeout() / 2);
 
-    win->ping_timestamp = xTime();
+    win->ping_timestamp = win->space.base.x11_data.time;
     win->space.root_info->sendPing(win->xcb_windows.client, win->ping_timestamp);
 }
 
@@ -162,9 +163,9 @@ void pong(Win* win, xcb_timestamp_t timestamp)
     }
 }
 
-inline bool wants_sync_counter()
+inline bool wants_sync_counter(base::operation_mode mode, base::x11::data const& data)
 {
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
+    if (mode == base::operation_mode::x11) {
         return true;
     }
     // When the frame window is resized, the attached buffer will be destroyed by
@@ -172,7 +173,7 @@ inline bool wants_sync_counter()
     // With the addition of multiple window buffers in Xwayland 1.21, X11 clients
     // are no longer able to destroy the buffer after it's been committed and not
     // released by the compositor yet.
-    static auto const xwayland_version = xcb_get_setup(connection())->release_number;
+    static auto const xwayland_version = xcb_get_setup(data.connection)->release_number;
     return xwayland_version > 12099000;
 }
 
@@ -182,11 +183,12 @@ void get_sync_counter(Win* win)
     if (!base::x11::xcb::extensions::self()->is_sync_available()) {
         return;
     }
-    if (!wants_sync_counter()) {
+    if (!wants_sync_counter(win->space.base.operation_mode, win->space.base.x11_data)) {
         return;
     }
 
-    base::x11::xcb::property syncProp(false,
+    base::x11::xcb::property syncProp(win->space.base.x11_data.connection,
+                                      false,
                                       win->xcb_windows.client,
                                       win->space.atoms->net_wm_sync_request_counter,
                                       XCB_ATOM_CARDINAL,
@@ -199,7 +201,7 @@ void get_sync_counter(Win* win)
         return;
     }
 
-    auto con = connection();
+    auto con = win->space.base.x11_data.connection;
     xcb_sync_set_counter(con, counter, {0, 0});
     win->sync_request.counter = counter;
 
@@ -252,8 +254,8 @@ void send_sync_request(Win* win)
         win->sync_request.update_request_number++;
     }
 
-    if (win->sync_request.timestamp >= xTime()) {
-        kwinApp()->update_x11_time_from_clock();
+    if (win->sync_request.timestamp >= win->space.base.x11_data.time) {
+        base::x11::update_time_from_clock(win->space.base);
     }
 
     auto const number_lo = (win->sync_request.update_request_number << 32) >> 32;
@@ -261,13 +263,14 @@ void send_sync_request(Win* win)
 
     // Send the message to client
     auto& atoms = win->space.atoms;
-    send_client_message(win->xcb_windows.client,
+    send_client_message(win->space.base.x11_data,
+                        win->xcb_windows.client,
                         atoms->wm_protocols,
                         atoms->net_wm_sync_request,
                         number_lo,
                         number_hi);
 
-    win->sync_request.timestamp = xTime();
+    win->sync_request.timestamp = win->space.base.x11_data.time;
 }
 
 /**
@@ -289,7 +292,8 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     c.width = client_geo.width();
     c.height = client_geo.height();
     auto getEmulatedXWaylandSize = [win, &client_geo]() {
-        auto property = base::x11::xcb::property(false,
+        auto property = base::x11::xcb::property(win->space.base.x11_data.connection,
+                                                 false,
                                                  win->xcb_windows.client,
                                                  win->space.atoms->xwayland_randr_emu_monitor_rects,
                                                  XCB_ATOM_CARDINAL,
@@ -324,8 +328,8 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
 
             uint32_t const values[] = {c.width, c.height};
             unique_cptr<xcb_generic_error_t> error(xcb_request_check(
-                connection(),
-                xcb_configure_window_checked(connection(),
+                win->space.base.x11_data.connection,
+                xcb_configure_window_checked(win->space.base.x11_data.connection,
                                              c.window,
                                              XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
                                              values)));
@@ -339,12 +343,12 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     c.above_sibling = XCB_WINDOW_NONE;
     c.override_redirect = 0;
 
-    xcb_send_event(connection(),
+    xcb_send_event(win->space.base.x11_data.connection,
                    true,
                    c.event,
                    XCB_EVENT_MASK_STRUCTURE_NOTIFY,
                    reinterpret_cast<const char*>(&c));
-    xcb_flush(connection());
+    xcb_flush(win->space.base.x11_data.connection);
 }
 
 template<typename Win>

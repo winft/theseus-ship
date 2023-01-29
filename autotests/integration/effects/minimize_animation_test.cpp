@@ -54,17 +54,20 @@ void MinimizeAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*effects).listOfKnownEffects();
+    auto const builtinNames
+        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
+              .listOfKnownEffects();
+
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
+
     config->sync();
-    kwinApp()->setConfig(config);
 
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
@@ -72,7 +75,7 @@ void MinimizeAnimationTest::initTestCase()
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 
-    auto& scene = Test::app()->base.render->compositor->scene;
+    auto& scene = Test::app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), OpenGLCompositing);
 }
@@ -85,7 +88,7 @@ void MinimizeAnimationTest::init()
 
 void MinimizeAnimationTest::cleanup()
 {
-    auto& effectsImpl = Test::app()->base.render->compositor->effects;
+    auto& effectsImpl = Test::app()->base->render->compositor->effects;
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -153,7 +156,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
 
     // Load effect that will be tested.
     QFETCH(QString, effectName);
-    auto& effectsImpl = Test::app()->base.render->compositor->effects;
+    auto& effectsImpl = Test::app()->base->render->compositor->effects;
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);

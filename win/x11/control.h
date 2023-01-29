@@ -7,7 +7,6 @@
 
 #include "command.h"
 
-#include "main.h"
 #include "win/control.h"
 #include "win/input.h"
 #include "win/meta.h"
@@ -56,8 +55,10 @@ public:
 
     void update_mouse_grab() override
     {
-        xcb_ungrab_button(
-            connection(), XCB_BUTTON_INDEX_ANY, m_window->xcb_windows.wrapper, XCB_MOD_MASK_ANY);
+        xcb_ungrab_button(m_window->space.base.x11_data.connection,
+                          XCB_BUTTON_INDEX_ANY,
+                          m_window->xcb_windows.wrapper,
+                          XCB_MOD_MASK_ANY);
 
         if (m_window->space.tabbox->forced_global_mouse_grab()) {
             // see TabBox::establishTabBoxGrab()
@@ -72,23 +73,20 @@ public:
         //
         // The passive grab below is established so the window can be raised or activated when it
         // is clicked.
-        if ((kwinApp()->options->qobject->focusPolicyIsReasonable() && !this->active)
-            || (kwinApp()->options->qobject->isClickRaise()
-                && !is_most_recently_raised(m_window))) {
-            if (kwinApp()->options->qobject->commandWindow1()
-                != base::options_qobject::MouseNothing) {
+        auto const& qopts = m_window->space.base.options->qobject;
+
+        if ((qopts->focusPolicyIsReasonable() && !this->active)
+            || (qopts->isClickRaise() && !is_most_recently_raised(m_window))) {
+            if (qopts->commandWindow1() != base::options_qobject::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (kwinApp()->options->qobject->commandWindow2()
-                != base::options_qobject::MouseNothing) {
+            if (qopts->commandWindow2() != base::options_qobject::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (kwinApp()->options->qobject->commandWindow3()
-                != base::options_qobject::MouseNothing) {
+            if (qopts->commandWindow3() != base::options_qobject::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (kwinApp()->options->qobject->commandWindowWheel()
-                != base::options_qobject::MouseNothing) {
+            if (qopts->commandWindowWheel() != base::options_qobject::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_5);
             }
@@ -99,17 +97,16 @@ public:
         // we can do about it, unfortunately.
 
         if (!m_window->space.global_shortcuts_disabled) {
-            if (kwinApp()->options->qobject->commandAll1() != base::options_qobject::MouseNothing) {
+            if (qopts->commandAll1() != base::options_qobject::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (kwinApp()->options->qobject->commandAll2() != base::options_qobject::MouseNothing) {
+            if (qopts->commandAll2() != base::options_qobject::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (kwinApp()->options->qobject->commandAll3() != base::options_qobject::MouseNothing) {
+            if (qopts->commandAll3() != base::options_qobject::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (kwinApp()->options->qobject->commandAllWheel()
-                != base::options_qobject::MouseWheelNothing) {
+            if (qopts->commandAllWheel() != base::options_qobject::MouseWheelNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_5);
             }

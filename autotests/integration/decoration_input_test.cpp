@@ -130,7 +130,7 @@ Test::space::wayland_window* DecorationInputTest::showWindow()
     // let's render
     auto c = Test::render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);
     VERIFY(c);
-    COMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     COMPARE(c->userCanSetNoBorder(), true);
     COMPARE(win::decoration(c) != nullptr, true);
 
@@ -142,7 +142,7 @@ Test::space::wayland_window* DecorationInputTest::showWindow()
 
 void DecorationInputTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     // change some options
@@ -154,7 +154,7 @@ void DecorationInputTest::initTestCase()
     config->group(QStringLiteral("Desktops")).writeEntry("Number", 2);
     config->sync();
 
-    kwinApp()->setConfig(config);
+    Test::app()->base->config.main = config;
 
     Test::app()->start();
     Test::app()->set_outputs(2);
@@ -202,9 +202,9 @@ void DecorationInputTest::testAxis()
 
     MOTION(QPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
-    QVERIFY(Test::app()->base.space->input->pointer->focus.deco.client);
+    QVERIFY(Test::app()->base->space->input->pointer->focus.deco.client);
     QCOMPARE(Test::app()
-                 ->base.space->input->pointer->focus.deco.client->decoration()
+                 ->base->space->input->pointer->focus.deco.client->decoration()
                  ->sectionUnderMouse(),
              Qt::TitleBarArea);
 
@@ -224,11 +224,11 @@ void DecorationInputTest::testAxis()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(Test::app()->base.space->input->pointer->focus.deco.client);
-    QVERIFY(Test::app()->base.space->input->pointer->focus.deco.window);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window), c);
+    QVERIFY(Test::app()->base->space->input->pointer->focus.deco.client);
+    QVERIFY(Test::app()->base->space->input->pointer->focus.deco.window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->input->pointer->focus.window), c);
     QTEST(Test::app()
-              ->base.space->input->pointer->focus.deco.client->decoration()
+              ->base->space->input->pointer->focus.deco.client->decoration()
               ->sectionUnderMouse(),
           "expectedSection");
     Test::pointer_axis_vertical(5.0, timestamp++, 0);
@@ -276,11 +276,11 @@ void KWin::DecorationInputTest::testDoubleClick()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(Test::app()->base.space->input->pointer->focus.deco.client);
-    QVERIFY(Test::app()->base.space->input->pointer->focus.deco.window);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->pointer->focus.window), c);
+    QVERIFY(Test::app()->base->space->input->pointer->focus.deco.client);
+    QVERIFY(Test::app()->base->space->input->pointer->focus.deco.window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->input->pointer->focus.window), c);
     QTEST(Test::app()
-              ->base.space->input->pointer->focus.deco.client->decoration()
+              ->base->space->input->pointer->focus.deco.client->decoration()
               ->sectionUnderMouse(),
           "expectedSection");
     // double click
@@ -335,12 +335,13 @@ void KWin::DecorationInputTest::testDoubleTap()
 
     // double click
     Test::touch_down(0, decoPoint, timestamp++);
-    QVERIFY(Test::app()->base.space->input->touch->focus.deco.client);
-    QVERIFY(Test::app()->base.space->input->touch->focus.deco.window);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->input->touch->focus.window), c);
-    QTEST(
-        Test::app()->base.space->input->touch->focus.deco.client->decoration()->sectionUnderMouse(),
-        "expectedSection");
+    QVERIFY(Test::app()->base->space->input->touch->focus.deco.client);
+    QVERIFY(Test::app()->base->space->input->touch->focus.deco.window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->input->touch->focus.window), c);
+    QTEST(Test::app()
+              ->base->space->input->touch->focus.deco.client->decoration()
+              ->sectionUnderMouse(),
+          "expectedSection");
     Test::touch_up(0, timestamp++);
     QVERIFY(!win::on_all_desktops(c));
     Test::touch_down(0, decoPoint, timestamp++);
@@ -368,8 +369,8 @@ void DecorationInputTest::testHover()
     //
     // TODO: Test input position with different border sizes.
     // TODO: We should test with the fake decoration to have a fixed test environment.
-    auto const hasBorders
-        = Test::app()->base.space->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
+    auto const hasBorders = Test::app()->base->space->deco->settings()->borderSize()
+        != KDecoration2::BorderSize::None;
     auto deviation = [hasBorders] { return hasBorders ? -1 : 0; };
 
     MOTION(QPoint(c->geo.frame.x(), 0));
@@ -508,7 +509,7 @@ void DecorationInputTest::testTapToMove()
     Test::touch_down(0, p, timestamp++);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
-    QCOMPARE(Test::app()->base.space->input->touch->decorationPressId(), 0);
+    QCOMPARE(Test::app()->base->space->input->touch->decorationPressId(), 0);
     Test::touch_motion(0, p + offset, timestamp++);
     const QPoint oldPos = c->geo.pos();
     QVERIFY(win::is_move(c));
@@ -522,7 +523,7 @@ void DecorationInputTest::testTapToMove()
 
     // again
     Test::touch_down(1, p + offset, timestamp++);
-    QCOMPARE(Test::app()->base.space->input->touch->decorationPressId(), 1);
+    QCOMPARE(Test::app()->base->space->input->touch->decorationPressId(), 1);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
     Test::touch_motion(1,
@@ -561,12 +562,11 @@ void DecorationInputTest::testResizeOutsideWindow()
     // this test verifies that one can resize the window outside the decoration with NoSideBorder
 
     // first adjust config
-    kwinApp()
-        ->config()
-        ->group("org.kde.kdecoration2")
+    Test::app()
+        ->base->config.main->group("org.kde.kdecoration2")
         .writeEntry("BorderSize", QStringLiteral("None"));
-    kwinApp()->config()->sync();
-    win::space_reconfigure(*Test::app()->base.space);
+    Test::app()->base->config.main->sync();
+    win::space_reconfigure(*Test::app()->base->space);
 
     // now create window
     auto c = showWindow();
@@ -659,20 +659,20 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
 
     // first modify the config for this run
     QFETCH(QString, modKey);
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base->config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", modKey);
     group.writeEntry("CommandAll1", "Move");
     group.writeEntry("CommandAll2", "Move");
     group.writeEntry("CommandAll3", "Move");
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
-    QCOMPARE(kwinApp()->options->qobject->commandAllModifier(),
+    win::space_reconfigure(*Test::app()->base->space);
+    QCOMPARE(Test::app()->base->options->qobject->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->qobject->commandAll1(),
+    QCOMPARE(Test::app()->base->options->qobject->commandAll1(),
              base::options_qobject::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->qobject->commandAll2(),
+    QCOMPARE(Test::app()->base->options->qobject->commandAll2(),
              base::options_qobject::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->qobject->commandAll3(),
+    QCOMPARE(Test::app()->base->options->qobject->commandAll3(),
              base::options_qobject::MouseUnrestrictedMove);
 
     // create a window
@@ -736,11 +736,11 @@ void DecorationInputTest::testModifierScrollOpacity()
 
     // first modify the config for this run
     QFETCH(QString, modKey);
-    KConfigGroup group = kwinApp()->config()->group("MouseBindings");
+    auto group = Test::app()->base->config.main->group("MouseBindings");
     group.writeEntry("CommandAllKey", modKey);
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
+    win::space_reconfigure(*Test::app()->base->space);
 
     auto c = showWindow();
     QVERIFY(c);
@@ -820,10 +820,10 @@ void DecorationInputTest::testTouchEvents()
     quint32 timestamp = 1;
     const QPoint tapPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2);
 
-    QVERIFY(!Test::app()->base.space->input->touch->focus.deco.client);
+    QVERIFY(!Test::app()->base->space->input->touch->focus.deco.client);
     Test::touch_down(0, tapPoint, timestamp++);
-    QVERIFY(Test::app()->base.space->input->touch->focus.deco.client);
-    QCOMPARE(Test::app()->base.space->input->touch->focus.deco.client->decoration(),
+    QVERIFY(Test::app()->base->space->input->touch->focus.deco.client);
+    QCOMPARE(Test::app()->base->space->input->touch->focus.deco.client->decoration(),
              win::decoration(c));
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 0);
@@ -865,7 +865,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QSignalSpy keyEvent(keyboard, &Wrapland::Client::Keyboard::keyChanged);
     QVERIFY(keyEvent.isValid());
 
-    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     c->control->deco.client->requestShowToolTip(QStringLiteral("test"));
@@ -873,7 +873,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
 
     QVERIFY(clientAddedSpy.wait());
     auto win_id = clientAddedSpy.first().first().value<quint32>();
-    auto internal = Test::get_internal_window(Test::app()->base.space->windows_map.at(win_id));
+    auto internal = Test::get_internal_window(Test::app()->base->space->windows_map.at(win_id));
     QVERIFY(internal);
     QVERIFY(internal->isInternal());
     QVERIFY(internal->internalWindow()->flags().testFlag(Qt::ToolTip));

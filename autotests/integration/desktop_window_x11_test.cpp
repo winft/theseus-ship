@@ -48,7 +48,7 @@ private:
 
 void X11DesktopWindowTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
@@ -114,16 +114,22 @@ void X11DesktopWindowTest::testDesktopWindow()
     };
     auto visualId = findDepth();
     auto colormapId = xcb_generate_id(c.get());
-    auto cmCookie = xcb_create_colormap_checked(
-        c.get(), XCB_COLORMAP_ALLOC_NONE, colormapId, rootWindow(), visualId);
+    auto cmCookie = xcb_create_colormap_checked(c.get(),
+                                                XCB_COLORMAP_ALLOC_NONE,
+                                                colormapId,
+                                                Test::app()->base->x11_data.root_window,
+                                                visualId);
     QVERIFY(!xcb_request_check(c.get(), cmCookie));
 
-    const uint32_t values[] = {XCB_PIXMAP_NONE, defaultScreen()->black_pixel, colormapId};
+    const uint32_t values[]
+        = {XCB_PIXMAP_NONE,
+           base::x11::get_default_screen(Test::app()->base->x11_data)->black_pixel,
+           colormapId};
     auto cookie
         = xcb_create_window_checked(c.get(),
                                     32,
                                     w,
-                                    rootWindow(),
+                                    Test::app()->base->x11_data.root_window,
                                     windowGeometry.x(),
                                     windowGeometry.y(),
                                     windowGeometry.width(),
@@ -139,23 +145,27 @@ void X11DesktopWindowTest::testDesktopWindow()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base->x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Desktop);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
     // verify through a geometry request that it's depth 32
-    base::x11::xcb::geometry geo(w);
+    base::x11::xcb::geometry geo(Test::app()->base->x11_data.connection, w);
     QCOMPARE(geo->depth, uint8_t(32));
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));

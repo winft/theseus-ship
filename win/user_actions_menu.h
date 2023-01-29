@@ -15,7 +15,6 @@
 #include "window_operation.h"
 
 #include "base/logging.h"
-#include "main.h"
 
 #if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
@@ -168,7 +167,7 @@ public:
                                             [this] { m_client = {}; });
 
         init();
-        if (kwinApp()->shouldUseWaylandForCompositing()) {
+        if (base::should_use_wayland_for_compositing(window->space.base)) {
             m_menu->popup(pos.bottomLeft());
         } else {
             m_menu->exec(pos.bottomLeft());
@@ -668,7 +667,7 @@ private:
         action->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-actions")));
         action->setData(base::options_qobject::ApplicationRulesOp);
         m_applicationRulesOperation = action;
-        if (!kwinApp()->config()->isImmutable()
+        if (!space.base.config.main->isImmutable()
             && !KAuthorized::authorizeControlModules(configModules(true)).isEmpty()) {
             advancedMenu->addSeparator();
             action
@@ -689,7 +688,11 @@ private:
                 args << configModules(false);
                 auto p = new QProcess(qobject.get());
                 p->setArguments(args);
-                p->setProcessEnvironment(kwinApp()->processStartupEnvironment());
+
+                if constexpr (requires(decltype(space.base) base) { base.process_environment; }) {
+                    p->setProcessEnvironment(space.base.process_environment);
+                }
+
                 p->setProgram(QStringLiteral("kcmshell5"));
                 QObject::connect(
                     p,
@@ -730,8 +733,7 @@ private:
     /// Creates the Move to Desktop sub-menu.
     void initDesktopPopup()
     {
-        if (kwinApp()->operationMode() == Application::OperationModeWaylandOnly
-            || kwinApp()->operationMode() == Application::OperationModeXwayland) {
+        if (base::should_use_wayland_for_compositing(space.base)) {
             if (m_multipleDesktopsMenu) {
                 return;
             }

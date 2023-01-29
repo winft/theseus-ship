@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "types.h"
 
+#include "base/config.h"
 #include "kwin_export.h"
 #include "kwinglobals.h"
 
@@ -166,7 +167,7 @@ private:
 class KWIN_EXPORT composited_outline_visual : public outline_visual
 {
 public:
-    composited_outline_visual(render::outline* outline, QQmlEngine& engine);
+    composited_outline_visual(render::outline* outline, QQmlEngine& engine, base::config& config);
     ~composited_outline_visual() override;
     void show() override;
     void hide() override;
@@ -176,6 +177,7 @@ private:
     QScopedPointer<QQmlComponent> m_qmlComponent;
     QScopedPointer<QObject> m_mainItem;
     QQmlEngine& engine;
+    base::config& config;
 };
 
 inline bool outline::isActive() const
@@ -208,7 +210,7 @@ std::unique_ptr<outline_visual> create_outline_visual(Compositor& compositor, Ou
 {
     if (compositor.state == state::on) {
         return std::make_unique<composited_outline_visual>(
-            &outline, *compositor.space->scripting->qml_engine);
+            &outline, *compositor.space->scripting->qml_engine, compositor.platform.base.config);
     } else {
         return std::unique_ptr<outline_visual>(
             compositor.platform.create_non_composited_outline(&outline));

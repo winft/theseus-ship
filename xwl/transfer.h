@@ -47,7 +47,7 @@ public:
     transfer(xcb_atom_t selection,
              qint32 fd,
              xcb_timestamp_t timestamp,
-             base::x11::atoms const& atoms,
+             x11_runtime const& x11,
              QObject* parent = nullptr);
 
     virtual bool handle_property_notify(xcb_property_notify_event_t* event) = 0;
@@ -57,7 +57,7 @@ public:
         return timestamp;
     }
 
-    base::x11::atoms const& atoms;
+    x11_runtime const& x11;
 
 Q_SIGNALS:
     void finished();
@@ -119,7 +119,7 @@ public:
     wl_to_x11_transfer(xcb_atom_t selection,
                        xcb_selection_request_event_t* request,
                        qint32 fd,
-                       base::x11::atoms const& atoms,
+                       x11_runtime const& x11,
                        QObject* parent = nullptr);
     ~wl_to_x11_transfer() override;
 

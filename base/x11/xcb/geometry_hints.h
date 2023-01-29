@@ -18,7 +18,12 @@ namespace KWin::base::x11::xcb
 class geometry_hints
 {
 public:
-    geometry_hints() = default;
+    explicit geometry_hints(xcb_connection_t* con)
+        : m_hints{con}
+        , con{con}
+    {
+    }
+
     void init(xcb_window_t window)
     {
         Q_ASSERT(window);
@@ -35,7 +40,7 @@ public:
             return;
         }
         m_sizeHints = nullptr;
-        m_hints = normal_hints(m_window);
+        m_hints = normal_hints(con, m_window);
     }
     void read()
     {
@@ -164,10 +169,12 @@ private:
             qint32 baseHeight = 0;
             qint32 winGravity = 0;
         };
-        explicit normal_hints()
-            : property(){};
-        explicit normal_hints(xcb_window_t window)
-            : property(0, window, XCB_ATOM_WM_NORMAL_HINTS, XCB_ATOM_WM_SIZE_HINTS, 0, 18)
+        explicit normal_hints(xcb_connection_t* con)
+            : property(con)
+        {
+        }
+        explicit normal_hints(xcb_connection_t* con, xcb_window_t window)
+            : property(con, 0, window, XCB_ATOM_WM_NORMAL_HINTS, XCB_ATOM_WM_SIZE_HINTS, 0, 18)
         {
         }
         inline size_hints* sizeHints()
@@ -189,6 +196,7 @@ private:
     xcb_window_t m_window = XCB_WINDOW_NONE;
     normal_hints m_hints;
     normal_hints::size_hints* m_sizeHints = nullptr;
+    xcb_connection_t* con;
 };
 
 }

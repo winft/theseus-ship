@@ -9,7 +9,6 @@
 #include "base/platform.h"
 #include "input/cursor_shape.h"
 #include "kwin_export.h"
-#include "main.h"
 
 #include <QObject>
 #include <Wrapland/Client/shm_pool.h>
@@ -35,7 +34,7 @@ public:
         , cursor{cursor}
         , m_shm{shm}
     {
-        QObject::connect(&kwinApp()->get_base(),
+        QObject::connect(&cursor.redirect.platform.base,
                          &base::platform::topology_changed,
                          qobject.get(),
                          [this](auto old, auto topo) {
@@ -96,7 +95,7 @@ private:
             size = 24;
         }
 
-        size *= kwinApp()->get_base().topology.max_scale;
+        size *= cursor.redirect.platform.base.topology.max_scale;
 
         auto theme
             = wl_cursor_theme_load(cursor.theme_name().toUtf8().constData(), size, m_shm->shm());

@@ -61,13 +61,14 @@ void init_space(Space& space)
                      space.qobject.get(),
                      [&](auto const& name) { store_session(space, name, sm_save_phase2); });
 
-    auto& base = kwinApp()->get_base();
-    QObject::connect(
-        &base, &base::platform::topology_changed, space.qobject.get(), [&](auto old, auto topo) {
-            if (old.size != topo.size) {
-                space.resize(topo.size);
-            }
-        });
+    QObject::connect(&space.base,
+                     &base::platform::topology_changed,
+                     space.qobject.get(),
+                     [&](auto old, auto topo) {
+                         if (old.size != topo.size) {
+                             space.resize(topo.size);
+                         }
+                     });
 
     QObject::connect(space.qobject.get(),
                      &Space::qobject_t::clientRemoved,
@@ -94,12 +95,12 @@ void init_space(Space& space)
         space.qobject.get(),
         [&](auto /*prev*/, auto next) { space.stacking.focus_chain.current_desktop = next; });
     QObject::connect(
-        kwinApp()->options->qobject.get(),
+        space.base.options->qobject.get(),
         &base::options_qobject::separateScreenFocusChanged,
         space.qobject.get(),
         [&](auto enable) { space.stacking.focus_chain.has_separate_screen_focus = enable; });
     space.stacking.focus_chain.has_separate_screen_focus
-        = kwinApp()->options->qobject->isSeparateScreenFocus();
+        = space.base.options->qobject->isSeparateScreenFocus();
 
     auto& vds = space.virtual_desktop_manager;
     QObject::connect(
@@ -126,13 +127,13 @@ void init_space(Space& space)
                          Q_EMIT space.qobject->currentDesktopChanged(prev);
                      });
 
-    vds->setNavigationWrappingAround(kwinApp()->options->qobject->isRollOverDesktops());
-    QObject::connect(kwinApp()->options->qobject.get(),
+    vds->setNavigationWrappingAround(space.base.options->qobject->isRollOverDesktops());
+    QObject::connect(space.base.options->qobject.get(),
                      &base::options_qobject::rollOverDesktopsChanged,
                      vds->qobject.get(),
                      [&vds](auto enabled) { vds->setNavigationWrappingAround(enabled); });
 
-    auto config = kwinApp()->config();
+    auto config = space.base.config.main;
     vds->setConfig(config);
 
     // positioning object needs to be created before the virtual desktops are loaded.
@@ -223,7 +224,7 @@ void clear_space(Space& space)
     assert(space.windows.empty());
 
     space.rule_book.reset();
-    kwinApp()->config()->sync();
+    space.base.config.main->sync();
 
     space.root_info.reset();
     delete space.startup;

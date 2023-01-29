@@ -7,7 +7,6 @@
 
 #include "base/platform.h"
 #include "base/x11/xcb/helpers.h"
-#include "main.h"
 #include "render/gl/gl.h"
 #include "render/x11/compositor.h"
 #include "win/space.h"
@@ -106,7 +105,8 @@ GLXFBConfig create_glx_fb_config(Backend const& backend)
 
     // Only request sRGB configurations with default depth 24 as it can cause problems with other
     // default depths. See bugs #408594 and #423014.
-    if (base::x11::xcb::default_depth(kwinApp()->x11ScreenNumber()) == 24) {
+    auto const& x11_data = backend.platform.base.x11_data;
+    if (base::x11::xcb::default_depth(x11_data.connection, x11_data.screen_number) == 24) {
         configs = glXChooseFBConfig(display, DefaultScreen(display), attribs_srgb, &count);
     }
 
@@ -189,8 +189,10 @@ bool init_glx_buffer(Backend& backend)
         return false;
     }
 
+    auto const& x11_data = backend.platform.base.x11_data;
+
     if (backend.overlay_window->create()) {
-        auto c = connection();
+        auto c = x11_data.connection;
 
         // Try to create double-buffered window in the overlay
         xcb_visualid_t visual;
@@ -203,7 +205,7 @@ bool init_glx_buffer(Backend& backend)
         }
 
         xcb_colormap_t colormap = xcb_generate_id(c);
-        xcb_create_colormap(c, false, colormap, rootWindow(), visual);
+        xcb_create_colormap(c, false, colormap, x11_data.root_window, visual);
 
         auto const& space_size = backend.platform.base.topology.size;
         backend.window = xcb_generate_id(c);
@@ -233,9 +235,9 @@ bool init_glx_buffer(Backend& backend)
 }
 
 template<typename Container>
-void populate_visual_depth_hash_table(Container& container)
+void populate_visual_depth_hash_table(base::x11::data const& x11_data, Container& container)
 {
-    auto setup = xcb_get_setup(connection());
+    auto setup = xcb_get_setup(x11_data.connection);
 
     for (auto screen = xcb_setup_roots_iterator(setup); screen.rem; xcb_screen_next(&screen)) {
         for (auto depth = xcb_screen_allowed_depths_iterator(screen.data); depth.rem;
@@ -379,7 +381,7 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
             getProcAddress("glXSwapIntervalMESA"));
     }
 
-    populate_visual_depth_hash_table(backend.visual_depth_hash);
+    populate_visual_depth_hash_table(backend.platform.base.x11_data, backend.visual_depth_hash);
 
     if (!init_glx_buffer(backend)) {
         throw std::runtime_error("Could not initialize the buffer");
@@ -390,7 +392,7 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
         throw std::runtime_error("Could not initialize rendering context");
     }
 
-    gl::init_gl(GlxPlatformInterface, getProcAddress);
+    gl::init_gl(GlxPlatformInterface, getProcAddress, backend.platform.base.x11_data.connection);
 
     // Check whether certain features are supported
     backend.data.extensions.mesa_copy_sub_buffer

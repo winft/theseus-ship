@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox_switcher_item.h"
 
 #include "base/platform.h"
-#include "main.h"
+#include "base/singleton_interface.h"
 #include "render/compositor.h"
 #include "render/platform.h"
 #include "render/singleton_interface.h"
@@ -50,7 +50,7 @@ tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
                   set_current_index(tabbox_handle->current_index().row());
               }
           });
-    connect(&kwinApp()->get_base(),
+    connect(base::singleton_interface::platform,
             &base::platform::topology_changed,
             this,
             &tabbox_switcher_item::screen_geometry_changed);

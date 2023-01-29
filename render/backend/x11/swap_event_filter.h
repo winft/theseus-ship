@@ -37,8 +37,9 @@ public:
     swap_event_filter(Compositor& compositor,
                       xcb_drawable_t drawable,
                       xcb_glx_drawable_t glxDrawable)
-        : base::x11::event_filter(base::x11::xcb::extensions::self()->glx_event_base()
-                                  + XCB_GLX_BUFFER_SWAP_COMPLETE)
+        : base::x11::event_filter(*compositor.platform.base.x11_event_filters,
+                                  base::x11::xcb::extensions::self()->glx_event_base()
+                                      + XCB_GLX_BUFFER_SWAP_COMPLETE)
         , m_drawable(drawable)
         , m_glxDrawable(glxDrawable)
         , compositor{compositor}

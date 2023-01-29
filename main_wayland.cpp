@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "config-kwin.h"
 
+#include "base/app_singleton.h"
 #include "base/backend/wlroots/platform.h"
 #include "base/seat/backend/wlroots/session.h"
 #include "base/wayland/server.h"
@@ -135,13 +136,12 @@ void gainRealTime()
 //************************************
 
 ApplicationWayland::ApplicationWayland(int &argc, char **argv)
-    : Application(OperationModeWaylandOnly, argc, argv)
+    : Application(argc, argv)
 {
 }
 
 ApplicationWayland::~ApplicationWayland()
 {
-    setTerminating();
     if (!base->server) {
         return;
     }
@@ -172,42 +172,35 @@ ApplicationWayland::~ApplicationWayland()
     base->render->compositor.reset();
 }
 
-bool ApplicationWayland::is_screen_locked() const
-{
-    return base->server && base->server->is_screen_locked();
-}
-
-base::platform& ApplicationWayland::get_base()
-{
-    return *base;
-}
-
-void ApplicationWayland::start(OperationMode mode,
+void ApplicationWayland::start(base::operation_mode mode,
                                std::string const& socket_name,
                                base::wayland::start_options flags,
                                QProcessEnvironment environment)
 {
-    assert(mode != OperationModeX11);
-    setOperationMode(mode);
+    assert(mode != base::operation_mode::x11);
 
     prepare_start();
 
     using base_t = base::backend::wlroots::platform;
-    base
-        = std::make_unique<base_t>(socket_name, flags, base::backend::wlroots::start_options::none);
+    base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::FullConfig),
+                                    socket_name,
+                                    flags,
+                                    base::backend::wlroots::start_options::none);
+    base->operation_mode = mode;
 
     using render_t = render::backend::wlroots::platform<base_t>;
     base->render = std::make_unique<render_t>(*base);
 
-    createOptions();
+    base->options = base::create_options(mode, base->config.main);
 
-    auto session = new base::seat::backend::wlroots::session(base->session, base->backend);
-    this->session.reset(session);
+    auto session = new base::seat::backend::wlroots::session(base->wlroots_session, base->backend);
+    base->session.reset(session);
     session->take_control(base->server->display->native());
 
-    base->input = std::make_unique<input::backend::wlroots::platform>(*base);
+    base->input = std::make_unique<input::backend::wlroots::platform>(
+        *base, input::config(KConfig::NoGlobals));
     input::wayland::add_dbus(base->input.get());
-    base->input->install_shortcuts();
+    base->input->install_shortcuts(mode);
 
     try {
         static_cast<render_t&>(*base->render).init();
@@ -223,7 +216,7 @@ void ApplicationWayland::start(OperationMode mode,
         exit(exc.code().value());
     }
 
-    base->space = std::make_unique<base_t::space_t>(*base, base->server.get());
+    base->space = std::make_unique<base_t::space_t>(*base);
     win::init_shortcuts(*base->space);
     base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
@@ -233,15 +226,14 @@ void ApplicationWayland::start(OperationMode mode,
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
     }
 
-    setProcessStartupEnvironment(environment);
-
+    base->process_environment = environment;
     base->server->create_addons([this] { handle_server_addons_created(); });
-    kwinApp()->screen_locker_watcher->initialize();
+    base->screen_locker_watcher->initialize();
 }
 
 void ApplicationWayland::handle_server_addons_created()
 {
-    if (operationMode() == OperationModeXwayland) {
+    if (base->operation_mode == base::operation_mode::xwayland) {
         create_xwayland();
     } else {
         startSession();
@@ -261,7 +253,7 @@ void ApplicationWayland::create_xwayland()
     };
 
     try {
-        base->xwayland = std::make_unique<xwl::xwayland<wayland_space>>(this, *base->space, status_callback);
+        base->xwayland = std::make_unique<xwl::xwayland<wayland_space>>(*base->space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());
@@ -273,7 +265,7 @@ void ApplicationWayland::create_xwayland()
 
 void ApplicationWayland::startSession()
 {
-    auto process_environment = processStartupEnvironment();
+    auto process_environment = base->process_environment;
 
     // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.
     process_environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
@@ -340,8 +332,6 @@ void ApplicationWayland::startSession()
     QObject::connect(env_sync_job, &UpdateLaunchEnvironmentJob::finished, this, []() {
         QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWinWrapper"));
     });
-
-    Q_EMIT startup_finished();
 }
 
 } // namespace
@@ -389,6 +379,8 @@ int main(int argc, char * argv[])
     qunsetenv("QT_DEVICE_PIXEL_RATIO");
     qputenv("QSG_RENDER_LOOP", "basic");
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+
+    KWin::base::app_singleton app_singleton;
     KWin::ApplicationWayland a(argc, argv);
     a.setupTranslator();
 
@@ -457,8 +449,8 @@ int main(int argc, char * argv[])
         flags |= KWin::base::wayland::start_options::no_global_shortcuts;
     }
 
-    auto op_mode = parser.isSet(xwaylandOption) ? KWin::Application::OperationModeXwayland
-                                                : KWin::Application::OperationModeWaylandOnly;
+    auto op_mode = parser.isSet(xwaylandOption) ? KWin::base::operation_mode::xwayland
+                                                : KWin::base::operation_mode::wayland;
 
     a.setApplicationsToStart(parser.positionalArguments());
     a.start(op_mode, parser.value(waylandSocketOption).toStdString(), flags, environment);

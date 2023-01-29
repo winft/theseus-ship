@@ -119,14 +119,13 @@ void handle_x11_offer_change(Selection* sel,
 template<typename Selection>
 void register_xfixes(Selection* sel)
 {
-    auto xcb_con = kwinApp()->x11Connection();
+    auto xcb_con = sel->data.core.x11.connection;
 
     uint32_t const mask = XCB_XFIXES_SELECTION_EVENT_MASK_SET_SELECTION_OWNER
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_WINDOW_DESTROY
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_CLIENT_CLOSE;
 
-    xcb_xfixes_select_selection_input(
-        kwinApp()->x11Connection(), sel->data.window, sel->data.atom, mask);
+    xcb_xfixes_select_selection_input(xcb_con, sel->data.window, sel->data.atom, mask);
     xcb_flush(xcb_con);
 }
 
@@ -139,7 +138,7 @@ void register_x11_selection(Selection* sel, QSize const& window_size)
     xcb_create_window(xcb_con,
                       XCB_COPY_FROM_PARENT,
                       sel->data.window,
-                      kwinApp()->x11RootWindow(),
+                      sel->data.core.space->base.x11_data.root_window,
                       0,
                       0,
                       window_size.width(),
@@ -185,7 +184,8 @@ void selection_x11_handle_targets(Source&& source, xcb_window_t const requestor)
             continue;
         }
 
-        auto const mimeStrings = atom_to_mime_types(value[i], *source->core.x11.atoms);
+        auto const mimeStrings
+            = atom_to_mime_types(source->core.x11.connection, value[i], *source->core.x11.atoms);
         if (mimeStrings.empty()) {
             // TODO: this should never happen? assert?
             continue;

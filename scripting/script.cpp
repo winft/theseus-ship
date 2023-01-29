@@ -56,12 +56,17 @@ static QSize scriptValueToSize(const QJSValue& value)
                  value.property(QStringLiteral("height")).toInt());
 }
 
-abstract_script::abstract_script(int id, QString scriptName, QString pluginName, QObject* parent)
+abstract_script::abstract_script(int id,
+                                 QString scriptName,
+                                 QString pluginName,
+                                 base::config& config,
+                                 QObject* parent)
     : QObject(parent)
     , m_scriptId(id)
     , m_fileName(scriptName)
     , m_pluginName(pluginName)
     , m_running(false)
+    , base_config{config}
 {
     if (m_pluginName.isNull()) {
         m_pluginName = scriptName;
@@ -78,7 +83,7 @@ abstract_script::~abstract_script()
 
 KConfigGroup abstract_script::config() const
 {
-    return kwinApp()->config()->group(QLatin1String("Script-") + m_pluginName);
+    return base_config.main->group(QLatin1String("Script-") + m_pluginName);
 }
 
 void abstract_script::stop()
@@ -90,10 +95,13 @@ script::script(int id,
                QString scriptName,
                QString pluginName,
                scripting::platform_wrap& platform,
+               base::options& options,
+               base::config& config,
                QObject* parent)
-    : abstract_script(id, scriptName, pluginName, parent)
+    : abstract_script(id, scriptName, pluginName, config, parent)
     , m_engine(new QJSEngine(this))
     , platform{platform}
+    , options{options}
 {
     // TODO: Remove in kwin 6. We have these converters only for compatibility reasons.
     if (!QMetaType::hasRegisteredConverterFunction<QJSValue, QRect>()) {
@@ -177,8 +185,8 @@ void script::slotScriptLoadedFromFile()
         QStringLiteral("KWin"), m_engine->newQMetaObject(&qt_script_space::staticMetaObject));
 
     // Make the options object visible to QJSEngine.
-    QJSValue optionsObject = m_engine->newQObject(kwinApp()->options->qobject.get());
-    QQmlEngine::setObjectOwnership(kwinApp()->options->qobject.get(), QQmlEngine::CppOwnership);
+    QJSValue optionsObject = m_engine->newQObject(options.qobject.get());
+    QQmlEngine::setObjectOwnership(options.qobject.get(), QQmlEngine::CppOwnership);
     m_engine->globalObject().setProperty(QStringLiteral("options"), optionsObject);
 
     // Make the workspace visible to QJSEngine.
@@ -541,7 +549,7 @@ declarative_script::declarative_script(int id,
                                        QString pluginName,
                                        scripting::platform_wrap& platform,
                                        QObject* parent)
-    : abstract_script(id, scriptName, pluginName, parent)
+    : abstract_script(id, scriptName, pluginName, platform.config, parent)
     , m_context(new QQmlContext(platform.declarative_script_shared_context, this))
     , m_component(new QQmlComponent(platform.qml_engine, this))
 {

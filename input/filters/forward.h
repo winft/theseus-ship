@@ -13,7 +13,6 @@
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
-#include "main.h"
 
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>

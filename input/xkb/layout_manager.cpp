@@ -9,7 +9,6 @@
 
 #include "input/event.h"
 #include "input/keyboard.h"
-#include "main.h"
 #include "render/platform.h"
 
 #include <QDBusMetaType>

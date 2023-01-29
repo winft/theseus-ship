@@ -116,19 +116,21 @@ void SceneQPainterShadowTest::initTestCase()
 {
     // Copied from scene_qpainter_test.cpp
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*effects).listOfKnownEffects();
+    auto const builtinNames
+        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
+              .listOfKnownEffects();
+
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
 
     config->sync();
-    kwinApp()->setConfig(config);
 
     if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation,
                                    QStringLiteral("icons/DMZ-White/index.theme"))
@@ -143,17 +145,17 @@ void SceneQPainterShadowTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QVERIFY(Test::app()->base.render->compositor);
+    QVERIFY(Test::app()->base->render->compositor);
 
     // Add directory with fake decorations to the plugin search path.
     QCoreApplication::addLibraryPath(
         QDir(QCoreApplication::applicationDirPath()).absoluteFilePath("fakes"));
 
     // Change decoration theme.
-    KConfigGroup group = kwinApp()->config()->group("org.kde.kdecoration2");
+    auto group = Test::app()->base->config.main->group("org.kde.kdecoration2");
     group.writeEntry("library", "org.kde.test.fakedecowithshadows");
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
+    win::space_reconfigure(*Test::app()->base->space);
 }
 
 void SceneQPainterShadowTest::cleanup()

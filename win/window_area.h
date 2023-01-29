@@ -11,7 +11,6 @@
 #include "base/output_helpers.h"
 #include "base/platform.h"
 #include "kwinglobals.h"
-#include "main.h"
 
 #include <NETWM>
 
@@ -52,14 +51,13 @@ QRect space_window_area(Space const& space,
         output_index = base::get_output_index(outputs, *output);
     }
 
-    auto& base = kwinApp()->get_base();
     QRect sarea, warea;
     sarea = (!space.areas.screen.empty()
              // screens may be missing during KWin initialization or screen config changes
              && output_index < space.areas.screen[desktop].size())
         ? space.areas.screen[desktop][output_index]
         : output_geo;
-    warea = space.areas.work[desktop].isNull() ? QRect({}, base.topology.size)
+    warea = space.areas.work[desktop].isNull() ? QRect({}, space.base.topology.size)
                                                : space.areas.work[desktop];
 
     switch (opt) {
@@ -74,7 +72,7 @@ QRect space_window_area(Space const& space,
     case WorkArea:
         return warea;
     case FullArea:
-        return QRect({}, base.topology.size);
+        return QRect({}, space.base.topology.size);
     }
     abort();
 }

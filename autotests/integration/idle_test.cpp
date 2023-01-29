@@ -32,7 +32,7 @@ private Q_SLOTS:
 
 void idle_test::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
@@ -52,7 +52,7 @@ void idle_test::cleanup()
 
 void idle_test::test_idle()
 {
-    auto& idle = Test::app()->base.input->idle;
+    auto& idle = Test::app()->base->input->idle;
     QCOMPARE(idle.inhibit_count, 0);
 
     auto& client = Test::get_client();
@@ -84,7 +84,7 @@ void idle_test::test_idle()
 
 void idle_test::test_activity()
 {
-    auto& idle = Test::app()->base.input->idle;
+    auto& idle = Test::app()->base->input->idle;
     QCOMPARE(idle.inhibit_count, 0);
 
     auto& client = Test::get_client();
@@ -164,7 +164,7 @@ void idle_test::test_splice_data()
 void idle_test::test_splice()
 {
     // Verifies that splicing listeners works as expected
-    auto& idle = Test::app()->base.input->idle;
+    auto& idle = Test::app()->base->input->idle;
     QCOMPARE(idle.inhibit_count, 0);
 
     QFETCH(int, duration1);

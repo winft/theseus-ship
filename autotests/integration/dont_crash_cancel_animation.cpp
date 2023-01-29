@@ -49,11 +49,11 @@ private Q_SLOTS:
 
 void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
-    QVERIFY(Test::app()->base.render->compositor);
+    QVERIFY(Test::app()->base->render->compositor);
     QVERIFY(startup_spy.size() || startup_spy.wait());
     QVERIFY(effects);
 }
@@ -74,12 +74,13 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     auto effect = scripting::effect::create(QStringLiteral("crashy"),
                                             QFINDTESTDATA("data/anim-data-delete-effect/effect.js"),
                                             10,
-                                            *effects);
+                                            *effects,
+                                            *Test::app()->base->render->compositor);
     QVERIFY(effect);
 
     const auto children = effects->children();
     for (auto it = children.begin(); it != children.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::effect_loader") != 0) {
+        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::basic_effect_loader") != 0) {
             continue;
         }
         QVERIFY(QMetaObject::invokeMethod(*it,
@@ -89,7 +90,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
         break;
     }
     QVERIFY(
-        Test::app()->base.render->compositor->effects->isEffectLoaded(QStringLiteral("crashy")));
+        Test::app()->base->render->compositor->effects->isEffectLoaded(QStringLiteral("crashy")));
 
     using namespace Wrapland::Client;
     // create a window
@@ -101,7 +102,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     // let's render
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
 
     // make sure we animate
     QTest::qWait(200);

@@ -20,8 +20,8 @@ XCB_WRAPPER_DATA(screen_resources_data, xcb_randr_get_screen_resources, xcb_wind
 class screen_resources : public wrapper<screen_resources_data, xcb_window_t>
 {
 public:
-    explicit screen_resources(xcb_window_t window)
-        : wrapper<screen_resources_data, xcb_window_t>(window)
+    screen_resources(xcb_connection_t* con, xcb_window_t window)
+        : wrapper<screen_resources_data, xcb_window_t>(con, window)
     {
     }
 
@@ -52,8 +52,8 @@ XCB_WRAPPER_DATA(crtc_gamma_data, xcb_randr_get_crtc_gamma, xcb_randr_crtc_t)
 class crtc_gamma : public wrapper<crtc_gamma_data, xcb_randr_crtc_t>
 {
 public:
-    explicit crtc_gamma(xcb_randr_crtc_t c)
-        : wrapper<crtc_gamma_data, xcb_randr_crtc_t>(c)
+    crtc_gamma(xcb_connection_t* con, xcb_randr_crtc_t c)
+        : wrapper<crtc_gamma_data, xcb_randr_crtc_t>(con, c)
     {
     }
 
@@ -75,10 +75,8 @@ XCB_WRAPPER_DATA(crtc_info_data, xcb_randr_get_crtc_info, xcb_randr_crtc_t, xcb_
 class crtc_info : public wrapper<crtc_info_data, xcb_randr_crtc_t, xcb_timestamp_t>
 {
 public:
-    crtc_info() = default;
-    crtc_info(crtc_info const&) = default;
-    explicit crtc_info(xcb_randr_crtc_t c, xcb_timestamp_t t)
-        : wrapper<crtc_info_data, xcb_randr_crtc_t, xcb_timestamp_t>(c, t)
+    crtc_info(xcb_connection_t* con, xcb_randr_crtc_t c, xcb_timestamp_t t)
+        : wrapper<crtc_info_data, xcb_randr_crtc_t, xcb_timestamp_t>(con, c, t)
     {
     }
 
@@ -106,10 +104,8 @@ XCB_WRAPPER_DATA(output_info_data, xcb_randr_get_output_info, xcb_randr_output_t
 class output_info : public wrapper<output_info_data, xcb_randr_output_t, xcb_timestamp_t>
 {
 public:
-    output_info() = default;
-    output_info(output_info const&) = default;
-    explicit output_info(xcb_randr_output_t c, xcb_timestamp_t t)
-        : wrapper<output_info_data, xcb_randr_output_t, xcb_timestamp_t>(c, t)
+    output_info(xcb_connection_t* con, xcb_randr_output_t c, xcb_timestamp_t t)
+        : wrapper<output_info_data, xcb_randr_output_t, xcb_timestamp_t>(con, c, t)
     {
     }
 
@@ -129,8 +125,8 @@ XCB_WRAPPER_DATA(current_resources_data, xcb_randr_get_screen_resources_current,
 class current_resources : public wrapper<current_resources_data, xcb_window_t>
 {
 public:
-    explicit current_resources(xcb_window_t window)
-        : wrapper<current_resources_data, xcb_window_t>(window)
+    explicit current_resources(xcb_connection_t* con, xcb_window_t window)
+        : wrapper<current_resources_data, xcb_window_t>(con, window)
     {
     }
 

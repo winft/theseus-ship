@@ -10,7 +10,6 @@
 #include "kill_window.h"
 #include "types.h"
 
-#include "main.h"
 #include "render/platform.h"
 #include "render/post/night_color_manager.h"
 #include "render/post/night_color_setup.h"
@@ -125,14 +124,14 @@ void shortcuts_init_virtual_desktops(Space& space)
                                                  QStringLiteral("Switch to Next Desktop"),
                                                  i18n("Switch to Next Desktop"),
                                                  [manager] { manager->slotNext(); });
-    input.registerTouchpadSwipeShortcut(SwipeDirection::Right, nextAction);
+    input::platform_register_touchpad_swipe_shortcut(input, SwipeDirection::Right, nextAction);
 
     auto previousAction = add_virtual_desktop_action(*manager,
                                                      input,
                                                      QStringLiteral("Switch to Previous Desktop"),
                                                      i18n("Switch to Previous Desktop"),
                                                      [manager] { manager->slotPrevious(); });
-    input.registerTouchpadSwipeShortcut(SwipeDirection::Left, previousAction);
+    input::platform_register_touchpad_swipe_shortcut(input, SwipeDirection::Left, previousAction);
 
     add_virtual_desktop_action(*manager,
                                input,
@@ -156,14 +155,16 @@ void shortcuts_init_virtual_desktops(Space& space)
                                [manager] { manager->slotDown(); });
 
     // axis events
-    input.registerAxisShortcut(
+    input::platform_register_axis_shortcut(
+        input,
         Qt::ControlModifier | Qt::AltModifier,
         PointerAxisDown,
         manager->qobject->template findChild<QAction*>(QStringLiteral("Switch to Next Desktop")));
-    input.registerAxisShortcut(Qt::ControlModifier | Qt::AltModifier,
-                               PointerAxisUp,
-                               manager->qobject->template findChild<QAction*>(
-                                   QStringLiteral("Switch to Previous Desktop")));
+    input::platform_register_axis_shortcut(input,
+                                           Qt::ControlModifier | Qt::AltModifier,
+                                           PointerAxisUp,
+                                           manager->qobject->template findChild<QAction*>(
+                                               QStringLiteral("Switch to Previous Desktop")));
 }
 
 template<typename Space>

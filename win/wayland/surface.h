@@ -6,8 +6,6 @@
 #pragma once
 
 #include "base/platform.h"
-#include "base/wayland/server.h"
-#include "main.h"
 #include "win/scene.h"
 
 #include <Wrapland/Server/display.h>

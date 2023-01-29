@@ -43,10 +43,8 @@ private Q_SLOTS:
 
 void ColorCorrectNightColorTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
-
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     Test::app()->start();
     Test::app()->set_outputs(2);
@@ -83,29 +81,29 @@ void ColorCorrectNightColorTest::testConfigRead()
     const bool activeDefault = true;
     const int modeDefault = 0;
 
-    KConfigGroup cfgGroup = kwinApp()->config()->group("NightColor");
+    auto cfgGroup = Test::app()->base->config.main->group("NightColor");
 
     cfgGroup.writeEntry("Active", activeDefault);
     cfgGroup.writeEntry("Mode", modeDefault);
 
-    kwinApp()->config()->sync();
-    auto& manager = Test::app()->base.render->night_color;
+    cfgGroup.sync();
+    auto& manager = Test::app()->base->render->night_color;
     manager->reconfigure();
 
-    QCOMPARE(manager->is_enabled(), activeDefault);
-    QCOMPARE(manager->mode(), modeDefault);
+    QCOMPARE(manager->data.enabled, activeDefault);
+    QCOMPARE(manager->data.mode, modeDefault);
 
     cfgGroup.writeEntry("Active", active);
     cfgGroup.writeEntry("Mode", mode);
-    kwinApp()->config()->sync();
+    cfgGroup.sync();
 
     manager->reconfigure();
 
-    QCOMPARE(manager->is_enabled(), active);
+    QCOMPARE(manager->data.enabled, active);
     if (mode > 3 || mode < 0) {
-        QCOMPARE(manager->mode(), 0);
+        QCOMPARE(manager->data.mode, 0);
     } else {
-        QCOMPARE(manager->mode(), mode);
+        QCOMPARE(manager->data.mode, mode);
     }
 }
 

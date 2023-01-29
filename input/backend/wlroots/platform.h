@@ -31,7 +31,7 @@ inline libinput_device* get_libinput_device(Dev dev)
 class KWIN_EXPORT platform : public input::wayland::platform<base::wayland::platform>
 {
 public:
-    platform(base::wayland::platform& base);
+    platform(base::wayland::platform& base, input::config config);
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
 

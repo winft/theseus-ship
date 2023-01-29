@@ -15,6 +15,7 @@
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 
+#include <QProcessEnvironment>
 #include <Wrapland/Server/drm_lease_v1.h>
 #include <cassert>
 #include <memory>
@@ -31,36 +32,23 @@ public:
     using input_t = input::wayland::platform<platform>;
     using space_t = win::wayland::space<platform>;
 
-    platform() = default;
+    platform(base::config config)
+        : base::platform(std::move(config))
+    {
+    }
 
-    platform(std::string const& socket_name, base::wayland::start_options flags)
-        : server{std::make_unique<base::wayland::server>(socket_name, flags)}
+    platform(base::config config,
+             std::string const& socket_name,
+             base::wayland::start_options flags)
+        : base::platform(std::move(config))
+        , server{std::make_unique<wayland::server<platform>>(*this, socket_name, flags)}
     {
     }
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
-
-    platform(platform&& other) noexcept
-    {
-        *this = std::move(other);
-    }
-
-    platform& operator=(platform&& other) noexcept
-    {
-        server = std::move(other.server);
-        drm_lease_device = std::move(other.drm_lease_device);
-
-        all_outputs = std::move(other.all_outputs);
-        outputs = std::move(other.outputs);
-
-        render = std::move(other.render);
-        input = std::move(other.input);
-        space = std::move(other.space);
-        xwayland = std::move(other.xwayland);
-
-        return *this;
-    }
+    platform(platform&& other) = delete;
+    platform& operator=(platform&& other) = delete;
 
     void enable_output(output_t* output)
     {
@@ -85,7 +73,9 @@ public:
         return vec;
     }
 
-    std::unique_ptr<base::wayland::server> server;
+    QProcessEnvironment process_environment;
+
+    std::unique_ptr<wayland::server<platform>> server;
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
 
     // All outputs, including disabled ones.

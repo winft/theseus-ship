@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "base/x11/data.h"
 #include "kwinglobals.h"
 
 #include <QObject>
@@ -18,8 +19,8 @@ class color_mapper : public QObject
 {
 public:
     explicit color_mapper(Space& space)
-        : m_default(defaultScreen()->default_colormap)
-        , m_installed(defaultScreen()->default_colormap)
+        : m_default(base::x11::get_default_screen(space.base.x11_data)->default_colormap)
+        , m_installed(base::x11::get_default_screen(space.base.x11_data)->default_colormap)
         , space{space}
     {
     }
@@ -37,7 +38,7 @@ public:
                        *win);
         }
         if (cmap != m_installed) {
-            xcb_install_colormap(connection(), cmap);
+            xcb_install_colormap(space.base.x11_data.connection, cmap);
             m_installed = cmap;
         }
     }

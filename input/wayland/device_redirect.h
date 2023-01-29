@@ -9,7 +9,6 @@
 #pragma once
 
 #include "input/window_find.h"
-#include "main.h"
 #include "win/geo.h"
 #include "win/space_qobject.h"
 #include "win/stacking_order.h"
@@ -221,7 +220,7 @@ QWindow* device_redirect_find_internal_window(Space& space, QPoint const& pos)
     if (space.windows.empty()) {
         return nullptr;
     }
-    if (kwinApp()->is_screen_locked()) {
+    if (base::wayland::is_screen_locked(space.base)) {
         return nullptr;
     }
 

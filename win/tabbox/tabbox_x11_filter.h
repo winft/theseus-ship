@@ -33,7 +33,8 @@ class tabbox_x11_filter : public base::x11::event_filter
 {
 public:
     explicit tabbox_x11_filter(Tabbox& tabbox)
-        : base::x11::event_filter(QVector<int>{XCB_KEY_PRESS,
+        : base::x11::event_filter(*tabbox.space.base.x11_event_filters,
+                                  QVector<int>{XCB_KEY_PRESS,
                                                XCB_KEY_RELEASE,
                                                XCB_MOTION_NOTIFY,
                                                XCB_BUTTON_PRESS,
@@ -52,7 +53,8 @@ public:
         case XCB_BUTTON_PRESS:
         case XCB_BUTTON_RELEASE: {
             auto e = reinterpret_cast<xcb_button_press_event_t*>(event);
-            xcb_allow_events(connection(), XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
+            xcb_allow_events(
+                tabbox.space.base.x11_data.connection, XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
             if (!tabbox.is_shown() && tabbox.is_displayed()) {
                 if (auto& effects = tabbox.space.base.render->compositor->effects;
                     effects && effects->isMouseInterception()) {
@@ -108,8 +110,12 @@ private:
         auto* mouse_event = reinterpret_cast<xcb_motion_notify_event_t*>(event);
         const QPoint rootPos(mouse_event->root_x, mouse_event->root_y);
         // TODO: this should be in ScreenEdges directly
-        tabbox.space.edges->check(rootPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
-        xcb_allow_events(connection(), XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
+        tabbox.space.edges->check(
+            rootPos,
+            QDateTime::fromMSecsSinceEpoch(tabbox.space.base.x11_data.time, Qt::UTC),
+            true);
+        xcb_allow_events(
+            tabbox.space.base.x11_data.connection, XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
     }
 
     void key_press(xcb_generic_event_t* event)
@@ -141,7 +147,7 @@ private:
         if (mod_index == -1)
             release = true;
         else {
-            base::x11::xcb::modifier_mapping xmk;
+            base::x11::xcb::modifier_mapping xmk(tabbox.space.base.x11_data.connection);
             if (xmk) {
                 xcb_keycode_t* keycodes = xmk.keycodes();
                 const int max_index = xmk.size();

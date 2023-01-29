@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "base/x11/atoms.h"
-#include "main.h"
 #include "utils/blocker.h"
 #include "win/actions.h"
 #include "win/activation.h"
@@ -64,15 +63,13 @@ private Q_SLOTS:
 
 Test::space::x11_window* get_x11_window_from_id(uint32_t id)
 {
-    return Test::get_x11_window(Test::app()->base.space->windows_map.at(id));
+    return Test::get_x11_window(Test::app()->base->space->windows_map.at(id));
 }
 
 void StackingOrderTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
-
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
@@ -86,7 +83,7 @@ void StackingOrderTest::init()
 void StackingOrderTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    QTRY_VERIFY(Test::app()->base.space->stacking.order.stack.empty());
+    QTRY_VERIFY(Test::app()->base->space->stacking.order.stack.empty());
 }
 
 template<typename Win>
@@ -121,19 +118,19 @@ static xcb_window_t createGroupWindow(xcb_connection_t* conn,
                                       xcb_window_t leaderWid = XCB_WINDOW_NONE)
 {
     xcb_window_t wid = xcb_generate_id(conn);
-    xcb_create_window(conn,                          // c
-                      XCB_COPY_FROM_PARENT,          // depth
-                      wid,                           // wid
-                      rootWindow(),                  // parent
-                      geometry.x(),                  // x
-                      geometry.y(),                  // y
-                      geometry.width(),              // width
-                      geometry.height(),             // height
-                      0,                             // border_width
-                      XCB_WINDOW_CLASS_INPUT_OUTPUT, // _class
-                      XCB_COPY_FROM_PARENT,          // visual
-                      0,                             // value_mask
-                      nullptr                        // value_list
+    xcb_create_window(conn,                                    // c
+                      XCB_COPY_FROM_PARENT,                    // depth
+                      wid,                                     // wid
+                      Test::app()->base->x11_data.root_window, // parent
+                      geometry.x(),                            // x
+                      geometry.y(),                            // y
+                      geometry.width(),                        // width
+                      geometry.height(),                       // height
+                      0,                                       // border_width
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,           // _class
+                      XCB_COPY_FROM_PARENT,                    // visual
+                      0,                                       // value_mask
+                      nullptr                                  // value_list
     );
 
     xcb_size_hints_t sizeHints = {};
@@ -145,14 +142,14 @@ static xcb_window_t createGroupWindow(xcb_connection_t* conn,
         leaderWid = wid;
     }
 
-    xcb_change_property(conn,                                             // c
-                        XCB_PROP_MODE_REPLACE,                            // mode
-                        wid,                                              // window
-                        Test::app()->base.space->atoms->wm_client_leader, // property
-                        XCB_ATOM_WINDOW,                                  // type
-                        32,                                               // format
-                        1,                                                // data_len
-                        &leaderWid                                        // data
+    xcb_change_property(conn,                                              // c
+                        XCB_PROP_MODE_REPLACE,                             // mode
+                        wid,                                               // window
+                        Test::app()->base->space->atoms->wm_client_leader, // property
+                        XCB_ATOM_WINDOW,                                   // type
+                        32,                                                // format
+                        1,                                                 // data_len
+                        &leaderWid                                         // data
     );
 
     return wid;
@@ -173,7 +170,7 @@ void StackingOrderTest::testTransientIsAboveParent()
     QVERIFY(!parent->transient->lead());
 
     // Initially, the stacking order should contain only the parent window.
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent}));
 
     // Create the transient.
@@ -188,15 +185,15 @@ void StackingOrderTest::testTransientIsAboveParent()
     QVERIFY(transient->transient->lead());
 
     // The transient should be above the parent.
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent, transient}));
 
     // The transient still stays above the parent if we activate the latter.
-    win::activate_window(*Test::app()->base.space, *parent);
+    win::activate_window(*Test::app()->base->space, *parent);
     QTRY_VERIFY(parent->control->active);
     QTRY_VERIFY(!transient->control->active);
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent, transient}));
 }
 
@@ -216,7 +213,7 @@ void StackingOrderTest::testRaiseTransient()
     QVERIFY(!parent->transient->lead());
 
     // Initially, the stacking order should contain only the parent window.
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent}));
 
     // Create the transient.
@@ -231,7 +228,7 @@ void StackingOrderTest::testRaiseTransient()
     QVERIFY(transient->transient->lead());
 
     // The transient should be above the parent.
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent, transient}));
 
     // Create a window that doesn't have any relationship to the parent or the transient.
@@ -246,31 +243,31 @@ void StackingOrderTest::testRaiseTransient()
     QVERIFY(!anotherClient->transient->lead());
 
     // The newly created surface has to be above both the parent and the transient.
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent, transient, anotherClient}));
 
     // If we activate the parent, the transient should be raised too.
-    win::activate_window(*Test::app()->base.space, *parent);
+    win::activate_window(*Test::app()->base->space, *parent);
     QTRY_VERIFY(parent->control->active);
     QTRY_VERIFY(!transient->control->active);
     QTRY_VERIFY(!anotherClient->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{anotherClient, parent, transient}));
 
     // Go back to the initial setup.
-    win::activate_window(*Test::app()->base.space, *anotherClient);
+    win::activate_window(*Test::app()->base->space, *anotherClient);
     QTRY_VERIFY(!parent->control->active);
     QTRY_VERIFY(!transient->control->active);
     QTRY_VERIFY(anotherClient->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent, transient, anotherClient}));
 
     // If we activate the transient, the parent should be raised too.
-    win::activate_window(*Test::app()->base.space, *transient);
+    win::activate_window(*Test::app()->base->space, *transient);
     QTRY_VERIFY(!parent->control->active);
     QTRY_VERIFY(transient->control->active);
     QTRY_VERIFY(!anotherClient->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{anotherClient, parent, transient}));
 }
 
@@ -289,7 +286,7 @@ void StackingOrderTest::testDeletedTransient()
     QVERIFY(parent->control->active);
     QVERIFY(!parent->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent}));
 
     // Create the first transient.
@@ -304,7 +301,7 @@ void StackingOrderTest::testDeletedTransient()
     QVERIFY(transient1->transient->lead());
     QCOMPARE(transient1->transient->lead(), parent);
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent, transient1}));
 
     // Create the second transient.
@@ -323,11 +320,11 @@ void StackingOrderTest::testDeletedTransient()
     QVERIFY(transient2->transient->lead());
     QCOMPARE(transient2->transient->lead(), transient1);
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent, transient1, transient2}));
 
     // Activate the parent, both transients have to be above it.
-    win::activate_window(*Test::app()->base.space, *parent);
+    win::activate_window(*Test::app()->base->space, *parent);
     QTRY_VERIFY(parent->control->active);
     QTRY_VERIFY(!transient1->control->active);
     QTRY_VERIFY(!transient2->control->active);
@@ -338,7 +335,7 @@ void StackingOrderTest::testDeletedTransient()
             transient2->qobject.get(),
             [](auto win_id) {
                 std::visit(overload{[&](auto&& win) { win->remnant->ref(); }},
-                           Test::app()->base.space->windows_map.at(win_id));
+                           Test::app()->base->space->windows_map.at(win_id));
             });
 
     QSignalSpy windowClosedSpy(transient2->space.qobject.get(),
@@ -350,14 +347,14 @@ void StackingOrderTest::testDeletedTransient()
 
     auto del_signal_id = windowClosedSpy.front().front().value<quint32>();
     auto deletedTransient = create_deleted<Test::wayland_window>(
-        Test::app()->base.space->windows_map.at(del_signal_id));
+        Test::app()->base->space->windows_map.at(del_signal_id));
     QVERIFY(deletedTransient);
 
     // The deleted transient still has to be above its old parent (transient1).
     QTRY_VERIFY(parent->control->active);
     QTRY_VERIFY(!transient1->control->active);
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{parent, transient1, deletedTransient.get()}));
 }
 
@@ -369,11 +366,11 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     const QRect geometry = QRect(0, 0, 128, 128);
 
     // We need to wait until the remnant from previous test is gone.
-    QTRY_VERIFY(Test::app()->base.space->windows.empty());
+    QTRY_VERIFY(Test::app()->base->space->windows.empty());
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
@@ -390,7 +387,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QCOMPARE(leader->xcb_windows.client, leaderWid);
     QVERIFY(!leader->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader}));
 
     // Create another group member.
@@ -408,7 +405,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QCOMPARE(member1->group, leader->group);
     QVERIFY(!member1->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1}));
 
     // Create yet another group member.
@@ -426,13 +423,14 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QCOMPARE(member2->group, leader->group);
     QVERIFY(!member2->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2}));
 
     // Create a group transient.
     windowCreatedSpy.clear();
     xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
+    xcb_icccm_set_wm_transient_for(
+        conn.get(), transientWid, Test::app()->base->x11_data.root_window);
 
     // Currently, we have some weird bug workaround: if a group transient
     // is a non-modal dialog, then it won't be kept above its window group.
@@ -467,28 +465,28 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QVERIFY(transient->groupTransient());
     QVERIFY(!win::is_dialog(transient)); // See above why
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2, transient}));
 
     // If we activate any member of the window group, the transient will be above it.
-    win::activate_window(*Test::app()->base.space, *leader);
+    win::activate_window(*Test::app()->base->space, *leader);
     QTRY_VERIFY(leader->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{member1, member2, leader, transient}));
 
-    win::activate_window(*Test::app()->base.space, *member1);
+    win::activate_window(*Test::app()->base->space, *member1);
     QTRY_VERIFY(member1->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{member2, leader, member1, transient}));
 
-    win::activate_window(*Test::app()->base.space, *member2);
+    win::activate_window(*Test::app()->base->space, *member2);
     QTRY_VERIFY(member2->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2, transient}));
 
-    win::activate_window(*Test::app()->base.space, *transient);
+    win::activate_window(*Test::app()->base->space, *transient);
     QTRY_VERIFY(transient->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2, transient}));
 }
 
@@ -498,7 +496,7 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
@@ -515,7 +513,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QCOMPARE(leader->xcb_windows.client, leaderWid);
     QVERIFY(!leader->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader}));
 
     // Create another group member.
@@ -533,7 +531,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QCOMPARE(member1->group, leader->group);
     QVERIFY(!member1->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1}));
 
     // Create yet another group member.
@@ -551,13 +549,14 @@ void StackingOrderTest::testRaiseGroupTransient()
     QCOMPARE(member2->group, leader->group);
     QVERIFY(!member2->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2}));
 
     // Create a group transient.
     windowCreatedSpy.clear();
     xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
+    xcb_icccm_set_wm_transient_for(
+        conn.get(), transientWid, Test::app()->base->x11_data.root_window);
 
     // Currently, we have some weird bug workaround: if a group transient
     // is a non-modal dialog, then it won't be kept above its window group.
@@ -592,7 +591,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QVERIFY(transient->groupTransient());
     QVERIFY(!win::is_dialog(transient)); // See above why
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2, transient}));
 
     // Create a Wayland client that is not a member of the window group.
@@ -607,35 +606,35 @@ void StackingOrderTest::testRaiseGroupTransient()
     QVERIFY(!anotherClient->transient->lead());
 
     QCOMPARE(
-        Test::app()->base.space->stacking.order.stack,
+        Test::app()->base->space->stacking.order.stack,
         (std::deque<Test::space::window_t>{leader, member1, member2, transient, anotherClient}));
 
     // If we activate the leader, then only it and the transient have to be raised.
-    win::activate_window(*Test::app()->base.space, *leader);
+    win::activate_window(*Test::app()->base->space, *leader);
     QTRY_VERIFY(leader->control->active);
     QCOMPARE(
-        Test::app()->base.space->stacking.order.stack,
+        Test::app()->base->space->stacking.order.stack,
         (std::deque<Test::space::window_t>{member1, member2, anotherClient, leader, transient}));
 
     // If another member of the window group is activated, then the transient will
     // be above that member and the leader.
-    win::activate_window(*Test::app()->base.space, *member2);
+    win::activate_window(*Test::app()->base->space, *member2);
     QTRY_VERIFY(member2->control->active);
     QCOMPARE(
-        Test::app()->base.space->stacking.order.stack,
+        Test::app()->base->space->stacking.order.stack,
         (std::deque<Test::space::window_t>{member1, anotherClient, leader, member2, transient}));
 
     // FIXME: If we activate the transient, only it will be raised.
-    win::activate_window(*Test::app()->base.space, *anotherClient);
+    win::activate_window(*Test::app()->base->space, *anotherClient);
     QTRY_VERIFY(anotherClient->control->active);
     QCOMPARE(
-        Test::app()->base.space->stacking.order.stack,
+        Test::app()->base->space->stacking.order.stack,
         (std::deque<Test::space::window_t>{member1, leader, member2, transient, anotherClient}));
 
-    win::activate_window(*Test::app()->base.space, *transient);
+    win::activate_window(*Test::app()->base->space, *transient);
     QTRY_VERIFY(transient->control->active);
     QCOMPARE(
-        Test::app()->base.space->stacking.order.stack,
+        Test::app()->base->space->stacking.order.stack,
         (std::deque<Test::space::window_t>{anotherClient, member1, leader, member2, transient}));
 }
 
@@ -648,7 +647,7 @@ void StackingOrderTest::testDeletedGroupTransient()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
@@ -664,7 +663,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QCOMPARE(leader->xcb_windows.client, leaderWid);
     QVERIFY(!leader->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader}));
 
     // Create another group member.
@@ -681,7 +680,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QCOMPARE(member1->group, leader->group);
     QVERIFY(!member1->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1}));
 
     // Create yet another group member.
@@ -698,13 +697,14 @@ void StackingOrderTest::testDeletedGroupTransient()
     QCOMPARE(member2->group, leader->group);
     QVERIFY(!member2->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2}));
 
     // Create a group transient.
     windowCreatedSpy.clear();
     xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
+    xcb_icccm_set_wm_transient_for(
+        conn.get(), transientWid, Test::app()->base->x11_data.root_window);
 
     // Currently, we have some weird bug workaround: if a group transient
     // is a non-modal dialog, then it won't be kept above its window group.
@@ -738,7 +738,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QVERIFY(transient->groupTransient());
     QVERIFY(!win::is_dialog(transient)); // See above why
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2, transient}));
 
     if (!transient->render_data.ready_for_painting) {
@@ -753,7 +753,7 @@ void StackingOrderTest::testDeletedGroupTransient()
             transient->qobject.get(),
             [](auto win_id) {
                 std::visit(overload{[&](auto&& win) { win->remnant->ref(); }},
-                           Test::app()->base.space->windows_map.at(win_id));
+                           Test::app()->base->space->windows_map.at(win_id));
             });
 
     QSignalSpy windowClosedSpy(transient->space.qobject.get(),
@@ -765,11 +765,11 @@ void StackingOrderTest::testDeletedGroupTransient()
 
     auto del_signal_id = windowClosedSpy.front().front().value<quint32>();
     auto deletedTransient = create_deleted<Test::space::x11_window>(
-        Test::app()->base.space->windows_map.at(del_signal_id));
+        Test::app()->base->space->windows_map.at(del_signal_id));
     QVERIFY(deletedTransient.get());
 
     // The transient has to be above each member of the window group.
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2, deletedTransient.get()}));
 }
 
@@ -781,7 +781,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
@@ -797,7 +797,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QCOMPARE(leader->xcb_windows.client, leaderWid);
     QVERIFY(!leader->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader}));
 
     // Create another group member.
@@ -814,7 +814,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QCOMPARE(member1->group, leader->group);
     QVERIFY(!member1->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1}));
 
     // Create yet another group member.
@@ -831,13 +831,14 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QCOMPARE(member2->group, leader->group);
     QVERIFY(!member2->transient->lead());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2}));
 
     // Create a group transient.
     windowCreatedSpy.clear();
     xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
+    xcb_icccm_set_wm_transient_for(
+        conn.get(), transientWid, Test::app()->base->x11_data.root_window);
     xcb_map_window(conn.get(), transientWid);
     xcb_flush(conn.get());
 
@@ -852,27 +853,27 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(win::is_dialog(transient));
     QVERIFY(!transient->transient->modal());
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2, transient}));
 
-    win::activate_window(*Test::app()->base.space, *leader);
+    win::activate_window(*Test::app()->base->space, *leader);
     QTRY_VERIFY(leader->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{member1, member2, transient, leader}));
 
-    win::activate_window(*Test::app()->base.space, *member1);
+    win::activate_window(*Test::app()->base->space, *member1);
     QTRY_VERIFY(member1->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{member2, transient, leader, member1}));
 
-    win::activate_window(*Test::app()->base.space, *member2);
+    win::activate_window(*Test::app()->base->space, *member2);
     QTRY_VERIFY(member2->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{transient, leader, member1, member2}));
 
-    win::activate_window(*Test::app()->base.space, *transient);
+    win::activate_window(*Test::app()->base->space, *transient);
     QTRY_VERIFY(transient->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{leader, member1, member2, transient}));
 }
 
@@ -890,7 +891,7 @@ void StackingOrderTest::testKeepAbove()
     QVERIFY(clientA->control->active);
     QVERIFY(!clientA->control->keep_above);
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{clientA}));
 
     // Create the second client.
@@ -903,24 +904,24 @@ void StackingOrderTest::testKeepAbove()
     QVERIFY(clientB->control->active);
     QVERIFY(!clientB->control->keep_above);
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{clientA, clientB}));
 
     // Go to the initial test position.
-    win::activate_window(*Test::app()->base.space, *clientA);
+    win::activate_window(*Test::app()->base->space, *clientA);
     QTRY_VERIFY(clientA->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{clientB, clientA}));
 
     // Set the "keep-above" flag on the client B, it should go above other clients.
     {
-        blocker block(Test::app()->base.space->stacking.order);
+        blocker block(Test::app()->base->space->stacking.order);
         win::set_keep_above(clientB, true);
     }
 
     QVERIFY(clientB->control->keep_above);
     QVERIFY(!clientB->control->active);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{clientA, clientB}));
 }
 
@@ -938,7 +939,7 @@ void StackingOrderTest::testKeepBelow()
     QVERIFY(clientA->control->active);
     QVERIFY(!clientA->control->keep_below);
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{clientA}));
 
     // Create the second client.
@@ -951,18 +952,18 @@ void StackingOrderTest::testKeepBelow()
     QVERIFY(clientB->control->active);
     QVERIFY(!clientB->control->keep_below);
 
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{clientA, clientB}));
 
     // Set the "keep-below" flag on the client B, it should go below other clients.
     {
-        blocker block(Test::app()->base.space->stacking.order);
+        blocker block(Test::app()->base->space->stacking.order);
         win::set_keep_below(clientB, true);
     }
 
     QVERIFY(clientB->control->active);
     QVERIFY(clientB->control->keep_below);
-    QCOMPARE(Test::app()->base.space->stacking.order.stack,
+    QCOMPARE(Test::app()->base->space->stacking.order.stack,
              (std::deque<Test::space::window_t>{clientB, clientA}));
 }
 

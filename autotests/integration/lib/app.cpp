@@ -70,17 +70,23 @@ void disable_dr_konqi()
 }
 Q_CONSTRUCTOR_FUNCTION(disable_dr_konqi)
 
-WaylandTestApplication::WaylandTestApplication(OperationMode mode,
+WaylandTestApplication::WaylandTestApplication(base::operation_mode mode,
                                                std::string const& socket_name,
                                                base::wayland::start_options flags,
                                                int& argc,
                                                char** argv)
-    : Application(mode, argc, argv)
+    : Application(argc, argv)
 {
-    // TODO: add a test move to kglobalaccel instead?
-    QFile{QStandardPaths::locate(QStandardPaths::ConfigLocation,
-                                 QStringLiteral("kglobalshortcutsrc"))}
-        .remove();
+    auto rm_config = [](auto name) {
+        auto const path = QStandardPaths::locate(QStandardPaths::ConfigLocation, name);
+        if (!path.isEmpty()) {
+            QFile{path}.remove();
+        }
+    };
+
+    rm_config("kcminputrc");
+    rm_config("kxkbrc");
+    rm_config("kglobalshortcutsrc");
 
     QIcon::setThemeName(QStringLiteral("breeze"));
 
@@ -94,13 +100,15 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    base = base::backend::wlroots::platform(
-        socket_name, flags, base::backend::wlroots::start_options::headless);
-    base.render = std::make_unique<render::backend::wlroots::platform<decltype(base)>>(base);
+    base = std::make_unique<base::backend::wlroots::platform>(
+        base::config(KConfig::OpenFlag::SimpleConfig),
+        socket_name,
+        flags,
+        base::backend::wlroots::start_options::headless);
+    base->operation_mode = mode;
+    base->render = std::make_unique<render::backend::wlroots::platform<base_t>>(*base);
 
-    auto environment = QProcessEnvironment::systemEnvironment();
-    environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
-    setProcessStartupEnvironment(environment);
+    base->process_environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
 }
 
 WaylandTestApplication::~WaylandTestApplication()
@@ -112,49 +120,38 @@ WaylandTestApplication::~WaylandTestApplication()
     wlr_pointer_finish(pointer);
     wlr_touch_finish(touch);
 
-    setTerminating();
-
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
     if (effects) {
-        base.render->compositor->effects->unloadAllEffects();
+        base->render->compositor->effects->unloadAllEffects();
     }
 
     // Kill Xwayland before terminating its connection.
-    base.xwayland.reset();
-    base.server->terminateClientConnections();
+    base->xwayland.reset();
+    base->server->terminateClientConnections();
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    base.render->compositor->lock();
+    base->render->compositor->lock();
 
-    base.space.reset();
-    base.render->compositor.reset();
-}
-
-bool WaylandTestApplication::is_screen_locked() const
-{
-    return base.server && base.server->is_screen_locked();
-}
-
-base::platform& WaylandTestApplication::get_base()
-{
-    return base;
+    base->space.reset();
+    base->render->compositor.reset();
 }
 
 void WaylandTestApplication::start()
 {
     prepare_start();
 
-    auto headless_backend = base::backend::wlroots::get_headless_backend(base.backend);
+    auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend);
     wlr_headless_add_output(headless_backend, 1280, 1024);
 
-    createOptions();
+    base->options = base::create_options(base->operation_mode, base->config.main);
 
-    session
-        = std::make_unique<base::seat::backend::wlroots::session>(base.session, headless_backend);
-    base.input = std::make_unique<input::backend::wlroots::platform>(base);
-    base.input->install_shortcuts();
+    base->session = std::make_unique<base::seat::backend::wlroots::session>(base->wlroots_session,
+                                                                            headless_backend);
+    base->input = std::make_unique<input::backend::wlroots::platform>(
+        *base, input::config(KConfig::SimpleConfig));
+    base->input->install_shortcuts(base->operation_mode);
 
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
     pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));
@@ -164,7 +161,7 @@ void WaylandTestApplication::start()
     assert(touch);
 
     try {
-        static_cast<render::backend::wlroots::platform<decltype(base)>&>(*base.render).init();
+        static_cast<render::backend::wlroots::platform<base_t>&>(*base->render).init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         ::exit(1);
@@ -174,31 +171,31 @@ void WaylandTestApplication::start()
     wlr_pointer_init(pointer, nullptr, "headless-pointer");
     wlr_touch_init(touch, nullptr, "headless-touch");
 
-    Test::wlr_signal_emit_safe(&base.backend->events.new_input, keyboard);
-    Test::wlr_signal_emit_safe(&base.backend->events.new_input, pointer);
-    Test::wlr_signal_emit_safe(&base.backend->events.new_input, touch);
+    Test::wlr_signal_emit_safe(&base->backend->events.new_input, keyboard);
+    Test::wlr_signal_emit_safe(&base->backend->events.new_input, pointer);
+    Test::wlr_signal_emit_safe(&base->backend->events.new_input, touch);
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.
-    auto out = base.outputs.at(0);
+    auto out = base->outputs.at(0);
     out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
     try {
-        base.render->compositor = std::make_unique<base_t::render_t::compositor_t>(*base.render);
+        base->render->compositor = std::make_unique<base_t::render_t::compositor_t>(*base->render);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
         exit(exc.code().value());
     }
 
-    base.space = std::make_unique<base_t::space_t>(base, base.server.get());
-    input::wayland::add_dbus(base.input.get());
-    win::init_shortcuts(*base.space);
-    base.space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
+    base->space = std::make_unique<base_t::space_t>(*base);
+    input::wayland::add_dbus(base->input.get());
+    win::init_shortcuts(*base->space);
+    base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
-    base.render->compositor->start(*base.space);
+    base->render->compositor->start(*base->space);
 
-    base.server->create_addons([this] { handle_server_addons_created(); });
-    kwinApp()->screen_locker_watcher->initialize();
+    base->server->create_addons([this] { handle_server_addons_created(); });
+    base->screen_locker_watcher->initialize();
 }
 
 void WaylandTestApplication::set_outputs(size_t count)
@@ -228,7 +225,7 @@ void WaylandTestApplication::set_outputs(std::vector<QRect> const& geometries)
 
 void WaylandTestApplication::set_outputs(std::vector<Test::output> const& outputs)
 {
-    auto outputs_copy = base.all_outputs;
+    auto outputs_copy = base->all_outputs;
     for (auto output : outputs_copy) {
         delete output;
     }
@@ -236,16 +233,16 @@ void WaylandTestApplication::set_outputs(std::vector<Test::output> const& output
     for (auto&& output : outputs) {
         auto const size = output.geometry.size() * output.scale;
 
-        wlr_headless_add_output(base.backend, size.width(), size.height());
-        base.all_outputs.back()->force_geometry(output.geometry);
+        wlr_headless_add_output(base->backend, size.width(), size.height());
+        base->all_outputs.back()->force_geometry(output.geometry);
     }
 
-    base::update_output_topology(base);
+    base::update_output_topology(*base);
 }
 
 void WaylandTestApplication::handle_server_addons_created()
 {
-    if (operationMode() == OperationModeXwayland) {
+    if (base->operation_mode == base::operation_mode::xwayland) {
         create_xwayland();
         return;
     }
@@ -266,8 +263,8 @@ void WaylandTestApplication::create_xwayland()
     };
 
     try {
-        base.xwayland
-            = std::make_unique<xwl::xwayland<wayland_space>>(this, *base.space, status_callback);
+        base->xwayland
+            = std::make_unique<xwl::xwayland<wayland_space>>(*base->space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

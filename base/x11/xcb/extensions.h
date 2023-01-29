@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "base/x11/data.h"
 #include "kwin_export.h"
 
 #include <QVector>
@@ -89,11 +90,12 @@ public:
         return m_glx.majorOpcode;
     }
 
+    static extensions* create(x11::data const& data);
     static extensions* self();
     static void destroy();
 
 private:
-    extensions();
+    extensions(x11::data const& data);
     ~extensions();
 
     void init();
@@ -111,6 +113,8 @@ private:
     extension_data m_fixes;
     extension_data m_sync;
     extension_data m_glx;
+
+    x11::data const& data;
 
     static extensions* s_self;
 };

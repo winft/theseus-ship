@@ -37,9 +37,10 @@ public:
     using im_keyboard_grab_v2
         = keyboard_grab<Redirect, Wrapland::Server::input_method_keyboard_grab_v2>;
 
-    input_method(Redirect& redirect, base::wayland::server* server)
+    input_method(Redirect& redirect)
         : redirect{redirect}
     {
+        auto& server = redirect.platform.base.server;
         auto seat = server->seat();
 
         text_input_manager_v3 = server->display->createTextInputManagerV3();

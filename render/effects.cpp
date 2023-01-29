@@ -51,33 +51,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render
 {
 
-effects_handler_wrap::effects_handler_wrap(CompositingType type)
-    : EffectsHandler(type)
-    , m_effectLoader(new effect_loader(*this, this))
-{
-    qRegisterMetaType<QVector<KWin::EffectWindow*>>();
-
-    singleton_interface::effects = this;
-    connect(m_effectLoader,
-            &basic_effect_loader::effectLoaded,
-            this,
-            [this](Effect* effect, const QString& name) {
-                effect_order.insert(effect->requestedEffectChainPosition(),
-                                    EffectPair(name, effect));
-                loaded_effects << EffectPair(name, effect);
-                effectsChanged();
-            });
-    m_effectLoader->setConfig(kwinApp()->config());
-
-    new EffectsAdaptor(this);
-    QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(QStringLiteral("/Effects"), this);
-
-    // init is important, otherwise causes crashes when quads are build before the first painting
-    // pass start
-    m_currentBuildQuadsIterator = m_activeEffects.constEnd();
-}
-
 effects_handler_wrap::~effects_handler_wrap()
 {
     singleton_interface::effects = nullptr;
@@ -404,24 +377,14 @@ int effects_handler_wrap::desktopGridHeight() const
     return desktopGridSize().height();
 }
 
-int effects_handler_wrap::workspaceWidth() const
-{
-    return desktopGridWidth() * kwinApp()->get_base().topology.size.width();
-}
-
-int effects_handler_wrap::workspaceHeight() const
-{
-    return desktopGridHeight() * kwinApp()->get_base().topology.size.height();
-}
-
 bool effects_handler_wrap::optionRollOverDesktops() const
 {
-    return kwinApp()->options->qobject->isRollOverDesktops();
+    return options.qobject->isRollOverDesktops();
 }
 
 double effects_handler_wrap::animationTimeFactor() const
 {
-    return kwinApp()->options->animationTimeFactor();
+    return options.animationTimeFactor();
 }
 
 WindowQuadType effects_handler_wrap::newWindowQuadType()
@@ -520,6 +483,11 @@ void effects_handler_wrap::unloadEffect(const QString& name)
     addRepaintFull();
 }
 
+void effects_handler_wrap::create_adaptor()
+{
+    new EffectsAdaptor(this);
+}
+
 void effects_handler_wrap::destroyEffect(Effect* effect)
 {
     assert(effect);
@@ -542,17 +510,6 @@ void effects_handler_wrap::destroyEffect(Effect* effect)
     }
 
     delete effect;
-}
-
-void effects_handler_wrap::reconfigureEffect(const QString& name)
-{
-    for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it)
-        if ((*it).first == name) {
-            kwinApp()->config()->reparseConfiguration();
-            makeOpenGLContextCurrent();
-            (*it).second->reconfigure(Effect::ReconfigureAll);
-            return;
-        }
 }
 
 bool effects_handler_wrap::isEffectLoaded(const QString& name) const
@@ -671,11 +628,6 @@ QString effects_handler_wrap::supportInformation(const QString& name) const
     return support;
 }
 
-bool effects_handler_wrap::isScreenLocked() const
-{
-    return kwinApp()->screen_locker_watcher->is_locked();
-}
-
 QString effects_handler_wrap::debug(const QString& name, const QString& parameter) const
 {
     QString internalName = name.toLower();
@@ -688,16 +640,6 @@ QString effects_handler_wrap::debug(const QString& name, const QString& paramete
     return QString();
 }
 
-xcb_connection_t* effects_handler_wrap::xcbConnection() const
-{
-    return connection();
-}
-
-xcb_window_t effects_handler_wrap::x11RootWindow() const
-{
-    return rootWindow();
-}
-
 void effects_handler_wrap::highlightWindows(const QVector<EffectWindow*>& windows)
 {
     Effect* e = provides(Effect::HighlightWindows);
@@ -705,16 +647,6 @@ void effects_handler_wrap::highlightWindows(const QVector<EffectWindow*>& window
         return;
     }
     e->perform(Effect::HighlightWindows, QVariantList{QVariant::fromValue(windows)});
-}
-
-KSharedConfigPtr effects_handler_wrap::config() const
-{
-    return kwinApp()->config();
-}
-
-KSharedConfigPtr effects_handler_wrap::inputConfig() const
-{
-    return kwinApp()->inputConfig();
 }
 
 Effect* effects_handler_wrap::findEffect(const QString& name) const

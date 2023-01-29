@@ -63,9 +63,10 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
         | NET::NotificationMask | NET::ComboBoxMask | NET::DNDIconMask | NET::OnScreenDisplayMask
         | NET::CriticalNotificationMask;
 
-    base::x11::server_grabber xserverGrabber;
-    base::x11::xcb::window_attributes attr(xcb_win);
-    base::x11::xcb::geometry geo(xcb_win);
+    auto con = space.base.x11_data.connection;
+    base::x11::server_grabber xserverGrabber(con);
+    base::x11::xcb::window_attributes attr(con, xcb_win);
+    base::x11::xcb::geometry geo(con, xcb_win);
 
     if (attr.is_null() || attr->map_state != XCB_MAP_STATE_VIEWABLE) {
         return nullptr;
@@ -85,16 +86,17 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     QTimer::singleShot(50, win->qobject.get(), [win] { set_ready_for_painting(*win); });
 
     // The window is also the frame.
-    base::x11::xcb::select_input(xcb_win,
+    base::x11::xcb::select_input(space.base.x11_data.connection,
+                                 xcb_win,
                                  attr->your_event_mask | XCB_EVENT_MASK_STRUCTURE_NOTIFY
                                      | XCB_EVENT_MASK_PROPERTY_CHANGE);
     win->geo.frame = geo.rect();
     check_screen(*win);
     win->xcb_visual = attr->visual;
     win->render_data.bit_depth = geo->depth;
-    win->net_info = new NETWinInfo(connection(),
+    win->net_info = new NETWinInfo(con,
                                    xcb_win,
-                                   rootWindow(),
+                                   win->space.base.x11_data.root_window,
                                    NET::WMWindowType | NET::WMPid,
                                    NET::WM2Opacity | NET::WM2WindowRole | NET::WM2WindowClass
                                        | NET::WM2OpaqueRegion);
@@ -106,7 +108,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
 
     fetch_wm_client_machine(*win);
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
-        xcb_shape_select_input(connection(), xcb_win, true);
+        xcb_shape_select_input(con, xcb_win, true);
     }
     detect_shape(*win);
     fetch_wm_opaque_region(*win);
@@ -114,7 +116,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     win->setupCompositing();
 
     auto find_internal_window = [&win]() -> QWindow* {
-        auto const windows = kwinApp()->topLevelWindows();
+        auto const windows = qApp->topLevelWindows();
         for (auto xcb_win : windows) {
             if (xcb_win->winId() == win->xcb_windows.client) {
                 return xcb_win;
@@ -208,7 +210,8 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* event)
         // To not run into these errors we try to wait for the destroy notify. For this we
         // generate a round trip to the X server and wait a very short time span before
         // handling the release.
-        kwinApp()->update_x11_time_from_clock();
+        base::x11::update_time_from_clock(win->space.base);
+
         // using 1 msec to not just move it at the end of the event loop but add an very short
         // timespan to cover cases like unmap() followed by destroy(). The only other way to
         // ensure that the window is not destroyed when we do the release handling is to grab

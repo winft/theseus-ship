@@ -32,11 +32,13 @@
 
 static QVector<uint32_t> readShadow(quint32 windowId)
 {
-    KWin::base::x11::xcb::atom atom(
-        QByteArrayLiteral("_KDE_NET_WM_SHADOW"), false, QX11Info::connection());
+    auto con = QX11Info::connection();
+    KWin::base::x11::xcb::atom atom(QByteArrayLiteral("_KDE_NET_WM_SHADOW"), false, con);
     QVector<uint32_t> ret;
+
     if (windowId != XCB_WINDOW) {
-        KWin::base::x11::xcb::property property(false, windowId, atom, XCB_ATOM_CARDINAL, 0, 12);
+        KWin::base::x11::xcb::property property(
+            con, false, windowId, atom, XCB_ATOM_CARDINAL, 0, 12);
         uint32_t* shadow = property.value<uint32_t*>();
         if (shadow) {
             ret.reserve(12);
@@ -56,15 +58,15 @@ static QVector<QPixmap> getPixmaps(const QVector<uint32_t>& data)
 {
     QVector<QPixmap> ret;
     static const int ShadowElementsCount = 8;
-    QVector<KWin::base::x11::xcb::geometry> pixmapGeometries(ShadowElementsCount);
+    QVector<KWin::base::x11::xcb::geometry> pixmapGeometries;
     QVector<xcb_get_image_cookie_t> getImageCookies(ShadowElementsCount);
-    auto* c = KWin::connection();
+    auto c = QX11Info::connection();
     for (int i = 0; i < ShadowElementsCount; ++i) {
-        pixmapGeometries[i] = KWin::base::x11::xcb::geometry(data[i]);
+        pixmapGeometries.push_back(KWin::base::x11::xcb::geometry(c, data[i]));
     }
     auto discardReplies = [&getImageCookies](int start) {
         for (int i = start; i < getImageCookies.size(); ++i) {
-            xcb_discard_reply(KWin::connection(), getImageCookies.at(i).sequence);
+            xcb_discard_reply(QX11Info::connection(), getImageCookies.at(i).sequence);
         }
     };
     for (int i = 0; i < ShadowElementsCount; ++i) {
@@ -94,7 +96,6 @@ int main(int argc, char** argv)
 {
     qputenv("QT_QPA_PLATFORM", "xcb");
     QApplication app(argc, argv);
-    app.setProperty("x11Connection", QVariant::fromValue<void*>(QX11Info::connection()));
 
     QCommandLineParser parser;
     parser.addPositionalArgument(QStringLiteral("windowId"),

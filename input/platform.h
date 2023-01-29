@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "config.h"
 #include "dbus/device_manager.h"
 #include "global_shortcuts_manager.h"
 #include "keyboard.h"
@@ -14,7 +15,6 @@
 
 #include "utils/algorithm.h"
 
-#include <KSharedConfig>
 #include <QAction>
 #include <QObject>
 #include <memory>
@@ -79,60 +79,36 @@ void platform_remove_touch(Touch* touch, Platform& platform)
     Q_EMIT platform.qobject->touch_removed(touch);
 }
 
-template<typename Base>
-class platform
+template<typename Platform>
+void platform_register_pointer_shortcut(Platform& platform,
+                                        Qt::KeyboardModifiers modifiers,
+                                        Qt::MouseButton pointerButtons,
+                                        QAction* action)
 {
-public:
-    using base_t = Base;
+    platform.shortcuts->registerPointerShortcut(action, modifiers, pointerButtons);
+}
 
-    platform(Base& base)
-        : qobject{std::make_unique<platform_qobject>(
-            [this](auto accel) { registerGlobalAccel(accel); })}
-        , base{base}
-    {
-        qRegisterMetaType<button_state>();
-        qRegisterMetaType<key_state>();
-    }
+template<typename Platform>
+void platform_register_axis_shortcut(Platform& platform,
+                                     Qt::KeyboardModifiers modifiers,
+                                     PointerAxisDirection axis,
+                                     QAction* action)
+{
+    platform.shortcuts->registerAxisShortcut(action, modifiers, axis);
+}
 
-    platform(platform const&) = delete;
-    platform& operator=(platform const&) = delete;
-    virtual ~platform() = default;
+template<typename Platform>
+void platform_register_touchpad_swipe_shortcut(Platform& platform,
+                                               SwipeDirection direction,
+                                               QAction* action)
+{
+    platform.shortcuts->registerTouchpadSwipe(action, direction);
+}
 
-    void registerPointerShortcut(Qt::KeyboardModifiers modifiers,
-                                 Qt::MouseButton pointerButtons,
-                                 QAction* action)
-    {
-        shortcuts->registerPointerShortcut(action, modifiers, pointerButtons);
-    }
-
-    void registerAxisShortcut(Qt::KeyboardModifiers modifiers,
-                              PointerAxisDirection axis,
-                              QAction* action)
-    {
-        shortcuts->registerAxisShortcut(action, modifiers, axis);
-    }
-
-    void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action)
-    {
-        shortcuts->registerTouchpadSwipe(action, direction);
-    }
-
-    void registerGlobalAccel(KGlobalAccelInterface* interface)
-    {
-        shortcuts->setKGlobalAccelInterface(interface);
-    }
-
-    std::unique_ptr<platform_qobject> qobject;
-    Base& base;
-
-    std::vector<keyboard*> keyboards;
-    std::vector<pointer*> pointers;
-    std::vector<switch_device*> switches;
-    std::vector<touch*> touchs;
-
-    std::unique_ptr<global_shortcuts_manager> shortcuts;
-
-    KSharedConfigPtr config;
-};
+template<typename Platform>
+void platform_register_global_accel(Platform& platform, KGlobalAccelInterface* interface)
+{
+    platform.shortcuts->setKGlobalAccelInterface(interface);
+}
 
 }

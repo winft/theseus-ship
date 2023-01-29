@@ -11,6 +11,7 @@
 
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/extensions.h"
+#include "base/x11/xcb/helpers.h"
 #include "utils/blocker.h"
 #include "win/input.h"
 #include "win/rules.h"
@@ -96,7 +97,7 @@ void destroy_damage_handle(Win& win)
     if (win.damage.handle == XCB_NONE) {
         return;
     }
-    xcb_damage_destroy(connection(), win.damage.handle);
+    xcb_damage_destroy(win.space.base.x11_data.connection, win.damage.handle);
     win.damage.handle = XCB_NONE;
 }
 
@@ -148,7 +149,8 @@ Win* create_remnant_window(Win& source)
         winfo->disable();
     }
 
-    win->xcb_windows.client.reset(source.xcb_windows.client, false);
+    win->xcb_windows.client.reset(
+        source.space.base.x11_data.connection, source.xcb_windows.client, false);
     win->xcb_visual = source.xcb_visual;
     win->is_shape = source.is_shape;
     win->client_machine = source.client_machine;
@@ -171,9 +173,11 @@ void release_unmanaged(Win* win, bool on_shutdown)
     // Don't affect our own windows.
     if (!QWidget::find(win->xcb_windows.client)) {
         if (base::x11::xcb::extensions::self()->is_shape_available()) {
-            xcb_shape_select_input(connection(), win->xcb_windows.client, false);
+            xcb_shape_select_input(
+                win->space.base.x11_data.connection, win->xcb_windows.client, false);
         }
-        base::x11::xcb::select_input(win->xcb_windows.client, XCB_EVENT_MASK_NO_EVENT);
+        base::x11::xcb::select_input(
+            win->space.base.x11_data.connection, win->xcb_windows.client, XCB_EVENT_MASK_NO_EVENT);
     }
 
     if (on_shutdown) {
@@ -251,7 +255,7 @@ void release_window(Win* win, bool on_shutdown)
     // Grab X during the release to make removing of properties, setting to withdrawn state
     // and repareting to root an atomic operation
     // (https://lists.kde.org/?l=kde-devel&m=116448102901184&w=2)
-    base::x11::grab_server();
+    base::x11::grab_server(win->space.base.x11_data.connection);
     export_mapping_state(win, XCB_ICCCM_WM_STATE_WITHDRAWN);
 
     // So that it's not considered visible anymore (can't use hideClient(), it would set flags)
@@ -283,9 +287,11 @@ void release_window(Win* win, bool on_shutdown)
     win->xcb_windows.client.delete_property(atoms->kde_net_wm_frame_strut);
 
     auto const client_rect = frame_to_client_rect(win, win->geo.frame);
-    win->xcb_windows.client.reparent(rootWindow(), client_rect.x(), client_rect.y());
+    win->xcb_windows.client.reparent(
+        win->space.base.x11_data.root_window, client_rect.x(), client_rect.y());
 
-    xcb_change_save_set(connection(), XCB_SET_MODE_DELETE, win->xcb_windows.client);
+    xcb_change_save_set(
+        win->space.base.x11_data.connection, XCB_SET_MODE_DELETE, win->xcb_windows.client);
     win->xcb_windows.client.select_input(XCB_EVENT_MASK_NO_EVENT);
 
     if (on_shutdown) {
@@ -312,7 +318,7 @@ void release_window(Win* win, bool on_shutdown)
         delete_window_from_space(win->space, *win);
     }
 
-    base::x11::ungrab_server();
+    base::x11::ungrab_server(win->space.base.x11_data.connection);
 }
 
 /**
@@ -398,7 +404,7 @@ void cleanup_window(Win& win)
     }
 
     if (win.sync_request.alarm != XCB_NONE) {
-        xcb_sync_destroy_alarm(connection(), win.sync_request.alarm);
+        xcb_sync_destroy_alarm(win.space.base.x11_data.connection, win.sync_request.alarm);
     }
 
     assert(!win.control || !win.control->move_resize.enabled);
@@ -441,7 +447,8 @@ void close_window(Win& win)
     update_user_time(&win);
 
     if (win.net_info->supportsProtocol(NET::DeleteWindowProtocol)) {
-        send_client_message(win.xcb_windows.client,
+        send_client_message(win.space.base.x11_data,
+                            win.xcb_windows.client,
                             win.space.atoms->wm_protocols,
                             win.space.atoms->wm_delete_window);
         ping(&win);

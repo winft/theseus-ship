@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/xkb/helpers.h"
 #include "kwin_export.h"
 #include "kwinglobals.h"
-#include "main.h"
 #include "win/activation.h"
 
 #include <KGlobalAccel>
@@ -333,8 +332,8 @@ public:
         }
         m_tabbox->hide(abort);
 
-        if (kwinApp()->x11Connection()) {
-            base::x11::xcb::sync();
+        if (auto con = space.base.x11_data.connection) {
+            base::x11::xcb::sync(con);
         }
     }
 
@@ -865,7 +864,7 @@ private:
     /**
      * Handles alt-tab / control-tab
      */
-    static bool areKeySymXsDepressed(const uint keySyms[], int nKeySyms)
+    bool areKeySymXsDepressed(uint const keySyms[], int nKeySyms)
     {
         struct KeySymbolsDeleter {
             static inline void cleanup(xcb_key_symbols_t* symbols)
@@ -874,10 +873,10 @@ private:
             }
         };
 
-        base::x11::xcb::query_keymap keys;
+        base::x11::xcb::query_keymap keys(space.base.x11_data.connection);
 
         QScopedPointer<xcb_key_symbols_t, KeySymbolsDeleter> symbols(
-            xcb_key_symbols_alloc(connection()));
+            xcb_key_symbols_alloc(space.base.x11_data.connection));
         if (symbols.isNull() || !keys) {
             return false;
         }
@@ -917,7 +916,7 @@ private:
         return depressed;
     }
 
-    static bool areModKeysDepressedX11(const QKeySequence& seq)
+    bool areModKeysDepressedX11(QKeySequence const& seq)
     {
         uint rgKeySyms[10];
         int nKeySyms = 0;
@@ -970,11 +969,11 @@ private:
     }
 
     template<typename Input>
-    static bool areModKeysDepressed(Input const& input, const QKeySequence& seq)
+    bool areModKeysDepressed(Input const& input, QKeySequence const& seq)
     {
         if (seq.isEmpty())
             return false;
-        if (kwinApp()->shouldUseWaylandForCompositing()) {
+        if (base::should_use_wayland_for_compositing(input.base)) {
             return areModKeysDepressedWayland(input, seq);
         } else {
             return areModKeysDepressedX11(seq);
@@ -1061,7 +1060,7 @@ private:
         if (!m_ready || is_grabbed()) {
             return;
         }
-        if (!kwinApp()->options->qobject->focusPolicyIsReasonable()) {
+        if (!space.base.options->qobject->focusPolicyIsReasonable()) {
             // ungrabXKeyboard(); // need that because of accelerator raw mode
             //  CDE style raise / lower
             cde_walk_through_windows(forward);
@@ -1109,7 +1108,7 @@ private:
 
         bool options_traverse_all;
         {
-            KConfigGroup group(kwinApp()->config(), "TabBox");
+            KConfigGroup group(space.base.config.main, "TabBox");
             options_traverse_all = group.readEntry("TraverseAll", false);
         }
 
@@ -1156,7 +1155,7 @@ private:
         }
 
         std::visit(overload{[&](auto&& win) {
-                       if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
+                       if (space.base.options->qobject->focusPolicyIsReasonable()) {
                            activate_window(space, *win);
                            return;
                        }
@@ -1208,12 +1207,12 @@ private:
 
     bool establish_tabbox_grab()
     {
-        if (kwinApp()->shouldUseWaylandForCompositing()) {
+        if (base::should_use_wayland_for_compositing(space.base)) {
             m_forced_global_mouse_grab = true;
             return true;
         }
-        kwinApp()->update_x11_time_from_clock();
-        if (!base::x11::grab_keyboard())
+        base::x11::update_time_from_clock(space.base);
+        if (!base::x11::grab_keyboard(space.base.x11_data))
             return false;
         // Don't try to establish a global mouse grab using XGrabPointer, as that would prevent
         // using Alt+Tab while DND (#44972). However force passive grabs on all windows
@@ -1232,12 +1231,12 @@ private:
 
     void remove_tabbox_grab()
     {
-        if (kwinApp()->shouldUseWaylandForCompositing()) {
+        if (base::should_use_wayland_for_compositing(space.base)) {
             m_forced_global_mouse_grab = false;
             return;
         }
-        kwinApp()->update_x11_time_from_clock();
-        base::x11::ungrab_keyboard();
+        base::x11::update_time_from_clock(space.base);
+        base::x11::ungrab_keyboard(space.base.x11_data.connection);
         Q_ASSERT(m_forced_global_mouse_grab);
         m_forced_global_mouse_grab = false;
         if (space.stacking.active) {
@@ -1264,7 +1263,7 @@ private:
 
     bool toggle_mode(TabBoxMode mode)
     {
-        if (!kwinApp()->options->qobject->focusPolicyIsReasonable()) {
+        if (!space.base.options->qobject->focusPolicyIsReasonable()) {
             // not supported.
             return false;
         }
@@ -1284,7 +1283,7 @@ private:
 
     void reconfigure()
     {
-        KSharedConfigPtr c = kwinApp()->config();
+        KSharedConfigPtr c = space.base.config.main;
         KConfigGroup config = c->group("TabBox");
 
         load_config(c->group("TabBox"), m_default_config);

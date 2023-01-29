@@ -78,6 +78,7 @@ public:
         });
 
         reconfigure();
+        init_dbus_interface_v2();
 
         for (auto keyboard : redirect.platform.keyboards) {
             add_keyboard(keyboard);
@@ -87,8 +88,6 @@ public:
                          &platform_qobject::keyboard_added,
                          qobject.get(),
                          [this](auto keys) { add_keyboard(keys); });
-
-        init_dbus_interface_v2();
     }
 
     void switchToNextLayout()
@@ -107,38 +106,33 @@ public:
 private:
     void reconfigure()
     {
+        redirect.platform.xkb.reconfigure();
+
         if (m_configGroup.isValid()) {
             m_configGroup.config()->reparseConfiguration();
             const QString policyKey
                 = m_configGroup.readEntry("SwitchMode", QStringLiteral("Global"));
-            redirect.platform.xkb.reconfigure();
             if (!m_policy || m_policy->name() != policyKey) {
                 m_policy = create_layout_policy(this, m_configGroup, policyKey);
             }
-        } else {
-            redirect.platform.xkb.reconfigure();
         }
 
-        auto xkb = get_keyboard();
+        load_shortcuts();
 
-        load_shortcuts(xkb);
+        if (requires_dbus_interface_v1()) {
+            init_dbus_interface_v1();
+        } else if (dbus_interface_v1) {
+            // Emit change before reset for backwards compatibility (was done so in the past).
+            Q_EMIT dbus_interface_v1->layoutListChanged();
+            dbus_interface_v1.reset();
+        }
 
-        initDBusInterface();
         Q_EMIT qobject->layoutsReconfigured();
     }
 
-    void initDBusInterface()
+    void init_dbus_interface_v1()
     {
-        auto xkb = get_keyboard();
-
-        if (xkb->layouts_count() <= 1) {
-            if (dbus_interface_v1) {
-                // Emit change before reset for backwards compatibility (was done so in the past).
-                Q_EMIT dbus_interface_v1->layoutListChanged();
-                dbus_interface_v1.reset();
-            }
-            return;
-        }
+        assert(requires_dbus_interface_v1());
 
         if (dbus_interface_v1) {
             return;
@@ -202,11 +196,12 @@ private:
         get_keyboard()->switch_to_layout(index);
     }
 
-    void load_shortcuts(xkb::keyboard* xkb)
+    void load_shortcuts()
     {
         qDeleteAll(m_layoutShortcuts);
         m_layoutShortcuts.clear();
 
+        auto xkb = get_keyboard();
         const QString componentName = QStringLiteral("KDE Keyboard Layout Switcher");
         auto const count = xkb->layouts_count();
 
@@ -232,6 +227,12 @@ private:
     auto get_keyboard()
     {
         return get_primary_xkb_keyboard(redirect.platform);
+    }
+
+    // The interface is advertised iff there are more than one layouts.
+    bool requires_dbus_interface_v1()
+    {
+        return get_keyboard()->layouts_count() > 1;
     }
 
     KConfigGroup m_configGroup;

@@ -22,7 +22,16 @@ class QAction;
 class QMenu;
 class KConfigGroup;
 
-namespace KWin::scripting
+namespace KWin
+{
+
+namespace base
+{
+class config;
+class options;
+}
+
+namespace scripting
 {
 
 class platform_wrap;
@@ -32,7 +41,11 @@ class KWIN_EXPORT abstract_script : public QObject
 {
     Q_OBJECT
 public:
-    abstract_script(int id, QString scriptName, QString pluginName, QObject* parent = nullptr);
+    abstract_script(int id,
+                    QString scriptName,
+                    QString pluginName,
+                    base::config& config,
+                    QObject* parent = nullptr);
     ~abstract_script() override;
     int scriptId() const
     {
@@ -75,6 +88,7 @@ private:
     QString m_fileName;
     QString m_pluginName;
     bool m_running;
+    base::config& base_config;
 };
 
 // TODO(romangg): Give it a more specific name.
@@ -86,6 +100,8 @@ public:
            QString scriptName,
            QString pluginName,
            scripting::platform_wrap& platform,
+           base::options& options,
+           base::config& config,
            QObject* parent = nullptr);
     virtual ~script();
 
@@ -236,6 +252,7 @@ private:
     QHash<int, QAction*> m_touchScreenEdgeCallbacks;
     QJSValueList m_userActionsMenuCallbacks;
     scripting::platform_wrap& platform;
+    base::options& options;
 };
 
 class declarative_script : public abstract_script
@@ -260,4 +277,5 @@ private:
     QQmlComponent* m_component;
 };
 
+}
 }

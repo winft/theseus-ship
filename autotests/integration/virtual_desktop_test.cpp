@@ -7,7 +7,6 @@
 #include "lib/app.h"
 
 #include "base/wayland/server.h"
-#include "main.h"
 #include "win/desktop_set.h"
 #include "win/screen.h"
 #include "win/virtual_desktops.h"
@@ -74,22 +73,27 @@ private:
 
 void VirtualDesktopTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 
-    if (kwinApp()->x11Connection()) {
+    if (Test::app()->base->x11_data.connection) {
         // verify the current desktop x11 property on startup, see BUG: 391034
-        base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP", connection());
+        base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP",
+                                                Test::app()->base->x11_data.connection);
         QVERIFY(currentDesktopAtom.is_valid());
-        base::x11::xcb::property currentDesktop(
-            0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+        base::x11::xcb::property currentDesktop(Test::app()->base->x11_data.connection,
+                                                0,
+                                                Test::app()->base->x11_data.root_window,
+                                                currentDesktopAtom,
+                                                XCB_ATOM_CARDINAL,
+                                                0,
+                                                1);
         bool ok = true;
         QCOMPARE(currentDesktop.value(0, &ok), 0);
         QVERIFY(ok);
@@ -99,7 +103,7 @@ void VirtualDesktopTest::initTestCase()
 void VirtualDesktopTest::init()
 {
     Test::setup_wayland_connection();
-    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
     vd_manager->setCount(1);
     vd_manager->setCurrent(0u);
 }
@@ -129,7 +133,7 @@ void VirtualDesktopTest::test_count_data()
 
 void VirtualDesktopTest::test_count()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
     QCOMPARE(vds->count(), 1);
 
     // start with a useful desktop count
@@ -182,7 +186,7 @@ void VirtualDesktopTest::test_navigation_wraps_around_data()
 
 void VirtualDesktopTest::test_navigation_wraps_around()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
 
     // TODO(romangg): This is sometimes false. Why?
     // QCOMPARE(vds->isNavigationWrappingAround(), true);
@@ -222,7 +226,7 @@ void VirtualDesktopTest::test_current_data()
 
 void VirtualDesktopTest::test_current()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
     QCOMPARE(vds->current(), 1);
 
     QFETCH(uint, count);
@@ -270,7 +274,7 @@ void VirtualDesktopTest::test_current_change_on_count_change_data()
 
 void VirtualDesktopTest::test_current_change_on_count_change()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
 
     QFETCH(uint, initCount);
     QFETCH(uint, initCurrent);
@@ -299,7 +303,7 @@ void add_direction_columns()
 template<typename T>
 void VirtualDesktopTest::test_direction(QString const& actionName)
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
 
     QFETCH(uint, initCount);
     QFETCH(uint, initCurrent);
@@ -506,7 +510,7 @@ void VirtualDesktopTest::update_grid_data()
 
 void VirtualDesktopTest::update_grid()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
 
     QFETCH(uint, initCount);
     vds->setCount(initCount);
@@ -564,7 +568,7 @@ void VirtualDesktopTest::update_layout_data()
 
 void VirtualDesktopTest::update_layout()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
 
     QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::layoutChanged);
     QVERIFY(spy.isValid());
@@ -617,7 +621,7 @@ void VirtualDesktopTest::test_name_data()
 
 void VirtualDesktopTest::test_name()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
 
     QFETCH(uint, initCount);
     QFETCH(uint, desktop);
@@ -628,7 +632,7 @@ void VirtualDesktopTest::test_name()
 
 void VirtualDesktopTest::test_switch_to_shortcuts()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
     vds->setCount(vds->maximum());
     vds->setCurrent(vds->maximum());
 
@@ -650,7 +654,7 @@ void VirtualDesktopTest::test_switch_to_shortcuts()
 
 void VirtualDesktopTest::test_change_rows()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
 
     vds->setCount(4);
     vds->setRows(4);
@@ -671,7 +675,7 @@ void VirtualDesktopTest::test_change_rows()
 
 void VirtualDesktopTest::test_load()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
 
     // No config yet, load should not change anything.
     vds->load();
@@ -696,7 +700,7 @@ void VirtualDesktopTest::test_load()
 
 void VirtualDesktopTest::test_save()
 {
-    auto& vds = Test::app()->base.space->virtual_desktop_manager;
+    auto& vds = Test::app()->base->space->virtual_desktop_manager;
     vds->setCount(4);
 
     // No config yet, just to ensure it actually works.
@@ -722,47 +726,73 @@ void VirtualDesktopTest::test_save()
 
 void VirtualDesktopTest::testNetCurrentDesktop()
 {
-    if (!kwinApp()->x11Connection()) {
+    if (!Test::app()->base->x11_data.connection) {
         QSKIP("Skipped on Wayland only");
     }
-    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
     QCOMPARE(vd_manager->count(), 1u);
     vd_manager->setCount(4);
     QCOMPARE(vd_manager->count(), 4u);
 
-    base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP", connection());
+    base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP",
+                                            Test::app()->base->x11_data.connection);
     QVERIFY(currentDesktopAtom.is_valid());
-    base::x11::xcb::property currentDesktop(
-        0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+    base::x11::xcb::property currentDesktop(Test::app()->base->x11_data.connection,
+                                            0,
+                                            Test::app()->base->x11_data.root_window,
+                                            currentDesktopAtom,
+                                            XCB_ATOM_CARDINAL,
+                                            0,
+                                            1);
     bool ok = true;
     QCOMPARE(currentDesktop.value(0, &ok), 0);
     QVERIFY(ok);
 
     // go to desktop 2
     vd_manager->setCurrent(2);
-    currentDesktop = base::x11::xcb::property(
-        0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+    currentDesktop = base::x11::xcb::property(Test::app()->base->x11_data.connection,
+                                              0,
+                                              Test::app()->base->x11_data.root_window,
+                                              currentDesktopAtom,
+                                              XCB_ATOM_CARDINAL,
+                                              0,
+                                              1);
     QCOMPARE(currentDesktop.value(0, &ok), 1);
     QVERIFY(ok);
 
     // go to desktop 3
     vd_manager->setCurrent(3);
-    currentDesktop = base::x11::xcb::property(
-        0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+    currentDesktop = base::x11::xcb::property(Test::app()->base->x11_data.connection,
+                                              0,
+                                              Test::app()->base->x11_data.root_window,
+                                              currentDesktopAtom,
+                                              XCB_ATOM_CARDINAL,
+                                              0,
+                                              1);
     QCOMPARE(currentDesktop.value(0, &ok), 2);
     QVERIFY(ok);
 
     // go to desktop 4
     vd_manager->setCurrent(4);
-    currentDesktop = base::x11::xcb::property(
-        0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+    currentDesktop = base::x11::xcb::property(Test::app()->base->x11_data.connection,
+                                              0,
+                                              Test::app()->base->x11_data.root_window,
+                                              currentDesktopAtom,
+                                              XCB_ATOM_CARDINAL,
+                                              0,
+                                              1);
     QCOMPARE(currentDesktop.value(0, &ok), 3);
     QVERIFY(ok);
 
     // and back to first
     vd_manager->setCurrent(1);
-    currentDesktop = base::x11::xcb::property(
-        0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
+    currentDesktop = base::x11::xcb::property(Test::app()->base->x11_data.connection,
+                                              0,
+                                              Test::app()->base->x11_data.root_window,
+                                              currentDesktopAtom,
+                                              XCB_ATOM_CARDINAL,
+                                              0,
+                                              1);
     QCOMPARE(currentDesktop.value(0, &ok), 0);
     QVERIFY(ok);
 }
@@ -770,7 +800,7 @@ void VirtualDesktopTest::testNetCurrentDesktop()
 void VirtualDesktopTest::testLastDesktopRemoved()
 {
     // first create a new desktop
-    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
     QCOMPARE(vd_manager->count(), 1u);
     vd_manager->setCount(2);
     QCOMPARE(vd_manager->count(), 2u);
@@ -810,7 +840,7 @@ void VirtualDesktopTest::testLastDesktopRemoved()
 void VirtualDesktopTest::testWindowOnMultipleDesktops()
 {
     // first create two new desktops
-    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
     QCOMPARE(vd_manager->count(), 1u);
     vd_manager->setCount(3);
     QCOMPARE(vd_manager->count(), 3u);
@@ -894,7 +924,7 @@ void VirtualDesktopTest::testWindowOnMultipleDesktops()
 void VirtualDesktopTest::testRemoveDesktopWithWindow()
 {
     // first create two new desktops
-    auto& vd_manager = Test::app()->base.space->virtual_desktop_manager;
+    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
     QCOMPARE(vd_manager->count(), 1u);
     vd_manager->setCount(3);
     QCOMPARE(vd_manager->count(), 3u);

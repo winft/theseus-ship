@@ -9,7 +9,6 @@
 #include "startup_notify.h"
 
 #include "base/output_helpers.h"
-#include "main.h"
 #include "win/desktop_space.h"
 
 #include <KStartupInfo>

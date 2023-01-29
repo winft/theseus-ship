@@ -38,7 +38,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
     assert(win->xcb_windows.wrapper == XCB_WINDOW_NONE);
 
     uint32_t const zero_value = 0;
-    auto conn = connection();
+    auto conn = win->space.base.x11_data.connection;
 
     // We don't want the window to be destroyed when we quit
     xcb_change_save_set(conn, XCB_SET_MODE_INSERT, win->xcb_windows.client);
@@ -77,7 +77,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
     xcb_create_window(conn,
                       depth,
                       frame,
-                      rootWindow(),
+                      win->space.base.x11_data.root_window,
                       0,
                       0,
                       1,
@@ -87,7 +87,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
                       visualid,
                       cw_mask,
                       cw_values);
-    win->xcb_windows.outer.reset(frame);
+    win->xcb_windows.outer.reset(win->space.base.x11_data.connection, frame);
 
     // Create the wrapper window
     auto wrapperId = xcb_generate_id(conn);
@@ -105,7 +105,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
                       cw_mask,
                       cw_values);
 
-    win->xcb_windows.wrapper.reset(wrapperId);
+    win->xcb_windows.wrapper.reset(win->space.base.x11_data.connection, wrapperId);
     win->xcb_windows.client.reparent(win->xcb_windows.wrapper);
 
     // We could specify the event masks when we create the windows, but the original
@@ -138,7 +138,7 @@ template<typename Win>
 bool created_window_may_activate(Win& win, Win& act_win)
 {
     if (enum_index(win.control->rules.checkFSP(
-            kwinApp()->options->qobject->focusStealingPreventionLevel()))
+            win.space.base.options->qobject->focusStealingPreventionLevel()))
         <= 0) {
         // Always allowed if focus stealing prevention is turned off.
         return true;
@@ -260,8 +260,8 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     blocker block(space.stacking.order);
 
-    base::x11::xcb::window_attributes attr(xcb_win);
-    base::x11::xcb::geometry windowGeometry(xcb_win);
+    base::x11::xcb::window_attributes attr(space.base.x11_data.connection, xcb_win);
+    base::x11::xcb::geometry windowGeometry(space.base.x11_data.connection, xcb_win);
     if (attr.is_null() || windowGeometry.is_null()) {
         return nullptr;
     }
@@ -294,7 +294,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->supported_default_types = supported_managed_window_types_mask;
     win->geo.has_in_content_deco = true;
 
-    win->sync_request.timestamp = xTime();
+    win->sync_request.timestamp = space.base.x11_data.time;
 
     setup_window_control_connections(win);
     win->control->setup_tabbox();
@@ -304,11 +304,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      &client_machine::localhostChanged,
                      win->qobject.get(),
                      [win] { win->updateCaption(); });
-    QObject::connect(kwinApp()->options->qobject.get(),
+    QObject::connect(space.base.options->qobject.get(),
                      &base::options_qobject::configChanged,
                      win->qobject.get(),
                      [win] { win->control->update_mouse_grab(); });
-    QObject::connect(kwinApp()->options->qobject.get(),
+    QObject::connect(space.base.options->qobject.get(),
                      &base::options_qobject::condensedTitleChanged,
                      win->qobject.get(),
                      [win] { win->updateCaption(); });
@@ -326,9 +326,9 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                              // changing window attributes doesn't change cursor if there's
                              // pointer grab active
                              xcb_change_active_pointer_grab(
-                                 connection(),
+                                 win->space.base.x11_data.connection,
                                  nativeCursor,
-                                 xTime(),
+                                 win->space.base.x11_data.time,
                                  XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
                                      | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW
                                      | XCB_EVENT_MASK_LEAVE_WINDOW);
@@ -361,8 +361,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->geometry_hints.init(win->xcb_windows.client);
     win->motif_hints.init(win->xcb_windows.client);
 
-    win->net_info
-        = new win_info<Win>(win, win->xcb_windows.client, rootWindow(), properties, properties2);
+    win->net_info = new win_info<Win>(win,
+                                      win->xcb_windows.client,
+                                      win->space.base.x11_data.root_window,
+                                      properties,
+                                      properties2);
 
     if (is_desktop(win) && win->render_data.bit_depth == 32) {
         // force desktop windows to be opaque. It's a desktop after all, there is no window
@@ -390,7 +393,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      [win] { rules::evaluate_rules(win); });
 
     if (base::x11::xcb::extensions::self()->is_shape_available()) {
-        xcb_shape_select_input(connection(), win->xcb_windows.client, true);
+        xcb_shape_select_input(space.base.x11_data.connection, win->xcb_windows.client, true);
     }
 
     detect_shape(*win);
@@ -726,7 +729,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         if (!isMapped) {
             if (allow && on_current_desktop(win)) {
                 if (!is_special_window(win)) {
-                    if (kwinApp()->options->qobject->focusPolicyIsReasonable()
+                    if (space.base.options->qobject->focusPolicyIsReasonable()
                         && wants_tab_focus(win)) {
                         request_focus(space, *win);
                     }
@@ -751,11 +754,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     if (win->user_time == XCB_TIME_CURRENT_TIME || win->user_time == -1U) {
         // No known user time, set something old
-        win->user_time = xTime() - 1000000;
+        win->user_time = win->space.base.x11_data.time - 1000000;
 
         // Let's be paranoid.
         if (win->user_time == XCB_TIME_CURRENT_TIME || win->user_time == -1U) {
-            win->user_time = xTime() - 1000000 + 10;
+            win->user_time = win->space.base.x11_data.time - 1000000 + 10;
         }
     }
 
@@ -773,21 +776,23 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     read_show_on_screen_edge(win, showOnScreenEdgeCookie);
 
     // Forward all opacity values to the frame in case there'll be other CM running.
-    QObject::connect(
-        win->space.base.render->compositor->qobject.get(),
-        &render::compositor_qobject::compositingToggled,
-        win->qobject.get(),
-        [win](bool active) {
-            if (active) {
-                return;
-            }
-            if (win->opacity() == 1.0) {
-                return;
-            }
-            NETWinInfo info(
-                connection(), win->frameId(), rootWindow(), NET::Properties(), NET::Properties2());
-            info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
-        });
+    QObject::connect(win->space.base.render->compositor->qobject.get(),
+                     &render::compositor_qobject::compositingToggled,
+                     win->qobject.get(),
+                     [win](bool active) {
+                         if (active) {
+                             return;
+                         }
+                         if (win->opacity() == 1.0) {
+                             return;
+                         }
+                         NETWinInfo info(win->space.base.x11_data.connection,
+                                         win->frameId(),
+                                         win->space.base.x11_data.root_window,
+                                         NET::Properties(),
+                                         NET::Properties2());
+                         info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
+                     });
 
     add_controlled_window_to_space(space, win);
     return win;

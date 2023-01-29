@@ -31,24 +31,26 @@ void update_window_buffer(Win* win)
 template<typename Win, typename BufImpl>
 void create_window_buffer(Win* win, BufImpl& buf_impl)
 {
-    base::x11::server_grabber grabber;
-    xcb_pixmap_t pix = xcb_generate_id(connection());
+    auto con = win->space.base.x11_data.connection;
+    base::x11::server_grabber grabber(con);
+    xcb_pixmap_t pix = xcb_generate_id(con);
     xcb_void_cookie_t name_cookie
-        = xcb_composite_name_window_pixmap_checked(connection(), win->frameId(), pix);
-    base::x11::xcb::window_attributes windowAttributes(win->frameId());
+        = xcb_composite_name_window_pixmap_checked(con, win->frameId(), pix);
+    base::x11::xcb::window_attributes windowAttributes(con, win->frameId());
 
-    auto xcb_frame_geometry = base::x11::xcb::geometry(win->frameId());
+    auto xcb_frame_geometry = base::x11::xcb::geometry(con, win->frameId());
 
-    if (xcb_generic_error_t* error = xcb_request_check(connection(), name_cookie)) {
+    if (xcb_generic_error_t* error = xcb_request_check(con, name_cookie)) {
         qCDebug(KWIN_CORE) << "Creating buffer failed: " << error->error_code;
         free(error);
         return;
     }
+
     // check that the received pixmap is valid and actually matches what we
     // know about the window (i.e. size)
     if (!windowAttributes || windowAttributes->map_state != XCB_MAP_STATE_VIEWABLE) {
         qCDebug(KWIN_CORE) << "Creating buffer failed by mapping state: " << win;
-        xcb_free_pixmap(connection(), pix);
+        xcb_free_pixmap(con, pix);
         return;
     }
 
@@ -56,7 +58,7 @@ void create_window_buffer(Win* win, BufImpl& buf_impl)
     if (xcb_frame_geometry.size() != render_geo.size()) {
         qCDebug(KWIN_CORE) << "Creating buffer failed by size: " << win << " : "
                            << xcb_frame_geometry.rect() << " | " << render_geo;
-        xcb_free_pixmap(connection(), pix);
+        xcb_free_pixmap(con, pix);
         return;
     }
 
@@ -80,10 +82,10 @@ QRegion get_shape_render_region(Win& win)
     win.is_render_shape_valid = true;
     win.render_shape = {};
 
-    auto cookie
-        = xcb_shape_get_rectangles_unchecked(connection(), win.frameId(), XCB_SHAPE_SK_BOUNDING);
+    auto con = win.space.base.x11_data.connection;
+    auto cookie = xcb_shape_get_rectangles_unchecked(con, win.frameId(), XCB_SHAPE_SK_BOUNDING);
     unique_cptr<xcb_shape_get_rectangles_reply_t> reply(
-        xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
+        xcb_shape_get_rectangles_reply(con, cookie, nullptr));
     if (!reply) {
         return {};
     }
@@ -154,9 +156,9 @@ void setup_compositing(Win& win)
         return;
     }
 
-    win.damage.handle = xcb_generate_id(connection());
-    xcb_damage_create(
-        connection(), win.damage.handle, win.frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
+    auto con = win.space.base.x11_data.connection;
+    win.damage.handle = xcb_generate_id(con);
+    xcb_damage_create(con, win.damage.handle, win.frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
 
     discard_shape(win);
     win.render_data.damage_region = QRect({}, win.geo.size());
@@ -191,7 +193,7 @@ void set_blocking_compositing(Win& win, bool block)
 {
     auto const usedToBlock = win.blocks_compositing;
     win.blocks_compositing = win.control->rules.checkBlockCompositing(
-        block && kwinApp()->options->qobject->windowsBlockCompositing());
+        block && win.space.base.options->qobject->windowsBlockCompositing());
 
     if (usedToBlock != win.blocks_compositing) {
         Q_EMIT win.qobject->blockingCompositingChanged(win.blocks_compositing);
@@ -210,14 +212,15 @@ void add_scene_window_addon(Win& win)
             render_win, atoms->kde_net_wm_shadow);
     };
     win.render->shadow_windowing.update = [&](auto&& shadow) {
-        return render::x11::read_and_update_shadow<shadow_t>(shadow, atoms->kde_net_wm_shadow);
+        return render::x11::read_and_update_shadow<shadow_t>(
+            shadow, win.space.base.x11_data.connection, atoms->kde_net_wm_shadow);
     };
 
-    auto setup_buffer = [](auto& buffer) {
+    auto setup_buffer = [con = win.space.base.x11_data.connection](auto& buffer) {
         using buffer_integration_t
             = render::x11::buffer_win_integration<typename scene_t::buffer_t>;
 
-        auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
+        auto win_integrate = std::make_unique<buffer_integration_t>(buffer, con);
         auto update_helper = [&buffer]() {
             auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
             create_window_buffer(std::get<Win*>(*buffer.window->ref_win), win_integrate);

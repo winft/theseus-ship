@@ -8,9 +8,9 @@
 #include "grabs.h"
 
 #include "base/logging.h"
-#include "main.h"
 #include "utils/memory.h"
 
+#include <QApplication>
 #include <QWidget>
 #include <cassert>
 
@@ -19,25 +19,25 @@ namespace KWin::base::x11
 
 static int server_grab_count = 0;
 
-void grab_server()
+void grab_server(xcb_connection_t* con)
 {
     if (++server_grab_count == 1) {
-        xcb_grab_server(connection());
+        xcb_grab_server(con);
     }
 }
 
-void ungrab_server()
+void ungrab_server(xcb_connection_t* con)
 {
     assert(server_grab_count > 0);
     if (--server_grab_count == 0) {
-        xcb_ungrab_server(connection());
-        xcb_flush(connection());
+        xcb_ungrab_server(con);
+        xcb_flush(con);
     }
 }
 
 static bool keyboard_grabbed = false;
 
-bool grab_keyboard(xcb_window_t w)
+bool grab_keyboard(x11::data const& data, xcb_window_t w)
 {
     if (QWidget::keyboardGrabber() != nullptr) {
         return false;
@@ -52,13 +52,13 @@ bool grab_keyboard(xcb_window_t w)
     }
 
     if (w == XCB_WINDOW_NONE) {
-        w = rootWindow();
+        w = data.root_window;
     }
 
     auto const cookie = xcb_grab_keyboard_unchecked(
-        connection(), false, w, xTime(), XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
+        data.connection, false, w, data.time, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
     unique_cptr<xcb_grab_keyboard_reply_t> grab(
-        xcb_grab_keyboard_reply(connection(), cookie, nullptr));
+        xcb_grab_keyboard_reply(data.connection, cookie, nullptr));
 
     if (!grab) {
         qCDebug(KWIN_CORE) << "Failed to grab X Keyboard: grab null";
@@ -73,7 +73,7 @@ bool grab_keyboard(xcb_window_t w)
     return true;
 }
 
-void ungrab_keyboard()
+void ungrab_keyboard(xcb_connection_t* con)
 {
     if (!keyboard_grabbed) {
         // grabXKeyboard() may fail sometimes, so don't fail, but at least warn anyway
@@ -81,7 +81,7 @@ void ungrab_keyboard()
     }
 
     keyboard_grabbed = false;
-    xcb_ungrab_keyboard(connection(), XCB_TIME_CURRENT_TIME);
+    xcb_ungrab_keyboard(con, XCB_TIME_CURRENT_TIME);
 }
 
 }

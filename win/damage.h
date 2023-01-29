@@ -24,7 +24,7 @@ QRegion repaints(Win const& win)
 template<typename Win>
 void acquire_repaint_outputs(Win& win, QRegion const& region)
 {
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
+    if (win.space.base.operation_mode == base::operation_mode::x11) {
         // On X11 we do not paint per output.
         return;
     }

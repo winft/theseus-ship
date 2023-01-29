@@ -11,7 +11,6 @@
 #include "x11/compositor_selection_owner.h"
 
 #include "base/options.h"
-#include "main.h"
 #include "win/remnant.h"
 #include "win/space_window_release.h"
 #include "win/stacking_order.h"
@@ -40,8 +39,11 @@ void compositor_claim_selection(Compositor& comp)
 
     if (!comp.m_selectionOwner) {
         char selection_name[100];
-        sprintf(selection_name, "_NET_WM_CM_S%d", kwinApp()->x11ScreenNumber());
-        comp.m_selectionOwner = new CompositorSelectionOwner(selection_name);
+        sprintf(selection_name, "_NET_WM_CM_S%d", comp.platform.base.x11_data.screen_number);
+        comp.m_selectionOwner
+            = new CompositorSelectionOwner(selection_name,
+                                           comp.platform.base.x11_data.connection,
+                                           comp.platform.base.x11_data.root_window);
         QObject::connect(comp.m_selectionOwner,
                          &CompositorSelectionOwner::lostOwnership,
                          comp.qobject.get(),
@@ -59,7 +61,7 @@ void compositor_claim_selection(Compositor& comp)
 template<typename Compositor>
 void compositor_setup_x11_support(Compositor& comp)
 {
-    auto con = kwinApp()->x11Connection();
+    auto con = comp.platform.base.x11_data.connection;
     if (!con) {
         delete comp.m_selectionOwner;
         comp.m_selectionOwner = nullptr;
@@ -67,7 +69,7 @@ void compositor_setup_x11_support(Compositor& comp)
     }
     compositor_claim_selection(comp);
     xcb_composite_redirect_subwindows(
-        con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
+        con, comp.platform.base.x11_data.root_window, XCB_COMPOSITE_REDIRECT_MANUAL);
 }
 
 template<typename Compositor>
@@ -76,18 +78,12 @@ void compositor_start_scene(Compositor& comp)
     assert(comp.space);
     assert(!comp.scene);
 
-    if (kwinApp()->isTerminating()) {
-        // Don't start while KWin is terminating. An event to restart might be lingering
-        // in the event queue due to graphics reset.
-        return;
-    }
-
     if (comp.state != state::off) {
         return;
     }
 
     comp.state = state::starting;
-    kwinApp()->options->reloadCompositingSettings(true);
+    comp.platform.base.options->reloadCompositingSettings(true);
     compositor_setup_x11_support(comp);
 
     Q_EMIT comp.qobject->aboutToToggleCompositing();
@@ -152,9 +148,9 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
                 var_win);
         }
 
-        if (auto con = kwinApp()->x11Connection()) {
+        if (auto con = comp.platform.base.x11_data.connection) {
             xcb_composite_unredirect_subwindows(
-                con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
+                con, comp.platform.base.x11_data.root_window, XCB_COMPOSITE_REDIRECT_MANUAL);
         }
         while (!win::get_remnants(*comp.space).empty()) {
             auto win = win::get_remnants(*comp.space).front();
@@ -188,7 +184,7 @@ template<typename Compositor>
 void reinitialize_compositor(Compositor& comp)
 {
     // Reparse config. Config options will be reloaded by start()
-    kwinApp()->config()->reparseConfiguration();
+    comp.platform.base.config.main->reparseConfiguration();
 
     // Restart compositing
     compositor_stop(comp, false);
@@ -205,11 +201,11 @@ void reinitialize_compositor(Compositor& comp)
 template<typename Compositor>
 void compositor_setup(Compositor& comp)
 {
-    QObject::connect(kwinApp()->options->qobject.get(),
+    QObject::connect(comp.platform.base.options->qobject.get(),
                      &base::options_qobject::configChanged,
                      comp.qobject.get(),
                      [&] { comp.configChanged(); });
-    QObject::connect(kwinApp()->options->qobject.get(),
+    QObject::connect(comp.platform.base.options->qobject.get(),
                      &base::options_qobject::animationSpeedChanged,
                      comp.qobject.get(),
                      [&] { comp.configChanged(); });

@@ -123,7 +123,6 @@ public:
             return nullptr;
         }
 
-        auto const& base = kwinApp()->get_base();
         QWindow* found = nullptr;
         auto it = windows.end();
 
@@ -141,7 +140,7 @@ public:
             if (!w->isVisible()) {
                 continue;
             }
-            if (!QRect({}, base.topology.size).contains(w->geometry())) {
+            if (!QRect({}, this->redirect.platform.base.topology.size).contains(w->geometry())) {
                 continue;
             }
             if (w->property("_q_showWithoutActivating").toBool()) {

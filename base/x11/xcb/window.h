@@ -26,6 +26,7 @@ namespace KWin::base::x11::xcb
 class window
 {
 public:
+    window() = default;
     /**
      * Takes over responsibility of @p win. If @p win is not provided an invalid window is
      * created. Use @ref create to set an xcb_window_t later on.
@@ -38,7 +39,7 @@ public:
      * @param destroy Whether the window should be destroyed together with the object.
      * @see reset
      */
-    window(xcb_window_t win = XCB_WINDOW_NONE, bool destroy = true);
+    window(xcb_connection_t* con, xcb_window_t win, bool destroy = true);
     /**
      * Creates an xcb_window_t and manages it. It's a convenient method to create a window with
      * depth, class and visual being copied from parent and border being @c 0.
@@ -47,10 +48,11 @@ public:
      * @param values The values to be passed to xcb_create_window
      * @param parent The parent window
      */
-    window(const QRect& geometry,
+    window(xcb_connection_t* con,
+           xcb_window_t parent,
+           QRect const& geometry,
            uint32_t mask = 0,
-           const uint32_t* values = nullptr,
-           xcb_window_t parent = rootWindow());
+           const uint32_t* values = nullptr);
     /**
      * Creates an xcb_window_t and manages it. It's a convenient method to create a window with
      * depth and visual being copied from parent and border being @c 0.
@@ -60,11 +62,12 @@ public:
      * @param values The values to be passed to xcb_create_window
      * @param parent The parent window
      */
-    window(const QRect& geometry,
+    window(xcb_connection_t* con,
+           xcb_window_t parent,
+           QRect const& geometry,
            uint16_t windowClass,
            uint32_t mask = 0,
-           const uint32_t* values = nullptr,
-           xcb_window_t parent = rootWindow());
+           const uint32_t* values = nullptr);
     window(const window& other) = delete;
     ~window();
 
@@ -78,10 +81,11 @@ public:
      * @param values The values to be passed to xcb_create_window
      * @param parent The parent window
      */
-    void create(const QRect& geometry,
+    void create(xcb_connection_t* con,
+                xcb_window_t parent,
+                QRect const& geometry,
                 uint32_t mask = 0,
-                const uint32_t* values = nullptr,
-                xcb_window_t parent = rootWindow());
+                const uint32_t* values = nullptr);
     /**
      * Creates a new window for which the responsibility is taken over. If a window had been managed
      * before it is freed.
@@ -93,18 +97,21 @@ public:
      * @param values The values to be passed to xcb_create_window
      * @param parent The parent window
      */
-    void create(const QRect& geometry,
+    void create(xcb_connection_t* con,
+                xcb_window_t parent,
+                QRect const& geometry,
                 uint16_t windowClass,
                 uint32_t mask = 0,
-                const uint32_t* values = nullptr,
-                xcb_window_t parent = rootWindow());
+                const uint32_t* values = nullptr);
     /**
      * Frees the existing window and starts to manage the new @p win.
      * If @p destroy is @c true the new managed window will be destroyed together with this
      * object or when reset is called again. If @p destroy is @c false the window will not
      * be destroyed. It is then the responsibility of the caller to destroy the window.
      */
-    void reset(xcb_window_t win = XCB_WINDOW_NONE, bool destroy = true);
+    void reset(xcb_connection_t* con, xcb_window_t win, bool destroy = true);
+    void reset();
+
     /**
      * @returns @c true if a window is managed, @c false otherwise.
      */
@@ -159,39 +166,47 @@ public:
     operator xcb_window_t() const;
 
 private:
-    xcb_window_t do_create(const QRect& geometry,
+    xcb_window_t do_create(xcb_connection_t* con,
+                           xcb_window_t parent,
+                           const QRect& geometry,
                            uint16_t windowClass,
                            uint32_t mask = 0,
-                           const uint32_t* values = nullptr,
-                           xcb_window_t parent = rootWindow());
+                           const uint32_t* values = nullptr);
     void destroy();
-    xcb_window_t m_window;
-    bool m_destroy;
+
+    xcb_window_t m_window{XCB_WINDOW_NONE};
+    bool m_destroy{true};
     QRect m_logicGeometry;
+    xcb_connection_t* con{nullptr};
 };
 
-inline window::window(xcb_window_t win, bool destroy)
+inline window::window(xcb_connection_t* con, xcb_window_t win, bool destroy)
     : m_window(win)
     , m_destroy(destroy)
+    , con{con}
 {
 }
 
-inline window::window(const QRect& geometry,
+inline window::window(xcb_connection_t* con,
+                      xcb_window_t parent,
+                      QRect const& geometry,
                       uint32_t mask,
-                      const uint32_t* values,
-                      xcb_window_t parent)
-    : m_window(do_create(geometry, XCB_COPY_FROM_PARENT, mask, values, parent))
+                      const uint32_t* values)
+    : m_window(do_create(con, parent, geometry, XCB_COPY_FROM_PARENT, mask, values))
     , m_destroy(true)
+    , con{con}
 {
 }
 
-inline window::window(const QRect& geometry,
+inline window::window(xcb_connection_t* con,
+                      xcb_window_t parent,
+                      QRect const& geometry,
                       uint16_t windowClass,
                       uint32_t mask,
-                      const uint32_t* values,
-                      xcb_window_t parent)
-    : m_window(do_create(geometry, windowClass, mask, values, parent))
+                      const uint32_t* values)
+    : m_window(do_create(con, parent, geometry, windowClass, mask, values))
     , m_destroy(true)
+    , con{con}
 {
 }
 
@@ -205,7 +220,7 @@ inline void window::destroy()
     if (!is_valid() || !m_destroy) {
         return;
     }
-    xcb_destroy_window(connection(), m_window);
+    xcb_destroy_window(con, m_window);
     m_window = XCB_WINDOW_NONE;
 }
 
@@ -219,31 +234,38 @@ inline window::operator xcb_window_t() const
     return m_window;
 }
 
-inline void window::create(const QRect& geometry,
+inline void window::create(xcb_connection_t* con,
+                           xcb_window_t parent,
+                           QRect const& geometry,
                            uint16_t windowClass,
                            uint32_t mask,
-                           const uint32_t* values,
-                           xcb_window_t parent)
+                           const uint32_t* values)
 {
+    assert(con);
     destroy();
-    m_window = do_create(geometry, windowClass, mask, values, parent);
+    m_window = do_create(con, parent, geometry, windowClass, mask, values);
 }
 
-inline void
-window::create(const QRect& geometry, uint32_t mask, const uint32_t* values, xcb_window_t parent)
+inline void window::create(xcb_connection_t* con,
+                           xcb_window_t parent,
+                           QRect const& geometry,
+                           uint32_t mask,
+                           const uint32_t* values)
 {
-    create(geometry, XCB_COPY_FROM_PARENT, mask, values, parent);
+    create(con, parent, geometry, XCB_COPY_FROM_PARENT, mask, values);
 }
 
-inline xcb_window_t window::do_create(QRect const& geometry,
+inline xcb_window_t window::do_create(xcb_connection_t* con,
+                                      xcb_window_t parent,
+                                      QRect const& geometry,
                                       uint16_t windowClass,
                                       uint32_t mask,
-                                      const uint32_t* values,
-                                      xcb_window_t parent)
+                                      const uint32_t* values)
 {
+    this->con = con;
     m_logicGeometry = geometry;
-    xcb_window_t w = xcb_generate_id(connection());
-    xcb_create_window(connection(),
+    xcb_window_t w = xcb_generate_id(con);
+    xcb_create_window(con,
                       XCB_COPY_FROM_PARENT,
                       w,
                       parent,
@@ -259,11 +281,19 @@ inline xcb_window_t window::do_create(QRect const& geometry,
     return w;
 }
 
-inline void window::reset(xcb_window_t window, bool shouldDestroy)
+inline void window::reset(xcb_connection_t* con, xcb_window_t window, bool shouldDestroy)
 {
     destroy();
+    this->con = con;
     m_window = window;
     m_destroy = shouldDestroy;
+}
+
+inline void window::reset()
+{
+    destroy();
+    m_window = XCB_WINDOW_NONE;
+    m_destroy = true;
 }
 
 inline void window::set_geometry(const QRect& geometry)
@@ -280,7 +310,7 @@ inline void window::set_geometry(uint32_t x, uint32_t y, uint32_t width, uint32_
     const uint16_t mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH
         | XCB_CONFIG_WINDOW_HEIGHT;
     const uint32_t values[] = {x, y, width, height};
-    xcb_configure_window(connection(), m_window, mask, values);
+    xcb_configure_window(con, m_window, mask, values);
 }
 
 inline void window::move(const QPoint& pos)
@@ -294,7 +324,7 @@ inline void window::move(uint32_t x, uint32_t y)
     if (!is_valid()) {
         return;
     }
-    move_window(m_window, x, y);
+    move_window(con, m_window, x, y);
 }
 
 inline void window::resize(const QSize& size)
@@ -310,18 +340,18 @@ inline void window::resize(uint32_t width, uint32_t height)
     }
     const uint16_t mask = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
     const uint32_t values[] = {width, height};
-    xcb_configure_window(connection(), m_window, mask, values);
+    xcb_configure_window(con, m_window, mask, values);
 }
 
 inline void window::raise()
 {
     const uint32_t values[] = {XCB_STACK_MODE_ABOVE};
-    xcb_configure_window(connection(), m_window, XCB_CONFIG_WINDOW_STACK_MODE, values);
+    xcb_configure_window(con, m_window, XCB_CONFIG_WINDOW_STACK_MODE, values);
 }
 
 inline void window::lower()
 {
-    lower_window(m_window);
+    lower_window(con, m_window);
 }
 
 inline void window::map()
@@ -329,7 +359,7 @@ inline void window::map()
     if (!is_valid()) {
         return;
     }
-    xcb_map_window(connection(), m_window);
+    xcb_map_window(con, m_window);
 }
 
 inline void window::unmap()
@@ -337,7 +367,7 @@ inline void window::unmap()
     if (!is_valid()) {
         return;
     }
-    xcb_unmap_window(connection(), m_window);
+    xcb_unmap_window(con, m_window);
 }
 
 inline void window::reparent(xcb_window_t parent, int x, int y)
@@ -345,7 +375,7 @@ inline void window::reparent(xcb_window_t parent, int x, int y)
     if (!is_valid()) {
         return;
     }
-    xcb_reparent_window(connection(), m_window, parent, x, y);
+    xcb_reparent_window(con, m_window, parent, x, y);
 }
 
 inline void window::change_property(xcb_atom_t prop,
@@ -358,7 +388,7 @@ inline void window::change_property(xcb_atom_t prop,
     if (!is_valid()) {
         return;
     }
-    xcb_change_property(connection(), mode, m_window, prop, type, format, length, data);
+    xcb_change_property(con, mode, m_window, prop, type, format, length, data);
 }
 
 inline void window::delete_property(xcb_atom_t prop)
@@ -366,7 +396,7 @@ inline void window::delete_property(xcb_atom_t prop)
     if (!is_valid()) {
         return;
     }
-    xcb_delete_property(connection(), m_window, prop);
+    xcb_delete_property(con, m_window, prop);
 }
 
 inline void window::set_border_width(uint32_t width)
@@ -374,7 +404,7 @@ inline void window::set_border_width(uint32_t width)
     if (!is_valid()) {
         return;
     }
-    xcb_configure_window(connection(), m_window, XCB_CONFIG_WINDOW_BORDER_WIDTH, &width);
+    xcb_configure_window(con, m_window, XCB_CONFIG_WINDOW_BORDER_WIDTH, &width);
 }
 
 inline void window::grab_button(uint8_t pointerMode,
@@ -389,7 +419,7 @@ inline void window::grab_button(uint8_t pointerMode,
     if (!is_valid()) {
         return;
     }
-    xcb_grab_button(connection(),
+    xcb_grab_button(con,
                     ownerEvents,
                     m_window,
                     eventMask,
@@ -406,7 +436,7 @@ inline void window::ungrab_button(uint16_t modifiers, uint8_t button)
     if (!is_valid()) {
         return;
     }
-    xcb_ungrab_button(connection(), button, m_window, modifiers);
+    xcb_ungrab_button(con, button, m_window, modifiers);
 }
 
 inline void window::clear()
@@ -414,7 +444,7 @@ inline void window::clear()
     if (!is_valid()) {
         return;
     }
-    xcb_clear_area(connection(), false, m_window, 0, 0, 0, 0);
+    xcb_clear_area(con, false, m_window, 0, 0, 0, 0);
 }
 
 inline void window::set_background_pixmap(xcb_pixmap_t pixmap)
@@ -423,27 +453,27 @@ inline void window::set_background_pixmap(xcb_pixmap_t pixmap)
         return;
     }
     const uint32_t values[] = {pixmap};
-    xcb_change_window_attributes(connection(), m_window, XCB_CW_BACK_PIXMAP, values);
+    xcb_change_window_attributes(con, m_window, XCB_CW_BACK_PIXMAP, values);
 }
 
 inline void window::define_cursor(xcb_cursor_t cursor)
 {
-    xcb::define_cursor(m_window, cursor);
+    xcb::define_cursor(con, m_window, cursor);
 }
 
 inline void window::focus(uint8_t revertTo, xcb_timestamp_t time)
 {
-    set_input_focus(m_window, revertTo, time);
+    xcb_set_input_focus(con, revertTo, m_window, time);
 }
 
 inline void window::select_input(uint32_t events)
 {
-    xcb::select_input(m_window, events);
+    xcb::select_input(con, m_window, events);
 }
 
 inline void window::kill()
 {
-    xcb_kill_client(connection(), m_window);
+    xcb_kill_client(con, m_window);
 }
 
 }

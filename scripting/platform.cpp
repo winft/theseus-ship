@@ -22,10 +22,12 @@
 namespace KWin::scripting
 {
 
-platform_wrap::platform_wrap()
+platform_wrap::platform_wrap(base::options& options, base::config& config)
     : qml_engine(new QQmlEngine(this))
     , declarative_script_shared_context(new QQmlContext(qml_engine, this))
+    , config{config}
     , m_scriptsLock(new QRecursiveMutex)
+    , options{options}
 
 {
     qRegisterMetaType<KWin::SessionState>();
@@ -66,15 +68,13 @@ void platform_wrap::start()
 
 LoadScriptList platform_wrap::queryScriptsToLoad()
 {
-    auto config = kwinApp()->config();
-
     if (is_running) {
-        config->reparseConfiguration();
+        config.main->reparseConfiguration();
     } else {
         is_running = true;
     }
 
-    QMap<QString, QString> pluginStates = KConfigGroup(config, "Plugins").entryMap();
+    QMap<QString, QString> pluginStates = KConfigGroup(config.main, "Plugins").entryMap();
     const QString scriptFolder = QStringLiteral(KWIN_NAME "/scripts/");
     const auto offers = KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"),
                                                                       scriptFolder);
@@ -187,7 +187,7 @@ int platform_wrap::loadScript(const QString& filePath, const QString& pluginName
         return -1;
     }
     const int id = scripts.size();
-    auto script = new scripting::script(id, filePath, pluginName, *this, this);
+    auto script = new scripting::script(id, filePath, pluginName, *this, options, config, this);
     connect(script, &QObject::destroyed, this, &platform_wrap::scriptDestroyed);
     scripts.append(script);
     return id;

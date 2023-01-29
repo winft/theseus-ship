@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "bridge_qobject.h"
 
-#include "main.h"
 #include "render/compositor_qobject.h"
 #include "render/types.h"
 #include "win/space_qobject.h"
@@ -167,7 +166,7 @@ private:
 
     void readSettings()
     {
-        KConfigGroup config = kwinApp()->config()->group(QStringLiteral("org.kde.kdecoration2"));
+        KConfigGroup config = space.base.config.main->group(QStringLiteral("org.kde.kdecoration2"));
         const auto& left
             = readDecorationButtons(config,
                                     "ButtonsOnLeft",

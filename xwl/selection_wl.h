@@ -75,7 +75,7 @@ template<typename Selection>
 void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event, qint32 fd)
 {
     auto transfer = new wl_to_x11_transfer(
-        sel->data.atom, event, fd, *sel->data.core.x11.atoms, sel->data.qobject.get());
+        sel->data.atom, event, fd, sel->data.core.x11, sel->data.qobject.get());
 
     QObject::connect(transfer,
                      &wl_to_x11_transfer::selection_notify,
@@ -214,7 +214,7 @@ inline void send_wl_selection_targets(x11_runtime const& x11,
 
     size_t cnt = 2;
     for (auto const& mime : offers) {
-        targets[cnt] = mime_type_to_atom(mime, *x11.atoms);
+        targets[cnt] = mime_type_to_atom(x11.connection, mime, *x11.atoms);
         cnt++;
     }
 
@@ -234,7 +234,8 @@ inline void send_wl_selection_targets(x11_runtime const& x11,
 template<typename Source>
 int selection_wl_start_transfer(Source&& source, xcb_selection_request_event_t* event)
 {
-    auto const targets = atom_to_mime_types(event->target, *source->core.x11.atoms);
+    auto const targets
+        = atom_to_mime_types(source->core.x11.connection, event->target, *source->core.x11.atoms);
     if (targets.empty()) {
         qCDebug(KWIN_CORE) << "Unknown selection atom. Ignoring request.";
         return -1;

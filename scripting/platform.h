@@ -48,7 +48,7 @@ class KWIN_EXPORT platform_wrap : public QObject
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Scripting")
 
 public:
-    platform_wrap();
+    platform_wrap(base::options& options, base::config& config);
     ~platform_wrap() override;
 
     Q_SCRIPTABLE Q_INVOKABLE int loadScript(const QString& filePath,
@@ -70,6 +70,7 @@ public:
 
     QQmlEngine* qml_engine;
     QQmlContext* declarative_script_shared_context;
+    base::config& config;
 
 public Q_SLOTS:
     void scriptDestroyed(QObject* object);
@@ -92,6 +93,7 @@ private:
 
     QStringList scriptList;
     bool is_running{false};
+    base::options& options;
 };
 
 template<typename Space>
@@ -99,7 +101,8 @@ class platform : public platform_wrap
 {
 public:
     platform(Space& space)
-        : space{space}
+        : platform_wrap(*space.base.options, space.base.config)
+        , space{space}
     {
         qmlRegisterType<render::desktop_thumbnail_item>(
             "org.kde.kwin", 2, 0, "DesktopThumbnailItem");
@@ -141,7 +144,7 @@ public:
 
         qt_space = std::make_unique<template_space<qt_script_space, Space>>(&space);
         qml_engine->rootContext()->setContextProperty("workspace", qt_space.get());
-        qml_engine->rootContext()->setContextProperty("options", kwinApp()->options->qobject.get());
+        qml_engine->rootContext()->setContextProperty("options", space.base.options->qobject.get());
 
         decl_space = std::make_unique<template_space<declarative_script_space, Space>>(&space);
         declarative_script_shared_context->setContextProperty("workspace", decl_space.get());

@@ -77,7 +77,7 @@ void input_method_test::initTestCase()
 {
     qRegisterMetaType<Wrapland::Client::Keyboard::KeyState>();
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
@@ -102,11 +102,11 @@ void input_method_test::init()
     QVERIFY(text_input.get());
     QVERIFY(input_method.get());
 
-    QSignalSpy input_method_spy(Test::app()->base.server->seat(),
+    QSignalSpy input_method_spy(Test::app()->base->server->seat(),
                                 &Wrapland::Server::Seat::input_method_v2_changed);
     QVERIFY(input_method_spy.isValid());
     QVERIFY(input_method_spy.wait());
-    QVERIFY(Test::app()->base.server->seat()->get_input_method_v2());
+    QVERIFY(Test::app()->base->server->seat()->get_input_method_v2());
 }
 
 void input_method_test::cleanup()
@@ -125,7 +125,7 @@ void input_method_test::cleanup()
     }
 
     toplevel.client_surface.reset();
-    QVERIFY(Test::app()->base.space->windows.empty());
+    QVERIFY(Test::app()->base->space->windows.empty());
 
     input_method.reset();
     text_input.reset();
@@ -145,7 +145,7 @@ void input_method_test::make_toplevel()
 
 void input_method_test::enable_text_input()
 {
-    QSignalSpy spy(Test::app()->base.server->seat(),
+    QSignalSpy spy(Test::app()->base->server->seat(),
                    &Wrapland::Server::Seat::text_input_v3_enabled_changed);
     QVERIFY(spy.isValid());
 
@@ -160,7 +160,7 @@ void input_method_test::enable_text_input()
 
 void input_method_test::disable_text_input()
 {
-    QSignalSpy spy(Test::app()->base.server->seat(),
+    QSignalSpy spy(Test::app()->base->server->seat(),
                    &Wrapland::Server::Seat::text_input_v3_enabled_changed);
     QVERIFY(spy.isValid());
 
@@ -174,7 +174,7 @@ void input_method_test::disable_text_input()
 /// Create popup surface, check popup window is created, init spies.
 void input_method_test::create_popup()
 {
-    QSignalSpy popup_spy(Test::app()->base.server->seat()->get_input_method_v2(),
+    QSignalSpy popup_spy(Test::app()->base->server->seat()->get_input_method_v2(),
                          &Wrapland::Server::input_method_v2::popup_surface_created);
     QVERIFY(popup_spy.isValid());
 
@@ -186,7 +186,7 @@ void input_method_test::create_popup()
     popup.server_popup_surface
         = popup_spy.front().front().value<Wrapland::Server::input_method_popup_surface_v2*>();
 
-    popup.window = Test::app()->base.space->find_window(popup.server_popup_surface->surface());
+    popup.window = Test::app()->base->space->find_window(popup.server_popup_surface->surface());
     QVERIFY(popup.window);
 
     popup.shown_spy = std::make_unique<QSignalSpy>(popup.window->qobject.get(),
@@ -217,11 +217,11 @@ void input_method_test::render_popup()
  */
 void input_method_test::test_early_popup_window()
 {
-    QSignalSpy window_added_spy(Test::app()->base.space->qobject.get(),
+    QSignalSpy window_added_spy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_added_spy.isValid());
 
-    QSignalSpy window_removed_spy(Test::app()->base.space->qobject.get(),
+    QSignalSpy window_removed_spy(Test::app()->base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_removed);
     QVERIFY(window_removed_spy.isValid());
 
@@ -249,7 +249,7 @@ void input_method_test::test_early_popup_window()
 
     auto signal_id = window_added_spy.back().front().value<quint32>();
     QCOMPARE(popup.window,
-             Test::get_wayland_window(Test::app()->base.space->windows_map.at(signal_id)));
+             Test::get_wayland_window(Test::app()->base->space->windows_map.at(signal_id)));
 
     QVERIFY(popup.window->isInputMethod());
     QVERIFY(!popup.text_area.intersects(popup.window->geo.frame));
@@ -277,11 +277,11 @@ void input_method_test::test_early_popup_window()
  */
 void input_method_test::test_late_popup_window()
 {
-    QSignalSpy window_added_spy(Test::app()->base.space->qobject.get(),
+    QSignalSpy window_added_spy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::wayland_window_added);
     QVERIFY(window_added_spy.isValid());
 
-    QSignalSpy window_removed_spy(Test::app()->base.space->qobject.get(),
+    QSignalSpy window_removed_spy(Test::app()->base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_removed);
     QVERIFY(window_removed_spy.isValid());
 
@@ -317,7 +317,7 @@ void input_method_test::test_late_popup_window()
 
     auto signal_id = window_added_spy.back().front().value<quint32>();
     QCOMPARE(popup.window,
-             Test::get_wayland_window(Test::app()->base.space->windows_map.at(signal_id)));
+             Test::get_wayland_window(Test::app()->base->space->windows_map.at(signal_id)));
 
     QVERIFY(popup.window->isInputMethod());
     QVERIFY(!popup.text_area.intersects(popup.window->geo.frame));
@@ -337,12 +337,12 @@ void input_method_test::test_late_popup_window()
  */
 void input_method_test::test_keyboard_filter()
 {
-    QSignalSpy enabled_spy(Test::app()->base.server->seat(),
+    QSignalSpy enabled_spy(Test::app()->base->server->seat(),
                            &Wrapland::Server::Seat::text_input_v3_enabled_changed);
 
     make_toplevel();
 
-    QSignalSpy keyboard_grab_spy(Test::app()->base.server->seat()->get_input_method_v2(),
+    QSignalSpy keyboard_grab_spy(Test::app()->base->server->seat()->get_input_method_v2(),
                                  &Wrapland::Server::input_method_v2::keyboard_grabbed);
     QVERIFY(keyboard_grab_spy.isValid());
 

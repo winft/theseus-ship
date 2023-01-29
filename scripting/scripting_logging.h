@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QDebug>
 #include <QLoggingCategory>
-Q_DECLARE_LOGGING_CATEGORY(KWIN_SCRIPTING)
+KWIN_EXPORT Q_DECLARE_LOGGING_CATEGORY(KWIN_SCRIPTING)

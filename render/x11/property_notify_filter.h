@@ -18,7 +18,7 @@ class property_notify_filter : public base::x11::event_filter
 {
 public:
     property_notify_filter(Effects& effects, Space& space, xcb_window_t root_window)
-        : base::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY})
+        : base::x11::event_filter(*space.base.x11_event_filters, QVector<int>{XCB_PROPERTY_NOTIFY})
         , effects{effects}
         , space{space}
         , root_window{root_window}

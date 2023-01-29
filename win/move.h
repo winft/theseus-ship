@@ -22,6 +22,7 @@
 #include "input/cursor.h"
 #include "render/outline.h"
 
+#include <QApplication>
 #include <QWidget>
 
 namespace KWin::win
@@ -661,7 +662,8 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
     }
 
     if (is_move(win)) {
-        win->space.edges->check(globalPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC));
+        win->space.edges->check(
+            globalPos, QDateTime::fromMSecsSinceEpoch(win->space.base.x11_data.time, Qt::UTC));
     }
 }
 

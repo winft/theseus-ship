@@ -12,7 +12,6 @@
 #include "input/event.h"
 #include "input/event_filter.h"
 #include "input/window_find.h"
-#include "main.h"
 #include "win/deco.h"
 #include "win/geo.h"
 #include "win/transient.h"

@@ -49,11 +49,13 @@ private:
     void setClientMachineProperty(xcb_window_t window, const QByteArray& hostname);
     QByteArray m_hostName;
     QByteArray m_fqdn;
+    xcb_connection_t* connection{nullptr};
+    xcb_window_t root_window{XCB_WINDOW_NONE};
 };
 
 void TestClientMachine::setClientMachineProperty(xcb_window_t window, const QByteArray& hostname)
 {
-    xcb_change_property(connection(),
+    xcb_change_property(connection,
                         XCB_PROP_MODE_REPLACE,
                         window,
                         XCB_ATOM_WM_CLIENT_MACHINE,
@@ -87,8 +89,8 @@ void TestClientMachine::initTestCase()
     }
     freeaddrinfo(res);
 
-    qApp->setProperty("x11RootWindow", QVariant::fromValue<quint32>(QX11Info::appRootWindow()));
-    qApp->setProperty("x11Connection", QVariant::fromValue<void*>(QX11Info::connection()));
+    connection = QX11Info::connection();
+    root_window = QX11Info::appRootWindow();
 }
 
 void TestClientMachine::cleanupTestCase()
@@ -121,15 +123,23 @@ void TestClientMachine::hostName()
 {
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
-    base::x11::xcb::window window(
-        geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
+    base::x11::xcb::window window(connection,
+                                  root_window,
+                                  geometry,
+                                  XCB_WINDOW_CLASS_INPUT_ONLY,
+                                  XCB_CW_OVERRIDE_REDIRECT,
+                                  values);
     QFETCH(QByteArray, hostName);
     QFETCH(bool, local);
     setClientMachineProperty(window, hostName);
 
     win::x11::client_machine clientMachine;
     QSignalSpy spy(&clientMachine, &win::x11::client_machine::localhostChanged);
-    clientMachine.resolve(window, XCB_WINDOW_NONE);
+
+    base::x11::data data;
+    data.connection = connection;
+    data.root_window = root_window;
+    clientMachine.resolve(data, window, XCB_WINDOW_NONE);
     QTEST(clientMachine.hostname(), "expectedHost");
 
     int i = 0;
@@ -146,11 +156,19 @@ void TestClientMachine::emptyHostName()
 {
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
-    base::x11::xcb::window window(
-        geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
+    base::x11::xcb::window window(connection,
+                                  root_window,
+                                  geometry,
+                                  XCB_WINDOW_CLASS_INPUT_ONLY,
+                                  XCB_CW_OVERRIDE_REDIRECT,
+                                  values);
     win::x11::client_machine clientMachine;
     QSignalSpy spy(&clientMachine, &win::x11::client_machine::localhostChanged);
-    clientMachine.resolve(window, XCB_WINDOW_NONE);
+
+    base::x11::data data;
+    data.connection = connection;
+    data.root_window = root_window;
+    clientMachine.resolve(data, window, XCB_WINDOW_NONE);
     QCOMPARE(clientMachine.hostname(), win::x11::client_machine::localhost());
     QVERIFY(clientMachine.is_local());
     // should be local

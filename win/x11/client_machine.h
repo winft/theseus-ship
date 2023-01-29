@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "base/x11/data.h"
 #include "kwin_export.h"
 
 #include <QObject>
@@ -68,7 +69,7 @@ class KWIN_EXPORT client_machine : public QObject
 {
     Q_OBJECT
 public:
-    void resolve(xcb_window_t window, xcb_window_t clientLeader);
+    void resolve(base::x11::data const& x11_data, xcb_window_t window, xcb_window_t clientLeader);
     QByteArray const& hostname() const;
     bool is_local() const;
     static QByteArray localhost();

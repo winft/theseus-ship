@@ -42,15 +42,14 @@ public:
     std::unique_ptr<book_qobject> qobject;
     KSharedConfig::Ptr config;
     std::deque<ruling*> m_rules;
+    std::unique_ptr<KXMessages> m_temporaryRulesMessages;
 
 private:
-    void initWithX11();
     void deleteAll();
     void cleanupTemporaryRules();
 
     QTimer* m_updateTimer;
     bool m_updatesDisabled;
-    std::unique_ptr<KXMessages> m_temporaryRulesMessages;
 };
 
 }

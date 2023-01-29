@@ -118,7 +118,7 @@ public:
 protected:
     bool doGrabKeyboard() override
     {
-        bool ret = base::x11::grab_keyboard();
+        bool ret = base::x11::grab_keyboard(this->compositor.platform.base.x11_data);
         if (!ret)
             return false;
         // Workaround for Qt 5.9 regression introduced with 2b34aefcf02f09253473b096eb4faffd3e62b5f4
@@ -132,7 +132,7 @@ protected:
 
     void doUngrabKeyboard() override
     {
-        base::x11::ungrab_keyboard();
+        base::x11::ungrab_keyboard(this->compositor.platform.base.x11_data.connection);
     }
 
     void doStartMouseInterception(Qt::CursorShape shape) override
@@ -140,13 +140,17 @@ protected:
         // NOTE: it is intended to not perform an XPointerGrab on X11. See documentation in
         // kwineffects.h The mouse grab is implemented by using a full screen input only window
         if (!mouse_intercept.window.is_valid()) {
-            auto const& space_size = this->compositor.platform.base.topology.size;
+            auto const& base = this->compositor.platform.base;
+            auto const& x11_data = base.x11_data;
+            auto const& space_size = base.topology.size;
             const QRect geo(0, 0, space_size.width(), space_size.height());
             const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
             const uint32_t values[] = {true,
                                        XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
                                            | XCB_EVENT_MASK_POINTER_MOTION};
-            mouse_intercept.window.reset(base::x11::xcb::create_input_window(geo, mask, values));
+            auto xcb_win = base::x11::xcb::create_input_window(
+                x11_data.connection, x11_data.root_window, geo, mask, values);
+            mouse_intercept.window.reset(x11_data.connection, xcb_win);
             defineCursor(shape);
         } else {
             defineCursor(shape);

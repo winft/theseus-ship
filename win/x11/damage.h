@@ -62,7 +62,7 @@ bool damage_reset_and_fetch(Win& win)
 
     assert(win.damage.handle != XCB_NONE);
 
-    auto conn = connection();
+    auto conn = win.space.base.x11_data.connection;
 
     // Create a new region and copy the damage region to it,
     // resetting the damaged state.
@@ -95,7 +95,8 @@ void damage_fetch_region_reply(Win& win)
     win.damage.is_reply_pending = false;
 
     // Get the fetch-region reply
-    auto reply = xcb_xfixes_fetch_region_reply(connection(), win.damage.region_cookie, nullptr);
+    auto reply = xcb_xfixes_fetch_region_reply(
+        win.space.base.x11_data.connection, win.damage.region_cookie, nullptr);
     if (!reply) {
         return;
     }

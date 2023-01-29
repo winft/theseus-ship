@@ -55,11 +55,11 @@ private Q_SLOTS:
 
 void TestDontCrashUseractionsMenu::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     // force style to breeze as that's the one which triggered the crash
-    QVERIFY(kwinApp()->setStyle(QStringLiteral("breeze")));
+    QVERIFY(Test::app()->setStyle(QStringLiteral("breeze")));
 
     Test::app()->start();
     Test::app()->set_outputs(2);
@@ -90,8 +90,8 @@ void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
     auto client = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
-    Test::app()->base.space->user_actions_menu->show(QRect(), client);
-    auto& userActionsMenu = Test::app()->base.space->user_actions_menu;
+    Test::app()->base->space->user_actions_menu->show(QRect(), client);
+    auto& userActionsMenu = Test::app()->base->space->user_actions_menu;
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
 
@@ -101,7 +101,7 @@ void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
     QVERIFY(!userActionsMenu->hasClient());
 
     // and show again, this triggers BUG 382063
-    Test::app()->base.space->user_actions_menu->show(QRect(), client);
+    Test::app()->base->space->user_actions_menu->show(QRect(), client);
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
 }

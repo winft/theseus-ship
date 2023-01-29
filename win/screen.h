@@ -10,7 +10,7 @@
 #include "base/options.h"
 #include "base/output_helpers.h"
 #include "base/platform.h"
-#include "main.h"
+#include "utils/algorithm.h"
 
 namespace KWin::win
 {
@@ -39,7 +39,7 @@ typename Space::base_t::output_t const* get_current_output(Space const& space)
 {
     auto const& base = space.base;
 
-    if (kwinApp()->options->get_current_output_follows_mouse()) {
+    if (space.base.options->get_current_output_follows_mouse()) {
         return base::get_nearest_output(base.outputs, space.input->cursor->pos());
     }
 

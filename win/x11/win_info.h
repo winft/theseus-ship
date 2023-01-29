@@ -27,7 +27,12 @@ public:
              xcb_window_t rwin,
              NET::Properties properties,
              NET::Properties2 properties2)
-        : NETWinInfo(connection(), xcb_win, rwin, properties, properties2, NET::WindowManager)
+        : NETWinInfo(window->space.base.x11_data.connection,
+                     xcb_win,
+                     rwin,
+                     properties,
+                     properties2,
+                     NET::WindowManager)
         , window(window)
     {
     }

@@ -51,12 +51,12 @@ private Q_SLOTS:
 
 Test::space::x11_window* get_x11_window_from_id(uint32_t id)
 {
-    return Test::get_x11_window(Test::app()->base.space->windows_map.at(id));
+    return Test::get_x11_window(Test::app()->base->space->windows_map.at(id));
 }
 
 void WindowRuleTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
@@ -74,7 +74,7 @@ void WindowRuleTest::init()
 void WindowRuleTest::cleanup()
 {
     // discards old rules
-    Test::app()->base.space->rule_book->load();
+    Test::app()->base->space->rule_book->load();
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
@@ -104,7 +104,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     QFile ruleFile(QFINDTESTDATA("./data/rules/maximize-vert-apply-initial"));
     QVERIFY(ruleFile.open(QIODevice::ReadOnly | QIODevice::Text));
 
-    Test::app()->base.space->rule_book->temporaryRulesMessage(
+    Test::app()->base->space->rule_book->temporaryRulesMessage(
         QString::fromUtf8(ruleFile.readAll()));
 
     // create the test window
@@ -117,7 +117,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -138,18 +138,22 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     xcb_change_property(c.get(),
                         XCB_PROP_MODE_REPLACE,
                         w,
-                        Test::app()->base.space->atoms->wm_window_role,
+                        Test::app()->base->space->atoms->wm_window_role,
                         XCB_ATOM_STRING,
                         8,
                         role.length(),
                         role.constData());
 
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base->x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -190,8 +194,8 @@ void WindowRuleTest::testWindowClassChange()
     group.writeEntry("wmclassmatch", 1);
     group.sync();
 
-    Test::app()->base.space->rule_book->config = config;
-    win::space_reconfigure(*Test::app()->base.space);
+    Test::app()->base->space->rule_book->config = config;
+    win::space_reconfigure(*Test::app()->base->space);
 
     // create the test window
     auto c = create_xcb_connection();
@@ -203,7 +207,7 @@ void WindowRuleTest::testWindowClassChange()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -220,12 +224,16 @@ void WindowRuleTest::testWindowClassChange()
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     xcb_icccm_set_wm_class(c.get(), w, 23, "org.kde.bar\0org.kde.bar");
 
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base->x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());

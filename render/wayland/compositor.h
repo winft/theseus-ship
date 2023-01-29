@@ -9,7 +9,6 @@
 #include "presentation.h"
 #include "utils.h"
 
-#include "main.h"
 #include "render/compositor.h"
 #include "render/compositor_start.h"
 #include "render/cursor.h"
@@ -48,11 +47,6 @@ public:
         compositor_setup(*this);
 
         dbus->qobject->integration.get_types = [] { return QStringList{"egl"}; };
-
-        QObject::connect(kwinApp(),
-                         &Application::x11ConnectionAboutToBeDestroyed,
-                         this->qobject.get(),
-                         [this] { compositor_destroy_selection(*this); });
     }
 
     ~compositor()
@@ -67,10 +61,9 @@ public:
     {
         if (!this->space) {
             // On first start setup connections.
-            QObject::connect(kwinApp(),
-                             &Application::x11ConnectionChanged,
-                             this->qobject.get(),
-                             [this] { compositor_setup_x11_support(*this); });
+            QObject::connect(&space.base, &base::platform::x11_reset, this->qobject.get(), [this] {
+                compositor_setup_x11_support(*this);
+            });
             QObject::connect(space.stacking.order.qobject.get(),
                              &win::stacking_order_qobject::changed,
                              this->qobject.get(),

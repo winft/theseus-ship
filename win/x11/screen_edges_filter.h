@@ -22,6 +22,7 @@ class screen_edges_filter : public base::x11::event_filter
 public:
     explicit screen_edges_filter(Space& space)
         : base::x11::event_filter(
+            *space.base.x11_event_filters,
             QVector<int>{XCB_MOTION_NOTIFY, XCB_ENTER_NOTIFY, XCB_CLIENT_MESSAGE})
         , space{space}
     {
@@ -35,7 +36,10 @@ public:
             const auto mouseEvent = reinterpret_cast<xcb_motion_notify_event_t*>(event);
             const QPoint rootPos(mouseEvent->root_x, mouseEvent->root_y);
             if (QWidget::mouseGrabber()) {
-                space.edges->check(rootPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
+                space.edges->check(
+                    rootPos,
+                    QDateTime::fromMSecsSinceEpoch(space.base.x11_data.time, Qt::UTC),
+                    true);
             } else {
                 space.edges->check(rootPos,
                                    QDateTime::fromMSecsSinceEpoch(mouseEvent->time, Qt::UTC));

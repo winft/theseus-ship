@@ -91,7 +91,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
 
         // We need to make a shadow copy of the event filter list because an activated event
         // filter may mutate it by removing or installing another event filter.
-        auto const event_filters = kwinApp()->x11_event_filters->generic_filters;
+        auto const event_filters = space.base.x11_event_filters->generic_filters;
 
         for (auto container : event_filters) {
             if (!container) {
@@ -107,7 +107,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     } else {
         // We need to make a shadow copy of the event filter list because an activated event
         // filter may mutate it by removing or installing another event filter.
-        auto const event_filters = kwinApp()->x11_event_filters->filters;
+        auto const event_filters = space.base.x11_event_filters->filters;
 
         for (auto container : event_filters) {
             if (!container) {
@@ -128,7 +128,8 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     // events that should be handled before Clients can get them
     switch (event_type) {
     case XCB_CONFIGURE_NOTIFY:
-        if (reinterpret_cast<xcb_configure_notify_event_t*>(event)->event == rootWindow()) {
+        if (reinterpret_cast<xcb_configure_notify_event_t*>(event)->event
+            == space.base.x11_data.root_window) {
             space.stacking.order.render_restack_required = true;
         }
         break;
@@ -168,12 +169,12 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     switch (event_type) {
     case XCB_CREATE_NOTIFY: {
         auto create_event = reinterpret_cast<xcb_create_notify_event_t*>(event);
-        if (create_event->parent == rootWindow() && !QWidget::find(create_event->window)
-            && !create_event->override_redirect) {
+        if (create_event->parent == space.base.x11_data.root_window
+            && !QWidget::find(create_event->window) && !create_event->override_redirect) {
             // see comments for allowClientActivation()
-            kwinApp()->update_x11_time_from_clock();
-            const xcb_timestamp_t t = xTime();
-            xcb_change_property(connection(),
+            base::x11::update_time_from_clock(space.base);
+            auto const t = space.base.x11_data.time;
+            xcb_change_property(space.base.x11_data.connection,
                                 XCB_PROP_MODE_REPLACE,
                                 create_event->window,
                                 space.atoms->kde_net_wm_user_creation_time,
@@ -199,7 +200,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     }
 
     case XCB_MAP_REQUEST: {
-        kwinApp()->update_x11_time_from_clock();
+        base::x11::update_time_from_clock(space.base);
         auto map_req_event = reinterpret_cast<xcb_map_request_event_t*>(event);
 
         if (auto c = find_controlled_window<x11_window>(
@@ -217,10 +218,12 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             // NOTICE: The save-set support in X11Client::mapRequestEvent() actually requires that
             // this code doesn't check the parent to be root.
             if (!create_controlled_window(map_req_event->window, false, space)) {
-                xcb_map_window(connection(), map_req_event->window);
+                xcb_map_window(space.base.x11_data.connection, map_req_event->window);
                 const uint32_t values[] = {XCB_STACK_MODE_ABOVE};
-                xcb_configure_window(
-                    connection(), map_req_event->window, XCB_CONFIG_WINDOW_STACK_MODE, values);
+                xcb_configure_window(space.base.x11_data.connection,
+                                     map_req_event->window,
+                                     XCB_CONFIG_WINDOW_STACK_MODE,
+                                     values);
             }
         }
 
@@ -257,7 +260,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     case XCB_CONFIGURE_REQUEST: {
         auto cfg_req_event = reinterpret_cast<xcb_configure_request_event_t*>(event);
 
-        if (cfg_req_event->parent == rootWindow()) {
+        if (cfg_req_event->parent == space.base.x11_data.root_window) {
             uint32_t values[5] = {0, 0, 0, 0, 0};
             const uint32_t value_mask = cfg_req_event->value_mask
                 & (XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH
@@ -278,7 +281,8 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             if (value_mask & XCB_CONFIG_WINDOW_BORDER_WIDTH) {
                 values[i++] = cfg_req_event->border_width;
             }
-            xcb_configure_window(connection(), cfg_req_event->window, value_mask, values);
+            xcb_configure_window(
+                space.base.x11_data.connection, cfg_req_event->window, value_mask, values);
             return true;
         }
 
@@ -287,19 +291,20 @@ bool space_event(Space& space, xcb_generic_event_t* event)
 
     case XCB_FOCUS_IN: {
         auto focus_event = reinterpret_cast<xcb_focus_in_event_t*>(event);
-        if (focus_event->event == rootWindow()
+        if (focus_event->event == space.base.x11_data.root_window
             && (focus_event->detail == XCB_NOTIFY_DETAIL_NONE
                 || focus_event->detail == XCB_NOTIFY_DETAIL_POINTER_ROOT
                 || focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR)) {
-            base::x11::xcb::input_focus currentInput;
+            base::x11::xcb::input_focus currentInput(space.base.x11_data.connection);
 
             // focusToNull() uses xTime(), which is old now (FocusIn has no timestamp)
-            kwinApp()->update_x11_time_from_clock();
+            base::x11::update_time_from_clock(space.base);
 
             // it seems we can "loose" focus reversions when the closing client hold a grab
             // => catch the typical pattern (though we don't want the focus on the root anyway)
             // #348935
-            const bool lostFocusPointerToRoot = currentInput->focus == rootWindow()
+            const bool lostFocusPointerToRoot
+                = currentInput->focus == space.base.x11_data.root_window
                 && focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR;
             if (!currentInput.is_null()
                 && (currentInput->focus == XCB_WINDOW_NONE
@@ -344,6 +349,83 @@ bool space_qt_event(Space& space, QEvent* event)
         return true;
     }
     return false;
+}
+
+template<typename Base>
+void update_time_from_event(Base& base, xcb_generic_event_t* event)
+{
+    xcb_timestamp_t time = XCB_TIME_CURRENT_TIME;
+    uint8_t const eventType = event->response_type & ~0x80;
+
+    switch (eventType) {
+    case XCB_KEY_PRESS:
+    case XCB_KEY_RELEASE:
+        time = reinterpret_cast<xcb_key_press_event_t*>(event)->time;
+        break;
+    case XCB_BUTTON_PRESS:
+    case XCB_BUTTON_RELEASE:
+        time = reinterpret_cast<xcb_button_press_event_t*>(event)->time;
+        break;
+    case XCB_MOTION_NOTIFY:
+        time = reinterpret_cast<xcb_motion_notify_event_t*>(event)->time;
+        break;
+    case XCB_ENTER_NOTIFY:
+    case XCB_LEAVE_NOTIFY:
+        time = reinterpret_cast<xcb_enter_notify_event_t*>(event)->time;
+        break;
+    case XCB_FOCUS_IN:
+    case XCB_FOCUS_OUT:
+    case XCB_KEYMAP_NOTIFY:
+    case XCB_EXPOSE:
+    case XCB_GRAPHICS_EXPOSURE:
+    case XCB_NO_EXPOSURE:
+    case XCB_VISIBILITY_NOTIFY:
+    case XCB_CREATE_NOTIFY:
+    case XCB_DESTROY_NOTIFY:
+    case XCB_UNMAP_NOTIFY:
+    case XCB_MAP_NOTIFY:
+    case XCB_MAP_REQUEST:
+    case XCB_REPARENT_NOTIFY:
+    case XCB_CONFIGURE_NOTIFY:
+    case XCB_CONFIGURE_REQUEST:
+    case XCB_GRAVITY_NOTIFY:
+    case XCB_RESIZE_REQUEST:
+    case XCB_CIRCULATE_NOTIFY:
+    case XCB_CIRCULATE_REQUEST:
+        // no timestamp
+        return;
+    case XCB_PROPERTY_NOTIFY:
+        time = reinterpret_cast<xcb_property_notify_event_t*>(event)->time;
+        break;
+    case XCB_SELECTION_CLEAR:
+        time = reinterpret_cast<xcb_selection_clear_event_t*>(event)->time;
+        break;
+    case XCB_SELECTION_REQUEST:
+        time = reinterpret_cast<xcb_selection_request_event_t*>(event)->time;
+        break;
+    case XCB_SELECTION_NOTIFY:
+        time = reinterpret_cast<xcb_selection_notify_event_t*>(event)->time;
+        break;
+    case XCB_COLORMAP_NOTIFY:
+    case XCB_CLIENT_MESSAGE:
+    case XCB_MAPPING_NOTIFY:
+    case XCB_GE_GENERIC:
+        // no timestamp
+        return;
+    default:
+        // extension handling
+        if (base::x11::xcb::extensions::self()) {
+            if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
+                time = reinterpret_cast<xcb_shape_notify_event_t*>(event)->server_time;
+            }
+            if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
+                time = reinterpret_cast<xcb_damage_notify_event_t*>(event)->timestamp;
+            }
+        }
+        break;
+    }
+
+    base::x11::advance_time(base.x11_data, time);
 }
 
 }

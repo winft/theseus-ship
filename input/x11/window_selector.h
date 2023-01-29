@@ -39,7 +39,8 @@ public:
     using x11_window_t = typename Redirect::space_t::x11_window;
 
     window_selector(Redirect& redirect)
-        : base::x11::event_filter(QVector<int>{XCB_BUTTON_PRESS,
+        : base::x11::event_filter(*redirect.platform.base.x11_event_filters,
+                                  QVector<int>{XCB_BUTTON_PRESS,
                                                XCB_BUTTON_RELEASE,
                                                XCB_MOTION_NOTIFY,
                                                XCB_ENTER_NOTIFY,
@@ -125,7 +126,7 @@ private:
                 return kill_cursor;
             }
             // fallback on font
-            xcb_connection_t* c = connection();
+            auto c = redirect.platform.base.x11_data.connection;
             xcb_font_t const cursorFont = xcb_generate_id(c);
             xcb_open_font(c, cursorFont, strlen("cursor"), "cursor");
             cursor = xcb_generate_id(c);
@@ -148,9 +149,10 @@ private:
 
     void release()
     {
-        base::x11::ungrab_keyboard();
-        xcb_ungrab_pointer(connection(), XCB_TIME_CURRENT_TIME);
-        base::x11::ungrab_server();
+        auto con = redirect.platform.base.x11_data.connection;
+        base::x11::ungrab_keyboard(con);
+        xcb_ungrab_pointer(con, XCB_TIME_CURRENT_TIME);
+        base::x11::ungrab_server(con);
         m_active = false;
         m_callback = {};
         m_pointSelectionFallback = std::function<void(const QPoint&)>();
@@ -158,7 +160,8 @@ private:
 
     void selectWindowUnderPointer()
     {
-        base::x11::xcb::pointer pointer(rootWindow());
+        auto const& x11_data = redirect.platform.base.x11_data;
+        base::x11::xcb::pointer pointer(x11_data.connection, x11_data.root_window);
         if (!pointer.is_null() && pointer->child != XCB_WINDOW_NONE) {
             selectWindowId(pointer->child);
         }
@@ -166,7 +169,7 @@ private:
 
     void handleKeyPress(xcb_keycode_t keycode, uint16_t state)
     {
-        xcb_key_symbols_t* symbols = xcb_key_symbols_alloc(connection());
+        auto symbols = xcb_key_symbols_alloc(redirect.platform.base.x11_data.connection);
         xcb_keysym_t kc = xcb_key_symbols_get_keysym(symbols, keycode, 0);
         int mx = 0;
         int my = 0;
@@ -243,7 +246,7 @@ private:
             if (client) {
                 break; // Found the client
             }
-            base::x11::xcb::tree tree(window);
+            base::x11::xcb::tree tree(redirect.platform.base.x11_data.connection, window);
             if (window == tree->root) {
                 // We didn't find the client, probably an override-redirect window
                 break;
@@ -260,12 +263,12 @@ private:
     bool activate(const QByteArray& cursorName = QByteArray())
     {
         xcb_cursor_t cursor = createCursor(cursorName);
-        xcb_connection_t* c = connection();
+        auto c = redirect.platform.base.x11_data.connection;
 
         auto cookie = xcb_grab_pointer_unchecked(
             c,
             false,
-            rootWindow(),
+            redirect.platform.base.x11_data.root_window,
             XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
                 | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW
                 | XCB_EVENT_MASK_LEAVE_WINDOW,
@@ -280,11 +283,11 @@ private:
             return false;
         }
 
-        const bool grabbed = base::x11::grab_keyboard();
+        const bool grabbed = base::x11::grab_keyboard(redirect.platform.base.x11_data);
         if (grabbed) {
-            base::x11::grab_server();
+            base::x11::grab_server(redirect.platform.base.x11_data.connection);
         } else {
-            xcb_ungrab_pointer(connection(), XCB_TIME_CURRENT_TIME);
+            xcb_ungrab_pointer(redirect.platform.base.x11_data.connection, XCB_TIME_CURRENT_TIME);
         }
         return grabbed;
     }

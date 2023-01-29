@@ -39,11 +39,7 @@ public:
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 
-    bool is_screen_locked() const override;
-
-    base::platform& get_base() override;
-
-    void start(OperationMode mode,
+    void start(base::operation_mode mode,
                std::string const& socket_name,
                base::wayland::start_options flags,
                QProcessEnvironment environment);
@@ -51,15 +47,8 @@ public:
     void setApplicationsToStart(const QStringList &applications) {
         m_applicationsToStart = applications;
     }
-    void setProcessStartupEnvironment(const QProcessEnvironment &environment) override {
-        m_environment = environment;
-    }
     void setSessionArgument(const QString &session) {
         m_sessionArgument = session;
-    }
-
-    QProcessEnvironment processStartupEnvironment() const override {
-        return m_environment;
     }
 
 private:
@@ -68,7 +57,6 @@ private:
     void startSession();
 
     QStringList m_applicationsToStart;
-    QProcessEnvironment m_environment;
     QString m_sessionArgument;
 
     std::unique_ptr<base::backend::wlroots::platform> base;

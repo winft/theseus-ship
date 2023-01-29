@@ -67,7 +67,7 @@ public:
     {
         device_redirect_init(this);
 
-        QObject::connect(&kwinApp()->get_base(),
+        QObject::connect(&redirect->platform.base,
                          &base::platform::topology_changed,
                          qobject.get(),
                          [this] { updateAfterScreenChange(); });
@@ -128,7 +128,7 @@ public:
                          setup_move_resize_notify_on_signal);
 
         // warp the cursor to center of screen
-        warp(QRect({}, kwinApp()->get_base().topology.size).center());
+        warp(QRect({}, redirect->platform.base.topology.size).center());
         updateAfterScreenChange();
     }
 
@@ -429,7 +429,7 @@ public:
     void processMotion(QPointF const& pos, uint32_t time, KWin::input::pointer* device = nullptr)
     {
         // Events for motion_absolute_event have positioning relative to screen size.
-        auto const& space_size = kwinApp()->get_base().topology.size;
+        auto const& space_size = redirect->platform.base.topology.size;
         auto const rel_pos = QPointF(pos.x() / space_size.width(), pos.y() / space_size.height());
 
         auto event = motion_absolute_event{rel_pos, {device, time}};
@@ -836,7 +836,7 @@ private:
 
         // verify that at least one screen contains the pointer position
         if (!screenContainsPos(pos)) {
-            auto const unitedScreensGeometry = QRectF({}, kwinApp()->get_base().topology.size);
+            auto const unitedScreensGeometry = QRectF({}, redirect->platform.base.topology.size);
             pos = confineToBoundingBox(pos, unitedScreensGeometry);
 
             if (!screenContainsPos(pos)) {
@@ -886,7 +886,7 @@ private:
             // No XWayland, no point in warping the x cursor
             return;
         }
-        const auto c = kwinApp()->x11Connection();
+        auto const c = redirect->platform.base.x11_data.connection;
         if (!c) {
             return;
         }
@@ -904,7 +904,8 @@ private:
             return;
         }
         // warp pointer to 0/0 to trigger leave events on previously focused X window
-        xcb_warp_pointer(c, XCB_WINDOW_NONE, kwinApp()->x11RootWindow(), 0, 0, 0, 0, 0, 0),
+        xcb_warp_pointer(
+            c, XCB_WINDOW_NONE, redirect->platform.base.x11_data.root_window, 0, 0, 0, 0, 0, 0),
             xcb_flush(c);
     }
 

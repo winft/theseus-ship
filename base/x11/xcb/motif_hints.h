@@ -14,8 +14,10 @@ namespace KWin::base::x11::xcb
 class motif_hints
 {
 public:
-    motif_hints(xcb_atom_t atom)
-        : m_atom(atom)
+    motif_hints(xcb_connection_t* con, xcb_atom_t atom)
+        : m_prop{con}
+        , m_atom(atom)
+        , con{con}
     {
     }
     void init(xcb_window_t window)
@@ -34,7 +36,7 @@ public:
             return;
         }
         m_hints = nullptr;
-        m_prop = property(0, m_window, m_atom, m_atom, 0, 5);
+        m_prop = property(con, 0, m_window, m_atom, m_atom, 0, 5);
     }
     void read()
     {
@@ -111,6 +113,7 @@ private:
     property m_prop;
     xcb_atom_t m_atom;
     mwm_hints* m_hints = nullptr;
+    xcb_connection_t* con;
 };
 
 }

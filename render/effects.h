@@ -17,6 +17,7 @@
 #include "x11/property_notify_filter.h"
 
 #include "desktop/screen_locker_watcher.h"
+#include "input/platform.h"
 #include "win/activation.h"
 #include "win/osd.h"
 #include "win/screen_edges.h"
@@ -62,7 +63,35 @@ class KWIN_EXPORT effects_handler_wrap : public EffectsHandler
     Q_PROPERTY(QStringList loadedEffects READ loadedEffects)
     Q_PROPERTY(QStringList listOfEffects READ listOfEffects)
 public:
-    effects_handler_wrap(CompositingType type);
+    template<typename Compositor>
+    effects_handler_wrap(Compositor& compositor)
+        : EffectsHandler(compositor.scene->compositingType())
+        , m_effectLoader(new effect_loader(*this, compositor, this))
+        , options{*compositor.platform.base.options}
+    {
+        qRegisterMetaType<QVector<KWin::EffectWindow*>>();
+
+        singleton_interface::effects = this;
+        connect(m_effectLoader,
+                &basic_effect_loader::effectLoaded,
+                this,
+                [this](Effect* effect, const QString& name) {
+                    effect_order.insert(effect->requestedEffectChainPosition(),
+                                        EffectPair(name, effect));
+                    loaded_effects << EffectPair(name, effect);
+                    effectsChanged();
+                });
+        m_effectLoader->setConfig(compositor.platform.base.config.main);
+
+        create_adaptor();
+        QDBusConnection dbus = QDBusConnection::sessionBus();
+        dbus.registerObject(QStringLiteral("/Effects"), this);
+
+        // init is important, otherwise causes crashes when quads are build before the first
+        // painting pass start
+        m_currentBuildQuadsIterator = m_activeEffects.constEnd();
+    }
+
     ~effects_handler_wrap() override;
 
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
@@ -89,8 +118,6 @@ public:
     QString currentActivity() const override;
     int desktopGridWidth() const override;
     int desktopGridHeight() const override;
-    int workspaceWidth() const override;
-    int workspaceHeight() const override;
 
     bool optionRollOverDesktops() const override;
 
@@ -125,11 +152,6 @@ public:
                              const QPoint& position,
                              Qt::Alignment alignment) const override;
 
-    bool isScreenLocked() const override;
-
-    xcb_connection_t* xcbConnection() const override;
-    xcb_window_t x11RootWindow() const override;
-
     // internal (used by kwin core or compositing code)
     void startPaint();
     void grabbedKeyboardEvent(QKeyEvent* e);
@@ -161,9 +183,6 @@ public:
 
     Wrapland::Server::Display* waylandDisplay() const override;
 
-    KSharedConfigPtr config() const override;
-    KSharedConfigPtr inputConfig() const override;
-
     bool touchDown(qint32 id, const QPointF& pos, quint32 time);
     bool touchMotion(qint32 id, const QPointF& pos, quint32 time);
     bool touchUp(qint32 id, quint32 time);
@@ -189,7 +208,10 @@ public:
 
 public Q_SLOTS:
     // slots for D-Bus interface
-    Q_SCRIPTABLE void reconfigureEffect(const QString& name);
+    Q_SCRIPTABLE void reconfigureEffect(const QString& name)
+    {
+        reconfigure_effect_impl(name);
+    }
     Q_SCRIPTABLE bool loadEffect(const QString& name);
     Q_SCRIPTABLE void toggleEffect(const QString& name);
     Q_SCRIPTABLE void unloadEffect(const QString& name);
@@ -238,6 +260,7 @@ protected:
     virtual void doCheckInputWindowStacking();
 
     virtual void handle_effect_destroy(Effect& effect) = 0;
+    virtual void reconfigure_effect_impl(QString const& name) = 0;
 
     Effect* keyboard_grab_effect{nullptr};
     Effect* fullscreen_effect{nullptr};
@@ -246,6 +269,7 @@ protected:
     int next_window_quad_type{EFFECT_QUAD_TYPE_START};
 
 private:
+    void create_adaptor();
     void destroyEffect(Effect* effect);
 
     typedef QVector<Effect*> EffectsList;
@@ -259,6 +283,7 @@ private:
     int m_currentRenderedDesktop{0};
     QList<Effect*> m_grabbedMouseEffects;
     effect_loader* m_effectLoader;
+    base::options& options;
 };
 
 template<typename Compositor>
@@ -272,7 +297,7 @@ public:
     using effect_window_t = typename scene_t::effect_window_t;
 
     effects_handler_impl(Compositor& compositor)
-        : effects_handler_wrap(compositor.scene->compositingType())
+        : effects_handler_wrap(compositor)
         , compositor{compositor}
     {
         singleton_interface::register_thumbnail = [](auto& eff_win, auto& thumbnail) {
@@ -439,36 +464,42 @@ public:
                 &win::screen_edger_qobject::approaching,
                 this,
                 &EffectsHandler::screenEdgeApproaching);
-        connect(kwinApp()->screen_locker_watcher.get(),
+        connect(ws->base.screen_locker_watcher.get(),
                 &desktop::screen_locker_watcher::locked,
                 this,
                 &EffectsHandler::screenLockingChanged);
-        connect(kwinApp()->screen_locker_watcher.get(),
+        connect(ws->base.screen_locker_watcher.get(),
                 &desktop::screen_locker_watcher::about_to_lock,
                 this,
                 &EffectsHandler::screenAboutToLock);
 
         auto make_property_filter = [this] {
             using filter = x11::property_notify_filter<effects_handler_wrap, space_t>;
-            x11_property_notify = std::make_unique<filter>(
-                *this, *this->compositor.space, kwinApp()->x11RootWindow());
+            x11_property_notify
+                = std::make_unique<filter>(*this,
+                                           *this->compositor.space,
+                                           this->compositor.platform.base.x11_data.root_window);
         };
 
-        connect(kwinApp(), &Application::x11ConnectionChanged, this, [this, make_property_filter] {
-            registered_atoms.clear();
-            for (auto it = m_propertiesForEffects.keyBegin(); it != m_propertiesForEffects.keyEnd();
-                 it++) {
-                x11::add_support_property(*this, *it);
-            }
-            if (kwinApp()->x11Connection()) {
-                make_property_filter();
-            } else {
-                x11_property_notify.reset();
-            }
-            Q_EMIT xcbConnectionChanged();
-        });
+        connect(&compositor.platform.base,
+                &base::platform::x11_reset,
+                this,
+                [this, make_property_filter] {
+                    registered_atoms.clear();
+                    for (auto it = m_propertiesForEffects.keyBegin();
+                         it != m_propertiesForEffects.keyEnd();
+                         it++) {
+                        x11::add_support_property(*this, *it);
+                    }
+                    if (this->compositor.platform.base.x11_data.connection) {
+                        make_property_filter();
+                    } else {
+                        x11_property_notify.reset();
+                    }
+                    Q_EMIT xcbConnectionChanged();
+                });
 
-        if (kwinApp()->x11Connection()) {
+        if (compositor.platform.base.x11_data.connection) {
             make_property_filter();
         }
 
@@ -520,6 +551,21 @@ public:
     scene_t* scene() const
     {
         return compositor.scene.get();
+    }
+
+    bool isScreenLocked() const override
+    {
+        return compositor.platform.base.screen_locker_watcher->is_locked();
+    }
+
+    xcb_connection_t* xcbConnection() const override
+    {
+        return compositor.platform.base.x11_data.connection;
+    }
+
+    xcb_window_t x11RootWindow() const override
+    {
+        return compositor.platform.base.x11_data.root_window;
     }
 
     unsigned long xrenderBufferPicture() const override
@@ -631,19 +677,22 @@ public:
                                  Qt::MouseButton pointerButtons,
                                  QAction* action) override
     {
-        compositor.platform.base.input->registerPointerShortcut(modifiers, pointerButtons, action);
+        input::platform_register_pointer_shortcut(
+            *compositor.platform.base.input, modifiers, pointerButtons, action);
     }
 
     void registerAxisShortcut(Qt::KeyboardModifiers modifiers,
                               PointerAxisDirection axis,
                               QAction* action) override
     {
-        compositor.platform.base.input->registerAxisShortcut(modifiers, axis, action);
+        input::platform_register_axis_shortcut(
+            *compositor.platform.base.input, modifiers, axis, action);
     }
 
     void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action) override
     {
-        compositor.platform.base.input->registerTouchpadSwipeShortcut(direction, action);
+        input::platform_register_touchpad_swipe_shortcut(
+            *compositor.platform.base.input, direction, action);
     }
 
     void startMousePolling() override
@@ -868,6 +917,16 @@ public:
     QSize desktopGridSize() const override
     {
         return compositor.space->virtual_desktop_manager->grid().size();
+    }
+
+    int workspaceWidth() const override
+    {
+        return desktopGridWidth() * compositor.platform.base.topology.size.width();
+    }
+
+    int workspaceHeight() const override
+    {
+        return desktopGridHeight() * compositor.platform.base.topology.size.height();
     }
 
     int desktopAtCoords(QPoint coords) const override
@@ -1242,10 +1301,12 @@ public:
 
     QByteArray readRootProperty(long atom, long type, int format) const override
     {
-        if (!kwinApp()->x11Connection()) {
+        auto const& data = compositor.platform.base.x11_data;
+        if (!data.connection) {
             return QByteArray();
         }
-        return render::x11::read_window_property(kwinApp()->x11RootWindow(), atom, type, format);
+        return render::x11::read_window_property(
+            data.connection, data.root_window, atom, type, format);
     }
 
     xcb_atom_t announceSupportProperty(const QByteArray& propertyName, Effect* effect) override
@@ -1256,6 +1317,27 @@ public:
     void removeSupportProperty(const QByteArray& propertyName, Effect* effect) override
     {
         x11::remove_support_property(*this, effect, propertyName);
+    }
+
+    KSharedConfigPtr config() const override
+    {
+        return compositor.platform.base.config.main;
+    }
+
+    KSharedConfigPtr inputConfig() const override
+    {
+        return compositor.platform.base.input->config.main;
+    }
+
+    void reconfigure_effect_impl(QString const& name) override
+    {
+        for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it)
+            if ((*it).first == name) {
+                compositor.platform.base.config.main->reparseConfiguration();
+                makeOpenGLContextCurrent();
+                (*it).second->reconfigure(Effect::ReconfigureAll);
+                return;
+            }
     }
 
     Compositor& compositor;

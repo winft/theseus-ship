@@ -8,6 +8,7 @@
 #include "non_desktop_output.h"
 #include "output.h"
 
+#include "base/app_singleton.h"
 #include "config-kwin.h"
 #include "render/backend/wlroots/output.h"
 #include "render/backend/wlroots/platform.h"
@@ -86,15 +87,18 @@ void handle_new_output(struct wl_listener* listener, void* data)
     }
 }
 
-platform::platform(std::string const& socket_name,
+platform::platform(base::config config,
+                   std::string const& socket_name,
                    base::wayland::start_options flags,
                    start_options options)
-    : wayland::platform(socket_name, flags)
+    : wayland::platform(std::move(config), socket_name, flags)
     , destroyed{std::make_unique<event_receiver<platform>>()}
     , new_output{std::make_unique<event_receiver<platform>>()}
 
 {
     singleton_interface::platform = this;
+    Q_EMIT singleton_interface::app_singleton->platform_created();
+
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 
     // TODO(romangg): Make this dependent on KWIN_WL debug verbosity.
@@ -104,10 +108,10 @@ platform::platform(std::string const& socket_name,
         backend = wlr_headless_backend_create(server->display->native());
     } else {
 #if HAVE_WLR_SESSION_ON_AUTOCREATE
-        backend = wlr_backend_autocreate(server->display->native(), &session);
+        backend = wlr_backend_autocreate(server->display->native(), &wlroots_session);
 #else
         backend = wlr_backend_autocreate(server->display->native());
-        session = wlr_backend_get_session(backend);
+        wlroots_session = wlr_backend_get_session(backend);
 #endif
     }
 
@@ -122,31 +126,6 @@ platform::platform(std::string const& socket_name,
     if (auto drm = get_drm_backend(backend)) {
         setup_drm_leasing(server->display.get(), drm);
     }
-}
-
-platform::platform(platform&& other) noexcept
-{
-    *this = std::move(other);
-}
-
-platform& platform::operator=(platform&& other) noexcept
-{
-    backend = other.backend;
-    other.backend = nullptr;
-
-    destroyed = std::move(other.destroyed);
-    destroyed->receiver = this;
-
-    new_output = std::move(other.new_output);
-    new_output->receiver = this;
-
-    leases = std::move(other.leases);
-    non_desktop_outputs = std::move(other.non_desktop_outputs);
-
-    singleton_interface::platform = this;
-    wayland::platform::operator=(std::move(other));
-
-    return *this;
 }
 
 platform::~platform()

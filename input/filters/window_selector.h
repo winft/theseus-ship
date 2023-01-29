@@ -16,7 +16,6 @@
 #include "input/qt_event.h"
 #include "input/window_find.h"
 #include "input/xkb/keyboard.h"
-#include "main.h"
 
 #include <Wrapland/Server/seat.h>
 #include <linux/input.h>

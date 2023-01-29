@@ -534,7 +534,7 @@ void activate_window_impl(Space& space, Win& window, bool force)
     window.hideClient(false);
 
     // TODO force should perhaps allow this only if the window already contains the mouse
-    if (kwinApp()->options->qobject->focusPolicyIsReasonable() || force) {
+    if (space.base.options->qobject->focusPolicyIsReasonable() || force) {
         request_focus(space, window, false, force);
     }
 
@@ -593,7 +593,7 @@ bool activate_next_window(Space& space)
         return true;
     }
 
-    if (!kwinApp()->options->qobject->focusPolicyIsReasonable()) {
+    if (!space.base.options->qobject->focusPolicyIsReasonable()) {
         return false;
     }
 
@@ -619,7 +619,7 @@ bool activate_next_window(Space& space)
         return get_current_output(space);
     };
 
-    if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
+    if (space.base.options->qobject->isNextFocusPrefersMouse()) {
         // Same as prev window and is_desktop should rather not happen.
         if (auto win = window_under_mouse(space, get_output());
             win && (!prev_window || *win != *prev_window)) {
@@ -708,7 +708,7 @@ std::optional<typename Space::window_t> find_window_to_activate_on_desktop(Space
     }
 
     // from actiavtion.cpp
-    if (kwinApp()->options->qobject->isNextFocusPrefersMouse()) {
+    if (space.base.options->qobject->isNextFocusPrefersMouse()) {
         auto it = stacking.order.stack.cend();
         while (it != stacking.order.stack.cbegin()) {
             if (auto win = std::visit(
@@ -754,7 +754,7 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
                    win);
     };
 
-    if (kwinApp()->options->qobject->focusPolicyIsReasonable()) {
+    if (space.base.options->qobject->focusPolicyIsReasonable()) {
         if (auto win = find_window_to_activate_on_desktop(space, desktop)) {
             do_activate(*win);
             return;
@@ -879,13 +879,13 @@ void activate_window_direction(Space& space, win::direction direction)
             auto opposite = [&] {
                 switch (direction) {
                 case direction::north:
-                    return QPoint(curPos.x(), kwinApp()->get_base().topology.size.height());
+                    return QPoint(curPos.x(), space.base.topology.size.height());
                 case direction::south:
                     return QPoint(curPos.x(), 0);
                 case direction::east:
                     return QPoint(0, curPos.y());
                 case direction::west:
-                    return QPoint(kwinApp()->get_base().topology.size.width(), curPos.y());
+                    return QPoint(space.base.topology.size.width(), curPos.y());
                 default:
                     Q_UNREACHABLE();
                 }
@@ -917,7 +917,7 @@ void reset_delay_focus_timer(Space& space)
         delay_focus(space);
     });
     space.delayFocusTimer->setSingleShot(true);
-    space.delayFocusTimer->start(kwinApp()->options->qobject->delayFocusInterval());
+    space.delayFocusTimer->start(space.base.options->qobject->delayFocusInterval());
 }
 
 template<typename Space>

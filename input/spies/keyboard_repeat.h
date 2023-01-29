@@ -12,7 +12,6 @@
 #include "input/event_spy.h"
 #include "input/keyboard.h"
 #include "input/xkb/keyboard.h"
-#include "main.h"
 
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>

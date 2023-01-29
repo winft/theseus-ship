@@ -56,19 +56,18 @@ void KeymapCreationFailureTest::initTestCase()
     qputenv("XKB_DEFAULT_VARIANT", "no");
     qputenv("XKB_DEFAULT_OPTIONS", "no");
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
-    kwinApp()->setKxkbConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
-    KConfigGroup layoutGroup = kwinApp()->kxkbConfig()->group("Layout");
+    Test::app()->start();
+    QVERIFY(startup_spy.size() || startup_spy.wait());
+
+    Test::app()->base->input->xkb.setConfig(KSharedConfig::openConfig({}, KConfig::SimpleConfig));
+    auto layoutGroup = Test::app()->base->input->config.xkb->group("Layout");
     layoutGroup.writeEntry("LayoutList", QStringLiteral("no"));
     layoutGroup.writeEntry("Model", "no");
     layoutGroup.writeEntry("Options", "no");
     layoutGroup.sync();
-
-    Test::app()->start();
-    QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 
 void KeymapCreationFailureTest::init()

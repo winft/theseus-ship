@@ -20,6 +20,7 @@ class mouse_intercept_filter : public base::x11::event_filter
 public:
     mouse_intercept_filter(xcb_window_t window, Effects* effects)
         : base::x11::event_filter(
+            *effects->compositor.platform.base.x11_event_filters,
             QVector<int>{XCB_BUTTON_PRESS, XCB_BUTTON_RELEASE, XCB_MOTION_NOTIFY})
         , m_effects(effects)
         , m_window(window)

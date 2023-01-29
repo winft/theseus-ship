@@ -27,11 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtTest>
 using namespace KWin;
 
-void TestTabBoxClientModel::initTestCase()
-{
-    qApp->setProperty("x11Connection", QVariant::fromValue<void*>(QX11Info::connection()));
-}
-
 void TestTabBoxClientModel::testLongestCaptionWithNullClient()
 {
     MockTabBoxHandler tabboxhandler;

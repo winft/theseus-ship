@@ -50,15 +50,15 @@ static qint64 parseVersionString(const QByteArray& version)
     return kVersionNumber(major, minor, patch);
 }
 
-static qint64 getXServerVersion()
+static qint64 getXServerVersion(xcb_connection_t* x11_connection)
 {
     qint64 major, minor, patch;
     major = 0;
     minor = 0;
     patch = 0;
 
-    if (xcb_connection_t* c = connection()) {
-        auto setup = xcb_get_setup(c);
+    if (x11_connection) {
+        auto setup = xcb_get_setup(x11_connection);
         const QByteArray vendorName(xcb_setup_vendor(setup), xcb_setup_vendor_length(setup));
         if (vendorName.contains("X.Org")) {
             const int release = setup->release_number;
@@ -639,7 +639,7 @@ QByteArray GLPlatform::chipClassToString8(ChipClass chipClass)
 
 // -------
 
-GLPlatform::GLPlatform()
+GLPlatform::GLPlatform(xcb_connection_t* x11_connection)
     : m_driver(Driver_Unknown)
     , m_chipClass(UnknownChipClass)
     , m_recommendedCompositor(XRenderCompositing)
@@ -660,6 +660,7 @@ GLPlatform::GLPlatform()
     , m_preferBufferSubData(false)
     , m_platformInterface(NoOpenGLPlatformInterface)
     , m_gles(false)
+    , x11_con{x11_connection}
 {
 }
 
@@ -738,7 +739,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
         }
     }
 
-    m_serverVersion = getXServerVersion();
+    m_serverVersion = getXServerVersion(x11_con);
     m_kernelVersion = getKernelVersion();
 
     m_glslVersion = 0;

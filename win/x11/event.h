@@ -152,7 +152,7 @@ void unmap_notify_event(Win* win, xcb_unmap_notify_event_t* e)
     if (e->event != win->xcb_windows.wrapper) {
         // most probably event from root window when initially reparenting
         bool ignore = true;
-        if (e->event == rootWindow() && (e->response_type & 0x80))
+        if (e->event == win->space.base.x11_data.root_window && (e->response_type & 0x80))
             ignore = false; // XWithdrawWindow()
         if (ignore)
             return;
@@ -161,7 +161,7 @@ void unmap_notify_event(Win* win, xcb_unmap_notify_event_t* e)
     // check whether this is result of an XReparentWindow - client then won't be parented by wrapper
     // in this case do not release the client (causes reparent to root, removal from saveSet and
     // what not) but just destroy the client
-    base::x11::xcb::tree tree(win->xcb_windows.client);
+    base::x11::xcb::tree tree(win->space.base.x11_data.connection, win->xcb_windows.client);
     xcb_window_t daddy = tree.parent();
 
     if (daddy == win->xcb_windows.wrapper) {
@@ -343,9 +343,10 @@ void enter_notify_event(Win* win, xcb_enter_notify_event_t* e)
     }
 
 #define MOUSE_DRIVEN_FOCUS                                                                         \
-    (!kwinApp()->options->qobject->focusPolicyIsReasonable()                                       \
-     || (kwinApp()->options->qobject->focusPolicy() == base::options_qobject::FocusFollowsMouse    \
-         && kwinApp()->options->qobject->isNextFocusPrefersMouse()))
+    (!win->space.base.options->qobject->focusPolicyIsReasonable()                                  \
+     || (win->space.base.options->qobject->focusPolicy()                                           \
+             == base::options_qobject::FocusFollowsMouse                                           \
+         && win->space.base.options->qobject->isNextFocusPrefersMouse()))
     if (e->mode == XCB_NOTIFY_MODE_NORMAL
         || (e->mode == XCB_NOTIFY_MODE_UNGRAB && MOUSE_DRIVEN_FOCUS)) {
 #undef MOUSE_DRIVEN_FOCUS
@@ -378,7 +379,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
         // if this window is another client, but not if it's a popup ... maybe after KDE3.1 :(
         // (repeat after me 'AARGHL!')
         if (!lostMouse && e->detail != XCB_NOTIFY_DETAIL_INFERIOR) {
-            base::x11::xcb::pointer pointer(win->frameId());
+            base::x11::xcb::pointer pointer(win->space.base.x11_data.connection, win->frameId());
             if (!pointer || !pointer->same_screen || pointer->child == XCB_WINDOW_NONE) {
                 // really lost the mouse
                 lostMouse = true;
@@ -394,7 +395,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
                 QCoreApplication::sendEvent(deco, &leaveEvent);
             }
         }
-        if (kwinApp()->options->qobject->focusPolicy()
+        if (win->space.base.options->qobject->focusPolicy()
                 == base::options_qobject::FocusStrictlyUnderMouse
             && win->control->active && lostMouse) {
             win->space.stacking.delayfocus_window = {};
@@ -404,9 +405,10 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
     }
 }
 
-static inline bool modKeyDown(int state)
+template<typename Win>
+static inline bool modKeyDown(Win& win, int state)
 {
-    uint const keyModX = (kwinApp()->options->qobject->keyCmdAllModKey() == Qt::Key_Meta)
+    uint const keyModX = (win.space.base.options->qobject->keyCmdAllModKey() == Qt::Key_Meta)
         ? KKeyServer::modXMeta()
         : KKeyServer::modXAlt();
     return keyModX && (state & KKeyServer::accelModMaskX()) == keyModX;
@@ -424,24 +426,23 @@ bool button_press_event(Win* win,
                         int y_root,
                         xcb_timestamp_t time)
 {
+    auto con = win->space.base.x11_data.connection;
     if (win->control->move_resize.button_down) {
         if (w == win->xcb_windows.wrapper)
-            xcb_allow_events(
-                connection(), XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME); // xTime());
+            xcb_allow_events(con, XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME);
         return true;
     }
 
     if (w == win->xcb_windows.wrapper || w == win->frameId() || w == win->xcb_windows.input) {
         // FRAME neco s tohohle by se melo zpracovat, nez to dostane dekorace
         update_user_time(win, time);
-        const bool bModKeyHeld = modKeyDown(state);
+        const bool bModKeyHeld = modKeyDown(*win, state);
 
         if (win::is_splash(win) && button == XCB_BUTTON_INDEX_1 && !bModKeyHeld) {
             // hide splashwindow if the user clicks on it
             win->hideClient(true);
             if (w == win->xcb_windows.wrapper)
-                xcb_allow_events(
-                    connection(), XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME); // xTime());
+                xcb_allow_events(con, XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME);
             return true;
         }
 
@@ -451,17 +452,17 @@ bool button_press_event(Win* win,
             was_action = true;
             switch (button) {
             case XCB_BUTTON_INDEX_1:
-                com = kwinApp()->options->qobject->commandAll1();
+                com = win->space.base.options->qobject->commandAll1();
                 break;
             case XCB_BUTTON_INDEX_2:
-                com = kwinApp()->options->qobject->commandAll2();
+                com = win->space.base.options->qobject->commandAll2();
                 break;
             case XCB_BUTTON_INDEX_3:
-                com = kwinApp()->options->qobject->commandAll3();
+                com = win->space.base.options->qobject->commandAll3();
                 break;
             case XCB_BUTTON_INDEX_4:
             case XCB_BUTTON_INDEX_5:
-                com = kwinApp()->options->operationWindowMouseWheel(
+                com = win->space.base.options->operationWindowMouseWheel(
                     button == XCB_BUTTON_INDEX_4 ? 120 : -120);
                 break;
             }
@@ -484,17 +485,16 @@ bool button_press_event(Win* win,
 
             if (w == win->xcb_windows.wrapper) {
                 // these can come only from a grab
-                xcb_allow_events(connection(),
+                xcb_allow_events(con,
                                  replay ? XCB_ALLOW_REPLAY_POINTER : XCB_ALLOW_SYNC_POINTER,
-                                 XCB_TIME_CURRENT_TIME); // xTime());
+                                 XCB_TIME_CURRENT_TIME);
             }
             return true;
         }
     }
 
     if (w == win->xcb_windows.wrapper) { // these can come only from a grab
-        xcb_allow_events(
-            connection(), XCB_ALLOW_REPLAY_POINTER, XCB_TIME_CURRENT_TIME); // xTime());
+        xcb_allow_events(con, XCB_ALLOW_REPLAY_POINTER, XCB_TIME_CURRENT_TIME);
         return true;
     }
     if (w == win->xcb_windows.input) {
@@ -530,9 +530,10 @@ bool button_press_event(Win* win,
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (!event.isAccepted() && !hor) {
                 if (win::titlebar_positioned_under_mouse(win)) {
-                    perform_mouse_command(*win,
-                                          kwinApp()->options->operationTitlebarMouseWheel(delta),
-                                          {x_root, y_root});
+                    perform_mouse_command(
+                        *win,
+                        win->space.base.options->operationTitlebarMouseWheel(delta),
+                        {x_root, y_root});
                 }
             }
         } else {
@@ -585,7 +586,8 @@ bool button_release_event(Win* win,
         }
     }
     if (w == win->xcb_windows.wrapper) {
-        xcb_allow_events(connection(), XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME); // xTime());
+        xcb_allow_events(
+            win->space.base.x11_data.connection, XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME);
         return true;
     }
     if (w != win->frameId() && w != win->xcb_windows.input && w != win->xcb_windows.grab) {
@@ -637,7 +639,7 @@ bool motion_notify_event(Win* win, xcb_window_t w, int state, int x, int y, int 
                 QCoreApplication::instance()->sendEvent(win::decoration(win), &event);
             }
         }
-        auto newmode = modKeyDown(state) ? win::position::center : win::mouse_position(win);
+        auto newmode = modKeyDown(*win, state) ? win::position::center : win::mouse_position(win);
         if (newmode != mov_res.contact) {
             mov_res.contact = newmode;
             win::update_cursor(win);
@@ -700,7 +702,7 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
         // a timestamp *sigh*, kwin's timestamp would be older than the timestamp
         // that was used by whoever caused the focus change, and therefore
         // the attempt to restore the focus would fail due to old timestamp
-        kwinApp()->update_x11_time_from_clock();
+        base::x11::update_time_from_clock(win->space.base);
 
         if (auto& sgf = win->space.stacking.should_get_focus; !sgf.empty()) {
             std::visit(overload{[](auto&& fc) { request_focus(fc->space, *fc); }}, sgf.back());
@@ -863,9 +865,9 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                 Q_EMIT win->qobject->opacityChanged(old_opacity);
             } else {
                 // forward to the frame if there's possibly another compositing manager running
-                NETWinInfo i(connection(),
+                NETWinInfo i(win->space.base.x11_data.connection,
                              win->frameId(),
-                             rootWindow(),
+                             win->space.base.x11_data.root_window,
                              NET::Properties(),
                              NET::Properties2());
                 i.setOpacity(win->net_info->opacity());

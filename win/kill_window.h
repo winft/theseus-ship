@@ -11,7 +11,6 @@
 #include "osd.h"
 
 #include "input/platform.h"
-#include "main.h"
 
 #include <KLocalizedString>
 
@@ -49,7 +48,8 @@ public:
                                    return;
                                }
                                if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
-                                   xcb_kill_client(connection(), win->xcb_windows.client);
+                                   xcb_kill_client(space.base.x11_data.connection,
+                                                   win->xcb_windows.client);
                                }
                            }},
                            *window);

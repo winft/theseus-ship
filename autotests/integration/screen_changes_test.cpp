@@ -44,7 +44,7 @@ private Q_SLOTS:
 
 void ScreenChangesTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
@@ -82,14 +82,14 @@ void ScreenChangesTest::testScreenAddRemove()
     auto xdgOutputManager = registry.createXdgOutputManager(xdgOMData.name, xdgOMData.version);
 
     // should be one output
-    QCOMPARE(Test::app()->base.get_outputs().size(), 1);
+    QCOMPARE(Test::app()->base->get_outputs().size(), 1);
     QCOMPARE(outputAnnouncedSpy.count(), 1);
     const quint32 firstOutputId = outputAnnouncedSpy.first().first().value<quint32>();
     QVERIFY(firstOutputId != 0u);
     outputAnnouncedSpy.clear();
 
     // let's announce a new output
-    QSignalSpy outputs_changed_spy(&Test::app()->base, &base::platform::topology_changed);
+    QSignalSpy outputs_changed_spy(Test::app()->base.get(), &base::platform::topology_changed);
     QVERIFY(outputs_changed_spy.isValid());
 
     auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};

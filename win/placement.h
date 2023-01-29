@@ -437,7 +437,7 @@ void place_on_main_window(Win* window, QRect const& area)
 template<typename Win>
 void place_dialog(Win* window, QRect const& area)
 {
-    if (kwinApp()->options->qobject->placement() == placement::maximizing) {
+    if (window->space.base.options->qobject->placement() == placement::maximizing) {
         // With maximizing placement policy as the default, the dialog should be either maximized or
         // made as large as its maximum size and then placed on the main window (centered).
         place_maximizing(window, area);
@@ -452,7 +452,7 @@ void place_with_policy(Win* window, QRect const& area, placement policy)
         policy = placement::global_default;
     }
     if (policy == placement::global_default) {
-        policy = kwinApp()->options->qobject->placement();
+        policy = window->space.base.options->qobject->placement();
     }
 
     if (policy == placement::no_placement) {
@@ -482,7 +482,7 @@ void place_with_policy(Win* window, QRect const& area, placement policy)
         place_smart(window, area);
     }
 
-    if (kwinApp()->options->qobject->borderSnapZone()) {
+    if (window->space.base.options->qobject->borderSnapZone()) {
         // snap to titlebar / snap to window borders on inner screen edges
         auto const geo = window->geo.update.frame;
         auto corner = geo.topLeft();
@@ -516,7 +516,7 @@ placement get_placement_policy(Win const& window)
         // Placement overriden by rule.
         return policy;
     }
-    return kwinApp()->options->qobject->placement();
+    return window.space.base.options->qobject->placement();
 }
 
 /**
@@ -559,7 +559,7 @@ void place_in_area(Win* window, QRect const& area)
         }
     }
 
-    place_with_policy(window, area, kwinApp()->options->qobject->placement());
+    place_with_policy(window, area, window->space.base.options->qobject->placement());
 }
 
 /**

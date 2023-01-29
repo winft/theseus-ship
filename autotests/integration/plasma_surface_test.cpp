@@ -74,7 +74,7 @@ private:
 
 void PlasmaSurfaceTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
@@ -93,7 +93,7 @@ void PlasmaSurfaceTest::init()
 void PlasmaSurfaceTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    QTRY_VERIFY(Test::app()->base.space->stacking.order.stack.empty());
+    QTRY_VERIFY(Test::app()->base->space->stacking.order.stack.empty());
 }
 
 void PlasmaSurfaceTest::testRoleOnAllDesktops_data()
@@ -124,7 +124,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     // now render to map the window
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
 
     // currently the role is not yet set, so the window should not be on all desktops
     QCOMPARE(win::on_all_desktops(c), false);
@@ -232,7 +232,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QCOMPARE(c->geo.frame, QRect(590, 657, 100, 50));
 
     // change the screen size
-    QSignalSpy screensChangedSpy(&Test::app()->base, &base::platform::topology_changed);
+    QSignalSpy screensChangedSpy(Test::app()->base.get(), &base::platform::topology_changed);
     QVERIFY(screensChangedSpy.isValid());
 
     auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
@@ -313,7 +313,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut()
     QVERIFY(win::is_dock(c));
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QTEST(c->hasStrut(), "expectedStrut");
-    QTEST(win::space_window_area(*Test::app()->base.space, MaximizeArea, 0, 0), "expectedMaxArea");
+    QTEST(win::space_window_area(*Test::app()->base->space, MaximizeArea, 0, 0), "expectedMaxArea");
     QTEST(win::get_layer(*c), "expectedLayer");
 }
 
@@ -372,7 +372,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QVERIFY(win::is_dock(panel));
     QCOMPARE(panel->geo.frame, panelGeometry);
     QCOMPARE(panel->hasStrut(), false);
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, 0, 0),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, 0, 0),
              QRect(0, 0, 1280, 1024));
     QCOMPARE(win::get_layer(*panel), KWin::win::layer::normal);
 
@@ -392,19 +392,19 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     win::move(c, windowGeometry.topLeft());
     QCOMPARE(c->geo.frame, windowGeometry);
 
-    auto stackingOrder = Test::app()->base.space->stacking.order.stack;
+    auto stackingOrder = Test::app()->base->space->stacking.order.stack;
     QCOMPARE(stackingOrder.size(), 2);
     QCOMPARE(Test::get_wayland_window(stackingOrder.front()), panel);
     QCOMPARE(Test::get_wayland_window(stackingOrder.back()), c);
 
-    QSignalSpy stackingOrderChangedSpy(Test::app()->base.space->stacking.order.qobject.get(),
+    QSignalSpy stackingOrderChangedSpy(Test::app()->base->space->stacking.order.qobject.get(),
                                        &win::stacking_order_qobject::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
     // trigger screenedge
     QFETCH(QPoint, triggerPoint);
     Test::cursor()->set_pos(triggerPoint);
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
-    stackingOrder = Test::app()->base.space->stacking.order.stack;
+    stackingOrder = Test::app()->base->space->stacking.order.stack;
     QCOMPARE(stackingOrder.size(), 2);
     QCOMPARE(Test::get_wayland_window(stackingOrder.front()), c);
     QCOMPARE(Test::get_wayland_window(stackingOrder.back()), panel);

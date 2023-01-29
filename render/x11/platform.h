@@ -40,7 +40,7 @@ public:
     std::unique_ptr<win::deco::render_injector>
     create_non_composited_deco(win::deco::render_window window)
     {
-        return std::make_unique<backend::x11::deco_renderer>(window);
+        return std::make_unique<backend::x11::deco_renderer>(this->base.x11_data, window);
     }
 
     bool requiresCompositing() const override
@@ -51,7 +51,7 @@ public:
     bool openGLCompositingIsBroken() const override
     {
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-        return KConfigGroup(kwinApp()->config(), "Compositing").readEntry(unsafeKey, false);
+        return KConfigGroup(this->base.config.main, "Compositing").readEntry(unsafeKey, false);
     }
 
     std::unique_ptr<render::effects_handler_impl<compositor_t>> createEffectsHandler()

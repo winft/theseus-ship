@@ -25,6 +25,11 @@ public:
     using input_t = input::x11::platform<platform>;
     using space_t = win::x11::space<platform>;
 
+    platform(base::config config)
+        : base::platform(std::move(config))
+    {
+    }
+
     ~platform() override
     {
         for (auto out : outputs) {
@@ -45,6 +50,8 @@ public:
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
+
+    bool is_crash_restart{false};
 };
 
 }

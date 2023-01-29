@@ -11,7 +11,6 @@
 #include "base/output.h"
 #include "base/wayland/platform.h"
 #include "base/wayland/server.h"
-#include "main.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 

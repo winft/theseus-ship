@@ -144,7 +144,11 @@ protected:
             delete m_pictures[i];
             m_pictures[i]
                 = new XRenderPicture(this->shadowPixmap(static_cast<shadow_element>(i)).toImage());
-            xcb_render_change_picture(connection(), *m_pictures[i], XCB_RENDER_CP_REPEAT, values);
+
+            auto con = std::visit(
+                overload{[](auto&& win) { return win->space.base.x11_data.connection; }},
+                *this->window->ref_win);
+            xcb_render_change_picture(con, *m_pictures[i], XCB_RENDER_CP_REPEAT, values);
         }
         return true;
     }

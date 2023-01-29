@@ -3,6 +3,7 @@ NameSpace=KWin::render::post
 ClassName=Settings
 Singleton=true
 Mutators=true
-# manager.h is needed for NightColorMode
-IncludeFiles=render/post/night_color_manager.h
+# needed for night_color_mode
+IncludeFiles=render/types.h,kwin_export.h
 UseEnumTypes=true
+Visibility=KWIN_EXPORT

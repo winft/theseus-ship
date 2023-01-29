@@ -73,7 +73,12 @@ void update_input_window(Win* win, QRect const& frame_geo)
                                    XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW
                                        | XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
                                        | XCB_EVENT_MASK_POINTER_MOTION};
-        win->xcb_windows.input.create(bounds, XCB_WINDOW_CLASS_INPUT_ONLY, mask, values);
+        win->xcb_windows.input.create(win->space.base.x11_data.connection,
+                                      win->space.base.x11_data.root_window,
+                                      bounds,
+                                      XCB_WINDOW_CLASS_INPUT_ONLY,
+                                      mask,
+                                      values);
         if (win->mapping == mapping_state::mapped) {
             win->xcb_windows.input.map();
         }
@@ -82,7 +87,7 @@ void update_input_window(Win* win, QRect const& frame_geo)
     }
 
     auto const rects = base::x11::xcb::qt_region_to_rects(region);
-    xcb_shape_rectangles(connection(),
+    xcb_shape_rectangles(win->space.base.x11_data.connection,
                          XCB_SHAPE_SO_SET,
                          XCB_SHAPE_SK_INPUT,
                          XCB_CLIP_ORDERING_UNSORTED,
@@ -127,14 +132,15 @@ void update_input_shape(Win& win)
     // until the real shape of the client is added and that can make
     // the window lose focus (which is a problem with mouse focus policies)
     // TODO: It seems there is, after all - XShapeGetRectangles() - but maybe this is better
-    if (!win.space.shape_helper_window.is_valid()) {
-        win.space.shape_helper_window.create(QRect(0, 0, 1, 1));
+    if (auto& shape_helper = win.space.shape_helper_window; !shape_helper.is_valid()) {
+        auto& x11_data = win.space.base.x11_data;
+        shape_helper.create(x11_data.connection, x11_data.root_window, QRect(0, 0, 1, 1));
     }
 
     win.space.shape_helper_window.resize(render_geometry(&win).size());
     auto const deco_margin = QPoint(left_border(&win), top_border(&win));
 
-    auto con = connection();
+    auto con = win.space.base.x11_data.connection;
 
     xcb_shape_combine(con,
                       XCB_SHAPE_SO_SET,

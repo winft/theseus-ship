@@ -13,7 +13,6 @@
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
 #include "input/xkb/helpers.h"
-#include "main.h"
 #include "win/deco.h"
 #include "win/input.h"
 
@@ -137,7 +136,8 @@ public:
                     && win::titlebar_positioned_under_mouse(window)) {
                     win::perform_mouse_command(
                         *window,
-                        kwinApp()->options->operationTitlebarMouseWheel(event.delta * -1),
+                        this->redirect.platform.base.options->operationTitlebarMouseWheel(
+                            event.delta * -1),
                         this->redirect.pointer->pos().toPoint());
                 }
                 return true;

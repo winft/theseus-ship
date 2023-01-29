@@ -22,6 +22,7 @@ class sync_alarm_filter : public base::x11::event_filter
 public:
     sync_alarm_filter(Space& space)
         : base::x11::event_filter(
+            *space.base.x11_event_filters,
             QVector<int>{base::x11::xcb::extensions::self()->sync_alarm_notify_event()})
         , space{space}
     {

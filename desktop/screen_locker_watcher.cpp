@@ -6,8 +6,6 @@
 */
 #include "screen_locker_watcher.h"
 
-#include "main.h"
-
 // dbus generated
 #include "kscreenlocker_interface.h"
 #include "screenlocker_interface.h"

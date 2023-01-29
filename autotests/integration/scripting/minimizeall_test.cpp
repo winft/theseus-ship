@@ -52,7 +52,7 @@ void MinimizeAllScriptTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
@@ -81,10 +81,10 @@ void MinimizeAllScriptTest::init()
 {
     Test::setup_wayland_connection();
 
-    Test::app()->base.space->scripting->loadScript(locateMainScript(s_scriptName), s_scriptName);
-    QTRY_VERIFY(Test::app()->base.space->scripting->isScriptLoaded(s_scriptName));
+    Test::app()->base->space->scripting->loadScript(locateMainScript(s_scriptName), s_scriptName);
+    QTRY_VERIFY(Test::app()->base->space->scripting->isScriptLoaded(s_scriptName));
 
-    auto script = Test::app()->base.space->scripting->findScript(s_scriptName);
+    auto script = Test::app()->base->space->scripting->findScript(s_scriptName);
     QVERIFY(script);
     QSignalSpy runningChangedSpy(script, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());
@@ -96,8 +96,8 @@ void MinimizeAllScriptTest::cleanup()
 {
     Test::destroy_wayland_connection();
 
-    Test::app()->base.space->scripting->unloadScript(s_scriptName);
-    QTRY_VERIFY(!Test::app()->base.space->scripting->isScriptLoaded(s_scriptName));
+    Test::app()->base->space->scripting->unloadScript(s_scriptName);
+    QTRY_VERIFY(!Test::app()->base->space->scripting->isScriptLoaded(s_scriptName));
 }
 
 void MinimizeAllScriptTest::testMinimizeUnminimize()

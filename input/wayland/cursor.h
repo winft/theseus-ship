@@ -27,7 +27,8 @@ public:
     using cursor_image_t = wayland::cursor_image<type, Redirect>;
 
     cursor(Redirect& redirect)
-        : cursor_image{std::make_unique<cursor_image_t>(redirect)}
+        : input::cursor(redirect.platform.base.x11_data, redirect.platform.config.main)
+        , cursor_image{std::make_unique<cursor_image_t>(redirect)}
         , redirect{redirect}
     {
         QObject::connect(redirect.qobject.get(),
@@ -65,6 +66,7 @@ public:
     }
 
     std::unique_ptr<cursor_image_t> cursor_image;
+    Redirect& redirect;
 
 protected:
     void do_set_pos() override
@@ -123,7 +125,6 @@ private:
     }
 
     Qt::MouseButtons m_currentButtons{Qt::NoButton};
-    Redirect& redirect;
 };
 
 }

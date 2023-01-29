@@ -7,7 +7,6 @@
 
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/randr.h"
-#include "main.h"
 #include "platform.h"
 
 #include <QTimer>
@@ -17,7 +16,8 @@ namespace KWin::base::backend::x11
 {
 
 RandrFilter::RandrFilter(x11::platform* platform)
-    : base::x11::event_filter(base::x11::xcb::extensions::self()->randr_notify_event())
+    : base::x11::event_filter(*platform->x11_event_filters,
+                              base::x11::xcb::extensions::self()->randr_notify_event())
     , platform(platform)
     , changed_timer(std::make_unique<QTimer>())
 {
@@ -33,7 +33,8 @@ bool RandrFilter::event(xcb_generic_event_t* event)
 
     // update default screen
     auto* xrrEvent = reinterpret_cast<xcb_randr_screen_change_notify_event_t*>(event);
-    xcb_screen_t* screen = defaultScreen();
+    auto screen = base::x11::get_default_screen(platform->x11_data);
+
     if (xrrEvent->rotation & (XCB_RANDR_ROTATION_ROTATE_90 | XCB_RANDR_ROTATION_ROTATE_270)) {
         screen->width_in_pixels = xrrEvent->height;
         screen->height_in_pixels = xrrEvent->width;

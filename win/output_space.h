@@ -11,16 +11,16 @@
 
 #include "base/output.h"
 #include "base/output_helpers.h"
-#include "main.h"
 
 #include <KProcess>
 
 namespace KWin::win
 {
 
-static inline bool is_output_switch_impossible()
+template<typename Space>
+inline bool is_output_switch_impossible(Space const& space)
 {
-    if (!kwinApp()->options->get_current_output_follows_mouse()) {
+    if (!space.base.options->get_current_output_follows_mouse()) {
         return false;
     }
 
@@ -39,7 +39,7 @@ static inline bool is_output_switch_impossible()
 template<typename Space>
 void set_current_output(Space& space, base::output const& output)
 {
-    if (!kwinApp()->options->qobject->focusPolicyIsReasonable()) {
+    if (!space.base.options->qobject->focusPolicyIsReasonable()) {
         return;
     }
 
@@ -62,7 +62,7 @@ void set_current_output(Space& space, base::output const& output)
 template<typename Space>
 void switch_to_output(Space& space, QAction* action)
 {
-    if (is_output_switch_impossible()) {
+    if (is_output_switch_impossible(space)) {
         return;
     }
 
@@ -92,7 +92,7 @@ typename Space::base_t::output_t const* get_derivated_output_from_current(Space&
 template<typename Space>
 void switch_to_next_output(Space& space)
 {
-    if (is_output_switch_impossible()) {
+    if (is_output_switch_impossible(space)) {
         return;
     }
     if (auto output = get_derivated_output_from_current(space, 1)) {
@@ -103,7 +103,7 @@ void switch_to_next_output(Space& space)
 template<typename Space>
 void switch_to_prev_output(Space& space)
 {
-    if (is_output_switch_impossible()) {
+    if (is_output_switch_impossible(space)) {
         return;
     }
     if (auto output = get_derivated_output_from_current(space, -1)) {

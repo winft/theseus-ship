@@ -31,12 +31,13 @@ public:
         : qobject{std::make_unique<redirect_qobject>()}
         , keyboard{std::make_unique<keyboard_redirect<type>>(this)}
         , pointer{std::make_unique<pointer_redirect<type>>(this)}
-        , cursor{std::make_unique<x11::cursor>()}
+        , cursor{std::make_unique<x11::cursor>(platform.base.x11_data,
+                                               *platform.base.x11_event_filters,
+                                               platform.config.main)}
         , platform{platform}
         , space{space}
         , xinput{std::make_unique<xinput_integration<type>>(QX11Info::display(), *this)}
     {
-        platform.xkb.setConfig(kwinApp()->kxkbConfig());
         platform.xkb.reconfigure();
     }
 

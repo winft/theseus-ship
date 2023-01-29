@@ -7,7 +7,6 @@
 
 #include "client.h"
 
-#include "main.h"
 #include "utils/geo.h"
 #include "utils/memory.h"
 #include "win/meta.h"
@@ -98,13 +97,18 @@ bool do_start_move_resize(Win& win)
     // something *shrug* (https://lists.kde.org/?t=107302193400001&r=1&w=2)
     auto r = space_window_area(win.space, FullArea, &win);
 
-    win.xcb_windows.grab.create(r, XCB_WINDOW_CLASS_INPUT_ONLY, 0, nullptr, rootWindow());
+    win.xcb_windows.grab.create(win.space.base.x11_data.connection,
+                                win.space.base.x11_data.root_window,
+                                r,
+                                XCB_WINDOW_CLASS_INPUT_ONLY,
+                                0,
+                                nullptr);
     win.xcb_windows.grab.map();
     win.xcb_windows.grab.raise();
 
-    kwinApp()->update_x11_time_from_clock();
+    base::x11::update_time_from_clock(win.space.base);
     auto const cookie = xcb_grab_pointer_unchecked(
-        connection(),
+        win.space.base.x11_data.connection,
         false,
         win.xcb_windows.grab,
         XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION
@@ -113,15 +117,15 @@ bool do_start_move_resize(Win& win)
         XCB_GRAB_MODE_ASYNC,
         win.xcb_windows.grab,
         win.space.input->cursor->x11_cursor(win.control->move_resize.cursor),
-        xTime());
+        win.space.base.x11_data.time);
 
     unique_cptr<xcb_grab_pointer_reply_t> pointerGrab(
-        xcb_grab_pointer_reply(connection(), cookie, nullptr));
+        xcb_grab_pointer_reply(win.space.base.x11_data.connection, cookie, nullptr));
     if (pointerGrab && pointerGrab->status == XCB_GRAB_STATUS_SUCCESS) {
         has_grab = true;
     }
 
-    if (!has_grab && base::x11::grab_keyboard(win.frameId()))
+    if (!has_grab && base::x11::grab_keyboard(win.space.base.x11_data, win.frameId()))
         has_grab = win.move_resize_has_keyboard_grab = true;
     if (!has_grab) {
         // at least one grab is necessary in order to be able to finish move/resize
@@ -151,11 +155,11 @@ void leave_move_resize(Win& win)
     }
 
     if (win.move_resize_has_keyboard_grab) {
-        base::x11::ungrab_keyboard();
+        base::x11::ungrab_keyboard(win.space.base.x11_data.connection);
     }
 
     win.move_resize_has_keyboard_grab = false;
-    xcb_ungrab_pointer(connection(), xTime());
+    xcb_ungrab_pointer(win.space.base.x11_data.connection, win.space.base.x11_data.time);
     win.xcb_windows.grab.reset();
 
     win::leave_move_resize(win);

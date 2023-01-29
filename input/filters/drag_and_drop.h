@@ -8,7 +8,6 @@
 #include "base/wayland/server.h"
 #include "input/event_filter.h"
 #include "input/window_find.h"
-#include "main.h"
 #include "win/activation.h"
 #include "xwl/types.h"
 

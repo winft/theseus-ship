@@ -70,21 +70,18 @@ private:
 
 Test::space::x11_window* get_x11_window_from_id(uint32_t id)
 {
-    return Test::get_x11_window(Test::app()->base.space->windows_map.at(id));
+    return Test::get_x11_window(Test::app()->base->space->windows_map.at(id));
 }
 
 void StrutsTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     // set custom config which disables the Outline
-    KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    KConfigGroup group = config->group("Outline");
+    auto group = Test::app()->base->config.main->group("Outline");
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
     group.sync();
-
-    kwinApp()->setConfig(config);
 
     Test::app()->start();
     Test::app()->set_outputs(2);
@@ -193,40 +190,40 @@ void StrutsTest::testWaylandStruts()
     // this test verifies that struts on Wayland panels are handled correctly
     using namespace Wrapland::Client;
 
-    auto const& outputs = Test::app()->base.outputs;
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    auto const& outputs = Test::app()->base->outputs;
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MovementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeFullArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeFullArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullScreenArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullScreenArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, ScreenArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, ScreenArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
 
     // second screen
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MovementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeFullArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeFullArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullScreenArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullScreenArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, ScreenArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, ScreenArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
 
     // combined
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
-    QCOMPARE(win::restricted_move_area(*Test::app()->base.space, -1, win::strut_area::all),
+    QCOMPARE(win::restricted_move_area(*Test::app()->base->space, -1, win::strut_area::all),
              QRegion());
 
     struct client_holder {
@@ -265,40 +262,41 @@ void StrutsTest::testWaylandStruts()
     }
 
     // some props are independent of struts - those first
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MovementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeFullArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeFullArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullScreenArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullScreenArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, ScreenArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, ScreenArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
 
     // screen 1
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MovementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeFullArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeFullArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullScreenArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullScreenArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, ScreenArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, ScreenArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
 
     // combined
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
 
     // now verify the actual updated client areas
-    QTEST(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    QTEST(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
           "screen0Maximized");
-    QTEST(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QTEST(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
           "screen0Maximized");
-    QTEST(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QTEST(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
           "screen1Maximized");
-    QTEST(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QTEST(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
           "screen1Maximized");
-    QTEST(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1), "workArea");
-    QTEST(win::restricted_move_area(*Test::app()->base.space, -1, win::strut_area::all),
+    QTEST(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
+          "workArea");
+    QTEST(win::restricted_move_area(*Test::app()->base->space, -1, win::strut_area::all),
           "restrictedMoveArea");
 
     // delete all surfaces
@@ -308,7 +306,7 @@ void StrutsTest::testWaylandStruts()
         client = {};
         QVERIFY(destroyedSpy.wait());
     }
-    QCOMPARE(win::restricted_move_area(*Test::app()->base.space, -1, win::strut_area::all),
+    QCOMPARE(win::restricted_move_area(*Test::app()->base->space, -1, win::strut_area::all),
              QRegion());
 }
 
@@ -333,16 +331,16 @@ void StrutsTest::testMoveWaylandPanel()
     QVERIFY(win::is_dock(c));
     QVERIFY(c->hasStrut());
 
-    auto const& outputs = Test::app()->base.outputs;
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    auto const& outputs = Test::app()->base->outputs;
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1000));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1000));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1000));
 
     QSignalSpy geometryChangedSpy(c->qobject.get(), &win::window_qobject::frame_geometry_changed);
@@ -350,15 +348,15 @@ void StrutsTest::testMoveWaylandPanel()
     plasmaSurface->setPosition(QPoint(1280, 1000));
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(c->geo.frame, QRect(1280, 1000, 1280, 24));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1000));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1000));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1000));
 }
 
@@ -367,10 +365,10 @@ void StrutsTest::testWaylandMobilePanel()
     using namespace Wrapland::Client;
 
     // First enable maxmizing policy
-    KConfigGroup group = kwinApp()->config()->group("Windows");
+    auto group = Test::app()->base->config.main->group("Windows");
     group.writeEntry("Placement", "maximizing");
     group.sync();
-    win::space_reconfigure(*Test::app()->base.space);
+    win::space_reconfigure(*Test::app()->base->space);
 
     // create first top panel
     const QRect windowGeometry(0, 0, 1280, 60);
@@ -390,16 +388,16 @@ void StrutsTest::testWaylandMobilePanel()
     QVERIFY(win::is_dock(c));
     QVERIFY(c->hasStrut());
 
-    auto const& outputs = Test::app()->base.outputs;
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    auto const& outputs = Test::app()->base->outputs;
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
              QRect(0, 60, 1280, 964));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
              QRect(0, 60, 1280, 964));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
              QRect(0, 60, 2560, 964));
 
     // create another bottom panel
@@ -422,15 +420,15 @@ void StrutsTest::testWaylandMobilePanel()
     QVERIFY(win::is_dock(c1));
     QVERIFY(c1->hasStrut());
 
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
              QRect(0, 60, 1280, 814));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
              QRect(0, 60, 1280, 814));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
              QRect(0, 60, 2560, 814));
 
     // Destroy test clients.
@@ -537,40 +535,40 @@ void StrutsTest::testX11Struts()
     // this test verifies that struts are applied correctly for X11 windows
 
     // no, struts yet
-    auto const& outputs = Test::app()->base.outputs;
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    auto const& outputs = Test::app()->base->outputs;
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MovementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeFullArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeFullArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullScreenArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullScreenArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, ScreenArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, ScreenArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
 
     // second screen
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MovementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeFullArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeFullArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullScreenArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullScreenArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, ScreenArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, ScreenArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
 
     // combined
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
-    QCOMPARE(win::restricted_move_area(*Test::app()->base.space, -1, win::strut_area::all),
+    QCOMPARE(win::restricted_move_area(*Test::app()->base->space, -1, win::strut_area::all),
              QRegion());
 
     // create an xcb window
@@ -582,7 +580,7 @@ void StrutsTest::testX11Struts()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -597,7 +595,11 @@ void StrutsTest::testX11Struts()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base->x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Dock);
     // set the extended strut
     QFETCH(int, leftStrut);
@@ -630,7 +632,7 @@ void StrutsTest::testX11Struts()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -644,40 +646,41 @@ void StrutsTest::testX11Struts()
 
     // this should have affected the client area
     // some props are independent of struts - those first
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MovementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeFullArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeFullArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullScreenArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullScreenArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, ScreenArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, ScreenArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
 
     // screen 1
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MovementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeFullArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeFullArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullScreenArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullScreenArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, ScreenArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, ScreenArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
 
     // combined
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
 
     // now verify the actual updated client areas
-    QTEST(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    QTEST(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
           "screen0Maximized");
-    QTEST(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QTEST(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
           "screen0Maximized");
-    QTEST(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QTEST(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
           "screen1Maximized");
-    QTEST(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QTEST(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
           "screen1Maximized");
-    QTEST(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1), "workArea");
-    QTEST(win::restricted_move_area(*Test::app()->base.space, -1, win::strut_area::all),
+    QTEST(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
+          "workArea");
+    QTEST(win::restricted_move_area(*Test::app()->base->space, -1, win::strut_area::all),
           "restrictedMoveArea");
 
     // and destroy the window again
@@ -691,39 +694,39 @@ void StrutsTest::testX11Struts()
     QVERIFY(windowClosedSpy.wait());
 
     // now struts should be removed again
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MovementArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeFullArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeFullArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullScreenArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullScreenArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, ScreenArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, ScreenArea, outputs.at(0), 1),
              QRect(0, 0, 1280, 1024));
 
     // second screen
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MovementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MovementArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeFullArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeFullArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullScreenArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullScreenArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, ScreenArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, ScreenArea, outputs.at(1), 1),
              QRect(1280, 0, 1280, 1024));
 
     // combined
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, FullArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, FullArea, outputs.at(0), 1),
              QRect(0, 0, 2560, 1024));
-    QCOMPARE(win::restricted_move_area(*Test::app()->base.space, -1, win::strut_area::all),
+    QCOMPARE(win::restricted_move_area(*Test::app()->base->space, -1, win::strut_area::all),
              QRegion());
 }
 
@@ -735,7 +738,7 @@ void StrutsTest::test363804()
     Test::app()->set_outputs(geometries);
     QCOMPARE(Test::get_output(0)->geometry(), geometries.at(0));
     QCOMPARE(Test::get_output(1)->geometry(), geometries.at(1));
-    QCOMPARE(Test::app()->base.topology.size, QSize(1920, 1848));
+    QCOMPARE(Test::app()->base->topology.size, QSize(1920, 1848));
 
     // create an xcb window
     auto c = create_xcb_connection();
@@ -746,7 +749,7 @@ void StrutsTest::test363804()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -761,7 +764,11 @@ void StrutsTest::test363804()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base->x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Dock);
     NETExtendedStrut strut;
     strut.left_start = 0;
@@ -781,7 +788,7 @@ void StrutsTest::test363804()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -794,16 +801,16 @@ void StrutsTest::test363804()
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // now verify the actual updated client areas
-    auto const& outputs = Test::app()->base.outputs;
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    auto const& outputs = Test::app()->base->outputs;
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
              geometries.at(0));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
              geometries.at(0));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
              QRect(554, 1080, 1366, 732));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
              QRect(554, 1080, 1366, 732));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 1920, 1812));
 
     // and destroy the window again
@@ -827,7 +834,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     Test::app()->set_outputs(geometries);
     QCOMPARE(Test::get_output(0)->geometry(), geometries.at(0));
     QCOMPARE(Test::get_output(1)->geometry(), geometries.at(1));
-    QCOMPARE(Test::app()->base.topology.size, QSize(3046, 1050));
+    QCOMPARE(Test::app()->base->topology.size, QSize(3046, 1050));
 
     // create the panel
     auto c = create_xcb_connection();
@@ -838,7 +845,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -853,7 +860,11 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base->x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Dock);
     NETExtendedStrut strut;
     strut.left_start = 0;
@@ -873,7 +884,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -886,16 +897,16 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // now verify the actual updated client areas
-    auto const& outputs = Test::app()->base.outputs;
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    auto const& outputs = Test::app()->base->outputs;
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
              QRect(0, 306, 1366, 744));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
              QRect(0, 306, 1366, 744));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
              geometries.at(1));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
              geometries.at(1));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 3046, 1050));
 
     // now create a window which is larger than screen 0
@@ -905,7 +916,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w2,
-                      rootWindow(),
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry2.x(),
                       windowGeometry2.y(),
                       windowGeometry2.width(),
@@ -963,7 +974,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     Test::app()->set_outputs(geometries);
     QCOMPARE(Test::get_output(0)->geometry(), geometries.at(0));
     QCOMPARE(Test::get_output(1)->geometry(), geometries.at(1));
-    QCOMPARE(Test::app()->base.topology.size, QSize(3046, 1050));
+    QCOMPARE(Test::app()->base->topology.size, QSize(3046, 1050));
 
     // create the panel on the right screen, left edge
     auto c = create_xcb_connection();
@@ -974,7 +985,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -989,7 +1000,11 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    NETWinInfo info(c.get(),
+                    w,
+                    Test::app()->base->x11_data.root_window,
+                    NET::WMAllProperties,
+                    NET::WM2AllProperties);
     info.setWindowType(NET::Dock);
     NETExtendedStrut strut;
     strut.left_start = 0;
@@ -1009,7 +1024,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
@@ -1022,18 +1037,18 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // now verify the actual updated client areas
-    auto const& outputs = Test::app()->base.outputs;
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(0), 1),
+    auto const& outputs = Test::app()->base->outputs;
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(0), 1),
              QRect(0, 282, 1366, 768));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(0), 1),
              QRect(0, 282, 1366, 768));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, PlacementArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, PlacementArea, outputs.at(1), 1),
              QRect(1390, 0, 1656, 1050));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, MaximizeArea, outputs.at(1), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, MaximizeArea, outputs.at(1), 1),
              QRect(1390, 0, 1656, 1050));
-    QCOMPARE(win::space_window_area(*Test::app()->base.space, WorkArea, outputs.at(0), 1),
+    QCOMPARE(win::space_window_area(*Test::app()->base->space, WorkArea, outputs.at(0), 1),
              QRect(0, 0, 3046, 1050));
-    QCOMPARE(win::restricted_move_area(*Test::app()->base.space, -1, win::strut_area::all),
+    QCOMPARE(win::restricted_move_area(*Test::app()->base->space, -1, win::strut_area::all),
              QRegion(1366, 0, 24, 1050));
 
     // create another window and try to move it
@@ -1042,7 +1057,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     xcb_create_window(c.get(),
                       XCB_COPY_FROM_PARENT,
                       w2,
-                      rootWindow(),
+                      Test::app()->base->x11_data.root_window,
                       windowGeometry2.x(),
                       windowGeometry2.y(),
                       windowGeometry2.width(),
@@ -1073,7 +1088,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     Test::cursor()->set_pos(origGeo.center());
     win::perform_window_operation(client2, base::options_qobject::MoveOp);
 
-    QTRY_COMPARE(Test::get_x11_window(Test::app()->base.space->move_resize_window), client2);
+    QTRY_COMPARE(Test::get_x11_window(Test::app()->base->space->move_resize_window), client2);
     QVERIFY(win::is_move(client2));
 
     // move to next screen - step is 8 pixel, so 800 pixel
@@ -1084,7 +1099,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
 
     win::key_press_event(client2, Qt::Key_Enter);
     QCOMPARE(win::is_move(client2), false);
-    QVERIFY(!Test::app()->base.space->move_resize_window);
+    QVERIFY(!Test::app()->base->space->move_resize_window);
     QCOMPARE(client2->geo.frame, QRect(origGeo.translated(-800, 0)));
 
     // Destroy window again.

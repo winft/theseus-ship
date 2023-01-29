@@ -10,7 +10,6 @@
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/keyboard.h"
-#include "main.h"
 
 namespace KWin::input
 {
@@ -30,7 +29,8 @@ public:
         if (event.state == key_state::pressed) {
             auto const keysym = event.base.dev->xkb->to_keysym(event.keycode);
             if (keysym >= XKB_KEY_XF86Switch_VT_1 && keysym <= XKB_KEY_XF86Switch_VT_12) {
-                kwinApp()->session->switchVirtualTerminal(keysym - XKB_KEY_XF86Switch_VT_1 + 1);
+                this->redirect.platform.base.session->switchVirtualTerminal(
+                    keysym - XKB_KEY_XF86Switch_VT_1 + 1);
                 return true;
             }
         }

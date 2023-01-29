@@ -6,7 +6,6 @@
 */
 #include "cursor.h"
 
-#include "main.h"
 #include "platform.h"
 #include "pointer_redirect.h"
 #include "singleton_interface.h"
@@ -20,11 +19,12 @@
 namespace KWin::input
 {
 
-cursor::cursor()
-    : QObject()
-    , m_cursorTrackingCounter(0)
+cursor::cursor(base::x11::data const& x11_data, KSharedConfigPtr config)
+    : m_cursorTrackingCounter(0)
     , m_themeName("default")
     , m_themeSize(24)
+    , x11_data{x11_data}
+    , config{config}
 {
     singleton_interface::cursor = this;
     load_theme_settings();
@@ -60,7 +60,7 @@ void cursor::load_theme_settings()
 
 void cursor::load_theme_from_kconfig()
 {
-    KConfigGroup mousecfg(kwinApp()->inputConfig(), "Mouse");
+    KConfigGroup mousecfg(config, "Mouse");
 
     auto const themeName = mousecfg.readEntry("cursorTheme", "default");
     uint const themeSize = mousecfg.readEntry("cursorSize", 24);
@@ -81,7 +81,7 @@ void cursor::kglobal_settings_notify_change(int type, int arg)
 {
     Q_UNUSED(arg)
     if (type == 5 /*CursorChanged*/) {
-        kwinApp()->inputConfig()->reparseConfiguration();
+        config->reparseConfiguration();
         load_theme_from_kconfig();
 
         // sync to environment
@@ -176,7 +176,7 @@ xcb_cursor_t cursor::x11_cursor(cursor_shape shape)
 
 xcb_cursor_t cursor::x11_cursor(QByteArray const& name)
 {
-    Q_ASSERT(kwinApp()->x11Connection());
+    assert(x11_data.connection);
     auto it = m_cursors.constFind(name);
     if (it != m_cursors.constEnd()) {
         return it.value();
@@ -187,7 +187,8 @@ xcb_cursor_t cursor::x11_cursor(QByteArray const& name)
     }
 
     xcb_cursor_context_t* ctx;
-    if (xcb_cursor_context_new(kwinApp()->x11Connection(), defaultScreen(), &ctx) < 0) {
+    if (xcb_cursor_context_new(x11_data.connection, base::x11::get_default_screen(x11_data), &ctx)
+        < 0) {
         return XCB_CURSOR_NONE;
     }
 

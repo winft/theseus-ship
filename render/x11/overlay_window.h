@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb/proto.h"
-#include "main.h"
 #include "render/compositor.h"
 
 #include <QRegion>
@@ -39,7 +38,8 @@ class overlay_window : public base::x11::event_filter
 {
 public:
     explicit overlay_window(Compositor& compositor)
-        : base::x11::event_filter(QVector<int>{XCB_EXPOSE, XCB_VISIBILITY_NOTIFY})
+        : base::x11::event_filter(*compositor.platform.base.x11_event_filters,
+                                  QVector<int>{XCB_EXPOSE, XCB_VISIBILITY_NOTIFY})
         , m_shown(false)
         , m_window(XCB_WINDOW_NONE)
         , compositor{compositor}
@@ -59,7 +59,8 @@ public:
             return false;
         }
 
-        base::x11::xcb::overlay_window overlay(rootWindow());
+        base::x11::xcb::overlay_window overlay(compositor.platform.base.x11_data.connection,
+                                               compositor.platform.base.x11_data.root_window);
         if (overlay.is_null()) {
             return false;
         }
@@ -67,7 +68,7 @@ public:
         if (m_window == XCB_WINDOW_NONE) {
             return false;
         }
-        resize(kwinApp()->get_base().topology.size);
+        resize(compositor.platform.base.topology.size);
         return true;
     }
 
@@ -79,13 +80,14 @@ public:
 
         setNoneBackgroundPixmap(m_window);
         m_shape = QRegion();
-        setShape(QRect({}, kwinApp()->get_base().topology.size));
+        setShape(QRect({}, compositor.platform.base.topology.size));
         if (window != XCB_WINDOW_NONE) {
             setNoneBackgroundPixmap(window);
             setupInputShape(window);
         }
         const uint32_t eventMask = XCB_EVENT_MASK_VISIBILITY_CHANGE;
-        xcb_change_window_attributes(connection(), m_window, XCB_CW_EVENT_MASK, &eventMask);
+        xcb_change_window_attributes(
+            compositor.platform.base.x11_data.connection, m_window, XCB_CW_EVENT_MASK, &eventMask);
     }
 
     void show()
@@ -93,8 +95,8 @@ public:
         Q_ASSERT(m_window != XCB_WINDOW_NONE);
         if (m_shown)
             return;
-        xcb_map_subwindows(connection(), m_window);
-        xcb_map_window(connection(), m_window);
+        xcb_map_subwindows(compositor.platform.base.x11_data.connection, m_window);
+        xcb_map_window(compositor.platform.base.x11_data.connection, m_window);
         m_shown = true;
     }
 
@@ -102,9 +104,9 @@ public:
     void hide()
     {
         Q_ASSERT(m_window != XCB_WINDOW_NONE);
-        xcb_unmap_window(connection(), m_window);
+        xcb_unmap_window(compositor.platform.base.x11_data.connection, m_window);
         m_shown = false;
-        setShape(QRect({}, kwinApp()->get_base().topology.size));
+        setShape(QRect({}, compositor.platform.base.topology.size));
     }
 
     void setShape(const QRegion& reg)
@@ -114,7 +116,7 @@ public:
         if (reg == m_shape)
             return;
         auto const xrects = base::x11::xcb::qt_region_to_rects(reg);
-        xcb_shape_rectangles(connection(),
+        xcb_shape_rectangles(compositor.platform.base.x11_data.connection,
                              XCB_SHAPE_SO_SET,
                              XCB_SHAPE_SK_BOUNDING,
                              XCB_CLIP_ORDERING_UNSORTED,
@@ -132,8 +134,10 @@ public:
         Q_ASSERT(m_window != XCB_WINDOW_NONE);
         const uint32_t geometry[2]
             = {static_cast<uint32_t>(size.width()), static_cast<uint32_t>(size.height())};
-        xcb_configure_window(
-            connection(), m_window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, geometry);
+        xcb_configure_window(compositor.platform.base.x11_data.connection,
+                             m_window,
+                             XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
+                             geometry);
         setShape(QRegion(0, 0, size.width(), size.height()));
     }
 
@@ -143,12 +147,12 @@ public:
         if (m_window == XCB_WINDOW_NONE)
             return;
         // reset the overlay shape
-        auto const& space_size = kwinApp()->get_base().topology.size;
+        auto const& space_size = compositor.platform.base.topology.size;
         xcb_rectangle_t rec = {0,
                                0,
                                static_cast<uint16_t>(space_size.width()),
                                static_cast<uint16_t>(space_size.height())};
-        xcb_shape_rectangles(connection(),
+        xcb_shape_rectangles(compositor.platform.base.x11_data.connection,
                              XCB_SHAPE_SO_SET,
                              XCB_SHAPE_SK_BOUNDING,
                              XCB_CLIP_ORDERING_UNSORTED,
@@ -157,7 +161,7 @@ public:
                              0,
                              1,
                              &rec);
-        xcb_shape_rectangles(connection(),
+        xcb_shape_rectangles(compositor.platform.base.x11_data.connection,
                              XCB_SHAPE_SO_SET,
                              XCB_SHAPE_SK_INPUT,
                              XCB_CLIP_ORDERING_UNSORTED,
@@ -166,7 +170,8 @@ public:
                              0,
                              1,
                              &rec);
-        xcb_composite_release_overlay_window(connection(), m_window);
+        xcb_composite_release_overlay_window(compositor.platform.base.x11_data.connection,
+                                             m_window);
 
         m_window = XCB_WINDOW_NONE;
         m_shown = false;
@@ -182,9 +187,10 @@ public:
         const uint8_t eventType = event->response_type & ~0x80;
         if (eventType == XCB_EXPOSE) {
             const auto* expose = reinterpret_cast<xcb_expose_event_t*>(event);
-            if (expose->window == rootWindow() // root window needs repainting
-                || (m_window != XCB_WINDOW_NONE
-                    && expose->window == m_window)) { // overlay needs repainting
+
+            // root window needs repainting or overlay needs repainting
+            if (expose->window == compositor.platform.base.x11_data.root_window
+                || (m_window != XCB_WINDOW_NONE && expose->window == m_window)) {
                 compositor.addRepaint(QRegion(expose->x, expose->y, expose->width, expose->height));
             }
         } else if (eventType == XCB_VISIBILITY_NOTIFY) {
@@ -211,12 +217,13 @@ private:
     void setNoneBackgroundPixmap(xcb_window_t window)
     {
         const uint32_t mask = XCB_BACK_PIXMAP_NONE;
-        xcb_change_window_attributes(connection(), window, XCB_CW_BACK_PIXMAP, &mask);
+        xcb_change_window_attributes(
+            compositor.platform.base.x11_data.connection, window, XCB_CW_BACK_PIXMAP, &mask);
     }
 
     void setupInputShape(xcb_window_t window)
     {
-        xcb_shape_rectangles(connection(),
+        xcb_shape_rectangles(compositor.platform.base.x11_data.connection,
                              XCB_SHAPE_SO_SET,
                              XCB_SHAPE_SK_INPUT,
                              XCB_CLIP_ORDERING_UNSORTED,

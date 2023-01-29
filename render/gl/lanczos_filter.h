@@ -350,7 +350,7 @@ private:
 
     void updateOffscreenSurfaces()
     {
-        auto const& space_size = kwinApp()->get_base().topology.size;
+        auto const& space_size = m_scene->platform.base.topology.size;
         int w = space_size.width();
         int h = space_size.height();
 

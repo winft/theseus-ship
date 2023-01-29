@@ -8,7 +8,6 @@
 #include "extensions.h"
 
 #include "base/logging.h"
-#include "main.h"
 #include "utils/memory.h"
 
 #include <xcb/composite.h>
@@ -316,17 +315,22 @@ extension_data::extension_data()
 template<typename reply, typename T, typename F>
 void extensions::init_version(T cookie, F f, extension_data* dataToFill)
 {
-    unique_cptr<reply> version(f(connection(), cookie, nullptr));
+    unique_cptr<reply> version(f(data.connection, cookie, nullptr));
     dataToFill->version = version->major_version * 0x10 + version->minor_version;
 }
 
 extensions* extensions::s_self = nullptr;
 
+extensions* extensions::create(x11::data const& data)
+{
+    assert(!s_self);
+    s_self = new extensions(data);
+    return s_self;
+}
+
 extensions* extensions::self()
 {
-    if (!s_self) {
-        s_self = new extensions();
-    }
+    assert(s_self);
     return s_self;
 }
 
@@ -336,7 +340,8 @@ void extensions::destroy()
     s_self = nullptr;
 }
 
-extensions::extensions()
+extensions::extensions(x11::data const& data)
+    : data{data}
 {
     init();
 }
@@ -347,7 +352,7 @@ extensions::~extensions()
 
 void extensions::init()
 {
-    auto c = connection();
+    auto c = data.connection;
     xcb_prefetch_extension_data(c, &xcb_shape_id);
     xcb_prefetch_extension_data(c, &xcb_randr_id);
     xcb_prefetch_extension_data(c, &xcb_damage_id);
@@ -403,7 +408,7 @@ void extensions::init()
     }
     if (m_randr.present) {
         randrVersion = xcb_randr_query_version_unchecked(c, RANDR_MAX_MAJOR, RANDR_MAX_MINOR);
-        xcb_randr_select_input(connection(), rootWindow(), XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE);
+        xcb_randr_select_input(c, data.root_window, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE);
     }
     if (m_damage.present) {
         damageVersion = xcb_damage_query_version_unchecked(c, DAMAGE_MAX_MAJOR, DAMAGE_MIN_MAJOR);
@@ -484,7 +489,7 @@ bool extensions::has_shape(xcb_window_t w) const
     }
 
     unique_cptr<xcb_shape_query_extents_reply_t> extents(xcb_shape_query_extents_reply(
-        connection(), xcb_shape_query_extents_unchecked(connection(), w), nullptr));
+        data.connection, xcb_shape_query_extents_unchecked(data.connection, w), nullptr));
     if (!extents) {
         return false;
     }

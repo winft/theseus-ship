@@ -132,7 +132,7 @@ void TestXdgShellClient::initTestCase()
 {
     qRegisterMetaType<Wrapland::Client::Output*>();
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
@@ -159,7 +159,7 @@ void TestXdgShellClient::cleanup()
 void TestXdgShellClient::testMapUnmapMap()
 {
     // this test verifies that mapping a previously mapped window works correctly
-    QSignalSpy clientAddedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy clientAddedSpy(Test::app()->base->space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
@@ -177,7 +177,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(clientAddedSpy.wait());
 
     auto client_id = clientAddedSpy.first().first().value<quint32>();
-    auto client = Test::get_wayland_window(Test::app()->base.space->windows_map.at(client_id));
+    auto client = Test::get_wayland_window(Test::app()->base->space->windows_map.at(client_id));
     QVERIFY(client);
     QVERIFY(client->isShown());
     QCOMPARE(client->isHiddenInternal(), false);
@@ -185,7 +185,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->render_data.bit_depth, 32);
     QVERIFY(win::has_alpha(*client));
     QCOMPARE(client->control->icon.name(), QStringLiteral("wayland"));
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), client);
     QVERIFY(effectsWindowShownSpy.isEmpty());
     QVERIFY(client->isMaximizable());
     QVERIFY(client->isMovable());
@@ -204,7 +204,7 @@ void TestXdgShellClient::testMapUnmapMap()
             client->qobject.get(),
             [&deletedUuid](auto win_id) {
                 auto remnant_win
-                    = Test::get_wayland_window(Test::app()->base.space->windows_map.at(win_id));
+                    = Test::get_wayland_window(Test::app()->base->space->windows_map.at(win_id));
                 deletedUuid = remnant_win->meta.internal_id;
             });
 
@@ -220,7 +220,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->render_data.ready_for_painting, true);
     QCOMPARE(client->isHiddenInternal(), true);
     QVERIFY(windowClosedSpy.isEmpty());
-    QVERIFY(!Test::app()->base.space->stacking.active);
+    QVERIFY(!Test::app()->base->space->stacking.active);
     QCOMPARE(effectsWindowHiddenSpy.count(), 1);
     QCOMPARE(effectsWindowHiddenSpy.first().first().value<EffectWindow*>(),
              client->render->effect.get());
@@ -236,7 +236,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(client->render_data.bit_depth, 24);
     QVERIFY(!win::has_alpha(*client));
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), client);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), client);
     QCOMPARE(effectsWindowShownSpy.count(), 1);
     QCOMPARE(effectsWindowShownSpy.first().first().value<EffectWindow*>(),
              client->render->effect.get());
@@ -278,14 +278,14 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     QSignalSpy desktopPresenceChangedClientSpy(c->qobject.get(),
                                                &win::window_qobject::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedClientSpy.isValid());
-    QSignalSpy desktopPresenceChangedWorkspaceSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy desktopPresenceChangedWorkspaceSpy(Test::app()->base->space->qobject.get(),
                                                   &win::space::qobject_t::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedWorkspaceSpy.isValid());
     QSignalSpy desktopPresenceChangedEffectsSpy(effects, &EffectsHandler::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedEffectsSpy.isValid());
 
     // let's change the desktop
-    win::send_window_to_desktop(*Test::app()->base.space, c, 2, false);
+    win::send_window_to_desktop(*Test::app()->base->space, c, 2, false);
     QCOMPARE(win::get_desktop(*c), 2);
     QCOMPARE(desktopPresenceChangedClientSpy.count(), 1);
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.count(), 1);
@@ -404,17 +404,17 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown());
 
-    win::active_window_minimize(*Test::app()->base.space);
+    win::active_window_minimize(*Test::app()->base->space);
     QVERIFY(!c->isShown());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(!c->control->active);
-    QVERIFY(!Test::app()->base.space->stacking.active);
+    QVERIFY(!Test::app()->base->space->stacking.active);
     QVERIFY(c->control->minimized);
 
     // unminimize again
@@ -424,7 +424,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown());
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
 }
 
 void TestXdgShellClient::testFullscreen_data()
@@ -835,7 +835,7 @@ void TestXdgShellClient::testHidden()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown());
@@ -852,7 +852,7 @@ void TestXdgShellClient::testHidden()
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
 
-    // QCOMPARE(Test::app()->base.space->stacking.active, c);
+    // QCOMPARE(Test::app()->base->space->stacking.active, c);
 }
 
 void TestXdgShellClient::testDesktopFileName()
@@ -974,7 +974,7 @@ void TestXdgShellClient::testUnresponsiveWindow()
     // for this an external binary is launched
     const QString kill = QFINDTESTDATA(QStringLiteral("kill"));
     QVERIFY(!kill.isEmpty());
-    QSignalSpy shellClientAddedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy shellClientAddedSpy(Test::app()->base->space->qobject.get(),
                                    &win::space::qobject_t::wayland_window_added);
     QVERIFY(shellClientAddedSpy.isValid());
 
@@ -988,7 +988,7 @@ void TestXdgShellClient::testUnresponsiveWindow()
     if (socketMode) {
         int sx[2];
         QVERIFY(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) >= 0);
-        Test::app()->base.server->display->createClient(sx[0]);
+        Test::app()->base->server->display->createClient(sx[0]);
         int socket = dup(sx[1]);
         QVERIFY(socket != -1);
         env.insert(QStringLiteral("WAYLAND_SOCKET"), QByteArray::number(socket));
@@ -1010,7 +1010,7 @@ void TestXdgShellClient::testUnresponsiveWindow()
 
     auto kill_client_id = shellClientAddedSpy.first().first().value<quint32>();
     auto killClient
-        = Test::get_wayland_window(Test::app()->base.space->windows_map.at(kill_client_id));
+        = Test::get_wayland_window(Test::app()->base->space->windows_map.at(kill_client_id));
     QVERIFY(killClient);
     QSignalSpy unresponsiveSpy(killClient->qobject.get(),
                                &win::window_qobject::unresponsiveChanged);
@@ -1102,7 +1102,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     // this test verifies that when sending a client to a desktop all transients are also send to
     // that desktop
 
-    Test::app()->base.space->virtual_desktop_manager->setCount(2);
+    Test::app()->base->space->virtual_desktop_manager->setCount(2);
     std::unique_ptr<Surface> surface{Test::create_surface()};
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
 
@@ -1117,7 +1117,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
 
     auto transient = Test::render_and_wait_for_shown(transientSurface, QSize(100, 50), Qt::blue);
     QVERIFY(transient);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), transient);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), transient);
     QCOMPARE(transient->transient->lead(), c);
     QVERIFY(contains(c->transient->children, transient));
 
@@ -1125,20 +1125,20 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     QVERIFY(!win::on_all_desktops(c));
     QCOMPARE(win::get_desktop(*transient), 1);
     QVERIFY(!win::on_all_desktops(transient));
-    win::active_window_to_desktop(*Test::app()->base.space, 2);
+    win::active_window_to_desktop(*Test::app()->base->space, 2);
 
     QCOMPARE(win::get_desktop(*c), 1);
     QCOMPARE(win::get_desktop(*transient), 2);
 
     // activate c
-    win::activate_window(*Test::app()->base.space, *c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), c);
+    win::activate_window(*Test::app()->base->space, *c);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
     QVERIFY(c->control->active);
 
     // and send it to the desktop it's already on
     QCOMPARE(win::get_desktop(*c), 1);
     QCOMPARE(win::get_desktop(*transient), 2);
-    win::active_window_to_desktop(*Test::app()->base.space, 1);
+    win::active_window_to_desktop(*Test::app()->base->space, 1);
 
     // which should move the transient back to the desktop
     QCOMPARE(win::get_desktop(*c), 1);
@@ -1289,7 +1289,7 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
     QVERIFY(cfgdata.states & Wrapland::Client::xdg_shell_state::maximized);
 
     // Unmaximize again, an empty size is returned, that means the client should decide.
-    win::active_window_maximize(*Test::app()->base.space);
+    win::active_window_maximize(*Test::app()->base->space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -1456,7 +1456,7 @@ void TestXdgShellClient::testSendToScreen()
 
     auto window = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
     QVERIFY(window);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), window);
     QCOMPARE(window->geo.frame.size(), QSize(200, 100));
 
     Wrapland::Client::xdg_shell_positioner_data pos_data;
@@ -1482,13 +1482,13 @@ void TestXdgShellClient::testSendToScreen()
     QSignalSpy popup_geo_spy(popup->qobject.get(), &win::window_qobject::frame_geometry_changed);
     QVERIFY(popup_geo_spy.isValid());
 
-    auto const& outputs = Test::app()->base.outputs;
+    auto const& outputs = Test::app()->base->outputs;
     QCOMPARE(window->topo.central_output, outputs.at(0));
     QCOMPARE(popup->topo.central_output, outputs.at(0));
 
     auto output = base::get_output(outputs, 1);
     QVERIFY(output);
-    win::send_to_screen(*Test::app()->base.space, window, *output);
+    win::send_to_screen(*Test::app()->base->space, window, *output);
     QCOMPARE(window->topo.central_output, outputs.at(1));
     QCOMPARE(popup->topo.central_output, outputs.at(0));
 
@@ -1598,9 +1598,9 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     // Start interactively resizing the client.
-    QVERIFY(!Test::app()->base.space->move_resize_window);
-    win::active_window_resize(*Test::app()->base.space);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->move_resize_window), client);
+    QVERIFY(!Test::app()->base->space->move_resize_window);
+    win::active_window_resize(*Test::app()->base->space);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->move_resize_window), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
@@ -1655,7 +1655,7 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     // Finish resizing the client.
     win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-    QVERIFY(!Test::app()->base.space->move_resize_window);
+    QVERIFY(!Test::app()->base->space->move_resize_window);
 #if 0
     QEXPECT_FAIL("", "XdgShellClient currently doesn't send final configure event", Abort);
     QVERIFY(configureRequestedSpy.wait());
@@ -1704,7 +1704,7 @@ void TestXdgShellClient::testXdgWindowGeometryFullScreen()
     QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->geo.frame.size(), QSize(180, 80));
 
-    win::active_window_set_fullscreen(*Test::app()->base.space);
+    win::active_window_set_fullscreen(*Test::app()->base->space);
     QCOMPARE(client->geo.restore.max, QRect(0, 0, 180, 80));
 
     QVERIFY(configureRequestedSpy.wait());
@@ -1722,7 +1722,7 @@ void TestXdgShellClient::testXdgWindowGeometryFullScreen()
     QCOMPARE(win::render_geometry(client).size(), QSize(1280, 1024));
     QCOMPARE(client->geo.frame.size(), QSize(1280, 1024));
 
-    win::active_window_set_fullscreen(*Test::app()->base.space);
+    win::active_window_set_fullscreen(*Test::app()->base->space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -1769,7 +1769,7 @@ void TestXdgShellClient::testXdgWindowGeometryMaximize()
     QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->geo.frame.size(), QSize(180, 80));
 
-    win::active_window_maximize(*Test::app()->base.space);
+    win::active_window_maximize(*Test::app()->base->space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
 
@@ -1785,7 +1785,7 @@ void TestXdgShellClient::testXdgWindowGeometryMaximize()
     QCOMPARE(win::render_geometry(client).size(), QSize(1280, 1024));
     QCOMPARE(client->geo.frame.size(), QSize(1280, 1024));
 
-    win::active_window_maximize(*Test::app()->base.space);
+    win::active_window_maximize(*Test::app()->base->space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -1929,7 +1929,7 @@ void TestXdgShellClient::test_popup_reposition()
 
     auto window = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
     QVERIFY(window);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), window);
     QCOMPARE(window->geo.frame.size(), QSize(200, 100));
 
     Wrapland::Client::xdg_shell_positioner_data pos_data;
@@ -2000,7 +2000,7 @@ void TestXdgShellClient::test_popup_reactive()
     QSize parent_size(200, 100);
     auto window = Test::render_and_wait_for_shown(parent_surface, parent_size, Qt::red);
     QVERIFY(window);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), window);
     QCOMPARE(window->geo.frame.size(), parent_size);
 
     QSignalSpy parent_geo_spy(window->qobject.get(), &win::window_qobject::frame_geometry_changed);

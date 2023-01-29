@@ -9,7 +9,6 @@
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/proto.h"
 #include "base/x11/xcb/qt_types.h"
-#include "main.h"
 #include "xfixes_cursor_event_filter.h"
 
 #include <QAbstractEventDispatcher>
@@ -18,30 +17,31 @@
 namespace KWin::input::x11
 {
 
-cursor::cursor()
-    : input::cursor()
+cursor::cursor(base::x11::data const& x11_data,
+               base::x11::event_filter_manager& x11_event_manager,
+               KSharedConfigPtr config)
+    : input::cursor(x11_data, config)
     , m_timeStamp(XCB_TIME_CURRENT_TIME)
     , m_buttonMask(0)
     , m_resetTimeStampTimer(new QTimer(this))
     , m_needsPoll(false)
 {
     m_resetTimeStampTimer->setSingleShot(true);
-    QObject::connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::reset_time_stamp);
 
+    if (base::x11::xcb::extensions::self()->is_fixes_available()) {
+        m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(x11_event_manager, this);
+    }
+
+    QObject::connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::reset_time_stamp);
     QObject::connect(qApp->eventDispatcher(),
                      &QAbstractEventDispatcher::aboutToBlock,
                      this,
                      &cursor::about_to_block);
-    QObject::connect(kwinApp(), &Application::startup_finished, this, [this] {
-        if (base::x11::xcb::extensions::self()->is_fixes_available()) {
-            m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(this);
-        }
-    });
 }
 
 PlatformCursorImage cursor::platform_image() const
 {
-    auto c = kwinApp()->x11Connection();
+    auto c = x11_data.connection;
 
     QScopedPointer<xcb_xfixes_get_cursor_image_reply_t, QScopedPointerPodDeleter> cursor(
         xcb_xfixes_get_cursor_image_reply(c, xcb_xfixes_get_cursor_image_unchecked(c), nullptr));
@@ -66,19 +66,20 @@ cursor::~cursor()
 void cursor::do_set_pos()
 {
     auto const& pos = current_pos();
-    xcb_warp_pointer(connection(), XCB_WINDOW_NONE, rootWindow(), 0, 0, 0, 0, pos.x(), pos.y());
+    xcb_warp_pointer(
+        x11_data.connection, XCB_WINDOW_NONE, x11_data.root_window, 0, 0, 0, 0, pos.x(), pos.y());
     // call default implementation to emit signal
     input::cursor::do_set_pos();
 }
 
 void cursor::do_get_pos()
 {
-    if (m_timeStamp != XCB_TIME_CURRENT_TIME && m_timeStamp == xTime()) {
+    if (m_timeStamp != XCB_TIME_CURRENT_TIME && m_timeStamp == x11_data.time) {
         // time stamps did not change, no need to query again
         return;
     }
-    m_timeStamp = xTime();
-    base::x11::xcb::pointer pointer(rootWindow());
+    m_timeStamp = x11_data.time;
+    base::x11::xcb::pointer pointer(x11_data.connection, x11_data.root_window);
     if (pointer.is_null()) {
         return;
     }
@@ -103,22 +104,22 @@ void cursor::about_to_block()
 void cursor::do_start_image_tracking()
 {
     xcb_xfixes_select_cursor_input(
-        connection(), rootWindow(), XCB_XFIXES_CURSOR_NOTIFY_MASK_DISPLAY_CURSOR);
+        x11_data.connection, x11_data.root_window, XCB_XFIXES_CURSOR_NOTIFY_MASK_DISPLAY_CURSOR);
 }
 
 void cursor::do_stop_image_tracking()
 {
-    xcb_xfixes_select_cursor_input(connection(), rootWindow(), 0);
+    xcb_xfixes_select_cursor_input(x11_data.connection, x11_data.root_window, 0);
 }
 
 void cursor::do_show()
 {
-    xcb_xfixes_show_cursor(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
+    xcb_xfixes_show_cursor(x11_data.connection, x11_data.root_window);
 }
 
 void cursor::do_hide()
 {
-    xcb_xfixes_hide_cursor(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
+    xcb_xfixes_hide_cursor(x11_data.connection, x11_data.root_window);
 }
 
 void cursor::mouse_polled()

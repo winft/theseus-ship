@@ -8,7 +8,6 @@
 #include "base/options.h"
 #include "base/platform.h"
 #include "base/x11/xcb/extensions.h"
-#include "main.h"
 #include "win/deco/bridge.h"
 
 #include <config-kwin.h>
@@ -59,14 +58,14 @@ QString get_support_info(Space const& space)
     support.append(
         QStringLiteral("XCB compile version: %1\n\n").arg(QStringLiteral(XCB_VERSION_STRING)));
     support.append(QStringLiteral("Operation Mode: "));
-    switch (kwinApp()->operationMode()) {
-    case Application::OperationModeX11:
+    switch (space.base.operation_mode) {
+    case base::operation_mode::x11:
         support.append(QStringLiteral("X11 only"));
         break;
-    case Application::OperationModeWaylandOnly:
+    case base::operation_mode::wayland:
         support.append(QStringLiteral("Wayland Only"));
         break;
-    case Application::OperationModeXwayland:
+    case base::operation_mode::xwayland:
         support.append(QStringLiteral("Xwayland"));
         break;
     }
@@ -87,7 +86,7 @@ QString get_support_info(Space const& space)
     support.append(HAVE_EPOXY_GLX ? yes : no);
     support.append(QStringLiteral("\n"));
 
-    if (auto c = kwinApp()->x11Connection()) {
+    if (auto c = space.base.x11_data.connection) {
         support.append(QStringLiteral("X11\n"));
         support.append(QStringLiteral("===\n"));
         auto x11setup = xcb_get_setup(c);
@@ -118,7 +117,7 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("Options\n"));
     support.append(QStringLiteral("=======\n"));
 
-    auto const metaOptions = kwinApp()->options->qobject->metaObject();
+    auto const metaOptions = space.base.options->qobject->metaObject();
     auto printProperty = [](const QVariant& variant) {
         if (variant.type() == QVariant::Size) {
             const QSize& s = variant.toSize();
@@ -141,7 +140,7 @@ QString get_support_info(Space const& space)
         support.append(
             QStringLiteral("%1: %2\n")
                 .arg(property.name())
-                .arg(printProperty(kwinApp()->options->qobject->property(property.name()))));
+                .arg(printProperty(space.base.options->qobject->property(property.name()))));
     }
 
     support.append(QStringLiteral("\nScreen Edges\n"));
@@ -166,9 +165,9 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("Multi-Head: "));
     support.append(QStringLiteral("not supported anymore\n"));
     support.append(QStringLiteral("Active screen follows mouse: "));
-    support.append(kwinApp()->options->get_current_output_follows_mouse() ? yes : no);
+    support.append(space.base.options->get_current_output_follows_mouse() ? yes : no);
 
-    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto const& outputs = space.base.get_outputs();
     support.append(QStringLiteral("Number of Screens: %1\n\n").arg(outputs.size()));
     for (size_t i = 0; i < outputs.size(); ++i) {
         auto const output = outputs.at(i);

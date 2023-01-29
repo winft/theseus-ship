@@ -49,19 +49,21 @@ void GenericSceneOpenGLTest::cleanup()
 
 void GenericSceneOpenGLTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*effects).listOfKnownEffects();
+    auto const builtinNames
+        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
+              .listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
 
     config->sync();
-    kwinApp()->setConfig(config);
+    Test::app()->base->config.main = config;
 
     qputenv("XCURSOR_THEME", QByteArrayLiteral("DMZ-White"));
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("24"));
@@ -69,26 +71,26 @@ void GenericSceneOpenGLTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QVERIFY(Test::app()->base.render->compositor);
+    QVERIFY(Test::app()->base->render->compositor);
 
-    auto& scene = Test::app()->base.render->compositor->scene;
+    auto& scene = Test::app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
-    QCOMPARE(Test::app()->base.render->selected_compositor(), KWin::OpenGLCompositing);
+    QCOMPARE(Test::app()->base->render->selected_compositor(), KWin::OpenGLCompositing);
 }
 
 void GenericSceneOpenGLTest::testRestart()
 {
     // simple restart of the OpenGL compositor without any windows being shown
-    Test::app()->base.render->compositor->reinitialize();
+    Test::app()->base->render->compositor->reinitialize();
 
-    auto& scene = Test::app()->base.render->compositor->scene;
+    auto& scene = Test::app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
-    QCOMPARE(Test::app()->base.render->selected_compositor(), KWin::OpenGLCompositing);
+    QCOMPARE(Test::app()->base->render->selected_compositor(), KWin::OpenGLCompositing);
 
     // trigger a repaint
-    render::full_repaint(*Test::app()->base.render->compositor);
+    render::full_repaint(*Test::app()->base->render->compositor);
     // and wait 100 msec to ensure it's rendered
     // TODO: introduce frameRendered signal in SceneOpenGL
     QTest::qWait(100);

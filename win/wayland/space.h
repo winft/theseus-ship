@@ -22,7 +22,6 @@
 #include "xdg_shell.h"
 #include "xwl_window.h"
 
-#include "base/wayland/server.h"
 #include "debug/console/wayland/wayland_console.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
@@ -67,7 +66,7 @@ public:
 
     using input_t = input::wayland::redirect<typename Base::input_t, type>;
 
-    space(Base& base, base::wayland::server* server)
+    space(Base& base)
         : win::space()
         , base{base}
         , outline{render::outline::create(*base.render->compositor,
@@ -78,21 +77,20 @@ public:
         , deco{std::make_unique<deco::bridge<type>>(*this)}
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
         , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
-        , server{server}
-        , compositor{server->display->createCompositor()}
-        , subcompositor{server->display->createSubCompositor()}
-        , xdg_shell{server->display->createXdgShell()}
-        , layer_shell{server->display->createLayerShellV1()}
-        , xdg_decoration_manager{server->display->createXdgDecorationManager(xdg_shell.get())}
-        , xdg_foreign{server->display->createXdgForeign()}
-        , plasma_activation_feedback{server->display->create_plasma_activation_feedback()}
-        , plasma_shell{server->display->createPlasmaShell()}
-        , plasma_window_manager{server->display->createPlasmaWindowManager()}
-        , plasma_virtual_desktop_manager{server->display->createPlasmaVirtualDesktopManager()}
-        , idle_inhibit_manager_v1{server->display->createIdleInhibitManager()}
-        , appmenu_manager{server->display->createAppmenuManager()}
+        , compositor{base.server->display->createCompositor()}
+        , subcompositor{base.server->display->createSubCompositor()}
+        , xdg_shell{base.server->display->createXdgShell()}
+        , layer_shell{base.server->display->createLayerShellV1()}
+        , xdg_decoration_manager{base.server->display->createXdgDecorationManager(xdg_shell.get())}
+        , xdg_foreign{base.server->display->createXdgForeign()}
+        , plasma_activation_feedback{base.server->display->create_plasma_activation_feedback()}
+        , plasma_shell{base.server->display->createPlasmaShell()}
+        , plasma_window_manager{base.server->display->createPlasmaWindowManager()}
+        , plasma_virtual_desktop_manager{base.server->display->createPlasmaVirtualDesktopManager()}
+        , idle_inhibit_manager_v1{base.server->display->createIdleInhibitManager()}
+        , appmenu_manager{base.server->display->createAppmenuManager()}
         , server_side_decoration_palette_manager{
-              server->display->createServerSideDecorationPaletteManager()}
+              base.server->display->createServerSideDecorationPaletteManager()}
     {
         namespace WS = Wrapland::Server;
         using wayland_window = win::wayland::window<space<Base>>;
@@ -488,8 +486,6 @@ public:
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
     std::unique_ptr<base::dbus::kwin_impl<type>> dbus;
-
-    base::wayland::server* server;
 
     std::unique_ptr<Wrapland::Server::Compositor> compositor;
     std::unique_ptr<Wrapland::Server::Subcompositor> subcompositor;

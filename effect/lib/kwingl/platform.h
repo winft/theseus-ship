@@ -182,9 +182,7 @@ public:
      */
     void printResults() const;
 
-    /**
-     * Returns a pointer to the GLPlatform instance.
-     */
+    static GLPlatform* create(xcb_connection_t* x11_connection);
     static GLPlatform* instance();
 
     /**
@@ -364,6 +362,11 @@ public:
      */
     OpenGLPlatformInterface platformInterface() const;
 
+    xcb_connection_t* x11_connection() const
+    {
+        return x11_con;
+    }
+
     /**
      * @returns a human readable form of the @p version as a QString.
      * @since 4.9
@@ -416,7 +419,7 @@ public:
     static QByteArray chipClassToString8(ChipClass chipClass);
 
 private:
-    GLPlatform();
+    GLPlatform(xcb_connection_t* x11_connection);
     friend void KWin::cleanupGL();
     static void cleanup();
 
@@ -447,14 +450,21 @@ private:
     bool m_preferBufferSubData : 1;
     OpenGLPlatformInterface m_platformInterface;
     bool m_gles : 1;
+    xcb_connection_t* x11_con{nullptr};
+
     static GLPlatform* s_platform;
 };
 
+inline GLPlatform* GLPlatform::create(xcb_connection_t* x11_connection)
+{
+    assert(!s_platform);
+    s_platform = new GLPlatform(x11_connection);
+    return s_platform;
+}
+
 inline GLPlatform* GLPlatform::instance()
 {
-    if (!s_platform)
-        s_platform = new GLPlatform;
-
+    assert(s_platform);
     return s_platform;
 }
 

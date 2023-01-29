@@ -7,7 +7,6 @@
 
 #include "config-kwin.h"
 #include "input/platform.h"
-#include "main.h"
 
 #include <KGlobalAccel>
 #include <memory>
@@ -16,20 +15,27 @@ namespace KWin::input::x11
 {
 
 template<typename Base>
-class platform : public input::platform<Base>
+class platform
 {
 public:
+    using base_t = Base;
     using type = platform<Base>;
     using space_t = typename Base::space_t;
 
     platform(Base& base)
-        : input::platform<Base>(base)
+        : qobject{std::make_unique<platform_qobject>(
+            [this](auto accel) { platform_register_global_accel(*this, accel); })}
+        , config{input::config(KConfig::NoGlobals)}
         , xkb{xkb::manager<type>(this)}
+        , base{base}
     {
+        qRegisterMetaType<button_state>();
+        qRegisterMetaType<key_state>();
     }
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
+    virtual ~platform() = default;
 
     /**
      * Platform specific preparation for an @p action which is used for KGlobalAccel.
@@ -49,8 +55,8 @@ public:
     {
         QObject::connect(KGlobalAccel::self(),
                          &KGlobalAccel::globalShortcutActiveChanged,
-                         kwinApp(),
-                         [action](QAction* triggeredAction, bool /*active*/) {
+                         qobject.get(),
+                         [this, action](QAction* triggeredAction, bool /*active*/) {
                              if (triggeredAction != action) {
                                  return;
                              }
@@ -60,7 +66,7 @@ public:
                              bool ok = false;
                              const quint32 t = timestamp.toULongLong(&ok);
                              if (ok) {
-                                 kwinApp()->setX11Time(t);
+                                 base::x11::advance_time(base.x11_data, t);
                              }
                          });
     }
@@ -85,8 +91,17 @@ public:
         QObject::connect(action, &QAction::triggered, receiver, slot);
     }
 
+    std::unique_ptr<platform_qobject> qobject;
+    input::config config;
+
+    std::vector<keyboard*> keyboards;
+    std::vector<pointer*> pointers;
+
     input::xkb::manager<type> xkb;
+    std::unique_ptr<global_shortcuts_manager> shortcuts;
     std::unique_ptr<dbus::device_manager<type>> dbus;
+
+    Base& base;
 };
 
 }

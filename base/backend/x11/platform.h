@@ -17,6 +17,8 @@ namespace KWin::base::backend::x11
 class platform : public base::x11::platform
 {
 public:
+    platform(base::config config);
+
     void update_outputs();
 
 private:

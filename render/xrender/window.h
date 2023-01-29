@@ -69,6 +69,7 @@ private:
         auto& temp_visibleRect = scene.temp_visible_rect;
         auto& s_tempPicture = scene.temp_picture;
         auto& s_fadeAlphaPicture = scene.fade_alpha_picture;
+        auto con = win.space.base.x11_data.connection;
 
         // maybe nothing will be painted
         setTransformedShape(QRegion());
@@ -221,7 +222,7 @@ private:
                 renderTarget = *s_tempPicture;
             }
         } else {
-            xcb_render_set_picture_transform(connection(), pic, xform);
+            xcb_render_set_picture_transform(con, pic, xform);
             if (this->filter == image_filter_type::good) {
                 setPictureFilter(pic, image_filter_type::good);
             }
@@ -239,7 +240,7 @@ private:
             // the repeat mode to RepeatPad.
             if (!win::has_alpha(win)) {
                 const uint32_t values[] = {XCB_RENDER_REPEAT_PAD};
-                xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
+                xcb_render_change_picture(con, pic, XCB_RENDER_CP_REPEAT, values);
             }
             // END OF STUPID RADEON HACK
         }
@@ -329,7 +330,7 @@ private:
         for (PaintClipper::Iterator iterator; !iterator.isDone(); iterator.next()) {
 
 #define RENDER_SHADOW_TILE(_TILE_, _RECT_)                                                         \
-    xcb_render_composite(connection(),                                                             \
+    xcb_render_composite(con,                                                                      \
                          XCB_RENDER_PICT_OP_OVER,                                                  \
                          m_xrenderShadow->picture(shadow_element::_TILE_),                         \
                          shadowAlpha,                                                              \
@@ -367,7 +368,7 @@ private:
                 clientAlpha = xRenderBlendPicture(data.opacity());
             }
 
-            xcb_render_composite(connection(),
+            xcb_render_composite(con,
                                  clientRenderOp,
                                  pic,
                                  clientAlpha,
@@ -389,12 +390,8 @@ private:
                         s_fadeAlphaPicture = new XRenderPicture(xRenderFill(cFadeColor));
                     } else {
                         xcb_rectangle_t rect = {0, 0, 1, 1};
-                        xcb_render_fill_rectangles(connection(),
-                                                   XCB_RENDER_PICT_OP_SRC,
-                                                   *s_fadeAlphaPicture,
-                                                   cFadeColor,
-                                                   1,
-                                                   &rect);
+                        xcb_render_fill_rectangles(
+                            con, XCB_RENDER_PICT_OP_SRC, *s_fadeAlphaPicture, cFadeColor, 1, &rect);
                     }
 
                     auto const previous_size = previous->win_integration->get_size();
@@ -413,10 +410,10 @@ private:
                                DOUBLE_TO_FIXED(0),
                                DOUBLE_TO_FIXED(0),
                                DOUBLE_TO_FIXED(1)};
-                        xcb_render_set_picture_transform(connection(), previous->picture, xform2);
+                        xcb_render_set_picture_transform(con, previous->picture, xform2);
                     }
 
-                    xcb_render_composite(connection(),
+                    xcb_render_composite(con,
                                          opaque ? XCB_RENDER_PICT_OP_OVER : XCB_RENDER_PICT_OP_ATOP,
                                          previous->picture,
                                          *s_fadeAlphaPicture,
@@ -431,7 +428,7 @@ private:
                                          dr.height());
 
                     if (previous_size != current_size) {
-                        xcb_render_set_picture_transform(connection(), previous->picture, identity);
+                        xcb_render_set_picture_transform(con, previous->picture, identity);
                     }
                 }
             }
@@ -442,12 +439,12 @@ private:
 
             if (!noBorder) {
                 xcb_render_picture_t decorationAlpha = xRenderBlendPicture(data.opacity());
-                auto renderDeco = [decorationAlpha, renderTarget](xcb_render_picture_t deco,
-                                                                  const QRect& rect) {
+                auto renderDeco = [decorationAlpha, renderTarget, con](xcb_render_picture_t deco,
+                                                                       const QRect& rect) {
                     if (deco == XCB_RENDER_PICTURE_NONE) {
                         return;
                     }
-                    xcb_render_composite(connection(),
+                    xcb_render_composite(con,
                                          XCB_RENDER_PICT_OP_OVER,
                                          deco,
                                          decorationAlpha,
@@ -483,7 +480,7 @@ private:
                     rect.width = wr.width();
                     rect.height = wr.height();
                 }
-                xcb_render_fill_rectangles(connection(),
+                xcb_render_fill_rectangles(con,
                                            XCB_RENDER_PICT_OP_OVER,
                                            renderTarget,
                                            preMultiply(data.brightness() < 1.0
@@ -494,9 +491,9 @@ private:
             }
             if (blitInTempPixmap) {
                 const QRect r = mapToScreen(win, mask, data, temp_visibleRect);
-                xcb_render_set_picture_transform(connection(), *s_tempPicture, xform);
+                xcb_render_set_picture_transform(con, *s_tempPicture, xform);
                 setPictureFilter(*s_tempPicture, this->filter);
-                xcb_render_composite(connection(),
+                xcb_render_composite(con,
                                      XCB_RENDER_PICT_OP_OVER,
                                      *s_tempPicture,
                                      XCB_RENDER_PICTURE_NONE,
@@ -509,17 +506,17 @@ private:
                                      r.y(),
                                      r.width(),
                                      r.height());
-                xcb_render_set_picture_transform(connection(), *s_tempPicture, identity);
+                xcb_render_set_picture_transform(con, *s_tempPicture, identity);
             }
         }
 
         if (scaled && !blitInTempPixmap) {
-            xcb_render_set_picture_transform(connection(), pic, identity);
+            xcb_render_set_picture_transform(con, pic, identity);
             if (this->filter == image_filter_type::good)
                 setPictureFilter(pic, image_filter_type::fast);
             if (!win::has_alpha(win)) {
                 const uint32_t values[] = {XCB_RENDER_REPEAT_NONE};
-                xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
+                xcb_render_change_picture(con, pic, XCB_RENDER_CP_REPEAT, values);
             }
         }
 
@@ -603,6 +600,7 @@ private:
     {
         auto& temp_visibleRect = scene.temp_visible_rect;
         auto& s_tempPicture = scene.temp_picture;
+        auto con = win.space.base.x11_data.connection;
 
         auto const oldSize = temp_visibleRect.size();
         temp_visibleRect = win::visible_rect(&win).translated(-win.geo.pos());
@@ -618,22 +616,22 @@ private:
         }
 
         if (!s_tempPicture) {
-            xcb_pixmap_t pix = xcb_generate_id(connection());
-            xcb_create_pixmap(connection(),
+            xcb_pixmap_t pix = xcb_generate_id(con);
+            xcb_create_pixmap(con,
                               32,
                               pix,
-                              rootWindow(),
+                              win.space.base.x11_data.root_window,
                               temp_visibleRect.width(),
                               temp_visibleRect.height());
             s_tempPicture = new XRenderPicture(pix, 32);
-            xcb_free_pixmap(connection(), pix);
+            xcb_free_pixmap(con, pix);
         }
 
         xcb_render_color_t const transparent = {0, 0, 0, 0};
         xcb_rectangle_t const rect
             = {0, 0, uint16_t(temp_visibleRect.width()), uint16_t(temp_visibleRect.height())};
         xcb_render_fill_rectangles(
-            connection(), XCB_RENDER_PICT_OP_SRC, *s_tempPicture, transparent, 1, &rect);
+            con, XCB_RENDER_PICT_OP_SRC, *s_tempPicture, transparent, 1, &rect);
     }
 
     void setPictureFilter(xcb_render_picture_t pic, image_filter_type filter)
@@ -647,8 +645,12 @@ private:
             filterName = QByteArray("good");
             break;
         }
-        xcb_render_set_picture_filter(
-            connection(), pic, filterName.length(), filterName.constData(), 0, nullptr);
+        xcb_render_set_picture_filter(scene.platform.base.x11_data.connection,
+                                      pic,
+                                      filterName.length(),
+                                      filterName.constData(),
+                                      0,
+                                      nullptr);
     }
 
     xcb_render_pictformat_t format;

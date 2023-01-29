@@ -170,7 +170,7 @@ public:
 
     int set_active_client_recursion{0};
 
-    base::x11::xcb::window shape_helper_window{XCB_WINDOW_NONE};
+    base::x11::xcb::window shape_helper_window;
 
     uint32_t window_id{0};
 };

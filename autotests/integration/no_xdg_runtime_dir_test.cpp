@@ -57,11 +57,12 @@ int main(int argc, char* argv[])
         using namespace KWin;
         Test::prepare_app_env(argv[0]);
 #ifdef NO_XWAYLAND
-        auto mode = KWin::Application::OperationModeWaylandOnly;
+        auto mode = KWin::base::operation_mode::wayland;
 #else
-        auto mode = KWin::Application::OperationModeXwayland;
+        auto mode = KWin::base::operation_mode::xwayland;
 
 #endif
+        KWin::base::app_singleton app_singleton;
         auto app = WaylandTestApplication(mode,
                                           Test::create_socket_name("KWin::NoXdgRuntimeDirTest"),
                                           base::wayland::start_options::none,

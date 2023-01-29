@@ -54,17 +54,18 @@ void ToplevelOpenCloseAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*effects).listOfKnownEffects();
+    auto const builtinNames
+        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
+              .listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
     config->sync();
-    kwinApp()->setConfig(config);
 
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
@@ -72,7 +73,7 @@ void ToplevelOpenCloseAnimationTest::initTestCase()
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 
-    auto& scene = Test::app()->base.render->compositor->scene;
+    auto& scene = Test::app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }
@@ -84,7 +85,7 @@ void ToplevelOpenCloseAnimationTest::init()
 
 void ToplevelOpenCloseAnimationTest::cleanup()
 {
-    auto& effectsImpl = Test::app()->base.render->compositor->effects;
+    auto& effectsImpl = Test::app()->base->render->compositor->effects;
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -107,7 +108,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
     // animate the appearing and the disappearing of toplevel windows.
 
     // Make sure that we have the right effects ptr.
-    auto& effectsImpl = Test::app()->base.render->compositor->effects;
+    auto& effectsImpl = Test::app()->base->render->compositor->effects;
     QVERIFY(effectsImpl);
 
     // Load effect that will be tested.
@@ -160,7 +161,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     // to animate popups(e.g. popup menus, tooltips, etc).
 
     // Make sure that we have the right effects ptr.
-    auto& effectsImpl = Test::app()->base.render->compositor->effects;
+    auto& effectsImpl = Test::app()->base->render->compositor->effects;
     QVERIFY(effectsImpl);
 
     // Create the main window.

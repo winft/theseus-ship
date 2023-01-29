@@ -10,9 +10,9 @@
 
 #include "cursor_theme.h"
 
+#include "base/wayland/screen_lock.h"
 #include "base/wayland/server.h"
 #include "kwin_export.h"
-#include "main.h"
 #include "win/space_qobject.h"
 #include "win/window_qobject.h"
 
@@ -77,11 +77,12 @@ public:
 
         m_surfaceRenderedTimer.start();
 
-        // Loading the theme is delayed to end of startup because we depend on the client
-        // connection.
+        // Loading the theme is delayed because we depend on the client connection.
         // TODO(romangg): Instead load the theme without client connection and setup directly.
-        QObject::connect(
-            kwinApp(), &Application::startup_finished, qobject.get(), [this] { setup_theme(); });
+        QObject::connect(redirect.platform.base.server->qobject.get(),
+                         &base::wayland::server_qobject::internal_client_available,
+                         qobject.get(),
+                         [this] { setup_theme(); });
     }
 
     void setEffectsOverrideCursor(Qt::CursorShape shape)
@@ -297,7 +298,7 @@ private:
             setSource(CursorSource::DragAndDrop);
             return;
         }
-        if (kwinApp()->is_screen_locked()) {
+        if (base::wayland::is_screen_locked(redirect.platform.base)) {
             setSource(CursorSource::LockScreen);
             return;
         }
@@ -542,8 +543,8 @@ private:
             m_cursorTheme = std::make_unique<cursor_theme<Cursor>>(
                 static_cast<Cursor&>(*redirect.cursor),
                 redirect.platform.base.server->internal_connection.shm);
-            QObject::connect(redirect.platform.base.server.get(),
-                             &base::wayland::server::terminating_internal_client_connection,
+            QObject::connect(redirect.platform.base.server->qobject.get(),
+                             &base::wayland::server_qobject::terminating_internal_client_connection,
                              qobject.get(),
                              [this] { m_cursorTheme.reset(); });
         }

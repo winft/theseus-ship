@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "startup_notify.h"
 #include "window_find.h"
 
-#include "main.h"
 #include "render/effect/window_group_impl.h"
 
 #include <KStartupInfo>
@@ -49,8 +48,11 @@ public:
         if (xcb_leader != XCB_WINDOW_NONE) {
             leader
                 = find_controlled_window<x11_window_t>(space, predicate_match::window, xcb_leader);
-            leader_info = new NETWinInfo(
-                connection(), xcb_leader, rootWindow(), NET::Properties(), NET::WM2StartupId);
+            leader_info = new NETWinInfo(space.base.x11_data.connection,
+                                         xcb_leader,
+                                         space.base.x11_data.root_window,
+                                         NET::Properties(),
+                                         NET::WM2StartupId);
         }
         effect_group = new render::effect_window_group_impl<group_t>(this);
         space.groups.push_back(this);
@@ -69,8 +71,11 @@ public:
             return leader->control->icon;
         } else if (xcb_leader != XCB_WINDOW_NONE) {
             QIcon ic;
-            NETWinInfo info(
-                connection(), xcb_leader, rootWindow(), NET::WMIcon, NET::WM2IconPixmap);
+            NETWinInfo info(space.base.x11_data.connection,
+                            xcb_leader,
+                            space.base.x11_data.root_window,
+                            NET::WMIcon,
+                            NET::WM2IconPixmap);
             auto readIcon = [&ic, &info, this](int size, bool scale = true) {
                 const QPixmap pix
                     = KWindowSystem::icon(xcb_leader,
@@ -130,8 +135,8 @@ public:
     {
         // copy of win::x11::update_user_time in control.h
         if (time == XCB_CURRENT_TIME) {
-            kwinApp()->update_x11_time_from_clock();
-            time = xTime();
+            base::x11::update_time_from_clock(space.base);
+            time = space.base.x11_data.time;
         }
         if (time != -1U
             && (user_time == XCB_CURRENT_TIME

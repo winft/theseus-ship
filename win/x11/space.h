@@ -63,7 +63,7 @@ public:
             this->input = std::make_unique<input_t>(*base.input, *this);
         }
 
-        atoms = std::make_unique<base::x11::atoms>(connection());
+        atoms = std::make_unique<base::x11::atoms>(base.x11_data.connection);
         edges = std::make_unique<edger_t>(*this);
         dbus = std::make_unique<base::dbus::kwin_impl<type>>(*this);
 
@@ -219,7 +219,7 @@ void stack_screen_edges_under_override_redirect(Space* space)
     auto const edges_wins = space->edges->windows();
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
 
-    base::x11::xcb::restack_windows(windows);
+    base::x11::xcb::restack_windows(space->base.x11_data.connection, windows);
 }
 
 }

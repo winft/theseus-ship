@@ -62,7 +62,8 @@ public:
         , meta{++space.window_id}
         , transient{std::make_unique<x11::transient<type>>(this)}
         , remnant{std::move(remnant)}
-        , motif_hints{space.atoms->motif_wm_hints}
+        , geometry_hints{space.base.x11_data.connection}
+        , motif_hints{space.base.x11_data.connection, space.atoms->motif_wm_hints}
         , space{space}
 
     {
@@ -74,13 +75,14 @@ public:
         , meta{++space.window_id}
         , transient{std::make_unique<x11::transient<type>>(this)}
         , client_machine{new win::x11::client_machine}
-        , motif_hints(space.atoms->motif_wm_hints)
+        , geometry_hints{space.base.x11_data.connection}
+        , motif_hints{space.base.x11_data.connection, space.atoms->motif_wm_hints}
         , space{space}
     {
         this->space.windows_map.insert({this->meta.signal_id, this});
         window_setup_geometry(*this);
 
-        this->xcb_windows.client.reset(xcb_win, false);
+        this->xcb_windows.client.reset(space.base.x11_data.connection, xcb_win, false);
     }
 
     ~xwl_window()
@@ -267,7 +269,7 @@ public:
 
     bool groupTransient() const
     {
-        return this->transient->lead_id == rootWindow();
+        return this->transient->lead_id == space.base.x11_data.root_window;
     }
 
     type* findModal()

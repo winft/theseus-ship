@@ -71,7 +71,7 @@ void virtual_keyboard_test::initTestCase()
     qRegisterMetaType<Wrapland::Client::Output*>();
     qRegisterMetaType<Wrapland::Client::Keyboard::KeyState>();
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
@@ -136,7 +136,7 @@ void virtual_keyboard_test::cleanup()
 {
     // Make sure we animate.
     QTest::qWait(1000);
-    QVERIFY(Test::app()->base.space->windows.empty());
+    QVERIFY(Test::app()->base->space->windows.empty());
 
     vk_client = {};
     focus_client = {};
@@ -163,7 +163,7 @@ void virtual_keyboard_test::test_keymap()
     QVERIFY(client_keymap_spy.isValid());
 
     auto window = create_window(focus_client);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window.window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), window.window);
 
     // After focus we don't yet get the current keymap as none was set yet.
     QVERIFY(!client_keymap_spy.wait(500));
@@ -174,7 +174,7 @@ void virtual_keyboard_test::test_keymap()
     Test::keyboard_key_released(KEY_Y, timestamp++);
     QVERIFY(client_keymap_spy.wait());
 
-    QSignalSpy vk_spy(Test::app()->base.input->virtual_keyboard.get(),
+    QSignalSpy vk_spy(Test::app()->base->input->virtual_keyboard.get(),
                       &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
     QVERIFY(vk_spy.isValid());
 
@@ -207,7 +207,7 @@ void virtual_keyboard_test::test_keymap()
  */
 void virtual_keyboard_test::test_keys()
 {
-    QSignalSpy vk_spy(Test::app()->base.input->virtual_keyboard.get(),
+    QSignalSpy vk_spy(Test::app()->base->input->virtual_keyboard.get(),
                       &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
     QVERIFY(vk_spy.isValid());
 
@@ -238,7 +238,7 @@ void virtual_keyboard_test::test_keys()
     QVERIFY(key_spy.isValid());
 
     auto window = create_window(focus_client);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), window.window);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), window.window);
 
     // Now we press on the virtual keyboard and we should get the new new keymap.
     uint32_t timestamp{0};

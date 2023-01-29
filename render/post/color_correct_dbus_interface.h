@@ -19,15 +19,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
+#include "render/types.h"
+
 #include <QObject>
 #include <QtDBus>
+#include <functional>
 
 namespace KWin::render::post
 {
 
-class night_color_manager;
+struct night_color_data;
 
-class color_correct_dbus_interface : public QObject, public QDBusContext
+struct color_correct_dbus_integration {
+    color_correct_dbus_integration(std::function<void(bool)> inhibit,
+                                   std::function<void(double, double)> loc_update,
+                                   night_color_data const& data)
+        : inhibit{inhibit}
+        , loc_update{loc_update}
+        , data{data}
+    {
+    }
+
+    std::function<void(bool)> inhibit;
+    std::function<void(double, double)> loc_update;
+    night_color_data const& data;
+};
+
+class KWIN_EXPORT color_correct_dbus_interface : public QObject, public QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.ColorCorrect")
@@ -44,7 +63,7 @@ class color_correct_dbus_interface : public QObject, public QDBusContext
     Q_PROPERTY(quint32 scheduledTransitionDuration READ scheduledTransitionDuration)
 
 public:
-    explicit color_correct_dbus_interface(night_color_manager* manager);
+    explicit color_correct_dbus_interface(color_correct_dbus_integration integration);
     ~color_correct_dbus_interface() override = default;
 
     bool isInhibited() const;
@@ -58,6 +77,14 @@ public:
     quint32 previousTransitionDuration() const;
     quint64 scheduledTransitionDateTime() const;
     quint32 scheduledTransitionDuration() const;
+
+    void send_inhibited(bool inhibited) const;
+    void send_enabled(bool enabled) const;
+    void send_running(bool running) const;
+    void send_current_temperature(int temp) const;
+    void send_target_temperature(int temp) const;
+    void send_mode(night_color_mode mode) const;
+    void send_transition_timings() const;
 
 public Q_SLOTS:
     /**
@@ -84,7 +111,7 @@ private Q_SLOTS:
 private:
     void uninhibit(const QString& serviceName, uint cookie);
 
-    night_color_manager* m_manager;
+    color_correct_dbus_integration integration;
     QDBusServiceWatcher* m_inhibitorWatcher;
     QMultiHash<QString, uint> m_inhibitors;
     uint m_lastInhibitionCookie = 0;

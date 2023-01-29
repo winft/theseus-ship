@@ -38,6 +38,7 @@ class GLPlatformTest : public QObject
 {
     Q_OBJECT
 private Q_SLOTS:
+    void init();
     void cleanup();
 
     void testDriverToString_data();
@@ -48,6 +49,11 @@ private Q_SLOTS:
     void testDetect_data();
     void testDetect();
 };
+
+void GLPlatformTest::init()
+{
+    GLPlatform::create(nullptr);
+}
 
 void GLPlatformTest::cleanup()
 {

@@ -10,15 +10,26 @@
 
 #include <memory>
 
-namespace KWin::input::x11
+namespace KWin
 {
+
+namespace base::x11
+{
+class event_filter_manager;
+}
+
+namespace input::x11
+{
+
 class xfixes_cursor_event_filter;
 
 class KWIN_EXPORT cursor : public input::cursor
 {
     Q_OBJECT
 public:
-    cursor();
+    cursor(base::x11::data const& x11_data,
+           base::x11::event_filter_manager& x11_event_manager,
+           KSharedConfigPtr config);
     ~cursor() override;
 
     PlatformCursorImage platform_image() const override;
@@ -63,4 +74,5 @@ private:
     std::unique_ptr<xfixes_cursor_event_filter> m_xfixesFilter;
 };
 
+}
 }

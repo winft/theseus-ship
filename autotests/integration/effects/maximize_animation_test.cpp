@@ -50,17 +50,20 @@ void MaximizeAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+    auto config = Test::app()->base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    const auto builtinNames = render::effect_loader(*effects).listOfKnownEffects();
+    auto const builtinNames
+        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
+              .listOfKnownEffects();
+
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
+
     config->sync();
-    kwinApp()->setConfig(config);
 
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
 
@@ -75,7 +78,7 @@ void MaximizeAnimationTest::init()
 
 void MaximizeAnimationTest::cleanup()
 {
-    auto& effectsImpl = Test::app()->base.render->compositor->effects;
+    auto& effectsImpl = Test::app()->base->render->compositor->effects;
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -128,7 +131,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Load effect that will be tested.
     const QString effectName = QStringLiteral("kwin4_effect_maximize");
-    auto& effectsImpl = Test::app()->base.render->compositor->effects;
+    auto& effectsImpl = Test::app()->base->render->compositor->effects;
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
@@ -145,7 +148,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
                                   &win::window_qobject::maximize_mode_changed);
     QVERIFY(maximizeChangedSpy.isValid());
 
-    win::active_window_maximize(*Test::app()->base.space);
+    win::active_window_maximize(*Test::app()->base->space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -167,7 +170,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QTRY_VERIFY(!effect->isActive());
 
     // Restore the client.
-    win::active_window_maximize(*Test::app()->base.space);
+    win::active_window_maximize(*Test::app()->base->space);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
 

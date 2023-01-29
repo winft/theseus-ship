@@ -13,7 +13,6 @@
 #include "input/xkb/helpers.h"
 #include "input/xkb/keyboard.h"
 #include "input_filter.h"
-#include "main.h"
 
 #include "ui_debug_console.h"
 

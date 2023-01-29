@@ -79,8 +79,8 @@ public:
         : qobject{std::make_unique<compositor_qobject>(
             [this](auto te) { return handle_timer_event(te); })}
         , platform{platform}
-        , m_suspended(kwinApp()->options->qobject->isUseCompositing() ? suspend_reason::none
-                                                                      : suspend_reason::user)
+        , m_suspended(platform.base.options->qobject->isUseCompositing() ? suspend_reason::none
+                                                                         : suspend_reason::user)
         , dbus{std::make_unique<dbus::compositing<type>>(*this)}
     {
         compositor_setup(*this);
@@ -116,10 +116,9 @@ public:
     {
         if (!this->space) {
             // On first start setup connections.
-            QObject::connect(kwinApp(),
-                             &Application::x11ConnectionChanged,
-                             this->qobject.get(),
-                             [this] { compositor_setup_x11_support(*this); });
+            QObject::connect(&space.base, &base::platform::x11_reset, this->qobject.get(), [this] {
+                compositor_setup_x11_support(*this);
+            });
             QObject::connect(space.stacking.order.qobject.get(),
                              &win::stacking_order_qobject::changed,
                              this->qobject.get(),
@@ -154,8 +153,8 @@ public:
             qCWarning(KWIN_CORE) << "Compositing not possible. Continue without it.";
 
             state = state::off;
-            xcb_composite_unredirect_subwindows(kwinApp()->x11Connection(),
-                                                kwinApp()->x11RootWindow(),
+            xcb_composite_unredirect_subwindows(space.base.x11_data.connection,
+                                                space.base.x11_data.root_window,
                                                 XCB_COMPOSITE_REDIRECT_MANUAL);
             compositor_destroy_selection(*this);
         }
@@ -382,7 +381,7 @@ public:
         std::deque<Factory> factories;
         factories.push_back(gl::create_scene<Platform>);
 
-        auto const req_mode = kwinApp()->options->qobject->compositingMode();
+        auto const req_mode = platform.base.options->qobject->compositingMode();
 
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
         if (req_mode == XRenderCompositing) {
@@ -554,7 +553,7 @@ private:
         // by kwin before the rendering that triggered the damage events have finished on the GPU.
         if (damaged_windows.size() > 0) {
             this->scene->triggerFence();
-            if (auto c = kwinApp()->x11Connection()) {
+            if (auto c = platform.base.x11_data.connection) {
                 xcb_flush(c);
             }
         }

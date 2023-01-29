@@ -9,13 +9,18 @@
 */
 #pragma once
 
+#include "base/options.h"
+#include "scripting_logging.h"
+
+#include <config-kwin.h>
 #include <kwineffects/animation_effect.h>
 
+#include <KPluginMetaData>
 #include <QJSEngine>
 #include <QJSValue>
+#include <QLatin1String>
 
 class KConfigLoader;
-class KPluginMetaData;
 
 namespace KWin
 {
@@ -72,11 +77,48 @@ public:
     QString activeConfig() const;
     void setActiveConfig(const QString& name);
 
+    template<typename Compositor>
     static effect* create(const QString& effectName,
                           const QString& pathToScript,
                           int chainPosition,
-                          EffectsHandler& effects);
-    static effect* create(const KPluginMetaData& effect, EffectsHandler& effects);
+                          EffectsHandler& effects,
+                          Compositor& compositor)
+    {
+        auto get_options
+            = [&compositor]() -> base::options& { return *compositor.platform.base.options; };
+        auto get_screen_size = [&compositor] { return compositor.platform.base.topology.size; };
+        auto effect = new scripting::effect(effects, get_options, get_screen_size);
+        if (!effect->init(effectName, pathToScript, compositor.platform.base.config.main)) {
+            delete effect;
+            return nullptr;
+        }
+        effect->m_chainPosition = chainPosition;
+        return effect;
+    }
+
+    template<typename Compositor>
+    static effect*
+    create(const KPluginMetaData& effect, EffectsHandler& effects, Compositor& compositor)
+    {
+        auto const name = effect.pluginId();
+        auto const scriptName = effect.value(QStringLiteral("X-Plasma-MainScript"));
+        if (scriptName.isEmpty()) {
+            qCDebug(KWIN_SCRIPTING) << "X-Plasma-MainScript not set";
+            return nullptr;
+        }
+        auto const scriptFile = QStandardPaths::locate(
+            QStandardPaths::GenericDataLocation,
+            QLatin1String(KWIN_NAME "/effects/") + name + QLatin1String("/contents/") + scriptName);
+        if (scriptFile.isNull()) {
+            qCDebug(KWIN_SCRIPTING) << "Could not locate the effect script";
+            return nullptr;
+        }
+        return effect::create(name,
+                              scriptFile,
+                              effect.value(QStringLiteral("X-KDE-Ordering")).toInt(),
+                              effects,
+                              compositor);
+    }
 
     static bool supported(EffectsHandler& effects);
     ~effect() override;
@@ -189,9 +231,12 @@ Q_SIGNALS:
     void isActiveFullScreenEffectChanged();
 
 protected:
-    effect(EffectsHandler& effects);
+    effect(EffectsHandler& effects,
+           std::function<base::options&()> get_options,
+           std::function<QSize()> get_screen_size);
+
     QJSEngine* engine() const;
-    bool init(const QString& effectName, const QString& pathToScript);
+    bool init(QString const& effectName, QString const& pathToScript, KSharedConfigPtr config);
     void animationEnded(KWin::EffectWindow* w, Attribute a, uint meta) override;
 
     EffectsHandler& effects;
@@ -211,6 +256,9 @@ private:
     KConfigLoader* m_config{nullptr};
     int m_chainPosition{0};
     Effect* m_activeFullScreenEffect = nullptr;
+
+    std::function<base::options&()> get_options;
+    std::function<QSize()> get_screen_size;
 };
 
 }

@@ -227,7 +227,8 @@ private:
             if (totalCnt == 3) {
                 break;
             }
-            auto const atom = mime_type_to_atom(mimeName.c_str(), *source.core.x11.atoms);
+            auto const atom = mime_type_to_atom(
+                source.core.x11.connection, mimeName.c_str(), *source.core.x11.atoms);
 
             if (atom != XCB_ATOM_NONE) {
                 data.data32[cnt + 2] = atom;
@@ -249,7 +250,8 @@ private:
 
             size_t cnt = 0;
             for (auto const& mimeName : mimeTypesNames) {
-                auto const atom = mime_type_to_atom(mimeName.c_str(), *source.core.x11.atoms);
+                auto const atom = mime_type_to_atom(
+                    source.core.x11.connection, mimeName.c_str(), *source.core.x11.atoms);
                 if (atom != XCB_ATOM_NONE) {
                     targets[cnt] = atom;
                     cnt++;

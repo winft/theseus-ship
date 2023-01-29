@@ -25,13 +25,14 @@ void init_night_color_shortcuts(Input& input, NightColor& manager)
         KGlobalAccel::self()->removeAllShortcuts(&toggleActionLegacy);
     }
 
-    auto toggleAction = new QAction(&manager);
+    auto toggleAction = new QAction(manager.qobject.get());
     toggleAction->setProperty("componentName", QStringLiteral(KWIN_NAME));
     toggleAction->setObjectName(QStringLiteral("Toggle Night Color"));
     toggleAction->setText(i18n("Toggle Night Color"));
 
     KGlobalAccel::setGlobalShortcut(toggleAction, QList<QKeySequence>());
-    input.registerShortcut(QKeySequence(), toggleAction, &manager, &NightColor::toggle);
+    input.registerShortcut(
+        QKeySequence(), toggleAction, manager.qobject.get(), [&manager] { manager.toggle(); });
 }
 
 }

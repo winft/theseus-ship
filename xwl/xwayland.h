@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
-#include "main.h"
+#include "render/compositor_start.h"
 #include "win/wayland/surface.h"
 #include "win/wayland/xwl_window.h"
 #include "win/x11/space_setup.h"
@@ -79,9 +79,8 @@ public:
     /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
      *  indicate a critical error happened at runtime.
      */
-    xwayland(Application* app, Space& space, std::function<void(int code)> status_callback)
+    xwayland(Space& space, std::function<void(int code)> status_callback)
         : core{&space}
-        , app{app}
         , space{space}
         , status_callback{status_callback}
     {
@@ -119,7 +118,7 @@ public:
         xwayland_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
         xwayland_process->setProgram(QStringLiteral("Xwayland"));
 
-        QProcessEnvironment env = app->processStartupEnvironment();
+        auto env = space.base.process_environment;
         env.insert("WAYLAND_SOCKET", QByteArray::number(wlfd));
 
         if (qEnvironmentVariableIsSet("KWIN_XWAYLAND_DEBUG")) {
@@ -171,13 +170,17 @@ public:
 
         win::x11::clear_space(space);
 
-        if (app->x11Connection()) {
-            base::x11::xcb::set_input_focus(XCB_INPUT_FOCUS_POINTER_ROOT);
+        if (space.base.x11_data.connection) {
+            xcb_set_input_focus(space.base.x11_data.connection,
+                                XCB_INPUT_FOCUS_POINTER_ROOT,
+                                XCB_INPUT_FOCUS_POINTER_ROOT,
+                                space.base.x11_data.time);
             space.atoms.reset();
             core.x11.atoms = nullptr;
-            Q_EMIT app->x11ConnectionAboutToBeDestroyed();
-            app->setX11Connection(nullptr);
-            xcb_disconnect(app->x11Connection());
+
+            render::compositor_destroy_selection(*space.base.render->compositor);
+            space.base.x11_data.connection = nullptr;
+            Q_EMIT space.base.x11_reset();
         }
 
         if (xwayland_process->state() != QProcess::NotRunning) {
@@ -223,11 +226,12 @@ private:
         core.x11.screen = iter.data;
         assert(core.x11.screen);
 
-        app->setX11Connection(core.x11.connection, false);
+        space.base.x11_data.connection = core.x11.connection;
 
         // we don't support X11 multi-head in Wayland
-        app->setX11ScreenNumber(screenNumber);
-        app->setX11RootWindow(defaultScreen()->root);
+        space.base.x11_data.screen_number = screenNumber;
+        space.base.x11_data.root_window = base::x11::get_default_screen(space.base.x11_data)->root;
+        base::x11::xcb::extensions::create(space.base.x11_data);
 
         xcb_read_notifier.reset(new QSocketNotifier(xcb_get_file_descriptor(core.x11.connection),
                                                     QSocketNotifier::Read));
@@ -258,13 +262,13 @@ private:
                          processXcbEvents);
 
         // create selection owner for WM_S0 - magic X display number expected by XWayland
-        KSelectionOwner owner("WM_S0", core.x11.connection, app->x11RootWindow());
+        KSelectionOwner owner("WM_S0", core.x11.connection, space.base.x11_data.root_window);
         owner.claim(true);
 
         space.atoms = std::make_unique<base::x11::atoms>(core.x11.connection);
         core.x11.atoms = space.atoms.get();
         event_filter = std::make_unique<base::x11::xcb_event_filter<Space>>(space);
-        app->installNativeEventFilter(event_filter.get());
+        qApp->installNativeEventFilter(event_filter.get());
 
         QObject::connect(
             space.qobject.get(),
@@ -283,9 +287,11 @@ private:
         // Check  whether another windowmanager is running
         uint32_t const maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
         unique_cptr<xcb_generic_error_t> redirectCheck(
-            xcb_request_check(connection(),
-                              xcb_change_window_attributes_checked(
-                                  connection(), rootWindow(), XCB_CW_EVENT_MASK, maskValues)));
+            xcb_request_check(space.base.x11_data.connection,
+                              xcb_change_window_attributes_checked(space.base.x11_data.connection,
+                                                                   space.base.x11_data.root_window,
+                                                                   XCB_CW_EVENT_MASK,
+                                                                   maskValues)));
 
         if (redirectCheck) {
             fputs(i18n("kwin_wayland: an X11 window manager is running on the X11 Display.\n")
@@ -297,20 +303,20 @@ private:
         }
 
         if (auto& cursor = space.input->cursor) {
-            base::x11::xcb::define_cursor(app->x11RootWindow(),
+            base::x11::xcb::define_cursor(space.base.x11_data.connection,
+                                          space.base.x11_data.root_window,
                                           cursor->x11_cursor(Qt::ArrowCursor));
         }
 
-        auto env = app->processStartupEnvironment();
-        env.insert(QStringLiteral("DISPLAY"), QString::fromUtf8(qgetenv("DISPLAY")));
-        app->setProcessStartupEnvironment(env);
+        space.base.process_environment.insert(QStringLiteral("DISPLAY"),
+                                              QString::fromUtf8(qgetenv("DISPLAY")));
 
         status_callback(0);
         win::x11::init_space(space);
-        Q_EMIT app->x11ConnectionChanged();
+        Q_EMIT space.base.x11_reset();
 
         // Trigger possible errors, there's still a chance to abort
-        base::x11::xcb::sync();
+        base::x11::xcb::sync(space.base.x11_data.connection);
 
         data_bridge = std::make_unique<xwl::data_bridge<Space>>(core);
     }
@@ -324,7 +330,6 @@ private:
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
     std::unique_ptr<base::x11::xcb_event_filter<Space>> event_filter;
 
-    Application* app;
     Space& space;
     std::function<void(int code)> status_callback;
 };

@@ -77,15 +77,15 @@ public:
     using abstract_type = base::wayland::platform;
     using output_t = wlroots::output;
 
-    platform() = default;
-    platform(std::string const& socket_name,
+    platform(base::config config,
+             std::string const& socket_name,
              base::wayland::start_options flags,
              start_options options);
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
-    platform(platform&& other) noexcept;
-    platform& operator=(platform&& other) noexcept;
+    platform(platform&& other) = delete;
+    platform& operator=(platform&& other) = delete;
     ~platform() override;
 
     clockid_t get_clockid() const override;
@@ -94,7 +94,7 @@ public:
     std::vector<non_desktop_output*> non_desktop_outputs;
 
     wlr_backend* backend{nullptr};
-    wlr_session* session{nullptr};
+    wlr_session* wlroots_session{nullptr};
 
 private:
     void init();

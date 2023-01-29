@@ -62,7 +62,7 @@ public:
 
         XMoveResizeWindow(data.display, window, 0, 0, size.width(), size.height());
         overlay_window->setup(window);
-        base::x11::xcb::sync();
+        base::x11::xcb::sync(platform.base.x11_data.connection);
 
         makeCurrent();
         glViewport(0, 0, size.width(), size.height());

@@ -64,7 +64,7 @@ void DontCrashCursorPhysicalSizeEmpty::cleanup()
 
 void DontCrashCursorPhysicalSizeEmpty::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation,
@@ -96,7 +96,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     QVERIFY(win::decoration(c));
 
     // destroy physical size
-    auto output = Test::app()->base.server->display->outputs().front()->output();
+    auto output = Test::app()->base->server->display->outputs().front()->output();
     output->set_physical_size(QSize(0, 0));
 
     // and fake a cursor theme change, so that the theme gets recreated

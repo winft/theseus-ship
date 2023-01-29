@@ -137,7 +137,7 @@ void update_shape(Win* win)
         }
         if (win->noBorder()) {
             auto const client_pos = QPoint(left_border(win), top_border(win));
-            xcb_shape_combine(connection(),
+            xcb_shape_combine(win->space.base.x11_data.connection,
                               XCB_SHAPE_SO_SET,
                               XCB_SHAPE_SK_BOUNDING,
                               XCB_SHAPE_SK_BOUNDING,
@@ -147,7 +147,7 @@ void update_shape(Win* win)
                               win->xcb_windows.client);
         }
     } else if (win->app_no_border) {
-        xcb_shape_mask(connection(),
+        xcb_shape_mask(win->space.base.x11_data.connection,
                        XCB_SHAPE_SO_SET,
                        XCB_SHAPE_SK_BOUNDING,
                        win->frameId(),
@@ -289,7 +289,7 @@ void do_set_maximize_mode(Win& win, win::maximize_mode mode)
 
     // Update decoration borders.
     if (auto deco = decoration(&win); deco && deco->client()
-        && !(kwinApp()->options->qobject->borderlessMaximizedWindows()
+        && !(win.space.base.options->qobject->borderlessMaximizedWindows()
              && mode == maximize_mode::full)) {
         auto const deco_client = decoration(&win)->client().toStrongRef().data();
 
@@ -1184,7 +1184,7 @@ NETExtendedStrut strut(Win const* win)
 {
     NETExtendedStrut ext = win->net_info->extendedStrut();
     NETStrut str = win->net_info->strut();
-    auto const displaySize = kwinApp()->get_base().topology.size;
+    auto const displaySize = win->space.base.topology.size;
 
     if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0 && ext.bottom_width == 0
         && (str.left != 0 || str.right != 0 || str.top != 0 || str.bottom != 0)) {
@@ -1246,7 +1246,7 @@ QRect adjusted_client_area(Win const* win, QRect const& desktopArea, QRect const
     // HACK: workarea handling is not xinerama aware, so if this strut
     // reserves place at a xinerama edge that's inside the virtual screen,
     // ignore the strut for workspace setting.
-    if (area == QRect({}, kwinApp()->get_base().topology.size)) {
+    if (area == QRect({}, win->space.base.topology.size)) {
         if (stareaL.left() < screenarea.left())
             stareaL = QRect();
         if (stareaR.right() > screenarea.right())
@@ -1287,7 +1287,7 @@ strut_rect get_strut_rect(Win const* win, strut_area area)
     // Not valid
     assert(area != strut_area::all);
 
-    auto const displaySize = kwinApp()->get_base().topology.size;
+    auto const displaySize = win->space.base.topology.size;
     NETExtendedStrut strutArea = strut(win);
 
     switch (area) {

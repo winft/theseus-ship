@@ -16,6 +16,12 @@
 namespace KWin::base::backend::x11
 {
 
+platform::platform(base::config config)
+    : base::x11::platform(std::move(config))
+{
+    operation_mode = operation_mode::x11;
+}
+
 void platform::update_outputs()
 {
     if (!randr_filter) {
@@ -30,7 +36,8 @@ void platform::update_outputs()
 template<typename Resources>
 void platform::update_outputs_impl()
 {
-    auto res_outs = get_outputs_from_resources(*this, Resources(rootWindow()));
+    auto res_outs
+        = get_outputs_from_resources(*this, Resources(x11_data.connection, x11_data.root_window));
 
     qCDebug(KWIN_X11) << "Update outputs:" << this->outputs.size() << "-->" << res_outs.size();
 

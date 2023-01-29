@@ -8,7 +8,6 @@
 
 #include "osd_notification.h"
 
-#include "main.h"
 #include "utils/flags.h"
 
 #include <QString>
@@ -34,14 +33,14 @@ static void create_osd(Space& space)
     assert(!space.osd);
     space.osd = std::make_unique<osd_notification<typename Space::input_t>>(*space.input);
 
-    space.osd->m_config = kwinApp()->config();
+    space.osd->m_config = space.base.config.main;
     space.osd->m_qmlEngine = space.scripting->qml_engine;
 }
 
 template<typename Space>
 void osd_show(Space& space, QString const& message, QString const& iconName, int timeout)
 {
-    if (!kwinApp()->shouldUseWaylandForCompositing()) {
+    if (!base::should_use_wayland_for_compositing(space.base)) {
         // FIXME: only supported on Wayland
         return;
     }
@@ -77,7 +76,7 @@ void osd_show(Space& space, QString const& message, int timeout)
 template<typename Space>
 void osd_hide(Space& space, osd_hide_flags hide_flags = osd_hide_flags::none)
 {
-    if (!kwinApp()->shouldUseWaylandForCompositing()) {
+    if (!base::should_use_wayland_for_compositing(space.base)) {
         // FIXME: only supported on Wayland
         return;
     }

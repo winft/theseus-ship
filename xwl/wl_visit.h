@@ -45,7 +45,7 @@ public:
         xcb_create_window(xcb_con,
                           XCB_COPY_FROM_PARENT,
                           window,
-                          kwinApp()->x11RootWindow(),
+                          source.core.space->base.x11_data.root_window,
                           0,
                           0,
                           8192,
@@ -158,7 +158,8 @@ private:
             // message has only max 3 types (which are directly in data)
             for (size_t i = 0; i < 3; i++) {
                 xcb_atom_t mimeAtom = data->data32[2 + i];
-                auto const mimeStrings = atom_to_mime_types(mimeAtom, *source.core.x11.atoms);
+                auto const mimeStrings = atom_to_mime_types(
+                    source.core.x11.connection, mimeAtom, *source.core.x11.atoms);
                 for (auto const& mime : mimeStrings) {
                     if (!hasMimeName(offers, mime)) {
                         offers.emplace_back(mime, mimeAtom);
@@ -274,7 +275,8 @@ private:
 
         auto mimeAtoms = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
         for (size_t i = 0; i < reply->value_len; ++i) {
-            auto const mimeStrings = atom_to_mime_types(mimeAtoms[i], *source.core.x11.atoms);
+            auto const mimeStrings = atom_to_mime_types(
+                source.core.x11.connection, mimeAtoms[i], *source.core.x11.atoms);
             for (auto const& mime : mimeStrings) {
                 if (!hasMimeName(offers, mime)) {
                     offers.emplace_back(mime, mimeAtoms[i]);

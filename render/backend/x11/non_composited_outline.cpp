@@ -6,8 +6,6 @@
 */
 #include "non_composited_outline.h"
 
-#include "main.h"
-
 #include <kwinxrender/utils.h>
 
 #include <xcb/render.h>
@@ -15,9 +13,11 @@
 namespace KWin::render::backend::x11
 {
 
-non_composited_outline::non_composited_outline(render::outline* outline)
+non_composited_outline::non_composited_outline(base::x11::data const& data,
+                                               render::outline* outline)
     : outline_visual(outline)
     , m_initialized(false)
+    , data{data}
 {
 }
 
@@ -31,14 +31,18 @@ void non_composited_outline::show()
         const QRect geo(0, 0, 1, 1);
         const uint32_t values[] = {true};
         // TODO: use template variant
-        m_leftOutline.create(geo, XCB_CW_OVERRIDE_REDIRECT, values);
-        m_rightOutline.create(geo, XCB_CW_OVERRIDE_REDIRECT, values);
-        m_topOutline.create(geo, XCB_CW_OVERRIDE_REDIRECT, values);
-        m_bottomOutline.create(geo, XCB_CW_OVERRIDE_REDIRECT, values);
+        m_leftOutline.create(
+            data.connection, data.root_window, geo, XCB_CW_OVERRIDE_REDIRECT, values);
+        m_rightOutline.create(
+            data.connection, data.root_window, geo, XCB_CW_OVERRIDE_REDIRECT, values);
+        m_topOutline.create(
+            data.connection, data.root_window, geo, XCB_CW_OVERRIDE_REDIRECT, values);
+        m_bottomOutline.create(
+            data.connection, data.root_window, geo, XCB_CW_OVERRIDE_REDIRECT, values);
         m_initialized = true;
     }
 
-    int const defaultDepth = base::x11::xcb::default_depth(kwinApp()->x11ScreenNumber());
+    auto const defaultDepth = base::x11::xcb::default_depth(data.connection, data.screen_number);
 
     const QRect& outlineGeometry = get_outline()->geometry();
     // left/right parts are between top/bottom, they don't reach as far as the corners
@@ -67,64 +71,72 @@ void non_composited_outline::show()
                                      0xffff};
     const xcb_render_color_t black = {0, 0, 0, 0xffff};
     {
-        xcb_pixmap_t xpix = xcb_generate_id(connection());
+        xcb_pixmap_t xpix = xcb_generate_id(data.connection);
         xcb_create_pixmap(
-            connection(), defaultDepth, xpix, rootWindow(), verticalWidth, verticalHeight);
+            data.connection, defaultDepth, xpix, data.root_window, verticalWidth, verticalHeight);
         XRenderPicture pic(xpix, defaultDepth);
 
         xcb_rectangle_t rect = {0, 0, 5, verticalHeight};
-        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, white, 1, &rect);
+        xcb_render_fill_rectangles(data.connection, XCB_RENDER_PICT_OP_SRC, pic, white, 1, &rect);
         rect.x = 1;
         rect.width = 3;
-        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, gray, 1, &rect);
+        xcb_render_fill_rectangles(data.connection, XCB_RENDER_PICT_OP_SRC, pic, gray, 1, &rect);
         rect.x = 2;
         rect.width = 1;
-        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, black, 1, &rect);
+        xcb_render_fill_rectangles(data.connection, XCB_RENDER_PICT_OP_SRC, pic, black, 1, &rect);
 
         m_leftOutline.set_background_pixmap(xpix);
         m_rightOutline.set_background_pixmap(xpix);
         // According to the XSetWindowBackgroundPixmap documentation the pixmap can be freed.
-        xcb_free_pixmap(connection(), xpix);
+        xcb_free_pixmap(data.connection, xpix);
     }
     {
-        xcb_pixmap_t xpix = xcb_generate_id(connection());
-        xcb_create_pixmap(
-            connection(), defaultDepth, xpix, rootWindow(), horizontalWidth, horizontalHeight);
+        xcb_pixmap_t xpix = xcb_generate_id(data.connection);
+        xcb_create_pixmap(data.connection,
+                          defaultDepth,
+                          xpix,
+                          data.root_window,
+                          horizontalWidth,
+                          horizontalHeight);
         XRenderPicture pic(xpix, defaultDepth);
 
         xcb_rectangle_t rect = {0, 0, horizontalWidth, horizontalHeight};
-        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, white, 1, &rect);
+        xcb_render_fill_rectangles(data.connection, XCB_RENDER_PICT_OP_SRC, pic, white, 1, &rect);
         xcb_rectangle_t grayRects[] = {{1, 1, uint16_t(horizontalWidth - 2), 3},
                                        {1, 4, 3, 1},
                                        {int16_t(horizontalWidth - 4), 4, 3, 1}};
-        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, gray, 3, grayRects);
+        xcb_render_fill_rectangles(
+            data.connection, XCB_RENDER_PICT_OP_SRC, pic, gray, 3, grayRects);
         xcb_rectangle_t blackRects[] = {{2, 2, uint16_t(horizontalWidth - 4), 1},
                                         {2, 3, 1, 2},
                                         {int16_t(horizontalWidth - 3), 3, 1, 2}};
-        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, black, 3, blackRects);
+        xcb_render_fill_rectangles(
+            data.connection, XCB_RENDER_PICT_OP_SRC, pic, black, 3, blackRects);
         m_topOutline.set_background_pixmap(xpix);
         // According to the XSetWindowBackgroundPixmap documentation the pixmap can be freed.
-        xcb_free_pixmap(connection(), xpix);
+        xcb_free_pixmap(data.connection, xpix);
     }
     {
-        xcb_pixmap_t xpix = xcb_generate_id(connection());
+        xcb_pixmap_t xpix = xcb_generate_id(data.connection);
         xcb_create_pixmap(
-            connection(), defaultDepth, xpix, rootWindow(), outlineGeometry.width(), 5);
+            data.connection, defaultDepth, xpix, data.root_window, outlineGeometry.width(), 5);
         XRenderPicture pic(xpix, defaultDepth);
 
         xcb_rectangle_t rect = {0, 0, horizontalWidth, horizontalHeight};
-        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, white, 1, &rect);
+        xcb_render_fill_rectangles(data.connection, XCB_RENDER_PICT_OP_SRC, pic, white, 1, &rect);
         xcb_rectangle_t grayRects[] = {{1, 1, uint16_t(horizontalWidth - 2), 3},
                                        {1, 0, 3, 1},
                                        {int16_t(horizontalWidth - 4), 0, 3, 1}};
-        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, gray, 3, grayRects);
+        xcb_render_fill_rectangles(
+            data.connection, XCB_RENDER_PICT_OP_SRC, pic, gray, 3, grayRects);
         xcb_rectangle_t blackRects[] = {{2, 2, uint16_t(horizontalWidth - 4), 1},
                                         {2, 0, 1, 2},
                                         {int16_t(horizontalWidth - 3), 0, 1, 2}};
-        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, black, 3, blackRects);
+        xcb_render_fill_rectangles(
+            data.connection, XCB_RENDER_PICT_OP_SRC, pic, black, 3, blackRects);
         m_bottomOutline.set_background_pixmap(xpix);
         // According to the XSetWindowBackgroundPixmap documentation the pixmap can be freed.
-        xcb_free_pixmap(connection(), xpix);
+        xcb_free_pixmap(data.connection, xpix);
     }
     forEachWindow(&base::x11::xcb::window::clear);
     forEachWindow(&base::x11::xcb::window::map);

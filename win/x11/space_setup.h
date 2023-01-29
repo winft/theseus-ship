@@ -10,12 +10,12 @@
 #include "moving_window_filter.h"
 #include "netinfo.h"
 #include "placement.h"
+#include "rules.h"
 #include "space_event.h"
 #include "sync_alarm_filter.h"
 
 #include "base/x11/user_interaction_filter.h"
 #include "base/x11/xcb/window.h"
-#include "main.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
 #include "win/space_areas_helpers.h"
@@ -25,16 +25,17 @@
 namespace KWin::win::x11
 {
 
-inline static void select_wm_input_event_mask()
+inline static void select_wm_input_event_mask(base::x11::data const& data)
 {
     uint32_t presentMask = 0;
-    base::x11::xcb::window_attributes attr(rootWindow());
+    base::x11::xcb::window_attributes attr(data.connection, data.root_window);
     if (!attr.is_null()) {
         presentMask = attr->your_event_mask;
     }
 
     base::x11::xcb::select_input(
-        rootWindow(),
+        data.connection,
+        data.root_window,
         presentMask | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_PROPERTY_CHANGE
             | XCB_EVENT_MASK_COLOR_MAP_CHANGE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT
             | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_FOCUS_CHANGE
@@ -45,12 +46,9 @@ inline static void select_wm_input_event_mask()
 template<typename Space>
 void init_space(Space& space)
 {
-    assert(kwinApp()->x11Connection());
+    assert(space.base.x11_data.connection);
 
     space.atoms->retrieveHelpers();
-
-    // first initialize the extensions
-    base::x11::xcb::extensions::self();
 
     using color_mapper_t = color_mapper<Space>;
     space.color_mapper = std::make_unique<color_mapper_t>(space);
@@ -64,12 +62,14 @@ void init_space(Space& space)
         = new KStartupInfo(KStartupInfo::DisableKWinModule | KStartupInfo::AnnounceSilenceChanges,
                            space.qobject.get());
 
-    // Select windowmanager privileges
-    select_wm_input_event_mask();
+    auto const& x11_data = space.base.x11_data;
 
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        space.m_wasUserInteractionFilter.reset(
-            new base::x11::user_interaction_filter([&space] { mark_as_user_interaction(space); }));
+    // Select windowmanager privileges
+    select_wm_input_event_mask(x11_data);
+
+    if (space.base.operation_mode == base::operation_mode::x11) {
+        space.m_wasUserInteractionFilter.reset(new base::x11::user_interaction_filter(
+            *space.base.x11_event_filters, [&space] { mark_as_user_interaction(space); }));
         space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
     if (base::x11::xcb::extensions::self()->is_sync_available()) {
@@ -77,13 +77,15 @@ void init_space(Space& space)
     }
 
     // Needed for proper initialization of user_time in Client ctor
-    kwinApp()->update_x11_time_from_clock();
+    base::x11::update_time_from_clock(space.base);
 
     const uint32_t nullFocusValues[] = {true};
-    space.m_nullFocus.reset(new base::x11::xcb::window(QRect(-1, -1, 1, 1),
-                                                       XCB_WINDOW_CLASS_INPUT_ONLY,
-                                                       XCB_CW_OVERRIDE_REDIRECT,
-                                                       nullFocusValues));
+    space.m_nullFocus = std::make_unique<base::x11::xcb::window>(x11_data.connection,
+                                                                 x11_data.root_window,
+                                                                 QRect(-1, -1, 1, 1),
+                                                                 XCB_WINDOW_CLASS_INPUT_ONLY,
+                                                                 XCB_CW_OVERRIDE_REDIRECT,
+                                                                 nullFocusValues);
     space.m_nullFocus->map();
 
     space.root_info = x11::root_info<Space>::create(space);
@@ -91,9 +93,15 @@ void init_space(Space& space)
     vds->setRootInfo(space.root_info.get());
     space.root_info->activate();
 
+    rules_setup_book(*space.rule_book, x11_data);
+    QObject::connect(&space.base,
+                     &base::platform::x11_reset,
+                     space.rule_book->qobject.get(),
+                     [&space] { rules_setup_book(*space.rule_book, space.base.x11_data); });
+
     // TODO: only in X11 mode
     // Extra NETRootInfo instance in Client mode is needed to get the values of the properties
-    NETRootInfo client_info(connection(), NET::ActiveWindow | NET::CurrentDesktop);
+    NETRootInfo client_info(x11_data.connection, NET::ActiveWindow | NET::CurrentDesktop);
     if (!qApp->isSessionRestored()) {
         space.m_initialDesktop = client_info.currentDesktop();
         vds->setCurrent(space.m_initialDesktop);
@@ -110,16 +118,17 @@ void init_space(Space& space)
         // Begin updates blocker block
         blocker block(space.stacking.order);
 
-        base::x11::xcb::tree tree(rootWindow());
+        base::x11::xcb::tree tree(x11_data.connection, x11_data.root_window);
         xcb_window_t* wins = xcb_query_tree_children(tree.data());
 
-        QVector<base::x11::xcb::window_attributes> windowAttributes(tree->children_len);
-        QVector<base::x11::xcb::geometry> windowGeometries(tree->children_len);
+        std::vector<base::x11::xcb::window_attributes> windowAttributes;
+        std::vector<base::x11::xcb::geometry> windowGeometries;
 
         // Request the attributes and geometries of all toplevel windows
         for (int i = 0; i < tree->children_len; i++) {
-            windowAttributes[i] = base::x11::xcb::window_attributes(wins[i]);
-            windowGeometries[i] = base::x11::xcb::geometry(wins[i]);
+            windowAttributes.push_back(
+                base::x11::xcb::window_attributes(x11_data.connection, wins[i]));
+            windowGeometries.push_back(base::x11::xcb::geometry(x11_data.connection, wins[i]));
         }
 
         // Get the replies
@@ -136,8 +145,10 @@ void init_space(Space& space)
                     // ### This will request the attributes again
                     create_unmanaged_window(wins[i], space);
             } else if (attr->map_state != XCB_MAP_STATE_UNMAPPED) {
-                if (Application::wasCrash()) {
-                    fix_position_after_crash(space, wins[i], windowGeometries.at(i).data());
+                if constexpr (requires(decltype(space.base) base) { base.is_crash_restart; }) {
+                    if (space.base.is_crash_restart) {
+                        fix_position_after_crash(space, wins[i], windowGeometries.at(i).data());
+                    }
                 }
 
                 // ### This will request the attributes again
@@ -208,7 +219,7 @@ void clear_space(Space& space)
     space.stacking.order.stack.clear();
 
     // Only release windows on X11.
-    auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
+    auto const is_x11 = space.base.operation_mode == base::operation_mode::x11;
 
     for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
         std::visit(overload{[&](typename Space::x11_window* win) {
@@ -237,6 +248,7 @@ void clear_space(Space& space)
         remove_all(space.stacking.order.pre_stack, unmanaged);
     }
 
+    space.root_info.reset();
     space.shape_helper_window.reset();
     space.stacking.order.unlock();
 }

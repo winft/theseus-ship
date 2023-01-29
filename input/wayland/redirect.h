@@ -63,9 +63,8 @@ public:
         : qobject{std::make_unique<redirect_qobject>()}
         , platform{platform}
         , space{space}
-        , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
-        , input_method{std::make_unique<wayland::input_method<type>>(*this,
-                                                                     platform.base.server.get())}
+        , config_watcher{KConfigWatcher::create(platform.config.main)}
+        , input_method{std::make_unique<wayland::input_method<type>>(*this)}
         , tablet_mode_manager{std::make_unique<dbus::tablet_mode_manager<type>>(*this)}
     {
         setup_workspace();
@@ -346,7 +345,7 @@ private:
     {
         auto const has_global_shortcuts = platform.base.server->has_global_shortcut_support();
 
-        if (kwinApp()->session->hasSessionControl() && has_global_shortcuts) {
+        if (platform.base.session->hasSessionControl() && has_global_shortcuts) {
             m_filters.emplace_back(new virtual_terminal_filter<type>(*this));
         }
 
@@ -501,10 +500,11 @@ private:
         platform.update_keyboard_leds(keyboard->xkb->leds);
         platform.base.server->update_key_state(keyboard->xkb->leds);
 
-        QObject::connect(keyboard->xkb->qobject.get(),
-                         &xkb::keyboard_qobject::leds_changed,
-                         platform.base.server.get(),
-                         &base::wayland::server::update_key_state);
+        QObject::connect(
+            keyboard->xkb->qobject.get(),
+            &xkb::keyboard_qobject::leds_changed,
+            platform.base.server->qobject.get(),
+            [&server = platform.base.server](auto&& leds) { server->update_key_state(leds); });
         QObject::connect(keyboard->xkb->qobject.get(),
                          &xkb::keyboard_qobject::leds_changed,
                          platform.qobject.get(),

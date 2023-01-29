@@ -24,9 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "singleton_interface.h"
 #include "thumbnail_item.h"
 #include "types.h"
-#include "win/deco/renderer.h"
 
+#include "base/wayland/screen_lock.h"
 #include "win/damage.h"
+#include "win/deco/renderer.h"
 #include "win/geo.h"
 #include "win/space_qobject.h"
 
@@ -649,7 +650,7 @@ public:
                                  QRegion region,
                                  WindowPaintData& data)
     {
-        if (kwinApp()->is_screen_locked()) {
+        if (base::wayland::is_screen_locked(platform.base)) {
             if (!std::visit(
                     overload{[](auto&& win) {
                         auto do_draw{false};

@@ -69,7 +69,7 @@ public:
         auto const needsFullRepaint = m_backend->needsFullRepaint();
         if (needsFullRepaint) {
             mask |= render::paint_type::screen_background_first;
-            damage = QRect({}, kwinApp()->get_base().topology.size);
+            damage = QRect({}, this->platform.base.topology.size);
         }
 
         auto const geometry = output->geometry();

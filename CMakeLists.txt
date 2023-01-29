@@ -386,13 +386,11 @@ set(kwin_SRCS
     base/platform.cpp
     desktop/screen_locker_watcher.cpp
     render/post/color_correct_dbus_interface.cpp
-    render/post/night_color_manager.cpp
     render/post/suncalc.cpp
     debug/console/console.cpp
     debug/perf/ftrace.cpp
     input/keyboard.cpp
     input/keyboard_redirect.cpp
-    input/platform.cpp
     input/platform_qobject.cpp
     input/redirect_qobject.cpp
     input/singleton_interface.cpp
@@ -686,7 +684,7 @@ set(kwin_WAYLAND_SRCS
    base/backend/wlroots/platform.cpp
    base/seat/backend/wlroots/session.cpp
    base/wayland/filtered_display.cpp
-   base/wayland/server.cpp
+   base/app_singleton.cpp
    debug/console/wayland/input_device_model.cpp
    debug/console/wayland/wayland_console.cpp
    input/backend/wlroots/platform.cpp
@@ -712,6 +710,7 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_policies.cpp
 
    # These headers need to be compiled for the helper QObjects they contain.
+   base/wayland/server.h
    input/touch.h
    input/wayland/cursor_image.h
    input/wayland/cursor_theme.h

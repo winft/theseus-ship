@@ -22,12 +22,13 @@ XCB_WRAPPER_DATA(geometry_data, xcb_get_geometry, xcb_drawable_t)
 class geometry : public wrapper<geometry_data, xcb_window_t>
 {
 public:
-    geometry()
-        : wrapper<geometry_data, xcb_window_t>()
+    explicit geometry(xcb_connection_t* con)
+        : wrapper<geometry_data, xcb_window_t>(con)
     {
     }
-    explicit geometry(xcb_window_t window)
-        : wrapper<geometry_data, xcb_window_t>(window)
+
+    geometry(xcb_connection_t* con, xcb_window_t window)
+        : wrapper<geometry_data, xcb_window_t>(con, window)
     {
     }
 
@@ -59,8 +60,8 @@ struct input_focus_data
 class input_focus : public wrapper<input_focus_data>
 {
 public:
-    input_focus()
-        : wrapper<input_focus_data>()
+    explicit input_focus(xcb_connection_t* con)
+        : wrapper<input_focus_data>(con)
     {
     }
 
@@ -82,8 +83,8 @@ struct modifier_mapping_data
 class modifier_mapping : public wrapper<modifier_mapping_data>
 {
 public:
-    modifier_mapping()
-        : wrapper<modifier_mapping_data>()
+    explicit modifier_mapping(xcb_connection_t* con)
+        : wrapper<modifier_mapping_data>(con)
     {
     }
 
@@ -116,8 +117,8 @@ struct query_keymap_data
 class query_keymap : public wrapper<query_keymap_data>
 {
 public:
-    query_keymap()
-        : wrapper<query_keymap_data>()
+    explicit query_keymap(xcb_connection_t* con)
+        : wrapper<query_keymap_data>(con)
     {
     }
 };
@@ -126,8 +127,8 @@ XCB_WRAPPER_DATA(tree_data, xcb_query_tree, xcb_window_t)
 class tree : public wrapper<tree_data, xcb_window_t>
 {
 public:
-    explicit tree(xcb_window_t window)
-        : wrapper<tree_data, xcb_window_t>(window)
+    tree(xcb_connection_t* con, xcb_window_t window)
+        : wrapper<tree_data, xcb_window_t>(con, window)
     {
     }
 

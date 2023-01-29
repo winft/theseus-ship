@@ -10,7 +10,6 @@
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/keyboard.h"
-#include "main.h"
 
 namespace KWin::input
 {

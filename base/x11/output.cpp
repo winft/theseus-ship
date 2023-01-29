@@ -50,8 +50,12 @@ bool output::set_gamma_ramp(gamma_ramp const& gamma)
         return false;
     }
 
-    xcb_randr_set_crtc_gamma(
-        connection(), data.crtc, gamma.size(), gamma.red(), gamma.green(), gamma.blue());
+    xcb_randr_set_crtc_gamma(platform.x11_data.connection,
+                             data.crtc,
+                             gamma.size(),
+                             gamma.red(),
+                             gamma.green(),
+                             gamma.blue());
 
     return true;
 }

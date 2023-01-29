@@ -47,7 +47,7 @@ private Q_SLOTS:
 
 void ShowingDesktopTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     Test::app()->start();
@@ -80,14 +80,14 @@ void ShowingDesktopTest::testRestoreFocus()
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client1 != client2);
 
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), client2);
-    win::toggle_show_desktop(*Test::app()->base.space);
-    QVERIFY(Test::app()->base.space->showing_desktop);
-    win::toggle_show_desktop(*Test::app()->base.space);
-    QVERIFY(!Test::app()->base.space->showing_desktop);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), client2);
+    win::toggle_show_desktop(*Test::app()->base->space);
+    QVERIFY(Test::app()->base->space->showing_desktop);
+    win::toggle_show_desktop(*Test::app()->base->space);
+    QVERIFY(!Test::app()->base->space->showing_desktop);
 
-    QVERIFY(Test::get_wayland_window(Test::app()->base.space->stacking.active));
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), client2);
+    QVERIFY(Test::get_wayland_window(Test::app()->base->space->stacking.active));
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), client2);
 }
 
 void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
@@ -123,15 +123,15 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
     auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client1 != client2);
 
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), client2);
-    win::toggle_show_desktop(*Test::app()->base.space);
-    QVERIFY(Test::app()->base.space->showing_desktop);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), desktop);
-    win::toggle_show_desktop(*Test::app()->base.space);
-    QVERIFY(!Test::app()->base.space->showing_desktop);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), client2);
+    win::toggle_show_desktop(*Test::app()->base->space);
+    QVERIFY(Test::app()->base->space->showing_desktop);
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), desktop);
+    win::toggle_show_desktop(*Test::app()->base->space);
+    QVERIFY(!Test::app()->base->space->showing_desktop);
 
-    QVERIFY(Test::get_wayland_window(Test::app()->base.space->stacking.active));
-    QCOMPARE(Test::get_wayland_window(Test::app()->base.space->stacking.active), client2);
+    QVERIFY(Test::get_wayland_window(Test::app()->base->space->stacking.active));
+    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), client2);
 }
 
 }

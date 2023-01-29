@@ -41,12 +41,12 @@ output::output(QRect const& geometry, double scale)
 
 WaylandTestApplication* app()
 {
-    return static_cast<WaylandTestApplication*>(kwinApp());
+    return static_cast<WaylandTestApplication*>(qApp);
 }
 
 input::wayland::cursor<space::input_t>* cursor()
 {
-    return app()->base.space->input->cursor.get();
+    return app()->base->space->input->cursor.get();
 }
 
 void setup_wayland_connection(global_selection globals)
@@ -61,17 +61,17 @@ void destroy_wayland_connection()
 
 base::output* get_output(size_t index)
 {
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base->get_outputs();
     assert(index < outputs.size());
     return outputs.at(index);
 }
 
 void set_current_output(int index)
 {
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base->get_outputs();
     auto output = base::get_output(outputs, index);
     QVERIFY(output);
-    base::set_current_output(Test::app()->base, output);
+    base::set_current_output(*Test::app()->base, output);
 }
 
 void test_outputs_default()
@@ -81,7 +81,7 @@ void test_outputs_default()
 
 void test_outputs_geometries(std::vector<QRect> const& geometries)
 {
-    auto const& outputs = Test::app()->base.get_outputs();
+    auto const& outputs = Test::app()->base->get_outputs();
     QCOMPARE(outputs.size(), geometries.size());
 
     size_t index = 0;
@@ -184,7 +184,7 @@ wayland_window* render_and_wait_for_shown(client const& clt,
                                           QImage::Format const& format,
                                           int timeout)
 {
-    QSignalSpy clientAddedSpy(app()->base.space->qobject.get(),
+    QSignalSpy clientAddedSpy(app()->base->space->qobject.get(),
                               &win::space::qobject_t::wayland_window_added);
     if (!clientAddedSpy.isValid()) {
         return nullptr;
@@ -196,7 +196,7 @@ wayland_window* render_and_wait_for_shown(client const& clt,
     }
 
     auto win_id = clientAddedSpy.first().first().value<quint32>();
-    return std::get<wayland_window*>(app()->base.space->windows_map.at(win_id));
+    return std::get<wayland_window*>(app()->base->space->windows_map.at(win_id));
 }
 
 void flush_wayland_connection()
@@ -331,24 +331,24 @@ void init_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
 
 void lock_screen()
 {
-    QVERIFY(!kwinApp()->is_screen_locked());
+    QVERIFY(!base::wayland::is_screen_locked(Test::app()->base));
 
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(kwinApp()->screen_locker_watcher.get(),
+    QSignalSpy lockWatcherSpy(Test::app()->base->screen_locker_watcher.get(),
                               &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
-    QVERIFY(kwinApp()->is_screen_locked());
+    QVERIFY(base::wayland::is_screen_locked(Test::app()->base));
     QVERIFY(lockWatcherSpy.wait());
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 2);
 
-    QVERIFY(kwinApp()->screen_locker_watcher->is_locked());
+    QVERIFY(Test::app()->base->screen_locker_watcher->is_locked());
 }
 
 void unlock_screen()
@@ -356,7 +356,7 @@ void unlock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(kwinApp()->screen_locker_watcher.get(),
+    QSignalSpy lockWatcherSpy(Test::app()->base->screen_locker_watcher.get(),
                               &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
@@ -387,9 +387,9 @@ void unlock_screen()
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
-    QVERIFY(!kwinApp()->is_screen_locked());
+    QVERIFY(!base::wayland::is_screen_locked(Test::app()->base));
 
-    QVERIFY(!kwinApp()->screen_locker_watcher->is_locked());
+    QVERIFY(!Test::app()->base->screen_locker_watcher->is_locked());
 }
 
 void prepare_app_env(std::string const& qpa_plugin_path)
@@ -480,7 +480,7 @@ void pointer_motion_absolute(QPointF const& position, uint32_t time)
 
     event.time_msec = time;
 
-    auto const screens_size = kwinApp()->get_base().topology.size;
+    auto const screens_size = test_app->base->topology.size;
     event.x = position.x() / screens_size.width();
     event.y = position.y() / screens_size.height();
 
@@ -588,7 +588,7 @@ KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_keyboard
 
 QPointF get_relative_touch_position(QPointF const& pos)
 {
-    auto output = base::get_nearest_output(kwinApp()->get_base().get_outputs(), pos.toPoint());
+    auto output = base::get_nearest_output(app()->base->get_outputs(), pos.toPoint());
     assert(output);
 
     auto output_size = output->geometry().size();

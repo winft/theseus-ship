@@ -47,7 +47,7 @@ private Q_SLOTS:
 
 void DontCrashEmptyDecorationTest::initTestCase()
 {
-    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
     QVERIFY(startup_spy.isValid());
 
     // this test needs to enforce OpenGL compositing to get into the crashy condition
@@ -59,7 +59,7 @@ void DontCrashEmptyDecorationTest::initTestCase()
     QVERIFY(startup_spy.wait());
     Test::test_outputs_default();
 
-    auto& scene = Test::app()->base.render->compositor->scene;
+    auto& scene = Test::app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }
@@ -83,7 +83,7 @@ void DontCrashEmptyDecorationTest::testBug361551()
     xcb_create_window(c,
                       XCB_COPY_FROM_PARENT,
                       w,
-                      rootWindow(),
+                      Test::app()->base->x11_data.root_window,
                       0,
                       0,
                       10,
@@ -97,13 +97,13 @@ void DontCrashEmptyDecorationTest::testBug361551()
     xcb_flush(c);
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base.space->qobject.get(),
+    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto win_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base.space->windows_map.at(win_id));
+    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(win_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(win::decoration(client));
