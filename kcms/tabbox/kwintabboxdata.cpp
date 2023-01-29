@@ -9,6 +9,7 @@
 #include "kwintabboxsettings.h"
 #include "kwinswitcheffectsettings.h"
 #include "kwinpluginssettings.h"
+#include "shortcutsettings.h"
 
 namespace KWin
 {
@@ -20,9 +21,11 @@ KWinTabboxData::KWinTabboxData(QObject *parent, const QVariantList &args)
     , m_tabBoxConfig(new TabBoxSettings(QStringLiteral("TabBox"), this))
     , m_tabBoxAlternativeConfig(new TabBoxSettings(QStringLiteral("TabBoxAlternative"), this))
     , m_pluginsConfig(new PluginsSettings(this))
+    , m_shortcutConfig(new ShortcutSettings(this))
 {
     registerSkeleton(m_tabBoxConfig);
     registerSkeleton(m_tabBoxAlternativeConfig);
+    registerSkeleton(m_shortcutConfig);
 }
 
 TabBoxSettings *KWinTabboxData::tabBoxConfig() const
@@ -40,6 +43,9 @@ PluginsSettings *KWinTabboxData::pluginsConfig() const
     return m_pluginsConfig;
 }
 
+ShortcutSettings *KWinTabboxData::shortcutConfig() const
+{
+    return m_shortcutConfig;
 }
-
+}
 }
