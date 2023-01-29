@@ -423,7 +423,6 @@ set(kwin_SRCS
     scripting/script_timer.cpp
     scripting/scripting_logging.cpp
     scripting/singleton_interface.cpp
-    scripting/v2/client_model.cpp
     scripting/v3/client_model.cpp
     scripting/v3/virtual_desktop_model.cpp
     scripting/utils.cpp

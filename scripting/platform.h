@@ -12,7 +12,6 @@
 #include "script.h"
 #include "scripting/desktop_background_item.h"
 #include "space.h"
-#include "v2/client_model.h"
 #include "v3/client_model.h"
 #include "v3/virtual_desktop_model.h"
 #include "window.h"
@@ -107,19 +106,6 @@ public:
         : platform_wrap(*space.base.options, space.base.config)
         , space{space}
     {
-        qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 2, 0, "ThumbnailItem");
-        qmlRegisterType<dbus_call>("org.kde.kwin", 2, 0, "DBusCall");
-        qmlRegisterType<screen_edge_item>("org.kde.kwin", 2, 0, "ScreenEdgeItem");
-        qmlRegisterAnonymousType<models::v2::client_model>("org.kde.kwin", 2);
-        qmlRegisterType<models::v2::simple_client_model>("org.kde.kwin", 2, 0, "ClientModel");
-        qmlRegisterType<models::v2::client_model_by_screen>(
-            "org.kde.kwin", 2, 0, "ClientModelByScreen");
-        qmlRegisterType<models::v2::client_model_by_screen_and_desktop>(
-            "org.kde.kwin", 2, 0, "ClientModelByScreenAndDesktop");
-        qmlRegisterType<models::v2::client_model_by_screen_and_activity>(
-            "org.kde.kwin", 2, 1, "ClientModelByScreenAndActivity");
-        qmlRegisterType<models::v2::client_filter_model>("org.kde.kwin", 2, 0, "ClientFilterModel");
-
         qmlRegisterType<desktop_background_item>("org.kde.kwin", 3, 0, "DesktopBackgroundItem");
         qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 3, 0, "WindowThumbnailItem");
         qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");
@@ -148,26 +134,13 @@ public:
         qmlRegisterSingletonInstance(
             "org.kde.kwin", 3, 0, "Options", space.base.options->qobject.get());
 
-        qmlRegisterAnonymousType<window>("org.kde.kwin", 2);
-        qmlRegisterAnonymousType<win::virtual_desktop>("org.kde.kwin", 2);
-        qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 2);
         qmlRegisterAnonymousType<window>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<win::virtual_desktop>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
 
         // TODO Plasma 6: Drop context properties.
         qt_space = std::make_unique<template_space<qt_script_space, Space>>(&space);
-        qml_engine->rootContext()->setContextProperty("workspace", qt_space.get());
-        qml_engine->rootContext()->setContextProperty("options", space.base.options->qobject.get());
-
         decl_space = std::make_unique<template_space<declarative_script_space, Space>>(&space);
-        declarative_script_shared_context->setContextProperty("workspace", decl_space.get());
-
-        // QQmlListProperty interfaces only work via properties, rebind them as functions here
-        QQmlExpression expr(declarative_script_shared_context,
-                            nullptr,
-                            "workspace.clientList = function() { return workspace.clients }");
-        expr.evaluate();
 
         // Start the scripting platform, but first process all events.
         // TODO(romangg): Can we also do this through a simple call?
