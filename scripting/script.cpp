@@ -113,6 +113,7 @@ script::script(int id,
     }
 
     qRegisterMetaType<QList<window*>>();
+    qRegisterMetaType<QVector<KWin::win::virtual_desktop*>>();
 }
 
 script::~script()

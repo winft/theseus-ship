@@ -37,8 +37,9 @@ namespace KWin::scripting
 class KWIN_EXPORT space : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(KWin::win::virtual_desktop* currentVirtualDesktop READ currentVirtualDesktop WRITE
-                   setCurrentVirtualDesktop NOTIFY currentVirtualDesktopChanged)
+    Q_PROPERTY(QVector<KWin::win::virtual_desktop*> desktops READ desktops NOTIFY desktopsChanged)
+    Q_PROPERTY(KWin::win::virtual_desktop* currentDesktop READ currentDesktop WRITE
+                   setCurrentDesktop NOTIFY currentDesktopChanged)
     Q_PROPERTY(KWin::scripting::window* activeClient READ activeClient WRITE setActiveClient NOTIFY
                    clientActivated)
     // TODO: write and notify?
@@ -48,11 +49,6 @@ class KWIN_EXPORT space : public QObject
     Q_PROPERTY(int workspaceWidth READ workspaceWidth)
     Q_PROPERTY(int workspaceHeight READ workspaceHeight)
     Q_PROPERTY(QSize workspaceSize READ workspaceSize)
-    /**
-     * The number of desktops currently used. Minimum number of desktops is 1, maximum 20.
-     */
-    Q_PROPERTY(
-        int desktops READ numberOfDesktops WRITE setNumberOfDesktops NOTIFY numberDesktopsChanged)
     Q_PROPERTY(int activeScreen READ activeScreen)
     Q_PROPERTY(int numScreens READ numScreens NOTIFY numberScreensChanged)
     Q_PROPERTY(QString currentActivity READ currentActivity WRITE setCurrentActivity NOTIFY
@@ -110,10 +106,9 @@ public:
     };
     Q_ENUM(ElectricBorder)
 
-    virtual win::virtual_desktop* currentVirtualDesktop() const = 0;
-    virtual void setCurrentVirtualDesktop(win::virtual_desktop* desktop) = 0;
-    virtual int numberOfDesktops() const = 0;
-    virtual void setNumberOfDesktops(int count) = 0;
+    virtual win::virtual_desktop* currentDesktop() const = 0;
+    virtual void setCurrentDesktop(win::virtual_desktop* desktop) = 0;
+    virtual QVector<KWin::win::virtual_desktop*> desktops() const = 0;
 
     Q_INVOKABLE int screenAt(const QPointF& pos) const;
 
@@ -369,12 +364,9 @@ Q_SIGNALS:
     void clientActivated(KWin::scripting::window* client);
     void clientFullScreenSet(KWin::scripting::window* client, bool fullScreen, bool user);
     void clientSetKeepAbove(KWin::scripting::window* client, bool keepAbove);
-    /**
-     * Signal emitted whenever the number of desktops changed.
-     * To get the current number of desktops use the property desktops.
-     * @param oldNumberOfDesktops The previous number of desktops.
-     */
-    void numberDesktopsChanged(uint oldNumberOfDesktops);
+
+    /// This signal is emitted when a virtual desktop is added or removed.
+    void desktopsChanged();
     /**
      * Signal emitted whenever the layout of virtual desktops changed.
      * That is desktopGrid(Size/Width/Height) will have new values.
@@ -425,13 +417,7 @@ Q_SIGNALS:
      * @since 5.0
      */
     void virtualScreenGeometryChanged();
-
-    /**
-     * This signal is emitted when the current virtual desktop changes.
-     *
-     * @since 5.23
-     */
-    void currentVirtualDesktopChanged();
+    void currentDesktopChanged();
 
 protected:
     space() = default;
@@ -557,7 +543,7 @@ public:
         QObject::connect(vds->qobject.get(),
                          &win::virtual_desktop_manager_qobject::countChanged,
                          this,
-                         &space::numberDesktopsChanged);
+                         &space::desktopsChanged);
         QObject::connect(vds->qobject.get(),
                          &win::virtual_desktop_manager_qobject::layoutChanged,
                          this,
@@ -565,7 +551,7 @@ public:
         QObject::connect(vds->qobject.get(),
                          &win::virtual_desktop_manager_qobject::currentChanged,
                          this,
-                         &space::currentVirtualDesktopChanged);
+                         &space::currentDesktopChanged);
 
         auto& base = ref_space->base;
         QObject::connect(
@@ -587,24 +573,19 @@ public:
         }
     }
 
-    win::virtual_desktop* currentVirtualDesktop() const override
+    win::virtual_desktop* currentDesktop() const override
     {
         return ref_space->virtual_desktop_manager->currentDesktop();
     }
 
-    int numberOfDesktops() const override
+    QVector<KWin::win::virtual_desktop*> desktops() const override
     {
-        return ref_space->virtual_desktop_manager->count();
+        return ref_space->virtual_desktop_manager->desktops();
     }
 
-    void setCurrentVirtualDesktop(win::virtual_desktop* desktop) override
+    void setCurrentDesktop(win::virtual_desktop* desktop) override
     {
         ref_space->virtual_desktop_manager->setCurrent(desktop);
-    }
-
-    void setNumberOfDesktops(int count) override
-    {
-        ref_space->virtual_desktop_manager->setCount(count);
     }
 
     std::vector<window*> windows() const override
