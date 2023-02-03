@@ -191,12 +191,6 @@ public:
         return {};
     }
 
-    int desktop() const override
-    {
-        return std::visit(overload{[](auto&& ref_win) { return win::get_desktop(*ref_win); }},
-                          *window.ref_win);
-    }
-
     QVector<uint> desktops() const override
     {
         return std::visit(overload{[](auto&& ref_win) -> QVector<uint> {

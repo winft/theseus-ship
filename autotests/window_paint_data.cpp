@@ -81,10 +81,6 @@ public:
     {
         return QStringList();
     }
-    int desktop() const override
-    {
-        return 0;
-    }
     QVector<uint> desktops() const override
     {
         return {};

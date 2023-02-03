@@ -56,10 +56,13 @@ public:
                 init();
             }
 
-            auto const output = std::visit(
-                overload{[](auto&& win) { return win->topo.central_output; }}, *w->window.ref_win);
-            auto const screenRect = win::space_window_area(
-                *m_scene->platform.base.space, ScreenArea, output, w->desktop());
+            auto const screenRect = std::visit(
+                overload{[this](auto&& win) {
+                    auto const output = win->topo.central_output;
+                    return win::space_window_area(
+                        *m_scene->platform.base.space, ScreenArea, output, win::get_desktop(*win));
+                }},
+                *w->window.ref_win);
 
             // window geometry may not be bigger than screen geometry to fit into the FBO
             QRect winGeo(w->expandedGeometry());
