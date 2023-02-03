@@ -45,7 +45,7 @@ private:
     void handleClientRemoved(window* client);
     void setupClientConnections(window* client);
 
-    QList<window*> m_clients;
+    QList<QUuid> m_clients;
 };
 
 class KWIN_EXPORT client_filter_model : public QSortFilterProxyModel

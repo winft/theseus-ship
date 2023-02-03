@@ -22,14 +22,14 @@ client_model::client_model(QObject* parent)
     connect(ws_wrap, &space::clientRemoved, this, &client_model::handleClientRemoved);
 
     for (auto window : ws_wrap->windows()) {
-        m_clients << window;
+        m_clients << window->internalId();
         setupClientConnections(window);
     }
 }
 
 void client_model::markRoleChanged(window* client, int role)
 {
-    const QModelIndex row = index(m_clients.indexOf(client), 0);
+    const QModelIndex row = index(m_clients.indexOf(client->internalId()), 0);
     Q_EMIT dataChanged(row, row, {role});
 }
 
@@ -46,7 +46,7 @@ void client_model::setupClientConnections(window* client)
 void client_model::handleClientAdded(window* client)
 {
     beginInsertRows(QModelIndex(), m_clients.count(), m_clients.count());
-    m_clients.append(client);
+    m_clients.append(client->internalId());
     endInsertRows();
 
     setupClientConnections(client);
@@ -54,7 +54,7 @@ void client_model::handleClientAdded(window* client)
 
 void client_model::handleClientRemoved(window* client)
 {
-    const int index = m_clients.indexOf(client);
+    const int index = m_clients.indexOf(client->internalId());
     Q_ASSERT(index != -1);
 
     beginRemoveRows(QModelIndex(), index, index);
@@ -73,24 +73,39 @@ QHash<int, QByteArray> client_model::roleNames() const
     };
 }
 
+scripting::window* find_window(QUuid const& wId)
+{
+    auto const windows = scripting::singleton_interface::qt_script_space->clientList();
+    for (auto win : windows) {
+        if (win->internalId() == wId) {
+            return win;
+        }
+    }
+    return nullptr;
+}
+
 QVariant client_model::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_clients.count()) {
         return QVariant();
     }
 
-    auto client = m_clients[index.row()];
-    switch (role) {
-    case Qt::DisplayRole:
-    case ClientRole:
-        return QVariant::fromValue(client);
-    case ScreenRole:
-        return client->screen();
-    case DesktopRole:
-        return client->desktop();
-    case ActivityRole:
-        return client->activities();
-    default:
+    auto client = find_window(m_clients[index.row()]);
+    if (client) {
+        switch (role) {
+        case Qt::DisplayRole:
+        case ClientRole:
+            return QVariant::fromValue(client);
+        case ScreenRole:
+            return client->screen();
+        case DesktopRole:
+            return client->desktop();
+        case ActivityRole:
+            return client->activities();
+        default:
+            return QVariant();
+        }
+    } else {
         return QVariant();
     }
 }
