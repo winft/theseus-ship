@@ -218,7 +218,7 @@ var dimScreenEffect = {
         effects.windowUnminimized.connect(dimScreenEffect.restartAnimation);
         effects.activeFullScreenEffectChanged.connect(
             dimScreenEffect.slotActiveFullScreenEffectChanged);
-        effects['desktopChanged(int,int)'].connect(dimScreenEffect.slotDesktopChanged);
+        effects.desktopChanged.connect(dimScreenEffect.slotDesktopChanged);
     }
 };
 

@@ -309,8 +309,6 @@ public:
                                    *mov_res);
                     }
                     Q_EMIT desktopChanged(old, newDesktop, eff_win);
-                    // TODO: remove in 4.10
-                    Q_EMIT desktopChanged(old, newDesktop);
                 });
         connect(ws->qobject.get(),
                 &win::space_qobject::currentDesktopChanging,
