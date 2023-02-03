@@ -48,7 +48,7 @@ public:
 class KWINEFFECTS_EXPORT EffectWindow : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QRect geometry READ geometry)
+    Q_PROPERTY(QRect geometry READ frameGeometry)
     Q_PROPERTY(QRect expandedGeometry READ expandedGeometry)
     Q_PROPERTY(int height READ height)
     Q_PROPERTY(qreal opacity READ opacity)
@@ -406,10 +406,6 @@ public:
      * MAY BE DISOBEYED BY THE WM! It's only for information, do NOT rely on it at all.
      */
     virtual QSize basicUnit() const = 0;
-    /**
-     * @deprecated Use frameGeometry() instead.
-     */
-    virtual QRect KWIN_DEPRECATED geometry() const = 0;
     /**
      * Returns the geometry of the window excluding server-side and client-side
      * drop-shadows.

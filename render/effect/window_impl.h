@@ -237,11 +237,6 @@ public:
                           *window.ref_win);
     }
 
-    QRect geometry() const override
-    {
-        return frameGeometry();
-    }
-
     QRect frameGeometry() const override
     {
         return std::visit(overload{[](auto&& ref_win) { return ref_win->geo.frame; }},

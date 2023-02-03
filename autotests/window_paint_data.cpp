@@ -105,10 +105,6 @@ public:
     {
         return QSize();
     }
-    QRect geometry() const override
-    {
-        return QRect();
-    }
     QRect expandedGeometry() const override
     {
         return QRect();

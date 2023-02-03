@@ -68,7 +68,7 @@ public:
             QRect winGeo(w->expandedGeometry());
             if (m_shader && winGeo.width() <= screenRect.width()
                 && winGeo.height() <= screenRect.height()) {
-                winGeo.translate(-w->geometry().topLeft());
+                winGeo.translate(-w->frameGeometry().topLeft());
                 double left = winGeo.left();
                 double top = winGeo.top();
                 double width = winGeo.right() - left;
