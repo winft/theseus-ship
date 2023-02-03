@@ -640,12 +640,6 @@ public:
                           *window.ref_win);
     }
 
-    // legacy from tab groups, can be removed when no effects use this any more.
-    bool isCurrentTab() const override
-    {
-        return true;
-    }
-
     QString windowRole() const override
     {
         return std::visit(overload{[](auto&& ref_win) { return ref_win->windowRole(); }},

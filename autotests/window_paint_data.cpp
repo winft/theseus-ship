@@ -281,10 +281,6 @@ public:
     {
         return false;
     }
-    bool isCurrentTab() const override
-    {
-        return true;
-    }
     bool skipsCloseAnimation() const override
     {
         return false;
