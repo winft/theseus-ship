@@ -52,20 +52,18 @@ public:
     {
         return 1;
     }
+    void setBrightness(qreal brightness);
 
     qreal saturation() const
     {
         return 1;
     }
+    void setSaturation(qreal saturation);
 
     QQuickItem* clipTo() const
     {
         return nullptr;
     }
-
-public Q_SLOTS:
-    void setBrightness(qreal brightness);
-    void setSaturation(qreal saturation);
     void setClipTo(QQuickItem* clip);
 
 Q_SIGNALS:
