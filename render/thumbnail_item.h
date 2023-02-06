@@ -47,9 +47,21 @@ class basic_thumbnail_item : public QQuickPaintedItem
     Q_PROPERTY(QQuickItem* clipTo READ clipTo WRITE setClipTo NOTIFY clipToChanged)
 public:
     ~basic_thumbnail_item() override;
-    qreal brightness() const;
-    qreal saturation() const;
-    QQuickItem* clipTo() const;
+
+    qreal brightness() const
+    {
+        return 1;
+    }
+
+    qreal saturation() const
+    {
+        return 1;
+    }
+
+    QQuickItem* clipTo() const
+    {
+        return nullptr;
+    }
 
 public Q_SLOTS:
     void setBrightness(qreal brightness);
@@ -94,7 +106,10 @@ public:
         return m_wId;
     }
     void setWId(const QUuid& wId);
-    scripting::window* client() const;
+    scripting::window* client() const
+    {
+        return m_client;
+    }
     void setClient(scripting::window* window);
     void paint(QPainter* painter) override;
 Q_SIGNALS:
@@ -130,26 +145,6 @@ protected Q_SLOTS:
 private:
     int m_desktop;
 };
-
-inline qreal basic_thumbnail_item::brightness() const
-{
-    return m_brightness;
-}
-
-inline qreal basic_thumbnail_item::saturation() const
-{
-    return m_saturation;
-}
-
-inline QQuickItem* basic_thumbnail_item::clipTo() const
-{
-    return m_clipToItem.data();
-}
-
-inline scripting::window* window_thumbnail_item::client() const
-{
-    return m_client;
-}
 
 }
 }
