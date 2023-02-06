@@ -240,6 +240,7 @@ virtual_desktop_manager::virtual_desktop_manager()
                 [this](auto pos, auto const& name) { return createVirtualDesktop(pos, name); },
                 [this](auto id) { return removeVirtualDesktop(id); }}
 {
+    singleton_interface::virtual_desktops = &singleton;
 }
 
 virtual_desktop_manager::~virtual_desktop_manager()
