@@ -5,7 +5,11 @@
 */
 #include "client.h"
 
+#ifdef CATCH2_TESTS
+#include "setup.h"
+#else
 #include "app.h"
+#endif
 
 #include <QThread>
 #include <QtTest>
@@ -35,12 +39,12 @@ client::client(global_selection globals)
 
     connection->setSocketFd(sx[1]);
 
-    thread.reset(new QThread(Test::app()));
+    thread.reset(new QThread(qApp));
     connection->moveToThread(thread.get());
     thread->start();
 
     connection->establishConnection();
-    QVERIFY(connectedSpy.count() || connectedSpy.wait());
+    QVERIFY((connectedSpy.count() || connectedSpy.wait()));
     QCOMPARE(connectedSpy.count(), 1);
     QVERIFY(connection->established());
 
@@ -60,7 +64,7 @@ client::client(global_selection globals)
     QVERIFY(registry->isValid());
 
     registry->setup();
-    QVERIFY(allAnnounced.count() || allAnnounced.wait());
+    QVERIFY((allAnnounced.count() || allAnnounced.wait()));
     QCOMPARE(allAnnounced.count(), 1);
 
     interfaces.compositor.reset(registry->createCompositor(
@@ -264,7 +268,7 @@ void client::cleanup()
         QVERIFY(spy.isValid());
 
         connection->deleteLater();
-        QVERIFY(!spy.isEmpty() || spy.wait());
+        QVERIFY((!spy.isEmpty() || spy.wait()));
         QCOMPARE(spy.count(), 1);
 
         thread->quit();

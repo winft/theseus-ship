@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2017 Martin Flöser <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
@@ -15,236 +16,193 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
 
-#include <Wrapland/Client/surface.h>
-
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingReply>
+#include <Wrapland/Client/surface.h>
+#include <catch2/generators/catch_generators.hpp>
+#include <catch2/generators/catch_generators_range.hpp>
 
 using namespace Wrapland::Client;
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class BindingsTest : public QObject
+TEST_CASE("bindings", "[input],[win]")
 {
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
-
-    void testSwitchWindow();
-    void testSwitchWindowScript();
-    void testWindowToDesktop_data();
-    void testWindowToDesktop();
-};
-
-void BindingsTest::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-
-    Test::app()->start();
-    QVERIFY(startup_spy.size() || startup_spy.wait());
-}
-
-void BindingsTest::init()
-{
+    test::setup setup("bindings");
+    setup.start();
     Test::setup_wayland_connection();
+
     Test::cursor()->set_pos(QPoint(640, 512));
     QCOMPARE(Test::cursor()->pos(), QPoint(640, 512));
-}
 
-void BindingsTest::cleanup()
-{
-    Test::destroy_wayland_connection();
-}
+    SECTION("switch window")
+    {
+        // first create windows
+        auto surface1 = Test::create_surface();
+        auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
+        auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
+        auto surface2 = Test::create_surface();
+        auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
+        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
+        auto surface3 = Test::create_surface();
+        auto shellSurface3 = Test::create_xdg_shell_toplevel(surface3);
+        auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
+        auto surface4 = Test::create_surface();
+        auto shellSurface4 = Test::create_xdg_shell_toplevel(surface4);
+        auto c4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
 
-void BindingsTest::testSwitchWindow()
-{
-    // first create windows
-    std::unique_ptr<Surface> surface1(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
-    auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
-    std::unique_ptr<Surface> surface2(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
-    auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
-    std::unique_ptr<Surface> surface3(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
-    auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
-    std::unique_ptr<Surface> surface4(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
-    auto c4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
+        QVERIFY(c4->control->active);
+        QVERIFY(c4 != c3);
+        QVERIFY(c3 != c2);
+        QVERIFY(c2 != c1);
 
-    QVERIFY(c4->control->active);
-    QVERIFY(c4 != c3);
-    QVERIFY(c3 != c2);
-    QVERIFY(c2 != c1);
+        // let's position all windows
+        win::move(c1, QPoint(0, 0));
+        win::move(c2, QPoint(200, 0));
+        win::move(c3, QPoint(200, 200));
+        win::move(c4, QPoint(0, 200));
 
-    // let's position all windows
-    win::move(c1, QPoint(0, 0));
-    win::move(c2, QPoint(200, 0));
-    win::move(c3, QPoint(200, 200));
-    win::move(c4, QPoint(0, 200));
+        QCOMPARE(c1->geo.pos(), QPoint(0, 0));
+        QCOMPARE(c2->geo.pos(), QPoint(200, 0));
+        QCOMPARE(c3->geo.pos(), QPoint(200, 200));
+        QCOMPARE(c4->geo.pos(), QPoint(0, 200));
 
-    QCOMPARE(c1->geo.pos(), QPoint(0, 0));
-    QCOMPARE(c2->geo.pos(), QPoint(200, 0));
-    QCOMPARE(c3->geo.pos(), QPoint(200, 200));
-    QCOMPARE(c4->geo.pos(), QPoint(0, 200));
+        // now let's trigger the shortcuts
 
-    // now let's trigger the shortcuts
+        // invoke global shortcut through dbus
+        auto invokeShortcut = [](const QString& shortcut) {
+            auto msg
+                = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                                 QStringLiteral("/component/kwin"),
+                                                 QStringLiteral("org.kde.kglobalaccel.Component"),
+                                                 QStringLiteral("invokeShortcut"));
+            msg.setArguments(QList<QVariant>{shortcut});
+            QDBusConnection::sessionBus().asyncCall(msg);
+        };
+        invokeShortcut(QStringLiteral("Switch Window Up"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c1);
+        invokeShortcut(QStringLiteral("Switch Window Right"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c2);
+        invokeShortcut(QStringLiteral("Switch Window Down"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c3);
+        invokeShortcut(QStringLiteral("Switch Window Left"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c4);
+        // test opposite direction
+        invokeShortcut(QStringLiteral("Switch Window Left"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c3);
+        invokeShortcut(QStringLiteral("Switch Window Down"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c2);
+        invokeShortcut(QStringLiteral("Switch Window Right"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c1);
+        invokeShortcut(QStringLiteral("Switch Window Up"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c4);
+    }
 
-    // invoke global shortcut through dbus
-    auto invokeShortcut = [](const QString& shortcut) {
-        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
-                                                  QStringLiteral("/component/kwin"),
-                                                  QStringLiteral("org.kde.kglobalaccel.Component"),
-                                                  QStringLiteral("invokeShortcut"));
-        msg.setArguments(QList<QVariant>{shortcut});
-        QDBusConnection::sessionBus().asyncCall(msg);
-    };
-    invokeShortcut(QStringLiteral("Switch Window Up"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c1);
-    invokeShortcut(QStringLiteral("Switch Window Right"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c2);
-    invokeShortcut(QStringLiteral("Switch Window Down"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c3);
-    invokeShortcut(QStringLiteral("Switch Window Left"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c4);
-    // test opposite direction
-    invokeShortcut(QStringLiteral("Switch Window Left"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c3);
-    invokeShortcut(QStringLiteral("Switch Window Down"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c2);
-    invokeShortcut(QStringLiteral("Switch Window Right"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c1);
-    invokeShortcut(QStringLiteral("Switch Window Up"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c4);
-}
+    SECTION("switch window script")
+    {
+        QVERIFY(setup.base->space->scripting);
 
-void BindingsTest::testSwitchWindowScript()
-{
-    QVERIFY(Test::app()->base->space->scripting);
+        // first create windows
+        auto surface1 = Test::create_surface();
+        auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
+        auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
+        auto surface2 = Test::create_surface();
+        auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
+        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
+        auto surface3 = Test::create_surface();
+        auto shellSurface3 = Test::create_xdg_shell_toplevel(surface3);
+        auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
+        auto surface4 = Test::create_surface();
+        auto shellSurface4 = Test::create_xdg_shell_toplevel(surface4);
+        auto c4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
 
-    // first create windows
-    std::unique_ptr<Surface> surface1(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
-    auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
-    std::unique_ptr<Surface> surface2(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
-    auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
-    std::unique_ptr<Surface> surface3(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
-    auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
-    std::unique_ptr<Surface> surface4(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
-    auto c4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
+        QVERIFY(c4->control->active);
+        QVERIFY(c4 != c3);
+        QVERIFY(c3 != c2);
+        QVERIFY(c2 != c1);
 
-    QVERIFY(c4->control->active);
-    QVERIFY(c4 != c3);
-    QVERIFY(c3 != c2);
-    QVERIFY(c2 != c1);
+        // let's position all windows
+        win::move(c1, QPoint(0, 0));
+        win::move(c2, QPoint(200, 0));
+        win::move(c3, QPoint(200, 200));
+        win::move(c4, QPoint(0, 200));
 
-    // let's position all windows
-    win::move(c1, QPoint(0, 0));
-    win::move(c2, QPoint(200, 0));
-    win::move(c3, QPoint(200, 200));
-    win::move(c4, QPoint(0, 200));
+        auto runScript = [&](auto const& slot) {
+            QTemporaryFile tmpFile;
+            QVERIFY(tmpFile.open());
+            QTextStream out(&tmpFile);
+            out << "workspace." << slot << "()";
+            out.flush();
 
-    auto runScript = [](const QString& slot) {
-        QTemporaryFile tmpFile;
-        QVERIFY(tmpFile.open());
-        QTextStream out(&tmpFile);
-        out << "workspace." << slot << "()";
-        out.flush();
+            auto const id = setup.base->space->scripting->loadScript(tmpFile.fileName());
+            QVERIFY(id != -1);
+            QVERIFY(setup.base->space->scripting->isScriptLoaded(tmpFile.fileName()));
+            auto s = setup.base->space->scripting->findScript(tmpFile.fileName());
+            QVERIFY(s);
+            QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
+            QVERIFY(runningChangedSpy.isValid());
+            s->run();
+            QTRY_COMPARE(runningChangedSpy.count(), 1);
+        };
 
-        auto const id = Test::app()->base->space->scripting->loadScript(tmpFile.fileName());
-        QVERIFY(id != -1);
-        QVERIFY(Test::app()->base->space->scripting->isScriptLoaded(tmpFile.fileName()));
-        auto s = Test::app()->base->space->scripting->findScript(tmpFile.fileName());
-        QVERIFY(s);
-        QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
-        QVERIFY(runningChangedSpy.isValid());
-        s->run();
-        QTRY_COMPARE(runningChangedSpy.count(), 1);
-    };
+        runScript(QStringLiteral("slotSwitchWindowUp"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c1);
+        runScript(QStringLiteral("slotSwitchWindowRight"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c2);
+        runScript(QStringLiteral("slotSwitchWindowDown"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c3);
+        runScript(QStringLiteral("slotSwitchWindowLeft"));
+        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c4);
+    }
 
-    runScript(QStringLiteral("slotSwitchWindowUp"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c1);
-    runScript(QStringLiteral("slotSwitchWindowRight"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c2);
-    runScript(QStringLiteral("slotSwitchWindowDown"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c3);
-    runScript(QStringLiteral("slotSwitchWindowLeft"));
-    QTRY_COMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c4);
-}
+    SECTION("switch window script")
+    {
+        auto desktop = GENERATE(range(2, 20));
 
-void BindingsTest::testWindowToDesktop_data()
-{
-    QTest::addColumn<int>("desktop");
+        // first go to desktop one
+        auto& vd_manager = setup.base->space->virtual_desktop_manager;
+        vd_manager->setCurrent(vd_manager->desktops().first());
 
-    QTest::newRow("2") << 2;
-    QTest::newRow("3") << 3;
-    QTest::newRow("4") << 4;
-    QTest::newRow("5") << 5;
-    QTest::newRow("6") << 6;
-    QTest::newRow("7") << 7;
-    QTest::newRow("8") << 8;
-    QTest::newRow("9") << 9;
-    QTest::newRow("10") << 10;
-    QTest::newRow("11") << 11;
-    QTest::newRow("12") << 12;
-    QTest::newRow("13") << 13;
-    QTest::newRow("14") << 14;
-    QTest::newRow("15") << 15;
-    QTest::newRow("16") << 16;
-    QTest::newRow("17") << 17;
-    QTest::newRow("18") << 18;
-    QTest::newRow("19") << 19;
-    QTest::newRow("20") << 20;
-}
+        // now create a window
+        auto surface = Test::create_surface();
+        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
 
-void BindingsTest::testWindowToDesktop()
-{
-    // first go to desktop one
-    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
-    vd_manager->setCurrent(vd_manager->desktops().first());
+        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
-    // now create a window
-    std::unique_ptr<Surface> surface(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
-    QSignalSpy desktopChangedSpy(c->qobject.get(), &win::window_qobject::desktopChanged);
-    QVERIFY(desktopChangedSpy.isValid());
-    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
+        QSignalSpy desktopChangedSpy(c->qobject.get(), &win::window_qobject::desktopChanged);
+        QVERIFY(desktopChangedSpy.isValid());
 
-    QFETCH(int, desktop);
-    vd_manager->setCount(desktop);
+        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
 
-    // now trigger the shortcut
-    auto invokeShortcut = [](int desktop) {
-        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
-                                                  QStringLiteral("/component/kwin"),
-                                                  QStringLiteral("org.kde.kglobalaccel.Component"),
-                                                  QStringLiteral("invokeShortcut"));
-        msg.setArguments(QList<QVariant>{QStringLiteral("Window to Desktop %1").arg(desktop)});
-        QDBusConnection::sessionBus().asyncCall(msg);
-    };
-    invokeShortcut(desktop);
-    QVERIFY(desktopChangedSpy.wait());
-    QCOMPARE(win::get_desktop(*c), desktop);
-    // back to desktop 1
-    invokeShortcut(1);
-    QVERIFY(desktopChangedSpy.wait());
-    QCOMPARE(win::get_desktop(*c), 1);
-    // invoke with one desktop too many
-    invokeShortcut(desktop + 1);
-    // that should fail
-    QVERIFY(!desktopChangedSpy.wait(100));
+        vd_manager->setCount(desktop);
+
+        // now trigger the shortcut
+        auto invokeShortcut = [](int desktop) {
+            auto msg
+                = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                                 QStringLiteral("/component/kwin"),
+                                                 QStringLiteral("org.kde.kglobalaccel.Component"),
+                                                 QStringLiteral("invokeShortcut"));
+            msg.setArguments(QList<QVariant>{QStringLiteral("Window to Desktop %1").arg(desktop)});
+            QDBusConnection::sessionBus().asyncCall(msg);
+        };
+
+        invokeShortcut(desktop);
+        QVERIFY(desktopChangedSpy.wait());
+        QCOMPARE(win::get_desktop(*c), desktop);
+
+        // back to desktop 1
+        invokeShortcut(1);
+        QVERIFY(desktopChangedSpy.wait());
+        QCOMPARE(win::get_desktop(*c), 1);
+
+        // invoke with one desktop too many
+        invokeShortcut(desktop + 1);
+        // that should fail
+        QVERIFY(!desktopChangedSpy.wait(100));
+    }
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::BindingsTest)
-#include "bindings_test.moc"

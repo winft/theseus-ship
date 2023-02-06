@@ -49,7 +49,10 @@ struct KWIN_EXPORT output {
     double scale;
 };
 
+#ifndef CATCH2_TESTS
 KWIN_EXPORT WaylandTestApplication* app();
+#endif
+
 KWIN_EXPORT input::wayland::cursor<space::input_t>* cursor();
 
 /**

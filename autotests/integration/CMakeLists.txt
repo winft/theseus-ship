@@ -87,7 +87,6 @@ integrationTest(WAYLAND_ONLY NAME testKeyboardKeymap SRCS keyboard_keymap.cpp)
 integrationTest(WAYLAND_ONLY NAME testKeymapCreationFailure SRCS keymap_creation_failure_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testShowingDesktop SRCS showing_desktop_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testDontCrashUseractionsMenu SRCS dont_crash_useractions_menu.cpp)
-integrationTest(WAYLAND_ONLY NAME testBindings SRCS bindings_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testVirtualDesktop SRCS virtual_desktop_test.cpp)
 integrationTest(NAME testVirtualKeyboard SRCS virtual_keyboard.cpp)
 integrationTest(WAYLAND_ONLY NAME testXdgShellClientRules SRCS xdgshellclient_rules_test.cpp)
@@ -99,7 +98,6 @@ integrationTest(WAYLAND_ONLY NAME testDontCrashReinitializeCompositor SRCS dont_
 integrationTest(WAYLAND_ONLY NAME testNoGlobalShortcuts SRCS no_global_shortcuts_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testBufferSizeChange SRCS buffer_size_change_test.cpp )
 integrationTest(WAYLAND_ONLY NAME testPlacement SRCS placement_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testActivation SRCS activation_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testXdgActivation SRCS xdg_activation.cpp)
 integrationTest(WAYLAND_ONLY NAME testGestures2 SRCS gestures.cpp)
 
@@ -124,3 +122,30 @@ endif()
 add_subdirectory(scripting)
 add_subdirectory(effects)
 add_subdirectory(fakes)
+
+add_executable(tests
+  lib/client.cpp
+  lib/helpers.cpp
+  lib/main.cpp
+  lib/setup.cpp
+  # tests
+  activation_test.cpp
+  bindings_test.cpp
+)
+
+target_link_libraries(tests
+PRIVATE
+  kwin_wayland_lib
+  Qt::Test
+  Catch2::Catch2WithMain
+  KF5::Crash
+  # Static plugins
+  KWinQpaPlugin
+  KF5WindowSystemKWinPlugin
+  KF5IdleTimeKWinPlugin
+)
+
+target_compile_definitions(tests PRIVATE CATCH2_TESTS)
+
+include(Catch)
+catch_discover_tests(tests)

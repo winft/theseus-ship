@@ -6,7 +6,11 @@
 */
 #include "helpers.h"
 
+#ifdef CATCH2_TESTS
+#include "setup.h"
+#else
 #include "app.h"
+#endif
 
 #include "base/output_helpers.h"
 #include "desktop/screen_locker_watcher.h"
@@ -39,10 +43,12 @@ output::output(QRect const& geometry, double scale)
 {
 }
 
+#ifndef CATCH2_TESTS
 WaylandTestApplication* app()
 {
     return static_cast<WaylandTestApplication*>(qApp);
 }
+#endif
 
 input::wayland::cursor<space::input_t>* cursor()
 {
