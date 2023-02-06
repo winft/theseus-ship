@@ -7,6 +7,7 @@
 
 #include "base/output.h"
 #include "base/platform.h"
+#include "base/singleton_interface.h"
 #include "input/x11/platform.h"
 #include "render/x11/platform.h"
 #include "win/x11/space.h"
@@ -28,6 +29,7 @@ public:
     platform(base::config config)
         : base::platform(std::move(config))
     {
+        singleton_interface::platform = this;
     }
 
     ~platform() override
@@ -35,6 +37,7 @@ public:
         for (auto out : outputs) {
             delete out;
         }
+        singleton_interface::platform = nullptr;
     }
 
     std::vector<base::output*> get_outputs() const override
