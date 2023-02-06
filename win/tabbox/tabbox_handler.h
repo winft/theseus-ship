@@ -214,7 +214,8 @@ public:
      * @return The client to be included in the list or NULL if it isn't to be included
      */
     virtual std::weak_ptr<tabbox_client> client_to_add_to_list(tabbox_client* client,
-                                                               int desktop) const = 0;
+                                                               int desktop) const
+        = 0;
     /**
      * @return The first desktop window in the stacking order.
      */

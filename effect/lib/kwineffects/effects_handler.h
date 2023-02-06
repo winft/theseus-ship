@@ -483,7 +483,8 @@ public:
     virtual EffectFrame* effectFrame(EffectFrameStyle style,
                                      bool staticSize = true,
                                      const QPoint& position = QPoint(-1, -1),
-                                     Qt::Alignment alignment = Qt::AlignCenter) const = 0;
+                                     Qt::Alignment alignment = Qt::AlignCenter) const
+        = 0;
 
     /**
      * Allows an effect to trigger a reload of itself.

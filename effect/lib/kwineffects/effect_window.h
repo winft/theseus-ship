@@ -515,12 +515,11 @@ public:
     virtual bool isMenu() const = 0;
     /**
      * Returns whether the window is a "normal" window, i.e. an application or any other window
-     * for which none of the specialized window types fit.
-     * See _NET_WM_WINDOW_TYPE_NORMAL at
+     * for which none of the specialized window types fit. Normal as in 'NET::Normal or NET::Unknown
+     * non-transient'. See _NET_WM_WINDOW_TYPE_NORMAL at
      * https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
      */
-    virtual bool
-    isNormalWindow() const = 0; // normal as in 'NET::Normal or NET::Unknown non-transient'
+    virtual bool isNormalWindow() const = 0;
     /**
      * Returns whether the window is any of special windows types (desktop, dock, splash, ...),
      * i.e. window types that usually don't have a window frame and the user does not use window

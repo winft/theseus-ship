@@ -453,8 +453,8 @@ protected:
     space() = default;
 
     virtual QRect client_area_impl(clientAreaOption option, int screen, int desktop) const = 0;
-    virtual QRect
-    client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const = 0;
+    virtual QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const
+        = 0;
     virtual QRect client_area_impl(clientAreaOption option, window* window) const = 0;
     virtual QRect client_area_impl(clientAreaOption option, window const* window) const = 0;
 
