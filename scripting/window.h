@@ -96,12 +96,6 @@ Q_SIGNALS:
     void damaged(KWin::scripting::window* client, const QRegion& damage);
     void stackingOrderChanged();
 
-    /// Deprecated
-    void clientManaging(KWin::scripting::window* window);
-
-    /// Deprecated
-    void clientFullScreenSet(KWin::scripting::window* window, bool fullscreen, bool user);
-
     // TODO: this signal is never emitted - remove?
     void clientMaximizeSet(KWin::scripting::window* window, bool horizontal, bool vertical);
 };
@@ -180,13 +174,6 @@ public:
 
         QObject::connect(qtwin, &win::window_qobject::damaged, this, [this](auto damage) {
             Q_EMIT damaged(this, damage);
-        });
-
-        // For backwards compatibility of scripts connecting to the old signal. We assume no script
-        // is actually differentiating its behavior on the user parameter (if fullscreen was
-        // triggered by the user or not) and always set it to being a user change.
-        QObject::connect(qtwin, &win::window_qobject::fullScreenChanged, this, [this, ref_win] {
-            Q_EMIT clientFullScreenSet(this, ref_win->control->fullscreen, true);
         });
 
         if constexpr (requires(RefWin win) { win.isClient(); }) {

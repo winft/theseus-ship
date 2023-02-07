@@ -353,16 +353,12 @@ Q_SIGNALS:
     void clientAdded(KWin::scripting::window* client);
     void clientRemoved(KWin::scripting::window* client);
 
-    /// Deprecated
-    void clientManaging(KWin::scripting::window* client);
-
     void clientMinimized(KWin::scripting::window* client);
     void clientUnminimized(KWin::scripting::window* client);
     void clientRestored(KWin::scripting::window* client);
     void clientMaximizeSet(KWin::scripting::window* client, bool h, bool v);
     void killWindowCalled(KWin::scripting::window* client);
     void clientActivated(KWin::scripting::window* client);
-    void clientFullScreenSet(KWin::scripting::window* client, bool fullScreen, bool user);
     void clientSetKeepAbove(KWin::scripting::window* client, bool keepAbove);
 
     /// This signal is emitted when a virtual desktop is added or removed.
@@ -451,7 +447,6 @@ protected:
 
 protected:
     void setupAbstractClientConnections(window* window);
-    void setupClientConnections(window* window);
 
 private:
     Q_DISABLE_COPY(space)
@@ -1023,12 +1018,6 @@ protected:
         auto scr_win = win->control->scripting.get();
 
         Space::setupAbstractClientConnections(scr_win);
-        if constexpr (requires(RefWin win) { win.isClient(); }) {
-            if (win->isClient()) {
-                Space::setupClientConnections(scr_win);
-            }
-        }
-
         Space::windows_count++;
         Q_EMIT Space::clientAdded(scr_win);
     }

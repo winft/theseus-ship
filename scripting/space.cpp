@@ -45,11 +45,6 @@ void space::setupAbstractClientConnections(window* window)
     connect(window, &window::clientMaximizedStateChanged, this, &space::clientMaximizeSet);
 }
 
-void space::setupClientConnections(window* window)
-{
-    connect(window, &window::clientFullScreenSet, this, &space::clientFullScreenSet);
-}
-
 void space::showOutline(int x, int y, int width, int height)
 {
     showOutline(QRect(x, y, width, height));
