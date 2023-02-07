@@ -38,13 +38,6 @@ int space::displayHeight() const
     return displaySize().height();
 }
 
-void space::setupAbstractClientConnections(window* window)
-{
-    connect(window, &window::clientMinimized, this, &space::clientMinimized);
-    connect(window, &window::clientUnminimized, this, &space::clientUnminimized);
-    connect(window, &window::clientMaximizedStateChanged, this, &space::clientMaximizeSet);
-}
-
 void space::showOutline(int x, int y, int width, int height)
 {
     showOutline(QRect(x, y, width, height));

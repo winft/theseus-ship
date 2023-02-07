@@ -352,10 +352,6 @@ Q_SIGNALS:
     void desktopPresenceChanged(KWin::scripting::window* client, int desktop);
     void clientAdded(KWin::scripting::window* client);
     void clientRemoved(KWin::scripting::window* client);
-
-    void clientMinimized(KWin::scripting::window* client);
-    void clientUnminimized(KWin::scripting::window* client);
-    void clientMaximizeSet(KWin::scripting::window* client, bool h, bool v);
     void clientActivated(KWin::scripting::window* client);
 
     /// This signal is emitted when a virtual desktop is added or removed.
@@ -441,9 +437,6 @@ protected:
     // TODO: make this private. Remove dynamic inheritance?
     std::vector<std::unique_ptr<window>> m_windows;
     int windows_count{0};
-
-protected:
-    void setupAbstractClientConnections(window* window);
 
 private:
     Q_DISABLE_COPY(space)
@@ -1012,11 +1005,9 @@ protected:
         }
 
         win->control->scripting = std::make_unique<window_t>(win);
-        auto scr_win = win->control->scripting.get();
 
-        Space::setupAbstractClientConnections(scr_win);
         Space::windows_count++;
-        Q_EMIT Space::clientAdded(scr_win);
+        Q_EMIT Space::clientAdded(win->control->scripting.get());
     }
 
     template<typename RefWin>
