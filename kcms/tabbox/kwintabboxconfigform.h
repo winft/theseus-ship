@@ -14,8 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "win/tabbox/tabbox_config.h"
 
-class KActionCollection;
-
 namespace Ui
 {
 class KWinTabBoxConfigForm;
@@ -27,6 +25,7 @@ namespace KWin
 namespace win
 {
 class TabBoxSettings;
+class ShortcutSettings;
 }
 
 class KWinTabBoxConfigForm : public QWidget
@@ -47,7 +46,7 @@ public:
         AddonEffect, // i.e not builtin effects
     };
 
-    explicit KWinTabBoxConfigForm(TabboxType type, win::TabBoxSettings *config, QWidget *parent = nullptr);
+    explicit KWinTabBoxConfigForm(TabboxType type, win::TabBoxSettings *config, win::ShortcutSettings *shortcutsConfig, QWidget *parent = nullptr);
     ~KWinTabBoxConfigForm() override;
 
     win::TabBoxSettings *config() const;
@@ -59,12 +58,6 @@ public:
     // EffectCombo Data Model
     void setEffectComboModel(QStandardItemModel *model);
     QVariant effectComboCurrentData(int role = Qt::UserRole) const;
-
-    void loadShortcuts();
-    void resetShortcuts();
-    void saveShortcuts();
-    bool isShortcutsChanged() const;
-    bool isShortcutsDefault() const;
 
 Q_SIGNALS:
     void configChanged();
@@ -107,8 +100,8 @@ private:
     void setLayoutName(const QString &layoutName);
 
 private:
-    KActionCollection *m_actionCollection = nullptr;
     win::TabBoxSettings *m_config = nullptr;
+    win::ShortcutSettings *m_shortcuts = nullptr;
     bool m_showDefaultIndicator = false;
 
     bool m_isHighlightWindowsEnabled = true;
