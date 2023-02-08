@@ -180,13 +180,6 @@ public:
     {
         return client_area_impl(static_cast<clientAreaOption>(option), point, desktop);
     }
-    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
-                                  QPoint const& point,
-                                  win::virtual_desktop* desktop) const
-    {
-        return client_area_impl(
-            static_cast<clientAreaOption>(option), point, desktop->x11DesktopNumber());
-    }
 
     /**
      * Overloaded method for convenience.
