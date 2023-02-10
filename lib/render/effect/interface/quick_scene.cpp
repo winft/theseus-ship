@@ -9,6 +9,7 @@
 
 #include <base/logging.h>
 
+#include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlIncubator>
 #include <QQuickItem>
@@ -66,8 +67,9 @@ public:
     }
     bool isItemOnScreen(QQuickItem* item, EffectScreen const* screen) const;
 
-    std::unique_ptr<QQmlComponent> qmlComponent;
+    std::unique_ptr<QQmlComponent> delegate;
     QUrl source;
+    std::map<EffectScreen const*, std::unique_ptr<QQmlContext>> contexts;
     std::map<EffectScreen const*, std::unique_ptr<QQmlIncubator>> incubators;
     std::map<EffectScreen const*, std::unique_ptr<QuickSceneView>> views;
     QPointer<QuickSceneView> mouseImplicitGrab;
@@ -251,7 +253,25 @@ void QuickSceneEffect::setSource(const QUrl& url)
     }
     if (d->source != url) {
         d->source = url;
-        d->qmlComponent.reset();
+        d->delegate.reset();
+    }
+}
+
+QQmlComponent* QuickSceneEffect::delegate() const
+{
+    return d->delegate.get();
+}
+
+void QuickSceneEffect::setDelegate(QQmlComponent* delegate)
+{
+    if (isRunning()) {
+        qWarning() << "Cannot change QuickSceneEffect.source while running";
+        return;
+    }
+    if (d->delegate.get() != delegate) {
+        d->source = QUrl();
+        d->delegate.reset(delegate);
+        Q_EMIT delegateChanged();
     }
 }
 
@@ -412,6 +432,7 @@ void QuickSceneEffect::handleScreenRemoved(EffectScreen const* screen)
 {
     d->views.erase(screen);
     d->incubators.erase(screen);
+    d->contexts.erase(screen);
 }
 
 void QuickSceneEffect::addScreen(EffectScreen const* screen)
@@ -442,14 +463,18 @@ void QuickSceneEffect::addScreen(EffectScreen const* screen)
                 d->views[screen] = std::move(view);
             } else if (incubator->isError()) {
                 qCWarning(KWIN_CORE)
-                    << "Could not create a view for QML file" << d->qmlComponent->url();
+                    << "Could not create a view for QML file" << d->delegate->url();
                 qCWarning(KWIN_CORE) << incubator->errors();
             }
         });
-
     incubator->setInitialProperties(properties);
+
+    QQmlContext* creationContext = d->delegate->creationContext();
+    QQmlContext* context = new QQmlContext(creationContext ? creationContext : qmlContext(this));
+
+    d->contexts[screen].reset(context);
     d->incubators[screen].reset(incubator);
-    d->qmlComponent->create(*incubator);
+    d->delegate->create(*incubator, context);
 }
 
 void QuickSceneEffect::startInternal()
@@ -458,20 +483,20 @@ void QuickSceneEffect::startInternal()
         return;
     }
 
-    if (Q_UNLIKELY(d->source.isEmpty())) {
-        qWarning() << "QuickSceneEffect.source is empty. Did you forget to call setSource()?";
-        return;
-    }
-
-    if (!d->qmlComponent) {
-        d->qmlComponent.reset(new QQmlComponent(effects->qmlEngine()));
-        d->qmlComponent->loadUrl(d->source);
-        if (d->qmlComponent->isError()) {
-            qWarning().nospace() << "Failed to load " << d->source << ": "
-                                 << d->qmlComponent->errors();
-            d->qmlComponent.reset();
+    if (!d->delegate) {
+        if (Q_UNLIKELY(d->source.isEmpty())) {
+            qWarning() << "QuickSceneEffect.source is empty. Did you forget to call setSource()?";
             return;
         }
+
+        d->delegate = std::make_unique<QQmlComponent>(effects->qmlEngine());
+        d->delegate->loadUrl(d->source);
+        if (d->delegate->isError()) {
+            qWarning().nospace() << "Failed to load " << d->source << ": " << d->delegate->errors();
+            d->delegate.reset();
+            return;
+        }
+        Q_EMIT delegateChanged();
     }
 
     effects->setActiveFullScreenEffect(this);
@@ -503,6 +528,7 @@ void QuickSceneEffect::stopInternal()
 
     d->incubators.clear();
     d->views.clear();
+    d->contexts.clear();
     d->running = false;
     qApp->removeEventFilter(this);
     effects->ungrabKeyboard();

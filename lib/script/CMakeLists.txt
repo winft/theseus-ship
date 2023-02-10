@@ -6,6 +6,7 @@ add_library(script SHARED)
 
 target_link_libraries(script
   PUBLIC
+    KF6::ConfigQml
     base
     render
     win
@@ -29,6 +30,7 @@ target_sources(script
       options.h
       output.h
       platform.h
+      quick_scene_effect.h
       screen_edge_handler.h
       script.h
       scripting_logging.h
@@ -51,6 +53,7 @@ target_sources(script
     options.cpp
     output.cpp
     platform.cpp
+    quick_scene_effect.cpp
     script.cpp
     script_timer.cpp
     scripting_logging.cpp

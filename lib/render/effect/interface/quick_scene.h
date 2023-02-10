@@ -10,7 +10,7 @@
 #include <render/effect/interface/effect_screen.h>
 #include <render/effect/interface/paint_data.h>
 
-#include <QQmlEngine>
+#include <QQmlComponent>
 
 namespace KWin
 {
@@ -75,6 +75,7 @@ class KWIN_EXPORT QuickSceneEffect : public Effect
 {
     Q_OBJECT
     Q_PROPERTY(QuickSceneView* activeView READ activeView NOTIFY activeViewChanged)
+    Q_PROPERTY(QQmlComponent* delegate READ delegate WRITE setDelegate NOTIFY delegateChanged)
 
 public:
     explicit QuickSceneEffect(QObject* parent = nullptr);
@@ -115,6 +116,12 @@ public:
     Q_INVOKABLE void activateView(QuickSceneView* view);
 
     /**
+     * The delegate provides a template defining the contents of each instantiated screen view.
+     */
+    QQmlComponent* delegate() const;
+    void setDelegate(QQmlComponent* delegate);
+
+    /**
      * Returns the source URL.
      */
     QUrl source() const;
@@ -153,6 +160,7 @@ Q_SIGNALS:
     void
     itemDroppedOutOfScreen(QPointF const& globalPos, QQuickItem* item, EffectScreen const* screen);
     void activeViewChanged(KWin::QuickSceneView* view);
+    void delegateChanged();
 
 protected:
     /**
