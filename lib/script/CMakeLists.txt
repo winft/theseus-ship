@@ -24,6 +24,7 @@ target_sources(script
       desktop_background_item.h
       effect.h
       effect_loader.h
+      gesture_handler.h
       js_engine_global_methods_wrapper.h
       options.h
       output.h
@@ -46,6 +47,7 @@ target_sources(script
     js_engine_global_methods_wrapper.cpp
     screen_edge_handler.cpp
     effect.cpp
+    gesture_handler.cpp
     options.cpp
     output.cpp
     platform.cpp

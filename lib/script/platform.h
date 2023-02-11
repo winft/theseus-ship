@@ -24,6 +24,7 @@
 
 #include <base/kwin_export.h>
 #include <render/effect/interface/quick_scene.h>
+#include <script/gesture_handler.h>
 
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -130,6 +131,8 @@ public:
         qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");
         qmlRegisterType<screen_edge_handler>("org.kde.kwin", 3, 0, "ScreenEdgeHandler");
         qmlRegisterType<shortcut_handler>("org.kde.kwin", 3, 0, "ShortcutHandler");
+        qmlRegisterType<SwipeGestureHandler>("org.kde.kwin", 3, 0, "SwipeGestureHandler");
+        qmlRegisterType<PinchGestureHandler>("org.kde.kwin", 3, 0, "PinchGestureHandler");
         qmlRegisterType<window_model>("org.kde.kwin", 3, 0, "WindowModel");
         qmlRegisterType<window_filter_model>("org.kde.kwin", 3, 0, "WindowFilterModel");
         qmlRegisterType<subspace_model>("org.kde.kwin", 3, 0, "VirtualDesktopModel");
