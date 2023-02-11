@@ -12,6 +12,8 @@
 #include "screen_edge_handler.h"
 #include "script.h"
 #include "scripting/desktop_background_item.h"
+#include "shortcut_handler.h"
+#include "singleton_interface.h"
 #include "space.h"
 #include "virtual_desktop_model.h"
 #include "window.h"
@@ -107,6 +109,9 @@ public:
         : platform_wrap(*space.base.options, space.base.config)
         , space{space}
     {
+        singleton_interface::register_shortcut
+            = [this](auto const& shortcut, auto action) { register_shortcut(shortcut, action); };
+
         qRegisterMetaType<QList<output*>>();
         qRegisterMetaType<QList<window*>>();
         qRegisterMetaType<QVector<KWin::win::virtual_desktop*>>();
@@ -115,6 +120,7 @@ public:
         qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 3, 0, "WindowThumbnail");
         qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");
         qmlRegisterType<screen_edge_handler>("org.kde.kwin", 3, 0, "ScreenEdgeHandler");
+        qmlRegisterType<shortcut_handler>("org.kde.kwin", 3, 0, "ShortcutHandler");
         qmlRegisterType<window_model>("org.kde.kwin", 3, 0, "WindowModel");
         qmlRegisterType<window_filter_model>("org.kde.kwin", 3, 0, "WindowFilterModel");
         qmlRegisterType<virtual_desktop_model>("org.kde.kwin", 3, 0, "VirtualDesktopModel");
@@ -150,6 +156,11 @@ public:
         // Start the scripting platform, but first process all events.
         // TODO(romangg): Can we also do this through a simple call?
         QMetaObject::invokeMethod(this, "start", Qt::QueuedConnection);
+    }
+
+    ~platform()
+    {
+        singleton_interface::register_shortcut = {};
     }
 
     qt_script_space* workspaceWrapper() const override

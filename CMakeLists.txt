@@ -418,6 +418,7 @@ set(kwin_SRCS
     scripting/script.cpp
     scripting/script_timer.cpp
     scripting/scripting_logging.cpp
+    scripting/shortcut_handler.cpp
     scripting/singleton_interface.cpp
     scripting/utils.cpp
     scripting/virtual_desktop_model.cpp

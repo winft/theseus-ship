@@ -9,5 +9,7 @@ namespace KWin::scripting
 {
 
 scripting::qt_script_space* singleton_interface::qt_script_space{nullptr};
+std::function<void(QKeySequence const& shortcut, QAction* action)>
+    singleton_interface::register_shortcut{};
 
 }
