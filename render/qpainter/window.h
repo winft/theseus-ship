@@ -30,7 +30,7 @@ public:
     {
     }
 
-    void performPaint(paint_type mask, QRegion region, WindowPaintData data) override
+    void performPaint(paint_type mask, const QRegion& region, WindowPaintData& data) override
     {
         std::visit(overload{[&](auto&& win) { perform_paint(*win, mask, region, data); }},
                    *this->ref_win);

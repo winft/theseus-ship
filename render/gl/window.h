@@ -76,7 +76,7 @@ public:
         return new buffer_t(this, scene);
     }
 
-    void performPaint(paint_type mask, QRegion region, WindowPaintData data) override
+    void performPaint(paint_type mask, const QRegion& region, WindowPaintData& data) override
     {
         if (!beginRenderWindow(mask, region, data))
             return;
