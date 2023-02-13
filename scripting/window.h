@@ -25,8 +25,6 @@ class KWIN_EXPORT window : public win::property_window
 {
     Q_OBJECT
 
-    Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged)
-
     /// @deprecated. Use frameGeometry instead.
     Q_PROPERTY(QRect geometry READ frameGeometry WRITE setFrameGeometry NOTIFY geometryChanged)
 
@@ -36,7 +34,7 @@ class KWIN_EXPORT window : public win::property_window
     /// @deprecated
     Q_PROPERTY(bool shade READ isShade WRITE setShade NOTIFY shadeChanged)
 
-    Q_PROPERTY(window* transientFor READ transientFor NOTIFY transientChanged)
+    Q_PROPERTY(int stackingOrder READ stackingOrder NOTIFY stackingOrderChanged)
 
     // TODO: Should this not also hold true for Wayland windows? The name is misleading.
     //       Wayland windows (with xdg-toplevel role) are also "managed" by the compositor.
@@ -55,14 +53,17 @@ public:
     virtual bool isOnDesktop(win::virtual_desktop* desktop) const = 0;
     virtual bool isOnCurrentDesktop() const = 0;
     virtual bool isOnOutput(base::output* output) const = 0;
+    virtual int stackingOrder() const = 0;
 
     QStringList activities() const;
     bool isShadeable() const;
     bool isShade() const;
     void setShade(bool set);
 
-    window* transientFor() const override = 0;
     virtual bool isClient() const = 0;
+
+public Q_SLOTS:
+    virtual void closeWindow() = 0;
 
 Q_SIGNALS:
     void quickTileModeChanged();
@@ -72,12 +73,9 @@ Q_SIGNALS:
     void clientStepUserMovedResized(KWin::scripting::window* window, const QRect&);
     void clientFinishUserMovedResized(KWin::scripting::window* window);
 
-    void closeableChanged(bool);
     void minimizeableChanged(bool);
     void shadeableChanged(bool);
     void maximizeableChanged(bool);
-
-    void opacityChanged(KWin::scripting::window* client, qreal old_opacity);
 
     void activitiesChanged(KWin::scripting::window* client);
 
@@ -94,6 +92,9 @@ Q_SIGNALS:
 
     void
     clientMaximizedStateChanged(KWin::scripting::window* window, bool horizontal, bool vertical);
+
+    void damaged(KWin::scripting::window* client, const QRegion& damage);
+    void stackingOrderChanged();
 
     /// Deprecated
     void clientManaging(KWin::scripting::window* window);
@@ -119,6 +120,11 @@ public:
                          &win::window_qobject::opacityChanged,
                          this,
                          [this](auto oldOpacity) { Q_EMIT opacityChanged(this, oldOpacity); });
+
+        QObject::connect(
+            qtwin, &win::window_qobject::frame_geometry_changed, this, [this](auto oldGeometry) {
+                Q_EMIT frameGeometryChanged(this, oldGeometry);
+            });
 
         QObject::connect(qtwin,
                          &win::window_qobject::desktopPresenceChanged,
@@ -171,6 +177,10 @@ public:
                          &win::window_qobject::maximizeableChanged,
                          this,
                          &window_impl::maximizeableChanged);
+
+        QObject::connect(qtwin, &win::window_qobject::damaged, this, [this](auto damage) {
+            Q_EMIT damaged(this, damage);
+        });
 
         // For backwards compatibility of scripts connecting to the old signal. We assume no script
         // is actually differentiating its behavior on the user parameter (if fullscreen was
@@ -828,6 +838,18 @@ public:
     {
         std::visit(overload{[=](auto&& win) { win::set_blocking_compositing(*win, block); }},
                    ref_win);
+    }
+
+    int stackingOrder() const override
+    {
+        return std::visit(
+            overload{[](auto&& win) { return win::index_of_stacking_order(win->space, win); }},
+            ref_win);
+    }
+
+    void closeWindow() override
+    {
+        return std::visit(overload{[](auto&& win) { return win->closeWindow(); }}, ref_win);
     }
 
     RefWin client() const

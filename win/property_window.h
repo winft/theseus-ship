@@ -56,10 +56,10 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(QPoint clientPos READ clientPos)
     Q_PROPERTY(QSize clientSize READ clientSize)
 
-    Q_PROPERTY(int x READ x)
-    Q_PROPERTY(int y READ y)
-    Q_PROPERTY(int width READ width)
-    Q_PROPERTY(int height READ height)
+    Q_PROPERTY(qreal x READ x NOTIFY frameGeometryChanged)
+    Q_PROPERTY(qreal y READ y NOTIFY frameGeometryChanged)
+    Q_PROPERTY(qreal width READ width NOTIFY frameGeometryChanged)
+    Q_PROPERTY(qreal height READ height NOTIFY frameGeometryChanged)
 
     Q_PROPERTY(bool move READ isMove NOTIFY moveResizedChanged)
     Q_PROPERTY(bool resize READ isResize NOTIFY moveResizedChanged)
@@ -78,27 +78,27 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(QByteArray windowRole READ windowRole NOTIFY windowRoleChanged)
     Q_PROPERTY(int windowType READ windowType)
 
-    Q_PROPERTY(bool desktopWindow READ isDesktop)
-    Q_PROPERTY(bool dock READ isDock)
-    Q_PROPERTY(bool toolbar READ isToolbar)
-    Q_PROPERTY(bool menu READ isMenu)
-    Q_PROPERTY(bool normalWindow READ isNormalWindow)
-    Q_PROPERTY(bool dialog READ isDialog)
-    Q_PROPERTY(bool splash READ isSplash)
-    Q_PROPERTY(bool utility READ isUtility)
-    Q_PROPERTY(bool dropdownMenu READ isDropdownMenu)
-    Q_PROPERTY(bool popupMenu READ isPopupMenu)
-    Q_PROPERTY(bool tooltip READ isTooltip)
-    Q_PROPERTY(bool notification READ isNotification)
-    Q_PROPERTY(bool criticalNotification READ isCriticalNotification)
-    Q_PROPERTY(bool appletPopup READ isAppletPopup)
-    Q_PROPERTY(bool onScreenDisplay READ isOnScreenDisplay)
-    Q_PROPERTY(bool comboBox READ isComboBox)
-    Q_PROPERTY(bool dndIcon READ isDNDIcon)
-    Q_PROPERTY(bool popupWindow READ isPopupWindow)
-    Q_PROPERTY(bool specialWindow READ isSpecialWindow)
+    Q_PROPERTY(bool desktopWindow READ isDesktop CONSTANT)
+    Q_PROPERTY(bool dock READ isDock CONSTANT)
+    Q_PROPERTY(bool toolbar READ isToolbar CONSTANT)
+    Q_PROPERTY(bool menu READ isMenu CONSTANT)
+    Q_PROPERTY(bool normalWindow READ isNormalWindow CONSTANT)
+    Q_PROPERTY(bool dialog READ isDialog CONSTANT)
+    Q_PROPERTY(bool splash READ isSplash CONSTANT)
+    Q_PROPERTY(bool utility READ isUtility CONSTANT)
+    Q_PROPERTY(bool dropdownMenu READ isDropdownMenu CONSTANT)
+    Q_PROPERTY(bool popupMenu READ isPopupMenu CONSTANT)
+    Q_PROPERTY(bool tooltip READ isTooltip CONSTANT)
+    Q_PROPERTY(bool notification READ isNotification CONSTANT)
+    Q_PROPERTY(bool criticalNotification READ isCriticalNotification CONSTANT)
+    Q_PROPERTY(bool appletPopup READ isAppletPopup CONSTANT)
+    Q_PROPERTY(bool onScreenDisplay READ isOnScreenDisplay CONSTANT)
+    Q_PROPERTY(bool comboBox READ isComboBox CONSTANT)
+    Q_PROPERTY(bool dndIcon READ isDNDIcon CONSTANT)
+    Q_PROPERTY(bool popupWindow READ isPopupWindow CONSTANT)
+    Q_PROPERTY(bool specialWindow READ isSpecialWindow CONSTANT)
 
-    Q_PROPERTY(bool closeable READ isCloseable)
+    Q_PROPERTY(bool closeable READ isCloseable NOTIFY closeableChanged)
     Q_PROPERTY(bool moveable READ isMovable)
     Q_PROPERTY(bool moveableAcrossScreens READ isMovableAcrossScreens)
     Q_PROPERTY(bool resizeable READ isResizable)
@@ -128,7 +128,7 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(bool unresponsive READ unresponsive NOTIFY unresponsiveChanged)
 
     Q_PROPERTY(bool transient READ isTransient NOTIFY transientChanged)
-    Q_PROPERTY(property_window* transientFor READ transientFor NOTIFY transientChanged)
+    Q_PROPERTY(KWin::win::property_window* transientFor READ transientFor NOTIFY transientChanged)
     Q_PROPERTY(bool modal READ isModal NOTIFY modalChanged)
 
     Q_PROPERTY(bool decorationHasAlpha READ decorationHasAlpha)
@@ -290,11 +290,12 @@ Q_SIGNALS:
     void iconChanged();
 
     void geometryChanged();
+    void frameGeometryChanged(KWin::win::property_window* window, QRect old_frame_geometry);
 
     void moveResizedChanged();
 
     void hasAlphaChanged();
-    void opacityChanged();
+    void opacityChanged(KWin::win::property_window* window, qreal old_opacity);
     void fullScreenChanged();
 
     void screenChanged();
@@ -302,6 +303,7 @@ Q_SIGNALS:
     void x11DesktopIdsChanged();
     void windowRoleChanged();
 
+    void closeableChanged(bool);
     void shapedChanged();
 
     void keepAboveChanged();
