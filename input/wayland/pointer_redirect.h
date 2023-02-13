@@ -232,7 +232,7 @@ public:
             return false;
         }
 
-        if (!can_constrain() || !getConstraintRegion(&win, cf.data()).contains(m_pos.toPoint())) {
+        if (!can_constrain() || !getConstraintRegion(&win, cf).contains(m_pos.toPoint())) {
             return false;
         }
 
@@ -240,13 +240,10 @@ public:
         constraints.confined = true;
 
         notifiers.confined_pointer_region = QObject::connect(
-            cf.data(),
-            &Wrapland::Server::ConfinedPointerV1::regionChanged,
-            qobject.get(),
-            [&win, this] {
+            cf, &Wrapland::Server::ConfinedPointerV1::regionChanged, qobject.get(), [&win, this] {
                 assert(win.surface);
                 auto const cf = win.surface->confinedPointer();
-                if (getConstraintRegion(&win, cf.data()).contains(m_pos.toPoint())) {
+                if (getConstraintRegion(&win, cf).contains(m_pos.toPoint())) {
                     if (!cf->isConfined()) {
                         cf->setConfined(true);
                         constraints.confined = true;
@@ -289,7 +286,7 @@ public:
             return;
         }
 
-        if (can_constrain() && getConstraintRegion(&win, lock.data()).contains(m_pos.toPoint())) {
+        if (can_constrain() && getConstraintRegion(&win, lock).contains(m_pos.toPoint())) {
             lock->setLocked(true);
             constraints.locked = true;
 
@@ -297,7 +294,7 @@ public:
             // LockedPointerV1. In this case the cached cursor position hint must be fetched
             // before the resource goes away
             notifiers.locked_pointer_destroyed = QObject::connect(
-                lock.data(),
+                lock,
                 &Wrapland::Server::LockedPointerV1::resourceDestroyed,
                 qobject.get(),
                 [&win, lock, this]() {
@@ -927,7 +924,7 @@ private:
                         return;
                     }
 
-                    auto const region = getConstraintRegion(win, cf.data());
+                    auto const region = getConstraintRegion(win, cf);
                     if (region.contains(pos.toPoint())) {
                         return;
                     }
