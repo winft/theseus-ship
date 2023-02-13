@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QSignalSpy>
 #include <QTest>
+#include <QtWidgets/qaction.h>
+#include <iostream>
 
 using namespace KWin;
 
@@ -30,10 +32,20 @@ class GestureTest : public QObject
 private Q_SLOTS:
     void testSwipeMinFinger_data();
     void testSwipeMinFinger();
+    void testPinchMinFinger_data();
+    void testPinchMinFinger();
+
     void testSwipeMaxFinger_data();
     void testSwipeMaxFinger();
-    void testDirection_data();
-    void testDirection();
+    void testPinchMaxFinger_data();
+    void testPinchMaxFinger();
+
+    void testSwipeDirection_data();
+    void testSwipeDirection();
+    void testPinchDirection_data();
+    void testPinchDirection();
+
+    // swipe only
     void testMinimumX_data();
     void testMinimumX();
     void testMinimumY_data();
@@ -43,24 +55,30 @@ private Q_SLOTS:
     void testMaximumY_data();
     void testMaximumY();
     void testStartGeometry();
+
+    // swipe and pinch
     void testSetMinimumDelta();
     void testMinimumDeltaReached_data();
     void testMinimumDeltaReached();
+    void testMinimumScaleDelta();
     void testUnregisterSwipeCancels();
+    void testUnregisterPinchCancels();
     void testDeleteSwipeCancels();
     void testSwipeCancel_data();
     void testSwipeCancel();
-    void testSwipeUpdateCancel();
     void testSwipeUpdateTrigger_data();
     void testSwipeUpdateTrigger();
+
+    // both
     void testSwipeMinFingerStart_data();
     void testSwipeMinFingerStart();
     void testSwipeMaxFingerStart_data();
     void testSwipeMaxFingerStart();
+    void testNotEmitCallbacksBeforeDirectionDecided();
+
+    // swipe only
     void testSwipeGeometryStart_data();
     void testSwipeGeometryStart();
-    void testSwipeDiagonalCancels_data();
-    void testSwipeDiagonalCancels();
 };
 
 void GestureTest::testSwipeMinFinger_data()
@@ -75,16 +93,40 @@ void GestureTest::testSwipeMinFinger_data()
 
 void GestureTest::testSwipeMinFinger()
 {
-    input::swipe_gesture gesture;
-    QCOMPARE(gesture.minimumFingerCountIsRelevant(), false);
-    QCOMPARE(gesture.minimumFingerCount(), 0u);
+    input::swipe_gesture swipeGesture;
+    QCOMPARE(swipeGesture.minimumFingerCountIsRelevant(), false);
+    QCOMPARE(swipeGesture.minimumFingerCount(), 0u);
     QFETCH(uint, count);
-    gesture.setMinimumFingerCount(count);
-    QCOMPARE(gesture.minimumFingerCountIsRelevant(), true);
-    QTEST(gesture.minimumFingerCount(), "expectedCount");
-    gesture.setMinimumFingerCount(0);
-    QCOMPARE(gesture.minimumFingerCountIsRelevant(), true);
-    QCOMPARE(gesture.minimumFingerCount(), 0u);
+    swipeGesture.setMinimumFingerCount(count);
+    QCOMPARE(swipeGesture.minimumFingerCountIsRelevant(), true);
+    QTEST(swipeGesture.minimumFingerCount(), "expectedCount");
+    swipeGesture.setMinimumFingerCount(0);
+    QCOMPARE(swipeGesture.minimumFingerCountIsRelevant(), true);
+    QCOMPARE(swipeGesture.minimumFingerCount(), 0u);
+}
+
+void GestureTest::testPinchMinFinger_data()
+{
+    QTest::addColumn<uint>("count");
+    QTest::addColumn<uint>("expectedCount");
+
+    QTest::newRow("0") << 0u << 0u;
+    QTest::newRow("1") << 1u << 1u;
+    QTest::newRow("10") << 10u << 10u;
+}
+
+void GestureTest::testPinchMinFinger()
+{
+    input::pinch_gesture pinchGesture;
+    QCOMPARE(pinchGesture.minimumFingerCountIsRelevant(), false);
+    QCOMPARE(pinchGesture.minimumFingerCount(), 0u);
+    QFETCH(uint, count);
+    pinchGesture.setMinimumFingerCount(count);
+    QCOMPARE(pinchGesture.minimumFingerCountIsRelevant(), true);
+    QTEST(pinchGesture.minimumFingerCount(), "expectedCount");
+    pinchGesture.setMinimumFingerCount(0);
+    QCOMPARE(pinchGesture.minimumFingerCountIsRelevant(), true);
+    QCOMPARE(pinchGesture.minimumFingerCount(), 0u);
 }
 
 void GestureTest::testSwipeMaxFinger_data()
@@ -111,9 +153,33 @@ void GestureTest::testSwipeMaxFinger()
     QCOMPARE(gesture.maximumFingerCount(), 0u);
 }
 
-void GestureTest::testDirection_data()
+void GestureTest::testPinchMaxFinger_data()
 {
-    QTest::addColumn<KWin::input::swipe_gesture::Direction>("direction");
+    QTest::addColumn<uint>("count");
+    QTest::addColumn<uint>("expectedCount");
+
+    QTest::newRow("0") << 0u << 0u;
+    QTest::newRow("1") << 1u << 1u;
+    QTest::newRow("10") << 10u << 10u;
+}
+
+void GestureTest::testPinchMaxFinger()
+{
+    input::pinch_gesture gesture;
+    QCOMPARE(gesture.maximumFingerCountIsRelevant(), false);
+    QCOMPARE(gesture.maximumFingerCount(), 0u);
+    QFETCH(uint, count);
+    gesture.setMaximumFingerCount(count);
+    QCOMPARE(gesture.maximumFingerCountIsRelevant(), true);
+    QTEST(gesture.maximumFingerCount(), "expectedCount");
+    gesture.setMaximumFingerCount(0);
+    QCOMPARE(gesture.maximumFingerCountIsRelevant(), true);
+    QCOMPARE(gesture.maximumFingerCount(), 0u);
+}
+
+void GestureTest::testSwipeDirection_data()
+{
+    QTest::addColumn<KWin::input::swipe_gesture::Direction>("swipe_direction");
 
     QTest::newRow("Up") << KWin::input::swipe_gesture::Direction::Up;
     QTest::newRow("Left") << KWin::input::swipe_gesture::Direction::Left;
@@ -121,16 +187,36 @@ void GestureTest::testDirection_data()
     QTest::newRow("Down") << KWin::input::swipe_gesture::Direction::Down;
 }
 
-void GestureTest::testDirection()
+void GestureTest::testSwipeDirection()
 {
     input::swipe_gesture gesture;
     QCOMPARE(gesture.direction(), input::swipe_gesture::Direction::Down);
-    QFETCH(KWin::input::swipe_gesture::Direction, direction);
-    gesture.setDirection(direction);
-    QCOMPARE(gesture.direction(), direction);
+    QFETCH(KWin::input::swipe_gesture::Direction, swipe_direction);
+    gesture.setDirection(swipe_direction);
+    QCOMPARE(gesture.direction(), swipe_direction);
     // back to down
     gesture.setDirection(input::swipe_gesture::Direction::Down);
     QCOMPARE(gesture.direction(), input::swipe_gesture::Direction::Down);
+}
+
+void GestureTest::testPinchDirection_data()
+{
+    QTest::addColumn<input::pinch_gesture::Direction>("pinch_direction");
+
+    QTest::newRow("Contracting") << input::pinch_gesture::Direction::Contracting;
+    QTest::newRow("Expanding") << input::pinch_gesture::Direction::Expanding;
+}
+
+void GestureTest::testPinchDirection()
+{
+    input::pinch_gesture gesture;
+    QCOMPARE(gesture.direction(), input::pinch_gesture::Direction::Expanding);
+    QFETCH(KWin::input::pinch_gesture::Direction, pinch_direction);
+    gesture.setDirection(pinch_direction);
+    QCOMPARE(gesture.direction(), pinch_direction);
+    // back to down
+    gesture.setDirection(input::pinch_gesture::Direction::Expanding);
+    QCOMPARE(gesture.direction(), input::pinch_gesture::Direction::Expanding);
 }
 
 void GestureTest::testMinimumX_data()
@@ -229,15 +315,25 @@ void GestureTest::testStartGeometry()
 
 void GestureTest::testSetMinimumDelta()
 {
-    input::swipe_gesture gesture;
-    QCOMPARE(gesture.isMinimumDeltaRelevant(), false);
-    QCOMPARE(gesture.minimumDelta(), QSizeF());
-    QCOMPARE(gesture.minimumDeltaReached(QSizeF()), true);
-    gesture.setMinimumDelta(QSizeF(2, 3));
-    QCOMPARE(gesture.isMinimumDeltaRelevant(), true);
-    QCOMPARE(gesture.minimumDelta(), QSizeF(2, 3));
-    QCOMPARE(gesture.minimumDeltaReached(QSizeF()), false);
-    QCOMPARE(gesture.minimumDeltaReached(QSizeF(2, 3)), true);
+    input::swipe_gesture swipeGesture;
+    QCOMPARE(swipeGesture.isMinimumDeltaRelevant(), false);
+    QCOMPARE(swipeGesture.minimumDelta(), QSizeF());
+    QCOMPARE(swipeGesture.minimumDeltaReached(QSizeF()), true);
+    swipeGesture.setMinimumDelta(QSizeF(2, 3));
+    QCOMPARE(swipeGesture.isMinimumDeltaRelevant(), true);
+    QCOMPARE(swipeGesture.minimumDelta(), QSizeF(2, 3));
+    QCOMPARE(swipeGesture.minimumDeltaReached(QSizeF()), false);
+    QCOMPARE(swipeGesture.minimumDeltaReached(QSizeF(2, 3)), true);
+
+    input::pinch_gesture pinchGesture;
+    QCOMPARE(pinchGesture.isMinimumScaleDeltaRelevant(), false);
+    QCOMPARE(pinchGesture.minimumScaleDelta(), input::DEFAULT_MINIMUM_SCALE_DELTA);
+    QCOMPARE(pinchGesture.minimumScaleDeltaReached(1.25), true);
+    pinchGesture.setMinimumScaleDelta(.5);
+    QCOMPARE(pinchGesture.isMinimumScaleDeltaRelevant(), true);
+    QCOMPARE(pinchGesture.minimumScaleDelta(), .5);
+    QCOMPARE(pinchGesture.minimumScaleDeltaReached(1.24), false);
+    QCOMPARE(pinchGesture.minimumScaleDeltaReached(1.5), true);
 }
 
 void GestureTest::testMinimumDeltaReached_data()
@@ -276,6 +372,9 @@ void GestureTest::testMinimumDeltaReached_data()
 
 void GestureTest::testMinimumDeltaReached()
 {
+    input::gesture_recognizer recognizer;
+
+    // swipe gesture
     input::swipe_gesture gesture;
     QFETCH(input::swipe_gesture::Direction, direction);
     gesture.setDirection(direction);
@@ -285,8 +384,7 @@ void GestureTest::testMinimumDeltaReached()
     QFETCH(bool, reached);
     QCOMPARE(gesture.minimumDeltaReached(delta), reached);
 
-    input::gesture_recognizer recognizer;
-    recognizer.registerGesture(&gesture);
+    recognizer.registerSwipeGesture(&gesture);
 
     QSignalSpy startedSpy(&gesture, &input::swipe_gesture::started);
     QVERIFY(startedSpy.isValid());
@@ -317,6 +415,37 @@ void GestureTest::testMinimumDeltaReached()
     QCOMPARE(cancelledSpy.isEmpty(), reached);
 }
 
+void GestureTest::testMinimumScaleDelta()
+{
+    // pinch gesture
+    input::pinch_gesture gesture;
+    gesture.setDirection(input::pinch_gesture::Direction::Contracting);
+    gesture.setMinimumScaleDelta(.5);
+    gesture.setMinimumFingerCount(3);
+    gesture.setMaximumFingerCount(4);
+
+    QCOMPARE(gesture.minimumScaleDeltaReached(1.25), false);
+    QCOMPARE(gesture.minimumScaleDeltaReached(1.5), true);
+
+    input::gesture_recognizer recognizer;
+    recognizer.registerPinchGesture(&gesture);
+
+    QSignalSpy startedSpy(&gesture, &input::pinch_gesture::started);
+    QVERIFY(startedSpy.isValid());
+    QSignalSpy triggeredSpy(&gesture, &input::pinch_gesture::triggered);
+    QVERIFY(triggeredSpy.isValid());
+    QSignalSpy cancelledSpy(&gesture, &input::pinch_gesture::cancelled);
+    QVERIFY(cancelledSpy.isValid());
+    QSignalSpy progressSpy(&gesture, &input::pinch_gesture::progress);
+    QVERIFY(progressSpy.isValid());
+
+    recognizer.startPinchGesture(4);
+    QCOMPARE(startedSpy.count(), 1);
+    QCOMPARE(triggeredSpy.count(), 0);
+    QCOMPARE(cancelledSpy.count(), 0);
+    QCOMPARE(progressSpy.count(), 0);
+}
+
 void GestureTest::testUnregisterSwipeCancels()
 {
     input::gesture_recognizer recognizer;
@@ -326,11 +455,32 @@ void GestureTest::testUnregisterSwipeCancels()
     QSignalSpy cancelledSpy(gesture.data(), &input::swipe_gesture::cancelled);
     QVERIFY(cancelledSpy.isValid());
 
-    recognizer.registerGesture(gesture.data());
+    recognizer.registerSwipeGesture(gesture.data());
     recognizer.startSwipeGesture(1);
     QCOMPARE(startedSpy.count(), 1);
     QCOMPARE(cancelledSpy.count(), 0);
-    recognizer.unregisterGesture(gesture.data());
+    recognizer.unregisterSwipeGesture(gesture.data());
+    QCOMPARE(cancelledSpy.count(), 1);
+
+    // delete the gesture should not trigger cancel
+    gesture.reset();
+    QCOMPARE(cancelledSpy.count(), 1);
+}
+
+void GestureTest::testUnregisterPinchCancels()
+{
+    input::gesture_recognizer recognizer;
+    QScopedPointer<input::pinch_gesture> gesture(new input::pinch_gesture);
+    QSignalSpy startedSpy(gesture.data(), &input::pinch_gesture::started);
+    QVERIFY(startedSpy.isValid());
+    QSignalSpy cancelledSpy(gesture.data(), &input::pinch_gesture::cancelled);
+    QVERIFY(cancelledSpy.isValid());
+
+    recognizer.registerPinchGesture(gesture.data());
+    recognizer.startPinchGesture(1);
+    QCOMPARE(startedSpy.count(), 1);
+    QCOMPARE(cancelledSpy.count(), 0);
+    recognizer.unregisterPinchGesture(gesture.data());
     QCOMPARE(cancelledSpy.count(), 1);
 
     // delete the gesture should not trigger cancel
@@ -347,7 +497,7 @@ void GestureTest::testDeleteSwipeCancels()
     QSignalSpy cancelledSpy(gesture.data(), &input::swipe_gesture::cancelled);
     QVERIFY(cancelledSpy.isValid());
 
-    recognizer.registerGesture(gesture.data());
+    recognizer.registerSwipeGesture(gesture.data());
     recognizer.startSwipeGesture(1);
     QCOMPARE(startedSpy.count(), 1);
     QCOMPARE(cancelledSpy.count(), 0);
@@ -378,91 +528,13 @@ void GestureTest::testSwipeCancel()
     QSignalSpy triggeredSpy(gesture.data(), &input::swipe_gesture::triggered);
     QVERIFY(triggeredSpy.isValid());
 
-    recognizer.registerGesture(gesture.data());
+    recognizer.registerSwipeGesture(gesture.data());
     recognizer.startSwipeGesture(1);
     QCOMPARE(startedSpy.count(), 1);
     QCOMPARE(cancelledSpy.count(), 0);
     recognizer.cancelSwipeGesture();
     QCOMPARE(cancelledSpy.count(), 1);
     QCOMPARE(triggeredSpy.count(), 0);
-}
-
-void GestureTest::testSwipeUpdateCancel()
-{
-    input::gesture_recognizer recognizer;
-    input::swipe_gesture upGesture;
-    upGesture.setDirection(input::swipe_gesture::Direction::Up);
-    input::swipe_gesture downGesture;
-    downGesture.setDirection(input::swipe_gesture::Direction::Down);
-    input::swipe_gesture rightGesture;
-    rightGesture.setDirection(input::swipe_gesture::Direction::Right);
-    input::swipe_gesture leftGesture;
-    leftGesture.setDirection(input::swipe_gesture::Direction::Left);
-
-    QSignalSpy upCancelledSpy(&upGesture, &input::swipe_gesture::cancelled);
-    QVERIFY(upCancelledSpy.isValid());
-    QSignalSpy downCancelledSpy(&downGesture, &input::swipe_gesture::cancelled);
-    QVERIFY(downCancelledSpy.isValid());
-    QSignalSpy rightCancelledSpy(&rightGesture, &input::swipe_gesture::cancelled);
-    QVERIFY(rightCancelledSpy.isValid());
-    QSignalSpy leftCancelledSpy(&leftGesture, &input::swipe_gesture::cancelled);
-    QVERIFY(leftCancelledSpy.isValid());
-
-    QSignalSpy upTriggeredSpy(&upGesture, &input::swipe_gesture::triggered);
-    QVERIFY(upTriggeredSpy.isValid());
-    QSignalSpy downTriggeredSpy(&downGesture, &input::swipe_gesture::triggered);
-    QVERIFY(downTriggeredSpy.isValid());
-    QSignalSpy rightTriggeredSpy(&rightGesture, &input::swipe_gesture::triggered);
-    QVERIFY(rightTriggeredSpy.isValid());
-    QSignalSpy leftTriggeredSpy(&leftGesture, &input::swipe_gesture::triggered);
-    QVERIFY(leftTriggeredSpy.isValid());
-
-    QSignalSpy upProgressSpy(&upGesture, &input::swipe_gesture::progress);
-    QVERIFY(upProgressSpy.isValid());
-    QSignalSpy downProgressSpy(&downGesture, &input::swipe_gesture::progress);
-    QVERIFY(downProgressSpy.isValid());
-    QSignalSpy leftProgressSpy(&leftGesture, &input::swipe_gesture::progress);
-    QVERIFY(leftProgressSpy.isValid());
-    QSignalSpy rightProgressSpy(&rightGesture, &input::swipe_gesture::progress);
-    QVERIFY(rightProgressSpy.isValid());
-
-    recognizer.registerGesture(&upGesture);
-    recognizer.registerGesture(&downGesture);
-    recognizer.registerGesture(&rightGesture);
-    recognizer.registerGesture(&leftGesture);
-
-    QCOMPARE(recognizer.startSwipeGesture(4), 4);
-
-    // first a down gesture
-    recognizer.updateSwipeGesture(QSizeF(1, 20));
-    QCOMPARE(upCancelledSpy.count(), 1);
-    QCOMPARE(downCancelledSpy.count(), 0);
-    QCOMPARE(leftCancelledSpy.count(), 1);
-    QCOMPARE(rightCancelledSpy.count(), 1);
-    // another down gesture
-    recognizer.updateSwipeGesture(QSizeF(-2, 10));
-    QCOMPARE(downCancelledSpy.count(), 0);
-    // and an up gesture
-    recognizer.updateSwipeGesture(QSizeF(-2, -10));
-    QCOMPARE(upCancelledSpy.count(), 1);
-    QCOMPARE(downCancelledSpy.count(), 1);
-    QCOMPARE(leftCancelledSpy.count(), 1);
-    QCOMPARE(rightCancelledSpy.count(), 1);
-
-    recognizer.endSwipeGesture();
-    QCOMPARE(upCancelledSpy.count(), 1);
-    QCOMPARE(downCancelledSpy.count(), 1);
-    QCOMPARE(leftCancelledSpy.count(), 1);
-    QCOMPARE(rightCancelledSpy.count(), 1);
-    QCOMPARE(upTriggeredSpy.count(), 0);
-    QCOMPARE(downTriggeredSpy.count(), 0);
-    QCOMPARE(leftTriggeredSpy.count(), 0);
-    QCOMPARE(rightTriggeredSpy.count(), 0);
-
-    QCOMPARE(upProgressSpy.count(), 0);
-    QCOMPARE(downProgressSpy.count(), 0);
-    QCOMPARE(leftProgressSpy.count(), 0);
-    QCOMPARE(rightProgressSpy.count(), 0);
 }
 
 void GestureTest::testSwipeUpdateTrigger_data()
@@ -488,7 +560,7 @@ void GestureTest::testSwipeUpdateTrigger()
     QSignalSpy cancelledSpy(&gesture, &input::swipe_gesture::cancelled);
     QVERIFY(cancelledSpy.isValid());
 
-    recognizer.registerGesture(&gesture);
+    recognizer.registerSwipeGesture(&gesture);
 
     recognizer.startSwipeGesture(1);
     QFETCH(QSizeF, delta);
@@ -522,7 +594,7 @@ void GestureTest::testSwipeMinFingerStart()
     QSignalSpy startedSpy(&gesture, &input::swipe_gesture::started);
     QVERIFY(startedSpy.isValid());
 
-    recognizer.registerGesture(&gesture);
+    recognizer.registerSwipeGesture(&gesture);
     QFETCH(uint, count);
     recognizer.startSwipeGesture(count);
     QTEST(!startedSpy.isEmpty(), "started");
@@ -549,10 +621,80 @@ void GestureTest::testSwipeMaxFingerStart()
     QSignalSpy startedSpy(&gesture, &input::swipe_gesture::started);
     QVERIFY(startedSpy.isValid());
 
-    recognizer.registerGesture(&gesture);
+    recognizer.registerSwipeGesture(&gesture);
     QFETCH(uint, count);
     recognizer.startSwipeGesture(count);
     QTEST(!startedSpy.isEmpty(), "started");
+}
+
+void GestureTest::testNotEmitCallbacksBeforeDirectionDecided()
+{
+    input::gesture_recognizer recognizer;
+    input::swipe_gesture up;
+    input::swipe_gesture down;
+    input::swipe_gesture right;
+    input::pinch_gesture expand;
+    input::pinch_gesture contract;
+    up.setDirection(input::swipe_gesture::Direction::Up);
+    down.setDirection(input::swipe_gesture::Direction::Down);
+    right.setDirection(input::swipe_gesture::Direction::Right);
+    expand.setDirection(input::pinch_gesture::Direction::Expanding);
+    contract.setDirection(input::pinch_gesture::Direction::Contracting);
+    recognizer.registerSwipeGesture(&up);
+    recognizer.registerSwipeGesture(&down);
+    recognizer.registerSwipeGesture(&right);
+    recognizer.registerPinchGesture(&expand);
+    recognizer.registerPinchGesture(&contract);
+
+    QSignalSpy upSpy(&up, &input::swipe_gesture::progress);
+    QSignalSpy downSpy(&down, &input::swipe_gesture::progress);
+    QSignalSpy rightSpy(&right, &input::swipe_gesture::progress);
+    QSignalSpy expandSpy(&expand, &input::pinch_gesture::progress);
+    QSignalSpy contractSpy(&contract, &input::pinch_gesture::progress);
+
+    // don't release callback until we know the direction of swipe gesture
+    recognizer.startSwipeGesture(4);
+    QCOMPARE(upSpy.count(), 0);
+    QCOMPARE(downSpy.count(), 0);
+    QCOMPARE(rightSpy.count(), 0);
+
+    // up (negative y)
+    recognizer.updateSwipeGesture(QSizeF(0, -1.5));
+    QCOMPARE(upSpy.count(), 1);
+    QCOMPARE(downSpy.count(), 0);
+    QCOMPARE(rightSpy.count(), 0);
+
+    // down (positive y)
+    // recognizer.updateSwipeGesture(QSizeF(0, 0));
+    recognizer.updateSwipeGesture(QSizeF(0, 3));
+    QCOMPARE(upSpy.count(), 1);
+    QCOMPARE(downSpy.count(), 1);
+    QCOMPARE(rightSpy.count(), 0);
+
+    // right
+    recognizer.cancelSwipeGesture();
+    recognizer.startSwipeGesture(4);
+    recognizer.updateSwipeGesture(QSizeF(1, 0));
+    QCOMPARE(upSpy.count(), 1);
+    QCOMPARE(downSpy.count(), 1);
+    QCOMPARE(rightSpy.count(), 1);
+
+    recognizer.cancelSwipeGesture();
+
+    // same test for pinch gestures
+    recognizer.startPinchGesture(4);
+    QCOMPARE(expandSpy.count(), 0);
+    QCOMPARE(contractSpy.count(), 0);
+
+    // contracting
+    recognizer.updatePinchGesture(.5, 0, QSizeF(0, 0));
+    QCOMPARE(expandSpy.count(), 0);
+    QCOMPARE(contractSpy.count(), 1);
+
+    // expanding
+    recognizer.updatePinchGesture(1.5, 0, QSizeF(0, 0));
+    QCOMPARE(expandSpy.count(), 1);
+    QCOMPARE(contractSpy.count(), 1);
 }
 
 void GestureTest::testSwipeGeometryStart_data()
@@ -582,44 +724,10 @@ void GestureTest::testSwipeGeometryStart()
     QSignalSpy startedSpy(&gesture, &input::swipe_gesture::started);
     QVERIFY(startedSpy.isValid());
 
-    recognizer.registerGesture(&gesture);
+    recognizer.registerSwipeGesture(&gesture);
     QFETCH(QPointF, startPos);
     recognizer.startSwipeGesture(startPos);
     QTEST(!startedSpy.isEmpty(), "started");
-}
-
-void GestureTest::testSwipeDiagonalCancels_data()
-{
-    QTest::addColumn<KWin::input::swipe_gesture::Direction>("direction");
-
-    QTest::newRow("Up") << KWin::input::swipe_gesture::Direction::Up;
-    QTest::newRow("Left") << KWin::input::swipe_gesture::Direction::Left;
-    QTest::newRow("Right") << KWin::input::swipe_gesture::Direction::Right;
-    QTest::newRow("Down") << KWin::input::swipe_gesture::Direction::Down;
-}
-
-void GestureTest::testSwipeDiagonalCancels()
-{
-    input::gesture_recognizer recognizer;
-    input::swipe_gesture gesture;
-    QFETCH(input::swipe_gesture::Direction, direction);
-    gesture.setDirection(direction);
-
-    QSignalSpy triggeredSpy(&gesture, &input::swipe_gesture::triggered);
-    QVERIFY(triggeredSpy.isValid());
-    QSignalSpy cancelledSpy(&gesture, &input::swipe_gesture::cancelled);
-    QVERIFY(cancelledSpy.isValid());
-
-    recognizer.registerGesture(&gesture);
-
-    recognizer.startSwipeGesture(1);
-    recognizer.updateSwipeGesture(QSizeF(1, 1));
-    QCOMPARE(cancelledSpy.count(), 1);
-    QCOMPARE(triggeredSpy.count(), 0);
-
-    recognizer.endSwipeGesture();
-    QCOMPARE(cancelledSpy.count(), 1);
-    QCOMPARE(triggeredSpy.count(), 0);
 }
 
 QTEST_MAIN(GestureTest)

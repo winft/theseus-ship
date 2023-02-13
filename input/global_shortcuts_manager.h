@@ -58,7 +58,24 @@ public:
                               Qt::KeyboardModifiers modifiers,
                               PointerAxisDirection axis);
 
-    void registerTouchpadSwipe(QAction* action, SwipeDirection direction);
+    void registerTouchpadSwipe(QAction* action, SwipeDirection direction, uint fingerCount = 4);
+
+    void registerRealtimeTouchpadSwipe(QAction* onUp,
+                                       std::function<void(qreal)> progressCallback,
+                                       SwipeDirection direction,
+                                       uint fingerCount = 4);
+
+    void registerTouchpadPinch(QAction* action, PinchDirection direction, uint fingerCount = 4);
+
+    void registerRealtimeTouchpadPinch(QAction* onUp,
+                                       std::function<void(qreal)> progressCallback,
+                                       PinchDirection direction,
+                                       uint fingerCount = 4);
+
+    void registerTouchscreenSwipe(QAction* action,
+                                  std::function<void(qreal)> progressCallback,
+                                  SwipeDirection direction,
+                                  uint fingerCount);
 
     /**
      * @brief Processes a key event to decide whether a shortcut needs to be triggered.
@@ -87,10 +104,15 @@ public:
      */
     bool processAxis(Qt::KeyboardModifiers modifiers, PointerAxisDirection axis);
 
-    void processSwipeStart(uint fingerCount);
-    void processSwipeUpdate(const QSizeF& delta);
-    void processSwipeCancel();
-    void processSwipeEnd();
+    void processSwipeStart(DeviceType device, uint fingerCount);
+    void processSwipeUpdate(DeviceType device, const QSizeF& delta);
+    void processSwipeCancel(DeviceType device);
+    void processSwipeEnd(DeviceType device);
+
+    void processPinchStart(uint fingerCount);
+    void processPinchUpdate(qreal scale, qreal angleDelta, const QSizeF& delta);
+    void processPinchCancel();
+    void processPinchEnd();
 
     void setKGlobalAccelInterface(KGlobalAccelInterface* interface)
     {
@@ -99,13 +121,14 @@ public:
 
 private:
     void objectDeleted(QObject* object);
-    bool addIfNotExists(global_shortcut sc);
+    bool addIfNotExists(global_shortcut sc, DeviceType device = DeviceType::Touchpad);
 
     QVector<global_shortcut> m_shortcuts;
 
     std::unique_ptr<KGlobalAccelD> m_kglobalAccel;
     KGlobalAccelInterface* m_kglobalAccelInterface = nullptr;
-    std::unique_ptr<gesture_recognizer> m_gestureRecognizer;
+    std::unique_ptr<gesture_recognizer> m_touchpadGestureRecognizer;
+    std::unique_ptr<gesture_recognizer> m_touchscreenGestureRecognizer;
     base::operation_mode windowing_mode;
 };
 

@@ -46,6 +46,7 @@ set(kwin_EFFECTSLIB_SRCS
     kwineffects/effect_screen.cpp
     kwineffects/effect_window.cpp
     kwineffects/effects_handler.cpp
+    kwineffects/quick_scene.cpp
     kwineffects/motions.cpp
     kwineffects/paint_clipper.cpp
     kwineffects/paint_data.cpp
@@ -68,9 +69,6 @@ target_link_libraries(kwineffects
         KF5::I18n
         kwinglutils
 )
-if (KWIN_HAVE_XRENDER_COMPOSITING)
-    target_link_libraries(kwineffects PRIVATE kwinxrenderutils XCB::XFIXES)
-endif()
 set_target_properties(kwineffects PROPERTIES
     VERSION ${KWINEFFECTS_VERSION}
     SOVERSION ${KWINEFFECTS_SOVERSION}
@@ -105,6 +103,7 @@ install(FILES
     kwineffects/legacy/kwineffectquickview.h
     kwineffects/legacy/kwineffects.h
     kwineffects/legacy/kwineffects_export.h
+    kwineffects/legacy/kwinquickeffect.h
     kwingl/legacy/kwinglplatform.h
     kwingl/legacy/kwingltexture.h
     kwingl/legacy/kwinglutils.h

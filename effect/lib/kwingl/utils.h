@@ -108,6 +108,8 @@ public:
 
     enum IntUniform {
         AlphaToOne, ///< @deprecated no longer used
+        TextureWidth,
+        TextureHeight,
         IntUniformCount
     };
 
@@ -215,7 +217,8 @@ public:
      * @param fragmentSource The source code of the fragment shader.
      * @return The created shader
      */
-    GLShader* loadShaderFromCode(const QByteArray& vertexSource, const QByteArray& fragmentSource);
+    std::unique_ptr<GLShader> loadShaderFromCode(const QByteArray& vertexSource,
+                                                 const QByteArray& fragmentSource);
 
     /**
      * Creates a custom shader with the given @p traits and custom @p vertexSource and or @p
@@ -235,9 +238,9 @@ public:
      * @return new generated shader
      * @since 5.6
      */
-    GLShader* generateCustomShader(ShaderTraits traits,
-                                   const QByteArray& vertexSource = QByteArray(),
-                                   const QByteArray& fragmentSource = QByteArray());
+    std::unique_ptr<GLShader> generateCustomShader(ShaderTraits traits,
+                                                   const QByteArray& vertexSource = QByteArray(),
+                                                   const QByteArray& fragmentSource = QByteArray());
 
     /**
      * Creates a custom shader with the given @p traits and custom @p vertexFile and or @p
@@ -260,9 +263,9 @@ public:
      * @return new generated shader
      * @see generateCustomShader
      */
-    GLShader* generateShaderFromFile(ShaderTraits traits,
-                                     const QString& vertexFile = QString(),
-                                     const QString& fragmentFile = QString());
+    std::unique_ptr<GLShader> generateShaderFromFile(ShaderTraits traits,
+                                                     const QString& vertexFile = QString(),
+                                                     const QString& fragmentFile = QString());
 
     /**
      * @return a pointer to the ShaderManager instance
@@ -283,10 +286,10 @@ private:
 
     QByteArray generateVertexSource(ShaderTraits traits) const;
     QByteArray generateFragmentSource(ShaderTraits traits) const;
-    GLShader* generateShader(ShaderTraits traits);
+    std::unique_ptr<GLShader> generateShader(ShaderTraits traits);
 
     QStack<GLShader*> m_boundShaders;
-    QHash<ShaderTraits, GLShader*> m_shaderHash;
+    std::map<ShaderTraits, std::unique_ptr<GLShader>> m_shaderHash;
     static ShaderManager* s_shaderManager;
 };
 
@@ -372,7 +375,7 @@ public:
     GLRenderTarget(GLRenderTarget&& other) noexcept;
     GLRenderTarget& operator=(GLRenderTarget&& other) noexcept;
     explicit GLRenderTarget(GLuint framebuffer, QRect const& viewport);
-    explicit GLRenderTarget(GLTexture const& texture);
+    explicit GLRenderTarget(GLTexture* texture);
 
     ~GLRenderTarget();
 
@@ -380,13 +383,6 @@ public:
     bool valid() const
     {
         return mValid;
-    }
-
-    void setTextureDirty()
-    {
-        if (mTexture.has_value()) {
-            mTexture->setDirty();
-        }
     }
 
     static void initStatic();
@@ -433,7 +429,7 @@ public:
                              GLenum filter = GL_LINEAR);
 
 protected:
-    void initFBO();
+    void initFBO(GLTexture* texture);
 
 private:
     friend void KWin::cleanupGL();
@@ -444,7 +440,6 @@ private:
     static bool s_blitSupported;
     static QStack<GLRenderTarget*> s_renderTargets;
 
-    std::optional<GLTexture> mTexture;
     GLuint mFramebuffer{0};
 
     QRect mViewport;

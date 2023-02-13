@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "base/output.h"
 #include "window.h"
 
 #include "base/output_helpers.h"
@@ -50,8 +51,13 @@ namespace KWin::scripting
 class KWIN_EXPORT space : public QObject
 {
     Q_OBJECT
+    /**
+     * @deprecated use the currentVirtualDesktop property instead
+     */
     Q_PROPERTY(
         int currentDesktop READ currentDesktop WRITE setCurrentDesktop NOTIFY currentDesktopChanged)
+    Q_PROPERTY(KWin::win::virtual_desktop* currentVirtualDesktop READ currentVirtualDesktop WRITE
+                   setCurrentVirtualDesktop NOTIFY currentVirtualDesktopChanged)
     Q_PROPERTY(KWin::scripting::window* activeClient READ activeClient WRITE setActiveClient NOTIFY
                    clientActivated)
     // TODO: write and notify?
@@ -139,9 +145,13 @@ public:
     Q_ENUM(ElectricBorder)
 
     virtual int currentDesktop() const = 0;
+    virtual win::virtual_desktop* currentVirtualDesktop() const = 0;
     virtual void setCurrentDesktop(int desktop) = 0;
+    virtual void setCurrentVirtualDesktop(win::virtual_desktop* desktop) = 0;
     virtual int numberOfDesktops() const = 0;
     virtual void setNumberOfDesktops(int count) = 0;
+
+    Q_INVOKABLE int screenAt(const QPointF& pos) const;
 
     /// Deprecated
     QString currentActivity() const
@@ -183,10 +193,18 @@ public:
      * @param desktop The desktop for which the area should be considered, in general there should
      * not be a difference
      * @returns The specified screen geometry
+     * @deprecated use clientArea(ClientAreaOption option, KWin::base::output* output,
+     * KWin::win::virtual_desktop* desktop)
      */
     Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, int screen, int desktop) const
     {
         return client_area_impl(static_cast<clientAreaOption>(option), screen, desktop);
+    }
+    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
+                                  base::output* output,
+                                  win::virtual_desktop* desktop) const
+    {
+        return client_area_impl(static_cast<clientAreaOption>(option), output, desktop);
     }
 
     /**
@@ -196,10 +214,19 @@ public:
      * @param desktop The desktop for which the area should be considered, in general there should
      * not be a difference
      * @returns The specified screen geometry
+     * @deprecated use clientArea(ClientAreaOption option, QPoint const& point,
+     * KWin::win::virtual_desktop* desktop)
      */
     Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, QPoint const& point, int desktop) const
     {
         return client_area_impl(static_cast<clientAreaOption>(option), point, desktop);
+    }
+    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
+                                  QPoint const& point,
+                                  win::virtual_desktop* desktop) const
+    {
+        return client_area_impl(
+            static_cast<clientAreaOption>(option), point, desktop->x11DesktopNumber());
     }
 
     /**
@@ -449,12 +476,23 @@ Q_SIGNALS:
      */
     void virtualScreenGeometryChanged();
 
+    /**
+     * This signal is emitted when the current virtual desktop changes.
+     *
+     * @since 5.23
+     */
+    void currentVirtualDesktopChanged();
+
 protected:
     space() = default;
 
     virtual QRect client_area_impl(clientAreaOption option, int screen, int desktop) const = 0;
-    virtual QRect
-    client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const = 0;
+    virtual QRect client_area_impl(clientAreaOption option,
+                                   base::output* output,
+                                   win::virtual_desktop* desktop) const
+        = 0;
+    virtual QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const
+        = 0;
     virtual QRect client_area_impl(clientAreaOption option, window* window) const = 0;
     virtual QRect client_area_impl(clientAreaOption option, window const* window) const = 0;
 
@@ -518,6 +556,7 @@ class template_space : public Space
 {
 public:
     using window_t = window_impl<typename RefSpace::window_t>;
+    using base_t = typename RefSpace::base_t;
 
     template_space(RefSpace* ref_space)
         : ref_space{ref_space}
@@ -587,6 +626,10 @@ public:
                          &win::virtual_desktop_manager_qobject::layoutChanged,
                          this,
                          &space::desktopLayoutChanged);
+        QObject::connect(vds->qobject.get(),
+                         &win::virtual_desktop_manager_qobject::currentChanged,
+                         this,
+                         &space::currentVirtualDesktopChanged);
 
         auto& base = ref_space->base;
         QObject::connect(
@@ -615,6 +658,11 @@ public:
         return ref_space->virtual_desktop_manager->current();
     }
 
+    win::virtual_desktop* currentVirtualDesktop() const override
+    {
+        return ref_space->virtual_desktop_manager->currentDesktop();
+    }
+
     void setCurrentDesktop(int desktop) override
     {
         ref_space->virtual_desktop_manager->setCurrent(desktop);
@@ -623,6 +671,11 @@ public:
     int numberOfDesktops() const override
     {
         return ref_space->virtual_desktop_manager->count();
+    }
+
+    void setCurrentVirtualDesktop(win::virtual_desktop* desktop) override
+    {
+        ref_space->virtual_desktop_manager->setCurrent(desktop);
     }
 
     void setNumberOfDesktops(int count) override
@@ -940,6 +993,15 @@ protected:
     {
         auto output = base::get_output(ref_space->base.outputs, screen);
         return win::space_window_area(*ref_space, option, output, desktop);
+    }
+
+    QRect client_area_impl(clientAreaOption option,
+                           base::output* client_output,
+                           win::virtual_desktop* desktop) const override
+    {
+        typename base_t::output_t const* output
+            = static_cast<typename base_t::output_t*>(client_output);
+        return win::space_window_area(*ref_space, option, output, desktop->x11DesktopNumber());
     }
 
     QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const override

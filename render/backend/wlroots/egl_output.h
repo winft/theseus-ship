@@ -78,7 +78,7 @@ public:
 
         auto const texSize = out->base.view_geometry().size();
         render.texture = GLTexture(GL_TEXTURE_2D, texSize.width(), texSize.height());
-        render.fbo = GLRenderTarget(render.texture.value());
+        render.fbo = GLRenderTarget(&render.texture.value());
         return render.fbo.valid();
     }
 

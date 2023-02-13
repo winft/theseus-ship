@@ -642,7 +642,7 @@ QByteArray GLPlatform::chipClassToString8(ChipClass chipClass)
 GLPlatform::GLPlatform(xcb_connection_t* x11_connection)
     : m_driver(Driver_Unknown)
     , m_chipClass(UnknownChipClass)
-    , m_recommendedCompositor(XRenderCompositing)
+    , m_recommendedCompositor(QPainterCompositing)
     , m_glVersion(0)
     , m_glslVersion(0)
     , m_mesaVersion(0)
@@ -957,11 +957,11 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
         }
 
         if (m_chipClass < R300) {
-            // fallback to XRender for R100 and R200
-            m_recommendedCompositor = XRenderCompositing;
+            // fallback to NoCompositing for R100 and R200
+            m_recommendedCompositor = NoCompositing;
         } else if (m_chipClass < R600) {
-            // XRender due to NPOT limitations not supported by KWin's shaders
-            m_recommendedCompositor = XRenderCompositing;
+            // NoCompositing due to NPOT limitations not supported by KWin's shaders
+            m_recommendedCompositor = NoCompositing;
         } else {
             m_recommendedCompositor = OpenGLCompositing;
         }
@@ -981,7 +981,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
         }
 
         if (m_chipClass < NV40) {
-            m_recommendedCompositor = XRenderCompositing;
+            m_recommendedCompositor = NoCompositing;
         } else {
             m_recommendedCompositor = OpenGLCompositing;
         }
@@ -999,7 +999,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
         m_looseBinding = false;
 
         if (m_chipClass < I915) {
-            m_recommendedCompositor = XRenderCompositing;
+            m_recommendedCompositor = NoCompositing;
         } else {
             m_recommendedCompositor = OpenGLCompositing;
         }
@@ -1018,8 +1018,8 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
 
     if (isSoftwareEmulation()) {
         if (m_driver < Driver_Llvmpipe) {
-            // we recommend XRender
-            m_recommendedCompositor = XRenderCompositing;
+            // we recommend QPainter
+            m_recommendedCompositor = QPainterCompositing;
             // Software emulation does not provide GLSL
             m_limitedGLSL = m_supportsGLSL = false;
         } else {

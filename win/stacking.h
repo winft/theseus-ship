@@ -411,4 +411,12 @@ std::vector<typename Container::value_type> sort_windows_by_layer(Container cons
     return sorted;
 }
 
+template<typename Space, typename Win>
+int index_of_stacking_order(Space const& space, Win const& win)
+{
+    using var_win = typename Space::window_t;
+
+    return index_of(space.stacking.order.stack, var_win(win));
+}
+
 }

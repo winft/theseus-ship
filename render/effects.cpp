@@ -94,25 +94,6 @@ void effects_handler_wrap::paintScreen(int mask, const QRegion& region, ScreenPa
     }
 }
 
-void effects_handler_wrap::paintDesktop(int desktop,
-                                        int mask,
-                                        QRegion region,
-                                        ScreenPaintData& data)
-{
-    if (desktop < 1 || desktop > numberOfDesktops()) {
-        return;
-    }
-    m_currentRenderedDesktop = desktop;
-    m_desktopRendering = true;
-    // save the paint screen iterator
-    EffectsIterator savedIterator = m_currentPaintScreenIterator;
-    m_currentPaintScreenIterator = m_activeEffects.constBegin();
-    paintScreen(mask, region, data);
-    // restore the saved iterator
-    m_currentPaintScreenIterator = savedIterator;
-    m_desktopRendering = false;
-}
-
 void effects_handler_wrap::postPaintScreen()
 {
     if (m_currentPaintScreenIterator != m_activeEffects.constEnd()) {
@@ -596,12 +577,12 @@ Wrapland::Server::Display* effects_handler_wrap::waylandDisplay() const
     return nullptr;
 }
 
-EffectFrame* effects_handler_wrap::effectFrame(EffectFrameStyle style,
-                                               bool staticSize,
-                                               const QPoint& position,
-                                               Qt::Alignment alignment) const
+std::unique_ptr<EffectFrame> effects_handler_wrap::effectFrame(EffectFrameStyle style,
+                                                               bool staticSize,
+                                                               const QPoint& position,
+                                                               Qt::Alignment alignment) const
 {
-    return new effect_frame_impl(
+    return std::make_unique<effect_frame_impl>(
         const_cast<effects_handler_wrap&>(*this), style, staticSize, position, alignment);
 }
 
@@ -673,7 +654,7 @@ QImage effects_handler_wrap::blit_from_framebuffer(QRect const& geometry, double
         image = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_ARGB32);
 
         GLTexture texture(GL_RGBA8, nativeSize.width(), nativeSize.height());
-        GLRenderTarget target(texture);
+        GLRenderTarget target(&texture);
         target.blitFromFramebuffer(mapToRenderTarget(geometry));
 
         // Copy content from framebuffer into image.

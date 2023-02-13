@@ -55,7 +55,7 @@ public:
     }
 
     // perform the actual painting of the window
-    virtual void performPaint(paint_type mask, QRegion region, WindowPaintData data) = 0;
+    virtual void performPaint(paint_type mask, const QRegion& region, WindowPaintData& data) = 0;
 
     // do any cleanup needed when the window's buffer is discarded
     void discard_buffer()
@@ -97,31 +97,25 @@ public:
     {
         disable_painting = window_paint_disable_type::none;
 
-        std::visit(
-            overload{[this](auto&& ref_win) {
-                if (ref_win->remnant) {
-                    disable_painting |= window_paint_disable_type::by_delete;
-                }
+        std::visit(overload{[this](auto&& ref_win) {
+                       if (ref_win->remnant) {
+                           disable_painting |= window_paint_disable_type::by_delete;
+                       }
 
-                if (compositor.effects->isDesktopRendering()) {
-                    if (!win::on_desktop(ref_win, compositor.effects->currentRenderedDesktop())) {
-                        disable_painting |= window_paint_disable_type::by_desktop;
-                    }
-                } else {
-                    if (!win::on_current_desktop(ref_win))
-                        disable_painting |= window_paint_disable_type::by_desktop;
-                }
+                       if (!win::on_current_desktop(ref_win)) {
+                           disable_painting |= window_paint_disable_type::by_desktop;
+                       }
 
-                if (ref_win->control) {
-                    if (ref_win->control->minimized) {
-                        disable_painting |= window_paint_disable_type::by_minimize;
-                    }
-                    if (ref_win->isHiddenInternal()) {
-                        disable_painting |= window_paint_disable_type::unspecified;
-                    }
-                }
-            }},
-            *ref_win);
+                       if (ref_win->control) {
+                           if (ref_win->control->minimized) {
+                               disable_painting |= window_paint_disable_type::by_minimize;
+                           }
+                           if (ref_win->isHiddenInternal()) {
+                               disable_painting |= window_paint_disable_type::unspecified;
+                           }
+                       }
+                   }},
+                   *ref_win);
     }
 
     void enablePainting(window_paint_disable_type reason)

@@ -49,11 +49,35 @@ Id=remove-placement-cascade
 File=kwinrc
 Script=kwin-5.23-placement.pl,perl
 
+# Remove the Flip Switch effect
+Id=remove-flip-switch-effect
+File=kwinrc
+Group=TabBox,TabBoxAlternative
+Script=kwin-5.23-remove-flip-switch.py,python3
+
+# Remove the Cover Switch effect
+Id=remove-cover-switch-effect
+File=kwinrc
+Group=TabBox,TabBoxAlternative
+Script=kwin-5.23-remove-cover-switch.py,python3
+
+# Remove Backend if it has a value of "XRender"
+Id=remove-xrender-backend
+File=kwinrc
+Group=Compositing
+Script=kwin-5.23-remove-xrender-backend.py,python3
+
 # Enable the Scale effect by default.
 Id=enable-scale-effect-by-default
 File=kwinrc
 Group=Plugins
 Key=kwin4_effect_fadeEnabled,kwin4_effect_scaleEnabled
+
+# Overview config group based upon plugin id
+Id=overview-group-plugin-id
+File=kwinrc
+Options=AllGroups
+Script=kwin-5.25-effect-pluginid-config-group.py,python3
 
 # Tidy up after a bug from the animation speed movement
 Id=animation-speed-cleanup

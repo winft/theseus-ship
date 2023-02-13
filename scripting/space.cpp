@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "space.h"
 
+#include "base/singleton_interface.h"
 #include "singleton_interface.h"
 
 #include "base/logging.h"
@@ -91,6 +92,16 @@ int space::workspaceHeight() const
 int space::workspaceWidth() const
 {
     return desktopGridWidth() * displayWidth();
+}
+
+int space::screenAt(const QPointF& pos) const
+{
+    auto const& outputs = base::singleton_interface::platform->get_outputs();
+    auto output = base::get_nearest_output(outputs, pos.toPoint());
+    if (!output) {
+        return 0;
+    }
+    return base::get_output_index(outputs, *output);
 }
 
 QRect space::virtualScreenGeometry() const

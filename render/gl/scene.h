@@ -769,21 +769,6 @@ protected:
         return matrix;
     }
 
-    void paintDesktop(int desktop,
-                      paint_type mask,
-                      const QRegion& region,
-                      ScreenPaintData& data) override
-    {
-        const QRect r = region.boundingRect();
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(r.x(),
-                  this->platform.base.topology.size.height() - r.y() - r.height(),
-                  r.width(),
-                  r.height());
-        render::scene<Platform>::paintDesktop(desktop, mask, region, data);
-        glDisable(GL_SCISSOR_TEST);
-    }
-
     void paintEffectQuickView(EffectQuickView* view) override
     {
         auto texture = view->bufferAsTexture();

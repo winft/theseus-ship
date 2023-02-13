@@ -9,7 +9,6 @@
 #include "scripting/platform.h"
 #include "scripting/singleton_interface.h"
 #include "scripting/space.h"
-#include "scripting/window.h"
 
 namespace KWin::scripting::models::v3
 {
@@ -23,14 +22,14 @@ client_model::client_model(QObject* parent)
     connect(ws_wrap, &space::clientRemoved, this, &client_model::handleClientRemoved);
 
     for (auto window : ws_wrap->windows()) {
-        m_clients << window;
+        m_clients << window->internalId();
         setupClientConnections(window);
     }
 }
 
 void client_model::markRoleChanged(window* client, int role)
 {
-    const QModelIndex row = index(m_clients.indexOf(client), 0);
+    const QModelIndex row = index(m_clients.indexOf(client->internalId()), 0);
     Q_EMIT dataChanged(row, row, {role});
 }
 
@@ -47,7 +46,7 @@ void client_model::setupClientConnections(window* client)
 void client_model::handleClientAdded(window* client)
 {
     beginInsertRows(QModelIndex(), m_clients.count(), m_clients.count());
-    m_clients.append(client);
+    m_clients.append(client->internalId());
     endInsertRows();
 
     setupClientConnections(client);
@@ -55,7 +54,7 @@ void client_model::handleClientAdded(window* client)
 
 void client_model::handleClientRemoved(window* client)
 {
-    const int index = m_clients.indexOf(client);
+    const int index = m_clients.indexOf(client->internalId());
     Q_ASSERT(index != -1);
 
     beginRemoveRows(QModelIndex(), index, index);
@@ -74,24 +73,39 @@ QHash<int, QByteArray> client_model::roleNames() const
     };
 }
 
+scripting::window* find_window(QUuid const& wId)
+{
+    auto const windows = scripting::singleton_interface::qt_script_space->clientList();
+    for (auto win : windows) {
+        if (win->internalId() == wId) {
+            return win;
+        }
+    }
+    return nullptr;
+}
+
 QVariant client_model::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_clients.count()) {
         return QVariant();
     }
 
-    auto client = m_clients[index.row()];
-    switch (role) {
-    case Qt::DisplayRole:
-    case ClientRole:
-        return QVariant::fromValue(client);
-    case ScreenRole:
-        return client->screen();
-    case DesktopRole:
-        return client->desktop();
-    case ActivityRole:
-        return client->activities();
-    default:
+    auto client = find_window(m_clients[index.row()]);
+    if (client) {
+        switch (role) {
+        case Qt::DisplayRole:
+        case ClientRole:
+            return QVariant::fromValue(client);
+        case ScreenRole:
+            return client->screen();
+        case DesktopRole:
+            return client->desktop();
+        case ActivityRole:
+            return client->activities();
+        default:
+            return QVariant();
+        }
+    } else {
         return QVariant();
     }
 }
@@ -134,12 +148,12 @@ void client_filter_model::resetActivity()
 {
 }
 
-int client_filter_model::desktop() const
+win::virtual_desktop* client_filter_model::desktop() const
 {
-    return m_desktop.value_or(0);
+    return m_desktop;
 }
 
-void client_filter_model::setDesktop(int desktop)
+void client_filter_model::setDesktop(win::virtual_desktop* desktop)
 {
     if (m_desktop != desktop) {
         m_desktop = desktop;
@@ -150,11 +164,7 @@ void client_filter_model::setDesktop(int desktop)
 
 void client_filter_model::resetDesktop()
 {
-    if (m_desktop.has_value()) {
-        m_desktop.reset();
-        Q_EMIT desktopChanged();
-        invalidateFilter();
-    }
+    setDesktop(nullptr);
 }
 
 QString client_filter_model::filter() const
@@ -174,13 +184,15 @@ void client_filter_model::setFilter(const QString& filter)
 
 QString client_filter_model::screenName() const
 {
-    return m_screenName.value_or(QString());
+    return m_output ? m_output->name() : QString();
 }
 
 void client_filter_model::setScreenName(const QString& screen)
 {
-    if (m_screenName != screen) {
-        m_screenName = screen;
+    auto const& outputs = base::singleton_interface::platform->get_outputs();
+    auto output = base::find_output(outputs, screen);
+    if (m_output != output) {
+        m_output = output;
         Q_EMIT screenNameChanged();
         invalidateFilter();
     }
@@ -188,8 +200,8 @@ void client_filter_model::setScreenName(const QString& screen)
 
 void client_filter_model::resetScreenName()
 {
-    if (m_screenName.has_value()) {
-        m_screenName.reset();
+    if (m_output) {
+        m_output = nullptr;
         Q_EMIT screenNameChanged();
         invalidateFilter();
     }
@@ -218,6 +230,22 @@ void client_filter_model::resetWindowType()
     }
 }
 
+void client_filter_model::setMinimizedWindows(bool show)
+{
+    if (m_showMinimizedWindows == show) {
+        return;
+    }
+
+    m_showMinimizedWindows = show;
+    invalidateFilter();
+    Q_EMIT minimizedWindowsChanged();
+}
+
+bool client_filter_model::minimizedWindows() const
+{
+    return m_showMinimizedWindows;
+}
+
 bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
 {
     if (!m_clientModel) {
@@ -238,16 +266,14 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
         return false;
     }
 
-    if (m_desktop.has_value()) {
-        if (!client->x11DesktopIds().contains(*m_desktop)) {
+    if (m_desktop) {
+        if (!client->isOnDesktop(m_desktop)) {
             return false;
         }
     }
 
-    if (m_screenName.has_value()) {
-        auto output = base::get_output(base::singleton_interface::platform->get_outputs(),
-                                       client->screen());
-        if (!output || output->name() != m_screenName) {
+    if (m_output) {
+        if (!client->isOnOutput(m_output)) {
             return false;
         }
     }
@@ -275,6 +301,10 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
             return true;
         }
         return false;
+    }
+
+    if (!m_showMinimizedWindows) {
+        return !client->isMinimized();
     }
     return true;
 }

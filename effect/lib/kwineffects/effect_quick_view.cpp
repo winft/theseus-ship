@@ -12,6 +12,7 @@
 
 #include <kwingl/utils.h>
 
+#include <QGuiApplication>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
@@ -20,6 +21,7 @@
 #include <QQuickItem>
 #include <QQuickRenderControl>
 #include <QQuickWindow>
+#include <QStyleHints>
 #include <QTimer>
 #include <QTouchEvent>
 #include <QWindow>
@@ -34,8 +36,6 @@ Q_LOGGING_CATEGORY(LIBKWINEFFECTS, "libkwineffects", QtWarningMsg)
 
 namespace KWin
 {
-
-static std::unique_ptr<QOpenGLContext> s_shareContext;
 
 class EffectQuickRenderControl : public QQuickRenderControl
 {
@@ -81,6 +81,9 @@ public:
     QList<QTouchEvent::TouchPoint> touchPoints;
     Qt::TouchPointStates touchState;
     QTouchDevice* touchDevice;
+
+    ulong lastMousePressTime = 0;
+    Qt::MouseButton lastMousePressButton = Qt::NoButton;
 
     void releaseResources();
 
@@ -148,7 +151,7 @@ EffectQuickView::EffectQuickView(QObject* parent, QWindow* renderWindow, ExportM
         format.setDepthBufferSize(16);
         format.setStencilBufferSize(8);
 
-        auto share_context = s_shareContext.get();
+        auto share_context = QOpenGLContext::globalShareContext();
         d->m_glcontext.reset(new QOpenGLContext);
         d->m_glcontext->setShareContext(share_context);
         d->m_glcontext->setFormat(format);
@@ -167,11 +170,6 @@ EffectQuickView::EffectQuickView(QObject* parent, QWindow* renderWindow, ExportM
         if (share_context && !d->m_glcontext->shareContext()) {
             qCDebug(LIBKWINEFFECTS)
                 << "Failed to create a shared context, falling back to raster rendering";
-
-            qCDebug(LIBKWINEFFECTS) << "Extra debug:";
-            qCDebug(LIBKWINEFFECTS) << "our context:" << d->m_glcontext.data();
-            qCDebug(LIBKWINEFFECTS) << "share context:" << share_context;
-
             // still render via GL, but blit for presentation
             d->m_useBlit = true;
         }
@@ -316,14 +314,34 @@ void EffectQuickView::forwardMouseEvent(QEvent* e)
     switch (e->type()) {
     case QEvent::MouseMove:
     case QEvent::MouseButtonPress:
-    case QEvent::MouseButtonRelease:
-    case QEvent::MouseButtonDblClick: {
+    case QEvent::MouseButtonRelease: {
         QMouseEvent* me = static_cast<QMouseEvent*>(e);
         const QPoint widgetPos = d->m_view->mapFromGlobal(me->pos());
         QMouseEvent cloneEvent(
             me->type(), widgetPos, me->pos(), me->button(), me->buttons(), me->modifiers());
         QCoreApplication::sendEvent(d->m_view, &cloneEvent);
         e->setAccepted(cloneEvent.isAccepted());
+
+        if (e->type() == QEvent::MouseButtonPress) {
+            const ulong doubleClickInterval
+                = static_cast<ulong>(QGuiApplication::styleHints()->mouseDoubleClickInterval());
+            const bool doubleClick = (me->timestamp() - d->lastMousePressTime < doubleClickInterval)
+                && me->button() == d->lastMousePressButton;
+            d->lastMousePressTime = me->timestamp();
+            d->lastMousePressButton = me->button();
+            if (doubleClick) {
+                d->lastMousePressButton = Qt::NoButton;
+                QMouseEvent doubleClickEvent(QEvent::MouseButtonDblClick,
+                                             me->localPos(),
+                                             me->windowPos(),
+                                             me->screenPos(),
+                                             me->button(),
+                                             me->buttons(),
+                                             me->modifiers());
+                QCoreApplication::sendEvent(d->m_view, &doubleClickEvent);
+            }
+        }
+
         return;
     }
     case QEvent::HoverEnter:
@@ -363,11 +381,6 @@ void EffectQuickView::forwardKeyEvent(QKeyEvent* keyEvent)
         return;
     }
     QCoreApplication::sendEvent(d->m_view, keyEvent);
-}
-
-void EffectQuickView::setShareContext(std::unique_ptr<QOpenGLContext> context)
-{
-    s_shareContext = std::move(context);
 }
 
 bool EffectQuickView::forwardTouchDown(qint32 id, const QPointF& pos, quint32 time)
@@ -427,6 +440,11 @@ qreal EffectQuickView::opacity() const
 QQuickItem* EffectQuickView::contentItem() const
 {
     return d->m_view->contentItem();
+}
+
+QQuickWindow* EffectQuickView::window() const
+{
+    return d->m_view;
 }
 
 void EffectQuickView::setVisible(bool visible)

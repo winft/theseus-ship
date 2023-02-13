@@ -138,7 +138,11 @@ void script::run()
     m_starting = true;
     QFutureWatcher<QByteArray>* watcher = new QFutureWatcher<QByteArray>(this);
     connect(watcher, &QFutureWatcherBase::finished, this, &script::slotScriptLoadedFromFile);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     watcher->setFuture(QtConcurrent::run(this, &script::loadScriptFromFile, fileName()));
+#else
+    watcher->setFuture(QtConcurrent::run(&script::loadScriptFromFile, this, fileName()));
+#endif
 }
 
 QByteArray script::loadScriptFromFile(const QString& fileName)
@@ -579,7 +583,7 @@ void declarative_script::run()
 void declarative_script::createComponent()
 {
     if (m_component->isError()) {
-        qCDebug(KWIN_SCRIPTING) << "Component failed to load: " << m_component->errors();
+        qCWarning(KWIN_SCRIPTING) << "Component failed to load: " << m_component->errors();
     } else {
         if (QObject* object = m_component->create(m_context)) {
             object->setParent(this);

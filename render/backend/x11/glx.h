@@ -257,6 +257,24 @@ GLXContext create_glx_context(Backend const& backend)
     GLXContext ctx{nullptr};
     auto const direct = true;
 
+    auto qtGlobalShareContext = QOpenGLContext::globalShareContext();
+    GLXContext globalShareContext = nullptr;
+    if (qtGlobalShareContext) {
+        qDebug(KWIN_X11) << "Global share context format:" << qtGlobalShareContext->format();
+        auto const nativeHandle = qtGlobalShareContext->nativeHandle();
+        if (!nativeHandle.canConvert<QGLXNativeContext>()) {
+            qCDebug(KWIN_X11) << "Invalid QOpenGLContext::globalShareContext()";
+            return nullptr;
+        } else {
+            QGLXNativeContext handle = qvariant_cast<QGLXNativeContext>(nativeHandle);
+            globalShareContext = handle.context();
+        }
+    }
+    if (!globalShareContext) {
+        qCWarning(KWIN_X11) << "QOpenGLContext::globalShareContext() is required";
+        return nullptr;
+    }
+
     // Use glXCreateContextAttribsARB() when it's available
     if (backend.hasExtension(QByteArrayLiteral("GLX_ARB_create_context"))) {
         auto const have_robustness
@@ -302,8 +320,11 @@ GLXContext create_glx_context(Backend const& backend)
 
         for (auto& candidate : candidates) {
             auto const attribs = candidate.build();
-            ctx = glXCreateContextAttribsARB(
-                backend.data.display, backend.data.fbconfig, nullptr, true, attribs.data());
+            ctx = glXCreateContextAttribsARB(backend.data.display,
+                                             backend.data.fbconfig,
+                                             globalShareContext,
+                                             true,
+                                             attribs.data());
             if (ctx) {
                 qCDebug(KWIN_X11) << "Created GLX context with attributes:" << &candidate;
                 break;
@@ -313,7 +334,7 @@ GLXContext create_glx_context(Backend const& backend)
 
     if (!ctx) {
         ctx = glXCreateNewContext(
-            backend.data.display, backend.data.fbconfig, GLX_RGBA_TYPE, nullptr, direct);
+            backend.data.display, backend.data.fbconfig, GLX_RGBA_TYPE, globalShareContext, direct);
     }
 
     if (!ctx) {
@@ -326,12 +347,6 @@ GLXContext create_glx_context(Backend const& backend)
         glXDestroyContext(backend.data.display, ctx);
         return nullptr;
     }
-
-    auto qtContext = new QOpenGLContext;
-    QGLXNativeContext native(ctx, backend.data.display);
-    qtContext->setNativeHandle(QVariant::fromValue(native));
-    qtContext->create();
-    EffectQuickView::setShareContext(std::unique_ptr<QOpenGLContext>(qtContext));
 
     return ctx;
 }
@@ -447,7 +462,6 @@ void tear_down_glx_backend(Backend& backend)
     // do cleanup after initBuffer()
     cleanupGL();
     backend.doneCurrent();
-    EffectQuickView::setShareContext(nullptr);
 
     if (backend.data.context) {
         glXDestroyContext(backend.data.display, backend.data.context);

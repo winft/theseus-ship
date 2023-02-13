@@ -67,7 +67,4 @@ class QMatrix4x4;
 
 namespace KWin
 {
-
-class XRenderPicture;
-
 }

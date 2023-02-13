@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/types.h"
+#include "win/virtual_desktops.h"
 
 #include <NETWM>
 
@@ -43,6 +44,15 @@ bool on_desktop(Win* win, int d)
 }
 
 template<typename Win>
+bool on_desktop(Win const& win, virtual_desktop* vd)
+{
+    return (base::should_use_wayland_for_compositing(win->space.base.operation_mode)
+                ? win->topo.desktops.contains(vd)
+                : get_desktop(*win) == vd->x11DesktopNumber())
+        || on_all_desktops(win);
+}
+
+template<typename Win>
 bool on_current_desktop(Win* win)
 {
     return on_desktop(win, win->space.virtual_desktop_manager->current());
@@ -71,6 +81,12 @@ QStringList desktop_ids(Win* win)
                    std::back_inserter(ids),
                    [](auto const* vd) { return vd->id(); });
     return ids;
+}
+
+template<typename Win>
+QVector<virtual_desktop*> get_desktops(Win const& win)
+{
+    return win.topo.desktops;
 }
 
 }

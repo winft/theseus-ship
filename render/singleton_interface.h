@@ -32,7 +32,6 @@ struct KWIN_EXPORT singleton_interface {
     static EffectsHandler* effects;
     static std::function<bool()> supports_surfaceless_context;
     static std::function<gl::egl_data*()> get_egl_data;
-    static std::function<void(EffectWindow&, basic_thumbnail_item&)> register_thumbnail;
 };
 
 }

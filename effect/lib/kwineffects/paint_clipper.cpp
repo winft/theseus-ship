@@ -10,15 +10,7 @@
 
 #include <kwinconfig.h>
 
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-#include <kwinxrender/utils.h>
-#endif
-
 #include <QStack>
-
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-#include <xcb/xfixes.h>
-#endif
 
 namespace KWin
 {
@@ -91,25 +83,10 @@ PaintClipper::Iterator::Iterator()
         data->index = -1;
         next(); // move to the first one
     }
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    if (clip() && effects->compositingType() == XRenderCompositing) {
-        XFixesRegion region(paintArea());
-        xcb_xfixes_set_picture_clip_region(
-            effects->xcbConnection(), effects->xrenderBufferPicture(), region, 0, 0);
-    }
-#endif
 }
 
 PaintClipper::Iterator::~Iterator()
 {
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    if (clip() && effects->compositingType() == XRenderCompositing)
-        xcb_xfixes_set_picture_clip_region(effects->xcbConnection(),
-                                           effects->xrenderBufferPicture(),
-                                           XCB_XFIXES_REGION_NONE,
-                                           0,
-                                           0);
-#endif
     delete data;
 }
 
@@ -119,10 +96,6 @@ bool PaintClipper::Iterator::isDone()
         return data->index == 1; // run once
     if (effects->isOpenGLCompositing())
         return data->index >= data->region.rectCount(); // run once per each area
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    if (effects->compositingType() == XRenderCompositing)
-        return data->index == 1; // run once
-#endif
     abort();
 }
 
@@ -137,10 +110,6 @@ QRect PaintClipper::Iterator::boundingRect() const
         return infiniteRegion();
     if (effects->isOpenGLCompositing())
         return *(data->region.begin() + data->index);
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    if (effects->compositingType() == XRenderCompositing)
-        return data->region.boundingRect();
-#endif
     abort();
     return infiniteRegion();
 }

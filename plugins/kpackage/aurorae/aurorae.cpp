@@ -82,4 +82,4 @@ void AuroraePackage::pathChanged(KPackage::Package *package)
 K_PLUGIN_CLASS_WITH_JSON(AuroraePackage, "kwin-packagestructure-aurorae.json")
 
 #include "aurorae.moc"
-
+#include "moc_aurorae.cpp"

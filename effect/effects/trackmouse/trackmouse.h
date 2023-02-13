@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_TRACKMOUSE_H
 
 #include <kwineffects/effect.h>
+#include <memory>
 
 class QAction;
 
@@ -30,7 +31,6 @@ namespace KWin
 {
 
 class GLTexture;
-class XRenderPicture;
 
 class TrackMouseEffect : public Effect
 {
@@ -71,11 +71,7 @@ private:
     bool m_mousePolling;
     float m_angle;
     float m_angleBase;
-    GLTexture* m_texture[2];
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    QSize m_size[2];
-    XRenderPicture* m_picture[2];
-#endif
+    std::unique_ptr<GLTexture> m_texture[2];
     QAction* m_action;
     QImage m_image[2];
     Qt::KeyboardModifiers m_modifiers;

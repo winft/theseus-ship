@@ -39,7 +39,7 @@ KWIN_EXPORT Q_NAMESPACE
     enum CompositingType {
         NoCompositing = 0,
         OpenGLCompositing = 1,
-        XRenderCompositing = 2,
+        /*XRenderCompositing = 2,*/
         QPainterCompositing = 3,
     };
 
@@ -75,6 +75,7 @@ enum ElectricBorder {
     ELECTRIC_COUNT,
     ElectricNone
 };
+Q_ENUM_NS(ElectricBorder)
 
 // TODO: Hardcoding is bad, need to add some way of registering global actions to these.
 // When designing the new system we must keep in mind that we have conditional actions
@@ -119,6 +120,10 @@ enum PointerAxisDirection { PointerAxisUp, PointerAxisDown, PointerAxisLeft, Poi
  * @since 5.10
  */
 enum class SwipeDirection { Invalid, Down, Left, Up, Right };
+
+enum class PinchDirection { Expanding, Contracting };
+
+enum class DeviceType { Touchpad, Touchscreen };
 
 /**
  * Represents the state of the session running outside kwin

@@ -17,11 +17,6 @@
 
 #include <QPainter>
 
-#if defined(KWIN_HAVE_XRENDER_COMPOSITING)
-#include <kwinxrender/utils.h>
-#include <xcb/xcb_image.h>
-#endif
-
 Q_LOGGING_CATEGORY(KWIN_SCREENSHOT, "kwin_effect_screenshot", QtWarningMsg)
 
 namespace KWin
@@ -77,8 +72,7 @@ static void convertFromGLImage(QImage& img, int w, int h)
 
 bool ScreenShotEffect::supported()
 {
-    return effects->compositingType() == XRenderCompositing
-        || (effects->isOpenGLCompositing() && GLRenderTarget::supported());
+    return effects->isOpenGLCompositing() && GLRenderTarget::supported();
 }
 
 ScreenShotEffect::ScreenShotEffect()
@@ -232,7 +226,7 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
         geometry = window->clientGeometry();
     }
     if (screenshot->flags & ScreenShotNativeResolution) {
-        if (const EffectScreen* screen = effects->findScreen(window->screen())) {
+        if (const EffectScreen* screen = window->screen()) {
             devicePixelRatio = screen->devicePixelRatio();
         }
     }
@@ -243,7 +237,7 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
         offscreenTexture.reset(new GLTexture(GL_RGBA8, geometry.size() * devicePixelRatio));
         offscreenTexture->setFilter(GL_LINEAR);
         offscreenTexture->setWrapMode(GL_CLAMP_TO_EDGE);
-        target.reset(new GLRenderTarget(*offscreenTexture));
+        target.reset(new GLRenderTarget(offscreenTexture.data()));
         validTarget = target->valid();
     }
     if (validTarget) {
@@ -280,18 +274,6 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
             convertFromGLImage(img, img.width(), img.height());
             img = img.mirrored();
         }
-#if defined(KWIN_HAVE_XRENDER_COMPOSITING)
-        if (effects->compositingType() == XRenderCompositing) {
-            setXRenderOffscreen(true);
-            effects->drawWindow(
-                window, mask, QRegion(0, 0, geometry.width(), geometry.height()), d);
-            if (xRenderOffscreenTarget()) {
-                img = xrender_picture_to_image(xRenderOffscreenTarget(),
-                                               QRect(0, 0, geometry.width(), geometry.height()));
-            }
-            setXRenderOffscreen(false);
-        }
-#endif
 
         if (screenshot->flags & ScreenShotIncludeCursor) {
             grabPointerImage(img, geometry.x(), geometry.y());
@@ -382,6 +364,7 @@ void ScreenShotEffect::grabPointerImage(QImage& snapshot, int xOffset, int yOffs
     }
 
     QPainter painter(&snapshot);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
     painter.drawImage(effects->cursorPos() - cursor.hotSpot() - QPoint(xOffset, yOffset),
                       cursor.image());
 }

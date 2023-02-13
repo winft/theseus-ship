@@ -39,6 +39,8 @@ class KWIN_EXPORT effect : public KWin::AnimationEffect
     Q_ENUMS(MetaType)
     Q_ENUMS(EasingCurve)
     Q_ENUMS(SessionState)
+    Q_ENUMS(ElectricBorder)
+    Q_ENUMS(ShaderTrait)
     /**
      * The plugin ID of the effect
      */
@@ -48,6 +50,7 @@ class KWIN_EXPORT effect : public KWin::AnimationEffect
      */
     Q_PROPERTY(bool isActiveFullScreenEffect READ isActiveFullScreenEffect NOTIFY
                    isActiveFullScreenEffectChanged)
+
 public:
     // copied from kwineffects.h
     enum DataRole {
@@ -65,6 +68,14 @@ public:
         LanczosCacheRole
     };
     enum EasingCurve { GaussianCurve = 128 };
+    // copied from kwinglutils.h
+    enum class ShaderTrait {
+        MapTexture = (1 << 0),
+        UniformColor = (1 << 1),
+        Modulate = (1 << 2),
+        AdjustSaturation = (1 << 3),
+    };
+
     const QString& scriptFile() const
     {
         return m_scriptFile;
@@ -81,6 +92,7 @@ public:
     static effect* create(const QString& effectName,
                           const QString& pathToScript,
                           int chainPosition,
+                          const QString& exclusiveCategory,
                           EffectsHandler& effects,
                           Compositor& compositor)
     {
@@ -88,11 +100,13 @@ public:
             = [&compositor]() -> base::options& { return *compositor.platform.base.options; };
         auto get_screen_size = [&compositor] { return compositor.platform.base.topology.size; };
         auto effect = new scripting::effect(effects, get_options, get_screen_size);
+        effect->m_exclusiveCategory = exclusiveCategory;
         if (!effect->init(effectName, pathToScript, compositor.platform.base.config.main)) {
             delete effect;
             return nullptr;
         }
         effect->m_chainPosition = chainPosition;
+
         return effect;
     }
 
@@ -116,6 +130,7 @@ public:
         return effect::create(name,
                               scriptFile,
                               effect.value(QStringLiteral("X-KDE-Ordering")).toInt(),
+                              effect.value(QStringLiteral("X-KWin-Exclusive-Category")),
                               effects,
                               compositor);
     }
@@ -169,6 +184,7 @@ public:
                                        const QString& keySequence,
                                        const QJSValue& callback);
     Q_SCRIPTABLE bool registerScreenEdge(int edge, const QJSValue& callback);
+    Q_SCRIPTABLE bool registerRealtimeScreenEdge(int edge, const QJSValue& callback);
     Q_SCRIPTABLE bool unregisterScreenEdge(int edge);
     Q_SCRIPTABLE bool registerTouchScreenEdge(int edge, const QJSValue& callback);
     Q_SCRIPTABLE bool unregisterTouchScreenEdge(int edge);
@@ -182,7 +198,8 @@ public:
                                  int curve = QEasingCurve::Linear,
                                  int delay = 0,
                                  bool fullScreen = false,
-                                 bool keepAlive = true);
+                                 bool keepAlive = true,
+                                 uint shaderId = 0);
     Q_SCRIPTABLE QJSValue animate(const QJSValue& object);
 
     Q_SCRIPTABLE quint64 set(KWin::EffectWindow* window,
@@ -194,7 +211,8 @@ public:
                              int curve = QEasingCurve::Linear,
                              int delay = 0,
                              bool fullScreen = false,
-                             bool keepAlive = true);
+                             bool keepAlive = true,
+                             uint shaderId = 0);
     Q_SCRIPTABLE QJSValue set(const QJSValue& object);
 
     Q_SCRIPTABLE bool
@@ -202,6 +220,8 @@ public:
     Q_SCRIPTABLE bool retarget(const QList<quint64>& animationIds,
                                const QJSValue& newTarget,
                                int newRemainingTime = -1);
+    Q_SCRIPTABLE bool freezeInTime(quint64 animationId, qint64 frozenTime);
+    Q_SCRIPTABLE bool freezeInTime(const QList<quint64>& animationIds, qint64 frozenTime);
 
     Q_SCRIPTABLE bool redirect(quint64 animationId,
                                Direction direction,
@@ -215,6 +235,16 @@ public:
 
     Q_SCRIPTABLE bool cancel(quint64 animationId);
     Q_SCRIPTABLE bool cancel(const QList<quint64>& animationIds);
+
+    Q_SCRIPTABLE QList<int> touchEdgesForAction(const QString& action) const;
+
+    Q_SCRIPTABLE uint addFragmentShader(ShaderTrait traits, const QString& fragmentShaderFile = {});
+    Q_SCRIPTABLE void setUniform(uint shaderId, const QString& name, const QJSValue& value);
+
+    QHash<int, QJSValueList>& realtimeScreenEdgeCallbacks()
+    {
+        return m_realtimeScreenEdgeCallbacks;
+    }
 
     QString pluginId() const;
     bool isActiveFullScreenEffect() const;
@@ -246,16 +276,24 @@ private:
 
     QJSValue animate_helper(const QJSValue& object, AnimationType animationType);
 
+    GLShader* findShader(uint shaderId) const;
+
     QJSEngine* m_engine;
     QString m_effectName;
     QString m_scriptFile;
+    QString m_exclusiveCategory;
 
     std::unordered_map<int, QJSValueList> border_callbacks;
     std::unordered_map<int, QAction*> touch_border_callbacks;
 
+    QHash<int, QJSValueList> m_realtimeScreenEdgeCallbacks;
     KConfigLoader* m_config{nullptr};
     int m_chainPosition{0};
     Effect* m_activeFullScreenEffect = nullptr;
+
+    std::unordered_map<uint, std::unique_ptr<GLShader>> m_shaders;
+
+    uint m_nextShaderId{1u};
 
     std::function<base::options&()> get_options;
     std::function<QSize()> get_screen_size;

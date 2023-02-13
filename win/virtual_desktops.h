@@ -20,6 +20,7 @@
 class KLocalizedString;
 class NETRootInfo;
 class QAction;
+class Options;
 
 namespace Wrapland::Server
 {
@@ -156,6 +157,17 @@ Q_SIGNALS:
      * @param newDesktop The virtual desktop changed to
      */
     void currentChanged(uint previousDesktop, uint newDesktop);
+
+    /**
+     * Signal emmitted for realtime desktop switching animations.
+     * @param currentDesktop The current virtual desktop
+     * @param offset The current total change in desktop coordinate
+     * Offset x and y are negative if switching Left and Down.
+     * Example: x = 0.6 means 60% of the way to the desktop to the right.
+     */
+    void currentChanging(uint currentDesktop, QPointF offset);
+    void currentChangingCancelled();
+
     /**
      * Signal emitted whenever the desktop layout changes.
      * @param columns The new number of columns in the layout
@@ -446,6 +458,31 @@ public:
      */
     void slotDown();
 
+    /* For gestured desktopSwitching
+     * Called when gesture ended, the thing that actually switches the desktop.
+     */
+    QAction* swipe_gesture_released_y() const
+    {
+        return m_swipeGestureReleasedY.get();
+    }
+    QAction* swipe_gesture_released_x() const
+    {
+        return m_swipeGestureReleasedX.get();
+    }
+    QPointF m_current_desktop_offset() const
+    {
+        return m_currentDesktopOffset;
+    }
+    void set_desktop_offset_x(qreal offsetX)
+    {
+        m_currentDesktopOffset.setX(offsetX);
+    }
+    void set_desktop_offset_y(qreal offsetY)
+    {
+        m_currentDesktopOffset.setY(offsetY);
+    }
+    void connect_gestures();
+
 private:
     /// Returns new desktops.
     QList<virtual_desktop*> update_count(uint count);
@@ -468,6 +505,10 @@ private:
     NETRootInfo* m_rootInfo{nullptr};
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement = nullptr;
     KSharedConfig::Ptr m_config;
+
+    QScopedPointer<QAction> m_swipeGestureReleasedY;
+    QScopedPointer<QAction> m_swipeGestureReleasedX;
+    QPointF m_currentDesktopOffset = QPointF(0, 0);
 
     virtual_desktops_singleton singleton;
 };

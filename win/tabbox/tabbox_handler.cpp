@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/x11/xcb/helpers.h"
 #include "kwinglobals.h"
-#include "render/thumbnail_item.h"
 #include "scripting/platform.h"
 #include "tabbox_logging.h"
 #include "tabbox_switcher_item.h"

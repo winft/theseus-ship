@@ -467,3 +467,5 @@ DecorationShadow *PreviewItem::shadow() const
 
 }
 }
+
+#include "moc_previewitem.cpp"

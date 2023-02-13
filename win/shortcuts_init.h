@@ -119,40 +119,122 @@ void shortcuts_init_virtual_desktops(Space& space)
 
     shortcuts_init_switch_to_virtual_desktop(space);
 
-    auto nextAction = add_virtual_desktop_action(*manager,
-                                                 input,
-                                                 QStringLiteral("Switch to Next Desktop"),
-                                                 i18n("Switch to Next Desktop"),
-                                                 [manager] { manager->slotNext(); });
-    input::platform_register_touchpad_swipe_shortcut(input, SwipeDirection::Right, nextAction);
+    Q_UNUSED(add_virtual_desktop_action(*manager,
+                                        input,
+                                        QStringLiteral("Switch to Next Desktop"),
+                                        i18n("Switch to Next Desktop"),
+                                        [manager] { manager->slotNext(); }))
+    Q_UNUSED(add_virtual_desktop_action(*manager,
+                                        input,
+                                        QStringLiteral("Switch to Previous Desktop"),
+                                        i18n("Switch to Previous Desktop"),
+                                        [manager] { manager->slotPrevious(); }))
 
-    auto previousAction = add_virtual_desktop_action(*manager,
-                                                     input,
-                                                     QStringLiteral("Switch to Previous Desktop"),
-                                                     i18n("Switch to Previous Desktop"),
-                                                     [manager] { manager->slotPrevious(); });
-    input::platform_register_touchpad_swipe_shortcut(input, SwipeDirection::Left, previousAction);
+    // shortcuts
+    QAction* slotRightAction
+        = add_virtual_desktop_action(*manager,
+                                     input,
+                                     QStringLiteral("Switch One Desktop to the Right"),
+                                     i18n("Switch One Desktop to the Right"),
+                                     [manager] { manager->slotRight(); });
+    KGlobalAccel::setGlobalShortcut(slotRightAction,
+                                    QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Right));
+    QAction* slotLeftAction
+        = add_virtual_desktop_action(*manager,
+                                     input,
+                                     QStringLiteral("Switch One Desktop to the Left"),
+                                     i18n("Switch One Desktop to the Left"),
+                                     [manager] { manager->slotLeft(); });
+    KGlobalAccel::setGlobalShortcut(slotLeftAction,
+                                    QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Left));
+    QAction* slotUpAction = add_virtual_desktop_action(*manager,
+                                                       input,
+                                                       QStringLiteral("Switch One Desktop Up"),
+                                                       i18n("Switch One Desktop Up"),
+                                                       [manager] { manager->slotUp(); });
+    KGlobalAccel::setGlobalShortcut(slotUpAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Up));
+    QAction* slotDownAction = add_virtual_desktop_action(*manager,
+                                                         input,
+                                                         QStringLiteral("Switch One Desktop Down"),
+                                                         i18n("Switch One Desktop Down"),
+                                                         [manager] { manager->slotDown(); });
+    KGlobalAccel::setGlobalShortcut(slotDownAction,
+                                    QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Down));
 
-    add_virtual_desktop_action(*manager,
-                               input,
-                               QStringLiteral("Switch One Desktop to the Right"),
-                               i18n("Switch One Desktop to the Right"),
-                               [manager] { manager->slotRight(); });
-    add_virtual_desktop_action(*manager,
-                               input,
-                               QStringLiteral("Switch One Desktop to the Left"),
-                               i18n("Switch One Desktop to the Left"),
-                               [manager] { manager->slotLeft(); });
-    add_virtual_desktop_action(*manager,
-                               input,
-                               QStringLiteral("Switch One Desktop Up"),
-                               i18n("Switch One Desktop Up"),
-                               [manager] { manager->slotUp(); });
-    add_virtual_desktop_action(*manager,
-                               input,
-                               QStringLiteral("Switch One Desktop Down"),
-                               i18n("Switch One Desktop Down"),
-                               [manager] { manager->slotDown(); });
+    // Gestures
+    // These connections decide which desktop to end on after gesture ends
+    manager->connect_gestures();
+
+    auto swipeGestureReleasedX = manager->swipe_gesture_released_x();
+    auto swipeGestureReleasedY = manager->swipe_gesture_released_y();
+
+    const auto left = [manager](qreal cb) {
+        if (manager->grid().width() > 1) {
+            manager->set_desktop_offset_x(cb);
+            Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                     manager->m_current_desktop_offset());
+        }
+    };
+    const auto right = [manager](qreal cb) {
+        if (manager->grid().width() > 1) {
+            manager->set_desktop_offset_x(-cb);
+            Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                     manager->m_current_desktop_offset());
+        }
+    };
+    input::platform_register_realtime_touchpad_swipe_shortcut(
+        input, SwipeDirection::Left, 3, swipeGestureReleasedX, [manager](qreal cb) {
+            if (manager->grid().width() > 1) {
+                manager->set_desktop_offset_x(cb);
+                Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                         manager->m_current_desktop_offset());
+            }
+        });
+    input::platform_register_realtime_touchpad_swipe_shortcut(
+        input, SwipeDirection::Right, 3, swipeGestureReleasedX, [manager](qreal cb) {
+            if (manager->grid().width() > 1) {
+                manager->set_desktop_offset_x(-cb);
+                Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                         manager->m_current_desktop_offset());
+            }
+        });
+    input::platform_register_realtime_touchpad_swipe_shortcut(
+        input, SwipeDirection::Left, 4, swipeGestureReleasedX, [manager](qreal cb) {
+            if (manager->grid().width() > 1) {
+                manager->set_desktop_offset_x(cb);
+                Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                         manager->m_current_desktop_offset());
+            }
+        });
+    input::platform_register_realtime_touchpad_swipe_shortcut(
+        input, SwipeDirection::Right, 4, swipeGestureReleasedX, [manager](qreal cb) {
+            if (manager->grid().width() > 1) {
+                manager->set_desktop_offset_x(-cb);
+                Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                         manager->m_current_desktop_offset());
+            }
+        });
+    input::platform_register_realtime_touchpad_swipe_shortcut(
+        input, SwipeDirection::Down, 3, swipeGestureReleasedY, [manager](qreal cb) {
+            if (manager->grid().height() > 1) {
+                manager->set_desktop_offset_y(-cb);
+                Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                         manager->m_current_desktop_offset());
+            }
+        });
+    input::platform_register_realtime_touchpad_swipe_shortcut(
+        input, SwipeDirection::Up, 3, swipeGestureReleasedY, [manager](qreal cb) {
+            if (manager->grid().height() > 1) {
+                manager->set_desktop_offset_y(cb);
+                Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                         manager->m_current_desktop_offset());
+            }
+        });
+
+    input::platform_register_touchscreen_swipe_shortcut(
+        input, SwipeDirection::Left, 3, swipeGestureReleasedX, left);
+    input::platform_register_touchscreen_swipe_shortcut(
+        input, SwipeDirection::Right, 3, swipeGestureReleasedX, right);
 
     // axis events
     input::platform_register_axis_shortcut(

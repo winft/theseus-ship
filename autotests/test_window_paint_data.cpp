@@ -141,9 +141,9 @@ public:
     {
         return QRect();
     }
-    int screen() const override
+    EffectScreen* screen() const override
     {
-        return 0;
+        return nullptr;
     }
     QPoint pos() const override
     {

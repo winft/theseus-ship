@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "kwineffects/effect_screen.h"
 #include <kwinconfig.h>
 #include <kwineffects/export.h>
 #include <kwineffects/types.h>
@@ -54,7 +55,7 @@ class KWINEFFECTS_EXPORT EffectWindow : public QObject
     Q_PROPERTY(int height READ height)
     Q_PROPERTY(qreal opacity READ opacity)
     Q_PROPERTY(QPoint pos READ pos)
-    Q_PROPERTY(int screen READ screen)
+    Q_PROPERTY(KWin::EffectScreen* screen READ screen)
     Q_PROPERTY(QSize size READ size)
     Q_PROPERTY(int width READ width)
     Q_PROPERTY(int x READ x)
@@ -453,7 +454,7 @@ public:
      * @since 4.9
      */
     virtual QRect expandedGeometry() const = 0;
-    virtual int screen() const = 0;
+    virtual EffectScreen* screen() const = 0;
     virtual QPoint pos() const = 0;
     virtual QSize size() const = 0;
     virtual QRect rect() const = 0;
@@ -515,12 +516,11 @@ public:
     virtual bool isMenu() const = 0;
     /**
      * Returns whether the window is a "normal" window, i.e. an application or any other window
-     * for which none of the specialized window types fit.
-     * See _NET_WM_WINDOW_TYPE_NORMAL at
+     * for which none of the specialized window types fit. Normal as in 'NET::Normal or NET::Unknown
+     * non-transient'. See _NET_WM_WINDOW_TYPE_NORMAL at
      * https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
      */
-    virtual bool
-    isNormalWindow() const = 0; // normal as in 'NET::Normal or NET::Unknown non-transient'
+    virtual bool isNormalWindow() const = 0;
     /**
      * Returns whether the window is any of special windows types (desktop, dock, splash, ...),
      * i.e. window types that usually don't have a window frame and the user does not use window

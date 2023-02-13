@@ -40,6 +40,9 @@ public:
      */
     virtual QRect geometry() const = 0;
 
+    Q_INVOKABLE QPointF mapToGlobal(const QPointF& pos) const;
+    Q_INVOKABLE QPointF mapFromGlobal(const QPointF& pos) const;
+
 Q_SIGNALS:
     /**
      * Notifies that the display will be dimmed in @p time ms.

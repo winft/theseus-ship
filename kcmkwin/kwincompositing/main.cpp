@@ -47,7 +47,6 @@ class KWinCompositingKCM : public KCModule
 public:
     enum CompositingTypeIndex {
         OPENGL_INDEX = 0,
-        XRENDER_INDEX
     };
 
     explicit KWinCompositingKCM(QWidget *parent = nullptr, const QVariantList &args = QVariantList());
@@ -142,7 +141,6 @@ void KWinCompositingKCM::init()
 
     // compositing type
     m_form.backend->addItem(i18n("OpenGL"), CompositingTypeIndex::OPENGL_INDEX);
-    m_form.backend->addItem(i18n("XRender"), CompositingTypeIndex::XRENDER_INDEX);
 
     connect(m_form.backend, currentIndexChangedSignal, this, &KWinCompositingKCM::onBackendChanged);
 
@@ -159,15 +157,12 @@ void KWinCompositingKCM::onBackendChanged()
 void KWinCompositingKCM::updateUnmanagedItemStatus()
 {
     int backend = KWinCompositingSetting::EnumBackend::OpenGL;
-    const int currentType = m_form.backend->currentData().toInt();
-    switch (currentType) {
-    case CompositingTypeIndex::OPENGL_INDEX:
+    // const int currentType = m_form.backend->currentData().toInt();
+    // switch (currentType) {
+    // case CompositingTypeIndex::OPENGL_INDEX:
         // default already set
-        break;
-    case CompositingTypeIndex::XRENDER_INDEX:
-        backend = KWinCompositingSetting::EnumBackend::XRender;
-        break;
-    }
+        // break;
+    // }
     const auto animationDuration = s_animationMultipliers[m_form.animationDurationFactor->value()];
 
     const bool inPlasma = isRunningPlasma();
@@ -203,11 +198,9 @@ void KWinCompositingKCM::load()
 
     m_settings->findItem("Backend")->readConfig(m_settings->config());
 
-    if (m_settings->backend() == KWinCompositingSetting::EnumBackend::OpenGL) {
+    // if (m_settings->backend() == KWinCompositingSetting::EnumBackend::OpenGL) {
         m_form.backend->setCurrentIndex(CompositingTypeIndex::OPENGL_INDEX);
-    } else {
-        m_form.backend->setCurrentIndex(CompositingTypeIndex::XRENDER_INDEX);
-    }
+    // }
     m_form.backend->setDisabled(m_settings->isBackendImmutable());
 
     onBackendChanged();
@@ -228,15 +221,12 @@ void KWinCompositingKCM::defaults()
 void KWinCompositingKCM::save()
 {
     int backend = KWinCompositingSetting::EnumBackend::OpenGL;
-    const int currentType = m_form.backend->currentData().toInt();
-    switch (currentType) {
-    case CompositingTypeIndex::OPENGL_INDEX:
+    // const int currentType = m_form.backend->currentData().toInt();
+    // switch (currentType) {
+    // case CompositingTypeIndex::OPENGL_INDEX:
         // default already set
-        break;
-    case CompositingTypeIndex::XRENDER_INDEX:
-        backend = KWinCompositingSetting::EnumBackend::XRender;
-        break;
-    }
+        // break;
+    // }
     m_settings->setBackend(backend);
 
     if (!isRunningPlasma()) {

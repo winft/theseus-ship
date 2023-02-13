@@ -364,7 +364,6 @@ private:
         if (has_global_shortcuts) {
             m_filters.emplace_back(new screen_edge_filter(*this));
         }
-        m_filters.emplace_back(new effects_filter(*this));
 
 #if KWIN_BUILD_TABBOX
         m_filters.emplace_back(new tabbox_filter(*this));
@@ -373,7 +372,7 @@ private:
         if (has_global_shortcuts) {
             m_filters.emplace_back(new global_shortcut_filter(*this));
         }
-
+        m_filters.emplace_back(new effects_filter(*this));
         m_filters.emplace_back(new move_resize_filter(*this));
         m_filters.emplace_back(new decoration_event_filter(*this));
         m_filters.emplace_back(new internal_window_filter(*this));

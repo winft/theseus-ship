@@ -18,8 +18,9 @@ property_window::property_window(window_qobject& qtwin)
 
 void property_window::setup_connections()
 {
-    QObject::connect(
-        &qtwin, &win::window_qobject::opacityChanged, this, &property_window::opacityChanged);
+    QObject::connect(&qtwin, &win::window_qobject::opacityChanged, this, [this](auto old_opacity) {
+        Q_EMIT opacityChanged(this, old_opacity);
+    });
 
     QObject::connect(
         &qtwin, &win::window_qobject::activeChanged, this, &property_window::activeChanged);

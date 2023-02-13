@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVBoxLayout>
 
 #include "kwintouchscreenedgeconfigform.h"
+#include "kwintouchscreenedgeeffectsettings.h"
 #include "kwintouchscreendata.h"
 #include "kwintouchscreensettings.h"
 #include "kwintouchscreenscriptsettings.h"
@@ -68,6 +69,9 @@ void KWinScreenEdgesConfig::load()
     for (KWinTouchScreenScriptSettings *setting : qAsConst(m_scriptSettings)) {
         setting->load();
     }
+    for (KWinTouchScreenEdgeEffectSettings* setting : qAsConst(m_effectSettings)) {
+        setting->load();
+    }
 
     monitorLoadSettings();
     monitorLoadDefaultSettings();
@@ -79,6 +83,9 @@ void KWinScreenEdgesConfig::save()
     monitorSaveSettings();
     m_data->settings()->save();
     for (KWinTouchScreenScriptSettings *setting : qAsConst(m_scriptSettings)) {
+        setting->save();
+    }
+    for (KWinTouchScreenEdgeEffectSettings *setting : qAsConst(m_effectSettings)) {
         setting->save();
     }
 
@@ -93,9 +100,11 @@ void KWinScreenEdgesConfig::save()
     OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
                                              QStringLiteral("/Effects"),
                                              QDBusConnection::sessionBus());
-    interface.reconfigureEffect(QStringLiteral("presentwindows"));
-    interface.reconfigureEffect(QStringLiteral("desktopgrid"));
+    interface.reconfigureEffect(QStringLiteral("windowview"));
     interface.reconfigureEffect(QStringLiteral("cube"));
+    for (auto const& effectId : qAsConst(m_effects)) {
+        interface.reconfigureEffect(effectId);
+    }
 
     KCModule::save();
 }
@@ -130,13 +139,12 @@ void KWinScreenEdgesConfig::monitorInit()
     m_form->monitorAddItem(i18n("Show KRunner"));
     m_form->monitorAddItem(i18n("Application Launcher"));
 
-    // TODO: Find a better way to get the display name of the present windows, the
-    // desktop grid, and the overview effect. Maybe install metadata.json files?
+    // TODO: Find a better way to get the display name of the present windows,
+    // Maybe install metadata.json files?
     const QString presentWindowsName = i18n("Present Windows");
     m_form->monitorAddItem(i18n("%1 - All Desktops", presentWindowsName));
     m_form->monitorAddItem(i18n("%1 - Current Desktop", presentWindowsName));
     m_form->monitorAddItem(i18n("%1 - Current Application", presentWindowsName));
-    m_form->monitorAddItem(i18n("Desktop Grid"));
     const QString cubeName = "Cube";
     m_form->monitorAddItem(i18n("%1 - Cube", cubeName));
     m_form->monitorAddItem(i18n("%1 - Cylinder", cubeName));
@@ -145,12 +153,27 @@ void KWinScreenEdgesConfig::monitorInit()
     m_form->monitorAddItem(i18n("Toggle window switching"));
     m_form->monitorAddItem(i18n("Toggle alternative window switching"));
 
+    KConfigGroup config(m_config, "Plugins");
+    const auto effects = KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"), QStringLiteral("kwin/builtin-effects/")) << KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"), QStringLiteral("kwin/effects/"));
+
+    for (KPluginMetaData const& effect : effects) {
+        if (!effect.value(QStringLiteral("X-KWin-Border-Activate"), false)) {
+            continue;
+        }
+
+        if (!config.readEntry(effect.pluginId() + QStringLiteral("Enabled"), effect.isEnabledByDefault())) {
+            continue;
+        }
+        m_effects << effect.pluginId();
+        m_form->monitorAddItem(effect.name());
+        m_effectSettings[effect.pluginId()] = new KWinTouchScreenEdgeEffectSettings(effect.pluginId(), this);
+    }
+
     const QString scriptFolder = QStringLiteral("kwin/scripts/");
     const auto scripts = KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"), scriptFolder);
 
-    KConfigGroup config(m_config, "Plugins");
     for (const KPluginMetaData &script: scripts) {
-        if (script.value(QStringLiteral("X-KWin-Border-Activate"), false) != QLatin1String("true")) {
+        if (script.value(QStringLiteral("X-KWin-Border-Activate")) != true) {
             continue;
         }
 
@@ -182,9 +205,6 @@ void KWinScreenEdgesConfig::monitorLoadSettings()
     // PresentWindows BorderActivateClass
     m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateClass(), PresentWindowsClass);
 
-    // Desktop Grid BorderActivate
-    m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateDesktopGrid(), DesktopGrid);
-
     // Desktop Cube BorderActivate
     m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateCube(), Cube);
     // Desktop Cube BorderActivateCylinder
@@ -197,10 +217,17 @@ void KWinScreenEdgesConfig::monitorLoadSettings()
     // Alternative TabBox
     m_form->monitorChangeEdge(m_data->settings()->touchBorderAlternativeActivate(), TabBoxAlternative);
 
+    // Dinamically loaded effects
+    int lastIndex = EffectCount;
+    for (int i = 0; i < m_effects.size(); i++) {
+        m_form->monitorChangeEdge(m_effectSettings[m_effects[i]]->touchBorderActivate(), lastIndex);
+        ++lastIndex;
+    }
+
     // Scripts
     for (int i=0; i < m_scripts.size(); i++) {
-        int index = EffectCount + i;
-        m_form->monitorChangeEdge(m_scriptSettings[m_scripts[i]]->touchBorderActivate(), index);
+        m_form->monitorChangeEdge(m_scriptSettings[m_scripts[i]]->touchBorderActivate(), lastIndex);
+        ++lastIndex;
     }
 }
 
@@ -217,9 +244,6 @@ void KWinScreenEdgesConfig::monitorLoadDefaultSettings()
     m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivatePresentWindowsValue(), PresentWindowsCurrent);
     // PresentWindows BorderActivateClass
     m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateClassValue(), PresentWindowsClass);
-
-    // Desktop Grid BorderActivate
-    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateDesktopGridValue(), DesktopGrid);
 
     // Desktop Cube BorderActivate
     m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateCubeValue(), Cube);
@@ -249,9 +273,6 @@ void KWinScreenEdgesConfig::monitorSaveSettings()
     m_data->settings()->setTouchBorderActivatePresentWindows(m_form->monitorCheckEffectHasEdge(PresentWindowsCurrent));
     m_data->settings()->setTouchBorderActivateClass(m_form->monitorCheckEffectHasEdge(PresentWindowsClass));
 
-    // Desktop Grid
-    m_data->settings()->setTouchBorderActivateDesktopGrid(m_form->monitorCheckEffectHasEdge(DesktopGrid));
-
     // Desktop Cube
     m_data->settings()->setTouchBorderActivateCube(m_form->monitorCheckEffectHasEdge(Cube));
     m_data->settings()->setTouchBorderActivateCylinder(m_form->monitorCheckEffectHasEdge(Cylinder));
@@ -261,10 +282,17 @@ void KWinScreenEdgesConfig::monitorSaveSettings()
     m_data->settings()->setTouchBorderActivateTabBox(m_form->monitorCheckEffectHasEdge(TabBox));
     m_data->settings()->setTouchBorderAlternativeActivate(m_form->monitorCheckEffectHasEdge(TabBoxAlternative));
 
+    // Dinamically loaded effects
+    int lastIndex = EffectCount;
+    for (int i = 0; i < m_effects.size(); i++) {
+        m_effectSettings[m_effects[i]]->setTouchBorderActivate(m_form->monitorCheckEffectHasEdge(lastIndex));
+        ++lastIndex;
+    }
+
     // Scripts
     for (int i = 0; i < m_scripts.size(); i++) {
-        int index = EffectCount + i;
-        m_scriptSettings[m_scripts[i]]->setTouchBorderActivate(m_form->monitorCheckEffectHasEdge(index));
+        m_scriptSettings[m_scripts[i]]->setTouchBorderActivate(m_form->monitorCheckEffectHasEdge(lastIndex));
+        ++lastIndex;
     }
 }
 
@@ -274,13 +302,9 @@ void KWinScreenEdgesConfig::monitorShowEvent()
     KConfigGroup config(m_config, "Plugins");
 
     // Present Windows
-    bool enabled = config.readEntry("presentwindowsEnabled", true);
+    bool enabled = config.readEntry("windowviewEnabled", true);
     m_form->monitorItemSetEnabled(PresentWindowsCurrent, enabled);
     m_form->monitorItemSetEnabled(PresentWindowsAll, enabled);
-
-    // Desktop Grid
-    enabled = config.readEntry("desktopgridEnabled", true);
-    m_form->monitorItemSetEnabled(DesktopGrid, enabled);
 
     // Desktop Cube
     enabled = config.readEntry("cube", true);

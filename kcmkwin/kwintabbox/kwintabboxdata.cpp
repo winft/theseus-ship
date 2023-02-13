@@ -22,14 +22,10 @@ KWinTabboxData::KWinTabboxData(QObject *parent, const QVariantList &args)
     : KCModuleData(parent, args)
     , m_tabBoxConfig(new TabBoxSettings(QStringLiteral("TabBox"), this))
     , m_tabBoxAlternativeConfig(new TabBoxSettings(QStringLiteral("TabBoxAlternative"), this))
-    , m_coverSwitchConfig(new SwitchEffectSettings(QStringLiteral("Effect-CoverSwitch"), this))
-    , m_flipSwitchConfig(new SwitchEffectSettings(QStringLiteral("Effect-FlipSwitch"), this))
     , m_pluginsConfig(new PluginsSettings(this))
 {
     registerSkeleton(m_tabBoxConfig);
     registerSkeleton(m_tabBoxAlternativeConfig);
-    registerSkeleton(m_coverSwitchConfig);
-    registerSkeleton(m_flipSwitchConfig);
 }
 
 TabBoxSettings *KWinTabboxData::tabBoxConfig() const
@@ -40,16 +36,6 @@ TabBoxSettings *KWinTabboxData::tabBoxConfig() const
 TabBoxSettings *KWinTabboxData::tabBoxAlternativeConfig() const
 {
     return m_tabBoxAlternativeConfig;
-}
-
-SwitchEffectSettings *KWinTabboxData::coverSwitchConfig() const
-{
-    return m_coverSwitchConfig;
-}
-
-SwitchEffectSettings *KWinTabboxData::flipSwitchConfig() const
-{
-    return m_flipSwitchConfig;
 }
 
 PluginsSettings *KWinTabboxData::pluginsConfig() const

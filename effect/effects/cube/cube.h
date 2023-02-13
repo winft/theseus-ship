@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "cube_inside.h"
 #include "cube_proxy.h"
+#include "kwineffects/effect_screen.h"
 #include <QFont>
 #include <QMatrix4x4>
 #include <QObject>
@@ -191,7 +192,7 @@ private:
     float cubeOpacity;
     bool opacityDesktopOnly;
     bool displayDesktopName;
-    EffectFrame* desktopNameFrame;
+    std::unique_ptr<EffectFrame> desktopNameFrame;
     QFont desktopNameFont;
     bool reflection;
     bool rotating;
@@ -220,7 +221,7 @@ private:
 
     bool reflectionPainting;
     std::chrono::milliseconds rotationDuration;
-    int activeScreen;
+    EffectScreen* activeScreen;
     bool bottomCap;
     bool closeOnMouseRelease;
     float zoom;
@@ -232,10 +233,10 @@ private:
     bool shortcutsRegistered;
     CubeMode mode;
     bool useShaders;
-    GLShader* cylinderShader;
-    GLShader* sphereShader;
-    GLShader* m_reflectionShader;
-    GLShader* m_capShader;
+    std::unique_ptr<GLShader> cylinderShader;
+    std::unique_ptr<GLShader> sphereShader;
+    std::unique_ptr<GLShader> m_reflectionShader;
+    std::unique_ptr<GLShader> m_capShader;
     float capDeformationFactor;
     bool useZOrdering;
     float zOrderingFactor;

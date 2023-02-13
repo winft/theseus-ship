@@ -22,13 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_MAGNIFIER_H
 
 #include <kwineffects/effect.h>
+#include <memory>
 
 namespace KWin
 {
 
 class GLRenderTarget;
 class GLTexture;
-class XRenderPicture;
 
 class MagnifierEffect : public Effect
 {
@@ -46,14 +46,8 @@ public:
     static bool supported();
 
     // for properties
-    QSize magnifierSize() const
-    {
-        return magnifier_size;
-    }
-    qreal targetZoom() const
-    {
-        return target_zoom;
-    }
+    QSize magnifierSize() const;
+    qreal targetZoom() const;
 private Q_SLOTS:
     void zoomIn();
     void zoomOut();
@@ -65,22 +59,16 @@ private Q_SLOTS:
                           Qt::KeyboardModifiers modifiers,
                           Qt::KeyboardModifiers oldmodifiers);
     void slotWindowDamaged();
-    void destroyPixmap();
 
 private:
     QRect magnifierArea(QPoint pos = cursorPos()) const;
-    double zoom;
-    double target_zoom;
-    bool polling; // Mouse polling
+    double m_zoom;
+    double m_targetZoom;
+    bool m_polling; // Mouse polling
     std::chrono::milliseconds m_lastPresentTime;
-    QSize magnifier_size;
-    GLTexture* m_texture;
-    GLRenderTarget* m_fbo;
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    xcb_pixmap_t m_pixmap;
-    QSize m_pixmapSize;
-    QScopedPointer<XRenderPicture> m_picture;
-#endif
+    QSize m_magnifierSize;
+    std::unique_ptr<GLTexture> m_texture;
+    std::unique_ptr<GLRenderTarget> m_fbo;
 };
 
 } // namespace

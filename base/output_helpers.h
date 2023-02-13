@@ -116,6 +116,17 @@ Output* get_output(std::vector<Output*> const& outputs, int index)
 }
 
 template<typename Output>
+Output* find_output(std::vector<Output*> const& outputs, QString const& name)
+{
+    auto it = std::find_if(
+        outputs.begin(), outputs.end(), [&name](auto output) { return output->name() == name; });
+    if (it == outputs.end()) {
+        return nullptr;
+    }
+    return *it;
+}
+
+template<typename Output>
 size_t get_output_index(std::vector<Output*> const& outputs, Output const& output)
 {
     auto it = std::find(outputs.begin(), outputs.end(), &output);

@@ -325,8 +325,11 @@ void PointerInputTest::testWarpingDuringFilter()
     QCOMPARE(window->geo.pos(), QPoint(0, 0));
     QVERIFY(window->geo.frame.contains(Test::cursor()->pos()));
 
-    // is PresentWindows effect for top left screen edge loaded
-    QVERIFY(Test::app()->base->render->compositor->effects->isEffectLoaded("presentwindows"));
+    // is window view effect for top left screen edge loaded
+    // TODO(romangg): Use OpenGl in this test and remove the expected fail once we can run tests
+    // with OpenGl on CI. See https://gitlab.freedesktop.org/wlroots/wlroots/-/issues/2871.
+    QEXPECT_FAIL("", "Not loaded because this test does not run with OpenGl at the moment", Abort);
+    QVERIFY(Test::app()->base->render->compositor->effects->isEffectLoaded("windowview"));
     QVERIFY(movedSpy.isEmpty());
     quint32 timestamp = 0;
     Test::pointer_motion_absolute(QPoint(0, 0), timestamp++);
@@ -1651,9 +1654,9 @@ void PointerInputTest::testConfineToScreenGeometry()
     // this test verifies that pointer belongs to at least one screen
     // after moving it to off-screen area
 
-    // unload the Present Windows effect because it pushes back
+    // unload the window view effect because it pushes back
     // pointer if it's at (0, 0)
-    Test::app()->base->render->compositor->effects->unloadEffect(QStringLiteral("presentwindows"));
+    Test::app()->base->render->compositor->effects->unloadEffect(QStringLiteral("windowview"));
 
     // setup screen layout
     auto const geometries = std::vector<QRect>{

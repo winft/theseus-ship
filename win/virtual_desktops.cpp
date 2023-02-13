@@ -22,6 +22,7 @@ namespace KWin::win
 {
 
 static bool s_loadingDesktopSettings = false;
+static const double GESTURE_SWITCH_THRESHOLD = .25;
 
 static QString generateDesktopId()
 {
@@ -235,11 +236,16 @@ virtual_desktop_manager_qobject::virtual_desktop_manager_qobject() = default;
 virtual_desktop_manager::virtual_desktop_manager()
     : qobject{std::make_unique<virtual_desktop_manager_qobject>()}
     , m_grid{*this}
+    , m_swipeGestureReleasedY(new QAction(qobject.get()))
+    , m_swipeGestureReleasedX(new QAction(qobject.get()))
     , singleton{qobject.get(),
                 [this] { return desktops(); },
                 [this](auto pos, auto const& name) { return createVirtualDesktop(pos, name); },
-                [this](auto id) { return removeVirtualDesktop(id); }}
+                [this](auto id) { return removeVirtualDesktop(id); },
+                [this] { return currentDesktop(); }}
+
 {
+    singleton_interface::virtual_desktops = &singleton;
 }
 
 virtual_desktop_manager::~virtual_desktop_manager()
@@ -571,9 +577,9 @@ void virtual_desktop_manager::removeVirtualDesktop(virtual_desktop* desktop)
         Q_EMIT qobject->currentChanged(oldCurrent, newCurrent);
     }
 
+    updateRootInfo();
     save();
 
-    updateRootInfo();
     Q_EMIT qobject->desktopRemoved(desktop);
     Q_EMIT qobject->countChanged(m_desktops.count() + 1, m_desktops.count());
 
@@ -592,7 +598,7 @@ virtual_desktop* virtual_desktop_manager::currentDesktop() const
 
 bool virtual_desktop_manager::setCurrent(uint newDesktop)
 {
-    if (newDesktop < 1 || newDesktop > count() || newDesktop == current()) {
+    if (newDesktop < 1 || newDesktop > count()) {
         return false;
     }
 
@@ -756,6 +762,12 @@ void virtual_desktop_manager::updateLayout()
         columns = count() / m_rows;
     }
 
+    // Patch to make desktop grid size equal 1 when 1 desktop for desktop switching animations
+    if (m_desktops.size() == 1) {
+        m_rows = 1;
+        columns = 1;
+    }
+
     setNETDesktopLayout(
         orientation,
         columns,
@@ -892,6 +904,48 @@ void virtual_desktop_manager::setNETDesktopLayout(Qt::Orientation orientation,
     // TODO: why is there no call to m_rootInfo->setDesktopLayout?
     Q_EMIT qobject->layoutChanged(width, height);
     Q_EMIT qobject->rowsChanged(height);
+}
+
+void virtual_desktop_manager::connect_gestures()
+{
+    KGlobalAccel::connect(
+        m_swipeGestureReleasedX.get(), &QAction::triggered, qobject.get(), [this]() {
+            // Note that if desktop wrapping is disabled and there's no desktop to left or right,
+            // toLeft() and toRight() will return the current desktop.
+            virtual_desktop* target = m_current;
+            if (m_currentDesktopOffset.x() <= -GESTURE_SWITCH_THRESHOLD) {
+                target = toLeft(m_current, isNavigationWrappingAround());
+            } else if (m_currentDesktopOffset.x() >= GESTURE_SWITCH_THRESHOLD) {
+                target = toRight(m_current, isNavigationWrappingAround());
+            }
+
+            // If the current desktop has not changed, consider that the gesture has been canceled.
+            if (m_current != target) {
+                setCurrent(target);
+            } else {
+                Q_EMIT qobject->currentChangingCancelled();
+            }
+            m_currentDesktopOffset = QPointF(0, 0);
+        });
+    KGlobalAccel::connect(
+        m_swipeGestureReleasedY.get(), &QAction::triggered, qobject.get(), [this]() {
+            // Note that if desktop wrapping is disabled and there's no desktop above or below,
+            // above() and below() will return the current desktop.
+            virtual_desktop* target = m_current;
+            if (m_currentDesktopOffset.y() <= -GESTURE_SWITCH_THRESHOLD) {
+                target = above(m_current, isNavigationWrappingAround());
+            } else if (m_currentDesktopOffset.y() >= GESTURE_SWITCH_THRESHOLD) {
+                target = below(m_current, isNavigationWrappingAround());
+            }
+
+            // If the current desktop has not changed, consider that the gesture has been canceled.
+            if (m_current != target) {
+                setCurrent(target);
+            } else {
+                Q_EMIT qobject->currentChangingCancelled();
+            }
+            m_currentDesktopOffset = QPointF(0, 0);
+        });
 }
 
 void virtual_desktop_manager::slotSwitchTo(QAction& action)

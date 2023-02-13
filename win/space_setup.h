@@ -127,6 +127,18 @@ void init_space(Space& space)
                          Q_EMIT space.qobject->currentDesktopChanged(prev);
                      });
 
+    QObject::connect(vds->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::currentChanging,
+                     space.qobject.get(),
+                     [&](auto currentDesktop, auto offset) {
+                         close_active_popup(space);
+                         Q_EMIT space.qobject->currentDesktopChanging(currentDesktop, offset);
+                     });
+    QObject::connect(vds->qobject.get(),
+                     &win::virtual_desktop_manager_qobject::currentChangingCancelled,
+                     space.qobject.get(),
+                     [&]() { Q_EMIT space.qobject->currentDesktopChangingCancelled(); });
+
     vds->setNavigationWrappingAround(space.base.options->qobject->isRollOverDesktops());
     QObject::connect(space.base.options->qobject.get(),
                      &base::options_qobject::rollOverDesktopsChanged,

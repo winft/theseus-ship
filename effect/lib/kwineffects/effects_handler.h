@@ -51,9 +51,9 @@ class KWINEFFECTS_EXPORT EffectsHandler : public QObject
     Q_PROPERTY(QString currentActivity READ currentActivity NOTIFY currentActivityChanged)
     Q_PROPERTY(KWin::EffectWindow* activeWindow READ activeWindow WRITE activateWindow NOTIFY
                    windowActivated)
-    Q_PROPERTY(QSize desktopGridSize READ desktopGridSize)
-    Q_PROPERTY(int desktopGridWidth READ desktopGridWidth)
-    Q_PROPERTY(int desktopGridHeight READ desktopGridHeight)
+    Q_PROPERTY(QSize desktopGridSize READ desktopGridSize NOTIFY desktopGridSizeChanged)
+    Q_PROPERTY(int desktopGridWidth READ desktopGridWidth NOTIFY desktopGridWidthChanged)
+    Q_PROPERTY(int desktopGridHeight READ desktopGridHeight NOTIFY desktopGridHeightChanged)
     Q_PROPERTY(int workspaceWidth READ workspaceWidth)
     Q_PROPERTY(int workspaceHeight READ workspaceHeight)
     /**
@@ -62,8 +62,7 @@ class KWINEFFECTS_EXPORT EffectsHandler : public QObject
     Q_PROPERTY(
         int desktops READ numberOfDesktops WRITE setNumberOfDesktops NOTIFY numberDesktopsChanged)
     Q_PROPERTY(bool optionRollOverDesktops READ optionRollOverDesktops)
-    Q_PROPERTY(int activeScreen READ activeScreen)
-    Q_PROPERTY(int numScreens READ numScreens NOTIFY numberScreensChanged)
+    Q_PROPERTY(KWin::EffectScreen* activeScreen READ activeScreen)
     /**
      * Factor by which animation speed in the effect should be modified (multiplied).
      * If configurable in the effect itself, the option should have also 'default'
@@ -94,6 +93,9 @@ class KWINEFFECTS_EXPORT EffectsHandler : public QObject
     friend class Effect;
 
 public:
+    using TouchBorderCallback
+        = std::function<void(ElectricBorder border, const QSizeF&, EffectScreen* screen)>;
+
     explicit EffectsHandler(CompositingType type);
     ~EffectsHandler() override;
     // for use by effects
@@ -181,7 +183,38 @@ public:
      * @param action The action which gets triggered when the gesture triggers
      * @since 5.10
      */
-    virtual void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action) = 0;
+    virtual void
+    registerTouchpadSwipeShortcut(SwipeDirection direction, uint fingerCount, QAction* action)
+        = 0;
+
+    virtual void registerRealtimeTouchpadSwipeShortcut(SwipeDirection dir,
+                                                       uint fingerCount,
+                                                       QAction* onUp,
+                                                       std::function<void(qreal)> progressCallback)
+        = 0;
+
+    virtual void registerRealtimeTouchpadPinchShortcut(PinchDirection dir,
+                                                       uint fingerCount,
+                                                       QAction* onUp,
+                                                       std::function<void(qreal)> progressCallback)
+        = 0;
+
+    virtual void
+    registerTouchpadPinchShortcut(PinchDirection direction, uint fingerCount, QAction* action)
+        = 0;
+
+    /**
+     * @brief Registers a global touchscreen swipe gesture shortcut with the provided @p action.
+     *
+     * @param direction The direction for the swipe
+     * @param action The action which gets triggered when the gesture triggers
+     * @since 5.25
+     */
+    virtual void registerTouchscreenSwipeShortcut(SwipeDirection direction,
+                                                  uint fingerCount,
+                                                  QAction* action,
+                                                  std::function<void(qreal)> progressCallback)
+        = 0;
 
     /**
      * Retrieve the proxy class for an effect if it has one. Will return NULL if
@@ -210,6 +243,28 @@ public:
      * @since 5.10
      */
     virtual void registerTouchBorder(ElectricBorder border, QAction* action) = 0;
+
+    /**
+     * Registers the given @p action for the given @p border to be activated through
+     * a touch swipe gesture.
+     *
+     * If the @p border gets triggered through a touch swipe gesture the QAction::triggered
+     * signal gets invoked.
+     *
+     * progressCallback will be dinamically called each time the touch position is updated
+     * to show the effect "partially" activated
+     *
+     * To unregister the touch screen action either delete the @p action or
+     * invoke unregisterTouchBorder.
+     *
+     * @see unregisterTouchBorder
+     * @since 5.25
+     */
+    virtual void registerRealtimeTouchBorder(ElectricBorder border,
+                                             QAction* action,
+                                             TouchBorderCallback progressCallback)
+        = 0;
+
     /**
      * Unregisters the given @p action for the given touch @p border.
      *
@@ -243,7 +298,7 @@ public:
                                                const QVector<uint>& desktopIds)
         = 0;
 
-    Q_SCRIPTABLE virtual void windowToScreen(KWin::EffectWindow* w, int screen) = 0;
+    Q_SCRIPTABLE virtual void windowToScreen(KWin::EffectWindow* w, EffectScreen* screen) = 0;
     virtual void setShowingDesktop(bool showing) = 0;
 
     // Activities
@@ -324,10 +379,8 @@ public:
     Q_SCRIPTABLE virtual QString desktopName(int desktop) const = 0;
     virtual bool optionRollOverDesktops() const = 0;
 
-    virtual int activeScreen() const = 0;                               // Xinerama
-    virtual int numScreens() const = 0;                                 // Xinerama
-    Q_SCRIPTABLE virtual int screenNumber(const QPoint& pos) const = 0; // Xinerama
-    virtual QRect clientArea(clientAreaOption, int screen, int desktop) const = 0;
+    virtual EffectScreen* activeScreen() const = 0; // Xinerama
+    virtual QRect clientArea(clientAreaOption, EffectScreen const* screen, int desktop) const = 0;
     virtual QRect clientArea(clientAreaOption, const EffectWindow* c) const = 0;
     virtual QRect clientArea(clientAreaOption, const QPoint& p, int desktop) const = 0;
 
@@ -415,7 +468,6 @@ public:
      * @return bool @c true in case of OpenGL based Compositor, @c false otherwise
      */
     bool isOpenGLCompositing() const;
-    virtual unsigned long xrenderBufferPicture() const = 0;
     /**
      * @brief Provides access to the QPainter which is rendering to the back buffer.
      *
@@ -480,10 +532,12 @@ public:
      * EffectFrame.
      * @since 4.6
      */
-    virtual EffectFrame* effectFrame(EffectFrameStyle style,
-                                     bool staticSize = true,
-                                     const QPoint& position = QPoint(-1, -1),
-                                     Qt::Alignment alignment = Qt::AlignCenter) const = 0;
+    virtual std::unique_ptr<EffectFrame> effectFrame(EffectFrameStyle style,
+                                                     bool staticSize = true,
+                                                     const QPoint& position = QPoint(-1, -1),
+                                                     Qt::Alignment alignment
+                                                     = Qt::AlignCenter) const
+        = 0;
 
     /**
      * Allows an effect to trigger a reload of itself.
@@ -717,6 +771,17 @@ Q_SIGNALS:
      * @since 4.9
      */
     void desktopChanged(int oldDesktop, int newDesktop, KWin::EffectWindow* with);
+
+    /**
+     * Signal emmitted while desktop is changing for animation.
+     * @param currentDesktop The current desktop untiotherwise.
+     * @param offset The current desktop offset.
+     * offset.x() = .6 means 60% of the way to the desktop to the right.
+     * Positive Values means Up and Right.
+     */
+    void desktopChanging(uint currentDesktop, QPointF offset, KWin::EffectWindow* with);
+    void desktopChangingCancelled();
+
     /**
      * @since 4.7
      * @deprecated
@@ -736,17 +801,30 @@ Q_SIGNALS:
      */
     void desktopPresenceChanged(KWin::EffectWindow* window, int oldDesktop, int newDesktop);
     /**
+     * Emitted when the virtual desktop grid layout changes
+     * @param size new size
+     * @since 5.25
+     */
+    void desktopGridSizeChanged(const QSize& size);
+    /**
+     * Emitted when the virtual desktop grid layout changes
+     * @param width new width
+     * @since 5.25
+     */
+    void desktopGridWidthChanged(int width);
+    /**
+     * Emitted when the virtual desktop grid layout changes
+     * @param height new height
+     * @since 5.25
+     */
+    void desktopGridHeightChanged(int height);
+    /**
      * Signal emitted when the number of currently existing desktops is changed.
      * @param old The previous number of desktops in used.
      * @see EffectsHandler::numberOfDesktops.
      * @since 4.7
      */
     void numberDesktopsChanged(uint old);
-    /**
-     * Signal emitted when the number of screens changed.
-     * @since 5.0
-     */
-    void numberScreensChanged();
     /**
      * Signal emitted when the desktop showing ("dashboard") state changed
      * The desktop is risen to the keepAbove layer, you may want to elevate
@@ -1171,6 +1249,8 @@ Q_SIGNALS:
      * This signal is emitted when the visible geometry of a window changed.
      */
     void windowExpandedGeometryChanged(KWin::EffectWindow* window);
+
+    void frameRendered();
 
 protected:
     virtual EffectWindow* find_window_by_wid(WId id) const = 0;

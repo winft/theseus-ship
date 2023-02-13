@@ -8,6 +8,10 @@ install(PROGRAMS kwin-5.21-desktop-grid-click-behavior.py
         DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})
 install(PROGRAMS kwin-5.23-placement.pl
         DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})
+install(PROGRAMS kwin-5.23-remove-flip-switch.py
+        DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})
+install(PROGRAMS kwin-5.23-remove-cover-switch.py
+        DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})
 
 install(FILES kwinrules.upd
         DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})
@@ -16,4 +20,6 @@ install(PROGRAMS kwinrules-5.19-placement.pl
 install(PROGRAMS kwinrules-5.23-placement.pl
         DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})
 install(PROGRAMS kwinrules-5.23-virtual-desktop-ids.py
+        DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})
+install(PROGRAMS kwin-5.25-effect-pluginid-config-group.py
         DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})

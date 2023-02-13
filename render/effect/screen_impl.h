@@ -24,6 +24,8 @@ public:
     {
         using qout = typename decltype(output->qobject)::element_type;
 
+        m_platformOutput->m_effectScreen = this;
+
         QObject::connect(output->qobject.get(), &qout::wake_up, this, &EffectScreen::wakeUp);
         QObject::connect(
             output->qobject.get(), &qout::about_to_turn_off, this, &EffectScreen::aboutToTurnOff);
@@ -33,6 +35,18 @@ public:
                          &EffectScreen::devicePixelRatioChanged);
         QObject::connect(
             output->qobject.get(), &qout::geometry_changed, this, &EffectScreen::geometryChanged);
+    }
+
+    ~effect_screen_impl()
+    {
+        if (m_platformOutput) {
+            m_platformOutput->m_effectScreen = nullptr;
+        }
+    }
+
+    static effect_screen_impl* get(Output const* output)
+    {
+        return output->m_effectScreen;
     }
 
     Output* platformOutput() const

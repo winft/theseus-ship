@@ -18,22 +18,61 @@ global_shortcut::global_shortcut(Shortcut&& sc, QAction* action)
     : m_shortcut(sc)
     , m_action(action)
 {
-    static const QMap<SwipeDirection, swipe_gesture::Direction> dirs = {
+    static const QMap<SwipeDirection, swipe_gesture::Direction> swipeDirs = {
         {SwipeDirection::Up, swipe_gesture::Direction::Up},
         {SwipeDirection::Down, swipe_gesture::Direction::Down},
         {SwipeDirection::Left, swipe_gesture::Direction::Left},
         {SwipeDirection::Right, swipe_gesture::Direction::Right},
     };
-    if (auto swipeGesture = std::get_if<FourFingerSwipeShortcut>(&sc)) {
-        m_gesture.reset(new swipe_gesture);
-        m_gesture->setDirection(dirs[swipeGesture->swipeDirection]);
-        m_gesture->setMaximumFingerCount(4);
-        m_gesture->setMinimumFingerCount(4);
-        QObject::connect(m_gesture.get(),
+    static const QMap<PinchDirection, pinch_gesture::Direction> pinchDirs
+        = {{PinchDirection::Expanding, pinch_gesture::Direction::Expanding},
+           {PinchDirection::Contracting, pinch_gesture::Direction::Contracting}};
+
+    if (auto swipeGesture = std::get_if<RealtimeFeedbackSwipeShortcut>(&sc)) {
+        m_swipeGesture.reset(new swipe_gesture());
+        m_swipeGesture->setDirection(swipeDirs[swipeGesture->direction]);
+        m_swipeGesture->setMinimumDelta(QSizeF(200, 200));
+        m_swipeGesture->setMaximumFingerCount(swipeGesture->fingerCount);
+        m_swipeGesture->setMinimumFingerCount(swipeGesture->fingerCount);
+        QObject::connect(m_swipeGesture.get(),
                          &swipe_gesture::triggered,
                          m_action,
                          &QAction::trigger,
                          Qt::QueuedConnection);
+        QObject::connect(m_swipeGesture.get(),
+                         &swipe_gesture::cancelled,
+                         m_action,
+                         &QAction::trigger,
+                         Qt::QueuedConnection);
+        QObject::connect(m_swipeGesture.get(),
+                         &swipe_gesture::progress,
+                         [cb = swipeGesture->progressCallback](qreal v) {
+                             if (cb) {
+                                 cb(v);
+                             }
+                         });
+    } else if (auto pinchGesture = std::get_if<RealtimeFeedbackPinchShortcut>(&sc)) {
+        m_pinchGesture.reset(new pinch_gesture());
+        m_pinchGesture->setDirection(pinchDirs[pinchGesture->direction]);
+        m_pinchGesture->setMaximumFingerCount(pinchGesture->fingerCount);
+        m_pinchGesture->setMinimumFingerCount(pinchGesture->fingerCount);
+        QObject::connect(m_pinchGesture.get(),
+                         &pinch_gesture::triggered,
+                         m_action,
+                         &QAction::trigger,
+                         Qt::QueuedConnection);
+        QObject::connect(m_pinchGesture.get(),
+                         &pinch_gesture::cancelled,
+                         m_action,
+                         &QAction::trigger,
+                         Qt::QueuedConnection);
+        QObject::connect(m_pinchGesture.get(),
+                         &pinch_gesture::progress,
+                         [cb = pinchGesture->scaleCallback](qreal v) {
+                             if (cb) {
+                                 cb(v);
+                             }
+                         });
     }
 }
 
@@ -58,7 +97,12 @@ Shortcut const& global_shortcut::shortcut() const
 
 swipe_gesture* global_shortcut::swipeGesture() const
 {
-    return m_gesture.get();
+    return m_swipeGesture.get();
+}
+
+pinch_gesture* global_shortcut::pinchGesture() const
+{
+    return m_pinchGesture.get();
 }
 
 }

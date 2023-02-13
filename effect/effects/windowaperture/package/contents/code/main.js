@@ -23,10 +23,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 var badBadWindowsEffect = {
     duration: animationTime(250),
+    showingDesktop: false,
     loadConfig: function () {
         badBadWindowsEffect.duration = animationTime(250);
     },
-    offToCorners: function (showing) {
+    setShowingDesktop: function (showing) {
+        badBadWindowsEffect.showingDesktop = showing;
+    },
+    offToCorners: function (showing, frozenTime) {
+        if (typeof frozenTime === "undefined") {
+            frozenTime = -1;
+        }
         var stackingOrder = effects.stackingOrder;
         var screenGeo = effects.virtualScreenGeometry;
         var xOffset = screenGeo.width / 16;
@@ -39,23 +46,19 @@ var badBadWindowsEffect = {
 
                 // ignore windows above the desktop
                 // (when not showing, pretty much everything would be)
-                if (w.desktopWindow)
-                    break;
+                if (w.desktopWindow) {
+                    if (frozenTime <= 0)
+                        break
+                    else
+                        continue;
+                }
 
                 // ignore invisible windows and such that do not have to be restored
                 if (!w.visible)
                     continue;
 
-                // we just fade out docks - moving panels into edges looks dull
+                // Don't touch docks
                 if (w.dock) {
-                    w.offToCornerId = set({
-                        window: w,
-                        duration: badBadWindowsEffect.duration,
-                        animations: [{
-                            type: Effect.Opacity,
-                            to: 0.0
-                        }]
-                    });
                     continue;
                 }
 
@@ -126,18 +129,7 @@ var badBadWindowsEffect = {
             // keep windows above the desktop visually
             effects.setElevatedWindow(w, showing);
 
-            if (!showing && w.dock) {
-                cancel(w.offToCornerId);
-                delete w.offToCornerId;
-                delete w.apertureCorner; // should not exist, but better safe than sorry.
-                animate({
-                    window: w,
-                    duration: badBadWindowsEffect.duration,
-                    animations: [{
-                        type: Effect.Opacity,
-                        from: 0.0
-                    }]
-                });
+            if (w.dock) {
                 continue;
             }
 
@@ -159,44 +151,85 @@ var badBadWindowsEffect = {
             }
 
             if (showing) {
-                w.offToCornerId = set({
-                    window: w,
-                    duration: badBadWindowsEffect.duration,
-                    curve: QEasingCurve.InOutCubic,
-                    animations: [{
-                        type: Effect.Position,
-                        targetAnchor: anchor,
-                        to: { value1: tx, value2: ty }
-                    },{
-                        type: Effect.Opacity,
-                        to: 0.0
-                    }]
-                });
-            } else {
-                cancel(w.offToCornerId);
-                delete w.offToCornerId;
-                delete w.apertureCorner;
-                if (w.visible) { // could meanwhile have been hidden
-                    animate({
+                if (!w.offToCornerId || !freezeInTime(w.offToCornerId, frozenTime)) {
+
+                    w.offToCornerId = set({
                         window: w,
                         duration: badBadWindowsEffect.duration,
                         curve: QEasingCurve.InOutCubic,
                         animations: [{
                             type: Effect.Position,
-                            sourceAnchor: anchor,
-                            from: { value1: tx, value2: ty }
+                            targetAnchor: anchor,
+                            to: { value1: tx, value2: ty },
+                            frozenTime: frozenTime
                         },{
                             type: Effect.Opacity,
-                            from: 0.0
+                            to: 0.0,
+                            frozenTime: frozenTime
                         }]
                     });
+                }
+            } else {
+                if (!w.offToCornerId || !redirect(w.offToCornerId, Effect.Backward) || !freezeInTime(w.offToCornerId, frozenTime)) {
+                    cancel(w.offToCornerId);
+                    delete w.offToCornerId;
+                    delete w.apertureCorner;
+                    if (w.visible) { // could meanwhile have been hidden
+                        animate({
+                            window: w,
+                            duration: badBadWindowsEffect.duration,
+                            curve: QEasingCurve.InOutCubic,
+                            animations: [{
+                                type: Effect.Position,
+                                sourceAnchor: anchor,
+                                gesture: true,
+                                from: { value1: tx, value2: ty }
+                            },{
+                                type: Effect.Opacity,
+                                from: 0.0
+                            }]
+                        });
+                    }
                 }
             }
         }
     },
+    realtimeScreenEdgeCallback: function (border, deltaProgress, effectScreen) {
+        if (!deltaProgress || !effectScreen) {
+            badBadWindowsEffect.offToCorners(badBadWindowsEffect.showingDesktop, -1);
+            return;
+        }
+        let time = 0;
+
+        switch (border) {
+        case KWin.ElectricTop:
+        case KWin.ElectricBottom:
+            time = Math.min(1, (Math.abs(deltaProgress.height) / (effectScreen.geometry.height / 2))) * badBadWindowsEffect.duration;
+            break;
+        case KWin.ElectricLeft:
+        case KWin.ElectricRight:
+            time = Math.min(1, (Math.abs(deltaProgress.width) / (effectScreen.geometry.width / 2))) * badBadWindowsEffect.duration;
+            break;
+        default:
+            return;
+        }
+        if (badBadWindowsEffect.showingDesktop) {
+            time = badBadWindowsEffect.duration - time;
+        }
+
+        badBadWindowsEffect.offToCorners(true, time)
+    },
     init: function () {
         badBadWindowsEffect.loadConfig();
+        effects.showingDesktopChanged.connect(badBadWindowsEffect.setShowingDesktop);
         effects.showingDesktopChanged.connect(badBadWindowsEffect.offToCorners);
+
+        let edges = effect.touchEdgesForAction("show-desktop");
+
+        for (let i in edges) {
+            let edge = parseInt(edges[i]);
+            registerRealtimeScreenEdge(edge, badBadWindowsEffect.realtimeScreenEdgeCallback);
+        }
     }
 };
 

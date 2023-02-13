@@ -106,6 +106,16 @@ public:
         return false;
     }
 
+    virtual bool touch_cancel()
+    {
+        return false;
+    }
+
+    virtual bool touch_frame()
+    {
+        return false;
+    }
+
     virtual bool pinch_begin(pinch_begin_event const& /*event*/)
     {
         return false;

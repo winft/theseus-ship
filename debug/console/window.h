@@ -238,6 +238,18 @@ public:
         }
     }
 
+    QVector<win::virtual_desktop*> desktops() const override
+    {
+        return win::get_desktops(*ref_win);
+    }
+
+    void setDesktops(QVector<win::virtual_desktop*> desktops) override
+    {
+        if (ref_win->control) {
+            win::set_desktops(ref_win, desktops);
+        }
+    }
+
     QVector<uint> x11DesktopIds() const override
     {
         return win::x11_desktop_ids(ref_win);
