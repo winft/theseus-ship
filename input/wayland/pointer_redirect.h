@@ -529,6 +529,27 @@ public:
             std::bind(&event_filter<Redirect>::pinch_end, std::placeholders::_1, event));
     }
 
+    void process_hold_begin(hold_begin_event const& event)
+    {
+        device_redirect_update(this);
+
+        process_spies(redirect->m_spies,
+                      std::bind(&event_spy<Redirect>::hold_begin, std::placeholders::_1, event));
+        process_filters(
+            redirect->m_filters,
+            std::bind(&event_filter<Redirect>::hold_begin, std::placeholders::_1, event));
+    }
+
+    void process_hold_end(hold_end_event const& event)
+    {
+        device_redirect_update(this);
+
+        process_spies(redirect->m_spies,
+                      std::bind(&event_spy<Redirect>::hold_end, std::placeholders::_1, event));
+        process_filters(redirect->m_filters,
+                        std::bind(&event_filter<Redirect>::hold_end, std::placeholders::_1, event));
+    }
+
     void process_frame()
     {
         redirect->platform.base.server->seat()->pointers().frame();

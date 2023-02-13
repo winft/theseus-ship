@@ -217,6 +217,29 @@ public:
 
         return true;
     }
+
+    bool hold_begin(hold_begin_event const& event) override
+    {
+        auto seat = this->redirect.platform.base.server->seat();
+        seat->setTimestamp(event.base.time_msec);
+        seat->pointers().start_hold_gesture(event.fingers);
+
+        return true;
+    }
+
+    bool hold_end(hold_end_event const& event) override
+    {
+        auto seat = this->redirect.platform.base.server->seat();
+        seat->setTimestamp(event.base.time_msec);
+
+        if (event.cancelled) {
+            seat->pointers().cancel_hold_gesture();
+        } else {
+            seat->pointers().end_hold_gesture();
+        }
+
+        return true;
+    }
 };
 
 }
