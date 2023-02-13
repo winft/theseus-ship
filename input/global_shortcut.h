@@ -44,15 +44,6 @@ struct PointerAxisShortcut {
     }
 };
 
-struct SwipeShortcut {
-    DeviceType device;
-    SwipeDirection direction;
-    uint fingerCount;
-    bool operator==(const SwipeShortcut& rhs) const
-    {
-        return direction == rhs.direction && fingerCount == rhs.fingerCount && device == rhs.device;
-    }
-};
 struct RealtimeFeedbackSwipeShortcut {
     DeviceType device;
     SwipeDirection direction;
@@ -63,14 +54,6 @@ struct RealtimeFeedbackSwipeShortcut {
     bool operator==(const T& rhs) const
     {
         return direction == rhs.direction && fingerCount == rhs.fingerCount && device == rhs.device;
-    }
-};
-struct PinchShortcut {
-    PinchDirection direction;
-    uint fingerCount;
-    bool operator==(const PinchShortcut& rhs) const
-    {
-        return direction == rhs.direction && fingerCount == rhs.fingerCount;
     }
 };
 
@@ -89,9 +72,7 @@ struct RealtimeFeedbackPinchShortcut {
 using Shortcut = std::variant<KeyboardShortcut,
                               PointerButtonShortcut,
                               PointerAxisShortcut,
-                              SwipeShortcut,
                               RealtimeFeedbackSwipeShortcut,
-                              PinchShortcut,
                               RealtimeFeedbackPinchShortcut>;
 
 class global_shortcut
