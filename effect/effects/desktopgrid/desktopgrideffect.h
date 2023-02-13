@@ -76,9 +76,6 @@ public Q_SLOTS:
     void deactivate(int timeout);
     void toggle();
 
-protected:
-    QVariantMap initialProperties(EffectScreen* screen) override;
-
 Q_SIGNALS:
     void gridRowsChanged();
     void gridColumnsChanged();

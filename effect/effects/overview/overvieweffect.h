@@ -66,9 +66,6 @@ public Q_SLOTS:
     void quickDeactivate();
     void toggle();
 
-protected:
-    QVariantMap initialProperties(EffectScreen* screen) override;
-
 private:
     void realDeactivate();
 
