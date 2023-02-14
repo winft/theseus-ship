@@ -8,7 +8,6 @@
 
 #include "effects_handler.h"
 #include "logging_p.h"
-#include "shared_qml_engine.h"
 
 #include <kwingl/utils.h>
 
@@ -68,11 +67,9 @@ class Q_DECL_HIDDEN EffectQuickScene::Private
 {
 public:
     Private()
-        : qmlEngine(SharedQmlEngine::engine())
     {
     }
 
-    SharedQmlEngine::Ptr qmlEngine;
     QScopedPointer<QQmlComponent> qmlComponent;
     QScopedPointer<QQuickItem> quickItem;
 };
@@ -591,7 +588,7 @@ void EffectQuickScene::setSource(const QUrl& source)
 void EffectQuickScene::setSource(const QUrl& source, const QVariantMap& initialProperties)
 {
     if (!d->qmlComponent) {
-        d->qmlComponent.reset(new QQmlComponent(d->qmlEngine.data()));
+        d->qmlComponent.reset(new QQmlComponent(effects->qmlEngine()));
     }
 
     d->qmlComponent->loadUrl(source);
@@ -622,11 +619,6 @@ void EffectQuickScene::setSource(const QUrl& source, const QVariantMap& initialP
     updateSize();
     connect(contentItem(), &QQuickItem::widthChanged, item, updateSize);
     connect(contentItem(), &QQuickItem::heightChanged, item, updateSize);
-}
-
-QQmlContext* EffectQuickScene::rootContext() const
-{
-    return d->qmlEngine->rootContext();
 }
 
 QQuickItem* EffectQuickScene::rootItem() const

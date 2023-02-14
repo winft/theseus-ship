@@ -824,6 +824,11 @@ public:
         return compositor.scene->m_renderTargetScale;
     }
 
+    QQmlEngine* qmlEngine() const override
+    {
+        return compositor.space->scripting ? compositor.space->scripting->qml_engine : nullptr;
+    }
+
     void renderEffectQuickView(EffectQuickView* effectQuickView) const override
     {
         if (!effectQuickView->isVisible()) {

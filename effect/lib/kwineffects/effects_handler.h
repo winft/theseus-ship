@@ -14,6 +14,7 @@
 
 class QAction;
 class QKeyEvent;
+class QQmlEngine;
 
 namespace Wrapland::Server
 {
@@ -743,6 +744,8 @@ public:
      * target local coordinate system.
      */
     QRegion mapToRenderTarget(QRegion const& region) const;
+
+    virtual QQmlEngine* qmlEngine() const = 0;
 
 Q_SIGNALS:
     /**

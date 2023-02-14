@@ -155,7 +155,6 @@ public:
     EffectQuickScene(QObject* parent, ExportMode exportMode);
     ~EffectQuickScene();
 
-    QQmlContext* rootContext() const;
     /** top level item in the given source*/
     QQuickItem* rootItem() const;
 

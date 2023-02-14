@@ -7,7 +7,6 @@
 
 #include "kwineffects/effects_handler.h"
 #include "logging_p.h"
-#include "shared_qml_engine.h"
 
 #include <QQmlEngine>
 #include <QQmlIncubator>
@@ -66,7 +65,6 @@ public:
     }
     bool isItemOnScreen(QQuickItem* item, EffectScreen* screen) const;
 
-    SharedQmlEngine::Ptr qmlEngine;
     std::unique_ptr<QQmlComponent> qmlComponent;
     QUrl source;
     std::map<EffectScreen*, std::unique_ptr<QQmlIncubator>> incubators;
@@ -464,12 +462,8 @@ void QuickSceneEffect::startInternal()
         return;
     }
 
-    if (!d->qmlEngine) {
-        d->qmlEngine = SharedQmlEngine::engine();
-    }
-
     if (!d->qmlComponent) {
-        d->qmlComponent.reset(new QQmlComponent(d->qmlEngine.get()));
+        d->qmlComponent.reset(new QQmlComponent(effects->qmlEngine()));
         d->qmlComponent->loadUrl(d->source);
         if (d->qmlComponent->isError()) {
             qWarning().nospace() << "Failed to load " << d->source << ": "
