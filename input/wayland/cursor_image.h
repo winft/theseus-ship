@@ -179,7 +179,7 @@ public:
                 return;
             }
             auto cursorSurface = c->surface();
-            if (cursorSurface.isNull()) {
+            if (!cursorSurface) {
                 return;
             }
             cursorSurface->frameRendered(m_surfaceRenderedTimer.elapsed());
@@ -204,7 +204,7 @@ public:
             return;
         }
         auto cursorSurface = c->surface();
-        if (cursorSurface.isNull()) {
+        if (!cursorSurface) {
             return;
         }
         cursorSurface->frameRendered(m_surfaceRenderedTimer.elapsed());
@@ -380,13 +380,13 @@ private:
             return;
         }
         auto cursorSurface = c->surface();
-        if (cursorSurface.isNull()) {
+        if (!cursorSurface) {
             if (needsEmit) {
                 Q_EMIT qobject->changed();
             }
             return;
         }
-        auto buffer = cursorSurface.data()->state().buffer;
+        auto buffer = cursorSurface->state().buffer;
         if (!buffer) {
             if (needsEmit) {
                 Q_EMIT qobject->changed();
@@ -483,13 +483,13 @@ private:
             return;
         }
         auto cursorSurface = c->surface();
-        if (cursorSurface.isNull()) {
+        if (!cursorSurface) {
             if (needsEmit) {
                 Q_EMIT qobject->changed();
             }
             return;
         }
-        auto buffer = cursorSurface.data()->state().buffer;
+        auto buffer = cursorSurface->state().buffer;
         if (!buffer) {
             if (needsEmit) {
                 Q_EMIT qobject->changed();
