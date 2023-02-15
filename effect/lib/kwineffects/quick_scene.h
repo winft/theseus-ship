@@ -3,7 +3,6 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #pragma once
 
 #include "kwineffects/effect_quick_view.h"
@@ -48,7 +47,7 @@ public Q_SLOTS:
 private:
     QuickSceneEffect* m_effect;
     EffectScreen* m_screen;
-    QScopedPointer<QQuickItem> m_rootItem;
+    std::unique_ptr<QQuickItem> m_rootItem;
     bool m_dirty = false;
 };
 
@@ -86,10 +85,9 @@ public:
     QuickSceneView* activeView() const;
 
     /**
-     * Returns all scene views managed by this effect. If the effect is not running,
-     * this function returns an empty QHash.
+     * Returns the scene view on the specified screen
      */
-    QHash<EffectScreen*, QuickSceneView*> views() const;
+    QuickSceneView* viewForScreen(EffectScreen* screen) const;
 
     /**
      * Returns the view at the specified @a pos in the global screen coordinates.
@@ -164,7 +162,7 @@ private:
     void startInternal();
     void stopInternal();
 
-    QScopedPointer<QuickSceneEffectPrivate> d;
+    std::unique_ptr<QuickSceneEffectPrivate> d;
     friend class QuickSceneEffectPrivate;
 };
 

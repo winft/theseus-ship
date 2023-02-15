@@ -418,9 +418,11 @@ void WindowViewEffect::cancelPartialActivate()
 
 void WindowViewEffect::deactivate(int timeout)
 {
-    const auto screenViews = views();
-    for (QuickSceneView* view : screenViews) {
-        QMetaObject::invokeMethod(view->rootItem(), "stop");
+    auto const screens = effects->screens();
+    for (auto const screen : screens) {
+        if (auto view = viewForScreen(screen)) {
+            QMetaObject::invokeMethod(view->rootItem(), "stop");
+        }
     }
     m_shutdownTimer->start(timeout);
 
