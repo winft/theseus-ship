@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2013 Martin Gräßlin <mgraesslin@kde.org>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "screen_edge_item.h"
+#include "screen_edge_handler.h"
 
 #include "config-kwin.h"
 #include "win/singleton_interface.h"
@@ -13,21 +13,21 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::scripting
 {
 
-screen_edge_item::screen_edge_item(QObject* parent)
+screen_edge_handler::screen_edge_handler(QObject* parent)
     : QObject(parent)
     , m_enabled(true)
     , m_edge(NoEdge)
     , m_action(new QAction(this))
 {
-    connect(m_action, &QAction::triggered, this, &screen_edge_item::activated);
+    connect(m_action, &QAction::triggered, this, &screen_edge_handler::activated);
 }
 
-screen_edge_item::~screen_edge_item()
+screen_edge_handler::~screen_edge_handler()
 {
     disableEdge();
 }
 
-void screen_edge_item::setEnabled(bool enabled)
+void screen_edge_handler::setEnabled(bool enabled)
 {
     if (m_enabled == enabled) {
         return;
@@ -38,7 +38,7 @@ void screen_edge_item::setEnabled(bool enabled)
     Q_EMIT enabledChanged();
 }
 
-void screen_edge_item::setEdge(Edge edge)
+void screen_edge_handler::setEdge(Edge edge)
 {
     if (m_edge == edge) {
         return;
@@ -49,7 +49,7 @@ void screen_edge_item::setEdge(Edge edge)
     Q_EMIT edgeChanged();
 }
 
-void screen_edge_item::enableEdge()
+void screen_edge_handler::enableEdge()
 {
     if (!m_enabled || m_edge == NoEdge) {
         return;
@@ -68,7 +68,7 @@ void screen_edge_item::enableEdge()
     }
 }
 
-void screen_edge_item::disableEdge()
+void screen_edge_handler::disableEdge()
 {
     if (!m_enabled || m_edge == NoEdge) {
         return;
@@ -93,7 +93,7 @@ void screen_edge_item::disableEdge()
     }
 }
 
-bool screen_edge_item::borderActivated(ElectricBorder edge)
+bool screen_edge_handler::borderActivated(ElectricBorder edge)
 {
     if (edge != static_cast<ElectricBorder>(m_edge) || !m_enabled) {
         return false;
@@ -102,7 +102,7 @@ bool screen_edge_item::borderActivated(ElectricBorder edge)
     return true;
 }
 
-void screen_edge_item::setMode(Mode mode)
+void screen_edge_handler::setMode(Mode mode)
 {
     if (m_mode == mode) {
         return;

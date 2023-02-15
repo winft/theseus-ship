@@ -9,7 +9,7 @@
 
 #include "dbus_call.h"
 #include "output.h"
-#include "screen_edge_item.h"
+#include "screen_edge_handler.h"
 #include "script.h"
 #include "scripting/desktop_background_item.h"
 #include "space.h"
@@ -114,7 +114,7 @@ public:
         qmlRegisterType<desktop_background_item>("org.kde.kwin", 3, 0, "DesktopBackground");
         qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 3, 0, "WindowThumbnail");
         qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");
-        qmlRegisterType<screen_edge_item>("org.kde.kwin", 3, 0, "ScreenEdgeItem");
+        qmlRegisterType<screen_edge_handler>("org.kde.kwin", 3, 0, "ScreenEdgeHandler");
         qmlRegisterType<window_model>("org.kde.kwin", 3, 0, "WindowModel");
         qmlRegisterType<window_filter_model>("org.kde.kwin", 3, 0, "WindowFilterModel");
         qmlRegisterType<virtual_desktop_model>("org.kde.kwin", 3, 0, "VirtualDesktopModel");

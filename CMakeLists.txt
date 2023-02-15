@@ -416,7 +416,7 @@ set(kwin_SRCS
     scripting/dbus_call.cpp
     scripting/desktop_background_item.cpp
     scripting/js_engine_global_methods_wrapper.cpp
-    scripting/screen_edge_item.cpp
+    scripting/screen_edge_handler.cpp
     scripting/effect.cpp
     scripting/output.cpp
     scripting/platform.cpp

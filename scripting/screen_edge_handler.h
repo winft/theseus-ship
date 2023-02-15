@@ -24,13 +24,13 @@ namespace KWin::scripting
  *
  * Example usage:
  * @code
- * ScreenEdgeItem {
- *     edge: ScreenEdgeItem.LeftEdge
+ * ScreenEdgeHandler {
+ *     edge: ScreenEdgeHandler.LeftEdge
  *     onActivated: doSomething()
  * }
  * @endcode
  */
-class KWIN_EXPORT screen_edge_item : public QObject
+class KWIN_EXPORT screen_edge_handler : public QObject
 {
     Q_OBJECT
     /**
@@ -64,8 +64,8 @@ public:
      */
     enum class Mode { Pointer, Touch };
     Q_ENUM(Mode)
-    explicit screen_edge_item(QObject* parent = nullptr);
-    ~screen_edge_item() override;
+    explicit screen_edge_handler(QObject* parent = nullptr);
+    ~screen_edge_handler() override;
     bool isEnabled() const;
     Edge edge() const;
     Mode mode() const
@@ -98,12 +98,12 @@ private:
     QAction* m_action;
 };
 
-inline bool screen_edge_item::isEnabled() const
+inline bool screen_edge_handler::isEnabled() const
 {
     return m_enabled;
 }
 
-inline screen_edge_item::Edge screen_edge_item::edge() const
+inline screen_edge_handler::Edge screen_edge_handler::edge() const
 {
     return m_edge;
 }
