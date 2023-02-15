@@ -64,7 +64,7 @@ class KWIN_EXPORT color_correct_dbus_interface : public QObject, public QDBusCon
 
 public:
     explicit color_correct_dbus_interface(color_correct_dbus_integration integration);
-    ~color_correct_dbus_interface() override = default;
+    ~color_correct_dbus_interface() override;
 
     bool isInhibited() const;
     bool isEnabled() const;

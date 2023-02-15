@@ -56,6 +56,12 @@ color_correct_dbus_interface::color_correct_dbus_interface(
 
     new ColorCorrectAdaptor(this);
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/ColorCorrect"), this);
+    QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.NightColor"));
+}
+
+color_correct_dbus_interface::~color_correct_dbus_interface()
+{
+    QDBusConnection::sessionBus().unregisterService(QStringLiteral("org.kde.NightColor"));
 }
 
 bool color_correct_dbus_interface::isInhibited() const
