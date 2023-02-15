@@ -26,6 +26,7 @@ public:
     enum LayoutMode : uint {
         LayoutClosest = 0,
         LayoutNatural = 1,
+        LayoutNone = 2,
     };
     Q_ENUM(LayoutMode)
 
@@ -46,6 +47,8 @@ public:
     bool isReady() const;
     void setReady();
 
+    Q_INVOKABLE void forceLayout();
+
 protected:
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     void geometryChanged(const QRectF& newGeometry, const QRectF& oldGeometry) override;
@@ -63,6 +66,7 @@ Q_SIGNALS:
 private:
     void calculateWindowTransformationsClosest();
     void calculateWindowTransformationsNatural();
+    void resetTransformations();
 
     QList<ExpoCell*> m_cells;
     LayoutMode m_mode = LayoutNatural;

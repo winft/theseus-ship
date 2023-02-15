@@ -69,6 +69,32 @@ public:
         return m_platformOutput->geometry();
     }
 
+    virtual int refreshRate() const override
+    {
+        return m_platformOutput->refresh_rate();
+    }
+
+    Transform transform() const override
+    {
+        // TODO(romangg): get correct value.
+        return EffectScreen::Transform::Normal;
+    }
+
+    QString manufacturer() const override
+    {
+        return m_platformOutput->manufacturer();
+    }
+
+    QString model() const override
+    {
+        return m_platformOutput->model();
+    }
+
+    QString serialNumber() const override
+    {
+        return m_platformOutput->serial_number();
+    }
+
 private:
     Output* m_platformOutput;
 };

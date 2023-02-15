@@ -20,6 +20,8 @@
 #include "kwinglobals.h"
 #include "render/window_thumbnail_item.h"
 
+#include <kwineffects/quick_scene.h>
+
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlExpression>
@@ -126,6 +128,12 @@ public:
         qmlRegisterType<models::v3::client_filter_model>("org.kde.kwin", 3, 0, "ClientFilterModel");
         qmlRegisterType<models::v3::virtual_desktop_model>(
             "org.kde.kwin", 3, 0, "VirtualDesktopModel");
+        qmlRegisterUncreatableType<KWin::QuickSceneView>(
+            "org.kde.kwin",
+            3,
+            0,
+            "SceneView",
+            QStringLiteral("Can't instantiate an object of type SceneView"));
 
         qmlRegisterSingletonType<qt_script_space>(
             "org.kde.kwin",

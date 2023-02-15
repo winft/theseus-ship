@@ -85,10 +85,6 @@ public:
     {
         m_opacity = opacity;
     }
-    bool hasAlpha() const override
-    {
-        return true;
-    }
     QStringList activities() const override
     {
         return QStringList();

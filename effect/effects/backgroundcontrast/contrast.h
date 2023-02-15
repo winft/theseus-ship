@@ -58,7 +58,11 @@ public:
     void slotWindowDeleted(KWin::EffectWindow* w);
     void reset();
 
-    QHash<const EffectWindow*, QMatrix4x4> m_colorMatrices;
+    struct Data {
+        QMatrix4x4 colorMatrix;
+        QRegion contrastRegion;
+    };
+    QHash<EffectWindow const*, Data> m_windowData;
 
 private:
     QRegion contrastRegion(const EffectWindow* w) const;

@@ -1,12 +1,13 @@
 /*
     SPDX-FileCopyrightText: 2021 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2022 ivan tkachenko <me@ratijas.tk>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import org.kde.kirigami 2.12 as Kirigami
+import QtQuick 2.15
+import QtQuick.Window 2.15
+import org.kde.kirigami 2.20 as Kirigami
 import org.kde.kwin 3.0 as KWinComponents
 import org.kde.kwin.private.effects 1.0
 import org.kde.plasma.components 3.0 as PC3
@@ -25,6 +26,16 @@ FocusScope {
     property alias model: windowsRepeater.model
     property alias delegate: windowsRepeater.delegate
     readonly property alias count: windowsRepeater.count
+    readonly property bool activeEmpty: {
+        var children = expoLayout.visibleChildren;
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (child instanceof WindowHeapDelegate && !child.activeHidden) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     property alias layout: expoLayout
     property int selectedIndex: -1
@@ -32,8 +43,8 @@ FocusScope {
     property bool animationEnabled: false
     property bool absolutePositioning: true
     property real padding: 0
+    // Either a string "activeClass" or a list internalIds of clients
     property var showOnly: []
-    property string activeClass
 
     required property bool organized
     readonly property bool effectiveOrganized: expoLayout.ready && organized
@@ -46,6 +57,21 @@ FocusScope {
     function activateIndex(index) {
         KWinComponents.Workspace.activeClient = windowsRepeater.itemAt(index).client;
         activated();
+    }
+
+    property var dndManagerStore: ({})
+
+    function saveDND(key: int, rect: rect) {
+        dndManagerStore[key] = rect;
+    }
+    function containsDND(key: int): bool {
+        return key in dndManagerStore;
+    }
+    function restoreDND(key: int): rect {
+        return dndManagerStore[key];
+    }
+    function deleteDND(key: int) {
+        delete dndManagerStore[key];
     }
 
     KWinComponents.WindowThumbnailItem {
@@ -77,9 +103,7 @@ FocusScope {
             for (let i in screens) {
                 if (targetScreen === screens[i]) {
                     found = true;
-                    let globalPos = item.screen.mapToGlobal(item.mapToItem(null, 0,0));
-                    let heapRelativePos = targetScreen.mapFromGlobal(globalPos);
-                    heapRelativePos = heap.mapFromItem(null, heapRelativePos.x, heapRelativePos.y);
+                    const heapRelativePos = heap.mapFromGlobal(item.mapToGlobal(0, 0));
                     otherScreenThumbnail.cloneOf = item
                     otherScreenThumbnail.x = heapRelativePos.x;
                     otherScreenThumbnail.y = heapRelativePos.y;
@@ -104,10 +128,27 @@ FocusScope {
 
         anchors.fill: parent
         anchors.margins: heap.padding
+        fillGaps: true
         spacing: PlasmaCore.Units.smallSpacing * 5
 
         Repeater {
             id: windowsRepeater
+
+            onItemAdded: (index, item) => {
+                // restore/reparent from drop
+                var key = item.client.internalId;
+                if (heap.containsDND(key)) {
+                    expoLayout.forceLayout();
+                    var oldGlobalRect = heap.restoreDND(key);
+                    item.restoreDND(oldGlobalRect);
+                    heap.deleteDND(key);
+                } else if (heap.effectiveOrganized) {
+                    // New window has opened in the middle of a running effect.
+                    // Make sure it is positioned before enabling its animations.
+                    expoLayout.forceLayout();
+                }
+                item.animationEnabled = true;
+            }
             delegate: WindowHeapDelegate {
                 windowHeap: heap
             }
@@ -125,7 +166,7 @@ FocusScope {
     }
 
     function findNextItem(selectedIndex, direction) {
-        if (selectedIndex == -1) {
+        if (selectedIndex === -1) {
             return findFirstItem();
         }
 
@@ -147,7 +188,7 @@ FocusScope {
                 }
 
                 if (candidateItem.x + candidateItem.width < selectedItem.x + selectedItem.width) {
-                    if (nextIndex == -1) {
+                    if (nextIndex === -1) {
                         nextIndex = candidateIndex;
                     } else {
                         const nextItem = windowsRepeater.itemAt(nextIndex);
@@ -172,11 +213,11 @@ FocusScope {
                 }
 
                 if (selectedItem.x < candidateItem.x) {
-                    if (nextIndex == -1) {
+                    if (nextIndex === -1) {
                         nextIndex = candidateIndex;
                     } else {
                         const nextItem = windowsRepeater.itemAt(nextIndex);
-                        if (nextIndex == -1 || candidateItem.x < nextItem.x) {
+                        if (nextIndex === -1 || candidateItem.x < nextItem.x) {
                             nextIndex = candidateIndex;
                         }
                     }
@@ -197,7 +238,7 @@ FocusScope {
                 }
 
                 if (candidateItem.y + candidateItem.height < selectedItem.y + selectedItem.height) {
-                    if (nextIndex == -1) {
+                    if (nextIndex === -1) {
                         nextIndex = candidateIndex;
                     } else {
                         const nextItem = windowsRepeater.itemAt(nextIndex);
@@ -222,7 +263,7 @@ FocusScope {
                 }
 
                 if (selectedItem.y < candidateItem.y) {
-                    if (nextIndex == -1) {
+                    if (nextIndex === -1) {
                         nextIndex = candidateIndex;
                     } else {
                         const nextItem = windowsRepeater.itemAt(nextIndex);
@@ -239,70 +280,80 @@ FocusScope {
     }
 
     function resetSelected() {
-        heap.selectedIndex = -1;
+        selectedIndex = -1;
     }
 
     function selectNextItem(direction) {
-        const nextIndex = findNextItem(heap.selectedIndex, direction);
-        if (nextIndex != -1) {
-            heap.selectedIndex = nextIndex;
+        const nextIndex = findNextItem(selectedIndex, direction);
+        if (nextIndex !== -1) {
+            selectedIndex = nextIndex;
             return true;
         }
         return false;
     }
 
     function selectLastItem(direction) {
-        let last = heap.selectedIndex;
+        let last = selectedIndex;
         while (true) {
             const next = findNextItem(last, direction);
-            if (next == -1) {
+            if (next === -1) {
                 break;
             } else {
                 last = next;
             }
         }
-        if (last != -1) {
-            heap.selectedIndex = last;
+        if (last !== -1) {
+            selectedIndex = last;
             return true;
         }
         return false;
     }
 
-    onActiveFocusChanged: resetSelected();
 
     Keys.onPressed: {
         let handled = false;
         switch (event.key) {
         case Qt.Key_Up:
             handled = selectNextItem(WindowHeap.Direction.Up);
+            heap.focus = true;
             break;
         case Qt.Key_Down:
             handled = selectNextItem(WindowHeap.Direction.Down);
+            heap.focus = true;
             break;
         case Qt.Key_Left:
             handled = selectNextItem(WindowHeap.Direction.Left);
+            heap.focus = true;
             break;
         case Qt.Key_Right:
             handled = selectNextItem(WindowHeap.Direction.Right);
+            heap.focus = true;
             break;
         case Qt.Key_Home:
             handled = selectLastItem(WindowHeap.Direction.Left);
+            heap.focus = true;
             break;
         case Qt.Key_End:
             handled = selectLastItem(WindowHeap.Direction.Right);
+            heap.focus = true;
             break;
         case Qt.Key_PageUp:
             handled = selectLastItem(WindowHeap.Direction.Up);
+            heap.focus = true;
             break;
         case Qt.Key_PageDown:
             handled = selectLastItem(WindowHeap.Direction.Down);
+            heap.focus = true;
             break;
-        case Qt.Key_Return:
         case Qt.Key_Space:
-            handled = true;
+            if (!heap.focus) {
+                break;
+            }
+        case Qt.Key_Return:
+            handled = false;
             let selectedItem = null;
-            if (heap.selectedIndex != -1) {
-                selectedItem = windowsRepeater.itemAt(heap.selectedIndex);
+            if (selectedIndex !== -1) {
+                selectedItem = windowsRepeater.itemAt(selectedIndex);
             } else {
                 // If the window heap has only one visible window, activate it.
                 for (let i = 0; i < windowsRepeater.count; ++i) {
@@ -319,7 +370,7 @@ FocusScope {
             if (selectedItem) {
                 handled = true;
                 KWinComponents.Workspace.activeClient = selectedItem.client;
-                heap.activated();
+                activated();
             }
             break;
         default:

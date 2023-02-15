@@ -21,6 +21,10 @@ class KWINEFFECTS_EXPORT EffectScreen : public QObject
     Q_PROPERTY(QRect geometry READ geometry NOTIFY geometryChanged)
     Q_PROPERTY(qreal devicePixelRatio READ devicePixelRatio NOTIFY devicePixelRatioChanged)
     Q_PROPERTY(QString name READ name CONSTANT)
+    Q_PROPERTY(QString manufacturer READ manufacturer CONSTANT)
+    Q_PROPERTY(QString model READ model CONSTANT)
+    Q_PROPERTY(QString serialNumber READ serialNumber CONSTANT)
+    Q_PROPERTY(qreal refreshRate READ refreshRate CONSTANT)
 
 public:
     explicit EffectScreen(QObject* parent = nullptr);
@@ -42,6 +46,28 @@ public:
 
     Q_INVOKABLE QPointF mapToGlobal(const QPointF& pos) const;
     Q_INVOKABLE QPointF mapFromGlobal(const QPointF& pos) const;
+
+    /**
+     * Returns the screen's refresh rate in milli-hertz.
+     */
+    virtual int refreshRate() const = 0;
+
+    enum class Transform {
+        Normal,
+        Rotated90,
+        Rotated180,
+        Rotated270,
+        Flipped,
+        Flipped90,
+        Flipped180,
+        Flipped270
+    };
+    Q_ENUM(Transform)
+    virtual Transform transform() const = 0;
+
+    virtual QString manufacturer() const = 0;
+    virtual QString model() const = 0;
+    virtual QString serialNumber() const = 0;
 
 Q_SIGNALS:
     /**

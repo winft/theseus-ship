@@ -67,6 +67,7 @@ private:
 class KWINEFFECTS_EXPORT QuickSceneEffect : public Effect
 {
     Q_OBJECT
+    Q_PROPERTY(QuickSceneView* activeView READ activeView NOTIFY activeViewChanged)
 
 public:
     explicit QuickSceneEffect(QObject* parent = nullptr);
@@ -82,6 +83,8 @@ public:
      */
     void setRunning(bool running);
 
+    QuickSceneView* activeView() const;
+
     /**
      * Returns all scene views managed by this effect. If the effect is not running,
      * this function returns an empty QHash.
@@ -94,10 +97,16 @@ public:
     QuickSceneView* viewAt(const QPoint& pos) const;
 
     /**
+     * Get a view at the given direction from the active view
+     * Returns null if no other views exist in the given direction
+     */
+    Q_INVOKABLE KWin::QuickSceneView* getView(Qt::Edge edge);
+
+    /**
      * Sets the given @a view as active. It will get a focusin event and all the other views will be
      * set as inactive
      */
-    void activateView(QuickSceneView* view);
+    Q_INVOKABLE void activateView(QuickSceneView* view);
 
     /**
      * Returns the source URL.
@@ -136,6 +145,7 @@ public:
 Q_SIGNALS:
     void itemDraggedOutOfScreen(QQuickItem* item, QList<EffectScreen*> screens);
     void itemDroppedOutOfScreen(const QPointF& globalPos, QQuickItem* item, EffectScreen* screen);
+    void activeViewChanged(KWin::QuickSceneView* view);
 
 protected:
     /**

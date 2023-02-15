@@ -44,8 +44,7 @@ namespace KWin
  * desktopChanged() is called. The desktopChanged() function configures the m_startPos and m_endPos
  * for the animation, and the duration.
  *
- * m_currentPosition and m_paintCtx.translation and everything else not labeled "drawCoordinate"
- * uses desktops as a unit.
+ * m_currentPosition and everything else not labeled "drawCoordinate" uses desktops as a unit.
  * Exmp: 1.2 means the dekstop at index 1 shifted over by .2 desktops.
  * All coords must be positive.
  *
@@ -65,7 +64,6 @@ class SlideEffect : public Effect
     Q_OBJECT
     Q_PROPERTY(int horizontalGap READ horizontalGap)
     Q_PROPERTY(int verticalGap READ verticalGap)
-    Q_PROPERTY(bool slideDocks READ slideDocks)
     Q_PROPERTY(bool slideBackground READ slideBackground)
 
 public:
@@ -90,7 +88,6 @@ public:
 
     int horizontalGap() const;
     int verticalGap() const;
-    bool slideDocks() const;
     bool slideBackground() const;
 
 private Q_SLOTS:
@@ -103,7 +100,7 @@ private Q_SLOTS:
 private:
     QPoint getDrawCoords(QPointF pos, EffectScreen* screen);
     bool isTranslated(const EffectWindow* w) const;
-    bool isPainted(const EffectWindow* w) const;
+    bool willBePainted(const EffectWindow* w) const;
     bool shouldElevate(const EffectWindow* w) const;
     QPointF moveInsideDesktopGrid(QPointF p);
     QPointF constrainToDrawableRange(QPointF p);
@@ -117,7 +114,6 @@ private:
 private:
     int m_hGap;
     int m_vGap;
-    bool m_slideDocks;
     bool m_slideBackground;
 
     enum class State {
@@ -141,14 +137,8 @@ private:
         m_currentPosition; // Should always be kept up to date with where on the grid we're seeing.
 
     struct {
-        int desktop;
-        bool firstPass;
-        bool lastPass;
-        QPointF translation; // Uses desktops as units
-
-        QPoint currentPos;
+        bool wrap;
         QVector<int> visibleDesktops;
-        EffectWindowList fullscreenWindows;
     } m_paintCtx;
 
     EffectWindowList m_elevatedWindows;
@@ -162,11 +152,6 @@ inline int SlideEffect::horizontalGap() const
 inline int SlideEffect::verticalGap() const
 {
     return m_vGap;
-}
-
-inline bool SlideEffect::slideDocks() const
-{
-    return m_slideDocks;
 }
 
 inline bool SlideEffect::slideBackground() const

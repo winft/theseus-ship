@@ -38,16 +38,13 @@ void update_function(ContrastEffect& effect, KWin::effect::color_update const& u
         return;
     }
 
-    effect.m_colorMatrices[update.base.window] = update.color;
-
-    // If the specified region is empty, enable the contrast effect for the whole window.
-    if (update.region.isEmpty() && update.base.valid) {
-        // Set the data to a dummy value.
-        // This is needed to be able to distinguish between the value not
-        // being set, and being set to an empty region.
-        update.base.window->setData(WindowBackgroundContrastRole, 1);
+    if (update.base.valid) {
+        effect.m_windowData[update.base.window] = {
+            .colorMatrix = update.color,
+            .contrastRegion = update.region,
+        };
     } else {
-        update.base.window->setData(WindowBackgroundContrastRole, update.region);
+        effect.m_windowData.remove(update.base.window);
     }
 }
 
@@ -93,7 +90,7 @@ void ContrastEffect::reconfigure(ReconfigureFlags flags)
 
 void ContrastEffect::slotWindowDeleted(EffectWindow* w)
 {
-    m_colorMatrices.remove(w);
+    m_windowData.remove(w);
 }
 
 bool ContrastEffect::enabledByDefault()
@@ -130,9 +127,8 @@ QRegion ContrastEffect::contrastRegion(const EffectWindow* w) const
 {
     QRegion region;
 
-    const QVariant value = w->data(WindowBackgroundContrastRole);
-    if (value.isValid()) {
-        const QRegion appRegion = qvariant_cast<QRegion>(value);
+    if (auto const it = m_windowData.find(w); it != m_windowData.end()) {
+        auto const& appRegion = it->contrastRegion;
         if (!appRegion.isEmpty()) {
             region |= appRegion.translated(w->contentsRect().topLeft()) & w->decorationInnerRect();
         } else {
@@ -198,9 +194,6 @@ bool ContrastEffect::shouldContrast(const EffectWindow* w,
 
     if ((scaled || (translated || (mask & PAINT_WINDOW_TRANSFORMED)))
         && !w->data(WindowForceBackgroundContrastRole).toBool())
-        return false;
-
-    if (!w->hasAlpha())
         return false;
 
     return true;
@@ -281,7 +274,7 @@ void ContrastEffect::doContrast(EffectWindow* w,
 
     // Draw the texture on the offscreen framebuffer object, while blurring it horizontally
 
-    shader->setColorMatrix(m_colorMatrices.value(w));
+    shader->setColorMatrix(m_windowData.value(w).colorMatrix);
     shader->bind();
 
     shader->setOpacity(opacity);

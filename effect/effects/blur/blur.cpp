@@ -52,14 +52,10 @@ void update_function(BlurEffect& effect, KWin::effect::region_update const& upda
         return;
     }
 
-    // If the specified blur region is empty, enable blur for the whole window.
-    if (update.value.isEmpty() && update.base.valid) {
-        // Set the data to a dummy value.
-        // This is needed to be able to distinguish between the value not
-        // being set, and being set to an empty region.
-        update.base.window->setData(WindowBlurBehindRole, 1);
+    if (update.base.valid) {
+        effect.blurRegions[update.base.window] = update.value;
     } else {
-        update.base.window->setData(WindowBlurBehindRole, update.value);
+        effect.blurRegions.remove(update.base.window);
     }
 }
 
@@ -337,9 +333,8 @@ QRegion BlurEffect::blurRegion(const EffectWindow* w) const
 {
     QRegion region;
 
-    const QVariant value = w->data(WindowBlurBehindRole);
-    if (value.isValid()) {
-        const QRegion appRegion = qvariant_cast<QRegion>(value);
+    if (auto it = blurRegions.find(w); it != blurRegions.end()) {
+        const QRegion& appRegion = *it;
         if (!appRegion.isEmpty()) {
             if (w->decorationHasAlpha() && decorationSupportsBlurBehind(w)) {
                 region = decorationBlurRegion(w);
@@ -490,11 +485,6 @@ bool BlurEffect::shouldBlur(const EffectWindow* w, int mask, const WindowPaintDa
         && !w->data(WindowForceBlurRole).toBool())
         return false;
 
-    bool blurBehindDecos = effects->decorationsHaveAlpha() && decorationSupportsBlurBehind(w);
-
-    if (!w->hasAlpha() && w->opacity() >= 1.0 && !(blurBehindDecos && w->hasDecoration()))
-        return false;
-
     return true;
 }
 
@@ -502,7 +492,7 @@ void BlurEffect::drawWindow(EffectWindow* w, int mask, const QRegion& region, Wi
 {
     if (shouldBlur(w, mask, data)) {
         const QRect screen = effects->renderTargetRect();
-        QRegion shape = region & blurRegion(w).translated(w->pos()) & screen;
+        auto shape = blurRegion(w).translated(w->pos());
 
         // let's do the evil parts - someone wants to blur behind a transformed window
         const bool translated = data.xTranslation() || data.yTranslation();
@@ -517,17 +507,17 @@ void BlurEffect::drawWindow(EffectWindow* w, int mask, const QRegion& region, Wi
                 r.setHeight(r.height() * data.yScale());
                 scaledShape |= r;
             }
-            shape = scaledShape & region;
+            shape = scaledShape;
 
             // Only translated, not scaled
         } else if (translated) {
             shape = shape.translated(data.xTranslation(), data.yTranslation());
-            shape = shape & region;
         }
 
         EffectWindow* modal = w->transientFor();
         const bool transientForIsDock = (modal ? modal->isDock() : false);
 
+        shape &= region;
         if (!shape.isEmpty()) {
             doBlur(shape,
                    screen,

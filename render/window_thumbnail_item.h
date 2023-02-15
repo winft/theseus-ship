@@ -90,6 +90,7 @@ Q_SIGNALS:
     void sourceSizeChanged();
 
 private:
+    bool use_gl_thumbnails() const;
     QImage fallbackImage() const;
     QRectF paintedRect() const;
     void invalidateOffscreenTexture();

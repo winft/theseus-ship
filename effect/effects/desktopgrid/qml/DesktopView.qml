@@ -1,6 +1,7 @@
 /*
     SPDX-FileCopyrightText: 2021 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
     SPDX-FileCopyrightText: 2022 Marco Martin <mart@kde.org>
+    SPDX-FileCopyrightText: 2022 ivan tkachenko <me@ratijas.tk>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -17,6 +18,7 @@ FocusScope {
 
     required property QtObject clientModel
     required property QtObject desktop
+    required property var dndManagerStore
     readonly property bool dragActive: heap.dragActive || dragHandler.active || xAnim.running || yAnim.running
     property real panelOpacity: 1
     focus: true
@@ -30,15 +32,21 @@ FocusScope {
         onEntered: {
             drag.accepted = true;
         }
-        onDropped: {
+        onDropped: drop => {
+            drop.accepted = true;
             if (drag.source instanceof DesktopView) {
                 // dragging a desktop as a whole
-                if (desktopView === drag.source) {
+                if (drag.source === desktopView) {
+                    drop.action = Qt.IgnoreAction;
                     return;
                 }
                 effect.swapDesktops(drag.source.desktop.x11DesktopNumber, desktop.x11DesktopNumber);
             } else {
                 // dragging a KWin::Window
+                if (drag.source.desktop === desktopView.desktop.x11DesktopNumber) {
+                    drop.action = Qt.IgnoreAction;
+                    return;
+                }
                 drag.source.desktop = desktopView.desktop.x11DesktopNumber;
             }
         }
@@ -46,7 +54,7 @@ FocusScope {
     Connections {
         target: effect
         function onItemDroppedOutOfScreen(globalPos, item, screen) {
-            if (screen != targetScreen) {
+            if (screen !== targetScreen) {
                 return;
             }
             const pos = screen.mapFromGlobal(globalPos);
@@ -69,17 +77,10 @@ FocusScope {
             wId: model.client.internalId
             x: model.client.x - targetScreen.geometry.x
             y: model.client.y - targetScreen.geometry.y
+            z: model.client.stackingOrder
             width: model.client.width
             height: model.client.height
-            z: model.client.stackingOrder
             opacity: model.client.dock ? desktopView.panelOpacity : 1
-            Behavior on opacity {
-                enabled: !container.effect.gestureInProgress
-                OpacityAnimator {
-                    duration: container.effect.animationDuration
-                    easing.type: Easing.InOutCubic
-                }
-            }
         }
     }
 
@@ -87,7 +88,6 @@ FocusScope {
         id: dragHandler
         target: heap
         grabPermissions: PointerHandler.ApprovesTakeOverByHandlersOfSameType
-        cursorShape: active ? Qt.ClosedHandCursor : Qt.ArrowCursor
         onActiveChanged: {
             if (!active) {
                 heap.Drag.drop();
@@ -98,11 +98,13 @@ FocusScope {
 
     WindowHeap {
         id: heap
-        function resetPosition () {
+        function resetPosition() {
             x = 0;
             y = 0;
         }
         Drag.active: dragHandler.active
+        Drag.proposedAction: Qt.MoveAction
+        Drag.supportedActions: Qt.MoveAction
         Drag.source: desktopView
         Drag.hotSpot: Qt.point(width * 0.5, height * 0.5)
         width: parent.width
@@ -114,14 +116,16 @@ FocusScope {
         animationEnabled: container.animationEnabled
         organized: container.organized
         layout.mode: effect.layout
+        dndManagerStore: desktopView.dndManagerStore
         model: KWinComponents.ClientFilterModel {
             activity: KWinComponents.Workspace.currentActivity
             desktop: desktopView.desktop
             screenName: targetScreen.name
             clientModel: desktopView.clientModel
             windowType: ~KWinComponents.ClientFilterModel.Dock &
-                    ~KWinComponents.ClientFilterModel.Desktop &
-                    ~KWinComponents.ClientFilterModel.Notification;
+                        ~KWinComponents.ClientFilterModel.Desktop &
+                        ~KWinComponents.ClientFilterModel.Notification &
+                        ~KWinComponents.ClientFilterModel.CriticalNotification
         }
         delegate: WindowHeapDelegate {
             windowHeap: heap
@@ -142,20 +146,26 @@ FocusScope {
         }
         Behavior on x {
             enabled: !dragHandler.active
-            XAnimator {
+            NumberAnimation {
                 id: xAnim
                 duration: container.effect.animationDuration
-                easing.type: Easing.InOutCubic
+                easing.type: Easing.OutCubic
             }
         }
         Behavior on y {
             enabled: !dragHandler.active
-            YAnimator {
+            NumberAnimation {
                 id: yAnim
                 duration: container.effect.animationDuration
-                easing.type: Easing.InOutCubic
+                easing.type: Easing.OutCubic
             }
         }
+    }
+
+    MouseArea {
+        anchors.fill: heap
+        acceptedButtons: Qt.NoButton
+        cursorShape: dragHandler.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
     }
 
     PC3.Control {

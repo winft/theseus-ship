@@ -310,14 +310,12 @@ GLTexturePrivate::GLTexturePrivate()
     , m_mipLevels(1)
     , m_unnormalizeActive(0)
     , m_normalizeActive(0)
-    , m_vbo(nullptr)
 {
     ++s_textureObjectCounter;
 }
 
 GLTexturePrivate::~GLTexturePrivate()
 {
-    delete m_vbo;
     if (m_texture != 0 && !m_foreign) {
         glDeleteTextures(1, &m_texture);
     }
@@ -540,7 +538,7 @@ void GLTexture::render(const QRegion& region, const QRect& rect, bool hardwareCl
         QRect r(rect);
         r.moveTo(0, 0);
         if (!d->m_vbo) {
-            d->m_vbo = new GLVertexBuffer(KWin::GLVertexBuffer::Static);
+            d->m_vbo = std::make_unique<GLVertexBuffer>(KWin::GLVertexBuffer::Static);
         }
 
         const float verts[4 * 2]
@@ -618,8 +616,7 @@ void GLTexture::clear()
             glBindFramebuffer(GL_FRAMEBUFFER, previousFramebuffer);
     } else {
         if (const int size = width() * height()) {
-            uint32_t* buffer = new uint32_t[size];
-            memset(buffer, 0, size * sizeof(uint32_t));
+            std::vector<uint32_t> buffer(size, 0);
             bind();
             if (!GLPlatform::instance()->isGLES()) {
                 glTexSubImage2D(GL_TEXTURE_2D,
@@ -630,14 +627,20 @@ void GLTexture::clear()
                                 height(),
                                 GL_BGRA,
                                 GL_UNSIGNED_INT_8_8_8_8_REV,
-                                buffer);
+                                buffer.data());
             } else {
                 const GLenum format = d->s_supportsARGB32 ? GL_BGRA_EXT : GL_RGBA;
-                glTexSubImage2D(
-                    GL_TEXTURE_2D, 0, 0, 0, width(), height(), format, GL_UNSIGNED_BYTE, buffer);
+                glTexSubImage2D(GL_TEXTURE_2D,
+                                0,
+                                0,
+                                0,
+                                width(),
+                                height(),
+                                format,
+                                GL_UNSIGNED_BYTE,
+                                buffer.data());
             }
             unbind();
-            delete[] buffer;
         }
     }
 }
@@ -763,9 +766,21 @@ bool GLTexture::supportsFormatRG()
 
 QImage GLTexture::toImage() const
 {
+    if (target() != GL_TEXTURE_2D) {
+        return QImage();
+    }
     QImage ret(size(), QImage::Format_RGBA8888_Premultiplied);
-    glGetTextureImage(
-        texture(), 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, ret.sizeInBytes(), ret.bits());
+
+    GLint currentTextureBinding;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentTextureBinding);
+
+    if (currentTextureBinding != static_cast<int>(texture())) {
+        glBindTexture(GL_TEXTURE_2D, texture());
+    }
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, ret.bits());
+    if (currentTextureBinding != static_cast<int>(texture())) {
+        glBindTexture(GL_TEXTURE_2D, currentTextureBinding);
+    }
     return ret;
 }
 

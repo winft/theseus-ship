@@ -5,6 +5,7 @@
 */
 #include "blendchanges.h"
 
+#include <kwineffects/effect_window.h>
 #include <kwineffects/effects_handler.h>
 #include <kwineffects/paint_data.h>
 #include <kwingl/utils.h>
@@ -46,7 +47,9 @@ void KWin::BlendChanges::start(int delay)
 
     const EffectWindowList allWindows = effects->stackingOrder();
     for (auto window : allWindows) {
-        redirect(window);
+        if (!window->isFullScreen()) {
+            redirect(window);
+        }
     }
 
     QTimer::singleShot(delay, this, [this, animationDuration]() {

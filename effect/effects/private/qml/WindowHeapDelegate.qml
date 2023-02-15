@@ -1,17 +1,17 @@
 /*
     SPDX-FileCopyrightText: 2021 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2022 ivan tkachenko <me@ratijas.tk>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import org.kde.kirigami 2.12 as Kirigami
+import QtQuick 2.15
+import QtQuick.Window 2.15
+import org.kde.kirigami 2.20 as Kirigami
 import org.kde.kwin 3.0 as KWinComponents
 import org.kde.kwin.private.effects 1.0
 import org.kde.plasma.components 3.0 as PC3
 import org.kde.plasma.core 2.0 as PlasmaCore
-
 
 Item {
     id: thumb
@@ -20,13 +20,22 @@ Item {
     required property int index
     required property Item windowHeap
 
-    readonly property bool selected: thumb.windowHeap.selectedIndex == index
-    //TODO: move?
-    readonly property bool hidden: {
-        if (thumb.windowHeap.showOnly === "activeClass") {
-            return thumb.windowHeap.activeClass !== String(thumb.client.resourceName); // thumb.client.resourceName is not an actual String as comes from a QByteArray so === would fail
+    readonly property bool selected: windowHeap.selectedIndex === index
+
+    // -1 is a special value which means "All Desktops"
+    readonly property bool presentOnCurrentDesktop: client.desktop === KWinComponents.Workspace.currentDesktop || client.desktop === -1
+    readonly property bool initialHidden: client.minimized || !presentOnCurrentDesktop
+    readonly property bool activeHidden: {
+        if (windowHeap.showOnly === "activeClass") {
+            if (!KWinComponents.Workspace.activeClient) {
+                return true;
+            } else {
+                // client.resourceName is not an actual String as comes from a QByteArray so === would fail
+                return String(KWinComponents.Workspace.activeClient.resourceName) !== String(client.resourceName);
+            }
         } else {
-            return thumb.windowHeap.showOnly.length && thumb.windowHeap.showOnly.indexOf(client.internalId) == -1;
+            return windowHeap.showOnly.length !== 0
+                && windowHeap.showOnly.indexOf(client.internalId) === -1;
         }
     }
 
@@ -35,45 +44,41 @@ Item {
     // Show a text label under this thumbnail
     property bool windowTitleVisible: true
 
+    // Same as for window heap
+    property bool animationEnabled: false
+
     //scale up and down the whole thumbnail without affecting layouting
     property real targetScale: 1.0
+
+    property DragManager activeDragHandler: dragHandler
 
     // Swipe down gesture by touch, in some effects will close the window
     readonly property alias downGestureProgress: touchDragHandler.downGestureProgress
     signal downGestureTriggered()
 
-
-
-    Component.onCompleted: {
-        if (thumb.client.active) {
-            thumb.windowHeap.activeClass = thumb.client.resourceName;
-        }
-    }
-    Connections {
-        target: thumb.client
-        function onActiveChanged() {
-            if (thumb.client.active) {
-                thumb.windowHeap.activeClass = thumb.client.resourceName;
-            }
-        }
-    }
+    // "normal" | "pressed" | "drag" | "reparenting"
+    property string substate: "normal"
 
     state: {
         if (effect.gestureInProgress) {
             return "partial";
         }
-        if (thumb.windowHeap.effectiveOrganized) {
-            return hidden ? "active-hidden" : "active";
+        if (windowHeap.effectiveOrganized) {
+            return activeHidden ? "active-hidden" : `active-${substate}`;
         }
-        return client.minimized ? "initial-minimized" : "initial";
+        return initialHidden ? "initial-hidden" : "initial";
     }
 
     visible: opacity > 0
-    z: thumb.activeDragHandler.active ? 1000
-        : client.stackingOrder + (thumb.client.desktop == KWinComponents.Workspace.currentDesktop ? 100 : 0)
+    z: (activeDragHandler.active || returning.running) ? 1000
+        : client.stackingOrder * (presentOnCurrentDesktop ? 1 : 0.001)
+
+    function restoreDND(oldGlobalRect: rect) {
+        thumbSource.restoreDND(oldGlobalRect);
+    }
 
     component TweenBehavior : Behavior {
-        enabled: thumb.state !== "partial" && thumb.windowHeap.animationEnabled && !thumb.activeDragHandler.active
+        enabled: thumb.state !== "partial" && thumb.windowHeap.animationEnabled && thumb.animationEnabled && !thumb.activeDragHandler.active
         NumberAnimation {
             duration: thumb.windowHeap.animationDuration
             easing.type: Easing.OutCubic
@@ -88,9 +93,9 @@ Item {
     KWinComponents.WindowThumbnailItem {
         id: thumbSource
         wId: thumb.client.internalId
-        state: thumb.activeDragHandler.active ? "drag" : "normal"
 
-        Drag.active: thumb.activeDragHandler.active
+        Drag.proposedAction: Qt.MoveAction
+        Drag.supportedActions: Qt.MoveAction
         Drag.source: thumb.client
         Drag.hotSpot: Qt.point(
             thumb.activeDragHandler.centroid.pressPosition.x * thumb.targetScale,
@@ -99,38 +104,38 @@ Item {
         onXChanged: effect.checkItemDraggedOutOfScreen(thumbSource)
         onYChanged: effect.checkItemDraggedOutOfScreen(thumbSource)
 
-        states: [
-            State {
-                name: "normal"
-                PropertyChanges {
-                    target: thumbSource
-                    x: 0
-                    y: 0
-                    width: thumb.width
-                    height: thumb.height
-                }
-            },
-            State {
-                name: "drag"
-                PropertyChanges {
-                    target: thumbSource
-                    x: -thumb.activeDragHandler.centroid.pressPosition.x * thumb.targetScale +
-                            thumb.activeDragHandler.centroid.position.x
-                    y: -thumb.activeDragHandler.centroid.pressPosition.y * thumb.targetScale +
-                            thumb.activeDragHandler.centroid.position.y
-                    width: cell.width * thumb.targetScale
-                    height: cell.height * thumb.targetScale
-                }
+        function saveDND() {
+            const oldGlobalRect = mapToItem(null, 0, 0, width, height);
+            thumb.windowHeap.saveDND(thumb.client.internalId, oldGlobalRect);
+        }
+        function restoreDND(oldGlobalRect: rect) {
+            thumb.substate = "reparenting";
+
+            const newGlobalRect = mapFromItem(null, oldGlobalRect);
+
+            x = newGlobalRect.x;
+            y = newGlobalRect.y;
+            width = newGlobalRect.width;
+            height = newGlobalRect.height;
+
+            thumb.substate = "normal";
+        }
+        function deleteDND() {
+            thumb.windowHeap.deleteDND(thumb.client.internalId);
+        }
+
+        PlasmaCore.FrameSvgItem {
+            anchors {
+                fill: parent
+                topMargin: -PlasmaCore.Units.smallSpacing * 2
+                leftMargin: -PlasmaCore.Units.smallSpacing * 2
+                rightMargin: -PlasmaCore.Units.smallSpacing * 2
+                bottomMargin: -(Math.round(icon.height / 4) + (thumb.windowTitleVisible ? caption.height : 0) + (PlasmaCore.Units.smallSpacing * 2))
             }
-        ]
-        transitions: Transition {
-            to: "normal"
-            enabled: thumb.windowHeap.animationEnabled
-            NumberAnimation {
-                duration: thumb.windowHeap.animationDuration
-                properties: "x, y, width, height, opacity"
-                easing.type: Easing.OutCubic
-            }
+            imagePath: "widgets/viewitem"
+            prefix: "hover"
+            z: -1
+            visible: !thumb.windowHeap.dragActive && (hoverHandler.hovered || (thumb.selected && Window.window.activeFocusItem)) && windowHeap.effectiveOrganized
         }
 
         MouseArea {
@@ -146,20 +151,19 @@ Item {
         verticalAlignment: Text.AlignVCenter
         text: i18nd("kwin_effects", "Drag Down To Close")
         opacity: 1 - thumbSource.opacity
-        visible: !thumb.hidden
+        visible: !thumb.activeHidden
     }
 
     PlasmaCore.IconItem {
         id: icon
         width: PlasmaCore.Units.iconSizes.large
-        height: width
+        height: PlasmaCore.Units.iconSizes.large
         source: thumb.client.icon
         usesPlasmaTheme: false
         anchors.horizontalCenter: thumbSource.horizontalCenter
         anchors.bottom: thumbSource.bottom
-        anchors.bottomMargin: -height / 4
-        visible: !thumb.hidden && !activeDragHandler.active
-
+        anchors.bottomMargin: -Math.round(height / 4)
+        visible: !thumb.activeHidden && !activeDragHandler.active
 
         PC3.Label {
             id: caption
@@ -177,13 +181,13 @@ Item {
     ExpoCell {
         id: cell
         layout: windowHeap.layout
-        enabled: !thumb.hidden
-        naturalX: thumb.client.x - targetScreen.geometry.x - windowHeap.layout.Kirigami.ScenePosition.x
-        naturalY: thumb.client.y - targetScreen.geometry.y - windowHeap.layout.Kirigami.ScenePosition.y
+        enabled: !thumb.activeHidden
+        naturalX: thumb.client.x
+        naturalY: thumb.client.y
         naturalWidth: thumb.client.width
         naturalHeight: thumb.client.height
         persistentKey: thumb.client.internalId
-        bottomMargin: icon.height / 4 + caption.height
+        bottomMargin: icon.height / 4 + (thumb.windowTitleVisible ? caption.height : 0)
     }
 
     states: [
@@ -193,6 +197,13 @@ Item {
                 target: thumb
                 x: thumb.client.x - targetScreen.geometry.x - (thumb.windowHeap.absolutePositioning ?  windowHeap.layout.Kirigami.ScenePosition.x : 0)
                 y: thumb.client.y - targetScreen.geometry.y - (thumb.windowHeap.absolutePositioning ?  windowHeap.layout.Kirigami.ScenePosition.y : 0)
+                width: thumb.client.width
+                height: thumb.client.height
+            }
+            PropertyChanges {
+                target: thumbSource
+                x: 0
+                y: 0
                 width: thumb.client.width
                 height: thumb.client.height
             }
@@ -213,7 +224,16 @@ Item {
                 y: (thumb.client.y - targetScreen.geometry.y - (thumb.windowHeap.absolutePositioning ?  windowHeap.layout.Kirigami.ScenePosition.y : 0)) * (1 - effect.partialActivationFactor) + cell.y * effect.partialActivationFactor
                 width: thumb.client.width * (1 - effect.partialActivationFactor) + cell.width * effect.partialActivationFactor
                 height: thumb.client.height * (1 - effect.partialActivationFactor) + cell.height * effect.partialActivationFactor
-                opacity: thumb.client.minimized || thumb.client.desktop != KWinComponents.Workspace.currentDesktop ? effect.partialActivationFactor : 1
+                opacity: thumb.initialHidden
+                    ? (thumb.activeHidden ? 0 : effect.partialActivationFactor)
+                    : (thumb.activeHidden ? 1 - effect.partialActivationFactor : 1)
+            }
+            PropertyChanges {
+                target: thumbSource
+                x: 0
+                y: 0
+                width: thumb.width
+                height: thumb.height
             }
             PropertyChanges {
                 target: icon
@@ -225,7 +245,7 @@ Item {
             }
         },
         State {
-            name: "initial-minimized"
+            name: "initial-hidden"
             extend: "initial"
             PropertyChanges {
                 target: thumb
@@ -241,6 +261,11 @@ Item {
             }
         },
         State {
+            name: "active-hidden"
+            extend: "initial-hidden"
+        },
+        State {
+            // this state is never directly used without a substate
             name: "active"
             PropertyChanges {
                 target: thumb
@@ -259,43 +284,70 @@ Item {
             }
         },
         State {
-            name: "active-hidden"
+            name: "active-normal"
             extend: "active"
             PropertyChanges {
-                target: thumb
-                opacity: 0
+                target: thumbSource
+                x: 0
+                y: 0
+                width: cell.width
+                height: cell.height
+            }
+        },
+        State {
+            name: "active-pressed"
+            extend: "active"
+            PropertyChanges {
+                target: thumbSource
+                width: cell.width
+                height: cell.height
+            }
+        },
+        State {
+            name: "active-drag"
+            extend: "active"
+            PropertyChanges {
+                target: thumbSource
+                x: -thumb.activeDragHandler.centroid.pressPosition.x * thumb.targetScale +
+                        thumb.activeDragHandler.centroid.position.x
+                y: -thumb.activeDragHandler.centroid.pressPosition.y * thumb.targetScale +
+                        thumb.activeDragHandler.centroid.position.y
+                width: cell.width * thumb.targetScale
+                height: cell.height * thumb.targetScale
+            }
+        },
+        State {
+            name: "active-reparenting"
+            extend: "active"
+        }
+    ]
+
+    transitions: [
+        Transition {
+            id: returning
+            from: "active-drag, active-reparenting"
+            to: "active-normal"
+            enabled: thumb.windowHeap.animationEnabled
+            NumberAnimation {
+                duration: thumb.windowHeap.animationDuration
+                properties: "x, y, width, height"
+                easing.type: Easing.OutCubic
+            }
+        },
+        Transition {
+            to: "initial, initial-hidden, active-normal, active-hidden"
+            enabled: thumb.windowHeap.animationEnabled
+            NumberAnimation {
+                duration: thumb.windowHeap.animationDuration
+                properties: "x, y, width, height, opacity"
+                easing.type: Easing.OutCubic
             }
         }
     ]
 
-    transitions: Transition {
-        to: "initial, initial-minimized, active, active-hidden"
-        enabled: thumb.windowHeap.animationEnabled
-        NumberAnimation {
-            duration: thumb.windowHeap.animationDuration
-            properties: "x, y, width, height, opacity"
-            easing.type: Easing.InOutCubic
-        }
-    }
-
-
-    PlasmaCore.FrameSvgItem {
-        anchors {
-            fill: parent
-            topMargin: -PlasmaCore.Units.smallSpacing * 2
-            leftMargin: -PlasmaCore.Units.smallSpacing * 2
-            rightMargin: -PlasmaCore.Units.smallSpacing * 2
-            bottomMargin: -(Math.round(icon.height / 4) + caption.height + (PlasmaCore.Units.smallSpacing * 2))
-        }
-        imagePath: "widgets/viewitem"
-        prefix: "hover"
-        z: -1
-        visible: !thumb.windowHeap.dragActive && (hoverHandler.hovered || selected)
-    }
-
     HoverHandler {
         id: hoverHandler
-        onHoveredChanged: if (hovered != selected) {
+        onHoveredChanged: if (hovered !== selected) {
             thumb.windowHeap.resetSelected();
         }
     }
@@ -305,6 +357,18 @@ Item {
         onTapped: {
             KWinComponents.Workspace.activeClient = thumb.client;
             thumb.windowHeap.activated();
+        }
+        onPressedChanged: {
+            if (pressed) {
+                var saved = Qt.point(thumbSource.x, thumbSource.y);
+                thumbSource.Drag.active = true;
+                thumb.substate = "pressed";
+                thumbSource.x = saved.x;
+                thumbSource.y = saved.y;
+            } else if (!thumb.activeDragHandler.active) {
+                thumbSource.Drag.active = false;
+                thumb.substate = "normal";
+            }
         }
     }
 
@@ -318,24 +382,49 @@ Item {
 
     component DragManager : DragHandler {
         target: null
+        dragThreshold: 0
         grabPermissions: PointerHandler.CanTakeOverFromAnything
+        // This does not work when moving pointer fast and pressing along the way
+        // See also QTBUG-105903, QTBUG-105904
+        // enabled: thumb.state !== "active-normal"
 
         onActiveChanged: {
             thumb.windowHeap.dragActive = active;
             if (active) {
                 thumb.activeDragHandler = this;
+                thumb.substate = "drag";
             } else {
-                thumbSource.Drag.drop();
+                thumbSource.saveDND();
+
+                var action = thumbSource.Drag.drop();
+                if (action === Qt.MoveAction) {
+                    // This whole component is in the process of being destroyed due to drop onto
+                    // another virtual desktop (not another screen).
+                    if (typeof thumbSource !== "undefined") {
+                        // Except the case when it was dropped on the same desktop which it's already on, so let's return to normal state anyway.
+                        thumbSource.deleteDND();
+                        thumb.substate = "normal";
+                    }
+                    return;
+                }
+
                 var globalPos = targetScreen.mapToGlobal(centroid.scenePosition);
                 effect.checkItemDroppedOutOfScreen(globalPos, thumbSource);
+
+                if (typeof thumbSource !== "undefined") {
+                    // else, return to normal without reparenting
+                    thumbSource.deleteDND();
+                    thumb.substate = "normal";
+                }
             }
         }
     }
-    property DragManager activeDragHandler: dragHandler
+
     DragManager {
         id: dragHandler
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
     }
+
     DragManager {
         id: touchDragHandler
         acceptedDevices: PointerDevice.TouchScreen
@@ -384,7 +473,7 @@ Item {
 
     Component.onDestruction: {
         if (selected) {
-            thumb.windowHeap.resetSelected();
+            windowHeap.resetSelected();
         }
     }
 }

@@ -172,20 +172,26 @@ void window_thumbnail_item::update_render_notifier()
 {
     disconnect(render_notifier);
 
-    if (!effects) {
-        return;
-    }
-
     if (!window()) {
         return;
     }
 
-    if (effects->isOpenGLCompositing()) {
-        render_notifier = connect(effects,
-                                  &EffectsHandler::frameRendered,
-                                  this,
-                                  &window_thumbnail_item::updateOffscreenTexture);
+    if (!use_gl_thumbnails()) {
+        return;
     }
+
+    render_notifier = connect(effects,
+                              &EffectsHandler::frameRendered,
+                              this,
+                              &window_thumbnail_item::updateOffscreenTexture);
+}
+
+bool window_thumbnail_item::use_gl_thumbnails() const
+{
+    static bool qt_quick_is_software
+        = QStringList({QStringLiteral("software"), QStringLiteral("softwarecontext")})
+              .contains(QQuickWindow::sceneGraphBackend());
+    return effects && effects->isOpenGLCompositing() && !qt_quick_is_software;
 }
 
 QSize window_thumbnail_item::sourceSize() const
@@ -204,7 +210,7 @@ void window_thumbnail_item::setSourceSize(const QSize& sourceSize)
 
 void window_thumbnail_item::destroyOffscreenTexture()
 {
-    if (!effects || !effects->isOpenGLCompositing()) {
+    if (!use_gl_thumbnails()) {
         return;
     }
 

@@ -1,13 +1,15 @@
 /*
     SPDX-FileCopyrightText: 2021 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
     SPDX-FileCopyrightText: 2022 Marco Martin <mart@kde.org>
+    SPDX-FileCopyrightText: 2022 ivan tkachenko <me@ratijas.tk>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-import QtQuick 2.12
-import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Window 2.15
+import QtGraphicalEffects 1.15
 import org.kde.kwin 3.0 as KWinComponents
 import org.kde.kwin.private.effects 1.0
 import org.kde.plasma.core 2.0 as PlasmaCore
@@ -22,20 +24,23 @@ Rectangle {
     property bool animationEnabled: false
     property bool organized: false
 
+    /** Shared Drag&Drop store to keep track of DND state across desktops. */
+    property var dndManagerStore: ({})
+
     color: "black"
 
     function start() {
-        container.animationEnabled = true;
-        container.organized = true;
+        animationEnabled = true;
+        organized = true;
     }
 
     function stop() {
-        container.organized = false;
+        organized = false;
     }
 
     function switchTo(desktopId) {
         KWinComponents.Workspace.currentDesktop = desktopId;
-        container.effect.deactivate(container.effect.animationDuration);
+        effect.deactivate(effect.animationDuration);
     }
 
     function selectNext(direction) {
@@ -86,27 +91,51 @@ Rectangle {
     }
 
     Keys.onPressed: {
-        if (event.key == Qt.Key_Escape) {
+        if (event.key === Qt.Key_Escape) {
             effect.deactivate(effect.animationDuration);
-        } else if (event.key == Qt.Key_Plus || event.key == Qt.Key_Equal) {
+        } else if (event.key === Qt.Key_Plus || event.key === Qt.Key_Equal) {
             addButton.clicked();
-        } else if (event.key == Qt.Key_Minus) {
+        } else if (event.key === Qt.Key_Minus) {
             removeButton.clicked();
         } else if (event.key >= Qt.Key_F1 && event.key <= Qt.Key_F12) {
             const desktopId = (event.key - Qt.Key_F1) + 1;
             switchTo(desktopId);
         } else if (event.key >= Qt.Key_0 && event.key <= Qt.Key_9) {
-            const desktopId = event.key == Qt.Key_0 ? 10 : (event.key - Qt.Key_0);
+            const desktopId = event.key === Qt.Key_0 ? 10 : (event.key - Qt.Key_0);
             switchTo(desktopId);
-        } else if (event.key == Qt.Key_Up) {
+        } else if (event.key === Qt.Key_Up) {
             event.accepted = selectNext(WindowHeap.Direction.Up);
-        } else if (event.key == Qt.Key_Down) {
+            if (!event.accepted) {
+                let view = effect.getView(Qt.TopEdge)
+                if (view) {
+                    effect.activateView(view)
+                }
+            }
+        } else if (event.key === Qt.Key_Down) {
             event.accepted = selectNext(WindowHeap.Direction.Down);
-        } else if (event.key == Qt.Key_Left) {
+            if (!event.accepted) {
+                let view = effect.getView(Qt.BottomEdge)
+                if (view) {
+                    effect.activateView(view)
+                }
+            }
+        } else if (event.key === Qt.Key_Left) {
             event.accepted = selectNext(WindowHeap.Direction.Left);
-        } else if (event.key == Qt.Key_Right) {
+            if (!event.accepted) {
+                let view = effect.getView(Qt.LeftEdge)
+                if (view) {
+                    effect.activateView(view)
+                }
+            }
+        } else if (event.key === Qt.Key_Right) {
             event.accepted = selectNext(WindowHeap.Direction.Right);
-        } else if (event.key == Qt.Key_Return || event.key == Qt.Key_Space) {
+            if (!event.accepted) {
+                let view = effect.getView(Qt.RightEdge)
+                if (view) {
+                    effect.activateView(view)
+                }
+            }
+        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Space) {
             for (let i = 0; i < gridRepeater.count; i++) {
                 if (gridRepeater.itemAt(i).focus) {
                     switchTo(gridRepeater.itemAt(i).desktop.x11DesktopNumber)
@@ -129,35 +158,42 @@ Rectangle {
         id: grid
 
         property Item currentItem
-        readonly property real targetScale : 1 / Math.max(rows, columns)
-        property real panelOpacity
+        readonly property real targetScale: Math.min(parent.width / width, parent.height / height)
+        property real panelOpacity: 1
 
         Behavior on x {
             enabled: !container.effect.gestureInProgress
             NumberAnimation {
                 duration: container.effect.animationDuration
-                easing.type: Easing.InOutCubic
+                easing.type: Easing.OutCubic
             }
         }
         Behavior on y {
             enabled: !container.effect.gestureInProgress
             NumberAnimation {
                 duration: container.effect.animationDuration
-                easing.type: Easing.InOutCubic
+                easing.type: Easing.OutCubic
             }
         }
         Behavior on scale {
             enabled: !container.effect.gestureInProgress
             NumberAnimation {
                 duration: container.effect.animationDuration
-                easing.type: Easing.InOutCubic
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on panelOpacity {
+            enabled: !container.effect.gestureInProgress
+            NumberAnimation {
+                duration: container.effect.animationDuration
+                easing.type: Easing.OutCubic
             }
         }
 
-        width: parent.width * columns
-        height: parent.height * rows
-        rowSpacing: PlasmaCore.Units.largeSpacing
-        columnSpacing: PlasmaCore.Units.largeSpacing
+        width: (parent.width + columnSpacing) * columns - columnSpacing
+        height: (parent.height + rowSpacing) * rows - rowSpacing
+        rowSpacing: PlasmaCore.Units.gridUnit
+        columnSpacing: PlasmaCore.Units.gridUnit
         rows: container.effect.gridRows
         columns: container.effect.gridColumns
         transformOrigin: Item.TopLeft
@@ -167,8 +203,8 @@ Rectangle {
                 when: container.effect.gestureInProgress
                 PropertyChanges {
                     target: grid
-                    x: Math.max(0, container.width / 2 - (width * targetScale) / 2) * container.effect.partialActivationFactor - grid.currentItem.x * (1 - container.effect.partialActivationFactor)
-                    y: Math.max(0, container.height / 2 - (height * targetScale) / 2) * container.effect.partialActivationFactor - grid.currentItem.y * (1 - container.effect.partialActivationFactor)
+                    x: Math.max(0, container.width / 2 - (grid.width * grid.targetScale) / 2) * container.effect.partialActivationFactor - grid.currentItem.x * (1 - container.effect.partialActivationFactor)
+                    y: Math.max(0, container.height / 2 - (grid.height * grid.targetScale) / 2) * container.effect.partialActivationFactor - grid.currentItem.y * (1 - container.effect.partialActivationFactor)
                     scale: 1 - (1 - grid.targetScale) * container.effect.partialActivationFactor
                     panelOpacity: 1 - container.effect.partialActivationFactor
                 }
@@ -181,8 +217,8 @@ Rectangle {
                 when: container.organized
                 PropertyChanges {
                     target: grid
-                    x: Math.max(0, container.width / 2 - (width * targetScale) / 2)
-                    y: Math.max(0, container.height / 2 - (height * targetScale) / 2)
+                    x: Math.max(0, container.width / 2 - (grid.width * grid.targetScale) / 2)
+                    y: Math.max(0, container.height / 2 - (grid.height * grid.targetScale) / 2)
                     scale: grid.targetScale
                     panelOpacity: 0
                 }
@@ -229,6 +265,16 @@ Rectangle {
                 height: container.height
 
                 clientModel: stackModel
+                dndManagerStore: container.dndManagerStore
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border {
+                        color: PlasmaCore.Theme.highlightColor
+                        width: 1 / grid.scale
+                    }
+                    visible: parent.activeFocus
+                }
                 TapHandler {
                     acceptedButtons: Qt.LeftButton
                     onTapped: {
@@ -263,7 +309,7 @@ Rectangle {
             enabled: !container.effect.gestureInProgress
             NumberAnimation {
                 duration: container.effect.animationDuration
-                easing.type: Easing.InOutCubic
+                easing.type: Easing.OutCubic
             }
         }
     }

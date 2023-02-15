@@ -98,7 +98,7 @@ void OverviewEffect::reconfigure(ReconfigureFlags)
 {
     OverviewConfig::self()->read();
     setLayout(OverviewConfig::layoutMode());
-    setAnimationDuration(animationTime(200));
+    setAnimationDuration(animationTime(300));
     setBlurBackground(OverviewConfig::blurBackground());
 
     for (const ElectricBorder& border : qAsConst(m_borderActivate)) {
@@ -245,6 +245,7 @@ void OverviewEffect::activate()
     setPartialActivationFactor(0.0);
 
     // This one should be the last.
+    m_searchText = QString();
     setRunning(true);
 }
 
@@ -260,6 +261,7 @@ void OverviewEffect::partialActivate(qreal factor)
     setGestureInProgress(true);
 
     // This one should be the last.
+    m_searchText = QString();
     setRunning(true);
 }
 

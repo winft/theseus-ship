@@ -1,15 +1,17 @@
 /*
     SPDX-FileCopyrightText: 2021 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2022 ivan tkachenko <me@ratijas.tk>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
-import org.kde.kirigami 2.12 as Kirigami
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
+import QtGraphicalEffects 1.15
+import org.kde.kirigami 2.20 as Kirigami
 import org.kde.kwin 3.0 as KWinComponents
+import org.kde.kwin.private.effects 1.0
 import org.kde.plasma.components 3.0 as PC3
 import org.kde.plasma.core 2.0 as PlasmaCore
 
@@ -23,6 +25,7 @@ Item {
     property QtObject clientModel
     property alias desktopModel: desktopRepeater.model
     property QtObject selectedDesktop: null
+    property WindowHeap heap
 
     implicitHeight: columnHeight + 2 * PlasmaCore.Units.smallSpacing
 
@@ -89,13 +92,6 @@ Item {
                         width: bar.desktopWidth
                         height: bar.desktopHeight
 
-                        Rectangle {
-                            id: mask
-                            anchors.fill: parent
-                            radius: 3
-                            visible: false
-                        }
-
                         DesktopView {
                             id: thumbnail
 
@@ -147,12 +143,17 @@ Item {
                             anchors.fill: parent
                             cached: true
                             source: thumbnail
-                            maskSource: mask
+                            maskSource: Rectangle {
+                                width: bar.desktopWidth
+                                height: bar.desktopHeight
+                                radius: 3
+                            }
                         }
 
                         Rectangle {
-                            readonly property bool active: !thumbnail.scaled && (delegate.activeFocus || dropArea.containsDrag || bar.selectedDesktop === delegate.desktop)
+                            readonly property bool active: !thumbnail.scaled && (delegate.activeFocus || dropArea.containsDrag || mouseArea.containsPress || bar.selectedDesktop === delegate.desktop)
                             anchors.fill: parent
+                            anchors.margins: -border.width
                             radius: 3
                             color: "transparent"
                             border.width: 2
@@ -161,6 +162,7 @@ Item {
                         }
 
                         MouseArea {
+                            id: mouseArea
                             anchors.fill: parent
                             acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                             onClicked: {
@@ -178,7 +180,7 @@ Item {
 
                         Loader {
                             LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
-                            active: (hoverHandler.hovered || Kirigami.Settings.tabletMode || Kirigami.Settings.hasTransientTouchInput) && desktopRepeater.count > 1
+                            active: !heap.dragActive && (hoverHandler.hovered || Kirigami.Settings.tabletMode || Kirigami.Settings.hasTransientTouchInput) && desktopRepeater.count > 1
                             anchors.right: parent.right
                             anchors.top: parent.top
                             sourceComponent: PC3.Button {
@@ -188,8 +190,7 @@ Item {
 
                                 PC3.ToolTip.text: text
                                 PC3.ToolTip.visible: hovered
-                                PC3. ToolTip.delay: Kirigami.Units.toolTipDelay
-                                Accessible.name: text
+                                PC3.ToolTip.delay: Kirigami.Units.toolTipDelay
 
                                 onClicked: delegate.remove()
                             }
@@ -199,10 +200,13 @@ Item {
                             id: dropArea
                             anchors.fill: parent
 
-                            onEntered: {
-                                drag.accepted = true;
-                            }
-                            onDropped: {
+                            onDropped: drop => {
+                                drop.accepted = true;
+                                // dragging a KWin::Window
+                                if (drag.source.desktop === delegate.desktop.x11DesktopNumber) {
+                                    drop.action = Qt.IgnoreAction;
+                                    return;
+                                }
                                 drag.source.desktop = delegate.desktop.x11DesktopNumber;
                             }
                         }
@@ -237,6 +241,8 @@ Item {
                             sourceComponent: PC3.TextField {
                                 topPadding: 0
                                 bottomPadding: 0
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
                                 text: delegate.desktop.name
                                 onEditingFinished: {
                                     delegate.desktop.name = text;

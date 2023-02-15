@@ -330,7 +330,7 @@ include_directories(BEFORE
 
 add_subdirectory(effect)
 if (KWIN_BUILD_KCMS)
-    add_subdirectory(kcmkwin)
+    add_subdirectory(kcms)
 endif()
 
 include(ECMSetupQtPluginMacroNames)
