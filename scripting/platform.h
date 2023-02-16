@@ -107,6 +107,10 @@ public:
         : platform_wrap(*space.base.options, space.base.config)
         , space{space}
     {
+        qRegisterMetaType<QList<output*>>();
+        qRegisterMetaType<QList<window*>>();
+        qRegisterMetaType<QVector<KWin::win::virtual_desktop*>>();
+
         qmlRegisterType<desktop_background_item>("org.kde.kwin", 3, 0, "DesktopBackground");
         qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 3, 0, "WindowThumbnail");
         qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");

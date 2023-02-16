@@ -111,10 +111,6 @@ script::script(int id,
     if (!QMetaType::hasRegisteredConverterFunction<QJSValue, QSize>()) {
         QMetaType::registerConverter<QJSValue, QSize>(scriptValueToSize);
     }
-
-    qRegisterMetaType<QList<output*>>();
-    qRegisterMetaType<QList<window*>>();
-    qRegisterMetaType<QVector<KWin::win::virtual_desktop*>>();
 }
 
 script::~script()
