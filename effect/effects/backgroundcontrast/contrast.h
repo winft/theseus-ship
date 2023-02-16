@@ -52,7 +52,7 @@ public:
 
     int requestedEffectChainPosition() const override
     {
-        return 76;
+        return 21;
     }
 
     void slotWindowDeleted(KWin::EffectWindow* w);

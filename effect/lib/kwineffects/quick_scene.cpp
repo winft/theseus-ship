@@ -3,36 +3,57 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #include "quick_scene.h"
 
 #include "kwineffects/effects_handler.h"
+#include "logging_p.h"
 #include "shared_qml_engine.h"
 
 #include <QQmlEngine>
+#include <QQmlIncubator>
+#include <QQuickItem>
 #include <QQuickWindow>
 #include <QWindow>
-#include <QtQuick/QQuickItem>
 
 namespace KWin
 {
+
+class QuickSceneViewIncubator : public QQmlIncubator
+{
+public:
+    QuickSceneViewIncubator(
+        const std::function<void(QuickSceneViewIncubator*)>& statusChangedCallback)
+        : QQmlIncubator(QQmlIncubator::Asynchronous)
+        , m_statusChangedCallback(statusChangedCallback)
+    {
+    }
+
+    void statusChanged(QQmlIncubator::Status /*status*/) override
+    {
+        m_statusChangedCallback(this);
+    }
+
+private:
+    std::function<void(QuickSceneViewIncubator*)> m_statusChangedCallback;
+};
 
 class QuickSceneEffectPrivate
 {
 public:
     static QuickSceneEffectPrivate* get(QuickSceneEffect* effect)
     {
-        return effect->d.data();
+        return effect->d.get();
     }
     bool isItemOnScreen(QQuickItem* item, EffectScreen* screen) const;
 
     SharedQmlEngine::Ptr qmlEngine;
-    QScopedPointer<QQmlComponent> qmlComponent;
+    std::unique_ptr<QQmlComponent> qmlComponent;
     QUrl source;
-    QHash<EffectScreen*, QuickSceneView*> views;
+    std::map<EffectScreen*, std::unique_ptr<QQmlIncubator>> incubators;
+    std::map<EffectScreen*, std::unique_ptr<QuickSceneView>> views;
     QPointer<QuickSceneView> mouseImplicitGrab;
     bool running = false;
-    QScopedPointer<QWindow> dummyWindow;
+    std::unique_ptr<QWindow> dummyWindow;
     EffectScreen* paintedScreen = nullptr;
 };
 
@@ -42,21 +63,12 @@ bool QuickSceneEffectPrivate::isItemOnScreen(QQuickItem* item, EffectScreen* scr
         return false;
     }
 
-    auto const view = views[screen];
-    auto rootItem = view->rootItem();
-    auto candidate = item->parentItem();
-    // Is there a more efficient way?
-    while (candidate) {
-        if (candidate == rootItem) {
-            return true;
-        }
-        candidate = candidate->parentItem();
-    }
-    return false;
+    auto const& view = views.at(screen);
+    return item->window() == view->window();
 }
 
 QuickSceneView::QuickSceneView(QuickSceneEffect* effect, EffectScreen* screen)
-    : EffectQuickView(effect, QuickSceneEffectPrivate::get(effect)->dummyWindow.data())
+    : EffectQuickView(effect, QuickSceneEffectPrivate::get(effect)->dummyWindow.get())
     , m_effect(effect)
     , m_screen(screen)
 {
@@ -72,7 +84,7 @@ QuickSceneView::~QuickSceneView()
 
 QQuickItem* QuickSceneView::rootItem() const
 {
-    return m_rootItem.data();
+    return m_rootItem.get();
 }
 
 void QuickSceneView::setRootItem(QQuickItem* item)
@@ -83,8 +95,8 @@ void QuickSceneView::setRootItem(QQuickItem* item)
 
     auto updateSize = [this]() { m_rootItem->setSize(contentItem()->size()); };
     updateSize();
-    connect(contentItem(), &QQuickItem::widthChanged, m_rootItem.data(), updateSize);
-    connect(contentItem(), &QQuickItem::heightChanged, m_rootItem.data(), updateSize);
+    connect(contentItem(), &QQuickItem::widthChanged, m_rootItem.get(), updateSize);
+    connect(contentItem(), &QQuickItem::heightChanged, m_rootItem.get(), updateSize);
 }
 
 QuickSceneEffect* QuickSceneView::effect() const
@@ -139,10 +151,10 @@ void QuickSceneEffect::checkItemDraggedOutOfScreen(QQuickItem* item)
         = QRectF(item->mapToGlobal(QPointF(0, 0)), QSizeF(item->width(), item->height()));
     QList<EffectScreen*> screens;
 
-    for (auto it = d->views.constBegin(); it != d->views.constEnd(); ++it) {
-        if (!d->isItemOnScreen(item, it.key())
-            && it.key()->geometry().intersects(globalGeom.toRect())) {
-            screens << it.key();
+    for (auto const& [screen, view] : d->views) {
+        if (!d->isItemOnScreen(item, screen)
+            && screen->geometry().intersects(globalGeom.toRect())) {
+            screens << screen;
         }
     }
 
@@ -151,17 +163,14 @@ void QuickSceneEffect::checkItemDraggedOutOfScreen(QQuickItem* item)
 
 void QuickSceneEffect::checkItemDroppedOutOfScreen(const QPointF& globalPos, QQuickItem* item)
 {
-    EffectScreen* screen = nullptr;
-    for (auto it = d->views.constBegin(); it != d->views.constEnd(); ++it) {
-        if (!d->isItemOnScreen(item, it.key())
-            && it.key()->geometry().contains(globalPos.toPoint())) {
-            screen = it.key();
-            break;
-        }
-    }
-
-    if (screen) {
-        Q_EMIT itemDroppedOutOfScreen(globalPos, item, screen);
+    auto const it
+        = std::find_if(d->views.begin(), d->views.end(), [this, globalPos, item](auto const& view) {
+              auto screen = view.first;
+              return !d->isItemOnScreen(item, screen)
+                  && screen->geometry().contains(globalPos.toPoint());
+          });
+    if (it != d->views.end()) {
+        Q_EMIT itemDroppedOutOfScreen(globalPos, item, it->first);
     }
 }
 
@@ -208,36 +217,26 @@ void QuickSceneEffect::setSource(const QUrl& url)
     }
 }
 
-QHash<EffectScreen*, QuickSceneView*> QuickSceneEffect::views() const
+QuickSceneView* QuickSceneEffect::viewForScreen(EffectScreen* screen) const
 {
-    return d->views;
+    auto const it = d->views.find(screen);
+    return it == d->views.end() ? nullptr : it->second.get();
 }
 
 QuickSceneView* QuickSceneEffect::viewAt(const QPoint& pos) const
 {
-    for (QuickSceneView* screenView : qAsConst(d->views)) {
-        if (screenView->geometry().contains(pos)) {
-            return screenView;
-        }
-    }
-    return nullptr;
+    auto const it = std::find_if(d->views.begin(), d->views.end(), [pos](auto const& view) {
+        return view.second->geometry().contains(pos);
+    });
+    return it == d->views.end() ? nullptr : it->second.get();
 }
 
 QuickSceneView* QuickSceneEffect::activeView() const
 {
-    auto it = std::find_if(d->views.constBegin(), d->views.constEnd(), [](QuickSceneView* v) {
-        return v->window()->activeFocusItem();
+    auto const it = std::find_if(d->views.begin(), d->views.end(), [](auto const& view) {
+        return view.second->window()->activeFocusItem();
     });
-
-    QuickSceneView* screenView = nullptr;
-
-    if (it == d->views.constEnd()) {
-        screenView = d->views.value(effects->activeScreen());
-    } else {
-        screenView = (*it);
-    }
-
-    return screenView;
+    return it == d->views.end() ? d->views[effects->activeScreen()].get() : it->second.get();
 }
 
 KWin::QuickSceneView* QuickSceneEffect::getView(Qt::Edge edge)
@@ -246,42 +245,42 @@ KWin::QuickSceneView* QuickSceneEffect::getView(Qt::Edge edge)
 
     QuickSceneView* candidate = nullptr;
 
-    for (auto* v : d->views) {
+    for (auto const& [screen, view] : d->views) {
         switch (edge) {
         case Qt::LeftEdge:
-            if (v->geometry().left() < screenView->geometry().left()) {
+            if (view->geometry().left() < screenView->geometry().left()) {
                 // Look for the nearest view from the current
-                if (!candidate || v->geometry().left() > candidate->geometry().left()
-                    || (v->geometry().left() == candidate->geometry().left()
-                        && v->geometry().top() > candidate->geometry().top())) {
-                    candidate = v;
+                if (!candidate || view->geometry().left() > candidate->geometry().left()
+                    || (view->geometry().left() == candidate->geometry().left()
+                        && view->geometry().top() > candidate->geometry().top())) {
+                    candidate = view.get();
                 }
             }
             break;
         case Qt::TopEdge:
-            if (v->geometry().top() < screenView->geometry().top()) {
-                if (!candidate || v->geometry().top() > candidate->geometry().top()
-                    || (v->geometry().top() == candidate->geometry().top()
-                        && v->geometry().left() > candidate->geometry().left())) {
-                    candidate = v;
+            if (view->geometry().top() < screenView->geometry().top()) {
+                if (!candidate || view->geometry().top() > candidate->geometry().top()
+                    || (view->geometry().top() == candidate->geometry().top()
+                        && view->geometry().left() > candidate->geometry().left())) {
+                    candidate = view.get();
                 }
             }
             break;
         case Qt::RightEdge:
-            if (v->geometry().right() > screenView->geometry().right()) {
-                if (!candidate || v->geometry().right() < candidate->geometry().right()
-                    || (v->geometry().right() == candidate->geometry().right()
-                        && v->geometry().top() > candidate->geometry().top())) {
-                    candidate = v;
+            if (view->geometry().right() > screenView->geometry().right()) {
+                if (!candidate || view->geometry().right() < candidate->geometry().right()
+                    || (view->geometry().right() == candidate->geometry().right()
+                        && view->geometry().top() > candidate->geometry().top())) {
+                    candidate = view.get();
                 }
             }
             break;
         case Qt::BottomEdge:
-            if (v->geometry().bottom() > screenView->geometry().bottom()) {
-                if (!candidate || v->geometry().bottom() < candidate->geometry().bottom()
-                    || (v->geometry().bottom() == candidate->geometry().bottom()
-                        && v->geometry().left() > candidate->geometry().left())) {
-                    candidate = v;
+            if (view->geometry().bottom() > screenView->geometry().bottom()) {
+                if (!candidate || view->geometry().bottom() < candidate->geometry().bottom()
+                    || (view->geometry().bottom() == candidate->geometry().bottom()
+                        && view->geometry().left() > candidate->geometry().left())) {
+                    candidate = view.get();
                 }
             }
             break;
@@ -297,17 +296,17 @@ void QuickSceneEffect::activateView(QuickSceneView* view)
         return;
     }
 
-    auto* av = activeView();
+    auto av = activeView();
     // Already properly active?
     if (view == av && av->window()->activeFocusItem()) {
         return;
     }
 
-    for (auto* otherView : d->views) {
-        if (otherView == view && !view->window()->activeFocusItem()) {
+    for (auto const& [screen, otherView] : d->views) {
+        if (otherView.get() == view && !view->window()->activeFocusItem()) {
             QFocusEvent focusEvent(QEvent::FocusIn, Qt::ActiveWindowFocusReason);
             qApp->sendEvent(view->window(), &focusEvent);
-        } else if (otherView != view && otherView->window()->activeFocusItem()) {
+        } else if (otherView.get() != view && otherView->window()->activeFocusItem()) {
             QFocusEvent focusEvent(QEvent::FocusOut, Qt::ActiveWindowFocusReason);
             qApp->sendEvent(otherView->window(), &focusEvent);
         }
@@ -322,13 +321,12 @@ void QuickSceneEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
     d->paintedScreen = data.screen();
 
     if (effects->waylandDisplay()) {
-        QuickSceneView* screenView = d->views.value(data.screen());
-        if (screenView) {
-            effects->renderEffectQuickView(screenView);
+        if (auto it = d->views.find(data.screen()); it != d->views.end()) {
+            effects->renderEffectQuickView(it->second.get());
         }
     } else {
-        for (QuickSceneView* screenView : qAsConst(d->views)) {
-            effects->renderEffectQuickView(screenView);
+        for (auto const& [screen, screenView] : d->views) {
+            effects->renderEffectQuickView(screenView.get());
         }
     }
 }
@@ -338,16 +336,18 @@ void QuickSceneEffect::postPaintScreen()
     // Screen views are repainted after kwin performs its compositing cycle. Another alternative
     // is to update the views after receiving a vblank.
     if (effects->waylandDisplay()) {
-        QuickSceneView* screenView = d->views.value(d->paintedScreen);
-        if (screenView && screenView->isDirty()) {
-            QMetaObject::invokeMethod(screenView, &QuickSceneView::update, Qt::QueuedConnection);
-            screenView->resetDirty();
+        auto it = d->views.find(d->paintedScreen);
+        if (it != d->views.end()) {
+            if (auto view = it->second.get(); view->isDirty()) {
+                QMetaObject::invokeMethod(view, &QuickSceneView::update, Qt::QueuedConnection);
+                view->resetDirty();
+            }
         }
     } else {
-        for (QuickSceneView* screenView : qAsConst(d->views)) {
+        for (auto const& [screen, screenView] : d->views) {
             if (screenView->isDirty()) {
                 QMetaObject::invokeMethod(
-                    screenView, &QuickSceneView::update, Qt::QueuedConnection);
+                    screenView.get(), &QuickSceneView::update, Qt::QueuedConnection);
                 screenView->resetDirty();
             }
         }
@@ -357,12 +357,11 @@ void QuickSceneEffect::postPaintScreen()
 
 bool QuickSceneEffect::isActive() const
 {
-    return !d->views.isEmpty() && !effects->isScreenLocked();
+    return !d->views.empty() && !effects->isScreenLocked();
 }
 
-QVariantMap QuickSceneEffect::initialProperties(EffectScreen* screen)
+QVariantMap QuickSceneEffect::initialProperties(EffectScreen* /*screen*/)
 {
-    Q_UNUSED(screen)
     return QVariantMap();
 }
 
@@ -373,32 +372,42 @@ void QuickSceneEffect::handleScreenAdded(EffectScreen* screen)
 
 void QuickSceneEffect::handleScreenRemoved(EffectScreen* screen)
 {
-    delete d->views.take(screen);
+    d->views.erase(screen);
+    d->incubators.erase(screen);
 }
 
 void QuickSceneEffect::addScreen(EffectScreen* screen)
 {
-    QuickSceneView* view = new QuickSceneView(this, screen);
     auto properties = initialProperties(screen);
-    properties["width"] = view->geometry().width();
-    properties["height"] = view->geometry().height();
-    view->setRootItem(
-        qobject_cast<QQuickItem*>(d->qmlComponent->createWithInitialProperties(properties)));
-    // we need the focus always set to the view of activescreen at first, and changed only upon
-    // user interaction
-    if (view->contentItem()) {
-        view->contentItem()->setFocus(false);
-    }
-    view->setAutomaticRepaint(false);
+    properties["width"] = screen->geometry().width();
+    properties["height"] = screen->geometry().height();
 
-    connect(view, &QuickSceneView::repaintNeeded, this, [view]() {
-        effects->addRepaint(view->geometry());
+    auto incubator = new QuickSceneViewIncubator([this,
+                                                  screen](QuickSceneViewIncubator* incubator) {
+        if (incubator->isReady()) {
+            auto view = new QuickSceneView(this, screen);
+            view->setRootItem(qobject_cast<QQuickItem*>(incubator->object()));
+            if (view->contentItem()) {
+                view->contentItem()->setFocus(false);
+            }
+            view->setAutomaticRepaint(false);
+            connect(view, &QuickSceneView::repaintNeeded, this, [view]() {
+                effects->addRepaint(view->geometry());
+            });
+            connect(view, &QuickSceneView::renderRequested, view, &QuickSceneView::scheduleRepaint);
+            connect(view, &QuickSceneView::sceneChanged, view, &QuickSceneView::scheduleRepaint);
+            view->scheduleRepaint();
+            d->views[screen].reset(view);
+        } else if (incubator->isError()) {
+            qCWarning(LIBKWINEFFECTS)
+                << "Could not create a view for QML file" << d->qmlComponent->url();
+            qCWarning(LIBKWINEFFECTS) << incubator->errors();
+        }
     });
-    connect(view, &QuickSceneView::renderRequested, view, &QuickSceneView::scheduleRepaint);
-    connect(view, &QuickSceneView::sceneChanged, view, &QuickSceneView::scheduleRepaint);
 
-    view->scheduleRepaint();
-    d->views.insert(screen, view);
+    incubator->setInitialProperties(properties);
+    d->incubators[screen].reset(incubator);
+    d->qmlComponent->create(*incubator);
 }
 
 void QuickSceneEffect::startInternal()
@@ -417,7 +426,7 @@ void QuickSceneEffect::startInternal()
     }
 
     if (!d->qmlComponent) {
-        d->qmlComponent.reset(new QQmlComponent(d->qmlEngine.data()));
+        d->qmlComponent.reset(new QQmlComponent(d->qmlEngine.get()));
         d->qmlComponent->loadUrl(d->source);
         if (d->qmlComponent->isError()) {
             qWarning().nospace() << "Failed to load " << d->source << ": "
@@ -465,7 +474,7 @@ void QuickSceneEffect::stopInternal()
     disconnect(
         effects, &EffectsHandler::screenRemoved, this, &QuickSceneEffect::handleScreenRemoved);
 
-    qDeleteAll(d->views);
+    d->incubators.clear();
     d->views.clear();
     d->dummyWindow.reset();
     d->running = false;
@@ -515,7 +524,7 @@ void QuickSceneEffect::windowInputMouseEvent(QEvent* event)
 
 void QuickSceneEffect::grabbedKeyboardEvent(QKeyEvent* keyEvent)
 {
-    auto* screenView = activeView();
+    auto screenView = activeView();
 
     if (screenView) {
         // ActiveView may not have an activeFocusItem yet
@@ -526,9 +535,9 @@ void QuickSceneEffect::grabbedKeyboardEvent(QKeyEvent* keyEvent)
 
 bool QuickSceneEffect::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
-    for (QuickSceneView* screenView : qAsConst(d->views)) {
+    for (auto const& [screen, screenView] : d->views) {
         if (screenView->geometry().contains(pos.toPoint())) {
-            activateView(screenView);
+            activateView(screenView.get());
             return screenView->forwardTouchDown(id, pos, time);
         }
     }
@@ -537,7 +546,7 @@ bool QuickSceneEffect::touchDown(qint32 id, const QPointF& pos, quint32 time)
 
 bool QuickSceneEffect::touchMotion(qint32 id, const QPointF& pos, quint32 time)
 {
-    for (QuickSceneView* screenView : qAsConst(d->views)) {
+    for (auto const& [screen, screenView] : d->views) {
         if (screenView->geometry().contains(pos.toPoint())) {
             return screenView->forwardTouchMotion(id, pos, time);
         }
@@ -547,7 +556,7 @@ bool QuickSceneEffect::touchMotion(qint32 id, const QPointF& pos, quint32 time)
 
 bool QuickSceneEffect::touchUp(qint32 id, quint32 time)
 {
-    for (QuickSceneView* screenView : qAsConst(d->views)) {
+    for (auto const& [screen, screenView] : d->views) {
         if (screenView->forwardTouchUp(id, time)) {
             return true;
         }

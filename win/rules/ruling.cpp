@@ -66,7 +66,7 @@ void ruling::readFromSettings(rules::settings const* settings)
 
     auto read_bytes_match = [](auto const& data, auto const& match) {
         bytes_match bytes;
-        bytes.data = data.toLower().toLatin1();
+        bytes.data = data.toLatin1();
         bytes.match = static_cast<name_match>(match);
         return bytes;
     };
@@ -81,7 +81,8 @@ void ruling::readFromSettings(rules::settings const* settings)
     wmclass = read_bytes_match(settings->wmclass(), settings->wmclassmatch());
     wmclasscomplete = settings->wmclasscomplete();
     windowrole = read_bytes_match(settings->windowrole(), settings->windowrolematch());
-    clientmachine = read_bytes_match(settings->clientmachine(), settings->clientmachinematch());
+    clientmachine
+        = read_bytes_match(settings->clientmachine().toLower(), settings->clientmachinematch());
     title = read_string_match(settings->title(), settings->titlematch());
 
     types = NET::WindowTypeMask(settings->types());

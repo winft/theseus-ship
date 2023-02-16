@@ -83,6 +83,9 @@ public:
 
     void loadShortcuts();
     void resetShortcuts();
+    void saveShortcuts();
+    bool isShortcutsChanged() const;
+    bool isShortcutsDefault() const;
 
     void setHighlightWindowsEnabled(bool enabled);
     void setFilterScreenEnabled(bool enabled);
@@ -100,6 +103,7 @@ public:
     void setShowDesktopModeDefaultIndicatorVisible(bool visible);
     void setSwitchingModeDefaultIndicatorVisible(bool visible);
     void setLayoutNameDefaultIndicatorVisible(bool visible);
+    void setShortcutsDefaultIndicatorVisible(bool visible);
 
 Q_SIGNALS:
     void filterScreenChanged(int value);
@@ -110,6 +114,7 @@ Q_SIGNALS:
     void switchingModeChanged(int value);
     void layoutNameChanged(const QString &layoutName);
     void effectConfigButtonClicked();
+    void shortcutChanged();
 
 private Q_SLOTS:
     void tabBoxToggled(bool on);
@@ -120,13 +125,12 @@ private Q_SLOTS:
     void onShowDesktopMode();
     void onSwitchingMode();
     void onEffectCombo();
-    void shortcutChanged(const QKeySequence &seq);
+    void onShortcutChanged(const QKeySequence &seq);
 
 private:
     void setDefaultIndicatorVisible(QWidget *widget, bool visible);
 
     KActionCollection *m_actionCollection = nullptr;
-    KShortcutsEditor *m_editor = nullptr;
 
     bool m_isHighlightWindowsEnabled = true;
     TabboxType m_type;

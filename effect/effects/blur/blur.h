@@ -60,7 +60,7 @@ public:
 
     int requestedEffectChainPosition() const override
     {
-        return 75;
+        return 20;
     }
 
     void reset();

@@ -158,9 +158,15 @@ void KWinTabBoxConfig::initLayoutLists()
     const auto lnfPackages = availableLnFPackages();
     for (const auto &package : lnfPackages) {
         const auto &metaData = package.metadata();
+
+        const QString switcherFile = package.filePath("windowswitcher", QStringLiteral("WindowSwitcher.qml"));
+        if (switcherFile.isEmpty()) {
+            // Skip lnfs that don't actually ship a switcher
+            continue;
+        }
         layoutNames << metaData.name();
         layoutPlugins << metaData.pluginId();
-        layoutPaths << package.filePath("windowswitcher", QStringLiteral("WindowSwitcher.qml"));
+        layoutPaths << switcherFile;
     }
 
     for (const auto &offer : offers) {
@@ -225,6 +231,7 @@ void KWinTabBoxConfig::createConnections(KWinTabBoxConfigForm *form)
     connect(form, &KWinTabBoxConfigForm::showDesktopModeChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
     connect(form, &KWinTabBoxConfigForm::switchingModeChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
     connect(form, &KWinTabBoxConfigForm::layoutNameChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
+    connect(form, &KWinTabBoxConfigForm::shortcutChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
 }
 
 void KWinTabBoxConfig::updateUnmanagedState()
@@ -261,6 +268,7 @@ bool KWinTabBoxConfig::updateUnmanagedIsNeedSave(const KWinTabBoxConfigForm *for
     isNeedSave |= form->showDesktopMode() != config->showDesktopMode();
     isNeedSave |= form->switchingMode() != config->switchingMode();
     isNeedSave |= form->layoutName() != config->layoutName();
+    isNeedSave |= form->isShortcutsChanged();
 
     return isNeedSave;
 }
@@ -275,6 +283,7 @@ bool KWinTabBoxConfig::updateUnmanagedIsDefault(KWinTabBoxConfigForm *form, cons
     isDefault &= form->showDesktopMode() == config->defaultShowDesktopModeValue();
     isDefault &= form->switchingMode() == config->defaultSwitchingModeValue();
     isDefault &= form->layoutName() == config->defaultLayoutNameValue();
+    isDefault &= form->isShortcutsDefault();
 
     return isDefault;
 }
@@ -288,6 +297,7 @@ void KWinTabBoxConfig::updateUiDefaultIndicator(bool visible, KWinTabBoxConfigFo
     form->setShowDesktopModeDefaultIndicatorVisible(visible && form->showDesktopMode() != config->defaultShowDesktopModeValue());
     form->setSwitchingModeDefaultIndicatorVisible(visible && form->switchingMode() != config->defaultSwitchingModeValue());
     form->setLayoutNameDefaultIndicatorVisible(visible && form->layoutName() != config->defaultLayoutNameValue());
+    form->setShortcutsDefaultIndicatorVisible(visible);
 }
 
 void KWinTabBoxConfig::load()
@@ -319,6 +329,9 @@ void KWinTabBoxConfig::save()
 
     updateConfigFromUi(m_primaryTabBoxUi, m_data->tabBoxConfig());
     updateConfigFromUi(m_alternativeTabBoxUi, m_data->tabBoxAlternativeConfig());
+
+    m_primaryTabBoxUi->saveShortcuts();
+    m_alternativeTabBoxUi->saveShortcuts();
 
     m_data->tabBoxConfig()->save();
     m_data->tabBoxAlternativeConfig()->save();
