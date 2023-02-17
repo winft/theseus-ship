@@ -20,7 +20,6 @@
 #include <memory>
 #include <vector>
 
-struct wlr_input_device;
 struct wlr_pointer;
 struct wlr_keyboard;
 struct wlr_touch;
