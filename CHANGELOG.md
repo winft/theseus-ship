@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+## [5.27.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.27.0-beta.0...kwinft@5.27.0) (2023-02-17)
+
 ## [5.27.0-beta.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.26.0-beta.0...kwinft@5.27.0-beta.0) (2023-02-16)
 
 
