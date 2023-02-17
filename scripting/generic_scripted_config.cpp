@@ -6,7 +6,6 @@
 #include "generic_scripted_config.h"
 
 #include "config-kwin.h"
-#include <KAboutData>
 #include <kwineffects_interface.h>
 #define TRANSLATION_DOMAIN "kwin_scripting"
 #include <KLocalizedString>

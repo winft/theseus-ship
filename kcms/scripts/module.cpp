@@ -12,7 +12,6 @@
 #include <QDBusPendingCall>
 #include <QFileDialog>
 
-#include <KAboutData>
 #include <KConfigGroup>
 #include <KLocalizedString>
 #include <KMessageBox>
