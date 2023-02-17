@@ -547,7 +547,7 @@ declarative_script::declarative_script(int id,
     , m_component(new QQmlComponent(platform.qml_engine, this))
 {
     m_context->setContextProperty(QStringLiteral("KWin"),
-                                  new js_engine_global_methods_wrapper(platform, this));
+                                  new js_engine_global_methods_wrapper(this));
 }
 
 declarative_script::~declarative_script()

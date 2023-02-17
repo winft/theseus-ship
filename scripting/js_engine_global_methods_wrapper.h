@@ -17,7 +17,6 @@ namespace KWin::scripting
 {
 
 class declarative_script;
-class platform_wrap;
 
 class js_engine_global_methods_wrapper : public QObject
 {
@@ -46,21 +45,15 @@ public:
     };
     Q_ENUM(ClientAreaOption)
 
-    js_engine_global_methods_wrapper(scripting::platform_wrap& platform,
-                                     declarative_script* parent);
+    js_engine_global_methods_wrapper(declarative_script* parent);
     ~js_engine_global_methods_wrapper() override;
 
 public Q_SLOTS:
     QVariant readConfig(const QString& key, QVariant defaultValue = QVariant());
     void registerWindow(QQuickWindow* window);
-    bool registerShortcut(const QString& name,
-                          const QString& text,
-                          const QKeySequence& keys,
-                          QJSValue function);
 
 private:
     declarative_script* m_script;
-    scripting::platform_wrap& platform;
 };
 
 }
