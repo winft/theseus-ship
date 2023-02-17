@@ -43,7 +43,7 @@ struct screen_edger_singleton {
 struct virtual_desktops_singleton {
     win::virtual_desktop_manager_qobject* qobject;
     std::function<QVector<virtual_desktop*>()> get;
-    std::function<void(unsigned int, QString)> create;
+    std::function<virtual_desktop*(unsigned int, QString)> create;
     std::function<void(QString const&)> remove;
     std::function<virtual_desktop*()> current;
 };

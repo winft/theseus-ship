@@ -218,18 +218,6 @@ public:
         }
     }
 
-    int desktop() const override
-    {
-        return win::get_desktop(*ref_win);
-    }
-
-    void setDesktop(int desktop) override
-    {
-        if (ref_win->control) {
-            win::set_desktop(ref_win, desktop);
-        }
-    }
-
     QVector<win::virtual_desktop*> desktops() const override
     {
         return win::get_desktops(*ref_win);
