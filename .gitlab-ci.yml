@@ -64,6 +64,14 @@ Clang-Format:
   stage: Compliance
   image: $IMAGE
 
+Reuse:
+  stage: Compliance
+  image: python
+  before_script:
+    pip install reuse
+  script:
+    reuse lint
+
 
 ####################################################################################################
 #
