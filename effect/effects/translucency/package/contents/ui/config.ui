@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+
+SPDX-License-Identifier: GPL-2.0-or-later
+-->
+
 <ui version="4.0">
  <class>KWin::TranslucencyEffectConfigForm</class>
  <widget class="QWidget" name="KWin::TranslucencyEffectConfigForm">
