@@ -2,7 +2,7 @@
     SPDX-FileCopyrightText: 2014 Martin Gräßlin <mgraesslin@kde.org>
     SPDX-FileCopyrightText: 2019 Valerio Pilo <vpilo@coldshock.net>
 
-    SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+    SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 */
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
