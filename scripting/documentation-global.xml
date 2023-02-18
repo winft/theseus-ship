@@ -1,4 +1,11 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
+
+<!--
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+
+SPDX-License-Identifier: GPL-2.0-or-later
+-->
+
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.7.6.1">
     <!--  Documentation for global KWin scripting methods. In doxygen XML format as this can be converted to MediaWiki    -->
     <!--  Use script and XSLT from https://invent.kde.org/graesslin/kwin-scripting-api-generator to generate the documentation    -->

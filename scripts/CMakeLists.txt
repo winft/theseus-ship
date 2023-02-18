@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 function(add_kwin_script name)
     kpackage_install_package(${name} ${name} scripts kwin)
 

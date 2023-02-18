@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+
+SPDX-License-Identifier: GPL-2.0-or-later
+-->
+
 # Changelog
 All notable changes to KWinFT will be documented in this file.
 ## [5.27.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.27.0-beta.0...kwinft@5.27.0) (2023-02-17)

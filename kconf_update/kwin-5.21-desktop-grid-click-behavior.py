@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 from __future__ import print_function
 
 import sys

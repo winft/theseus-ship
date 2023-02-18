@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 if (XCB_ICCCM_FOUND)
     integrationTest(NAME testTranslucency SRCS translucency_test.cpp LIBS XCB::ICCCM)
     integrationTest(NAME testSlidingPopups SRCS slidingpopups_test.cpp LIBS XCB::ICCCM)

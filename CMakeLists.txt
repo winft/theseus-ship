@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(KWinFT VERSION 5.27.80)

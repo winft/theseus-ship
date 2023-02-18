@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 install(FILES kwin.upd
         DESTINATION ${KDE_INSTALL_KCONFUPDATEDIR})
 install(PROGRAMS kwin-5.16-auto-bordersize.sh

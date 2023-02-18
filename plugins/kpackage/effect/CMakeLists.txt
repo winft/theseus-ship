@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 add_definitions(-DTRANSLATION_DOMAIN=\"kwin_package_effect\")
 
 kcoreaddons_add_plugin(kwin_packagestructure_effect SOURCES effect.cpp INSTALL_NAMESPACE "kpackage/packagestructure")

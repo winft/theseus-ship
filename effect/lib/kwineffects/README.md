@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+
+SPDX-License-Identifier: GPL-2.0-or-later
+-->
+
 # Effects library 
 
 Contains necessary classes for creating new KWin compositing effects.

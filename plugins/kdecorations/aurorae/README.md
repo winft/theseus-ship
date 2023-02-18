@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+
+SPDX-License-Identifier: GPL-2.0-or-later
+-->
+
 Aurorae is a themeable window decoration for KWin.
 
 It supports theme files consisting of several SVG files for decoration and buttons. Themes can be
