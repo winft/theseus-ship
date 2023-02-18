@@ -212,7 +212,6 @@ void ApplicationX11::start()
 
     using base_t = base::x11::platform;
     base.is_crash_restart = crashes > 0;
-    base.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
 
     crashChecking();
     base.x11_data.screen_number = QX11Info::appScreen();
@@ -244,6 +243,7 @@ void ApplicationX11::start()
         }
 
         base.session = std::make_unique<base::seat::backend::logind::session>();
+        base.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
 
         base.input = std::make_unique<input::x11::platform<base_t>>(base);
         base.input->shortcuts

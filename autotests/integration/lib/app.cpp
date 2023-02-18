@@ -92,7 +92,12 @@ WaylandTestApplication::WaylandTestApplication(base::operation_mode mode,
         flags,
         base::backend::wlroots::start_options::headless);
     base->operation_mode = mode;
+
+    auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend);
+    base->session = std::make_unique<base::seat::backend::wlroots::session>(base->wlroots_session,
+                                                                            headless_backend);
     base->render = std::make_unique<render::backend::wlroots::platform<base_t>>(*base);
+    wlr_headless_add_output(headless_backend, 1280, 1024);
 
     base->process_environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
 }
@@ -128,13 +133,8 @@ void WaylandTestApplication::start()
 {
     prepare_start();
 
-    auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend);
-    wlr_headless_add_output(headless_backend, 1280, 1024);
-
     base->options = base::create_options(base->operation_mode, base->config.main);
 
-    base->session = std::make_unique<base::seat::backend::wlroots::session>(base->wlroots_session,
-                                                                            headless_backend);
     base->input = std::make_unique<input::backend::wlroots::platform>(
         *base, input::config(KConfig::SimpleConfig));
     base->input->install_shortcuts(base->operation_mode);
