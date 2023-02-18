@@ -428,7 +428,7 @@ std::string create_socket_name(std::string base)
     base.erase(std::remove_if(base.begin(), base.end(), [](char c) { return !isalpha(c); }),
                base.end());
     std::transform(base.begin(), base.end(), base.begin(), [](char c) { return std::tolower(c); });
-    return "wayland_" + base + "-0";
+    return "wayland-kwinft-test-" + base + "-0";
 }
 
 //
