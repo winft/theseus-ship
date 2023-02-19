@@ -102,6 +102,16 @@ struct pinch_end_event {
     event<pointer> base;
 };
 
+struct hold_begin_event {
+    uint32_t fingers;
+    event<pointer> base;
+};
+
+struct hold_end_event {
+    bool cancelled{false};
+    event<pointer> base;
+};
+
 /** Keyboard events */
 
 enum class key_state {

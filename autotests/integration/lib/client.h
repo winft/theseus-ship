@@ -21,6 +21,7 @@
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/plasmawindowmanagement.h>
 #include <Wrapland/Client/pointerconstraints.h>
+#include <Wrapland/Client/pointergestures.h>
 #include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/shadow.h>
@@ -58,6 +59,7 @@ public:
         std::unique_ptr<Wrapland::Client::PlasmaShell> plasma_shell;
         std::unique_ptr<Wrapland::Client::PlasmaWindowManagement> window_management;
         std::unique_ptr<Wrapland::Client::PointerConstraints> pointer_constraints;
+        std::unique_ptr<Wrapland::Client::PointerGestures> pointer_gestures;
         std::vector<std::unique_ptr<Wrapland::Client::Output>> outputs;
         std::unique_ptr<Wrapland::Client::idle_notifier_v1> idle_notifier;
         std::unique_ptr<Wrapland::Client::IdleInhibitManager> idle_inhibit;

@@ -116,6 +116,14 @@ public:
     {
     }
 
+    virtual void hold_begin(hold_begin_event const& /*event*/)
+    {
+    }
+
+    virtual void hold_end(hold_end_event const& /*event*/)
+    {
+    }
+
     virtual void switch_toggle(switch_toggle_event const& /*event*/)
     {
     }

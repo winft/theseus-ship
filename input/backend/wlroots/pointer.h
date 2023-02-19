@@ -247,6 +247,44 @@ void handle_pinch_end(struct wl_listener* listener, void* data)
 }
 
 template<typename Platform>
+void handle_hold_begin(struct wl_listener* listener, void* data)
+{
+    base::event_receiver<pointer<Platform>>* event_receiver_struct
+        = wl_container_of(listener, event_receiver_struct, event);
+    auto pointer = event_receiver_struct->receiver;
+    auto wlr_event = reinterpret_cast<wlr_pointer_hold_begin_event*>(data);
+
+    auto event = hold_begin_event{
+        wlr_event->fingers,
+        {
+            pointer,
+            wlr_event->time_msec,
+        },
+    };
+
+    Q_EMIT pointer->hold_begin(event);
+}
+
+template<typename Platform>
+void handle_hold_end(struct wl_listener* listener, void* data)
+{
+    base::event_receiver<pointer<Platform>>* event_receiver_struct
+        = wl_container_of(listener, event_receiver_struct, event);
+    auto pointer = event_receiver_struct->receiver;
+    auto wlr_event = reinterpret_cast<wlr_pointer_hold_end_event*>(data);
+
+    auto event = hold_end_event{
+        wlr_event->cancelled,
+        {
+            pointer,
+            wlr_event->time_msec,
+        },
+    };
+
+    Q_EMIT pointer->hold_end(event);
+}
+
+template<typename Platform>
 void handle_frame(struct wl_listener* listener, void* /*data*/)
 {
     base::event_receiver<pointer<Platform>>* event_receiver_struct
@@ -315,6 +353,14 @@ public:
         pinch_end_rec.event.notify = handle_pinch_end<Platform>;
         wl_signal_add(&backend->events.pinch_end, &pinch_end_rec.event);
 
+        hold_begin_rec.receiver = this;
+        hold_begin_rec.event.notify = handle_hold_begin<Platform>;
+        wl_signal_add(&backend->events.hold_begin, &hold_begin_rec.event);
+
+        hold_end_rec.receiver = this;
+        hold_end_rec.event.notify = handle_hold_end<Platform>;
+        wl_signal_add(&backend->events.hold_end, &hold_end_rec.event);
+
         frame_rec.receiver = this;
         frame_rec.event.notify = handle_frame<Platform>;
         wl_signal_add(&backend->events.frame, &frame_rec.event);
@@ -339,6 +385,8 @@ private:
     er pinch_begin_rec;
     er pinch_update_rec;
     er pinch_end_rec;
+    er hold_begin_rec;
+    er hold_end_rec;
 };
 
 }

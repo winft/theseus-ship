@@ -123,6 +123,13 @@ client::client(global_selection globals)
         QVERIFY(interfaces.pointer_constraints->isValid());
     }
 
+    if (flags(globals & global_selection::pointer_gestures)) {
+        interfaces.pointer_gestures.reset(registry->createPointerGestures(
+            registry->interface(Clt::Registry::Interface::PointerGesturesUnstableV1).name,
+            registry->interface(Clt::Registry::Interface::PointerGesturesUnstableV1).version));
+        QVERIFY(interfaces.pointer_gestures->isValid());
+    }
+
     interfaces.idle_notifier.reset(registry->createIdleNotifierV1(
         registry->interface(Clt::Registry::Interface::IdleNotifierV1).name,
         registry->interface(Clt::Registry::Interface::IdleNotifierV1).version));

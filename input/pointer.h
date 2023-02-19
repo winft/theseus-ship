@@ -37,6 +37,8 @@ Q_SIGNALS:
     void pinch_begin(pinch_begin_event);
     void pinch_update(pinch_update_event);
     void pinch_end(pinch_end_event);
+    void hold_begin(hold_begin_event);
+    void hold_end(hold_end_event);
 };
 
 }

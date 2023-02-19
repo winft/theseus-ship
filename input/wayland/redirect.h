@@ -457,6 +457,17 @@ private:
             pointer_red->qobject.get(),
             [pointer_red](auto const& event) { pointer_red->process_swipe_end(event); });
 
+        QObject::connect(
+            pointer,
+            &pointer::hold_begin,
+            pointer_red->qobject.get(),
+            [pointer_red](auto const& event) { pointer_red->process_hold_begin(event); });
+        QObject::connect(
+            pointer,
+            &pointer::hold_end,
+            pointer_red->qobject.get(),
+            [pointer_red](auto const& event) { pointer_red->process_hold_end(event); });
+
         QObject::connect(pointer, &pointer::frame, pointer_red->qobject.get(), [pointer_red] {
             pointer_red->process_frame();
         });

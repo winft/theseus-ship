@@ -146,6 +146,16 @@ public:
         return false;
     }
 
+    virtual bool hold_begin(hold_begin_event const& /*event*/)
+    {
+        return false;
+    }
+
+    virtual bool hold_end(hold_end_event const& /*event*/)
+    {
+        return false;
+    }
+
     virtual bool switch_toggle(switch_toggle_event const& /*event*/)
     {
         return false;

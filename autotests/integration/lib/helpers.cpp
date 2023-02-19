@@ -659,4 +659,135 @@ void touch_cancel()
     wlr_signal_emit_safe(&test_app->touch->events.cancel, &event);
 }
 
+void swipe_begin(uint32_t fingers, uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_swipe_begin_event event{
+        .pointer = test_app->pointer, .time_msec = time, .fingers = fingers};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.swipe_begin, &event);
+}
+
+void swipe_update(uint32_t fingers, double dx, double dy, uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_swipe_update_event event{
+        .pointer = test_app->pointer, .time_msec = time, .fingers = fingers, .dx = dx, .dy = dy};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.swipe_update, &event);
+}
+
+void swipe_end(uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_swipe_end_event event{
+        .pointer = test_app->pointer, .time_msec = time, .cancelled = false};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.swipe_end, &event);
+}
+
+void swipe_cancel(uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_swipe_end_event event{
+        .pointer = test_app->pointer, .time_msec = time, .cancelled = true};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.swipe_end, &event);
+}
+
+void pinch_begin(uint32_t fingers, uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_pinch_begin_event event{
+        .pointer = test_app->pointer, .time_msec = time, .fingers = fingers};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.pinch_begin, &event);
+}
+
+void pinch_update(uint32_t fingers,
+                  double dx,
+                  double dy,
+                  double scale,
+                  double rotation,
+                  uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_pinch_update_event event{.pointer = test_app->pointer,
+                                         .time_msec = time,
+                                         .fingers = fingers,
+                                         .dx = dx,
+                                         .dy = dy,
+                                         .scale = scale,
+                                         .rotation = rotation};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.pinch_update, &event);
+}
+
+void pinch_end(uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_pinch_end_event event{
+        .pointer = test_app->pointer, .time_msec = time, .cancelled = false};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.pinch_end, &event);
+}
+
+void pinch_cancel(uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_pinch_end_event event{
+        .pointer = test_app->pointer, .time_msec = time, .cancelled = true};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.pinch_end, &event);
+}
+
+void hold_begin(uint32_t fingers, uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_hold_begin_event event{
+        .pointer = test_app->pointer, .time_msec = time, .fingers = fingers};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.hold_begin, &event);
+}
+
+void hold_end(uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_hold_end_event event{
+        .pointer = test_app->pointer, .time_msec = time, .cancelled = false};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.hold_end, &event);
+}
+
+void hold_cancel(uint32_t time)
+{
+    auto test_app = Test::app();
+    QVERIFY(test_app->pointer);
+
+    wlr_pointer_hold_end_event event{
+        .pointer = test_app->pointer, .time_msec = time, .cancelled = true};
+
+    wlr_signal_emit_safe(&test_app->pointer->events.hold_end, &event);
+}
+
 }
