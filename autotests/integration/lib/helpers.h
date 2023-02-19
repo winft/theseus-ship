@@ -240,6 +240,21 @@ KWIN_EXPORT void touch_up(int32_t id, uint32_t time);
 KWIN_EXPORT void touch_motion(int32_t id, QPointF const& position, uint32_t time);
 KWIN_EXPORT void touch_cancel();
 
+KWIN_EXPORT void swipe_begin(uint32_t fingers, uint32_t time);
+KWIN_EXPORT void swipe_update(uint32_t fingers, double dx, double dy, uint32_t time);
+KWIN_EXPORT void swipe_end(uint32_t time);
+KWIN_EXPORT void swipe_cancel(uint32_t time);
+
+KWIN_EXPORT void pinch_begin(uint32_t fingers, uint32_t time);
+KWIN_EXPORT void
+pinch_update(uint32_t fingers, double dx, double dy, double scale, double rotation, uint32_t time);
+KWIN_EXPORT void pinch_end(uint32_t time);
+KWIN_EXPORT void pinch_cancel(uint32_t time);
+
+KWIN_EXPORT void hold_begin(uint32_t fingers, uint32_t time);
+KWIN_EXPORT void hold_end(uint32_t time);
+KWIN_EXPORT void hold_cancel(uint32_t time);
+
 KWIN_EXPORT void prepare_app_env(std::string const& qpa_plugin_path);
 KWIN_EXPORT void prepare_sys_env(std::string const& socket_name);
 KWIN_EXPORT std::string create_socket_name(std::string base);

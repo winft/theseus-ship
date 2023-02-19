@@ -16,6 +16,7 @@ enum class global_selection {
     plasma_shell = 1 << 2,
     window_management = 1 << 3,
     pointer_constraints = 1 << 4,
+    pointer_gestures = 1 << 4,
     idle_inhibition = 1 << 5,
     appmenu = 1 << 6,
     shadow = 1 << 7,
