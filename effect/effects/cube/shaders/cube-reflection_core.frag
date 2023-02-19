@@ -1,4 +1,8 @@
 #version 140
+// SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+//
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 uniform float u_alpha;
 
 in vec2 texcoord0;

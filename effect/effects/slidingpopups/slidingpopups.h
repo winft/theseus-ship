@@ -1,5 +1,5 @@
 /*
-    SPDX-FileCopyrightText: 2009 Marco Martin notmart@gmail.com
+    SPDX-FileCopyrightText: 2009 Marco Martin <notmart@gmail.com>
     SPDX-FileCopyrightText: 2018 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
     SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 

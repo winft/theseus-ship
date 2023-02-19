@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 include(ECMMarkAsTest)
 
 macro(KWINEFFECTS_UNIT_TESTS)

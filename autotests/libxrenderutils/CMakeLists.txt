@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 add_executable(blendPictureTest blendpicture_test.cpp)
 set_target_properties(blendPictureTest PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
 add_test(NAME xrenderutils-blendPictureTest COMMAND blendPictureTest)

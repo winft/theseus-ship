@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+//
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 effects.windowAdded.connect(function(w) {
     w.anim1 = effect.animate(w, Effect.Scale, 100, 1.4, 0.2, 0, QEasingCurve.OutCubic);
     sendTestResponse(typeof(w.anim1) == "number");

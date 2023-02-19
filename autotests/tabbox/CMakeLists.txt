@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 include_directories(${KWIN_SOURCE_DIR})
 add_definitions(-DKWIN_UNIT_TEST)
 ########################################################

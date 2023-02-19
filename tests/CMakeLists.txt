@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 if (XCB_ICCCM_FOUND)
     set(normalhintsbasesizetest_SRCS normalhintsbasesizetest.cpp)
     add_executable(normalhintsbasesizetest ${normalhintsbasesizetest_SRCS})

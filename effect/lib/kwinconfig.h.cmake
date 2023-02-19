@@ -1,8 +1,14 @@
 /*
+    SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
- This file includes config #define's for KWin's libraries
- that are installed. Installed files and files using them
- should be using these instead of their own.
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+
+/*
+
+    This file includes config #define's for KWin's libraries
+    that are installed. Installed files and files using them
+    should be using these instead of their own.
 
 */
 

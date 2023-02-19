@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+//
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 effects.windowAdded.connect(function(w) {
     w.anim1 = animate({
         window: w,

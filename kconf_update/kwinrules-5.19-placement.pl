@@ -1,5 +1,9 @@
 #! /usr/bin/perl
 
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 # Convert strings as in `Placement::policyToString()` from `placement.cpp`
 # to correponding values of enum `Placement::Policy` defined in `placement.h`
 

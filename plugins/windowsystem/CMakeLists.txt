@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 set(kwindowsystem_plugin_SRCS
     plugin.cpp
     windoweffects.cpp
