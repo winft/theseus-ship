@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorationoptions.h"
 
 #include <kwineffects/effect_quick_view.h>
+#include <kwineffects/effects_handler.h>
 
 // KDecoration2
 #include <KDecoration2/DecoratedClient>
@@ -269,7 +270,7 @@ Decoration::Decoration(QObject *parent, const QVariantList &args)
 Decoration::~Decoration()
 {
     delete m_qmlContext;
-    delete m_view;
+    m_view.reset();
     Helper::instance().unref();
 }
 
@@ -324,13 +325,23 @@ void Decoration::init()
         m_item->setParentItem(visualParent.value<QQuickItem*>());
         visualParent.value<QQuickItem*>()->setProperty("drawBackground", false);
     } else {
-        m_view = new KWin::EffectQuickView(this, KWin::EffectQuickView::ExportMode::Image);
+        // This is an ugly hack to make hidpi rendering work as expected on wayland until we switch
+        // to Qt 6.3 or newer. See https://codereview.qt-project.org/c/qt/qtdeclarative/+/361506
+        if (KWin::effects && KWin::effects->waylandDisplay()) {
+            m_dummyWindow.reset(new QWindow());
+            m_dummyWindow->setOpacity(0);
+            m_dummyWindow->resize(1, 1);
+            m_dummyWindow->setFlag(Qt::FramelessWindowHint);
+            m_dummyWindow->setVisible(true);
+        }
+
+        m_view = std::make_unique<KWin::EffectQuickView>(this, m_dummyWindow.get(), KWin::EffectQuickView::ExportMode::Image);
         m_item->setParentItem(m_view->contentItem());
         auto updateSize = [this]() { m_item->setSize(m_view->contentItem()->size()); };
         updateSize();
         connect(m_view->contentItem(), &QQuickItem::widthChanged, m_item, updateSize);
         connect(m_view->contentItem(), &QQuickItem::heightChanged, m_item, updateSize);
-        connect(m_view, &KWin::EffectQuickView::repaintNeeded, this, &Decoration::updateBuffer);
+        connect(m_view.get(), &KWin::EffectQuickView::repaintNeeded, this, &Decoration::updateBuffer);
     }
 
     m_supportsMask = m_item->property("supportsMask").toBool();

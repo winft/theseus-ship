@@ -87,7 +87,8 @@ private:
     KWin::Borders *m_padding;
     QString m_themeName;
 
-    KWin::EffectQuickView *m_view;
+    std::unique_ptr<QWindow> m_dummyWindow;
+    std::unique_ptr<KWin::EffectQuickView> m_view;
 };
 
 class ThemeProvider : public KDecoration2::DecorationThemeProvider
