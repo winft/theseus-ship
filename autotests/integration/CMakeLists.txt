@@ -8,7 +8,6 @@ add_library(KWinIntegrationTestFramework SHARED
   lib/app.cpp
   lib/client.cpp
   lib/helpers.cpp
-  generic_scene_opengl_test.cpp
 )
 
 target_link_libraries(KWinIntegrationTestFramework
@@ -74,7 +73,6 @@ integrationTest(WAYLAND_ONLY NAME testMaximized SRCS maximize_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testXdgShellClient SRCS xdgshellclient_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testDontCrashNoBorder SRCS dont_crash_no_border.cpp)
 integrationTest(NAME testXwaylandSelections SRCS xwayland_selections_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testSceneOpenGL SRCS scene_opengl_test.cpp )
 integrationTest(WAYLAND_ONLY NAME testSceneOpenGLShadow SRCS scene_opengl_shadow_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testNoXdgRuntimeDir SRCS no_xdg_runtime_dir_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testScreenChanges SRCS screen_changes_test.cpp)
@@ -96,7 +94,6 @@ integrationTest(WAYLAND_ONLY NAME testColorCorrectNightColor SRCS colorcorrect_n
 integrationTest(WAYLAND_ONLY NAME testDontCrashCursorPhysicalSizeEmpty SRCS dont_crash_cursor_physical_size_empty.cpp)
 integrationTest(WAYLAND_ONLY NAME testDontCrashReinitializeCompositor SRCS dont_crash_reinitialize_compositor.cpp)
 integrationTest(WAYLAND_ONLY NAME testNoGlobalShortcuts SRCS no_global_shortcuts_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testBufferSizeChange SRCS buffer_size_change_test.cpp )
 integrationTest(WAYLAND_ONLY NAME testPlacement SRCS placement_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testXdgActivation SRCS xdg_activation.cpp)
 integrationTest(WAYLAND_ONLY NAME testGestures2 SRCS gestures.cpp)
@@ -131,6 +128,8 @@ add_executable(tests
   # tests
   activation_test.cpp
   bindings_test.cpp
+  buffer_size_change_test.cpp
+  scene_opengl_test.cpp
 )
 
 target_link_libraries(tests

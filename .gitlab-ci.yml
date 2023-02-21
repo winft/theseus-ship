@@ -124,7 +124,7 @@ Stable Build:
     # * all others: the GLES2 backend of wlroots can't be run in CI/without GPU at the moment,
     #   see https://gitlab.freedesktop.org/wlroots/wlroots/-/issues/2871
     CTEST_ARGS: "-E 'testLockScreen|testModifierOnlyShortcut|testDontCrashEmptyDeco|testDontCrashNoBorder\
-    |testSceneOpenGL|testSceneOpenGLShadow|testDontCrashReinitializeCompositor|testBufferSizeChange\
+    |scene opengl|testSceneOpenGLShadow|testDontCrashReinitializeCompositor|buffer size change\
     |testDontCrashAuroraeDestroyDeco|testSlidingPopups|testScriptedEffects|testToplevelOpenCloseAnimation\
     |testDesktopSwitchingAnimation|testMinimizeAnimation'"
     GCOVR_ARGS: --gcov-executable '/usr/bin/llvm-cov gcov' -e tests
