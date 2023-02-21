@@ -22,6 +22,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/virtual_desktops.h"
 
 #include <QObject>
+#include <QQmlEngine>
 #include <QQmlListProperty>
 #include <QRect>
 #include <QSize>
@@ -865,7 +866,9 @@ protected:
     output* screen_at_impl(QPointF const& pos) const override
     {
         auto output = base::get_nearest_output(ref_space->base.outputs, pos.toPoint());
-        return get_output(output);
+        auto ret = get_output(output);
+        QQmlEngine::setObjectOwnership(ret, QQmlEngine::CppOwnership);
+        return ret;
     }
 
     QRect client_area_impl(clientAreaOption option,
@@ -957,6 +960,7 @@ protected:
                                  return nullptr;
                              }},
                              win)) {
+                QQmlEngine::setObjectOwnership(scr_win, QQmlEngine::CppOwnership);
                 return scr_win;
             }
         }
