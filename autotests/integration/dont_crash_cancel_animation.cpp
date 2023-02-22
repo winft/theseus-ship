@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "render/compositor.h"
@@ -20,49 +21,26 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class DontCrashCancelAnimationFromAnimationEndedTest : public QObject
+TEST_CASE("no crash cancel animation", "[render]")
 {
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
-    void testScript();
-};
+    test::setup setup("no-crash-cancel-animation");
+    setup.start();
 
-void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
+    REQUIRE(setup.base->render->compositor);
+    REQUIRE(effects);
 
-    Test::app()->start();
-    QVERIFY(Test::app()->base->render->compositor);
-    QVERIFY(startup_spy.size() || startup_spy.wait());
-    QVERIFY(effects);
-}
-
-void DontCrashCancelAnimationFromAnimationEndedTest::init()
-{
     Test::setup_wayland_connection();
-}
 
-void DontCrashCancelAnimationFromAnimationEndedTest::cleanup()
-{
-    Test::destroy_wayland_connection();
-}
-
-void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
-{
     // load a scripted effect which deletes animation data
     auto effect = scripting::effect::create(QStringLiteral("crashy"),
                                             QFINDTESTDATA("data/anim-data-delete-effect/effect.js"),
                                             10,
                                             QString(),
                                             *effects,
-                                            *Test::app()->base->render->compositor);
+                                            *setup.base->render->compositor);
     QVERIFY(effect);
 
     const auto children = effects->children();
@@ -76,20 +54,21 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
                                           Q_ARG(QString, QStringLiteral("crashy"))));
         break;
     }
-    QVERIFY(
-        Test::app()->base->render->compositor->effects->isEffectLoaded(QStringLiteral("crashy")));
+    QVERIFY(setup.base->render->compositor->effects->isEffectLoaded(QStringLiteral("crashy")));
 
     using namespace Wrapland::Client;
+
     // create a window
     auto surface = std::unique_ptr<Wrapland::Client::Surface>(Test::create_surface());
     QVERIFY(surface);
     auto shellSurface = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(
         Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
+
     // let's render
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
 
     // make sure we animate
     QTest::qWait(200);
@@ -101,11 +80,9 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     surface.reset();
 
     QVERIFY(windowDeletedSpy.wait());
+
     // make sure we animate
     QTest::qWait(200);
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::DontCrashCancelAnimationFromAnimationEndedTest)
-#include "dont_crash_cancel_animation.moc"

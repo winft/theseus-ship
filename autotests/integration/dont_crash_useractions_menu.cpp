@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2017 Martin Flöser <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
@@ -25,49 +26,24 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 using namespace Wrapland::Client;
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class TestDontCrashUseractionsMenu : public QObject
+TEST_CASE("no crash useractions menu", "[win]")
 {
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
+    // This test creates the condition of BUG 382063.
 
-    void testShowHideShowUseractionsMenu();
-};
+    // Force style to breeze as that's the one which triggered the crash.
+    QVERIFY(qApp->setStyle(QStringLiteral("breeze")));
 
-void TestDontCrashUseractionsMenu::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-
-    // force style to breeze as that's the one which triggered the crash
-    QVERIFY(Test::app()->setStyle(QStringLiteral("breeze")));
-
-    Test::app()->start();
-    Test::app()->set_outputs(2);
-
-    QVERIFY(startup_spy.size() || startup_spy.wait());
+    test::setup setup("no-crash-useractions-menu");
+    setup.start();
+    setup.set_outputs(2);
     Test::test_outputs_default();
-}
 
-void TestDontCrashUseractionsMenu::init()
-{
     Test::setup_wayland_connection();
     Test::cursor()->set_pos(QPoint(1280, 512));
-}
 
-void TestDontCrashUseractionsMenu::cleanup()
-{
-    Test::destroy_wayland_connection();
-}
-
-void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
-{
-    // this test creates the condition of BUG 382063
     std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     QVERIFY(surface1);
@@ -76,8 +52,8 @@ void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
     auto client = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
-    Test::app()->base->space->user_actions_menu->show(QRect(), client);
-    auto& userActionsMenu = Test::app()->base->space->user_actions_menu;
+    setup.base->space->user_actions_menu->show(QRect(), client);
+    auto& userActionsMenu = setup.base->space->user_actions_menu;
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
 
@@ -87,12 +63,9 @@ void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
     QVERIFY(!userActionsMenu->hasClient());
 
     // and show again, this triggers BUG 382063
-    Test::app()->base->space->user_actions_menu->show(QRect(), client);
+    setup.base->space->user_actions_menu->show(QRect(), client);
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::TestDontCrashUseractionsMenu)
-#include "dont_crash_useractions_menu.moc"

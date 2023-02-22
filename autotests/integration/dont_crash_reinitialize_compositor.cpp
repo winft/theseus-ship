@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2018 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "render/compositor.h"
@@ -14,91 +15,51 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
+#include <catch2/generators/catch_generators.hpp>
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class DontCrashReinitializeCompositorTest : public QObject
+TEST_CASE("no crash reinit compositor", "[render]")
 {
-    Q_OBJECT
+    // This test verifies that KWin doesn't crash when the compositor settings have been changed
+    // while a scripted effect animates the disappearing of a window.
 
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
+    using namespace Wrapland::Client;
 
-    void testReinitializeCompositor_data();
-    void testReinitializeCompositor();
-};
-
-void DontCrashReinitializeCompositorTest::initTestCase()
-{
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
+    qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
+    qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
 
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
+    test::setup setup("no-crash-reinit-compositor");
 
-    auto config = Test::app()->base->config.main;
+    auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
+
     auto const builtinNames
-        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
-              .listOfKnownEffects();
+        = render::effect_loader(*effects, *setup.base->render->compositor).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
+
     config->sync();
 
-    qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
-    qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
-
-    Test::app()->start();
-    Test::app()->set_outputs(2);
-
-    QVERIFY(startup_spy.count() || startup_spy.wait());
+    setup.start();
+    setup.set_outputs(2);
     Test::test_outputs_default();
 
-    auto& scene = Test::app()->base->render->compositor->scene;
+    auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
-}
 
-void DontCrashReinitializeCompositorTest::init()
-{
-    Test::setup_wayland_connection();
-}
-
-void DontCrashReinitializeCompositorTest::cleanup()
-{
-    // Unload all effects.
-    auto& effectsImpl = Test::app()->base->render->compositor->effects;
-    QVERIFY(effectsImpl);
-    effectsImpl->unloadAllEffects();
-    QVERIFY(effectsImpl->loadedEffects().isEmpty());
-
-    Test::destroy_wayland_connection();
-}
-
-void DontCrashReinitializeCompositorTest::testReinitializeCompositor_data()
-{
-    QTest::addColumn<QString>("effectName");
-
-    QTest::newRow("Fade") << QStringLiteral("kwin4_effect_fade");
-    QTest::newRow("Glide") << QStringLiteral("glide");
-    QTest::newRow("Scale") << QStringLiteral("kwin4_effect_scale");
-}
-
-void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
-{
-    // This test verifies that KWin doesn't crash when the compositor settings
-    // have been changed while a scripted effect animates the disappearing of
-    // a window.
+    auto effect_name = GENERATE(as<QString>{}, "kwin4_effect_fade", "glide", "kwin4_effect_scale");
 
     // Make sure that we have the right effects ptr.
-    auto& effectsImpl = Test::app()->base->render->compositor->effects;
+    auto& effectsImpl = setup.base->render->compositor->effects;
     QVERIFY(effectsImpl);
 
     // Create the test client.
-    using namespace Wrapland::Client;
+    Test::setup_wayland_connection();
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
@@ -108,11 +69,10 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     QVERIFY(client);
 
     // Make sure that only the test effect is loaded.
-    QFETCH(QString, effectName);
-    QVERIFY(effectsImpl->loadEffect(effectName));
+    QVERIFY(effectsImpl->loadEffect(effect_name));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
-    QCOMPARE(effectsImpl->loadedEffects().constFirst(), effectName);
-    Effect* effect = effectsImpl->findEffect(effectName);
+    QCOMPARE(effectsImpl->loadedEffects().constFirst(), effect_name);
+    Effect* effect = effectsImpl->findEffect(effect_name);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
@@ -128,12 +88,9 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     QTRY_VERIFY(effect->isActive());
 
     // Re-initialize the compositor, effects will be destroyed and created again.
-    Test::app()->base->render->compositor->reinitialize();
+    setup.base->render->compositor->reinitialize();
 
-    // By this time, KWin should still be alive.
+    // By this time the compositor should still be alive.
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::DontCrashReinitializeCompositorTest)
-#include "dont_crash_reinitialize_compositor.moc"

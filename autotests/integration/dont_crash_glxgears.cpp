@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2015 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "win/deco.h"
@@ -12,32 +13,17 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <KDecoration2/Decoration>
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class DontCrashGlxgearsTest : public QObject
+TEST_CASE("no crash glxgears", "[xwl],[win]")
 {
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void testGlxgears();
-};
+    // Closing a glxgears window through Aurorae themes used to crash KWin.
 
-void DontCrashGlxgearsTest::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
+    test::setup setup("no-crash-glxgears", base::operation_mode::xwayland);
+    setup.start();
 
-    Test::app()->start();
-    QVERIFY(startup_spy.wait());
-}
-
-void DontCrashGlxgearsTest::testGlxgears()
-{
-    // closing a glxgears window through Aurorae themes used to crash KWin
-    // Let's make sure that doesn't happen anymore
-
-    QSignalSpy clientAddedSpy(Test::app()->base->space->qobject.get(),
+    QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                               &win::space::qobject_t::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
 
@@ -48,9 +34,9 @@ void DontCrashGlxgearsTest::testGlxgears()
 
     QVERIFY(clientAddedSpy.wait());
     QCOMPARE(clientAddedSpy.count(), 1);
-    QCOMPARE(Test::app()->base->space->windows.size(), 1);
+    QCOMPARE(setup.base->space->windows.size(), 1);
 
-    auto glxgearsClient = Test::get_x11_window(Test::app()->base->space->windows.front());
+    auto glxgearsClient = Test::get_x11_window(setup.base->space->windows.front());
     QVERIFY(glxgearsClient);
     QVERIFY(win::decoration(glxgearsClient));
     QSignalSpy closedSpy(glxgearsClient->qobject.get(), &win::window_qobject::closed);
@@ -66,12 +52,14 @@ void DontCrashGlxgearsTest::testGlxgears()
         + QPointF(-decoration->borderTop() / 2, decoration->borderTop() / 2);
     QHoverEvent event(QEvent::HoverMove, pos, pos);
     QCoreApplication::instance()->sendEvent(decoration, &event);
+
     // mouse press
     QMouseEvent mousePressevent(
         QEvent::MouseButtonPress, pos, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
     mousePressevent.setAccepted(false);
     QCoreApplication::sendEvent(decoration, &mousePressevent);
     QVERIFY(mousePressevent.isAccepted());
+
     // mouse Release
     QMouseEvent mouseReleaseEvent(
         QEvent::MouseButtonRelease, pos, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
@@ -80,8 +68,7 @@ void DontCrashGlxgearsTest::testGlxgears()
     QVERIFY(mouseReleaseEvent.isAccepted());
 
     QVERIFY(closedSpy.wait());
-    QCOMPARE(closedSpy.count(), 1);
-    xcb_flush(Test::app()->base->x11_data.connection);
+    xcb_flush(setup.base->x11_data.connection);
 
     if (glxgears.state() == QProcess::Running) {
         QVERIFY(glxgears.waitForFinished());
@@ -89,7 +76,3 @@ void DontCrashGlxgearsTest::testGlxgears()
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::DontCrashGlxgearsTest)
-
-#include "dont_crash_glxgears.moc"

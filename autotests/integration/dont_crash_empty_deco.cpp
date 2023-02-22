@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
@@ -16,50 +17,30 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/x11/window.h"
 
 #include <KDecoration2/Decoration>
-
 #include <linux/input.h>
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class DontCrashEmptyDecorationTest : public QObject
+TEST_CASE("no crash empty deco", "[win]")
 {
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void testBug361551();
-};
-
-void DontCrashEmptyDecorationTest::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
+    // This test verifies that resizing an X11 window to an invalid size does not result in crash on
+    // unmap when the DecorationRenderer gets copied to the Deleted. There a repaint is scheduled
+    // and the resulting texture is invalid if the window size is invalid.
 
     // this test needs to enforce OpenGL compositing to get into the crashy condition
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
 
-    Test::app()->start();
-    Test::app()->set_outputs(2);
-
-    QVERIFY(startup_spy.wait());
+    test::setup setup("no-crash-empty-deco", base::operation_mode::xwayland);
+    setup.start();
+    setup.set_outputs(2);
     Test::test_outputs_default();
 
-    auto& scene = Test::app()->base->render->compositor->scene;
+    auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
-}
 
-void DontCrashEmptyDecorationTest::init()
-{
     Test::cursor()->set_pos(QPoint(640, 512));
-}
-
-void DontCrashEmptyDecorationTest::testBug361551()
-{
-    // this test verifies that resizing an X11 window to an invalid size does not result in crash on
-    // unmap when the DecorationRenderer gets copied to the Deleted there a repaint is scheduled and
-    // the resulting texture is invalid if the window size is invalid
 
     // create an xcb window
     xcb_connection_t* c = xcb_connect(nullptr, nullptr);
@@ -69,7 +50,7 @@ void DontCrashEmptyDecorationTest::testBug361551()
     xcb_create_window(c,
                       XCB_COPY_FROM_PARENT,
                       w,
-                      Test::app()->base->x11_data.root_window,
+                      setup.base->x11_data.root_window,
                       0,
                       0,
                       10,
@@ -83,13 +64,13 @@ void DontCrashEmptyDecorationTest::testBug361551()
     xcb_flush(c);
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
+    QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto win_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(win_id));
+    auto client = Test::get_x11_window(setup.base->space->windows_map.at(win_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(win::decoration(client));
@@ -110,6 +91,3 @@ void DontCrashEmptyDecorationTest::testBug361551()
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::DontCrashEmptyDecorationTest)
-#include "dont_crash_empty_deco.moc"

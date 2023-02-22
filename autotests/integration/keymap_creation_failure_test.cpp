@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2017 Martin Flöser <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
@@ -17,21 +18,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 using namespace Wrapland::Client;
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class KeymapCreationFailureTest : public QObject
-{
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
-
-    void testPointerButton();
-};
-
-void KeymapCreationFailureTest::initTestCase()
+TEST_CASE("keymap creation failure", "[input]")
 {
     // situation for for BUG 381210
     // this will fail to create keymap
@@ -41,34 +31,18 @@ void KeymapCreationFailureTest::initTestCase()
     qputenv("XKB_DEFAULT_VARIANT", "no");
     qputenv("XKB_DEFAULT_OPTIONS", "no");
 
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
+    test::setup setup("keymap-create-fail");
+    setup.start();
 
-    Test::app()->start();
-    QVERIFY(startup_spy.size() || startup_spy.wait());
+    setup.base->input->xkb.setConfig(KSharedConfig::openConfig({}, KConfig::SimpleConfig));
 
-    Test::app()->base->input->xkb.setConfig(KSharedConfig::openConfig({}, KConfig::SimpleConfig));
-    auto layoutGroup = Test::app()->base->input->config.xkb->group("Layout");
+    auto layoutGroup = setup.base->input->config.xkb->group("Layout");
     layoutGroup.writeEntry("LayoutList", QStringLiteral("no"));
     layoutGroup.writeEntry("Model", "no");
     layoutGroup.writeEntry("Options", "no");
     layoutGroup.sync();
-}
 
-void KeymapCreationFailureTest::init()
-{
     Test::setup_wayland_connection();
-}
-
-void KeymapCreationFailureTest::cleanup()
-{
-    Test::destroy_wayland_connection();
-}
-
-void KeymapCreationFailureTest::testPointerButton()
-{
-    // test case for BUG 381210
-    // pressing a pointer button results in crash
 
     // now create the crashing condition
     // which is sending in a pointer event
@@ -77,6 +51,3 @@ void KeymapCreationFailureTest::testPointerButton()
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::KeymapCreationFailureTest)
-#include "keymap_creation_failure_test.moc"

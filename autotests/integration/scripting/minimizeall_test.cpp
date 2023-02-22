@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2019 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "scripting/platform.h"
@@ -17,36 +18,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <linux/input.h>
 
-namespace KWin
+namespace KWin::detail::test
+{
+
+namespace
 {
 
 static const QString s_scriptName = QStringLiteral("minimizeall");
-
-class MinimizeAllScriptTest : public QObject
-{
-    Q_OBJECT
-
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
-
-    void testMinimizeUnminimize();
-};
-
-void MinimizeAllScriptTest::initTestCase()
-{
-    qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-
-    Test::app()->start();
-    Test::app()->set_outputs(2);
-
-    QVERIFY(startup_spy.size() || startup_spy.wait());
-    Test::test_outputs_default();
-}
 
 static QString locateMainScript(const QString& pluginName)
 {
@@ -57,41 +35,37 @@ static QString locateMainScript(const QString& pluginName)
     if (offers.isEmpty()) {
         return QString();
     }
-    const KPluginMetaData& metaData = offers.first();
-    const QString mainScriptFileName = metaData.value(QStringLiteral("X-Plasma-MainScript"));
-    const QFileInfo metaDataFileInfo(metaData.fileName());
+    auto const& metaData = offers.first();
+    QString const mainScriptFileName = metaData.value(QStringLiteral("X-Plasma-MainScript"));
+    QFileInfo const metaDataFileInfo(metaData.fileName());
     return metaDataFileInfo.path() + QLatin1String("/contents/") + mainScriptFileName;
 }
 
-void MinimizeAllScriptTest::init()
+}
+
+TEST_CASE("minimize all", "[script]")
 {
+    // This test verifies that all windows are minimized when Meta+Shift+D
+    // is pressed, and unminimized when the shortcut is pressed once again.
+    using namespace Wrapland::Client;
+
+    qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
+
+    test::setup setup("minimize-all");
+    setup.start();
+    setup.set_outputs(2);
+    Test::test_outputs_default();
     Test::setup_wayland_connection();
 
-    Test::app()->base->space->scripting->loadScript(locateMainScript(s_scriptName), s_scriptName);
-    QTRY_VERIFY(Test::app()->base->space->scripting->isScriptLoaded(s_scriptName));
+    setup.base->space->scripting->loadScript(locateMainScript(s_scriptName), s_scriptName);
+    QTRY_VERIFY(setup.base->space->scripting->isScriptLoaded(s_scriptName));
 
-    auto script = Test::app()->base->space->scripting->findScript(s_scriptName);
+    auto script = setup.base->space->scripting->findScript(s_scriptName);
     QVERIFY(script);
     QSignalSpy runningChangedSpy(script, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());
     script->run();
     QTRY_COMPARE(runningChangedSpy.count(), 1);
-}
-
-void MinimizeAllScriptTest::cleanup()
-{
-    Test::destroy_wayland_connection();
-
-    Test::app()->base->space->scripting->unloadScript(s_scriptName);
-    QTRY_VERIFY(!Test::app()->base->space->scripting->isScriptLoaded(s_scriptName));
-}
-
-void MinimizeAllScriptTest::testMinimizeUnminimize()
-{
-    // This test verifies that all windows are minimized when Meta+Shift+D
-    // is pressed, and unminimized when the shortcut is pressed once again.
-
-    using namespace Wrapland::Client;
 
     // Create a couple of test clients.
     std::unique_ptr<Surface> surface1(Test::create_surface());
@@ -139,6 +113,3 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::MinimizeAllScriptTest)
-#include "minimizeall_test.moc"

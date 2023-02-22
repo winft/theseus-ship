@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
@@ -20,57 +21,33 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <linux/input.h>
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class DontCrashNoBorder : public QObject
+TEST_CASE("no crash no border", "[win]")
 {
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
-    void testCreateWindow();
-};
-
-void DontCrashNoBorder::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-
-    auto config = Test::app()->base->config.main;
-    config->group("org.kde.kdecoration2").writeEntry("NoPlugin", true);
-    config->sync();
+    // Create a window and ensure that this doesn't crash.
+    using namespace Wrapland::Client;
 
     // this test needs to enforce OpenGL compositing to get into the crashy condition
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
 
-    Test::app()->start();
-    Test::app()->set_outputs(2);
+    test::setup setup("no-crash-no-border");
 
-    QVERIFY(startup_spy.size() || startup_spy.wait());
+    auto config = setup.base->config.main;
+    config->group("org.kde.kdecoration2").writeEntry("NoPlugin", true);
+    config->sync();
+
+    setup.start();
+    setup.set_outputs(2);
     Test::test_outputs_default();
 
-    auto& scene = Test::app()->base->render->compositor->scene;
+    auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
-}
 
-void DontCrashNoBorder::init()
-{
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
     Test::cursor()->set_pos(QPoint(640, 512));
-}
-
-void DontCrashNoBorder::cleanup()
-{
-    Test::destroy_wayland_connection();
-}
-
-void DontCrashNoBorder::testCreateWindow()
-{
-    // create a window and ensure that this doesn't crash
-    using namespace Wrapland::Client;
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
@@ -92,11 +69,8 @@ void DontCrashNoBorder::testCreateWindow()
     // let's render
     auto c = Test::render_and_wait_for_shown(surface, QSize(500, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), c);
+    QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
     QVERIFY(!win::decoration(c));
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::DontCrashNoBorder)
-#include "dont_crash_no_border.moc"

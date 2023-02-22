@@ -1,36 +1,24 @@
 /*
 SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class PlatformCursorTest : public QObject
-{
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void testPos();
-};
-
-void PlatformCursorTest::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-    Test::app()->start();
-    QVERIFY(startup_spy.wait());
-}
-
-void PlatformCursorTest::testPos()
+TEST_CASE("platform cursor", "[input]")
 {
     // this test verifies that the PlatformCursor of the QPA plugin forwards ::pos and ::setPos
     // correctly that is QCursor should work just like KWin::Cursor
+
+    test::setup setup("platform-cursor");
+    setup.start();
 
     // cursor should be centered on screen
     QCOMPARE(Test::cursor()->pos(), QPoint(639, 511));
@@ -48,6 +36,3 @@ void PlatformCursorTest::testPos()
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::PlatformCursorTest)
-#include "platformcursor.moc"

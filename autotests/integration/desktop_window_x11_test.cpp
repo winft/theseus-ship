@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "base/x11/xcb/proto.h"
@@ -16,41 +17,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <xcb/xcb_icccm.h>
 
-namespace KWin
+namespace KWin::detail::test
 {
-
-class X11DesktopWindowTest : public QObject
-{
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
-    void testDesktopWindow();
-
-private:
-};
-
-void X11DesktopWindowTest::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-
-    Test::app()->start();
-    Test::app()->set_outputs(2);
-
-    QVERIFY(startup_spy.wait());
-    Test::test_outputs_default();
-}
-
-void X11DesktopWindowTest::init()
-{
-    Test::cursor()->set_pos(QPoint(640, 512));
-}
-
-void X11DesktopWindowTest::cleanup()
-{
-}
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
 {
@@ -64,10 +32,17 @@ xcb_connection_ptr create_xcb_connection()
     return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
 }
 
-void X11DesktopWindowTest::testDesktopWindow()
+TEST_CASE("x11 desktop window", "[xwl],[win]")
 {
-    // this test creates a desktop window with an RGBA visual and verifies that it's only considered
-    // as an RGB (opaque) window in KWin
+    // Creates a desktop window with an RGBA visual and verifies that it's only considered as an RGB
+    // (opaque) window by us.
+
+    test::setup setup("x11-desktop-window", base::operation_mode::xwayland);
+    setup.start();
+    setup.set_outputs(2);
+    Test::test_outputs_default();
+
+    Test::cursor()->set_pos(QPoint(640, 512));
 
     // create an xcb window
     auto c = create_xcb_connection();
@@ -99,22 +74,18 @@ void X11DesktopWindowTest::testDesktopWindow()
     };
     auto visualId = findDepth();
     auto colormapId = xcb_generate_id(c.get());
-    auto cmCookie = xcb_create_colormap_checked(c.get(),
-                                                XCB_COLORMAP_ALLOC_NONE,
-                                                colormapId,
-                                                Test::app()->base->x11_data.root_window,
-                                                visualId);
+    auto cmCookie = xcb_create_colormap_checked(
+        c.get(), XCB_COLORMAP_ALLOC_NONE, colormapId, setup.base->x11_data.root_window, visualId);
     QVERIFY(!xcb_request_check(c.get(), cmCookie));
 
-    const uint32_t values[]
-        = {XCB_PIXMAP_NONE,
-           base::x11::get_default_screen(Test::app()->base->x11_data)->black_pixel,
-           colormapId};
+    const uint32_t values[] = {XCB_PIXMAP_NONE,
+                               base::x11::get_default_screen(setup.base->x11_data)->black_pixel,
+                               colormapId};
     auto cookie
         = xcb_create_window_checked(c.get(),
                                     32,
                                     w,
-                                    Test::app()->base->x11_data.root_window,
+                                    setup.base->x11_data.root_window,
                                     windowGeometry.x(),
                                     windowGeometry.y(),
                                     windowGeometry.width(),
@@ -132,7 +103,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     win::x11::net::win_info info(c.get(),
                                  w,
-                                 Test::app()->base->x11_data.root_window,
+                                 setup.base->x11_data.root_window,
                                  win::x11::net::WMAllProperties,
                                  win::x11::net::WM2AllProperties);
     info.setWindowType(win::win_type::desktop);
@@ -140,17 +111,17 @@ void X11DesktopWindowTest::testDesktopWindow()
     xcb_flush(c.get());
 
     // verify through a geometry request that it's depth 32
-    base::x11::xcb::geometry geo(Test::app()->base->x11_data.connection, w);
+    base::x11::xcb::geometry geo(setup.base->x11_data.connection, w);
     QCOMPARE(geo->depth, uint8_t(32));
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
+    QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
                                 &win::space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
+    auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
@@ -172,6 +143,3 @@ void X11DesktopWindowTest::testDesktopWindow()
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::X11DesktopWindowTest)
-#include "desktop_window_x11_test.moc"

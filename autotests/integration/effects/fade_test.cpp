@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "render/compositor.h"
@@ -19,37 +20,22 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 using namespace Wrapland::Client;
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class FadeTest : public QObject
+TEST_CASE("fade", "[effect]")
 {
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
-
-    void testWindowCloseAfterWindowHidden();
-
-private:
-    Effect* m_fadeEffect = nullptr;
-};
-
-void FadeTest::initTestCase()
-{
+    qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
     qRegisterMetaType<KWin::Effect*>();
 
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
+    test::setup setup("fade");
 
     // disable all effects - we don't want to have it interact with the rendering
-    auto config = Test::app()->base->config.main;
+    auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames
-        = render::effect_loader(*effects, *Test::app()->base->render->compositor)
-              .listOfKnownEffects();
+        = render::effect_loader(*effects, *setup.base->render->compositor).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -57,19 +43,13 @@ void FadeTest::initTestCase()
 
     config->sync();
 
-    qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
-
-    Test::app()->start();
-    QVERIFY(startup_spy.wait());
-    QVERIFY(Test::app()->base->render->compositor);
-}
-
-void FadeTest::init()
-{
+    setup.start();
+    QVERIFY(setup.base->render->compositor);
     Test::setup_wayland_connection();
 
     // load the translucency effect
-    auto& e = Test::app()->base->render->compositor->effects;
+    auto& e = setup.base->render->compositor->effects;
+
     // find the effectsloader
     auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);
@@ -81,73 +61,60 @@ void FadeTest::init()
     QVERIFY(e->isEffectLoaded(QStringLiteral("kwin4_effect_fade")));
 
     QCOMPARE(effectLoadedSpy.count(), 1);
-    m_fadeEffect = effectLoadedSpy.first().first().value<Effect*>();
-    QVERIFY(m_fadeEffect);
-}
 
-void FadeTest::cleanup()
-{
-    Test::destroy_wayland_connection();
-    auto& e = Test::app()->base->render->compositor->effects;
-    if (e->isEffectLoaded(QStringLiteral("kwin4_effect_fade"))) {
-        e->unloadEffect(QStringLiteral("kwin4_effect_fade"));
+    auto fade_effect = effectLoadedSpy.first().first().value<Effect*>();
+    QVERIFY(fade_effect);
+
+    SECTION("window close after hidden")
+    {
+        // this test simulates the showing/hiding/closing of a Wayland window
+        // especially the situation that a window got unmapped and destroyed way later
+        QVERIFY(!fade_effect->isActive());
+
+        QSignalSpy windowAddedSpy(effects, &EffectsHandler::windowAdded);
+        QVERIFY(windowAddedSpy.isValid());
+        QSignalSpy windowHiddenSpy(effects, &EffectsHandler::windowHidden);
+        QVERIFY(windowHiddenSpy.isValid());
+        QSignalSpy windowShownSpy(effects, &EffectsHandler::windowShown);
+        QVERIFY(windowShownSpy.isValid());
+        QSignalSpy windowClosedSpy(effects, &EffectsHandler::windowClosed);
+        QVERIFY(windowClosedSpy.isValid());
+
+        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        QVERIFY(c);
+        QTRY_COMPARE(windowAddedSpy.count(), 1);
+        QTRY_COMPARE(fade_effect->isActive(), true);
+
+        QTest::qWait(500);
+        QTRY_COMPARE(fade_effect->isActive(), false);
+
+        // now unmap the surface
+        surface->attachBuffer(Buffer::Ptr());
+        surface->commit(Surface::CommitFlag::None);
+        QVERIFY(windowHiddenSpy.wait());
+        QCOMPARE(fade_effect->isActive(), false);
+
+        // and map again
+        Test::render(surface, QSize(100, 50), Qt::red);
+        QVERIFY(windowShownSpy.wait());
+        QCOMPARE(fade_effect->isActive(), false);
+
+        // and unmap once more
+        surface->attachBuffer(Buffer::Ptr());
+        surface->commit(Surface::CommitFlag::None);
+        QVERIFY(windowHiddenSpy.wait());
+        QCOMPARE(fade_effect->isActive(), false);
+
+        // and now destroy
+        shellSurface.reset();
+        surface.reset();
+        QVERIFY(windowClosedSpy.wait());
+        QCOMPARE(fade_effect->isActive(), true);
+        QTest::qWait(500);
+        QTRY_COMPARE(fade_effect->isActive(), false);
     }
-    QVERIFY(!e->isEffectLoaded(QStringLiteral("kwin4_effect_fade")));
-    m_fadeEffect = nullptr;
-}
-
-void FadeTest::testWindowCloseAfterWindowHidden()
-{
-    // this test simulates the showing/hiding/closing of a Wayland window
-    // especially the situation that a window got unmapped and destroyed way later
-    QVERIFY(!m_fadeEffect->isActive());
-
-    QSignalSpy windowAddedSpy(effects, &EffectsHandler::windowAdded);
-    QVERIFY(windowAddedSpy.isValid());
-    QSignalSpy windowHiddenSpy(effects, &EffectsHandler::windowHidden);
-    QVERIFY(windowHiddenSpy.isValid());
-    QSignalSpy windowShownSpy(effects, &EffectsHandler::windowShown);
-    QVERIFY(windowShownSpy.isValid());
-    QSignalSpy windowClosedSpy(effects, &EffectsHandler::windowClosed);
-    QVERIFY(windowClosedSpy.isValid());
-
-    std::unique_ptr<Surface> surface(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
-    QVERIFY(c);
-    QTRY_COMPARE(windowAddedSpy.count(), 1);
-    QTRY_COMPARE(m_fadeEffect->isActive(), true);
-
-    QTest::qWait(500);
-    QTRY_COMPARE(m_fadeEffect->isActive(), false);
-
-    // now unmap the surface
-    surface->attachBuffer(Buffer::Ptr());
-    surface->commit(Surface::CommitFlag::None);
-    QVERIFY(windowHiddenSpy.wait());
-    QCOMPARE(m_fadeEffect->isActive(), false);
-
-    // and map again
-    Test::render(surface, QSize(100, 50), Qt::red);
-    QVERIFY(windowShownSpy.wait());
-    QCOMPARE(m_fadeEffect->isActive(), false);
-
-    // and unmap once more
-    surface->attachBuffer(Buffer::Ptr());
-    surface->commit(Surface::CommitFlag::None);
-    QVERIFY(windowHiddenSpy.wait());
-    QCOMPARE(m_fadeEffect->isActive(), false);
-
-    // and now destroy
-    shellSurface.reset();
-    surface.reset();
-    QVERIFY(windowClosedSpy.wait());
-    QCOMPARE(m_fadeEffect->isActive(), true);
-    QTest::qWait(500);
-    QTRY_COMPARE(m_fadeEffect->isActive(), false);
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::FadeTest)
-#include "fade_test.moc"

@@ -1,9 +1,9 @@
 /*
-SPDX-FileCopyrightText: 2017 Roman Gilg <subdiff@gmail.com>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "render/platform.h"
@@ -11,89 +11,57 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/post/night_color_manager.h"
 
 #include <KConfigGroup>
+#include <catch2/generators/catch_generators.hpp>
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class ColorCorrectNightColorTest : public QObject
+TEST_CASE("night color", "[render]")
 {
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
-
-    void testConfigRead_data();
-    void testConfigRead();
-};
-
-void ColorCorrectNightColorTest::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-
-    Test::app()->start();
-    Test::app()->set_outputs(2);
-    QVERIFY(startup_spy.size() || startup_spy.wait());
-}
-
-void ColorCorrectNightColorTest::init()
-{
+    test::setup setup("night-color");
+    setup.start();
+    setup.set_outputs(2);
+    Test::test_outputs_default();
     Test::setup_wayland_connection();
-}
 
-void ColorCorrectNightColorTest::cleanup()
-{
-    Test::destroy_wayland_connection();
-}
+    SECTION("config read")
+    {
+        struct data {
+            bool active;
+            int mode;
+        };
 
-void ColorCorrectNightColorTest::testConfigRead_data()
-{
-    QTest::addColumn<bool>("active");
-    QTest::addColumn<int>("mode");
+        auto test_data
+            = GENERATE(data{true, 0}, data{true, 1}, data{true, 3}, data{false, 2}, data{false, 4});
 
-    QTest::newRow("activeMode0") << true << 0;
-    QTest::newRow("activeMode1") << true << 1;
-    QTest::newRow("activeMode2") << true << 3;
-    QTest::newRow("notActiveMode2") << false << 2;
-    QTest::newRow("wrongData1") << false << 4;
-}
+        const bool activeDefault = true;
+        const int modeDefault = 0;
 
-void ColorCorrectNightColorTest::testConfigRead()
-{
-    QFETCH(bool, active);
-    QFETCH(int, mode);
+        auto cfgGroup = setup.base->config.main->group("NightColor");
 
-    const bool activeDefault = true;
-    const int modeDefault = 0;
+        cfgGroup.writeEntry("Active", activeDefault);
+        cfgGroup.writeEntry("Mode", modeDefault);
 
-    auto cfgGroup = Test::app()->base->config.main->group("NightColor");
+        cfgGroup.sync();
+        auto& manager = setup.base->render->night_color;
+        manager->reconfigure();
 
-    cfgGroup.writeEntry("Active", activeDefault);
-    cfgGroup.writeEntry("Mode", modeDefault);
+        QCOMPARE(manager->data.enabled, activeDefault);
+        QCOMPARE(manager->data.mode, modeDefault);
 
-    cfgGroup.sync();
-    auto& manager = Test::app()->base->render->night_color;
-    manager->reconfigure();
+        cfgGroup.writeEntry("Active", test_data.active);
+        cfgGroup.writeEntry("Mode", test_data.mode);
+        cfgGroup.sync();
 
-    QCOMPARE(manager->data.enabled, activeDefault);
-    QCOMPARE(manager->data.mode, modeDefault);
+        manager->reconfigure();
 
-    cfgGroup.writeEntry("Active", active);
-    cfgGroup.writeEntry("Mode", mode);
-    cfgGroup.sync();
-
-    manager->reconfigure();
-
-    QCOMPARE(manager->data.enabled, active);
-    if (mode > 3 || mode < 0) {
-        QCOMPARE(manager->data.mode, 0);
-    } else {
-        QCOMPARE(manager->data.mode, mode);
+        QCOMPARE(manager->data.enabled, test_data.active);
+        if (test_data.mode > 3 || test_data.mode < 0) {
+            QCOMPARE(manager->data.mode, 0);
+        } else {
+            QCOMPARE(manager->data.mode, test_data.mode);
+        }
     }
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::ColorCorrectNightColorTest)
-#include "colorcorrect_nightcolor_test.moc"

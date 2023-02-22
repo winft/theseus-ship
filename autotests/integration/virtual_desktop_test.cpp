@@ -1,10 +1,10 @@
 /*
     SPDX-FileCopyrightText: 2012, 2017 Martin Gräßlin <mgraesslin@kde.org>
-    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "win/desktop_set.h"
@@ -13,83 +13,51 @@
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/surface.h>
+#include <catch2/generators/catch_generators.hpp>
 
 using namespace Wrapland::Client;
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class VirtualDesktopTest : public QObject
+template<typename Functor, typename Data>
+void test_direction(test::setup& setup, Data const& test_data, std::string const& action_name)
 {
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
+    auto& vd_manager = setup.base->space->virtual_desktop_manager;
 
-    void test_count_data();
-    void test_count();
-    void test_navigation_wraps_around_data();
-    void test_navigation_wraps_around();
-    void test_current_data();
-    void test_current();
-    void test_current_change_on_count_change_data();
-    void test_current_change_on_count_change();
+    vd_manager->setCount(test_data.init_count);
+    vd_manager->setRows(2);
+    vd_manager->setCurrent(test_data.init_current);
 
-    void next_data();
-    void next();
-    void previous_data();
-    void previous();
-    void left_data();
-    void left();
-    void right_data();
-    void right();
-    void above_data();
-    void above();
-    void below_data();
-    void below();
+    Functor functor(*vd_manager);
+    QCOMPARE(functor(nullptr, test_data.wrap)->x11DesktopNumber(), test_data.result);
 
-    void update_grid_data();
-    void update_grid();
-    void update_layout_data();
-    void update_layout();
+    vd_manager->setNavigationWrappingAround(test_data.wrap);
 
-    void test_name_data();
-    void test_name();
-    void test_switch_to_shortcuts();
-    void test_change_rows();
-    void test_load();
-    void test_save();
+    auto action = vd_manager->qobject->findChild<QAction*>(QString::fromStdString(action_name));
+    QVERIFY(action);
+    action->trigger();
 
-    void testNetCurrentDesktop();
-    void testLastDesktopRemoved();
-    void testWindowOnMultipleDesktops();
-    void testRemoveDesktopWithWindow();
+    QCOMPARE(vd_manager->current(), test_data.result);
+    QCOMPARE(functor(test_data.init_current, test_data.wrap), test_data.result);
+}
 
-private:
-    template<typename T>
-    void test_direction(QString const& actionName);
-};
-
-void VirtualDesktopTest::initTestCase()
+TEST_CASE("virtual desktop", "[win]")
 {
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
-    Test::app()->start();
-    QVERIFY(startup_spy.size() || startup_spy.wait());
+    test::setup setup("virtual-desktop");
+    setup.start();
 
-    if (Test::app()->base->x11_data.connection) {
+    if (setup.base->x11_data.connection) {
         // verify the current desktop x11 property on startup, see BUG: 391034
         base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP",
-                                                Test::app()->base->x11_data.connection);
+                                                setup.base->x11_data.connection);
         QVERIFY(currentDesktopAtom.is_valid());
-        base::x11::xcb::property currentDesktop(Test::app()->base->x11_data.connection,
+        base::x11::xcb::property currentDesktop(setup.base->x11_data.connection,
                                                 0,
-                                                Test::app()->base->x11_data.root_window,
+                                                setup.base->x11_data.root_window,
                                                 currentDesktopAtom,
                                                 XCB_ATOM_CARDINAL,
                                                 0,
@@ -98,889 +66,869 @@ void VirtualDesktopTest::initTestCase()
         QCOMPARE(currentDesktop.value(0, &ok), 0);
         QVERIFY(ok);
     }
-}
 
-void VirtualDesktopTest::init()
-{
     Test::setup_wayland_connection();
-    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
+    auto& vd_manager = setup.base->space->virtual_desktop_manager;
     vd_manager->setCount(1);
     vd_manager->setCurrent(0u);
-}
 
-void VirtualDesktopTest::cleanup()
-{
-    Test::destroy_wayland_connection();
-}
-static const uint s_countInitValue = 2;
+    SECTION("count")
+    {
+        struct data {
+            unsigned int request;
+            unsigned int result;
+            bool signal;
+            bool removed_signal;
+        };
 
-void VirtualDesktopTest::test_count_data()
-{
-    QTest::addColumn<uint>("request");
-    QTest::addColumn<uint>("result");
-    QTest::addColumn<bool>("signal");
-    QTest::addColumn<bool>("removedSignal");
+        auto test_data = GENERATE(
+            // Minimum
+            data{1, 1, true, true},
+            // Below minimum
+            data{0, 1, true, true},
+            // Normal value
+            data{10, 10, true, false},
+            // Maximum
+            data{win::virtual_desktop_manager::maximum(),
+                 win::virtual_desktop_manager::maximum(),
+                 true,
+                 false},
+            // Above maximum
+            data{win::virtual_desktop_manager::maximum() + 1,
+                 win::virtual_desktop_manager::maximum(),
+                 true,
+                 false},
+            // Unchanged
+            data{2, 2, false, false});
 
-    QTest::newRow("Minimum") << 1u << 1u << true << true;
-    QTest::newRow("Below Minimum") << 0u << 1u << true << true;
-    QTest::newRow("Normal Value") << 10u << 10u << true << false;
-    QTest::newRow("Maximum") << win::virtual_desktop_manager::maximum()
-                             << win::virtual_desktop_manager::maximum() << true << false;
-    QTest::newRow("Above Maximum") << win::virtual_desktop_manager::maximum() + 1
-                                   << win::virtual_desktop_manager::maximum() << true << false;
-    QTest::newRow("Unchanged") << s_countInitValue << s_countInitValue << false << false;
-}
+        QCOMPARE(vd_manager->count(), 1);
 
-void VirtualDesktopTest::test_count()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-    QCOMPARE(vds->count(), 1);
+        // start with a useful desktop count
+        auto const count_init_value = 2;
+        vd_manager->setCount(count_init_value);
 
-    // start with a useful desktop count
-    vds->setCount(s_countInitValue);
+        QSignalSpy spy(vd_manager->qobject.get(),
+                       &win::virtual_desktop_manager_qobject::countChanged);
+        QSignalSpy desktopsRemoved(vd_manager->qobject.get(),
+                                   &win::virtual_desktop_manager_qobject::desktopRemoved);
 
-    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::countChanged);
-    QSignalSpy desktopsRemoved(vds->qobject.get(),
-                               &win::virtual_desktop_manager_qobject::desktopRemoved);
+        auto vdToRemove = vd_manager->desktops().last();
 
-    auto vdToRemove = vds->desktops().last();
+        vd_manager->setCount(test_data.request);
+        QCOMPARE(vd_manager->count(), test_data.result);
+        QCOMPARE(spy.isEmpty(), !test_data.signal);
 
-    QFETCH(uint, request);
-    QFETCH(uint, result);
-    QFETCH(bool, signal);
-    QFETCH(bool, removedSignal);
+        if (!spy.isEmpty()) {
+            auto arguments = spy.takeFirst();
+            QCOMPARE(arguments.count(), 2);
+            QCOMPARE(arguments.at(0).type(), QVariant::UInt);
+            QCOMPARE(arguments.at(1).type(), QVariant::UInt);
+            QCOMPARE(arguments.at(0).toUInt(), count_init_value);
+            QCOMPARE(arguments.at(1).toUInt(), test_data.result);
+        }
 
-    vds->setCount(request);
-    QCOMPARE(vds->count(), result);
-    QCOMPARE(spy.isEmpty(), !signal);
-
-    if (!spy.isEmpty()) {
-        QList<QVariant> arguments = spy.takeFirst();
-        QCOMPARE(arguments.count(), 2);
-        QCOMPARE(arguments.at(0).type(), QVariant::UInt);
-        QCOMPARE(arguments.at(1).type(), QVariant::UInt);
-        QCOMPARE(arguments.at(0).toUInt(), s_countInitValue);
-        QCOMPARE(arguments.at(1).toUInt(), result);
+        QCOMPARE(desktopsRemoved.isEmpty(), !test_data.removed_signal);
+        if (!desktopsRemoved.isEmpty()) {
+            auto arguments = desktopsRemoved.takeFirst();
+            QCOMPARE(arguments.count(), 1);
+            QCOMPARE(arguments.at(0).value<win::virtual_desktop*>(), vdToRemove);
+        }
     }
 
-    QCOMPARE(desktopsRemoved.isEmpty(), !removedSignal);
-    if (!desktopsRemoved.isEmpty()) {
-        QList<QVariant> arguments = desktopsRemoved.takeFirst();
-        QCOMPARE(arguments.count(), 1);
-        QCOMPARE(arguments.at(0).value<win::virtual_desktop*>(), vdToRemove);
+    SECTION("navigation wraps around")
+    {
+        struct data {
+            bool init;
+            bool request;
+            bool result;
+            bool signal;
+        };
+
+        auto test_data = GENERATE(
+            // enable
+            data{false, true, true, true},
+            // disable
+            data{true, false, false, true},
+            // keep enabled
+            data{true, true, true, false},
+            // keep disabled
+            data{false, false, false, false});
+
+        QCOMPARE(vd_manager->isNavigationWrappingAround(), true);
+
+        // set to init value
+        vd_manager->setNavigationWrappingAround(test_data.init);
+        QCOMPARE(vd_manager->isNavigationWrappingAround(), test_data.init);
+
+        QSignalSpy spy(vd_manager->qobject.get(),
+                       &win::virtual_desktop_manager_qobject::navigationWrappingAroundChanged);
+        vd_manager->setNavigationWrappingAround(test_data.request);
+        QCOMPARE(vd_manager->isNavigationWrappingAround(), test_data.result);
+        QCOMPARE(spy.isEmpty(), !test_data.signal);
+    }
+
+    SECTION("current")
+    {
+        struct data {
+            unsigned int count;
+            unsigned int init;
+            unsigned int request;
+            unsigned int result;
+            bool signal;
+        };
+
+        auto test_data = GENERATE(
+            // lower
+            data{4, 3, 2, 2, true},
+            // higher
+            data{4, 1, 2, 2, true},
+            // maximum
+            data{4, 1, 4, 4, true},
+            // above maximum
+            data{4, 1, 5, 1, false},
+            // minimum
+            data{4, 2, 1, 1, true},
+            // below minimum
+            data{4, 2, 0, 2, false},
+            // unchanged
+            data{4, 2, 2, 2, false});
+
+        QCOMPARE(vd_manager->current(), 1);
+
+        vd_manager->setCount(test_data.count);
+        REQUIRE(vd_manager->setCurrent(test_data.init) == (test_data.init != 1));
+        QCOMPARE(vd_manager->current(), test_data.init);
+
+        QSignalSpy spy(vd_manager->qobject.get(),
+                       &win::virtual_desktop_manager_qobject::currentChanged);
+
+        QCOMPARE(vd_manager->setCurrent(test_data.request), test_data.signal);
+        QCOMPARE(vd_manager->current(), test_data.result);
+        QCOMPARE(spy.isEmpty(), !test_data.signal);
+
+        if (!spy.isEmpty()) {
+            QList<QVariant> arguments = spy.takeFirst();
+            QCOMPARE(arguments.count(), 2);
+            QCOMPARE(arguments.at(0).type(), QVariant::UInt);
+            QCOMPARE(arguments.at(1).type(), QVariant::UInt);
+            QCOMPARE(arguments.at(0).toUInt(), test_data.init);
+            QCOMPARE(arguments.at(1).toUInt(), test_data.result);
+        }
+    }
+
+    SECTION("current change on count change")
+    {
+        struct data {
+            unsigned int init_count;
+            unsigned int init_current;
+            unsigned int request;
+            unsigned int current;
+            bool signal;
+        };
+
+        auto test_data = GENERATE(
+            // increment
+            data{4, 2, 5, 2, false},
+            // increement on last
+            data{4, 4, 5, 4, false},
+            // decrement
+            data{4, 2, 3, 2, false},
+            // decrement on second last
+            data{4, 3, 3, 3, false},
+            // decrement on last
+            data{4, 4, 3, 3, true},
+            // multiple decrement
+            data{4, 2, 1, 1, true});
+
+        vd_manager->setCount(test_data.init_count);
+        vd_manager->setCurrent(test_data.init_current);
+
+        QSignalSpy spy(vd_manager->qobject.get(),
+                       &win::virtual_desktop_manager_qobject::currentChanged);
+
+        vd_manager->setCount(test_data.request);
+        QCOMPARE(vd_manager->current(), test_data.current);
+        QCOMPARE(spy.isEmpty(), !test_data.signal);
+    }
+
+    SECTION("next")
+    {
+        struct data {
+            unsigned int init_count;
+            unsigned int init_current;
+            bool wrap;
+            unsigned int result;
+        };
+
+        auto test_data = GENERATE(
+            // one desktop, wrap
+            data{1, 1, true, 1},
+            // one desktop, no wrap
+            data{1, 1, false, 1},
+            // desktops, wrap
+            data{4, 1, true, 2},
+            // desktops, no wrap
+            data{4, 1, false, 2},
+            // desktops at end, wrap
+            data{4, 4, true, 1},
+            // desktops at end, no wrap
+            data{4, 4, false, 4});
+
+        test_direction<win::virtual_desktop_next>(setup, test_data, "Switch to Next Desktop");
+    }
+
+    SECTION("previous")
+    {
+        struct data {
+            unsigned int init_count;
+            unsigned int init_current;
+            bool wrap;
+            unsigned int result;
+        };
+
+        auto test_data = GENERATE(
+            // one desktop, wrap
+            data{1, 1, true, 1},
+            // one desktop, no wrap
+            data{1, 1, false, 1},
+            // desktops, wrap
+            data{4, 3, true, 2},
+            // desktops, no wrap
+            data{4, 3, false, 2},
+            // desktops at start, wrap
+            data{4, 1, true, 4},
+            // desktops at start, no wrap
+            data{4, 1, false, 1});
+
+        test_direction<win::virtual_desktop_previous>(
+            setup, test_data, "Switch to Previous Desktop");
+    }
+
+    SECTION("left")
+    {
+        struct data {
+            unsigned int init_count;
+            unsigned int init_current;
+            bool wrap;
+            unsigned int result;
+        };
+
+        auto test_data = GENERATE(
+            // one desktop, wrap
+            data{1, 1, true, 1},
+            // one desktop, no wrap
+            data{1, 1, false, 1},
+            // desktops, wrap, 1st row
+            data{4, 2, true, 1},
+            // desktops, no wrap, 1st row
+            data{4, 2, false, 1},
+            // desktops, wrap, 2nd row
+            data{4, 4, true, 3},
+            // desktops, no wrap, 2nd row
+            data{4, 4, false, 3},
+            // desktops at start, wrap, 1st row
+            data{4, 1, true, 2},
+            // desktops at start, no wrap, 1st row
+            data{4, 1, false, 1},
+            // desktops at start, wrap, 2nd row
+            data{4, 3, true, 4},
+            // desktops at start, no wrap, 2nd row
+            data{4, 3, false, 3},
+            // non symmetric, start
+            data{5, 5, false, 4},
+            // non symmetric, end, no wrap
+            data{5, 4, false, 4},
+            // non symmetric, end, wrap
+            data{5, 4, true, 5});
+
+        test_direction<win::virtual_desktop_left>(
+            setup, test_data, "Switch One Desktop to the Left");
+    }
+
+    SECTION("right")
+    {
+        struct data {
+            unsigned int init_count;
+            unsigned int init_current;
+            bool wrap;
+            unsigned int result;
+        };
+
+        auto test_data = GENERATE(
+            // one desktop, wrap
+            data{1, 1, true, 1},
+            // one desktop, no wrap
+            data{1, 1, false, 1},
+            // desktops, wrap, 1st row
+            data{4, 1, true, 2},
+            // desktops, no wrap, 1st row
+            data{4, 1, false, 2},
+            // desktops, wrap, 2nd row
+            data{4, 3, true, 4},
+            // desktops, no wrap, 2nd row
+            data{4, 3, false, 4},
+            // desktops at start, wrap, 1st row
+            data{4, 2, true, 1},
+            // desktops at start, no wrap, 1st row
+            data{4, 2, false, 2},
+            // desktops at start, wrap, 2nd row
+            data{4, 4, true, 3},
+            // desktops at start, no wrap, 2nd row
+            data{4, 4, false, 4},
+            // non symmetric, start
+            data{5, 4, true, 5},
+            // non symmetric, end, no wrap
+            data{5, 5, false, 5},
+            // non symmetric, end, wrap
+            data{5, 5, true, 4});
+
+        test_direction<win::virtual_desktop_right>(
+            setup, test_data, "Switch One Desktop to the Right");
+    }
+
+    SECTION("above")
+    {
+        struct data {
+            unsigned int init_count;
+            unsigned int init_current;
+            bool wrap;
+            unsigned int result;
+        };
+
+        auto test_data = GENERATE(
+            // one desktop, wrap
+            data{1, 1, true, 1},
+            // one desktop, no wrap
+            data{1, 1, false, 1},
+            // desktops, wrap, 1st column
+            data{4, 3, true, 1},
+            // desktops, no wrap, 1st column
+            data{4, 3, false, 1},
+            // desktops, wrap, 2nd column
+            data{4, 4, true, 2},
+            // desktops, no wrap, 2nd column
+            data{4, 4, false, 2},
+            // desktops at start, wrap, 1st column
+            data{4, 1, true, 3},
+            // desktops at start, no wrap, 1st column
+            data{4, 1, false, 1},
+            // desktops at start, wrap, 2nd column
+            data{4, 2, true, 4},
+            // desktops at start, no wrap, 2nd column
+            data{4, 2, false, 2});
+
+        test_direction<win::virtual_desktop_above>(setup, test_data, "Switch One Desktop Up");
+    }
+
+    SECTION("below")
+    {
+        struct data {
+            unsigned int init_count;
+            unsigned int init_current;
+            bool wrap;
+            unsigned int result;
+        };
+
+        auto test_data = GENERATE(
+            // one desktop, wrap
+            data{1, 1, true, 1},
+            // one desktop, no wrap
+            data{1, 1, false, 1},
+            // desktops, wrap, 1st column
+            data{4, 1, true, 3},
+            // desktops, no wrap, 1st column
+            data{4, 1, false, 3},
+            // desktops, wrap, 2nd column
+            data{4, 2, true, 4},
+            // desktops, no wrap, 2nd column
+            data{4, 2, false, 4},
+            // desktops at start, wrap, 1st column
+            data{4, 3, true, 1},
+            // desktops at start, no wrap, 1st column
+            data{4, 3, false, 3},
+            // desktops at start, wrap, 2nd column
+            data{4, 4, true, 2},
+            // desktops at start, no wrap, 2nd column
+            data{4, 4, false, 4});
+
+        test_direction<win::virtual_desktop_below>(setup, test_data, "Switch One Desktop Down");
+    }
+
+    SECTION("update grid")
+    {
+        struct data {
+            unsigned int init_count;
+            QSize size;
+            Qt::Orientation orientation;
+            QPoint coords;
+            unsigned int desktop;
+        };
+
+        auto test_data = GENERATE(data{1, {1, 1}, Qt::Horizontal, {0, 0}, 1},
+                                  data{1, {1, 1}, Qt::Horizontal, {0, 0}, 1},
+                                  data{1, {1, 1}, Qt::Vertical, {1, 0}, 0},
+                                  data{1, {1, 1}, Qt::Vertical, {0, 1}, 0},
+                                  data{2, {2, 1}, Qt::Horizontal, {0, 0}, 1},
+                                  data{2, {2, 1}, Qt::Horizontal, {1, 0}, 2},
+                                  data{2, {2, 1}, Qt::Horizontal, {0, 1}, 0},
+                                  data{2, {2, 1}, Qt::Horizontal, {2, 0}, 0},
+                                  data{2, {2, 1}, Qt::Vertical, {0, 0}, 1},
+                                  data{2, {2, 1}, Qt::Vertical, {1, 0}, 2},
+                                  data{2, {2, 1}, Qt::Vertical, {0, 1}, 0},
+                                  data{2, {2, 1}, Qt::Vertical, {2, 0}, 0},
+                                  data{3, {2, 2}, Qt::Horizontal, {0, 0}, 1},
+                                  data{3, {2, 2}, Qt::Horizontal, {1, 0}, 2},
+                                  data{3, {2, 2}, Qt::Horizontal, {0, 1}, 3},
+                                  data{3, {2, 2}, Qt::Horizontal, {1, 1}, 0},
+                                  data{4, {4, 1}, Qt::Horizontal, {0, 0}, 1},
+                                  data{4, {4, 1}, Qt::Horizontal, {1, 0}, 2},
+                                  data{4, {4, 1}, Qt::Horizontal, {2, 0}, 3},
+                                  data{4, {4, 1}, Qt::Horizontal, {3, 0}, 4},
+                                  data{4, {1, 4}, Qt::Vertical, {0, 0}, 1},
+                                  data{4, {1, 4}, Qt::Vertical, {0, 1}, 2},
+                                  data{4, {1, 4}, Qt::Vertical, {0, 2}, 3},
+                                  data{4, {1, 4}, Qt::Vertical, {0, 3}, 4},
+                                  data{4, {2, 2}, Qt::Horizontal, {0, 0}, 1},
+                                  data{4, {2, 2}, Qt::Horizontal, {1, 0}, 2},
+                                  data{4, {2, 2}, Qt::Horizontal, {0, 1}, 3},
+                                  data{4, {2, 2}, Qt::Horizontal, {1, 1}, 4},
+                                  data{4, {2, 2}, Qt::Horizontal, {0, 3}, 0});
+
+        vd_manager->setCount(test_data.init_count);
+
+        win::virtual_desktop_grid grid(*vd_manager);
+
+        QCOMPARE(vd_manager->desktops().count(), int(test_data.init_count));
+
+        grid.update(test_data.size, test_data.orientation, vd_manager->desktops());
+        QCOMPARE(grid.size(), test_data.size);
+        QCOMPARE(grid.width(), test_data.size.width());
+        QCOMPARE(grid.height(), test_data.size.height());
+
+        QCOMPARE(grid.at(test_data.coords), vd_manager->desktopForX11Id(test_data.desktop));
+
+        if (test_data.desktop != 0) {
+            QCOMPARE(grid.gridCoords(test_data.desktop), test_data.coords);
+        }
+    }
+
+    SECTION("update layout")
+    {
+        // call update layout - implicitly through setCount
+
+        struct data {
+            unsigned int desktop;
+            QSize result;
+        };
+
+        auto test_data = GENERATE(data{1, {1, 1}},
+                                  data{2, {1, 2}},
+                                  data{3, {2, 2}},
+                                  data{4, {2, 2}},
+                                  data{5, {3, 2}},
+                                  data{6, {3, 2}},
+                                  data{7, {4, 2}},
+                                  data{8, {4, 2}},
+                                  data{9, {5, 2}},
+                                  data{10, {5, 2}},
+                                  data{11, {6, 2}},
+                                  data{12, {6, 2}},
+                                  data{13, {7, 2}},
+                                  data{14, {7, 2}},
+                                  data{15, {8, 2}},
+                                  data{16, {8, 2}},
+                                  data{17, {9, 2}},
+                                  data{18, {9, 2}},
+                                  data{19, {10, 2}},
+                                  data{20, {10, 2}});
+
+        QSignalSpy spy(vd_manager->qobject.get(),
+                       &win::virtual_desktop_manager_qobject::layoutChanged);
+        QVERIFY(spy.isValid());
+
+        if (test_data.desktop == 1) {
+            // Must be changed back and forth from our default so the spy fires.
+            vd_manager->setCount(2);
+        }
+
+        vd_manager->setCount(test_data.desktop);
+        vd_manager->setRows(2);
+
+        QCOMPARE(vd_manager->grid().size(), test_data.result);
+        QVERIFY(!spy.empty());
+
+        auto const& arguments = spy.back();
+        QCOMPARE(arguments.at(0).toInt(), test_data.result.width());
+        QCOMPARE(arguments.at(1).toInt(), test_data.result.height());
+
+        spy.clear();
+
+        // calling update layout again should not change anything
+        vd_manager->updateLayout();
+        QCOMPARE(vd_manager->grid().size(), test_data.result);
+        QCOMPARE(spy.count(), 1);
+
+        auto const& arguments2 = spy.back();
+        QCOMPARE(arguments2.at(0).toInt(), test_data.result.width());
+        QCOMPARE(arguments2.at(1).toInt(), test_data.result.height());
+    }
+
+    SECTION("name")
+    {
+        struct data {
+            unsigned int init_count;
+            unsigned int desktop;
+            std::string desktop_name;
+        };
+
+        auto test_data = GENERATE(data{4, 1, "Desktop 1"},
+                                  data{4, 2, "Desktop 2"},
+                                  data{4, 3, "Desktop 3"},
+                                  data{4, 4, "Desktop 4"},
+                                  data{5, 5, "Desktop 5"});
+
+        vd_manager->setCount(test_data.init_count);
+        REQUIRE(vd_manager->name(test_data.desktop)
+                == QString::fromStdString(test_data.desktop_name));
+    }
+
+    SECTION("switch to shortcut")
+    {
+        vd_manager->setCount(vd_manager->maximum());
+        vd_manager->setCurrent(vd_manager->maximum());
+
+        QCOMPARE(vd_manager->current(), vd_manager->maximum());
+        //    vd_manager->initShortcuts();
+        auto const toDesktop = QStringLiteral("Switch to Desktop %1");
+
+        for (uint i = 1; i <= vd_manager->maximum(); ++i) {
+            const QString desktop(toDesktop.arg(i));
+            QAction* action = vd_manager->qobject->findChild<QAction*>(desktop);
+            QVERIFY2(action, desktop.toUtf8().constData());
+            action->trigger();
+            QCOMPARE(vd_manager->current(), i);
+        }
+
+        // should still be on max
+        QCOMPARE(vd_manager->current(), vd_manager->maximum());
+    }
+
+    SECTION("change rows")
+    {
+        vd_manager->setCount(4);
+        vd_manager->setRows(4);
+        QCOMPARE(vd_manager->rows(), 4);
+
+        vd_manager->setRows(5);
+        QCOMPARE(vd_manager->rows(), 4);
+
+        vd_manager->setCount(2);
+
+        // TODO(romangg): Fails when run in Xwayland mode and passes otherwise. The root cause
+        //                seems to be the update from root info in
+        //                win::virtual_desktop_manager::updateLayout.
+        REQUIRE(vd_manager->rows() == 2);
+    }
+
+    SECTION("load")
+    {
+        // No config yet, load should not change anything.
+        vd_manager->load();
+        QCOMPARE(vd_manager->count(), 1);
+
+        // Empty config should create one desktop.
+        auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+        vd_manager->setConfig(config);
+        vd_manager->load();
+        QCOMPARE(vd_manager->count(), 1);
+
+        // Setting a sensible number.
+        config->group("Desktops").writeEntry("Number", 4);
+        vd_manager->load();
+        QCOMPARE(vd_manager->count(), 4);
+
+        // Setting the config value and reloading should update.
+        config->group("Desktops").writeEntry("Number", 5);
+        vd_manager->load();
+        QCOMPARE(vd_manager->count(), 5);
+    }
+
+    SECTION("save")
+    {
+        vd_manager->setCount(4);
+
+        // No config yet, just to ensure it actually works.
+        vd_manager->save();
+
+        auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
+        vd_manager->setConfig(config);
+
+        REQUIRE(config->hasGroup("Desktops"));
+
+        // Now save should create the group "Desktops".
+        vd_manager->save();
+        QCOMPARE(config->hasGroup("Desktops"), true);
+
+        auto desktops = config->group("Desktops");
+        QCOMPARE(desktops.readEntry<int>("Number", 1), 4);
+        QCOMPARE(desktops.hasKey("Name_1"), false);
+        QCOMPARE(desktops.hasKey("Name_2"), false);
+        QCOMPARE(desktops.hasKey("Name_3"), false);
+        QCOMPARE(desktops.hasKey("Name_4"), false);
+    }
+
+    SECTION("net current desktop")
+    {
+        if (!setup.base->x11_data.connection) {
+            QSKIP("Skipped on Wayland only");
+        }
+
+        QCOMPARE(vd_manager->count(), 1u);
+        vd_manager->setCount(4);
+        QCOMPARE(vd_manager->count(), 4u);
+
+        base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP",
+                                                setup.base->x11_data.connection);
+        QVERIFY(currentDesktopAtom.is_valid());
+        base::x11::xcb::property currentDesktop(setup.base->x11_data.connection,
+                                                0,
+                                                setup.base->x11_data.root_window,
+                                                currentDesktopAtom,
+                                                XCB_ATOM_CARDINAL,
+                                                0,
+                                                1);
+        bool ok = true;
+        QCOMPARE(currentDesktop.value(0, &ok), 0);
+        QVERIFY(ok);
+
+        // go to desktop 2
+        vd_manager->setCurrent(2);
+        currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
+                                                  0,
+                                                  setup.base->x11_data.root_window,
+                                                  currentDesktopAtom,
+                                                  XCB_ATOM_CARDINAL,
+                                                  0,
+                                                  1);
+        QCOMPARE(currentDesktop.value(0, &ok), 1);
+        QVERIFY(ok);
+
+        // go to desktop 3
+        vd_manager->setCurrent(3);
+        currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
+                                                  0,
+                                                  setup.base->x11_data.root_window,
+                                                  currentDesktopAtom,
+                                                  XCB_ATOM_CARDINAL,
+                                                  0,
+                                                  1);
+        QCOMPARE(currentDesktop.value(0, &ok), 2);
+        QVERIFY(ok);
+
+        // go to desktop 4
+        vd_manager->setCurrent(4);
+        currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
+                                                  0,
+                                                  setup.base->x11_data.root_window,
+                                                  currentDesktopAtom,
+                                                  XCB_ATOM_CARDINAL,
+                                                  0,
+                                                  1);
+        QCOMPARE(currentDesktop.value(0, &ok), 3);
+        QVERIFY(ok);
+
+        // and back to first
+        vd_manager->setCurrent(1);
+        currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
+                                                  0,
+                                                  setup.base->x11_data.root_window,
+                                                  currentDesktopAtom,
+                                                  XCB_ATOM_CARDINAL,
+                                                  0,
+                                                  1);
+        QCOMPARE(currentDesktop.value(0, &ok), 0);
+        QVERIFY(ok);
+    }
+
+    SECTION("last desktop removed")
+    {
+        // first create a new desktop
+        QCOMPARE(vd_manager->count(), 1u);
+        vd_manager->setCount(2);
+        QCOMPARE(vd_manager->count(), 2u);
+
+        // switch to last desktop
+        vd_manager->setCurrent(vd_manager->desktops().last());
+        QCOMPARE(vd_manager->current(), 2u);
+
+        // now create a window on this desktop
+        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        QVERIFY(surface);
+        QVERIFY(shellSurface);
+
+        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+
+        QVERIFY(client);
+        QCOMPARE(win::get_desktop(*client), 2);
+        QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
+                                             &win::window_qobject::desktopPresenceChanged);
+        QVERIFY(desktopPresenceChangedSpy.isValid());
+
+        QCOMPARE(client->topo.desktops.count(), 1u);
+        QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
+
+        // and remove last desktop
+        vd_manager->setCount(1);
+        QCOMPARE(vd_manager->count(), 1u);
+        // now the client should be moved as well
+        QTRY_COMPARE(desktopPresenceChangedSpy.count(), 1);
+        QCOMPARE(win::get_desktop(*client), 1);
+
+        QCOMPARE(client->topo.desktops.count(), 1u);
+        QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
+    }
+
+    SECTION("window on multiple desktops")
+    {
+        // first create two new desktops
+        QCOMPARE(vd_manager->count(), 1u);
+        vd_manager->setCount(3);
+        QCOMPARE(vd_manager->count(), 3u);
+
+        // switch to last desktop
+        vd_manager->setCurrent(vd_manager->desktops().last());
+        QCOMPARE(vd_manager->current(), 3u);
+
+        // now create a window on this desktop
+        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        QVERIFY(surface);
+        QVERIFY(shellSurface);
+
+        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+
+        QVERIFY(client);
+        QCOMPARE(win::get_desktop(*client), 3u);
+        QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
+                                             &win::window_qobject::desktopPresenceChanged);
+        QVERIFY(desktopPresenceChangedSpy.isValid());
+
+        QCOMPARE(client->topo.desktops.count(), 1u);
+        QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
+
+        // Set the window on desktop 2 as well
+        win::enter_desktop(client, vd_manager->desktopForX11Id(2));
+        QCOMPARE(client->topo.desktops.count(), 2u);
+        QCOMPARE(vd_manager->desktops()[2], client->topo.desktops.at(0));
+        QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(1));
+        QVERIFY(win::on_desktop(client, 2));
+        QVERIFY(win::on_desktop(client, 3));
+
+        // leave desktop 3
+        win::leave_desktop(client, vd_manager->desktopForX11Id(3));
+        QCOMPARE(client->topo.desktops.count(), 1u);
+        // leave desktop 2
+        win::leave_desktop(client, vd_manager->desktopForX11Id(2));
+        QCOMPARE(client->topo.desktops.count(), 0u);
+        // we should be on all desktops now
+        QVERIFY(win::on_all_desktops(client));
+        // put on desktop 1
+        win::enter_desktop(client, vd_manager->desktopForX11Id(1));
+        QVERIFY(win::on_desktop(client, 1));
+        QVERIFY(!win::on_desktop(client, 2));
+        QVERIFY(!win::on_desktop(client, 3));
+        QCOMPARE(client->topo.desktops.count(), 1u);
+        // put on desktop 2
+        win::enter_desktop(client, vd_manager->desktopForX11Id(2));
+        QVERIFY(win::on_desktop(client, 1));
+        QVERIFY(win::on_desktop(client, 2));
+        QVERIFY(!win::on_desktop(client, 3));
+        QCOMPARE(client->topo.desktops.count(), 2u);
+        // put on desktop 3
+        win::enter_desktop(client, vd_manager->desktopForX11Id(3));
+        QVERIFY(win::on_desktop(client, 1));
+        QVERIFY(win::on_desktop(client, 2));
+        QVERIFY(win::on_desktop(client, 3));
+        QCOMPARE(client->topo.desktops.count(), 3u);
+
+        // entering twice dooes nothing
+        win::enter_desktop(client, vd_manager->desktopForX11Id(3));
+        QCOMPARE(client->topo.desktops.count(), 3u);
+
+        // adding to "all desktops" results in just that one desktop
+        win::set_on_all_desktops(client, true);
+        QCOMPARE(client->topo.desktops.count(), 0u);
+        win::enter_desktop(client, vd_manager->desktopForX11Id(3));
+        QVERIFY(win::on_desktop(client, 3));
+        QCOMPARE(client->topo.desktops.count(), 1u);
+
+        // leaving a desktop on "all desktops" puts on everything else
+        win::set_on_all_desktops(client, true);
+        QCOMPARE(client->topo.desktops.count(), 0u);
+        win::leave_desktop(client, vd_manager->desktopForX11Id(3));
+        QVERIFY(win::on_desktop(client, 1));
+        QVERIFY(win::on_desktop(client, 2));
+        QCOMPARE(client->topo.desktops.count(), 2u);
+    }
+
+    SECTION("remove desktop with window")
+    {
+        // first create two new desktops
+        QCOMPARE(vd_manager->count(), 1u);
+        vd_manager->setCount(3);
+        QCOMPARE(vd_manager->count(), 3u);
+
+        // switch to last desktop
+        vd_manager->setCurrent(vd_manager->desktops().last());
+        QCOMPARE(vd_manager->current(), 3u);
+
+        // now create a window on this desktop
+        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        QVERIFY(surface);
+        QVERIFY(shellSurface);
+
+        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+
+        QVERIFY(client);
+        QCOMPARE(win::get_desktop(*client), 3u);
+        QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
+                                             &win::window_qobject::desktopPresenceChanged);
+        QVERIFY(desktopPresenceChangedSpy.isValid());
+
+        QCOMPARE(client->topo.desktops.count(), 1u);
+        QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
+
+        // Set the window on desktop 2 as well
+        win::enter_desktop(client, vd_manager->desktops()[1]);
+        QCOMPARE(client->topo.desktops.count(), 2u);
+        QCOMPARE(vd_manager->desktops()[2], client->topo.desktops.at(0));
+        QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(1));
+        QVERIFY(win::on_desktop(client, 2));
+        QVERIFY(win::on_desktop(client, 3));
+
+        // remove desktop 3
+        vd_manager->setCount(2);
+        QCOMPARE(client->topo.desktops.count(), 1u);
+        // window is only on desktop 2
+        QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(0));
+
+        // Again 3 desktops
+        vd_manager->setCount(3);
+        // move window to be only on desktop 3
+        win::enter_desktop(client, vd_manager->desktops()[2]);
+        win::leave_desktop(client, vd_manager->desktops()[1]);
+        QCOMPARE(client->topo.desktops.count(), 1u);
+        // window is only on desktop 3
+        QCOMPARE(vd_manager->desktops()[2], client->topo.desktops.at(0));
+
+        // remove desktop 3
+        vd_manager->setCount(2);
+        QCOMPARE(client->topo.desktops.count(), 1u);
+        // window is only on desktop 2
+        QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(0));
     }
 }
 
-void VirtualDesktopTest::test_navigation_wraps_around_data()
-{
-    QTest::addColumn<bool>("init");
-    QTest::addColumn<bool>("request");
-    QTest::addColumn<bool>("result");
-    QTest::addColumn<bool>("signal");
-
-    QTest::newRow("enable") << false << true << true << true;
-    QTest::newRow("disable") << true << false << false << true;
-    QTest::newRow("keep enabled") << true << true << true << false;
-    QTest::newRow("keep disabled") << false << false << false << false;
 }
-
-void VirtualDesktopTest::test_navigation_wraps_around()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-
-    // TODO(romangg): This is sometimes false. Why?
-    // QCOMPARE(vds->isNavigationWrappingAround(), true);
-
-    QFETCH(bool, init);
-    QFETCH(bool, request);
-    QFETCH(bool, result);
-    QFETCH(bool, signal);
-
-    // set to init value
-    vds->setNavigationWrappingAround(init);
-    QCOMPARE(vds->isNavigationWrappingAround(), init);
-
-    QSignalSpy spy(vds->qobject.get(),
-                   &win::virtual_desktop_manager_qobject::navigationWrappingAroundChanged);
-    vds->setNavigationWrappingAround(request);
-    QCOMPARE(vds->isNavigationWrappingAround(), result);
-    QCOMPARE(spy.isEmpty(), !signal);
-}
-
-void VirtualDesktopTest::test_current_data()
-{
-    QTest::addColumn<uint>("count");
-    QTest::addColumn<uint>("init");
-    QTest::addColumn<uint>("request");
-    QTest::addColumn<uint>("result");
-    QTest::addColumn<bool>("signal");
-
-    QTest::newRow("lower") << 4u << 3u << 2u << 2u << true;
-    QTest::newRow("higher") << 4u << 1u << 2u << 2u << true;
-    QTest::newRow("maximum") << 4u << 1u << 4u << 4u << true;
-    QTest::newRow("above maximum") << 4u << 1u << 5u << 1u << false;
-    QTest::newRow("minimum") << 4u << 2u << 1u << 1u << true;
-    QTest::newRow("below minimum") << 4u << 2u << 0u << 2u << false;
-    QTest::newRow("unchanged") << 4u << 2u << 2u << 2u << false;
-}
-
-void VirtualDesktopTest::test_current()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-    QCOMPARE(vds->current(), 1);
-
-    QFETCH(uint, count);
-    vds->setCount(count);
-
-    QFETCH(uint, init);
-    QCOMPARE(vds->setCurrent(init), init != 1);
-    QCOMPARE(vds->current(), init);
-
-    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::currentChanged);
-
-    QFETCH(uint, request);
-    QFETCH(uint, result);
-    QFETCH(bool, signal);
-
-    QCOMPARE(vds->setCurrent(request), signal);
-    QCOMPARE(vds->current(), result);
-    QCOMPARE(spy.isEmpty(), !signal);
-
-    if (!spy.isEmpty()) {
-        QList<QVariant> arguments = spy.takeFirst();
-        QCOMPARE(arguments.count(), 2);
-        QCOMPARE(arguments.at(0).type(), QVariant::UInt);
-        QCOMPARE(arguments.at(1).type(), QVariant::UInt);
-        QCOMPARE(arguments.at(0).toUInt(), init);
-        QCOMPARE(arguments.at(1).toUInt(), result);
-    }
-}
-
-void VirtualDesktopTest::test_current_change_on_count_change_data()
-{
-    QTest::addColumn<uint>("initCount");
-    QTest::addColumn<uint>("initCurrent");
-    QTest::addColumn<uint>("request");
-    QTest::addColumn<uint>("current");
-    QTest::addColumn<bool>("signal");
-
-    QTest::newRow("increment") << 4u << 2u << 5u << 2u << false;
-    QTest::newRow("increment on last") << 4u << 4u << 5u << 4u << false;
-    QTest::newRow("decrement") << 4u << 2u << 3u << 2u << false;
-    QTest::newRow("decrement on second last") << 4u << 3u << 3u << 3u << false;
-    QTest::newRow("decrement on last") << 4u << 4u << 3u << 3u << true;
-    QTest::newRow("multiple decrement") << 4u << 2u << 1u << 1u << true;
-}
-
-void VirtualDesktopTest::test_current_change_on_count_change()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-
-    QFETCH(uint, initCount);
-    QFETCH(uint, initCurrent);
-    vds->setCount(initCount);
-    vds->setCurrent(initCurrent);
-
-    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::currentChanged);
-
-    QFETCH(uint, request);
-    QFETCH(uint, current);
-    QFETCH(bool, signal);
-
-    vds->setCount(request);
-    QCOMPARE(vds->current(), current);
-    QCOMPARE(spy.isEmpty(), !signal);
-}
-
-void add_direction_columns()
-{
-    QTest::addColumn<uint>("initCount");
-    QTest::addColumn<uint>("initCurrent");
-    QTest::addColumn<bool>("wrap");
-    QTest::addColumn<uint>("result");
-}
-
-template<typename T>
-void VirtualDesktopTest::test_direction(QString const& actionName)
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-
-    QFETCH(uint, initCount);
-    QFETCH(uint, initCurrent);
-
-    vds->setCount(initCount);
-    vds->setRows(2);
-    vds->setCurrent(initCurrent);
-
-    QFETCH(bool, wrap);
-    QFETCH(uint, result);
-
-    T functor(*vds);
-    QCOMPARE(functor(nullptr, wrap)->x11DesktopNumber(), result);
-
-    vds->setNavigationWrappingAround(wrap);
-
-    auto action = vds->qobject->findChild<QAction*>(actionName);
-    QVERIFY(action);
-    action->trigger();
-
-    QCOMPARE(vds->current(), result);
-    QCOMPARE(functor(initCurrent, wrap), result);
-}
-
-void VirtualDesktopTest::next_data()
-{
-    add_direction_columns();
-
-    QTest::newRow("one desktop, wrap") << 1u << 1u << true << 1u;
-    QTest::newRow("one desktop, no wrap") << 1u << 1u << false << 1u;
-    QTest::newRow("desktops, wrap") << 4u << 1u << true << 2u;
-    QTest::newRow("desktops, no wrap") << 4u << 1u << false << 2u;
-    QTest::newRow("desktops at end, wrap") << 4u << 4u << true << 1u;
-    QTest::newRow("desktops at end, no wrap") << 4u << 4u << false << 4u;
-}
-
-void VirtualDesktopTest::next()
-{
-    test_direction<win::virtual_desktop_next>(QStringLiteral("Switch to Next Desktop"));
-}
-
-void VirtualDesktopTest::previous_data()
-{
-    add_direction_columns();
-
-    QTest::newRow("one desktop, wrap") << 1u << 1u << true << 1u;
-    QTest::newRow("one desktop, no wrap") << 1u << 1u << false << 1u;
-    QTest::newRow("desktops, wrap") << 4u << 3u << true << 2u;
-    QTest::newRow("desktops, no wrap") << 4u << 3u << false << 2u;
-    QTest::newRow("desktops at start, wrap") << 4u << 1u << true << 4u;
-    QTest::newRow("desktops at start, no wrap") << 4u << 1u << false << 1u;
-}
-
-void VirtualDesktopTest::previous()
-{
-    test_direction<win::virtual_desktop_previous>(QStringLiteral("Switch to Previous Desktop"));
-}
-
-void VirtualDesktopTest::left_data()
-{
-    add_direction_columns();
-
-    QTest::newRow("one desktop, wrap") << 1u << 1u << true << 1u;
-    QTest::newRow("one desktop, no wrap") << 1u << 1u << false << 1u;
-    QTest::newRow("desktops, wrap, 1st row") << 4u << 2u << true << 1u;
-    QTest::newRow("desktops, no wrap, 1st row") << 4u << 2u << false << 1u;
-    QTest::newRow("desktops, wrap, 2nd row") << 4u << 4u << true << 3u;
-    QTest::newRow("desktops, no wrap, 2nd row") << 4u << 4u << false << 3u;
-
-    QTest::newRow("desktops at start, wrap, 1st row") << 4u << 1u << true << 2u;
-    QTest::newRow("desktops at start, no wrap, 1st row") << 4u << 1u << false << 1u;
-    QTest::newRow("desktops at start, wrap, 2nd row") << 4u << 3u << true << 4u;
-    QTest::newRow("desktops at start, no wrap, 2nd row") << 4u << 3u << false << 3u;
-
-    QTest::newRow("non symmetric, start") << 5u << 5u << false << 4u;
-    QTest::newRow("non symmetric, end, no wrap") << 5u << 4u << false << 4u;
-    QTest::newRow("non symmetric, end, wrap") << 5u << 4u << true << 5u;
-}
-
-void VirtualDesktopTest::left()
-{
-    test_direction<win::virtual_desktop_left>(QStringLiteral("Switch One Desktop to the Left"));
-}
-
-void VirtualDesktopTest::right_data()
-{
-    add_direction_columns();
-
-    QTest::newRow("one desktop, wrap") << 1u << 1u << true << 1u;
-    QTest::newRow("one desktop, no wrap") << 1u << 1u << false << 1u;
-    QTest::newRow("desktops, wrap, 1st row") << 4u << 1u << true << 2u;
-    QTest::newRow("desktops, no wrap, 1st row") << 4u << 1u << false << 2u;
-    QTest::newRow("desktops, wrap, 2nd row") << 4u << 3u << true << 4u;
-    QTest::newRow("desktops, no wrap, 2nd row") << 4u << 3u << false << 4u;
-
-    QTest::newRow("desktops at start, wrap, 1st row") << 4u << 2u << true << 1u;
-    QTest::newRow("desktops at start, no wrap, 1st row") << 4u << 2u << false << 2u;
-    QTest::newRow("desktops at start, wrap, 2nd row") << 4u << 4u << true << 3u;
-    QTest::newRow("desktops at start, no wrap, 2nd row") << 4u << 4u << false << 4u;
-
-    QTest::newRow("non symmetric, start") << 5u << 4u << false << 5u;
-    QTest::newRow("non symmetric, end, no wrap") << 5u << 5u << false << 5u;
-    QTest::newRow("non symmetric, end, wrap") << 5u << 5u << true << 4u;
-}
-
-void VirtualDesktopTest::right()
-{
-    test_direction<win::virtual_desktop_right>(QStringLiteral("Switch One Desktop to the Right"));
-}
-
-void VirtualDesktopTest::above_data()
-{
-    add_direction_columns();
-
-    QTest::newRow("one desktop, wrap") << 1u << 1u << true << 1u;
-    QTest::newRow("one desktop, no wrap") << 1u << 1u << false << 1u;
-    QTest::newRow("desktops, wrap, 1st column") << 4u << 3u << true << 1u;
-    QTest::newRow("desktops, no wrap, 1st column") << 4u << 3u << false << 1u;
-    QTest::newRow("desktops, wrap, 2nd column") << 4u << 4u << true << 2u;
-    QTest::newRow("desktops, no wrap, 2nd column") << 4u << 4u << false << 2u;
-
-    QTest::newRow("desktops at start, wrap, 1st column") << 4u << 1u << true << 3u;
-    QTest::newRow("desktops at start, no wrap, 1st column") << 4u << 1u << false << 1u;
-    QTest::newRow("desktops at start, wrap, 2nd column") << 4u << 2u << true << 4u;
-    QTest::newRow("desktops at start, no wrap, 2nd column") << 4u << 2u << false << 2u;
-}
-
-void VirtualDesktopTest::above()
-{
-    test_direction<win::virtual_desktop_above>(QStringLiteral("Switch One Desktop Up"));
-}
-
-void VirtualDesktopTest::below_data()
-{
-    add_direction_columns();
-    QTest::newRow("one desktop, wrap") << 1u << 1u << true << 1u;
-    QTest::newRow("one desktop, no wrap") << 1u << 1u << false << 1u;
-    QTest::newRow("desktops, wrap, 1st column") << 4u << 1u << true << 3u;
-    QTest::newRow("desktops, no wrap, 1st column") << 4u << 1u << false << 3u;
-    QTest::newRow("desktops, wrap, 2nd column") << 4u << 2u << true << 4u;
-    QTest::newRow("desktops, no wrap, 2nd column") << 4u << 2u << false << 4u;
-
-    QTest::newRow("desktops at start, wrap, 1st column") << 4u << 3u << true << 1u;
-    QTest::newRow("desktops at start, no wrap, 1st column") << 4u << 3u << false << 3u;
-    QTest::newRow("desktops at start, wrap, 2nd column") << 4u << 4u << true << 2u;
-    QTest::newRow("desktops at start, no wrap, 2nd column") << 4u << 4u << false << 4u;
-}
-
-void VirtualDesktopTest::below()
-{
-    test_direction<win::virtual_desktop_below>(QStringLiteral("Switch One Desktop Down"));
-}
-
-void VirtualDesktopTest::update_grid_data()
-{
-    QTest::addColumn<uint>("initCount");
-    QTest::addColumn<QSize>("size");
-    QTest::addColumn<Qt::Orientation>("orientation");
-    QTest::addColumn<QPoint>("coords");
-    QTest::addColumn<uint>("desktop");
-    const Qt::Orientation h = Qt::Horizontal;
-    const Qt::Orientation v = Qt::Vertical;
-
-    QTest::newRow("one desktop, h") << 1u << QSize(1, 1) << h << QPoint(0, 0) << 1u;
-    QTest::newRow("one desktop, v") << 1u << QSize(1, 1) << v << QPoint(0, 0) << 1u;
-    QTest::newRow("one desktop, h, 0") << 1u << QSize(1, 1) << h << QPoint(1, 0) << 0u;
-    QTest::newRow("one desktop, v, 0") << 1u << QSize(1, 1) << v << QPoint(0, 1) << 0u;
-
-    QTest::newRow("two desktops, h, 1") << 2u << QSize(2, 1) << h << QPoint(0, 0) << 1u;
-    QTest::newRow("two desktops, h, 2") << 2u << QSize(2, 1) << h << QPoint(1, 0) << 2u;
-    QTest::newRow("two desktops, h, 3") << 2u << QSize(2, 1) << h << QPoint(0, 1) << 0u;
-    QTest::newRow("two desktops, h, 4") << 2u << QSize(2, 1) << h << QPoint(2, 0) << 0u;
-
-    QTest::newRow("two desktops, v, 1") << 2u << QSize(2, 1) << v << QPoint(0, 0) << 1u;
-    QTest::newRow("two desktops, v, 2") << 2u << QSize(2, 1) << v << QPoint(1, 0) << 2u;
-    QTest::newRow("two desktops, v, 3") << 2u << QSize(2, 1) << v << QPoint(0, 1) << 0u;
-    QTest::newRow("two desktops, v, 4") << 2u << QSize(2, 1) << v << QPoint(2, 0) << 0u;
-
-    QTest::newRow("four desktops, h, one row, 1") << 4u << QSize(4, 1) << h << QPoint(0, 0) << 1u;
-    QTest::newRow("four desktops, h, one row, 2") << 4u << QSize(4, 1) << h << QPoint(1, 0) << 2u;
-    QTest::newRow("four desktops, h, one row, 3") << 4u << QSize(4, 1) << h << QPoint(2, 0) << 3u;
-    QTest::newRow("four desktops, h, one row, 4") << 4u << QSize(4, 1) << h << QPoint(3, 0) << 4u;
-
-    QTest::newRow("four desktops, v, one column, 1")
-        << 4u << QSize(1, 4) << v << QPoint(0, 0) << 1u;
-    QTest::newRow("four desktops, v, one column, 2")
-        << 4u << QSize(1, 4) << v << QPoint(0, 1) << 2u;
-    QTest::newRow("four desktops, v, one column, 3")
-        << 4u << QSize(1, 4) << v << QPoint(0, 2) << 3u;
-    QTest::newRow("four desktops, v, one column, 4")
-        << 4u << QSize(1, 4) << v << QPoint(0, 3) << 4u;
-
-    QTest::newRow("four desktops, h, grid, 1") << 4u << QSize(2, 2) << h << QPoint(0, 0) << 1u;
-    QTest::newRow("four desktops, h, grid, 2") << 4u << QSize(2, 2) << h << QPoint(1, 0) << 2u;
-    QTest::newRow("four desktops, h, grid, 3") << 4u << QSize(2, 2) << h << QPoint(0, 1) << 3u;
-    QTest::newRow("four desktops, h, grid, 4") << 4u << QSize(2, 2) << h << QPoint(1, 1) << 4u;
-    QTest::newRow("four desktops, h, grid, 0/3") << 4u << QSize(2, 2) << h << QPoint(0, 3) << 0u;
-
-    QTest::newRow("three desktops, h, grid, 1") << 3u << QSize(2, 2) << h << QPoint(0, 0) << 1u;
-    QTest::newRow("three desktops, h, grid, 2") << 3u << QSize(2, 2) << h << QPoint(1, 0) << 2u;
-    QTest::newRow("three desktops, h, grid, 3") << 3u << QSize(2, 2) << h << QPoint(0, 1) << 3u;
-    QTest::newRow("three desktops, h, grid, 4") << 3u << QSize(2, 2) << h << QPoint(1, 1) << 0u;
-}
-
-void VirtualDesktopTest::update_grid()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-
-    QFETCH(uint, initCount);
-    vds->setCount(initCount);
-
-    win::virtual_desktop_grid grid(*vds);
-
-    QFETCH(QSize, size);
-    QFETCH(Qt::Orientation, orientation);
-    QCOMPARE(vds->desktops().count(), int(initCount));
-
-    grid.update(size, orientation, vds->desktops());
-    QCOMPARE(grid.size(), size);
-    QCOMPARE(grid.width(), size.width());
-    QCOMPARE(grid.height(), size.height());
-
-    QFETCH(QPoint, coords);
-    QFETCH(uint, desktop);
-    QCOMPARE(grid.at(coords), vds->desktopForX11Id(desktop));
-
-    if (desktop != 0) {
-        QCOMPARE(grid.gridCoords(desktop), coords);
-    }
-}
-
-void VirtualDesktopTest::update_layout_data()
-{
-    QTest::addColumn<uint>("desktop");
-    QTest::addColumn<QSize>("result");
-
-    // Grid does not shrink for some reason and stays at 2x2 from previous test. Needs to be
-    // investigated.
-#if 0
-    QTest::newRow("01") << 1u << QSize(1, 1);
-    QTest::newRow("02") << 2u << QSize(1, 2);
-#endif
-    QTest::newRow("03") << 3u << QSize(2, 2);
-    QTest::newRow("04") << 4u << QSize(2, 2);
-    QTest::newRow("05") << 5u << QSize(3, 2);
-    QTest::newRow("06") << 6u << QSize(3, 2);
-    QTest::newRow("07") << 7u << QSize(4, 2);
-    QTest::newRow("08") << 8u << QSize(4, 2);
-    QTest::newRow("09") << 9u << QSize(5, 2);
-    QTest::newRow("10") << 10u << QSize(5, 2);
-    QTest::newRow("11") << 11u << QSize(6, 2);
-    QTest::newRow("12") << 12u << QSize(6, 2);
-    QTest::newRow("13") << 13u << QSize(7, 2);
-    QTest::newRow("14") << 14u << QSize(7, 2);
-    QTest::newRow("15") << 15u << QSize(8, 2);
-    QTest::newRow("16") << 16u << QSize(8, 2);
-    QTest::newRow("17") << 17u << QSize(9, 2);
-    QTest::newRow("18") << 18u << QSize(9, 2);
-    QTest::newRow("19") << 19u << QSize(10, 2);
-    QTest::newRow("20") << 20u << QSize(10, 2);
-}
-
-void VirtualDesktopTest::update_layout()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-
-    QSignalSpy spy(vds->qobject.get(), &win::virtual_desktop_manager_qobject::layoutChanged);
-    QVERIFY(spy.isValid());
-
-    // call update layout - implicitly through setCount
-    QFETCH(uint, desktop);
-    QFETCH(QSize, result);
-
-    if (desktop == 1) {
-        // Must be changed back and forth from our default so the spy fires.
-        vds->setCount(2);
-    }
-
-    vds->setCount(desktop);
-    vds->setRows(2);
-
-    //    QEXPECT_FAIL("01", "Should rows() reduce to VDs count? Happened in old VD test.",
-    //    Continue);
-    QCOMPARE(vds->grid().size(), result);
-    QVERIFY(!spy.empty());
-
-    auto const& arguments = spy.back();
-    QCOMPARE(arguments.at(0).toInt(), result.width());
-    QCOMPARE(arguments.at(1).toInt(), result.height());
-
-    spy.clear();
-
-    // calling update layout again should not change anything
-    vds->updateLayout();
-    QCOMPARE(vds->grid().size(), result);
-    QCOMPARE(spy.count(), 1);
-
-    auto const& arguments2 = spy.back();
-    QCOMPARE(arguments2.at(0).toInt(), result.width());
-    QCOMPARE(arguments2.at(1).toInt(), result.height());
-}
-
-void VirtualDesktopTest::test_name_data()
-{
-    QTest::addColumn<uint>("initCount");
-    QTest::addColumn<uint>("desktop");
-    QTest::addColumn<QString>("desktopName");
-
-    QTest::newRow("desktop 1") << 4u << 1u << "Desktop 1";
-    QTest::newRow("desktop 2") << 4u << 2u << "Desktop 2";
-    QTest::newRow("desktop 3") << 4u << 3u << "Desktop 3";
-    QTest::newRow("desktop 4") << 4u << 4u << "Desktop 4";
-    QTest::newRow("desktop 5") << 5u << 5u << "Desktop 5";
-}
-
-void VirtualDesktopTest::test_name()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-
-    QFETCH(uint, initCount);
-    QFETCH(uint, desktop);
-
-    vds->setCount(initCount);
-    QTEST(vds->name(desktop), "desktopName");
-}
-
-void VirtualDesktopTest::test_switch_to_shortcuts()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-    vds->setCount(vds->maximum());
-    vds->setCurrent(vds->maximum());
-
-    QCOMPARE(vds->current(), vds->maximum());
-    //    vds->initShortcuts();
-    auto const toDesktop = QStringLiteral("Switch to Desktop %1");
-
-    for (uint i = 1; i <= vds->maximum(); ++i) {
-        const QString desktop(toDesktop.arg(i));
-        QAction* action = vds->qobject->findChild<QAction*>(desktop);
-        QVERIFY2(action, desktop.toUtf8().constData());
-        action->trigger();
-        QCOMPARE(vds->current(), i);
-    }
-
-    // should still be on max
-    QCOMPARE(vds->current(), vds->maximum());
-}
-
-void VirtualDesktopTest::test_change_rows()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-
-    vds->setCount(4);
-    vds->setRows(4);
-    QCOMPARE(vds->rows(), 4);
-
-    vds->setRows(5);
-    QCOMPARE(vds->rows(), 4);
-
-    vds->setCount(2);
-
-    // TODO(romangg): Fails when compiled with Xwayland and passes otherwise. The root cause seems
-    //                to be the update from root info in win::virtual_desktop_manager::updateLayout.
-#if 0
-    QEXPECT_FAIL("", "Should rows() reduce to VDs count? Happened in old VD test.", Continue);
-    QCOMPARE(vds->rows(), 2);
-#endif
-}
-
-void VirtualDesktopTest::test_load()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-
-    // No config yet, load should not change anything.
-    vds->load();
-    QCOMPARE(vds->count(), 1);
-
-    // Empty config should create one desktop.
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    vds->setConfig(config);
-    vds->load();
-    QCOMPARE(vds->count(), 1);
-
-    // Setting a sensible number.
-    config->group("Desktops").writeEntry("Number", 4);
-    vds->load();
-    QCOMPARE(vds->count(), 4);
-
-    // Setting the config value and reloading should update.
-    config->group("Desktops").writeEntry("Number", 5);
-    vds->load();
-    QCOMPARE(vds->count(), 5);
-}
-
-void VirtualDesktopTest::test_save()
-{
-    auto& vds = Test::app()->base->space->virtual_desktop_manager;
-    vds->setCount(4);
-
-    // No config yet, just to ensure it actually works.
-    vds->save();
-
-    auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    vds->setConfig(config);
-
-    QEXPECT_FAIL("", "Entry exists already. Was not the case in the old VD test.", Continue);
-    QCOMPARE(config->hasGroup("Desktops"), false);
-
-    // Now save should create the group "Desktops".
-    vds->save();
-    QCOMPARE(config->hasGroup("Desktops"), true);
-
-    auto desktops = config->group("Desktops");
-    QCOMPARE(desktops.readEntry<int>("Number", 1), 4);
-    QCOMPARE(desktops.hasKey("Name_1"), false);
-    QCOMPARE(desktops.hasKey("Name_2"), false);
-    QCOMPARE(desktops.hasKey("Name_3"), false);
-    QCOMPARE(desktops.hasKey("Name_4"), false);
-}
-
-void VirtualDesktopTest::testNetCurrentDesktop()
-{
-    if (!Test::app()->base->x11_data.connection) {
-        QSKIP("Skipped on Wayland only");
-    }
-    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
-    QCOMPARE(vd_manager->count(), 1u);
-    vd_manager->setCount(4);
-    QCOMPARE(vd_manager->count(), 4u);
-
-    base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP",
-                                            Test::app()->base->x11_data.connection);
-    QVERIFY(currentDesktopAtom.is_valid());
-    base::x11::xcb::property currentDesktop(Test::app()->base->x11_data.connection,
-                                            0,
-                                            Test::app()->base->x11_data.root_window,
-                                            currentDesktopAtom,
-                                            XCB_ATOM_CARDINAL,
-                                            0,
-                                            1);
-    bool ok = true;
-    QCOMPARE(currentDesktop.value(0, &ok), 0);
-    QVERIFY(ok);
-
-    // go to desktop 2
-    vd_manager->setCurrent(2);
-    currentDesktop = base::x11::xcb::property(Test::app()->base->x11_data.connection,
-                                              0,
-                                              Test::app()->base->x11_data.root_window,
-                                              currentDesktopAtom,
-                                              XCB_ATOM_CARDINAL,
-                                              0,
-                                              1);
-    QCOMPARE(currentDesktop.value(0, &ok), 1);
-    QVERIFY(ok);
-
-    // go to desktop 3
-    vd_manager->setCurrent(3);
-    currentDesktop = base::x11::xcb::property(Test::app()->base->x11_data.connection,
-                                              0,
-                                              Test::app()->base->x11_data.root_window,
-                                              currentDesktopAtom,
-                                              XCB_ATOM_CARDINAL,
-                                              0,
-                                              1);
-    QCOMPARE(currentDesktop.value(0, &ok), 2);
-    QVERIFY(ok);
-
-    // go to desktop 4
-    vd_manager->setCurrent(4);
-    currentDesktop = base::x11::xcb::property(Test::app()->base->x11_data.connection,
-                                              0,
-                                              Test::app()->base->x11_data.root_window,
-                                              currentDesktopAtom,
-                                              XCB_ATOM_CARDINAL,
-                                              0,
-                                              1);
-    QCOMPARE(currentDesktop.value(0, &ok), 3);
-    QVERIFY(ok);
-
-    // and back to first
-    vd_manager->setCurrent(1);
-    currentDesktop = base::x11::xcb::property(Test::app()->base->x11_data.connection,
-                                              0,
-                                              Test::app()->base->x11_data.root_window,
-                                              currentDesktopAtom,
-                                              XCB_ATOM_CARDINAL,
-                                              0,
-                                              1);
-    QCOMPARE(currentDesktop.value(0, &ok), 0);
-    QVERIFY(ok);
-}
-
-void VirtualDesktopTest::testLastDesktopRemoved()
-{
-    // first create a new desktop
-    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
-    QCOMPARE(vd_manager->count(), 1u);
-    vd_manager->setCount(2);
-    QCOMPARE(vd_manager->count(), 2u);
-
-    // switch to last desktop
-    vd_manager->setCurrent(vd_manager->desktops().last());
-    QCOMPARE(vd_manager->current(), 2u);
-
-    // now create a window on this desktop
-    std::unique_ptr<Surface> surface(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    QVERIFY(surface);
-    QVERIFY(shellSurface);
-
-    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
-
-    QVERIFY(client);
-    QCOMPARE(win::get_desktop(*client), 2);
-    QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
-                                         &win::window_qobject::desktopPresenceChanged);
-    QVERIFY(desktopPresenceChangedSpy.isValid());
-
-    QCOMPARE(client->topo.desktops.count(), 1u);
-    QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
-
-    // and remove last desktop
-    vd_manager->setCount(1);
-    QCOMPARE(vd_manager->count(), 1u);
-    // now the client should be moved as well
-    QTRY_COMPARE(desktopPresenceChangedSpy.count(), 1);
-    QCOMPARE(win::get_desktop(*client), 1);
-
-    QCOMPARE(client->topo.desktops.count(), 1u);
-    QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
-}
-
-void VirtualDesktopTest::testWindowOnMultipleDesktops()
-{
-    // first create two new desktops
-    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
-    QCOMPARE(vd_manager->count(), 1u);
-    vd_manager->setCount(3);
-    QCOMPARE(vd_manager->count(), 3u);
-
-    // switch to last desktop
-    vd_manager->setCurrent(vd_manager->desktops().last());
-    QCOMPARE(vd_manager->current(), 3u);
-
-    // now create a window on this desktop
-    std::unique_ptr<Surface> surface(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    QVERIFY(surface);
-    QVERIFY(shellSurface);
-
-    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
-
-    QVERIFY(client);
-    QCOMPARE(win::get_desktop(*client), 3u);
-    QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
-                                         &win::window_qobject::desktopPresenceChanged);
-    QVERIFY(desktopPresenceChangedSpy.isValid());
-
-    QCOMPARE(client->topo.desktops.count(), 1u);
-    QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
-
-    // Set the window on desktop 2 as well
-    win::enter_desktop(client, vd_manager->desktopForX11Id(2));
-    QCOMPARE(client->topo.desktops.count(), 2u);
-    QCOMPARE(vd_manager->desktops()[2], client->topo.desktops.at(0));
-    QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(1));
-    QVERIFY(win::on_desktop(client, 2));
-    QVERIFY(win::on_desktop(client, 3));
-
-    // leave desktop 3
-    win::leave_desktop(client, vd_manager->desktopForX11Id(3));
-    QCOMPARE(client->topo.desktops.count(), 1u);
-    // leave desktop 2
-    win::leave_desktop(client, vd_manager->desktopForX11Id(2));
-    QCOMPARE(client->topo.desktops.count(), 0u);
-    // we should be on all desktops now
-    QVERIFY(win::on_all_desktops(client));
-    // put on desktop 1
-    win::enter_desktop(client, vd_manager->desktopForX11Id(1));
-    QVERIFY(win::on_desktop(client, 1));
-    QVERIFY(!win::on_desktop(client, 2));
-    QVERIFY(!win::on_desktop(client, 3));
-    QCOMPARE(client->topo.desktops.count(), 1u);
-    // put on desktop 2
-    win::enter_desktop(client, vd_manager->desktopForX11Id(2));
-    QVERIFY(win::on_desktop(client, 1));
-    QVERIFY(win::on_desktop(client, 2));
-    QVERIFY(!win::on_desktop(client, 3));
-    QCOMPARE(client->topo.desktops.count(), 2u);
-    // put on desktop 3
-    win::enter_desktop(client, vd_manager->desktopForX11Id(3));
-    QVERIFY(win::on_desktop(client, 1));
-    QVERIFY(win::on_desktop(client, 2));
-    QVERIFY(win::on_desktop(client, 3));
-    QCOMPARE(client->topo.desktops.count(), 3u);
-
-    // entering twice dooes nothing
-    win::enter_desktop(client, vd_manager->desktopForX11Id(3));
-    QCOMPARE(client->topo.desktops.count(), 3u);
-
-    // adding to "all desktops" results in just that one desktop
-    win::set_on_all_desktops(client, true);
-    QCOMPARE(client->topo.desktops.count(), 0u);
-    win::enter_desktop(client, vd_manager->desktopForX11Id(3));
-    QVERIFY(win::on_desktop(client, 3));
-    QCOMPARE(client->topo.desktops.count(), 1u);
-
-    // leaving a desktop on "all desktops" puts on everything else
-    win::set_on_all_desktops(client, true);
-    QCOMPARE(client->topo.desktops.count(), 0u);
-    win::leave_desktop(client, vd_manager->desktopForX11Id(3));
-    QVERIFY(win::on_desktop(client, 1));
-    QVERIFY(win::on_desktop(client, 2));
-    QCOMPARE(client->topo.desktops.count(), 2u);
-}
-
-void VirtualDesktopTest::testRemoveDesktopWithWindow()
-{
-    // first create two new desktops
-    auto& vd_manager = Test::app()->base->space->virtual_desktop_manager;
-    QCOMPARE(vd_manager->count(), 1u);
-    vd_manager->setCount(3);
-    QCOMPARE(vd_manager->count(), 3u);
-
-    // switch to last desktop
-    vd_manager->setCurrent(vd_manager->desktops().last());
-    QCOMPARE(vd_manager->current(), 3u);
-
-    // now create a window on this desktop
-    std::unique_ptr<Surface> surface(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    QVERIFY(surface);
-    QVERIFY(shellSurface);
-
-    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
-
-    QVERIFY(client);
-    QCOMPARE(win::get_desktop(*client), 3u);
-    QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
-                                         &win::window_qobject::desktopPresenceChanged);
-    QVERIFY(desktopPresenceChangedSpy.isValid());
-
-    QCOMPARE(client->topo.desktops.count(), 1u);
-    QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
-
-    // Set the window on desktop 2 as well
-    win::enter_desktop(client, vd_manager->desktops()[1]);
-    QCOMPARE(client->topo.desktops.count(), 2u);
-    QCOMPARE(vd_manager->desktops()[2], client->topo.desktops.at(0));
-    QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(1));
-    QVERIFY(win::on_desktop(client, 2));
-    QVERIFY(win::on_desktop(client, 3));
-
-    // remove desktop 3
-    vd_manager->setCount(2);
-    QCOMPARE(client->topo.desktops.count(), 1u);
-    // window is only on desktop 2
-    QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(0));
-
-    // Again 3 desktops
-    vd_manager->setCount(3);
-    // move window to be only on desktop 3
-    win::enter_desktop(client, vd_manager->desktops()[2]);
-    win::leave_desktop(client, vd_manager->desktops()[1]);
-    QCOMPARE(client->topo.desktops.count(), 1u);
-    // window is only on desktop 3
-    QCOMPARE(vd_manager->desktops()[2], client->topo.desktops.at(0));
-
-    // remove desktop 3
-    vd_manager->setCount(2);
-    QCOMPARE(client->topo.desktops.count(), 1u);
-    // window is only on desktop 2
-    QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(0));
-}
-
-}
-
-WAYLANDTEST_MAIN(KWin::VirtualDesktopTest)
-#include "virtual_desktop_test.moc"

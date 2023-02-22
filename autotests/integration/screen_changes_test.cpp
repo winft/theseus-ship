@@ -1,9 +1,10 @@
 /*
 SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
@@ -14,43 +15,17 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 using namespace Wrapland::Client;
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class ScreenChangesTest : public QObject
-{
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
-
-    void testScreenAddRemove();
-};
-
-void ScreenChangesTest::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-
-    Test::app()->start();
-    QVERIFY(startup_spy.size() || startup_spy.wait());
-}
-
-void ScreenChangesTest::init()
-{
-    Test::setup_wayland_connection();
-    Test::cursor()->set_pos(QPoint(640, 512));
-}
-
-void ScreenChangesTest::cleanup()
-{
-    Test::destroy_wayland_connection();
-}
-
-void ScreenChangesTest::testScreenAddRemove()
+TEST_CASE("screen changes", "[base]")
 {
     // this test verifies that when a new screen is added it gets synced to Wayland
+
+    test::setup setup("screen-changes");
+    setup.start();
+    Test::setup_wayland_connection();
+    Test::cursor()->set_pos(QPoint(640, 512));
 
     // first create a registry to get signals about Outputs announced/removed
     Registry registry;
@@ -68,32 +43,27 @@ void ScreenChangesTest::testScreenAddRemove()
     auto xdgOutputManager = registry.createXdgOutputManager(xdgOMData.name, xdgOMData.version);
 
     // should be one output
-    QCOMPARE(Test::app()->base->get_outputs().size(), 1);
+    QCOMPARE(setup.base->get_outputs().size(), 1);
     QCOMPARE(outputAnnouncedSpy.count(), 1);
     const quint32 firstOutputId = outputAnnouncedSpy.first().first().value<quint32>();
     QVERIFY(firstOutputId != 0u);
     outputAnnouncedSpy.clear();
 
     // let's announce a new output
-    QSignalSpy outputs_changed_spy(Test::app()->base.get(), &base::platform::topology_changed);
+    QSignalSpy outputs_changed_spy(setup.base.get(), &base::platform::topology_changed);
     QVERIFY(outputs_changed_spy.isValid());
 
     auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
-    Test::app()->set_outputs(geometries);
+    setup.set_outputs(geometries);
 
     QCOMPARE(outputs_changed_spy.count(), 1);
     Test::test_outputs_geometries(geometries);
 
     // this should result in it getting announced, two new outputs are added...
-    QVERIFY(outputAnnouncedSpy.count() > 1 || outputAnnouncedSpy.wait());
-    QTRY_COMPARE(outputAnnouncedSpy.count(), 2);
+    TRY_REQUIRE(outputAnnouncedSpy.size() == 2);
 
     // ... and afterward the previous output gets removed
-    if (outputRemovedSpy.isEmpty()) {
-        QVERIFY(outputRemovedSpy.wait());
-    }
-
-    QCOMPARE(outputRemovedSpy.count(), 1);
+    TRY_REQUIRE(outputRemovedSpy.size() == 1);
     QCOMPARE(outputRemovedSpy.first().first().value<quint32>(), firstOutputId);
 
     // let's wait a little bit to ensure we don't get more events
@@ -144,28 +114,15 @@ void ScreenChangesTest::testScreenAddRemove()
     QVERIFY(o2RemovedSpy.isValid());
 
     auto const geometries2 = std::vector<QRect>{{0, 0, 1280, 1024}};
-    Test::app()->set_outputs(geometries2);
+    setup.set_outputs(geometries2);
 
     QCOMPARE(outputs_changed_spy.count(), 1);
     Test::test_outputs_geometries(geometries2);
 
-    QVERIFY(outputAnnouncedSpy.count() > 0 || outputAnnouncedSpy.wait());
-    QCOMPARE(outputAnnouncedSpy.count(), 1);
-    if (o1RemovedSpy.isEmpty()) {
-        QVERIFY(o1RemovedSpy.wait());
-    }
-    if (o2RemovedSpy.isEmpty()) {
-        QVERIFY(o2RemovedSpy.wait());
-    }
-    // now wait a bit to ensure we don't get more events
-    QTest::qWait(100);
-    QCOMPARE(outputAnnouncedSpy.count(), 1);
-    QCOMPARE(o1RemovedSpy.count(), 1);
-    QCOMPARE(o2RemovedSpy.count(), 1);
-    QCOMPARE(outputRemovedSpy.count(), 2);
+    TRY_REQUIRE(outputAnnouncedSpy.size() == 1);
+    TRY_REQUIRE(o1RemovedSpy.size() == 1);
+    TRY_REQUIRE(o2RemovedSpy.size() == 1);
+    TRY_REQUIRE(outputRemovedSpy.size() == 2);
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::ScreenChangesTest)
-#include "screen_changes_test.moc"
