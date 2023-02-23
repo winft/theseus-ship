@@ -334,7 +334,6 @@ public Q_SLOTS:
     virtual void hideOutline() = 0;
 
 Q_SIGNALS:
-    void desktopPresenceChanged(KWin::scripting::window* client, int desktop);
     void clientAdded(KWin::scripting::window* client);
     void clientRemoved(KWin::scripting::window* client);
     void clientActivated(KWin::scripting::window* client);
@@ -459,15 +458,6 @@ public:
         : ref_space{ref_space}
     {
         using space_qobject = typename RefSpace::qobject_t;
-
-        QObject::connect(ref_space->qobject.get(),
-                         &space_qobject::desktopPresenceChanged,
-                         this,
-                         [this](auto win_id, auto desktop) {
-                             auto ref_win = this->ref_space->windows_map.at(win_id);
-                             auto window = get_window(ref_win);
-                             Q_EMIT Space::desktopPresenceChanged(window, desktop);
-                         });
 
         QObject::connect(
             ref_space->qobject.get(), &space_qobject::clientAdded, this, [this](auto win_id) {

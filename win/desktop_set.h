@@ -32,8 +32,6 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     }
 
     auto was_desk = get_desktop(*win);
-    auto const wasOnCurrentDesktop = on_current_desktop(win) && was_desk >= 0;
-
     win->topo.desktops = desktops;
     win->control->set_desktops(desktops);
 
@@ -67,9 +65,6 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     win->updateWindowRules(rules::type::desktops);
 
     Q_EMIT win->qobject->desktopChanged();
-    if (wasOnCurrentDesktop != on_current_desktop(win)) {
-        Q_EMIT win->qobject->desktopPresenceChanged(was_desk);
-    }
 }
 
 template<typename Win>

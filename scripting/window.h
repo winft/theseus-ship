@@ -85,8 +85,6 @@ Q_SIGNALS:
 
     void shadeChanged();
 
-    void desktopPresenceChanged(KWin::scripting::window* window, int);
-
     void paletteChanged(const QPalette& p);
 
     void blockingCompositingChanged(KWin::scripting::window* window);
@@ -118,16 +116,10 @@ public:
                          &win::window_qobject::opacityChanged,
                          this,
                          [this](auto oldOpacity) { Q_EMIT opacityChanged(this, oldOpacity); });
-
         QObject::connect(
             qtwin, &win::window_qobject::frame_geometry_changed, this, [this](auto oldGeometry) {
                 Q_EMIT frameGeometryChanged(this, oldGeometry);
             });
-
-        QObject::connect(qtwin,
-                         &win::window_qobject::desktopPresenceChanged,
-                         this,
-                         [this](auto desktop) { Q_EMIT desktopPresenceChanged(this, desktop); });
 
         QObject::connect(qtwin, &win::window_qobject::clientMinimized, this, [this] {
             Q_EMIT clientMinimized(this);

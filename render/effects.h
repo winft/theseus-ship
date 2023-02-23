@@ -329,18 +329,6 @@ public:
                 this,
                 [this]() { Q_EMIT desktopChangingCancelled(); });
         connect(ws->qobject.get(),
-                &win::space_qobject::desktopPresenceChanged,
-                this,
-                [this, space = ws](auto win_id, int old) {
-                    std::visit(overload{[&, this](auto&& win) {
-                                   assert(win->render);
-                                   assert(win->render->effect);
-                                   Q_EMIT desktopPresenceChanged(
-                                       win->render->effect.get(), old, win::get_desktop(*win));
-                               }},
-                               space->windows_map.at(win_id));
-                });
-        connect(ws->qobject.get(),
                 &win::space_qobject::clientAdded,
                 this,
                 [this, space = ws](auto win_id) {
@@ -1386,6 +1374,9 @@ protected:
     {
         auto qtwin = window.qobject.get();
 
+        QObject::connect(qtwin, &win::window_qobject::desktopChanged, this, [this, &window] {
+            Q_EMIT windowDesktopsChanged(window.render->effect.get());
+        });
         QObject::connect(qtwin,
                          &win::window_qobject::maximize_mode_changed,
                          this,
