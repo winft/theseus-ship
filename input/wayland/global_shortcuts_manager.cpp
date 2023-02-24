@@ -49,13 +49,29 @@ void global_shortcuts_manager::objectDeleted(QObject* object)
     }
 }
 
-bool global_shortcuts_manager::addIfNotExists(global_shortcut sc, DeviceType device)
+bool global_shortcuts_manager::shortcut_exists(global_shortcut const& sc)
 {
     for (const auto& cs : qAsConst(m_shortcuts)) {
         if (sc.shortcut() == cs.shortcut()) {
             return false;
         }
     }
+
+    return true;
+}
+
+void global_shortcuts_manager::add_shortcut(global_shortcut sc)
+{
+    assert(!shortcut_exists(sc));
+
+    QObject::connect(
+        sc.action(), &QAction::destroyed, this, &global_shortcuts_manager::objectDeleted);
+    m_shortcuts.push_back(std::move(sc));
+}
+
+void global_shortcuts_manager::add_gesture_shortcut(global_shortcut sc, DeviceType device)
+{
+    assert(!shortcut_exists(sc));
 
     auto const& recognizer = device == DeviceType::Touchpad ? m_touchpadGestureRecognizer
                                                             : m_touchscreenGestureRecognizer;
@@ -64,35 +80,39 @@ bool global_shortcuts_manager::addIfNotExists(global_shortcut sc, DeviceType dev
     } else if (std::holds_alternative<RealtimeFeedbackPinchShortcut>(sc.shortcut())) {
         recognizer->registerPinchGesture(sc.pinchGesture());
     }
-    QObject::connect(
-        sc.action(), &QAction::destroyed, this, &global_shortcuts_manager::objectDeleted);
-    m_shortcuts.push_back(std::move(sc));
-    return true;
+
+    add_shortcut(sc);
 }
 
 void global_shortcuts_manager::registerPointerShortcut(QAction* action,
                                                        Qt::KeyboardModifiers modifiers,
                                                        Qt::MouseButtons pointerButtons)
 {
-    addIfNotExists(global_shortcut(PointerButtonShortcut{modifiers, pointerButtons}, action));
+    auto sc = global_shortcut(PointerButtonShortcut{modifiers, pointerButtons}, action);
+    if (!shortcut_exists(sc)) {
+        add_shortcut(sc);
+    }
 }
 
 void global_shortcuts_manager::registerAxisShortcut(QAction* action,
                                                     Qt::KeyboardModifiers modifiers,
                                                     PointerAxisDirection axis)
 {
-    addIfNotExists(global_shortcut(PointerAxisShortcut{modifiers, axis}, action));
+    auto sc = global_shortcut(PointerAxisShortcut{modifiers, axis}, action);
+    if (!shortcut_exists(sc)) {
+        add_shortcut(sc);
+    }
 }
 
 void global_shortcuts_manager::registerTouchpadSwipe(QAction* action,
                                                      SwipeDirection direction,
                                                      uint fingerCount)
 {
-    addIfNotExists(
-        global_shortcut(
-            RealtimeFeedbackSwipeShortcut{DeviceType::Touchpad, direction, {}, fingerCount},
-            action),
-        DeviceType::Touchpad);
+    auto sc = global_shortcut(
+        RealtimeFeedbackSwipeShortcut{DeviceType::Touchpad, direction, {}, fingerCount}, action);
+    if (!shortcut_exists(sc)) {
+        add_gesture_shortcut(sc, DeviceType::Touchpad);
+    }
 }
 
 void global_shortcuts_manager::registerRealtimeTouchpadSwipe(
@@ -101,20 +121,23 @@ void global_shortcuts_manager::registerRealtimeTouchpadSwipe(
     SwipeDirection direction,
     uint fingerCount)
 {
-    addIfNotExists(global_shortcut(
-                       RealtimeFeedbackSwipeShortcut{
-                           DeviceType::Touchpad, direction, progressCallback, fingerCount},
-                       action),
-                   DeviceType::Touchpad);
+    auto sc = global_shortcut(
+        RealtimeFeedbackSwipeShortcut{
+            DeviceType::Touchpad, direction, progressCallback, fingerCount},
+        action);
+    if (!shortcut_exists(sc)) {
+        add_gesture_shortcut(sc, DeviceType::Touchpad);
+    }
 }
 
 void global_shortcuts_manager::registerTouchpadPinch(QAction* action,
                                                      PinchDirection direction,
                                                      uint fingerCount)
 {
-    addIfNotExists(
-        global_shortcut(RealtimeFeedbackPinchShortcut{direction, {}, fingerCount}, action),
-        DeviceType::Touchpad);
+    auto sc = global_shortcut(RealtimeFeedbackPinchShortcut{direction, {}, fingerCount}, action);
+    if (!shortcut_exists(sc)) {
+        add_gesture_shortcut(sc, DeviceType::Touchpad);
+    }
 }
 
 void global_shortcuts_manager::registerRealtimeTouchpadPinch(
@@ -123,10 +146,11 @@ void global_shortcuts_manager::registerRealtimeTouchpadPinch(
     PinchDirection direction,
     uint fingerCount)
 {
-    addIfNotExists(
-        global_shortcut(RealtimeFeedbackPinchShortcut{direction, progressCallback, fingerCount},
-                        onUp),
-        DeviceType::Touchpad);
+    auto sc = global_shortcut(
+        RealtimeFeedbackPinchShortcut{direction, progressCallback, fingerCount}, onUp);
+    if (!shortcut_exists(sc)) {
+        add_gesture_shortcut(sc, DeviceType::Touchpad);
+    }
 }
 
 void global_shortcuts_manager::registerTouchscreenSwipe(QAction* action,
@@ -134,11 +158,13 @@ void global_shortcuts_manager::registerTouchscreenSwipe(QAction* action,
                                                         SwipeDirection direction,
                                                         uint fingerCount)
 {
-    addIfNotExists(global_shortcut(
-                       RealtimeFeedbackSwipeShortcut{
-                           DeviceType::Touchscreen, direction, progressCallback, fingerCount},
-                       action),
-                   DeviceType::Touchscreen);
+    auto sc = global_shortcut(
+        RealtimeFeedbackSwipeShortcut{
+            DeviceType::Touchscreen, direction, progressCallback, fingerCount},
+        action);
+    if (!shortcut_exists(sc)) {
+        add_gesture_shortcut(sc, DeviceType::Touchscreen);
+    }
 }
 
 bool global_shortcuts_manager::processKey(Qt::KeyboardModifiers mods, int keyQt)
