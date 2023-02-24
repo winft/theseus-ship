@@ -10,8 +10,7 @@
 namespace KWin::input
 {
 
-platform_qobject::platform_qobject(std::function<void(KGlobalAccelInterface*)> accel)
-    : register_global_accel{accel}
+platform_qobject::platform_qobject()
 {
     singleton_interface::platform_qobject = this;
 }

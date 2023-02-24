@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-add_subdirectory(kglobalaccel)
 add_subdirectory(qpa)
 add_subdirectory(idletime)
 add_subdirectory(windowsystem)

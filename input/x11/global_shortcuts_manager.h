@@ -10,7 +10,6 @@
 #include <memory>
 
 class QAction;
-class KGlobalAccelInterface;
 
 namespace KWin::input
 {
@@ -63,10 +62,6 @@ public:
                                   std::function<void(qreal)> /*progressCallback*/,
                                   SwipeDirection /*direction*/,
                                   uint /*fingerCount*/)
-    {
-    }
-
-    void setKGlobalAccelInterface(KGlobalAccelInterface* /*interface*/)
     {
     }
 

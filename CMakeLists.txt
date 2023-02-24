@@ -525,6 +525,7 @@ set(kwin_QT_LIBS
     Qt::Concurrent
     Qt::DBus
     Qt::Quick
+    Qt::X11Extras
 )
 
 set(kwin_KDE_LIBS
@@ -532,7 +533,6 @@ set(kwin_KDE_LIBS
     KF5::ConfigWidgets
     KF5::CoreAddons
     KF5::GlobalAccel
-    KF5::GlobalAccelPrivate
     KF5::I18n
     KF5::Notifications
     KF5::Package
@@ -715,6 +715,13 @@ set(kwin_WAYLAND_SRCS
    input/wayland/global_shortcuts_manager.cpp
    input/logging.cpp
    input/switch.cpp
+   input/wayland/kglobalaccel/runtime/component.cpp
+   input/wayland/kglobalaccel/runtime/global_accel_d.cpp
+   input/wayland/kglobalaccel/runtime/global_shortcut.cpp
+   input/wayland/kglobalaccel/runtime/global_shortcut_context.cpp
+   input/wayland/kglobalaccel/runtime/global_shortcuts_registry.cpp
+   input/wayland/kglobalaccel/runtime/service_action_component.cpp
+   input/wayland/kglobalaccel/runtime/sequence_helpers.cpp
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
 
@@ -776,7 +783,6 @@ target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)
 add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
     kwin_wayland_lib
-    KF5GlobalAccelKWinPlugin
     KF5IdleTimeKWinPlugin
     KF5WindowSystemKWinPlugin
     KWinQpaPlugin

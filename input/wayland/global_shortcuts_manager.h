@@ -12,7 +12,6 @@
 
 class QAction;
 class KGlobalAccelD;
-class KGlobalAccelInterface;
 
 namespace KWin::input
 {
@@ -117,11 +116,6 @@ public:
     void processPinchCancel();
     void processPinchEnd();
 
-    void setKGlobalAccelInterface(KGlobalAccelInterface* interface)
-    {
-        m_kglobalAccelInterface = interface;
-    }
-
 private:
     void objectDeleted(QObject* object);
 
@@ -132,7 +126,6 @@ private:
     QVector<global_shortcut> m_shortcuts;
 
     std::unique_ptr<KGlobalAccelD> m_kglobalAccel;
-    KGlobalAccelInterface* m_kglobalAccelInterface = nullptr;
     std::unique_ptr<gesture_recognizer> m_touchpadGestureRecognizer;
     std::unique_ptr<gesture_recognizer> m_touchscreenGestureRecognizer;
 };

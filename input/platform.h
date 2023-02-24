@@ -137,12 +137,6 @@ void platform_register_realtime_touchpad_pinch_shortcut(Platform& platform,
 }
 
 template<typename Platform>
-void platform_register_global_accel(Platform& platform, KGlobalAccelInterface* interface)
-{
-    platform.shortcuts->setKGlobalAccelInterface(interface);
-}
-
-template<typename Platform>
 void platform_register_touchscreen_swipe_shortcut(Platform& platform,
                                                   SwipeDirection direction,
                                                   uint fingerCount,

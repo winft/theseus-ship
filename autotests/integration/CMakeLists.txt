@@ -20,7 +20,6 @@ PRIVATE
   KF5::Crash
   # Static plugins
   KWinQpaPlugin
-  KF5GlobalAccelKWinPlugin
   KF5WindowSystemKWinPlugin
   KF5IdleTimeKWinPlugin
 )

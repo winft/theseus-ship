@@ -28,8 +28,7 @@ public:
     using space_t = typename Base::space_t;
 
     platform(Base& base, input::config config)
-        : qobject{std::make_unique<platform_qobject>(
-            [this](auto accel) { platform_register_global_accel(*this, accel); })}
+        : qobject{std::make_unique<platform_qobject>()}
         , config{std::move(config)}
         , xkb{xkb::manager<type>(this)}
         , kde_idle{base.server->display->create_kde_idle()}
