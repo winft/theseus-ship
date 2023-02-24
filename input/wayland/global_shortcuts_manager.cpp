@@ -6,21 +6,20 @@
 */
 #include "global_shortcuts_manager.h"
 
-#include "gestures.h"
-#include "global_shortcut.h"
-#include "logging.h"
+#include "input/gestures.h"
+#include "input/global_shortcut.h"
+#include "input/logging.h"
 
 #include <KGlobalAccel/private/kglobalaccel_interface.h>
 #include <KGlobalAccel/private/kglobalacceld.h>
 #include <QAction>
 
-namespace KWin::input
+namespace KWin::input::wayland
 {
 
-global_shortcuts_manager::global_shortcuts_manager(base::operation_mode mode)
+global_shortcuts_manager::global_shortcuts_manager()
     : m_touchpadGestureRecognizer{std::make_unique<gesture_recognizer>()}
     , m_touchscreenGestureRecognizer{std::make_unique<gesture_recognizer>()}
-    , windowing_mode{mode}
 {
 }
 
@@ -28,15 +27,13 @@ global_shortcuts_manager::~global_shortcuts_manager() = default;
 
 void global_shortcuts_manager::init()
 {
-    if (base::should_use_wayland_for_compositing(windowing_mode)) {
-        qputenv("KGLOBALACCELD_PLATFORM", QByteArrayLiteral("org.kde.kwin"));
-        m_kglobalAccel = std::make_unique<KGlobalAccelD>();
-        if (!m_kglobalAccel->init()) {
-            qCDebug(KWIN_INPUT) << "Init of kglobalaccel failed";
-            m_kglobalAccel.reset();
-        } else {
-            qCDebug(KWIN_INPUT) << "KGlobalAcceld inited";
-        }
+    qputenv("KGLOBALACCELD_PLATFORM", QByteArrayLiteral("org.kde.kwin"));
+    m_kglobalAccel = std::make_unique<KGlobalAccelD>();
+    if (!m_kglobalAccel->init()) {
+        qCDebug(KWIN_INPUT) << "Init of kglobalaccel failed";
+        m_kglobalAccel.reset();
+    } else {
+        qCDebug(KWIN_INPUT) << "KGlobalAcceld inited";
     }
 }
 

@@ -7,12 +7,12 @@
 
 #include "config.h"
 #include "dbus/device_manager.h"
-#include "global_shortcuts_manager.h"
 #include "keyboard.h"
 #include "platform_qobject.h"
 #include "singleton_interface.h"
 #include "xkb/manager.h"
 
+#include "kwinglobals.h"
 #include "utils/algorithm.h"
 
 #include <QAction>

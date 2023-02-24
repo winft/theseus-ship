@@ -397,7 +397,6 @@ set(kwin_SRCS
     input/cursor_shape.cpp
     input/gestures.cpp
     input/global_shortcut.cpp
-    input/global_shortcuts_manager.cpp
     input/logging.cpp
     input/pointer.cpp
     input/xkb/keyboard.cpp
@@ -611,6 +610,7 @@ set(kwin_X11_SRCS
    base/backend/x11/randr_filter.cpp
    base/x11/output.cpp
    input/x11/cursor.cpp
+   input/x11/global_shortcuts_manager.cpp
    input/x11/xfixes_cursor_event_filter.cpp
    input/logging.cpp
    render/backend/x11/non_composited_outline.cpp
@@ -703,6 +703,7 @@ set(kwin_WAYLAND_SRCS
    input/dbus/keyboard_layouts_v2.cpp
    input/dbus/tablet_mode_manager.cpp
    input/spies/keyboard_repeat.cpp
+   input/wayland/global_shortcuts_manager.cpp
    input/logging.cpp
    input/switch.cpp
    input/xkb/layout_manager.cpp

@@ -5,11 +5,11 @@
 */
 #pragma once
 
+#include "global_shortcuts_manager.h"
 #include "idle.h"
 
 #include "base/wayland/server.h"
 #include "input/dbus/dbus.h"
-#include "input/global_shortcuts_manager.h"
 #include "input/platform.h"
 #include "input/types.h"
 
@@ -78,9 +78,9 @@ public:
         QObject::connect(action, &QAction::triggered, receiver, slot);
     }
 
-    void install_shortcuts(base::operation_mode mode)
+    void install_shortcuts()
     {
-        this->shortcuts = std::make_unique<input::global_shortcuts_manager>(mode);
+        this->shortcuts = std::make_unique<global_shortcuts_manager>();
         this->shortcuts->init();
         setup_touchpad_shortcuts();
     }

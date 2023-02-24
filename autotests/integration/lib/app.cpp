@@ -137,7 +137,7 @@ void WaylandTestApplication::start()
 
     base->input = std::make_unique<input::backend::wlroots::platform>(
         *base, input::config(KConfig::SimpleConfig));
-    base->input->install_shortcuts(base->operation_mode);
+    base->input->install_shortcuts();
 
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
     pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));

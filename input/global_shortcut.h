@@ -75,7 +75,7 @@ using Shortcut = std::variant<KeyboardShortcut,
                               RealtimeFeedbackSwipeShortcut,
                               RealtimeFeedbackPinchShortcut>;
 
-class global_shortcut
+class KWIN_EXPORT global_shortcut
 {
 public:
     global_shortcut(Shortcut&& shortcut, QAction* action);

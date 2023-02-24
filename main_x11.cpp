@@ -15,7 +15,6 @@
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
 #include "desktop/screen_locker_watcher.h"
-#include "input/global_shortcuts_manager.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
@@ -244,11 +243,7 @@ void ApplicationX11::start()
 
         base.session = std::make_unique<base::seat::backend::logind::session>();
         base.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
-
         base.input = std::make_unique<input::x11::platform<base_t>>(base);
-        base.input->shortcuts
-            = std::make_unique<input::global_shortcuts_manager>(base::operation_mode::x11);
-        base.input->shortcuts->init();
 
         base.update_outputs();
         auto render = static_cast<render::backend::x11::platform<base_t>*>(base.render.get());

@@ -8,7 +8,6 @@
 #include "base/output_helpers.h"
 #include "input/event.h"
 #include "input/event_filter.h"
-#include "input/global_shortcuts_manager.h"
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
 #include "input/qt_event.h"
