@@ -203,6 +203,15 @@ EffectQuickView::EffectQuickView(QObject* parent, QWindow* renderWindow, ExportM
 
 EffectQuickView::~EffectQuickView()
 {
+    disconnect(d->m_renderControl,
+               &QQuickRenderControl::renderRequested,
+               this,
+               &EffectQuickView::handleRenderRequested);
+    disconnect(d->m_renderControl,
+               &QQuickRenderControl::sceneChanged,
+               this,
+               &EffectQuickView::handleSceneChanged);
+
     if (d->m_glcontext) {
         // close the view whilst we have an active GL context
         d->m_glcontext->makeCurrent(d->m_offscreenSurface.data());
