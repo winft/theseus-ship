@@ -638,12 +638,6 @@ public:
                           *window.ref_win);
     }
 
-    NET::WindowType windowType() const override
-    {
-        return std::visit(overload{[](auto&& ref_win) { return ref_win->windowType(); }},
-                          *window.ref_win);
-    }
-
     bool isSkipSwitcher() const override
     {
         return std::visit(overload{[](auto&& ref_win) {

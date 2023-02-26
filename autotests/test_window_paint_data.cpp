@@ -259,10 +259,6 @@ public:
     {
         return QString();
     }
-    NET::WindowType windowType() const override
-    {
-        return NET::Normal;
-    }
     bool acceptsFocus() const override
     {
         return true;

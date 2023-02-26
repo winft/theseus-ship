@@ -11,7 +11,6 @@
 #include <kwineffects/types.h>
 #include <kwinglobals.h>
 
-#include <NETWM>
 #include <QIcon>
 #include <QObject>
 
@@ -162,11 +161,6 @@ class KWINEFFECTS_EXPORT EffectWindow : public QObject
      * .
      */
     Q_PROPERTY(bool dndIcon READ isDNDIcon)
-    /**
-     * Returns the NETWM window type
-     * See https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(int windowType READ windowType)
     /**
      * Whether this EffectWindow is managed by KWin (it has control over its placement and other
      * aspects, as opposed to override-redirect windows that are entirely handled by the
@@ -595,11 +589,6 @@ public:
      * .
      */
     virtual bool isDNDIcon() const = 0;
-    /**
-     * Returns the NETWM window type
-     * See https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    virtual NET::WindowType windowType() const = 0;
     /**
      * Returns whether the window is managed by KWin (it has control over its placement and other
      * aspects, as opposed to override-redirect windows that are entirely handled by the
