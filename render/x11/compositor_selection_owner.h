@@ -5,15 +5,15 @@
 */
 #pragma once
 
+#include "base/x11/selection_owner.h"
 #include "kwin_export.h"
 
-#include <KSelectionOwner>
 #include <QObject>
 
 namespace KWin::render::x11
 {
 
-class KWIN_EXPORT compositor_selection_owner : public KSelectionOwner
+class KWIN_EXPORT compositor_selection_owner : public base::x11::selection_owner
 {
     Q_OBJECT
 public:

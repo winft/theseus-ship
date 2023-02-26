@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "types.h"
 
 #include "base/wayland/server.h"
+#include "base/x11/selection_owner.h"
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
@@ -18,7 +19,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/x11/space_setup.h"
 
 #include <KLocalizedString>
-#include <KSelectionOwner>
 #include <QAbstractEventDispatcher>
 #include <QFile>
 #include <QFutureWatcher>
@@ -248,7 +248,8 @@ private:
                          processXcbEvents);
 
         // create selection owner for WM_S0 - magic X display number expected by XWayland
-        KSelectionOwner owner("WM_S0", core.x11.connection, space.base.x11_data.root_window);
+        base::x11::selection_owner owner(
+            "WM_S0", core.x11.connection, space.base.x11_data.root_window);
         owner.claim(true);
 
         space.atoms = std::make_unique<base::x11::atoms>(core.x11.connection);
