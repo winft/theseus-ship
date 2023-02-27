@@ -10,8 +10,6 @@
 #include "win/virtual_desktops.h"
 
 #include <QObject>
-
-#include <NETWM>
 #include <xcb/xcb.h>
 
 namespace Wrapland::Server
@@ -79,7 +77,6 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops WRITE setOnAllDesktops NOTIFY desktopChanged)
 
     Q_PROPERTY(QByteArray windowRole READ windowRole NOTIFY windowRoleChanged)
-    Q_PROPERTY(int windowType READ windowType)
 
     Q_PROPERTY(bool desktopWindow READ isDesktop CONSTANT)
     Q_PROPERTY(bool dock READ isDock CONSTANT)
@@ -210,7 +207,6 @@ public:
     virtual void setOnAllDesktops(bool set) = 0;
 
     virtual QByteArray windowRole() const = 0;
-    virtual NET::WindowType windowType() const = 0;
 
     virtual bool isDesktop() const = 0;
     virtual bool isDock() const = 0;

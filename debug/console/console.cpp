@@ -356,56 +356,8 @@ QVariant console_model::propertyData(QObject* object, const QModelIndex& index, 
     const auto property = object->metaObject()->property(index.row());
     if (index.column() == 0) {
         return property.name();
-    } else {
-        const QVariant value = property.read(object);
-        if (qstrcmp(property.name(), "windowType") == 0) {
-            switch (value.toInt()) {
-            case NET::Normal:
-                return QStringLiteral("NET::Normal");
-            case NET::Desktop:
-                return QStringLiteral("NET::Desktop");
-            case NET::Dock:
-                return QStringLiteral("NET::Dock");
-            case NET::Toolbar:
-                return QStringLiteral("NET::Toolbar");
-            case NET::Menu:
-                return QStringLiteral("NET::Menu");
-            case NET::Dialog:
-                return QStringLiteral("NET::Dialog");
-            case NET::Override:
-                return QStringLiteral("NET::Override");
-            case NET::TopMenu:
-                return QStringLiteral("NET::TopMenu");
-            case NET::Utility:
-                return QStringLiteral("NET::Utility");
-            case NET::Splash:
-                return QStringLiteral("NET::Splash");
-            case NET::DropdownMenu:
-                return QStringLiteral("NET::DropdownMenu");
-            case NET::PopupMenu:
-                return QStringLiteral("NET::PopupMenu");
-            case NET::Tooltip:
-                return QStringLiteral("NET::Tooltip");
-            case NET::Notification:
-                return QStringLiteral("NET::Notification");
-            case NET::ComboBox:
-                return QStringLiteral("NET::ComboBox");
-            case NET::DNDIcon:
-                return QStringLiteral("NET::DNDIcon");
-            case NET::OnScreenDisplay:
-                return QStringLiteral("NET::OnScreenDisplay");
-            case NET::CriticalNotification:
-                return QStringLiteral("NET::CriticalNotification");
-            case NET::AppletPopup:
-                return QStringLiteral("NET::AppletPopup");
-            case NET::Unknown:
-            default:
-                return QStringLiteral("NET::Unknown");
-            }
-        }
-        return value;
     }
-    return QVariant();
+    return property.read(object);
 }
 
 QVariant console_model::get_client_property_data(QModelIndex const& index, int role) const

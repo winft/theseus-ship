@@ -88,22 +88,22 @@ bool client_level::exclude(window* client) const
         return false;
     }
     if (exclusions & client_model::DesktopWindowsExclusion) {
-        if (win::is_desktop(client)) {
+        if (client->isDesktop()) {
             return true;
         }
     }
     if (exclusions & client_model::DockWindowsExclusion) {
-        if (win::is_dock(client)) {
+        if (client->isDock()) {
             return true;
         }
     }
     if (exclusions & client_model::UtilityWindowsExclusion) {
-        if (win::is_utility(client)) {
+        if (client->isUtility()) {
             return true;
         }
     }
     if (exclusions & client_model::SpecialWindowsExclusion) {
-        if (win::is_special_window(client)) {
+        if (client->isSpecialWindow()) {
             return true;
         }
     }
