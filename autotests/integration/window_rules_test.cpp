@@ -40,6 +40,16 @@ Test::space::x11_window* get_x11_window_from_id(uint32_t id)
     return Test::get_x11_window(Test::app()->base->space->windows_map.at(id));
 }
 
+std::tuple<KSharedConfigPtr, KConfigGroup> get_config()
+{
+    auto config = Test::app()->base->config.main;
+
+    auto group = config->group("1");
+    group.deleteGroup();
+    config->group("General").writeEntry("count", 1);
+    return {config, group};
+}
+
 void WindowRuleTest::initTestCase()
 {
     QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
@@ -87,11 +97,22 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
 {
     // this test creates the situation of BUG 367554: creates a window and initial apply maximize
     // vertical the window is matched by class and role load the rule
-    QFile ruleFile(QFINDTESTDATA("./data/rules/maximize-vert-apply-initial"));
-    QVERIFY(ruleFile.open(QIODevice::ReadOnly | QIODevice::Text));
-
-    Test::app()->base->space->rule_book->temporaryRulesMessage(
-        QString::fromUtf8(ruleFile.readAll()));
+    auto [config, group] = get_config();
+    group.writeEntry("maximizevert", true);
+    group.writeEntry("maximizevertrule", 3);
+    group.writeEntry("title", "KPatience");
+    group.writeEntry("titlematch", 0);
+    group.writeEntry("types", 1);
+    group.writeEntry("windowrole", "mainwindow");
+    group.writeEntry("windowrolematch", 1);
+    group.writeEntry("clientmachine", "localhost");
+    group.writeEntry("clientmachinematch", 0);
+    group.writeEntry("wmclass", "kpat");
+    group.writeEntry("wmclasscomplete", false);
+    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
+    group.sync();
+    Test::app()->base->space->rule_book->config = config;
+    win::space_reconfigure(*Test::app()->base->space);
 
     // create the test window
     auto c = create_xcb_connection();
@@ -169,10 +190,8 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
 
 void WindowRuleTest::testWindowClassChange()
 {
-    KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
+    auto [config, group] = get_config();
 
-    auto group = config->group("1");
     group.writeEntry("above", true);
     group.writeEntry("aboverule", 2);
     group.writeEntry("wmclass", "org.kde.foo");

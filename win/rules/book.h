@@ -10,8 +10,6 @@
 
 #include <deque>
 
-class KXMessages;
-
 namespace KWin::win::rules
 {
 
@@ -37,16 +35,13 @@ public:
     void save();
 
     void requestDiskStorage();
-    void temporaryRulesMessage(const QString&);
 
     std::unique_ptr<book_qobject> qobject;
     KSharedConfig::Ptr config;
     std::deque<ruling*> m_rules;
-    std::unique_ptr<KXMessages> m_temporaryRulesMessages;
 
 private:
     void deleteAll();
-    void cleanupTemporaryRules();
 
     QTimer* m_updateTimer;
     bool m_updatesDisabled;

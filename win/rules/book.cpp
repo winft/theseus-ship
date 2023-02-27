@@ -13,7 +13,6 @@
 #include "rules_settings.h"
 
 #include <KConfig>
-#include <KXMessages>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -25,7 +24,6 @@ book::book()
     : qobject{std::make_unique<book_qobject>()}
     , m_updateTimer(new QTimer(qobject.get()))
     , m_updatesDisabled(false)
-    , m_temporaryRulesMessages()
 {
     QObject::connect(m_updateTimer, &QTimer::timeout, qobject.get(), [this] { save(); });
     m_updateTimer->setInterval(1000);
@@ -78,46 +76,6 @@ void book::save()
     book_settings settings(config);
     settings.setRules(filteredRules);
     settings.save();
-}
-
-void book::temporaryRulesMessage(const QString& message)
-{
-    auto was_temporary = false;
-    for (auto&& rule : m_rules) {
-        if (rule->isTemporary()) {
-            was_temporary = true;
-        }
-    }
-
-    auto rule = new ruling(message, true);
-
-    // highest priority first
-    m_rules.push_front(rule);
-
-    if (!was_temporary) {
-        QTimer::singleShot(60000, qobject.get(), [this] { cleanupTemporaryRules(); });
-    }
-}
-
-void book::cleanupTemporaryRules()
-{
-    auto has_temporary = false;
-
-    for (auto it = m_rules.begin(); it != m_rules.end();) {
-        if ((*it)->discardTemporary(false)) {
-            // deletes (*it)
-            it = m_rules.erase(it);
-        } else {
-            if ((*it)->isTemporary()) {
-                has_temporary = true;
-            }
-            ++it;
-        }
-    }
-
-    if (has_temporary) {
-        QTimer::singleShot(60000, qobject.get(), [this] { cleanupTemporaryRules(); });
-    }
 }
 
 void book::requestDiskStorage()
