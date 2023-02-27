@@ -51,7 +51,6 @@ Q_SIGNALS:
     void paintChanged();
 
 private:
-    std::unique_ptr<QWindow> m_window;
     std::unique_ptr<EffectQuickScene> m_scene;
 
     int m_maximumFps = 0;

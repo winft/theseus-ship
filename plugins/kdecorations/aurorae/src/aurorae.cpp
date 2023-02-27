@@ -325,17 +325,7 @@ void Decoration::init()
         m_item->setParentItem(visualParent.value<QQuickItem*>());
         visualParent.value<QQuickItem*>()->setProperty("drawBackground", false);
     } else {
-        // This is an ugly hack to make hidpi rendering work as expected on wayland until we switch
-        // to Qt 6.3 or newer. See https://codereview.qt-project.org/c/qt/qtdeclarative/+/361506
-        if (KWin::effects && KWin::effects->waylandDisplay()) {
-            m_dummyWindow.reset(new QWindow());
-            m_dummyWindow->setOpacity(0);
-            m_dummyWindow->resize(1, 1);
-            m_dummyWindow->setFlag(Qt::FramelessWindowHint);
-            m_dummyWindow->setVisible(true);
-        }
-
-        m_view = std::make_unique<KWin::EffectQuickView>(this, m_dummyWindow.get(), KWin::EffectQuickView::ExportMode::Image);
+        m_view = std::make_unique<KWin::EffectQuickView>(this, KWin::EffectQuickView::ExportMode::Image);
         m_item->setParentItem(m_view->contentItem());
         auto updateSize = [this]() { m_item->setSize(m_view->contentItem()->size()); };
         updateSize();
