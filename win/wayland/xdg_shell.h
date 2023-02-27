@@ -92,7 +92,7 @@ void xdg_shell_setup_control(Win& win)
     if (win.supportsWindowRules()) {
         auto const& ctrl = win.control;
 
-        rules::setup_rules(&win, false);
+        rules::setup_rules(&win);
 
         auto const original_geo = win.geo.frame;
         auto const ruled_geo = ctrl->rules.checkGeometry(original_geo, true);
@@ -124,8 +124,6 @@ void xdg_shell_setup_control(Win& win)
         if (ctrl->rules.checkPosition(geo::invalid_point, true) != geo::invalid_point) {
             win.must_place = false;
         }
-
-        ctrl->discard_temporary_rules();
 
         // Remove Apply Now rules.
         rules::discard_used_rules(*win.space.rule_book, win, false);

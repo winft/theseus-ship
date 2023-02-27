@@ -1239,7 +1239,7 @@ public:
         auto const window_class = QByteArray(toplevel->appId().c_str());
         set_wm_class(*this, this->meta.wm_class.res_name, window_class);
         if (initialized && supportsWindowRules()) {
-            rules::setup_rules(this, true);
+            rules::setup_rules(this);
             apply_window_rules(*this);
         }
         set_desktop_file_name(this, window_class);

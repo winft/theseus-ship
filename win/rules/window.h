@@ -42,7 +42,6 @@ public:
     explicit window(std::vector<ruling*> const& rules);
     window();
 
-    void discardTemporary();
     bool contains(ruling const* rule) const;
     void remove(ruling* rule);
     placement checkPlacement(win::placement placement) const;

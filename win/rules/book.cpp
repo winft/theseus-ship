@@ -68,9 +68,7 @@ void book::save()
 
     std::vector<ruling*> filteredRules;
     for (const auto& rule : qAsConst(m_rules)) {
-        if (!rule->isTemporary()) {
-            filteredRules.push_back(rule);
-        }
+        filteredRules.push_back(rule);
     }
 
     book_settings settings(config);

@@ -39,14 +39,10 @@ class KWIN_EXPORT ruling
 public:
     ruling();
     explicit ruling(settings const*);
-    ruling(QString const&, bool temporary);
 
     void write(settings*) const;
     bool isEmpty() const;
-
     bool discardUsed(bool withdrawn);
-    bool isTemporary() const;
-    bool discardTemporary(bool force); // removes if temporary and forced or too old
 
     bool applyPlacement(win::placement& placement) const;
     bool applyGeometry(QRect& rect, bool init) const;
@@ -136,7 +132,6 @@ public:
     bytes_match clientmachine;
     string_match title;
 
-    int temporary_state; // e.g. for kstart
     QString description;
     bool wmclasscomplete;
     NET::WindowTypes types; // types for matching

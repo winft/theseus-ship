@@ -15,11 +15,8 @@
 #include "win/space.h"
 #include "win/x11/client_machine.h"
 
-#include <QDebug>
-#include <QFile>
 #include <QFileInfo>
 #include <QRegularExpression>
-#include <QTemporaryFile>
 #include <kconfig.h>
 
 #include "book_settings.h"
@@ -29,30 +26,12 @@ namespace KWin::win::rules
 {
 
 ruling::ruling()
-    : temporary_state(0)
-    , wmclasscomplete(enum_index(name_match::unimportant))
+    : wmclasscomplete(enum_index(name_match::unimportant))
     , types(NET::AllTypesMask)
 {
 }
 
-ruling::ruling(QString const& str, bool temporary)
-    : temporary_state(temporary ? 2 : 0)
-{
-    QTemporaryFile file;
-    if (file.open()) {
-        QByteArray s = str.toUtf8();
-        file.write(s.data(), s.length());
-    }
-    file.flush();
-    auto cfg = KSharedConfig::openConfig(file.fileName(), KConfig::SimpleConfig);
-    rules::settings settings(cfg, QString());
-    readFromSettings(&settings);
-    if (description.isEmpty())
-        description = QStringLiteral("temporary");
-}
-
 ruling::ruling(rules::settings const* settings)
-    : temporary_state(0)
 {
     readFromSettings(settings);
 }
@@ -655,22 +634,6 @@ bool ruling::applyMaximizeVert(win::maximize_mode& mode, bool init) const
         }
     }
     return checkSetStop(maximizevert.rule);
-}
-
-bool ruling::isTemporary() const
-{
-    return temporary_state > 0;
-}
-
-bool ruling::discardTemporary(bool force)
-{
-    if (temporary_state == 0) // not temporary
-        return false;
-    if (force || --temporary_state == 0) { // too old
-        delete this;
-        return true;
-    }
-    return false;
 }
 
 bool ruling::discardUsed(bool withdrawn)

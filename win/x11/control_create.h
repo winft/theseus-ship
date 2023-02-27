@@ -384,7 +384,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     // and also relies on rules already existing
     win->meta.caption.normal = read_name(win);
 
-    rules::setup_rules(win, false);
+    rules::setup_rules(win);
     set_caption(win, win->meta.caption.normal, true);
 
     QObject::connect(win->qobject.get(),
@@ -763,8 +763,6 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     }
 
     delete session;
-
-    win->control->discard_temporary_rules();
 
     // Remove ApplyNow rules
     rules::discard_used_rules(*space.rule_book, *win, false);
