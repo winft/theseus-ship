@@ -135,16 +135,12 @@ QPixmap createPixmapFromHandle(xcb_connection_t* c, WId pixmap, WId pixmap_mask)
     return pix;
 }
 
-QPixmap iconFromNetWinInfo(int width, int height, bool scale, int flags, net::win_info* info)
+QPixmap iconFromNetWinInfo(int width, int height, bool scale, int flags, net::win_info const& info)
 {
-    if (!info) {
-        return {};
-    }
-
     QPixmap result;
 
     if (flags & extras::NETWM) {
-        auto ni = info->icon(width, height);
+        auto ni = info.icon(width, height);
         if (ni.data && ni.size.width > 0 && ni.size.height > 0) {
             QImage img(
                 (uchar*)ni.data, (int)ni.size.width, (int)ni.size.height, QImage::Format_ARGB32);
@@ -160,11 +156,11 @@ QPixmap iconFromNetWinInfo(int width, int height, bool scale, int flags, net::wi
     }
 
     if (flags & extras::WMHints) {
-        xcb_pixmap_t p = info->icccmIconPixmap();
-        xcb_pixmap_t p_mask = info->icccmIconPixmapMask();
+        xcb_pixmap_t p = info.icccmIconPixmap();
+        xcb_pixmap_t p_mask = info.icccmIconPixmapMask();
 
         if (p != XCB_PIXMAP_NONE) {
-            auto pm = createPixmapFromHandle(info->xcbConnection(), p, p_mask);
+            auto pm = createPixmapFromHandle(info.xcbConnection(), p, p_mask);
             if (scale && width > 0 && height > 0 && !pm.isNull() //
                 && (pm.width() != width || pm.height() != height)) {
                 result = QPixmap::fromImage(pm.toImage().scaled(
@@ -198,7 +194,7 @@ QPixmap iconFromNetWinInfo(int width, int height, bool scale, int flags, net::wi
         // its own:
         if (result.isNull()) {
             const QIcon icon
-                = QIcon::fromTheme(QString::fromUtf8(info->windowClassClass()).toLower());
+                = QIcon::fromTheme(QString::fromUtf8(info.windowClassClass()).toLower());
             const QPixmap pm = icon.isNull() ? QPixmap() : icon.pixmap(iconWidth, iconWidth);
             if (scale && !pm.isNull()) {
                 result = QPixmap::fromImage(pm.toImage().scaled(
@@ -226,23 +222,13 @@ QPixmap iconFromNetWinInfo(int width, int height, bool scale, int flags, net::wi
     return result;
 }
 
-QPixmap extras::icon(WId win, int width, int height, bool scale, int flags, net::win_info* info)
+QPixmap extras::icon(net::win_info const& info, int width, int height, bool scale, int flags)
 {
     // TODO(romangg): Get dpr internally instead.
     width *= qGuiApp->devicePixelRatio();
     height *= qGuiApp->devicePixelRatio();
 
-    if (info) {
-        return iconFromNetWinInfo(width, height, scale, flags, info);
-    }
-
-    net::win_info newInfo(QX11Info::connection(),
-                          win,
-                          QX11Info::appRootWindow(),
-                          net::WMIcon,
-                          net::WM2WindowClass | net::WM2IconPixmap);
-
-    return iconFromNetWinInfo(width, height, scale, flags, &newInfo);
+    return iconFromNetWinInfo(width, height, scale, flags, info);
 }
 
 }

@@ -173,6 +173,8 @@ void fetch_iconic_name(Win* win)
 template<typename Win>
 void get_icons(Win* win)
 {
+    assert(win->net_info);
+
     // First read icons from the window itself
     auto const themedIconName = win::icon_from_desktop_file(win);
     if (!themedIconName.isEmpty()) {
@@ -183,12 +185,8 @@ void get_icons(Win* win)
 
     QIcon icon;
     auto readIcon = [win, &icon](int size, bool scale = true) {
-        auto const pix = extras::icon(win->xcb_windows.client,
-                                      size,
-                                      size,
-                                      scale,
-                                      extras::NETWM | extras::WMHints,
-                                      win->net_info);
+        auto const pix
+            = extras::icon(*win->net_info, size, size, scale, extras::NETWM | extras::WMHints);
         if (!pix.isNull()) {
             icon.addPixmap(pix);
         }
@@ -215,30 +213,14 @@ void get_icons(Win* win)
     }
     if (icon.isNull()) {
         // And if nothing else, load icon from classhint or xapp icon
-        icon.addPixmap(extras::icon(win->xcb_windows.client,
-                                    32,
-                                    32,
-                                    true,
-                                    extras::ClassHint | extras::XApp,
-                                    win->net_info));
-        icon.addPixmap(extras::icon(win->xcb_windows.client,
-                                    16,
-                                    16,
-                                    true,
-                                    extras::ClassHint | extras::XApp,
-                                    win->net_info));
-        icon.addPixmap(extras::icon(win->xcb_windows.client,
-                                    64,
-                                    64,
-                                    false,
-                                    extras::ClassHint | extras::XApp,
-                                    win->net_info));
-        icon.addPixmap(extras::icon(win->xcb_windows.client,
-                                    128,
-                                    128,
-                                    false,
-                                    extras::ClassHint | extras::XApp,
-                                    win->net_info));
+        icon.addPixmap(
+            extras::icon(*win->net_info, 32, 32, true, extras::ClassHint | extras::XApp));
+        icon.addPixmap(
+            extras::icon(*win->net_info, 16, 16, true, extras::ClassHint | extras::XApp));
+        icon.addPixmap(
+            extras::icon(*win->net_info, 64, 64, false, extras::ClassHint | extras::XApp));
+        icon.addPixmap(
+            extras::icon(*win->net_info, 128, 128, false, extras::ClassHint | extras::XApp));
     }
     win->control->icon = icon;
     Q_EMIT win->qobject->iconChanged();

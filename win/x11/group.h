@@ -61,8 +61,8 @@ public:
                                net::WMIcon,
                                net::WM2IconPixmap);
             auto readIcon = [&ic, &info, this](int size, bool scale = true) {
-                auto const pix = extras::icon(
-                    xcb_leader, size, size, scale, extras::NETWM | extras::WMHints, &info);
+                auto const pix
+                    = extras::icon(info, size, size, scale, extras::NETWM | extras::WMHints);
                 if (!pix.isNull()) {
                     ic.addPixmap(pix);
                 }

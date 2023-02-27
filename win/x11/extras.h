@@ -40,7 +40,7 @@ public:
         XApp = 8,      //!< load the standard X icon (last fallback)
     };
 
-    static QPixmap icon(WId win, int width, int height, bool scale, int flags, net::win_info* info);
+    static QPixmap icon(net::win_info const& info, int width, int height, bool scale, int flags);
 
     static void minimizeWindow(WId win);
     static void unminimizeWindow(WId win);
