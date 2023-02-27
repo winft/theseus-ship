@@ -5,8 +5,9 @@
 */
 #pragma once
 
+#include "key_server.h"
+
 #include "base/options.h"
-#include "base/os/kkeyserver.h"
 
 namespace KWin::win::x11
 {
@@ -16,17 +17,17 @@ static inline uint16_t x11CommandAllModifier(Win& win)
 {
     switch (win.space.base.options->qobject->commandAllModifier()) {
     case Qt::MetaModifier:
-        return KKeyServer::modXMeta();
+        return key_server::modXMeta();
     case Qt::AltModifier:
-        return KKeyServer::modXAlt();
+        return key_server::modXAlt();
     default:
         return 0;
     }
 }
 
-#define XCapL KKeyServer::modXLock()
-#define XNumL KKeyServer::modXNumLock()
-#define XScrL KKeyServer::modXScrollLock()
+#define XCapL key_server::modXLock()
+#define XNumL key_server::modXNumLock()
+#define XScrL key_server::modXScrollLock()
 
 template<typename Win>
 void establish_command_window_grab(Win* win, uint8_t button)

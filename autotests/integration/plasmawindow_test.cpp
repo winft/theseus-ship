@@ -24,8 +24,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <QPainter>
 #include <QRasterWindow>
-
-#include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
 using namespace Wrapland::Client;

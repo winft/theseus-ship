@@ -6,15 +6,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
+#include "extras.h"
 #include "startup_notify.h"
 #include "window_find.h"
 
 #include "render/effect/window_group_impl.h"
 
-#include <KStartupInfo>
-#include <KWindowSystem>
 #include <QIcon>
-#include <netwm.h>
 #include <vector>
 
 namespace KWin::win::x11
@@ -34,11 +32,11 @@ public:
         if (xcb_leader != XCB_WINDOW_NONE) {
             leader
                 = find_controlled_window<x11_window_t>(space, predicate_match::window, xcb_leader);
-            leader_info = new NETWinInfo(space.base.x11_data.connection,
-                                         xcb_leader,
-                                         space.base.x11_data.root_window,
-                                         NET::Properties(),
-                                         NET::WM2StartupId);
+            leader_info = new net::win_info(space.base.x11_data.connection,
+                                            xcb_leader,
+                                            space.base.x11_data.root_window,
+                                            net::Properties(),
+                                            net::WM2StartupId);
         }
         effect_group = new render::effect_window_group_impl<group_t>(this);
         space.groups.push_back(this);
@@ -57,19 +55,14 @@ public:
             return leader->control->icon;
         } else if (xcb_leader != XCB_WINDOW_NONE) {
             QIcon ic;
-            NETWinInfo info(space.base.x11_data.connection,
-                            xcb_leader,
-                            space.base.x11_data.root_window,
-                            NET::WMIcon,
-                            NET::WM2IconPixmap);
+            net::win_info info(space.base.x11_data.connection,
+                               xcb_leader,
+                               space.base.x11_data.root_window,
+                               net::WMIcon,
+                               net::WM2IconPixmap);
             auto readIcon = [&ic, &info, this](int size, bool scale = true) {
-                const QPixmap pix
-                    = KWindowSystem::icon(xcb_leader,
-                                          size,
-                                          size,
-                                          scale,
-                                          KWindowSystem::NETWM | KWindowSystem::WMHints,
-                                          &info);
+                auto const pix = extras::icon(
+                    xcb_leader, size, size, scale, extras::NETWM | extras::WMHints, &info);
                 if (!pix.isNull()) {
                     ic.addPixmap(pix);
                 }
@@ -126,7 +119,7 @@ public:
         }
         if (time != -1U
             && (user_time == XCB_CURRENT_TIME
-                || NET::timestampCompare(time, user_time) > 0)) // time > user_time
+                || net::timestampCompare(time, user_time) > 0)) // time > user_time
             user_time = time;
     }
 
@@ -145,22 +138,22 @@ public:
     std::vector<x11_window_t*> members;
     x11_window_t* leader{nullptr};
     xcb_window_t xcb_leader;
-    NETWinInfo* leader_info{nullptr};
+    net::win_info* leader_info{nullptr};
     xcb_timestamp_t user_time{-1U};
     render::effect_window_group_impl<group_t>* effect_group;
 
 private:
     void startupIdChanged()
     {
-        KStartupInfoId asn_id;
-        KStartupInfoData asn_data;
+        startup_info_id asn_id;
+        startup_info_data asn_data;
         auto asn_valid = check_startup_notification(space, xcb_leader, asn_id, asn_data);
         if (!asn_valid) {
             return;
         }
 
         if (asn_id.timestamp() != 0 && user_time != -1U
-            && NET::timestampCompare(asn_id.timestamp(), user_time) > 0) {
+            && net::timestampCompare(asn_id.timestamp(), user_time) > 0) {
             user_time = asn_id.timestamp();
         }
     }

@@ -48,10 +48,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <unordered_map>
 #include <vector>
 
-class KStartupInfo;
-
 namespace KWin::win
 {
+
+namespace x11
+{
+class startup_info;
+}
 
 template<typename Window>
 struct stacking_state {
@@ -103,7 +106,7 @@ public:
 
     win::space_areas areas;
 
-    KStartupInfo* startup{nullptr};
+    x11::startup_info* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
 
     std::unique_ptr<rules::book> rule_book;
@@ -162,5 +165,3 @@ public:
 };
 
 }
-
-Q_DECLARE_METATYPE(NET::WindowType)

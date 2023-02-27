@@ -5,9 +5,9 @@
 */
 #pragma once
 
-#include "base/x11/event_filter.h"
+#include "net/net.h"
 
-#include <NETWM>
+#include "base/x11/event_filter.h"
 
 namespace KWin::win::x11
 {
@@ -25,14 +25,14 @@ public:
 
     bool event(xcb_generic_event_t* event) override
     {
-        NET::Properties dirtyProtocols;
-        NET::Properties2 dirtyProtocols2;
+        net::Properties dirtyProtocols;
+        net::Properties2 dirtyProtocols2;
         info->event(event, &dirtyProtocols, &dirtyProtocols2);
 
-        if (dirtyProtocols & NET::DesktopNames) {
+        if (dirtyProtocols & net::DesktopNames) {
             info->space.virtual_desktop_manager->save();
         }
-        if (dirtyProtocols2 & NET::WM2DesktopLayout) {
+        if (dirtyProtocols2 & net::WM2DesktopLayout) {
             info->space.virtual_desktop_manager->updateLayout();
         }
         return false;

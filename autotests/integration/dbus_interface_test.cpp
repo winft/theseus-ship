@@ -24,7 +24,6 @@ SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 #include <QDBusPendingReply>
 #include <QUuid>
 
-#include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
 using namespace Wrapland::Client;
@@ -121,7 +120,8 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     auto windowData = reply.value();
     QVERIFY(!windowData.isEmpty());
     QCOMPARE(windowData.size(), 25);
-    QCOMPARE(windowData.value(QStringLiteral("type")).toInt(), NET::Normal);
+    QCOMPARE(windowData.value(QStringLiteral("type")).toInt(),
+             static_cast<int>(win::window_type::normal));
     QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->geo.pos().x());
     QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->geo.pos().y());
     QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->geo.size().width());
@@ -253,8 +253,11 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     xcb_icccm_set_wm_class(c.get(), w, 7, "foo\0bar");
-    NETWinInfo winInfo(
-        c.get(), w, Test::app()->base->x11_data.root_window, NET::Properties(), NET::Properties2());
+    win::x11::net::win_info winInfo(c.get(),
+                                    w,
+                                    Test::app()->base->x11_data.root_window,
+                                    win::x11::net::Properties(),
+                                    win::x11::net::Properties2());
     winInfo.setName("Some caption");
     winInfo.setDesktopFileName("org.kde.foo");
     xcb_map_window(c.get(), w);
@@ -280,7 +283,8 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     auto windowData = reply.value();
     QVERIFY(!windowData.isEmpty());
     QCOMPARE(windowData.size(), 25);
-    QCOMPARE(windowData.value(QStringLiteral("type")).toInt(), NET::Normal);
+    QCOMPARE(windowData.value(QStringLiteral("type")).toInt(),
+             static_cast<int>(win::window_type::normal));
     QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->geo.pos().x());
     QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->geo.pos().y());
     QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->geo.size().width());

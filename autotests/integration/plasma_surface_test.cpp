@@ -192,7 +192,7 @@ void PlasmaSurfaceTest::testDesktopIsOpaque()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(c->windowType(), NET::Desktop);
+    QCOMPARE(c->windowType(), win::window_type::desktop);
     QVERIFY(win::is_desktop(c));
 
     QVERIFY(!win::has_alpha(*c));
@@ -213,7 +213,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(c->windowType(), NET::OnScreenDisplay);
+    QCOMPARE(c->windowType(), win::window_type::on_screen_display);
     QVERIFY(win::is_on_screen_display(c));
     QCOMPARE(c->geo.frame, QRect(590, 657, 100, 50));
 
@@ -255,7 +255,7 @@ void PlasmaSurfaceTest::testOSDPlacementManualPosition()
 
     QVERIFY(c);
     QVERIFY(c->isInitialPositionSet());
-    QCOMPARE(c->windowType(), NET::OnScreenDisplay);
+    QCOMPARE(c->windowType(), win::window_type::on_screen_display);
     QVERIFY(win::is_on_screen_display(c));
     QCOMPARE(c->geo.frame, QRect(50, 70, 100, 50));
 }
@@ -295,7 +295,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut()
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
-    QCOMPARE(c->windowType(), NET::Dock);
+    QCOMPARE(c->windowType(), win::window_type::dock);
     QVERIFY(win::is_dock(c));
     QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
     QTEST(c->hasStrut(), "expectedStrut");
@@ -354,7 +354,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     auto panel = Test::render_and_wait_for_shown(surface, panelGeometry.size(), Qt::blue);
 
     QVERIFY(panel);
-    QCOMPARE(panel->windowType(), NET::Dock);
+    QCOMPARE(panel->windowType(), win::window_type::dock);
     QVERIFY(win::is_dock(panel));
     QCOMPARE(panel->geo.frame, panelGeometry);
     QCOMPARE(panel->hasStrut(), false);
@@ -372,7 +372,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     auto c = Test::render_and_wait_for_shown(surface2, windowGeometry.size(), Qt::red);
 
     QVERIFY(c);
-    QCOMPARE(c->windowType(), NET::Normal);
+    QCOMPARE(c->windowType(), win::window_type::normal);
     QVERIFY(c->control->active);
     QCOMPARE(win::get_layer(*c), KWin::win::layer::normal);
     win::move(c, windowGeometry.topLeft());
@@ -420,7 +420,7 @@ void PlasmaSurfaceTest::testPanelActivate()
     auto panel = Test::render_and_wait_for_shown(surface, QSize(100, 200), Qt::blue);
 
     QVERIFY(panel);
-    QCOMPARE(panel->windowType(), NET::Dock);
+    QCOMPARE(panel->windowType(), win::window_type::dock);
     QVERIFY(win::is_dock(panel));
     QFETCH(bool, active);
     QCOMPARE(panel->dockWantsInput(), active);

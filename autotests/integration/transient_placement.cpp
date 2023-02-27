@@ -328,7 +328,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     // Now map the panel and placement area is reduced.
     auto dock = Test::render_and_wait_for_shown(surface, QSize(1280, 50), Qt::blue);
     QVERIFY(dock);
-    QCOMPARE(dock->windowType(), NET::Dock);
+    QCOMPARE(dock->windowType(), win::window_type::dock);
     QVERIFY(win::is_dock(dock));
     QCOMPARE(dock->geo.frame, QRect(0, Test::get_output(0)->geometry().height() - 50, 1280, 50));
     QCOMPARE(dock->hasStrut(), true);

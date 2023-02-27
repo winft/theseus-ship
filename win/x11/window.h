@@ -104,12 +104,12 @@ public:
         return net_info->pid();
     }
 
-    NET::WindowType get_window_type_direct() const
+    window_type get_window_type_direct() const
     {
         return x11::get_window_type_direct(*this);
     }
 
-    NET::WindowType windowType() const
+    window_type windowType() const
     {
         return get_window_type(*this);
     }
@@ -164,7 +164,7 @@ public:
      */
     bool providesContextHelp() const
     {
-        return net_info->supportsProtocol(NET::ContextHelpProtocol);
+        return net_info->supportsProtocol(net::ContextHelpProtocol);
     }
 
     void showContextHelp()
@@ -526,7 +526,7 @@ public:
 
     QString iconic_caption;
 
-    NETWinInfo* net_info{nullptr};
+    net::win_info* net_info{nullptr};
     x11::xcb_windows xcb_windows;
 
     x11::client_machine* client_machine{nullptr};
@@ -540,8 +540,8 @@ public:
     bool move_needs_server_update{false};
     bool move_resize_has_keyboard_grab{false};
 
-    NET::WindowTypes supported_default_types{};
-    NET::Actions allowed_actions{};
+    window_type_mask supported_default_types{};
+    net::Actions allowed_actions{};
 
     uint user_no_border{0};
     uint app_no_border{0};
@@ -598,7 +598,7 @@ public:
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
 
     // Only used as a cache for window as a remnant.
-    NET::WindowType window_type{NET::Normal};
+    win::window_type window_type{window_type::normal};
 
     Space& space;
 };

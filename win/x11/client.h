@@ -104,7 +104,7 @@ void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRE
 template<typename Win>
 void ping(Win* win)
 {
-    if (!win->net_info->supportsProtocol(NET::PingProtocol)) {
+    if (!win->net_info->supportsProtocol(net::PingProtocol)) {
         // Can't ping :(
         return;
     }
@@ -148,7 +148,7 @@ template<typename Win>
 void pong(Win* win, xcb_timestamp_t timestamp)
 {
     // Just plain compare is not good enough because of 64bit and truncating and whatnot
-    if (NET::timestampCompare(timestamp, win->ping_timestamp) != 0) {
+    if (net::timestampCompare(timestamp, win->ping_timestamp) != 0) {
         return;
     }
 
@@ -363,7 +363,7 @@ xcb_timestamp_t get_user_time(Win const& win)
     assert(win.group != nullptr);
 
     if (time == -1U
-        || (win.group->user_time != -1U && NET::timestampCompare(win.group->user_time, time) > 0)) {
+        || (win.group->user_time != -1U && net::timestampCompare(win.group->user_time, time) > 0)) {
         time = win.group->user_time;
     }
     return time;

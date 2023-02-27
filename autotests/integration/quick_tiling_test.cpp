@@ -33,10 +33,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QTemporaryFile>
 #include <QTextStream>
 
-#include <netwm.h>
-#include <xcb/xcb_icccm.h>
-
 #include <linux/input.h>
+#include <xcb/xcb_icccm.h>
 
 Q_DECLARE_METATYPE(KWin::win::quicktiles)
 Q_DECLARE_METATYPE(KWin::win::maximize_mode)

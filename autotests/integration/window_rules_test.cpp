@@ -17,7 +17,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
 
-#include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
 namespace KWin
@@ -151,12 +150,12 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
                         role.length(),
                         role.constData());
 
-    NETWinInfo info(c.get(),
-                    w,
-                    Test::app()->base->x11_data.root_window,
-                    NET::WMAllProperties,
-                    NET::WM2AllProperties);
-    info.setWindowType(NET::Normal);
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::WMAllProperties,
+                                 win::x11::net::WM2AllProperties);
+    info.setWindowType(win::window_type::normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -229,12 +228,12 @@ void WindowRuleTest::testWindowClassChange()
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     xcb_icccm_set_wm_class(c.get(), w, 23, "org.kde.bar\0org.kde.bar");
 
-    NETWinInfo info(c.get(),
-                    w,
-                    Test::app()->base->x11_data.root_window,
-                    NET::WMAllProperties,
-                    NET::WM2AllProperties);
-    info.setWindowType(NET::Normal);
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::WMAllProperties,
+                                 win::x11::net::WM2AllProperties);
+    info.setWindowType(win::window_type::normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 

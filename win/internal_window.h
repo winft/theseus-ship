@@ -27,8 +27,6 @@
 #include "render/wayland/buffer.h"
 #include "render/window.h"
 
-#include <NETWM>
-
 namespace KWin::win
 {
 
@@ -86,8 +84,8 @@ protected:
                     window.m_internalWindow->property(internal_skip_close_animation_name).toBool());
             }
             if (pe->propertyName() == "kwin_windowType") {
-                window.window_type = window.m_internalWindow->property("kwin_windowType")
-                                         .template value<NET::WindowType>();
+                window.window_type = static_cast<win::window_type>(
+                    window.m_internalWindow->property("kwin_windowType").template value<int>());
                 update_space_areas(window.space);
             }
         }
@@ -168,7 +166,7 @@ public:
 
         const QVariant windowType = m_internalWindow->property("kwin_windowType");
         if (!windowType.isNull()) {
-            window_type = windowType.value<NET::WindowType>();
+            window_type = static_cast<win::window_type>(windowType.value<int>());
         }
 
         setCaption(m_internalWindow->title());
@@ -247,12 +245,12 @@ public:
         stream.nospace() << "\'internal_window:" << m_internalWindow << "\'";
     }
 
-    NET::WindowType windowType() const
+    win::window_type windowType() const
     {
         return window_type;
     }
 
-    NET::WindowType get_window_type_direct() const
+    win::window_type get_window_type_direct() const
     {
         return window_type;
     }
@@ -844,7 +842,7 @@ public:
     QWindow* m_internalWindow = nullptr;
     QRect synced_geo;
     double m_opacity = 1.0;
-    NET::WindowType window_type{NET::Normal};
+    win::window_type window_type{window_type::normal};
     Qt::WindowFlags m_internalWindowFlags = Qt::WindowFlags();
     bool m_userNoBorder = false;
     bool is_outline{false};

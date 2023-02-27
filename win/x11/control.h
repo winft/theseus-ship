@@ -35,22 +35,22 @@ public:
     void set_skip_pager(bool set) override
     {
         control_t::set_skip_pager(set);
-        m_window->net_info->setState(this->skip_pager() ? NET::SkipPager : NET::States(),
-                                     NET::SkipPager);
+        m_window->net_info->setState(this->skip_pager() ? net::SkipPager : net::States(),
+                                     net::SkipPager);
     }
 
     void set_skip_switcher(bool set) override
     {
         control_t::set_skip_switcher(set);
-        m_window->net_info->setState(this->skip_switcher() ? NET::SkipSwitcher : NET::States(),
-                                     NET::SkipSwitcher);
+        m_window->net_info->setState(this->skip_switcher() ? net::SkipSwitcher : net::States(),
+                                     net::SkipSwitcher);
     }
 
     void set_skip_taskbar(bool set) override
     {
         control_t::set_skip_taskbar(set);
-        m_window->net_info->setState(this->skip_taskbar() ? NET::SkipTaskbar : NET::States(),
-                                     NET::SkipTaskbar);
+        m_window->net_info->setState(this->skip_taskbar() ? net::SkipTaskbar : net::States(),
+                                     net::SkipTaskbar);
     }
 
     void update_mouse_grab() override

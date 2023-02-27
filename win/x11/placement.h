@@ -5,14 +5,14 @@
 */
 #pragma once
 
+#include "startup_info.h"
+
 #include "base/x11/xcb/property.h"
 #include "utils/geo.h"
 #include "win/geo.h"
 #include "win/placement.h"
 #include "win/session_manager.h"
 #include "win/window_area.h"
-
-#include <KStartupInfo>
 
 namespace KWin::win::x11
 {
@@ -109,10 +109,10 @@ void place_max_fs(Win* win,
 
     auto pseudo_max{maximize_mode::restore};
 
-    if (win->net_info->state() & NET::MaxVert) {
+    if (win->net_info->state() & net::MaxVert) {
         pseudo_max |= maximize_mode::vertical;
     }
-    if (win->net_info->state() & NET::MaxHoriz) {
+    if (win->net_info->state() & net::MaxHoriz) {
         pseudo_max |= maximize_mode::horizontal;
     }
 
@@ -288,7 +288,7 @@ bool ignore_position_default(Win* win)
 }
 
 template<typename Win>
-QRect place_unmapped(Win* win, QRect& frame_geo, KStartupInfoData const& asn_data)
+QRect place_unmapped(Win* win, QRect& frame_geo, startup_info_data const& asn_data)
 {
     auto const& base = win->space.base;
     auto output = asn_data.xinerama() == -1 ? get_current_output(win->space)
@@ -339,7 +339,7 @@ QRect place_on_taking_control(Win* win,
                               QRect& frame_geo,
                               bool mapped,
                               win::session_info* session,
-                              KStartupInfoData const& asn_data)
+                              startup_info_data const& asn_data)
 {
     if (session) {
         if (mapped) {
@@ -363,12 +363,12 @@ void fix_position_after_crash(Space& space,
                               xcb_window_t w,
                               const xcb_get_geometry_reply_t* geometry)
 {
-    NETWinInfo i(space.base.x11_data.connection,
-                 w,
-                 space.base.x11_data.root_window,
-                 NET::WMFrameExtents,
-                 NET::Properties2());
-    NETStrut frame = i.frameExtents();
+    net::win_info i(space.base.x11_data.connection,
+                    w,
+                    space.base.x11_data.root_window,
+                    net::WMFrameExtents,
+                    net::Properties2());
+    auto frame = i.frameExtents();
 
     if (frame.left != 0 || frame.top != 0) {
         // left and top needed due to narrowing conversations restrictions in C++11

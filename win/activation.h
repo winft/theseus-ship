@@ -16,6 +16,7 @@
 #include "stacking_order.h"
 #include "transient.h"
 #include "window_find.h"
+#include "x11/net/net.h"
 #include "x11/netinfo_helpers.h"
 #include "x11/tool_windows.h"
 #include "x11/user_time.h"
@@ -331,8 +332,8 @@ void set_demands_attention(Win* win, bool demand)
     win->control->demands_attention = demand;
 
     if constexpr (requires(Win win) { win.net_info; }) {
-        win->net_info->setState(demand ? NET::DemandsAttention : NET::States(),
-                                NET::DemandsAttention);
+        win->net_info->setState(demand ? x11::net::DemandsAttention : x11::net::States(),
+                                x11::net::DemandsAttention);
     }
 
     remove_all(win->space.stacking.attention_chain, var_win(win));

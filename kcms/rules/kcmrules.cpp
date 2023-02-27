@@ -17,6 +17,7 @@
 #include <KConfig>
 #include <KLocalizedString>
 #include <KPluginFactory>
+#include <KWindowSystem>
 
 
 namespace KWin
@@ -347,7 +348,7 @@ QModelIndex KCMKWinRules::findRuleWithProperties(const QVariantMap &info, bool w
         auto const rule = win::rules::ruling(settings);
         /* clang-format off */
         if (!rule.matchWMClass(wmclass_class, wmclass_name)
-                || !rule.matchType(type)
+                || !rule.matchType(static_cast<win::window_type>(type))
                 || !rule.matchRole(role)
                 || !rule.matchTitle(title)
                 || !rule.matchClientMachine(machine, isLocalHost)) {

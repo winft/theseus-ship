@@ -447,6 +447,12 @@ set(kwin_SRCS
     win/space_qobject.cpp
     win/virtual_desktops.cpp
     win/x11/client_machine.cpp
+    win/x11/extras.cpp
+    win/x11/key_server.cpp
+    win/x11/net/atoms.cpp
+    win/x11/net/root_info.cpp
+    win/x11/net/win_info.cpp
+    win/x11/startup_info.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.
     base/output.h
@@ -532,10 +538,13 @@ set(kwin_KDE_LIBS
     KF5::Notifications
     KF5::Package
     KF5::Service
-    KF5::WindowSystem
 
     KDecoration2::KDecoration
     KDecoration2::KDecoration2Private
+)
+
+set(kwin_X11_LIBS
+  ${X11_LIBRARIES}
 )
 
 set(kwin_XCB_LIBS
@@ -562,6 +571,7 @@ set(kwinLibs
     ${kwin_OWN_LIBS}
     ${kwin_QT_LIBS}
     ${kwin_KDE_LIBS}
+    ${kwin_X11_LIBS}
     ${kwin_XCB_LIBS}
     ${kwin_INPUT_LIBS}
 

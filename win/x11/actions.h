@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include <NETWM>
+#include "net/net.h"
 
 namespace KWin::win::x11
 {
@@ -17,32 +17,32 @@ void update_allowed_actions(Win* win, bool force = false)
         return;
     }
 
-    auto old_allowed_actions = NET::Actions(win->allowed_actions);
-    win->allowed_actions = NET::Actions();
+    auto old_allowed_actions = net::Actions(win->allowed_actions);
+    win->allowed_actions = net::Actions();
 
     if (win->isMovable()) {
-        win->allowed_actions |= NET::ActionMove;
+        win->allowed_actions |= net::ActionMove;
     }
     if (win->isResizable()) {
-        win->allowed_actions |= NET::ActionResize;
+        win->allowed_actions |= net::ActionResize;
     }
     if (win->isMinimizable()) {
-        win->allowed_actions |= NET::ActionMinimize;
+        win->allowed_actions |= net::ActionMinimize;
     }
 
     // Sticky state not supported
     if (win->isMaximizable()) {
-        win->allowed_actions |= NET::ActionMax;
+        win->allowed_actions |= net::ActionMax;
     }
     if (win->userCanSetFullScreen()) {
-        win->allowed_actions |= NET::ActionFullScreen;
+        win->allowed_actions |= net::ActionFullScreen;
     }
 
     // Always (Pagers shouldn't show Docks etc.)
-    win->allowed_actions |= NET::ActionChangeDesktop;
+    win->allowed_actions |= net::ActionChangeDesktop;
 
     if (win->isCloseable()) {
-        win->allowed_actions |= NET::ActionClose;
+        win->allowed_actions |= net::ActionClose;
     }
     if (old_allowed_actions == win->allowed_actions) {
         return;
@@ -53,15 +53,15 @@ void update_allowed_actions(Win* win, bool force = false)
 
     // ONLY if relevant features have changed (and the window didn't just get/loose moveresize for
     // maximization state changes)
-    auto const relevant = ~(NET::ActionMove | NET::ActionResize);
+    auto const relevant = ~(net::ActionMove | net::ActionResize);
 
     if ((win->allowed_actions & relevant) != (old_allowed_actions & relevant)) {
-        if ((win->allowed_actions & NET::ActionMinimize)
-            != (old_allowed_actions & NET::ActionMinimize)) {
-            Q_EMIT win->qobject->minimizeableChanged(win->allowed_actions & NET::ActionMinimize);
+        if ((win->allowed_actions & net::ActionMinimize)
+            != (old_allowed_actions & net::ActionMinimize)) {
+            Q_EMIT win->qobject->minimizeableChanged(win->allowed_actions & net::ActionMinimize);
         }
-        if ((win->allowed_actions & NET::ActionMax) != (old_allowed_actions & NET::ActionMax)) {
-            Q_EMIT win->qobject->maximizeableChanged(win->allowed_actions & NET::ActionMax);
+        if ((win->allowed_actions & net::ActionMax) != (old_allowed_actions & net::ActionMax)) {
+            Q_EMIT win->qobject->maximizeableChanged(win->allowed_actions & net::ActionMax);
         }
     }
 }

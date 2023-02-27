@@ -14,6 +14,7 @@
 #include "win/setup.h"
 #include "win/space.h"
 #include "win/x11/client_machine.h"
+#include "win/x11/net/net.h"
 
 #include <QFileInfo>
 #include <QRegularExpression>
@@ -27,7 +28,7 @@ namespace KWin::win::rules
 
 ruling::ruling()
     : wmclasscomplete(enum_index(name_match::unimportant))
-    , types(NET::AllTypesMask)
+    , types(window_type_mask::all_types)
 {
 }
 
@@ -64,7 +65,7 @@ void ruling::readFromSettings(rules::settings const* settings)
         = read_bytes_match(settings->clientmachine().toLower(), settings->clientmachinematch());
     title = read_string_match(settings->title(), settings->titlematch());
 
-    types = NET::WindowTypeMask(settings->types());
+    types = window_type_mask(settings->types());
 
     auto read_set_rule = [](auto const& data, auto const& rule) {
         set_ruler<std::decay_t<decltype(data)>> set;
@@ -135,8 +136,8 @@ void ruling::readFromSettings(rules::settings const* settings)
     placement = read_force_rule(settings->placement(), settings->placementrule());
     strictgeometry = read_force_rule(settings->strictgeometry(), settings->strictgeometryrule());
 
-    type = read_force_rule(static_cast<NET::WindowType>(settings->type()), settings->typerule());
-    if (type.data == NET::Unknown) {
+    type = read_force_rule(static_cast<window_type>(settings->type()), settings->typerule());
+    if (type.data == window_type::unknown) {
         type.rule = force_rule::unused;
     }
 }
@@ -160,7 +161,7 @@ void ruling::write(rules::settings* settings) const
     write_string(title, &settings::setTitle, &settings::setTitlematch);
     write_string(clientmachine, &settings::setClientmachine, &settings::setClientmachinematch);
 
-    settings->setTypes(types);
+    settings->setTypes(static_cast<unsigned int>(types));
 
     auto write_set = [&settings](auto const& ruler, auto rule_writer, auto data_writer) {
         std::invoke(rule_writer, settings, static_cast<int>(ruler.rule));
@@ -232,7 +233,10 @@ void ruling::write(rules::settings* settings) const
     write_force(opacityinactive, &settings::setOpacityinactiverule, &settings::setOpacityinactive);
     write_force(placement, &settings::setPlacementrule, &settings::setPlacement);
     write_force(strictgeometry, &settings::setStrictgeometryrule, &settings::setStrictgeometry);
-    write_force(type, &settings::setTyperule, &settings::setType);
+    convert_write_force(type,
+                        &settings::setTyperule,
+                        &settings::setType,
+                        [](auto const& value) -> int { return static_cast<int>(value); });
 }
 
 // returns true if it doesn't affect anything
@@ -275,12 +279,14 @@ QString ruling::getDecoColor(QString const& themeName)
                                       + QLatin1String(".colors"));
 }
 
-bool ruling::matchType(NET::WindowType match_type) const
+bool ruling::matchType(window_type match_type) const
 {
-    if (types != NET::AllTypesMask) {
-        if (match_type == NET::Unknown)
-            match_type = NET::Normal; // NET::Unknown->NET::Normal is only here for matching
-        if (!NET::typeMatchesMask(match_type, types))
+    if (types != window_type_mask::all_types) {
+        if (match_type == window_type::unknown) {
+            // window_type::Unknown->window_type::Normal is only here for matching
+            match_type = window_type::normal;
+        }
+        if (!x11::net::typeMatchesMask(match_type, types))
             return false;
     }
     return true;
@@ -537,7 +543,7 @@ bool ruling::applyOpacityInactive(int& s) const
     return apply_force(s, this->opacityinactive);
 }
 
-bool ruling::applyType(NET::WindowType& type) const
+bool ruling::applyType(window_type& type) const
 {
     return apply_force(type, this->type);
 }

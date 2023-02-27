@@ -15,6 +15,7 @@ target_link_libraries(KWinIntegrationTestFramework
 PUBLIC
   kwin_wayland_lib
   Qt::Test
+  KF5::WindowSystem
 PRIVATE
   KF5::Crash
   # Static plugins

@@ -38,6 +38,7 @@ set(kcm_libs
     kwin_x11_lib
     KF5::KCMUtils
     KF5::QuickAddons
+    KF5::WindowSystem
 )
 
 target_link_libraries(KWinRulesObjects ${kcm_libs} ${kwin_kcm_rules_XCB_LIBS})

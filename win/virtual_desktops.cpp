@@ -8,11 +8,11 @@
 #include "virtual_desktops.h"
 
 #include "singleton_interface.h"
+#include "x11/net/root_info.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <KLocalizedString>
-#include <NETWM>
 #include <QAction>
 #include <QUuid>
 #include <Wrapland/Server/plasma_virtual_desktop.h>
@@ -253,7 +253,7 @@ virtual_desktop_manager::~virtual_desktop_manager()
     singleton_interface::virtual_desktops = {};
 }
 
-void virtual_desktop_manager::setRootInfo(NETRootInfo* info)
+void virtual_desktop_manager::setRootInfo(x11::net::root_info* info)
 {
     m_rootInfo = info;
 
@@ -265,7 +265,7 @@ void virtual_desktop_manager::setRootInfo(NETRootInfo* info)
         }
 
         m_rootInfo->setDesktopLayout(
-            NET::OrientationHorizontal, columns, m_rows, NET::DesktopLayoutCornerTopLeft);
+            x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
         updateRootInfo();
         m_rootInfo->setCurrentDesktop(currentDesktop()->x11DesktopNumber());
 
@@ -712,7 +712,7 @@ void virtual_desktop_manager::setRows(uint rows)
 
     if (m_rootInfo) {
         m_rootInfo->setDesktopLayout(
-            NET::OrientationHorizontal, columns, m_rows, NET::DesktopLayoutCornerTopLeft);
+            x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
         m_rootInfo->activate();
     }
 
@@ -732,7 +732,7 @@ void virtual_desktop_manager::updateRootInfo()
     const int n = count();
     m_rootInfo->setNumberOfDesktops(n);
 
-    NETPoint* viewports = new NETPoint[n];
+    auto viewports = new x11::net::point[n];
     m_rootInfo->setDesktopViewport(n, *viewports);
     delete[] viewports;
 
@@ -751,7 +751,7 @@ void virtual_desktop_manager::updateLayout()
         // TODO: Is there a sane way to avoid overriding the existing grid?
         columns = m_rootInfo->desktopLayoutColumnsRows().width();
         m_rows = qMax(1, m_rootInfo->desktopLayoutColumnsRows().height());
-        orientation = m_rootInfo->desktopLayoutOrientation() == NET::OrientationHorizontal
+        orientation = m_rootInfo->desktopLayoutOrientation() == x11::net::OrientationHorizontal
             ? Qt::Horizontal
             : Qt::Vertical;
     }

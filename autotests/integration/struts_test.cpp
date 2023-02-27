@@ -23,7 +23,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KDecoration2/Decoration>
 
 #include <map>
-#include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
 namespace KWin
@@ -581,12 +580,12 @@ void StrutsTest::testX11Struts()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(),
-                    w,
-                    Test::app()->base->x11_data.root_window,
-                    NET::WMAllProperties,
-                    NET::WM2AllProperties);
-    info.setWindowType(NET::Dock);
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::WMAllProperties,
+                                 win::x11::net::WM2AllProperties);
+    info.setWindowType(win::window_type::dock);
     // set the extended strut
     QFETCH(int, leftStrut);
     QFETCH(int, rightStrut);
@@ -600,7 +599,8 @@ void StrutsTest::testX11Struts()
     QFETCH(int, topStrutEnd);
     QFETCH(int, bottomStrutStart);
     QFETCH(int, bottomStrutEnd);
-    NETExtendedStrut strut;
+
+    win::x11::net::extended_strut strut;
     strut.left_start = leftStrutStart;
     strut.left_end = leftStrutEnd;
     strut.left_width = leftStrut;
@@ -627,7 +627,7 @@ void StrutsTest::testX11Struts()
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->windowType(), NET::Dock);
+    QCOMPARE(client->windowType(), win::window_type::dock);
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // this should have affected the client area
@@ -750,13 +750,15 @@ void StrutsTest::test363804()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(),
-                    w,
-                    Test::app()->base->x11_data.root_window,
-                    NET::WMAllProperties,
-                    NET::WM2AllProperties);
-    info.setWindowType(NET::Dock);
-    NETExtendedStrut strut;
+
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::WMAllProperties,
+                                 win::x11::net::WM2AllProperties);
+    info.setWindowType(win::window_type::dock);
+
+    win::x11::net::extended_strut strut;
     strut.left_start = 0;
     strut.left_end = 0;
     strut.left_width = 0;
@@ -783,7 +785,7 @@ void StrutsTest::test363804()
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->windowType(), NET::Dock);
+    QCOMPARE(client->windowType(), win::window_type::dock);
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // now verify the actual updated client areas
@@ -846,13 +848,15 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(),
-                    w,
-                    Test::app()->base->x11_data.root_window,
-                    NET::WMAllProperties,
-                    NET::WM2AllProperties);
-    info.setWindowType(NET::Dock);
-    NETExtendedStrut strut;
+
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::WMAllProperties,
+                                 win::x11::net::WM2AllProperties);
+    info.setWindowType(win::window_type::dock);
+
+    win::x11::net::extended_strut strut;
     strut.left_start = 0;
     strut.left_end = 0;
     strut.left_width = 0;
@@ -879,7 +883,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->windowType(), NET::Dock);
+    QCOMPARE(client->windowType(), win::window_type::dock);
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // now verify the actual updated client areas
@@ -986,13 +990,15 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(),
-                    w,
-                    Test::app()->base->x11_data.root_window,
-                    NET::WMAllProperties,
-                    NET::WM2AllProperties);
-    info.setWindowType(NET::Dock);
-    NETExtendedStrut strut;
+
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::WMAllProperties,
+                                 win::x11::net::WM2AllProperties);
+    info.setWindowType(win::window_type::dock);
+
+    win::x11::net::extended_strut strut;
     strut.left_start = 0;
     strut.left_end = 1050;
     strut.left_width = 1366 + 24;
@@ -1019,7 +1025,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->windowType(), NET::Dock);
+    QCOMPARE(client->windowType(), win::window_type::dock);
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // now verify the actual updated client areas

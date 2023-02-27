@@ -9,7 +9,6 @@
 
 #include "base/logging.h"
 
-#include <NETWM>
 #include <QMargins>
 #include <QRect>
 #include <QRegion>

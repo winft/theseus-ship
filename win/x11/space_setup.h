@@ -11,6 +11,7 @@
 #include "netinfo.h"
 #include "placement.h"
 #include "space_event.h"
+#include "startup_info.h"
 #include "sync_alarm_filter.h"
 
 #include "base/x11/user_interaction_filter.h"
@@ -18,8 +19,6 @@
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
 #include "win/space_areas_helpers.h"
-
-#include <KStartupInfo>
 
 namespace KWin::win::x11
 {
@@ -58,7 +57,7 @@ void init_space(Space& space)
 
     // Call this before XSelectInput() on the root window
     space.startup
-        = new KStartupInfo(KStartupInfo::DisableKWinModule | KStartupInfo::AnnounceSilenceChanges,
+        = new startup_info(startup_info::DisableKWinModule | startup_info::AnnounceSilenceChanges,
                            space.qobject.get());
 
     auto const& x11_data = space.base.x11_data;
@@ -92,13 +91,16 @@ void init_space(Space& space)
     vds->setRootInfo(space.root_info.get());
     space.root_info->activate();
 
+    // TODO(romangg): Do we need this still?
+    /*
     // TODO: only in X11 mode
     // Extra NETRootInfo instance in Client mode is needed to get the values of the properties
-    NETRootInfo client_info(x11_data.connection, NET::ActiveWindow | NET::CurrentDesktop);
+    net::root_info client_info(x11_data.connection, net::ActiveWindow | net::CurrentDesktop);
     if (!qApp->isSessionRestored()) {
         space.m_initialDesktop = client_info.currentDesktop();
         vds->setCurrent(space.m_initialDesktop);
     }
+    */
 
     // TODO: better value
     space.root_info->setActiveWindow(XCB_WINDOW_NONE);
@@ -156,7 +158,7 @@ void init_space(Space& space)
         update_space_areas(space);
 
         // NETWM spec says we have to set it to (0,0) if we don't support it
-        NETPoint* viewports = new NETPoint[vds->count()];
+        auto viewports = new net::point[vds->count()];
         space.root_info->setDesktopViewport(vds->count(), *viewports);
         delete[] viewports;
         QRect geom;
@@ -165,7 +167,7 @@ void init_space(Space& space)
             geom |= output->geometry();
         }
 
-        NETSize desktop_geometry;
+        net::size desktop_geometry;
         desktop_geometry.width = geom.width();
         desktop_geometry.height = geom.height();
         space.root_info->setDesktopGeometry(desktop_geometry);
@@ -177,10 +179,13 @@ void init_space(Space& space)
     std::optional<typename Space::window_t> new_active_win;
     if (!qApp->isSessionRestored()) {
         --space.block_focus;
+        // TODO(romangg): Do we need this? Can we fetch the info manually?
+        /*
         if (auto win = find_controlled_window<typename Space::x11_window>(
                 space, predicate_match::window, client_info.activeWindow())) {
             new_active_win = win;
         }
+        */
     }
 
     if (!new_active_win && !space.stacking.active && space.stacking.should_get_focus.empty()) {

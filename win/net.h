@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include <NETWM>
+#include "types.h"
 
 namespace KWin::win
 {
@@ -13,65 +13,65 @@ namespace KWin::win
 template<typename Win>
 bool is_desktop(Win const* win)
 {
-    return win->windowType() == NET::Desktop;
+    return win->windowType() == window_type::desktop;
 }
 
 template<typename Win>
 bool is_dock(Win const* win)
 {
-    return win->windowType() == NET::Dock;
+    return win->windowType() == window_type::dock;
 }
 
 template<typename Win>
 bool is_menu(Win const* win)
 {
-    return win->windowType() == NET::Menu;
+    return win->windowType() == window_type::menu;
 }
 
 template<typename Win>
 bool is_toolbar(Win const* win)
 {
-    return win->windowType() == NET::Toolbar;
+    return win->windowType() == window_type::toolbar;
 }
 
 template<typename Win>
 bool is_splash(Win const* win)
 {
-    return win->windowType() == NET::Splash;
+    return win->windowType() == window_type::splash;
 }
 
 template<typename Win>
 bool is_utility(Win const* win)
 {
-    return win->windowType() == NET::Utility;
+    return win->windowType() == window_type::utility;
 }
 
 template<typename Win>
 bool is_dialog(Win const* win)
 {
-    return win->windowType() == NET::Dialog;
+    return win->windowType() == window_type::dialog;
 }
 
 template<typename Win>
 bool is_normal(Win const* win)
 {
-    return win->windowType() == NET::Normal;
+    return win->windowType() == window_type::normal;
 }
 
 template<typename Win>
 bool is_dropdown_menu(Win const* win)
 {
-    return win->windowType() == NET::DropdownMenu;
+    return win->windowType() == window_type::dropdown_menu;
 }
 
 template<typename Win>
 bool is_popup(Win const* win)
 {
     switch (win->windowType()) {
-    case NET::ComboBox:
-    case NET::DropdownMenu:
-    case NET::PopupMenu:
-    case NET::Tooltip:
+    case window_type::combo_box:
+    case window_type::dropdown_menu:
+    case window_type::popup_menu:
+    case window_type::tooltip:
         return true;
     default:
         if constexpr (requires(Win win) { win.is_popup_end(); }) {
@@ -85,49 +85,49 @@ bool is_popup(Win const* win)
 template<typename Win>
 bool is_popup_menu(Win const* win)
 {
-    return win->windowType() == NET::PopupMenu;
+    return win->windowType() == window_type::popup_menu;
 }
 
 template<typename Win>
 bool is_tooltip(Win const* win)
 {
-    return win->windowType() == NET::Tooltip;
+    return win->windowType() == window_type::tooltip;
 }
 
 template<typename Win>
 bool is_notification(Win const* win)
 {
-    return win->windowType() == NET::Notification;
+    return win->windowType() == window_type::notification;
 }
 
 template<typename Win>
 bool is_critical_notification(Win const* win)
 {
-    return win->windowType() == NET::CriticalNotification;
+    return win->windowType() == window_type::critical_notification;
 }
 
 template<typename Win>
 bool is_applet_popup(Win const* win)
 {
-    return win->windowType() == NET::AppletPopup;
+    return win->windowType() == window_type::applet_popup;
 }
 
 template<typename Win>
 bool is_on_screen_display(Win const* win)
 {
-    return win->windowType() == NET::OnScreenDisplay;
+    return win->windowType() == window_type::on_screen_display;
 }
 
 template<typename Win>
 bool is_combo_box(Win const* win)
 {
-    return win->windowType() == NET::ComboBox;
+    return win->windowType() == window_type::combo_box;
 }
 
 template<typename Win>
 bool is_dnd_icon(Win const* win)
 {
-    return win->windowType() == NET::DNDIcon;
+    return win->windowType() == window_type::dnd_icon;
 }
 
 template<typename Win>

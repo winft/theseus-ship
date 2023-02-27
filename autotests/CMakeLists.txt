@@ -14,7 +14,7 @@ add_subdirectory(tabbox)
 ########################################################
 set(testScreenPaintData_SRCS test_screen_paint_data.cpp)
 add_executable(testScreenPaintData ${testScreenPaintData_SRCS})
-target_link_libraries(testScreenPaintData kwineffects Qt::Test Qt::Widgets KF5::WindowSystem)
+target_link_libraries(testScreenPaintData kwineffects Qt::Test Qt::Widgets)
 add_test(NAME kwin-testScreenPaintData COMMAND testScreenPaintData)
 ecm_mark_as_test(testScreenPaintData)
 
@@ -32,6 +32,10 @@ ecm_mark_as_test(testWindowPaintData)
 ########################################################
 set(testClientMachine_SRCS
     ../win/x11/client_machine.cpp
+    ../win/x11/extras.cpp
+    ../win/x11/net/atoms.cpp
+    ../win/x11/net/root_info.cpp
+    ../win/x11/net/win_info.cpp
     test_client_machine.cpp
 )
 add_executable(testClientMachine ${testClientMachine_SRCS})
@@ -44,7 +48,6 @@ target_link_libraries(testClientMachine
     Qt::X11Extras
 
     KF5::ConfigCore
-    KF5::WindowSystem
 
     XCB::XCB
     XCB::XFIXES
@@ -58,6 +61,10 @@ ecm_mark_as_test(testClientMachine)
 # Test XcbWrapper
 ########################################################
 set(testXcbWrapper_SRCS
+    ../win/x11/extras.cpp
+    ../win/x11/net/atoms.cpp
+    ../win/x11/net/root_info.cpp
+    ../win/x11/net/win_info.cpp
     test_xcb_wrapper.cpp
 )
 add_executable(testXcbWrapper ${testXcbWrapper_SRCS})
@@ -68,7 +75,6 @@ target_link_libraries(testXcbWrapper
     Qt::X11Extras
 
     KF5::ConfigCore
-    KF5::WindowSystem
 
     XCB::XCB
 )
@@ -84,7 +90,6 @@ if (XCB_ICCCM_FOUND)
         Qt::X11Extras
 
         KF5::ConfigCore
-        KF5::WindowSystem
 
         XCB::ICCCM
         XCB::XCB
@@ -107,7 +112,6 @@ target_link_libraries(testXcbWindow
     Qt::X11Extras
 
     KF5::ConfigCore
-    KF5::WindowSystem
 
     XCB::XCB
 )
@@ -153,7 +157,12 @@ ecm_mark_as_test(testGestures)
 ########################################################
 # Test X11 TimestampUpdate
 ########################################################
-add_executable(testX11TimestampUpdate test_x11_timestamp_update.cpp)
+add_executable(testX11TimestampUpdate
+    ../win/x11/net/root_info.cpp
+    ../win/x11/net/win_info.cpp
+    ../win/x11/startup_info.cpp
+    test_x11_timestamp_update.cpp
+)
 target_link_libraries(testX11TimestampUpdate
     kwin
     kwin_x11_lib
@@ -190,7 +199,6 @@ target_link_libraries(testXkb
 
     KF5::ConfigCore
     WraplandServer
-    KF5::WindowSystem
 
     XKB::XKB
     Qt5::XkbCommonSupportPrivate

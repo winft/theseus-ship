@@ -297,7 +297,7 @@ private:
             {QStringLiteral("caption"), win->meta.caption.normal},
             {QStringLiteral("clientMachine"), get_client_machine(*win)},
             {QStringLiteral("localhost"), is_local_host(*win)},
-            {QStringLiteral("type"), win->windowType()},
+            {QStringLiteral("type"), static_cast<int>(win->windowType())},
             {QStringLiteral("x"), win->geo.pos().x()},
             {QStringLiteral("y"), win->geo.pos().y()},
             {QStringLiteral("width"), win->geo.size().width()},

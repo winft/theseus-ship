@@ -9,12 +9,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/x11/xcb/motif_hints.h"
 #include "base/x11/xcb/proto.h"
 #include "base/x11/xcb/window.h"
+#include "win/x11/net/win_info.h"
 
 #include <QApplication>
 #include <QX11Info>
 #include <QtTest>
-#include <netwm.h>
-// xcb
 #include <xcb/xcb.h>
 
 using namespace KWin;
@@ -403,11 +402,11 @@ void TestXcbWrapper::testPropertyBool()
     base::x11::xcb::atom blockCompositing(QByteArrayLiteral("_KDE_NET_WM_BLOCK_COMPOSITING"),
                                           connection);
     QVERIFY(blockCompositing != XCB_ATOM_NONE);
-    NETWinInfo info(connection,
-                    testWindow,
-                    QX11Info::appRootWindow(),
-                    NET::Properties(),
-                    NET::WM2BlockCompositing);
+    win::x11::net::win_info info(connection,
+                                 testWindow,
+                                 QX11Info::appRootWindow(),
+                                 win::x11::net::Properties(),
+                                 win::x11::net::WM2BlockCompositing);
 
     base::x11::xcb::property prop(
         connection, false, testWindow, blockCompositing, XCB_ATOM_CARDINAL, 0, 100000);
@@ -417,6 +416,7 @@ void TestXcbWrapper::testPropertyBool()
     QVERIFY(!ok);
 
     info.setBlockingCompositing(true);
+
     xcb_flush(connection);
     prop = base::x11::xcb::property(
         connection, false, testWindow, blockCompositing, XCB_ATOM_CARDINAL, 0, 100000);

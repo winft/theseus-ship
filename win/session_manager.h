@@ -7,9 +7,10 @@
 */
 #pragma once
 
+#include "types.h"
+
 #include "kwinglobals.h"
 
-#include <NETWM>
 #include <QRect>
 
 namespace KWin::win
@@ -69,7 +70,7 @@ struct session_info {
     bool skipSwitcher;
     bool noBorder;
 
-    NET::WindowType windowType;
+    window_type windowType;
     QString shortcut;
 
     // means 'was active in the saved session'

@@ -5,10 +5,10 @@
 */
 #pragma once
 
+#include "net/win_info.h"
+
 #include "base/x11/xcb/property.h"
 #include "base/x11/xcb/proto.h"
-
-#include <NETWM>
 
 namespace KWin::win::x11
 {
@@ -35,7 +35,7 @@ void update_user_time(Win* win, xcb_timestamp_t time = XCB_TIME_CURRENT_TIME)
     }
     if (time != -1U
         && (win->user_time == XCB_TIME_CURRENT_TIME
-            || NET::timestampCompare(time, win->user_time) > 0)) {
+            || net::timestampCompare(time, win->user_time) > 0)) {
         // time > user_time
         win->user_time = time;
     }
@@ -69,7 +69,7 @@ xcb_timestamp_t user_time(Win* win)
     assert(group);
 
     if (time == -1U
-        || (group->user_time != -1U && NET::timestampCompare(group->user_time, time) > 0)) {
+        || (group->user_time != -1U && net::timestampCompare(group->user_time, time) > 0)) {
         time = group->user_time;
     }
     return time;

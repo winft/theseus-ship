@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
-#include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
 namespace KWin
@@ -131,12 +130,12 @@ void X11DesktopWindowTest::testDesktopWindow()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(c.get(),
-                    w,
-                    Test::app()->base->x11_data.root_window,
-                    NET::WMAllProperties,
-                    NET::WM2AllProperties);
-    info.setWindowType(NET::Desktop);
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::WMAllProperties,
+                                 win::x11::net::WM2AllProperties);
+    info.setWindowType(win::window_type::desktop);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -155,7 +154,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->windowType(), NET::Desktop);
+    QCOMPARE(client->windowType(), win::window_type::desktop);
     QCOMPARE(client->geo.frame, windowGeometry);
     QVERIFY(win::is_desktop(client));
     QCOMPARE(client->render_data.bit_depth, 24);

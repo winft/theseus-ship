@@ -6,8 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "client_machine.h"
 
 #include "base/logging.h"
-
-#include <NETWM>
+#include "net/net.h"
+#include "net/win_info.h"
 
 #include <QFutureWatcher>
 #include <QtConcurrentRun>
@@ -165,18 +165,18 @@ void client_machine::resolve(base::x11::data const& x11_data,
     if (m_resolved) {
         return;
     }
-    QByteArray name = NETWinInfo(x11_data.connection,
-                                 window,
-                                 x11_data.root_window,
-                                 NET::Properties(),
-                                 NET::WM2ClientMachine)
+    QByteArray name = net::win_info(x11_data.connection,
+                                    window,
+                                    x11_data.root_window,
+                                    net::Properties(),
+                                    net::WM2ClientMachine)
                           .clientMachine();
     if (name.isEmpty() && clientLeader && clientLeader != window) {
-        name = NETWinInfo(x11_data.connection,
-                          clientLeader,
-                          x11_data.root_window,
-                          NET::Properties(),
-                          NET::WM2ClientMachine)
+        name = net::win_info(x11_data.connection,
+                             clientLeader,
+                             x11_data.root_window,
+                             net::Properties(),
+                             net::WM2ClientMachine)
                    .clientMachine();
     }
     if (name.isEmpty()) {

@@ -7,9 +7,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "tabbox_handler.h"
 
-#include "base/os/kkeyserver.h"
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/proto.h"
+#include "win/x11/key_server.h"
 
 namespace KWin::win
 {
@@ -108,7 +108,7 @@ private:
     {
         int key_qt;
         xcb_key_press_event_t* key_event = reinterpret_cast<xcb_key_press_event_t*>(event);
-        KKeyServer::xcbKeyPressEventToQt(key_event, &key_qt);
+        x11::key_server::xcbKeyPressEventToQt(key_event, &key_qt);
         tabbox.key_press(key_qt);
     }
 
@@ -116,8 +116,8 @@ private:
     {
         const auto ev = reinterpret_cast<xcb_key_release_event_t*>(event);
         unsigned int mk = ev->state
-            & (KKeyServer::modXShift() | KKeyServer::modXCtrl() | KKeyServer::modXAlt()
-               | KKeyServer::modXMeta());
+            & (x11::key_server::modXShift() | x11::key_server::modXCtrl()
+               | x11::key_server::modXAlt() | x11::key_server::modXMeta());
         // ev.state is state before the key release, so just checking mk being 0 isn't enough
         // using XQueryPointer() also doesn't seem to work well, so the check that all
         // modifiers are released: only one modifier is active and the currently released

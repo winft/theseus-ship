@@ -11,8 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QApplication>
 #include <QX11Info>
 #include <QtTest>
-#include <netwm.h>
-// xcb
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>
 

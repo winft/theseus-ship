@@ -23,7 +23,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
-#include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
 namespace KWin

@@ -5,11 +5,10 @@
 */
 #pragma once
 
-#include "win/meta.h"
-
 #include "client_machine.h"
+#include "extras.h"
 
-#include <KWindowSystem>
+#include "win/meta.h"
 
 #include <xcb/xcb_icccm.h>
 
@@ -184,12 +183,12 @@ void get_icons(Win* win)
 
     QIcon icon;
     auto readIcon = [win, &icon](int size, bool scale = true) {
-        auto const pix = KWindowSystem::icon(win->xcb_windows.client,
-                                             size,
-                                             size,
-                                             scale,
-                                             KWindowSystem::NETWM | KWindowSystem::WMHints,
-                                             win->net_info);
+        auto const pix = extras::icon(win->xcb_windows.client,
+                                      size,
+                                      size,
+                                      scale,
+                                      extras::NETWM | extras::WMHints,
+                                      win->net_info);
         if (!pix.isNull()) {
             icon.addPixmap(pix);
         }
@@ -216,30 +215,30 @@ void get_icons(Win* win)
     }
     if (icon.isNull()) {
         // And if nothing else, load icon from classhint or xapp icon
-        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
-                                           32,
-                                           32,
-                                           true,
-                                           KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->net_info));
-        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
-                                           16,
-                                           16,
-                                           true,
-                                           KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->net_info));
-        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
-                                           64,
-                                           64,
-                                           false,
-                                           KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->net_info));
-        icon.addPixmap(KWindowSystem::icon(win->xcb_windows.client,
-                                           128,
-                                           128,
-                                           false,
-                                           KWindowSystem::ClassHint | KWindowSystem::XApp,
-                                           win->net_info));
+        icon.addPixmap(extras::icon(win->xcb_windows.client,
+                                    32,
+                                    32,
+                                    true,
+                                    extras::ClassHint | extras::XApp,
+                                    win->net_info));
+        icon.addPixmap(extras::icon(win->xcb_windows.client,
+                                    16,
+                                    16,
+                                    true,
+                                    extras::ClassHint | extras::XApp,
+                                    win->net_info));
+        icon.addPixmap(extras::icon(win->xcb_windows.client,
+                                    64,
+                                    64,
+                                    false,
+                                    extras::ClassHint | extras::XApp,
+                                    win->net_info));
+        icon.addPixmap(extras::icon(win->xcb_windows.client,
+                                    128,
+                                    128,
+                                    false,
+                                    extras::ClassHint | extras::XApp,
+                                    win->net_info));
     }
     win->control->icon = icon;
     Q_EMIT win->qobject->iconChanged();
@@ -364,7 +363,7 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
 }
 
 template<typename Win>
-NET::WindowType get_window_type_direct(Win& win)
+window_type get_window_type_direct(Win& win)
 {
     if (win.remnant) {
         return win.window_type;
@@ -373,7 +372,7 @@ NET::WindowType get_window_type_direct(Win& win)
 }
 
 template<typename Win>
-NET::WindowType get_window_type(Win& win)
+window_type get_window_type(Win& win)
 {
     auto wt = get_window_type_direct(win);
     if (!win.control) {
@@ -390,9 +389,9 @@ NET::WindowType get_window_type(Win& win)
     }
 
     // hacks here
-    if (wt == NET::Unknown) {
+    if (wt == window_type::unknown) {
         // this is more or less suggested in NETWM spec
-        wt = win.transient->lead() ? NET::Dialog : NET::Normal;
+        wt = win.transient->lead() ? window_type::dialog : window_type::normal;
     }
     return wt;
 }

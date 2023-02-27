@@ -5,56 +5,151 @@
 */
 #pragma once
 
-#include "focus_stealing.h"
-#include "startup_notify.h"
+#include <kwin_export.h>
 
-#include "base/output_helpers.h"
-#include "win/desktop_space.h"
+#include <QObject>
+#include <QString>
+#include <QWindow>
 
-#include <KStartupInfo>
+#include <sys/types.h>
+
+// typedef struct _XDisplay Display;
+
+struct xcb_connection_t;
 
 namespace KWin::win::x11
 {
 
-template<typename Win>
-void startup_id_changed(Win* win)
-{
-    KStartupInfoId asn_id;
-    KStartupInfoData asn_data;
-    auto asn_valid
-        = check_startup_notification(win->space, win->xcb_windows.client, asn_id, asn_data);
-    if (!asn_valid) {
-        return;
-    }
+class startup_info_id;
+class startup_info_data;
 
-    // If the ASN contains desktop, move it to the desktop, otherwise move it to the current
-    // desktop (since the new ASN should make the window act like if it's a new application
-    // launched). However don't affect the window's desktop if it's set to be on all desktops.
-    int desktop = win->space.virtual_desktop_manager->current();
-    if (asn_data.desktop() != 0)
-        desktop = asn_data.desktop();
-    if (!on_all_desktops(win)) {
-        send_window_to_desktop(win->space, win, desktop, true);
-    }
-    if (asn_data.xinerama() != -1) {
-        auto output = base::get_output(win->space.base.outputs, asn_data.xinerama());
-        if (output) {
-            send_to_screen(win->space, win, *output);
-        }
-    }
-    auto const timestamp = asn_id.timestamp();
-    if (timestamp != 0) {
-        auto activate = allow_window_activation(win->space, win, timestamp);
-        if (asn_data.desktop() != 0 && !on_current_desktop(win)) {
-            // it was started on different desktop than current one
-            activate = false;
-        }
-        if (activate) {
-            activate_window(win->space, *win);
-        } else {
-            set_demands_attention(win, true);
-        }
-    }
-}
+class KWIN_EXPORT startup_info : public QObject
+{
+    Q_OBJECT
+public:
+    enum {
+        CleanOnCantDetect = 1 << 0,
+        DisableKWinModule = 1 << 1,
+        AnnounceSilenceChanges = 1 << 2,
+    };
+
+    explicit startup_info(int flags, QObject* parent = nullptr);
+    ~startup_info() override;
+
+    enum startup_t {
+        NoMatch,
+        Match,
+        CantDetect,
+    };
+
+    startup_t checkStartup(WId w, startup_info_id& id, startup_info_data& data);
+    static QByteArray windowStartupId(WId w);
+
+    class Data;
+    class Private;
+
+private:
+    Private* const d;
+};
+
+class KWIN_EXPORT startup_info_id
+{
+public:
+    bool operator==(const startup_info_id& id) const;
+    bool operator!=(const startup_info_id& id) const;
+    bool isNull() const;
+
+    const QByteArray& id() const;
+    unsigned long timestamp() const;
+
+    startup_info_id();
+    startup_info_id(const startup_info_id& data);
+    ~startup_info_id();
+    startup_info_id& operator=(const startup_info_id& data);
+    bool operator<(const startup_info_id& id) const;
+
+private:
+    explicit startup_info_id(const QString& txt);
+    friend class startup_info;
+    friend class startup_info::Private;
+    struct Private;
+    Private* const d;
+};
+
+class KWIN_EXPORT startup_info_data
+{
+public:
+    const QString& bin() const;
+    const QString& name() const;
+    const QString& description() const;
+
+    const QString& icon() const;
+
+    int desktop() const;
+
+    QByteArray WMClass() const;
+
+    void addPid(pid_t pid);
+    QList<pid_t> pids() const;
+    bool is_pid(pid_t pid) const;
+
+    QByteArray hostname() const;
+
+    enum TriState {
+        Yes,
+        No,
+        Unknown,
+    };
+
+    /**
+     * Return the silence status for the startup notification.
+     * @return startup_info_data::Yes if visual feedback is silenced
+     */
+    TriState silent() const;
+
+    /**
+     * The X11 screen on which the startup notification is happening, -1 if unknown.
+     */
+    int screen() const;
+
+    /**
+     * The Xinerama screen for the startup notification, -1 if unknown.
+     */
+    int xinerama() const;
+
+    /**
+     * The .desktop file used to initiate this startup notification, or empty. This information
+     * should be used only to identify the application, not to read any additional information.
+     * @since 4.5
+     **/
+    QString applicationId() const;
+
+    /**
+     * Updates the notification data from the given data. Some data, such as the desktop
+     * or the name, won't be rewritten if already set.
+     * @param data the data to update
+     */
+    void update(const startup_info_data& data);
+
+    /**
+     * Constructor. Initializes all the data to their default empty values.
+     */
+    startup_info_data();
+
+    /**
+     * Copy constructor.
+     */
+    startup_info_data(const startup_info_data& data);
+    ~startup_info_data();
+    startup_info_data& operator=(const startup_info_data& data);
+
+private:
+    explicit startup_info_data(const QString& txt);
+    friend class startup_info;
+    friend class startup_info::Data;
+    friend class startup_info::Private;
+    struct Private;
+    Private* const d;
+};
 
 }

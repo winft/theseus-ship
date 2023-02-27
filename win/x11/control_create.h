@@ -14,7 +14,7 @@
 #include "meta.h"
 #include "placement.h"
 #include "session.h"
-#include "startup_info.h"
+#include "startup_notify.h"
 #include "user_time.h"
 #include "win_info.h"
 #include "window_create.h"
@@ -25,8 +25,6 @@
 #include "win/layers.h"
 #include "win/rules/find.h"
 #include "win/session.h"
-
-#include <KStartupInfo>
 
 namespace KWin::win::x11
 {
@@ -216,8 +214,8 @@ xcb_timestamp_t query_timestamp(Win& win)
 
 template<typename Win>
 xcb_timestamp_t read_user_time_map_timestamp(Win* win,
-                                             const KStartupInfoId* asn_id,
-                                             const KStartupInfoData* asn_data,
+                                             startup_info_id const* asn_id,
+                                             startup_info_data const* asn_data,
                                              bool session)
 {
     xcb_timestamp_t time = win->net_info->userTime();
@@ -225,7 +223,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
     // Newer ASN timestamp always replaces user timestamp, unless user timestamp is 0. Helps
     // e.g. with konqy reusing.
     if (asn_data && time && asn_id->timestamp()) {
-        if (time == -1U || NET::timestampCompare(asn_id->timestamp(), time) > 0) {
+        if (time == -1U || net::timestampCompare(asn_id->timestamp(), time) > 0) {
             time = asn_id->timestamp();
         }
     }
@@ -342,15 +340,15 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->xcb_visual = attr->visual;
     win->render_data.bit_depth = windowGeometry->depth;
 
-    const NET::Properties properties = NET::WMDesktop | NET::WMState | NET::WMWindowType
-        | NET::WMStrut | NET::WMName | NET::WMIconGeometry | NET::WMIcon | NET::WMPid
-        | NET::WMIconName;
-    const NET::Properties2 properties2 = NET::WM2BlockCompositing | NET::WM2WindowClass
-        | NET::WM2WindowRole | NET::WM2UserTime | NET::WM2StartupId | NET::WM2ExtendedStrut
-        | NET::WM2Opacity | NET::WM2FullscreenMonitors | NET::WM2GroupLeader | NET::WM2Urgency
-        | NET::WM2Input | NET::WM2Protocols | NET::WM2InitialMappingState | NET::WM2IconPixmap
-        | NET::WM2OpaqueRegion | NET::WM2DesktopFileName | NET::WM2GTKFrameExtents
-        | NET::WM2GTKApplicationId;
+    const net::Properties properties = net::WMDesktop | net::WMState | net::WMWindowType
+        | net::WMStrut | net::WMName | net::WMIconGeometry | net::WMIcon | net::WMPid
+        | net::WMIconName;
+    const net::Properties2 properties2 = net::WM2BlockCompositing | net::WM2WindowClass
+        | net::WM2WindowRole | net::WM2UserTime | net::WM2StartupId | net::WM2ExtendedStrut
+        | net::WM2Opacity | net::WM2FullscreenMonitors | net::WM2GroupLeader | net::WM2Urgency
+        | net::WM2Input | net::WM2Protocols | net::WM2InitialMappingState | net::WM2IconPixmap
+        | net::WM2OpaqueRegion | net::WM2DesktopFileName | net::WM2GTKFrameExtents
+        | net::WM2GTKApplicationId;
 
     auto wmClientLeaderCookie = fetch_wm_client_leader(*win);
     auto skipCloseAnimationCookie = fetch_skip_close_animation(*win);
@@ -405,7 +403,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     update_allowed_actions(win);
 
-    win->transient->set_modal((win->net_info->state() & NET::Modal) != 0);
+    win->transient->set_modal((win->net_info->state() & net::Modal) != 0);
     read_transient_property(win, transientCookie);
 
     QByteArray desktopFileName{win->net_info->desktopFileName()};
@@ -427,18 +425,18 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     // TODO: Try to obey all state information from net_info->state()
 
-    set_original_skip_taskbar(win, (win->net_info->state() & NET::SkipTaskbar) != 0);
-    set_skip_pager(win, (win->net_info->state() & NET::SkipPager) != 0);
-    set_skip_switcher(win, (win->net_info->state() & NET::SkipSwitcher) != 0);
+    set_original_skip_taskbar(win, (win->net_info->state() & net::SkipTaskbar) != 0);
+    set_skip_pager(win, (win->net_info->state() & net::SkipPager) != 0);
+    set_skip_switcher(win, (win->net_info->state() & net::SkipSwitcher) != 0);
     read_first_in_tabbox(win, firstInTabBoxCookie);
 
-    auto init_minimize = !isMapped && (win->net_info->initialMappingState() == NET::Iconic);
-    if (win->net_info->state() & NET::Hidden) {
+    auto init_minimize = !isMapped && (win->net_info->initialMappingState() == net::Iconic);
+    if (win->net_info->state() & net::Hidden) {
         init_minimize = true;
     }
 
-    KStartupInfoId asn_id;
-    KStartupInfoData asn_data;
+    startup_info_id asn_id;
+    startup_info_data asn_data;
     auto asn_valid = check_startup_notification(space, win->xcb_windows.client, asn_id, asn_data);
 
     // Make sure that the input window is created before we update the stacking order
@@ -485,7 +483,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             // This is slightly duplicated from win::place_on_main_window()
             for (auto const& lead : leads) {
                 if (leads.size() > 1 && is_special_window(lead)
-                    && !(win->net_info->state() & NET::Modal)) {
+                    && !(win->net_info->state() & net::Modal)) {
                     // Don't consider group-transients and toolbars etc when placing
                     // except when it's modal (blocks specials as well).
                     continue;
@@ -518,7 +516,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                 desktop_id = asn_data.desktop();
             }
             if (desktop_id) {
-                if (desktop_id == NET::OnAllDesktops) {
+                if (desktop_id == net::OnAllDesktops) {
                     initial_desktops = desks{};
                 } else if (auto desktop
                            = space.virtual_desktop_manager->desktopForX11Id(desktop_id)) {
@@ -575,7 +573,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         auto leads = win->transient->leads();
         for (auto lead : leads) {
             if (lead->isShown()) {
-                // SELI TODO: Even e.g. for NET::Utility?
+                // SELI TODO: Even e.g. for net::Utility?
                 init_minimize = false;
             }
         }
@@ -631,10 +629,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         // isn't restored larger than the workarea
         auto maxmode{maximize_mode::restore};
 
-        if (win->net_info->state() & NET::MaxVert) {
+        if (win->net_info->state() & net::MaxVert) {
             maxmode = maxmode | maximize_mode::vertical;
         }
-        if (win->net_info->state() & NET::MaxHoriz) {
+        if (win->net_info->state() & net::MaxHoriz) {
             maxmode = maxmode | maximize_mode::horizontal;
         }
 
@@ -649,29 +647,29 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         // Read other initial states
         set_keep_above(
             win,
-            win->control->rules.checkKeepAbove(win->net_info->state() & NET::KeepAbove, !isMapped));
+            win->control->rules.checkKeepAbove(win->net_info->state() & net::KeepAbove, !isMapped));
         set_keep_below(
             win,
-            win->control->rules.checkKeepBelow(win->net_info->state() & NET::KeepBelow, !isMapped));
+            win->control->rules.checkKeepBelow(win->net_info->state() & net::KeepBelow, !isMapped));
         set_original_skip_taskbar(win,
                                   win->control->rules.checkSkipTaskbar(
-                                      win->net_info->state() & NET::SkipTaskbar, !isMapped));
+                                      win->net_info->state() & net::SkipTaskbar, !isMapped));
         set_skip_pager(
             win,
-            win->control->rules.checkSkipPager(win->net_info->state() & NET::SkipPager, !isMapped));
+            win->control->rules.checkSkipPager(win->net_info->state() & net::SkipPager, !isMapped));
         set_skip_switcher(win,
                           win->control->rules.checkSkipSwitcher(
-                              win->net_info->state() & NET::SkipSwitcher, !isMapped));
+                              win->net_info->state() & net::SkipSwitcher, !isMapped));
 
-        if (win->net_info->state() & NET::DemandsAttention) {
+        if (win->net_info->state() & net::DemandsAttention) {
             set_demands_attention(win, true);
         }
-        if (win->net_info->state() & NET::Modal) {
+        if (win->net_info->state() & net::Modal) {
             win->transient->set_modal(true);
         }
 
         win->setFullScreen(win->control->rules.checkFullScreen(
-                               win->net_info->state() & NET::FullScreen, !isMapped),
+                               win->net_info->state() & net::FullScreen, !isMapped),
                            false);
     }
 
@@ -784,11 +782,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                          if (win->opacity() == 1.0) {
                              return;
                          }
-                         NETWinInfo info(win->space.base.x11_data.connection,
-                                         win->frameId(),
-                                         win->space.base.x11_data.root_window,
-                                         NET::Properties(),
-                                         NET::Properties2());
+                         net::win_info info(win->space.base.x11_data.connection,
+                                            win->frameId(),
+                                            win->space.base.x11_data.root_window,
+                                            net::Properties(),
+                                            net::Properties2());
                          info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
                      });
 

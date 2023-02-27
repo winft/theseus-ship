@@ -10,4 +10,8 @@ set(kwindowsystem_plugin_SRCS
 
 add_library(KF5WindowSystemKWinPlugin OBJECT ${kwindowsystem_plugin_SRCS})
 target_compile_definitions(KF5WindowSystemKWinPlugin PRIVATE QT_STATICPLUGIN)
-target_link_libraries(KF5WindowSystemKWinPlugin kwin)
+target_link_libraries(KF5WindowSystemKWinPlugin
+PRIVATE
+  kwin
+  KF5::WindowSystem
+)

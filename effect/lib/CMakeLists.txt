@@ -65,7 +65,6 @@ target_link_libraries(kwineffects
     PUBLIC
         KF5::ConfigCore
         KF5::CoreAddons
-        KF5::WindowSystem
         XCB::XCB
         WraplandServer
     PRIVATE
@@ -91,7 +90,16 @@ set(kwin_GLUTILSLIB_SRCS
 
 add_library(kwinglutils SHARED ${kwin_GLUTILSLIB_SRCS})
 generate_export_header(kwinglutils BASE_NAME kwinglutils EXPORT_FILE_NAME kwingl/export.h)
-target_link_libraries(kwinglutils PUBLIC XCB::XCB KF5::CoreAddons KF5::ConfigCore KF5::WindowSystem epoxy::epoxy)
+
+target_link_libraries(kwinglutils
+PUBLIC
+  XCB::XCB
+  Qt::Gui
+  KF5::CoreAddons
+  KF5::ConfigCore
+  epoxy::epoxy
+)
+
 set_target_properties(kwinglutils PROPERTIES
     VERSION ${KWINEFFECTS_VERSION}
     SOVERSION ${KWINEFFECTS_SOVERSION}

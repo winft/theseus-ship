@@ -114,7 +114,7 @@ void maximize_restore(Win* win)
     win->apply_restore_geometry(final_restore_geo);
 
     if constexpr (requires(Win win) { win.net_info; }) {
-        win->net_info->setState(NET::States(), NET::Max);
+        win->net_info->setState(x11::net::States(), x11::net::Max);
     }
 
     win->geo.update.max_mode = maximize_mode::restore;
@@ -139,9 +139,9 @@ void maximize_vertically(Win* win)
     win->setFrameGeometry(QRect(pos, size));
 
     if constexpr (requires(Win win) { win.net_info; }) {
-        auto net_state
-            = flags(geo_update.max_mode & maximize_mode::horizontal) ? NET::Max : NET::MaxVert;
-        win->net_info->setState(net_state, NET::Max);
+        auto net_state = flags(geo_update.max_mode & maximize_mode::horizontal) ? x11::net::Max
+                                                                                : x11::net::MaxVert;
+        win->net_info->setState(net_state, x11::net::Max);
     }
 
     geo_update.max_mode |= maximize_mode::vertical;
@@ -166,9 +166,9 @@ void maximize_horizontally(Win* win)
     win->setFrameGeometry(QRect(pos, size));
 
     if constexpr (requires(Win win) { win.net_info; }) {
-        auto net_state
-            = flags(geo_update.max_mode & maximize_mode::vertical) ? NET::Max : NET::MaxHoriz;
-        win->net_info->setState(net_state, NET::Max);
+        auto net_state = flags(geo_update.max_mode & maximize_mode::vertical) ? x11::net::Max
+                                                                              : x11::net::MaxHoriz;
+        win->net_info->setState(net_state, x11::net::Max);
     }
 
     geo_update.max_mode |= maximize_mode::horizontal;

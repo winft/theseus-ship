@@ -148,17 +148,17 @@ effect::anim_update get_internal_window_slide_update(EffectIntegrator& effi, Eff
     auto location = get_internal_window_prop_val_or_default(
         std::get<internal_slide_from_location_property>(effi.internal_properties.at(0)),
         *internal,
-        KWindowEffects::NoEdge);
+        slide_from_location_edge::none);
 
     auto get_slide_position = [](auto loc) {
         switch (loc) {
-        case KWindowEffects::BottomEdge:
+        case slide_from_location_edge::bottom:
             return effect::position::bottom;
-        case KWindowEffects::TopEdge:
+        case slide_from_location_edge::top:
             return effect::position::top;
-        case KWindowEffects::RightEdge:
+        case slide_from_location_edge::right:
             return effect::position::right;
-        case KWindowEffects::LeftEdge:
+        case slide_from_location_edge::left:
             return effect::position::left;
         default:
             return effect::position::center;

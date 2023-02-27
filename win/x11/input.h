@@ -5,12 +5,14 @@
 */
 #pragma once
 
+#include "net/net.h"
+#include "types.h"
+
 #include "base/options.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/helpers.h"
 #include "hidden_preview.h"
 #include "win/deco.h"
-#include "win/x11/types.h"
 
 #include <QRect>
 #include <xcb/shape.h>
@@ -22,7 +24,7 @@ template<typename Win>
 bool wants_input(Win const& win)
 {
     return win.control->rules.checkAcceptFocus(
-        win.acceptsFocus() || win.net_info->supportsProtocol(NET::TakeFocusProtocol));
+        win.acceptsFocus() || win.net_info->supportsProtocol(net::TakeFocusProtocol));
 }
 
 template<typename Win>
