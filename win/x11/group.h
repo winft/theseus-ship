@@ -143,21 +143,6 @@ public:
     render::effect_window_group_impl<group_t>* effect_group;
 
 private:
-    void startupIdChanged()
-    {
-        startup_info_id asn_id;
-        startup_info_data asn_data;
-        auto asn_valid = check_startup_notification(space, xcb_leader, asn_id, asn_data);
-        if (!asn_valid) {
-            return;
-        }
-
-        if (asn_id.timestamp() != 0 && user_time != -1U
-            && net::timestampCompare(asn_id.timestamp(), user_time) > 0) {
-            user_time = asn_id.timestamp();
-        }
-    }
-
     int refcount{0};
     Space& space;
 };
