@@ -3,7 +3,6 @@
         "Category": "Accessibility",
         "Description": "Help you locate the center of the screen when moving a window",
         "EnabledByDefault": false,
-        "Id": "snaphelper",
         "License": "GPL",
         "Name": "Snap Helper"
     },

@@ -11,8 +11,8 @@ set(cubeslide_SOURCES
 kconfig_add_kcfg_files(cubeslide_SOURCES
     cubeslideconfig.kcfgc
 )
-kwin4_add_effect_module(kwin4_effect_cubeslide ${cubeslide_SOURCES})
-target_link_libraries(kwin4_effect_cubeslide PRIVATE
+kwin4_add_effect_module(cubeslide ${cubeslide_SOURCES})
+target_link_libraries(cubeslide PRIVATE
   KF6::KCMUtils
   kwineffects
 )

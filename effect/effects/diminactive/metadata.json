@@ -3,7 +3,6 @@
         "Category": "Focus",
         "Description": "Darken inactive windows",
         "EnabledByDefault": false,
-        "Id": "diminactive",
         "License": "GPL",
         "Name": "Dim Inactive"
     },

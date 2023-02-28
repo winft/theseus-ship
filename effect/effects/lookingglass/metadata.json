@@ -3,7 +3,6 @@
         "Category": "Accessibility",
         "Description": "A screen magnifier that looks like a fisheye lens",
         "EnabledByDefault": false,
-        "Id": "lookingglass",
         "License": "GPL",
         "Name": "Looking Glass"
     },

@@ -14,8 +14,8 @@ kconfig_add_kcfg_files(resize_SOURCES
     resizeconfig.kcfgc
 )
 
-kwin4_add_effect_module(kwin4_effect_resize ${resize_SOURCES})
-target_link_libraries(kwin4_effect_resize PRIVATE
+kwin4_add_effect_module(resize ${resize_SOURCES})
+target_link_libraries(resize PRIVATE
   KF6::KCMUtils
   kwineffects
 )

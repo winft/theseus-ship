@@ -14,8 +14,8 @@ kconfig_add_kcfg_files(diminactive_SOURCES
     diminactiveconfig.kcfgc
 )
 
-kwin4_add_effect_module(kwin4_effect_diminactive ${diminactive_SOURCES})
-target_link_libraries(kwin4_effect_diminactive PRIVATE
+kwin4_add_effect_module(diminactive ${diminactive_SOURCES})
+target_link_libraries(diminactive PRIVATE
   KF6::ConfigGui
   kwineffects
 )

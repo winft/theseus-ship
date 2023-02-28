@@ -3,7 +3,6 @@
         "Category": "Virtual Desktop Switching Animation",
         "Description": "Slide desktops when switching virtual desktops",
         "EnabledByDefault": true,
-        "Id": "slide",
         "License": "GPL",
         "Name": "Slide"
     },

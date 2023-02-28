@@ -12,8 +12,8 @@ set(cube_SOURCES
 kconfig_add_kcfg_files(cube_SOURCES
     cubeconfig.kcfgc
 )
-kwin4_add_effect_module(kwin4_effect_cube ${cube_SOURCES})
-target_link_libraries(kwin4_effect_cube PRIVATE
+kwin4_add_effect_module(cube ${cube_SOURCES})
+target_link_libraries(cube PRIVATE
   KF6::I18n
   KF6::KCMUtils
   kwineffects

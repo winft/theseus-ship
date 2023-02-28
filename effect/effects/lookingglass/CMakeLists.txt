@@ -15,8 +15,8 @@ kconfig_add_kcfg_files(lookingglass_SOURCES
     lookingglassconfig.kcfgc
 )
 
-kwin4_add_effect_module(kwin4_effect_lookingglass ${lookingglass_SOURCES})
-target_link_libraries(kwin4_effect_lookingglass PRIVATE
+kwin4_add_effect_module(lookingglass ${lookingglass_SOURCES})
+target_link_libraries(lookingglass PRIVATE
   KF6::ConfigGui
   KF6::I18n
   KF6::KCMUtils

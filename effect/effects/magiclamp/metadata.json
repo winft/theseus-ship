@@ -3,7 +3,6 @@
         "Category": "Appearance",
         "Description": "Simulate a magic lamp when minimizing windows",
         "EnabledByDefault": false,
-        "Id": "magiclamp",
         "License": "GPL",
         "Name": "Magic Lamp"
     },

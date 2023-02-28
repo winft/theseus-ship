@@ -10,8 +10,8 @@ set(showpaint_SOURCES
     showpaint.cpp
 )
 
-kwin4_add_effect_module(kwin4_effect_showpaint ${showpaint_SOURCES})
-target_link_libraries(kwin4_effect_showpaint PRIVATE
+kwin4_add_effect_module(showpaint ${showpaint_SOURCES})
+target_link_libraries(showpaint PRIVATE
   KF6::I18n
   kwineffects
   kwinglutils

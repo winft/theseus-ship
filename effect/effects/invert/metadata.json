@@ -3,7 +3,6 @@
         "Category": "Accessibility",
         "Description": "Inverts the color of the desktop and windows",
         "EnabledByDefault": false,
-        "Id": "invert",
         "License": "GPL",
         "Name": "Invert"
     },

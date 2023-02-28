@@ -3,7 +3,6 @@
         "Category": "Accessibility",
         "Description": "Supports picking a color",
         "EnabledByDefault": true,
-        "Id": "colorpicker",
         "License": "GPL",
         "Name": "Color Picker"
     },

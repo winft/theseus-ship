@@ -3,7 +3,6 @@
         "Category": "Focus",
         "Description": "Slide back windows when another window is raised",
         "EnabledByDefault": false,
-        "Id": "slideback",
         "License": "GPL",
         "Name": "Slide Back"
     }

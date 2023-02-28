@@ -14,8 +14,8 @@ kconfig_add_kcfg_files(magnifier_SOURCES
     magnifierconfig.kcfgc
 )
 
-kwin4_add_effect_module(kwin4_effect_magnifier ${magnifier_SOURCES})
-target_link_libraries(kwin4_effect_magnifier PRIVATE
+kwin4_add_effect_module(magnifier ${magnifier_SOURCES})
+target_link_libraries(magnifier PRIVATE
   KF6::ConfigGui
   KF6::I18n
   KF6::KCMUtils

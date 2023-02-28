@@ -3,7 +3,6 @@
         "Category": "Appearance",
         "Description": "Sliding animation for Plasma popups",
         "EnabledByDefault": true,
-        "Id": "slidingpopups",
         "License": "GPL",
         "Name": "Sliding Popups"
     },

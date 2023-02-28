@@ -3,7 +3,6 @@
         "Category": "Accessibility",
         "Description": "Magnify the section of the screen that is near the mouse cursor",
         "EnabledByDefault": false,
-        "Id": "magnifier",
         "License": "GPL",
         "Name": "Magnifier"
     },

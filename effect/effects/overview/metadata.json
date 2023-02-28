@@ -3,7 +3,6 @@
         "Category": "Window Management",
         "Description": "Allows you to overview virtual desktops and windows",
         "EnabledByDefault": true,
-        "Id": "overview",
         "License": "GPL",
         "Name": "Overview"
     },

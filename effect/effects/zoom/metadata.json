@@ -3,7 +3,6 @@
         "Category": "Accessibility",
         "Description": "Magnify the entire desktop",
         "EnabledByDefault": true,
-        "Id": "zoom",
         "License": "GPL",
         "Name": "Zoom"
     },

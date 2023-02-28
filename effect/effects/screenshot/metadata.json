@@ -3,7 +3,6 @@
         "Category": "Appearance",
         "Description": "Helper effect for screenshot tools",
         "EnabledByDefault": true,
-        "Id": "screenshot",
         "License": "GPL",
         "Name": "Screenshot"
     },
