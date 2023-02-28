@@ -14,7 +14,6 @@
 #include "meta.h"
 #include "placement.h"
 #include "session.h"
-#include "startup_notify.h"
 #include "user_time.h"
 #include "win_info.h"
 #include "window_create.h"
@@ -213,20 +212,9 @@ xcb_timestamp_t query_timestamp(Win& win)
 }
 
 template<typename Win>
-xcb_timestamp_t read_user_time_map_timestamp(Win* win,
-                                             startup_info_id const* asn_id,
-                                             startup_info_data const* asn_data,
-                                             bool session)
+xcb_timestamp_t read_user_time_map_timestamp(Win* win, bool session)
 {
     xcb_timestamp_t time = win->net_info->userTime();
-
-    // Newer ASN timestamp always replaces user timestamp, unless user timestamp is 0. Helps
-    // e.g. with konqy reusing.
-    if (asn_data && time && asn_id->timestamp()) {
-        if (time == -1U || net::timestampCompare(asn_id->timestamp(), time) > 0) {
-            time = asn_id->timestamp();
-        }
-    }
 
     if (time != -1U) {
         return time;
@@ -344,9 +332,9 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         | net::WMStrut | net::WMName | net::WMIconGeometry | net::WMIcon | net::WMPid
         | net::WMIconName;
     const net::Properties2 properties2 = net::WM2BlockCompositing | net::WM2WindowClass
-        | net::WM2WindowRole | net::WM2UserTime | net::WM2StartupId | net::WM2ExtendedStrut
-        | net::WM2Opacity | net::WM2FullscreenMonitors | net::WM2GroupLeader | net::WM2Urgency
-        | net::WM2Input | net::WM2Protocols | net::WM2InitialMappingState | net::WM2IconPixmap
+        | net::WM2WindowRole | net::WM2UserTime | net::WM2ExtendedStrut | net::WM2Opacity
+        | net::WM2FullscreenMonitors | net::WM2GroupLeader | net::WM2Urgency | net::WM2Input
+        | net::WM2Protocols | net::WM2InitialMappingState | net::WM2IconPixmap
         | net::WM2OpaqueRegion | net::WM2DesktopFileName | net::WM2GTKFrameExtents
         | net::WM2GTKApplicationId;
 
@@ -435,10 +423,6 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         init_minimize = true;
     }
 
-    startup_info_id asn_id;
-    startup_info_data asn_data;
-    auto asn_valid = check_startup_notification(space, win->xcb_windows.client, asn_id, asn_data);
-
     // Make sure that the input window is created before we update the stacking order
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
     update_input_window(win, win->geo.frame);
@@ -512,9 +496,6 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                 // Window had the initial desktop property, force it
                 desktop_id = win->net_info->desktop();
             }
-            if (desktop_id == 0 && asn_valid && asn_data.desktop() != 0) {
-                desktop_id = asn_data.desktop();
-            }
             if (desktop_id) {
                 if (desktop_id == net::OnAllDesktops) {
                     initial_desktops = desks{};
@@ -563,8 +544,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     win->geo.frame = frame_geo;
 
-    auto const placement_area
-        = place_on_taking_control(win, frame_geo, isMapped, session, asn_data);
+    auto const placement_area = place_on_taking_control(win, frame_geo, isMapped, session);
 
     // CT: Extra check for stupid jdk 1.3.1. But should make sense in general
     // if client has initial state set to Iconic and is transient with a parent
@@ -676,8 +656,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     update_allowed_actions(win, true);
 
     // Set initial user time directly
-    win->user_time = read_user_time_map_timestamp(
-        win, asn_valid ? &asn_id : nullptr, asn_valid ? &asn_data : nullptr, session);
+    win->user_time = read_user_time_map_timestamp(win, session);
 
     // And do what Win::updateUserTime() does
     win->group->updateUserTime(win->user_time);

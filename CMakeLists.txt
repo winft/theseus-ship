@@ -452,7 +452,6 @@ set(kwin_SRCS
     win/x11/net/atoms.cpp
     win/x11/net/root_info.cpp
     win/x11/net/win_info.cpp
-    win/x11/startup_info.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.
     base/output.h

@@ -11,7 +11,6 @@
 #include "netinfo.h"
 #include "placement.h"
 #include "space_event.h"
-#include "startup_info.h"
 #include "sync_alarm_filter.h"
 
 #include "base/x11/user_interaction_filter.h"
@@ -54,11 +53,6 @@ void init_space(Space& space)
                      &Space::qobject_t::clientActivated,
                      space.color_mapper.get(),
                      &color_mapper_t::update);
-
-    // Call this before XSelectInput() on the root window
-    space.startup
-        = new startup_info(startup_info::DisableKWinModule | startup_info::AnnounceSilenceChanges,
-                           space.qobject.get());
 
     auto const& x11_data = space.base.x11_data;
 

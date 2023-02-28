@@ -14,7 +14,6 @@
 #include "geo.h"
 #include "meta.h"
 #include "stacking.h"
-#include "startup_info.h"
 #include "transient.h"
 #include "user_time.h"
 #include "window_release.h"
@@ -852,9 +851,6 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         if ((dirtyProperties2 & net::WM2UserTime) != 0) {
             mark_as_user_interaction(win->space);
             update_user_time(win, win->net_info->userTime());
-        }
-        if ((dirtyProperties2 & net::WM2StartupId) != 0) {
-            startup_id_changed(win);
         }
         if (dirtyProperties2 & net::WM2Opacity) {
             if (win->space.base.render->compositor->scene) {

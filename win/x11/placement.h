@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "startup_info.h"
-
 #include "base/x11/xcb/property.h"
 #include "utils/geo.h"
 #include "win/geo.h"
@@ -288,13 +286,11 @@ bool ignore_position_default(Win* win)
 }
 
 template<typename Win>
-QRect place_unmapped(Win* win, QRect& frame_geo, startup_info_data const& asn_data)
+QRect place_unmapped(Win* win, QRect& frame_geo)
 {
-    auto const& base = win->space.base;
-    auto output = asn_data.xinerama() == -1 ? get_current_output(win->space)
-                                            : base::get_output(base.outputs, asn_data.xinerama());
-
     QPoint center;
+    auto output = get_current_output(win->space);
+
     if (output) {
         output = win->control->rules.checkScreen(win->space.base, output, true);
         center = output->geometry().center();
@@ -335,11 +331,7 @@ QRect place_unmapped(Win* win, QRect& frame_geo, startup_info_data const& asn_da
 }
 
 template<typename Win>
-QRect place_on_taking_control(Win* win,
-                              QRect& frame_geo,
-                              bool mapped,
-                              win::session_info* session,
-                              startup_info_data const& asn_data)
+QRect place_on_taking_control(Win* win, QRect& frame_geo, bool mapped, win::session_info* session)
 {
     if (session) {
         if (mapped) {
@@ -352,7 +344,7 @@ QRect place_on_taking_control(Win* win,
         return place_mapped(win, frame_geo);
     }
 
-    return place_unmapped(win, frame_geo, asn_data);
+    return place_unmapped(win, frame_geo);
 }
 
 // When kwin crashes, windows will not be gravitated back to their original position

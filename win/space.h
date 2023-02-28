@@ -51,11 +51,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::win
 {
 
-namespace x11
-{
-class startup_info;
-}
-
 template<typename Window>
 struct stacking_state {
     win::stacking_order<Window> order;
@@ -105,10 +100,7 @@ public:
     std::unique_ptr<qobject_t> qobject;
 
     win::space_areas areas;
-
-    x11::startup_info* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
-
     std::unique_ptr<rules::book> rule_book;
 
     std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;

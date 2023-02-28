@@ -7,7 +7,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
 #include "extras.h"
-#include "startup_notify.h"
 #include "window_find.h"
 
 #include "render/effect/window_group_impl.h"
@@ -36,7 +35,7 @@ public:
                                             xcb_leader,
                                             space.base.x11_data.root_window,
                                             net::Properties(),
-                                            net::WM2StartupId);
+                                            net::Properties2());
         }
         effect_group = new render::effect_window_group_impl<group_t>(this);
         space.groups.push_back(this);

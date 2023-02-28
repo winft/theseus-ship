@@ -160,7 +160,6 @@ ecm_mark_as_test(testGestures)
 add_executable(testX11TimestampUpdate
     ../win/x11/net/root_info.cpp
     ../win/x11/net/win_info.cpp
-    ../win/x11/startup_info.cpp
     test_x11_timestamp_update.cpp
 )
 target_link_libraries(testX11TimestampUpdate
