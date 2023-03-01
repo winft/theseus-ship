@@ -160,6 +160,19 @@ void shortcut_dialog_create(Space& space, Win* window)
     space.client_keys_dialog = new shortcut_dialog(window->control->shortcut);
     space.client_keys_client = window;
 
+    QObject::connect(
+        space.client_keys_dialog,
+        &win::shortcut_dialog::shortcut_changed,
+        space.qobject.get(),
+        [&space](auto&& seq) {
+            auto const conflicts = KGlobalAccel::globalShortcutsByKey(seq);
+            if (conflicts.empty()) {
+                space.client_keys_dialog->allow_shortcut(seq);
+            } else {
+                space.client_keys_dialog->reject_shortcut(
+                    seq, conflicts.at(0).friendlyName(), conflicts.at(0).componentFriendlyName());
+            }
+        });
     QObject::connect(space.client_keys_dialog,
                      &win::shortcut_dialog::dialogDone,
                      space.qobject.get(),

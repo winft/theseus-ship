@@ -23,10 +23,14 @@ public:
     void accept() override;
     QKeySequence shortcut() const;
 
+    void allow_shortcut(QKeySequence const& seq);
+    void reject_shortcut(QKeySequence const& seq, QString const& action, QString const& app);
+
 public Q_SLOTS:
     void keySequenceChanged();
 
 Q_SIGNALS:
+    void shortcut_changed(QKeySequence const& seq);
     void dialogDone(bool ok);
 
 protected:

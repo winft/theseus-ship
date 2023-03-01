@@ -7,7 +7,6 @@
 */
 #include "shortcut_dialog.h"
 
-#include <KGlobalAccel>
 #include <QPushButton>
 
 namespace KWin::win
@@ -73,37 +72,51 @@ void shortcut_dialog::keySequenceChanged()
         m_ui.keySequenceEdit->setKeySequence(seq);
     }
 
-    // Check if the key sequence is used currently
-    QString sc = seq.toString();
-
-    // NOTICE - seq.toString() & the entries in "conflicting" randomly get invalidated after the
-    // next call (if no sc has been set & conflicting isn't empty?!)
-    QList<KGlobalShortcutInfo> conflicting = KGlobalAccel::globalShortcutsByKey(seq);
-
-    if (!conflicting.isEmpty()) {
-        const KGlobalShortcutInfo& conflict = conflicting.at(0);
-        m_ui.warning->setText(
-            i18nc("'%1' is a keyboard shortcut like 'ctrl+w'", "<b>%1</b> is already in use", sc));
-        m_ui.warning->setToolTip(
-            i18nc("keyboard shortcut '%1' is used by action '%2' in application '%3'",
-                  "<b>%1</b> is used by %2 in %3",
-                  sc,
-                  conflict.friendlyName(),
-                  conflict.componentFriendlyName()));
-        m_ui.warning->show();
-        m_ui.keySequenceEdit->setKeySequence(shortcut());
-    } else if (seq != _shortcut) {
-        m_ui.warning->hide();
-        if (QPushButton* ok = m_ui.buttonBox->button(QDialogButtonBox::Ok))
-            ok->setFocus();
-    }
-
-    _shortcut = seq;
+    Q_EMIT shortcut_changed(seq);
 }
 
 QKeySequence shortcut_dialog::shortcut() const
 {
     return _shortcut;
+}
+
+void shortcut_dialog::allow_shortcut(QKeySequence const& seq)
+{
+    if (seq != m_ui.keySequenceEdit->keySequence()) {
+        // Already changed again
+        return;
+    }
+
+    m_ui.warning->hide();
+    if (auto ok = m_ui.buttonBox->button(QDialogButtonBox::Ok)) {
+        ok->setFocus();
+    }
+
+    _shortcut = seq;
+}
+
+void shortcut_dialog::reject_shortcut(QKeySequence const& seq,
+                                      QString const& action,
+                                      QString const& app)
+{
+    if (seq != m_ui.keySequenceEdit->keySequence()) {
+        // Already changed again
+        return;
+    }
+
+    auto const seq_string = seq.toString();
+
+    m_ui.warning->setText(i18nc(
+        "'%1' is a keyboard shortcut like 'ctrl+w'", "<b>%1</b> is already in use", seq_string));
+    m_ui.warning->setToolTip(
+        i18nc("keyboard shortcut '%1' is used by action '%2' in application '%3'",
+              "<b>%1</b> is used by %2 in %3",
+              seq_string,
+              action,
+              app));
+    m_ui.warning->show();
+
+    m_ui.keySequenceEdit->setKeySequence(shortcut());
 }
 
 }
