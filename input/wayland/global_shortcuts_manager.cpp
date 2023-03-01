@@ -27,12 +27,10 @@ global_shortcuts_manager::~global_shortcuts_manager() = default;
 void global_shortcuts_manager::init()
 {
     qputenv("KGLOBALACCELD_PLATFORM", QByteArrayLiteral("org.kde.kwin"));
-    m_kglobalAccel = std::make_unique<KGlobalAccelD>();
-    if (!m_kglobalAccel->init()) {
-        qCDebug(KWIN_INPUT) << "Init of kglobalaccel failed";
-        m_kglobalAccel.reset();
-    } else {
-        qCDebug(KWIN_INPUT) << "KGlobalAcceld inited";
+    try {
+        m_kglobalAccel = std::make_unique<KGlobalAccelD>();
+    } catch (std::runtime_error& exc) {
+        qCWarning(KWIN_INPUT) << exc.what();
     }
 }
 

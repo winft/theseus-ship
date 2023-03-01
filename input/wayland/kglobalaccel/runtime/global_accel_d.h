@@ -28,10 +28,9 @@ public:
     Q_DECLARE_FLAGS(SetShortcutFlags, SetShortcutFlag)
     Q_FLAG(SetShortcutFlags)
 
-    explicit KGlobalAccelD(QObject* parent = nullptr);
+    KGlobalAccelD();
     ~KGlobalAccelD() override;
 
-    bool init();
     bool keyPressed(int keyQt);
     bool keyReleased(int keyQt);
 

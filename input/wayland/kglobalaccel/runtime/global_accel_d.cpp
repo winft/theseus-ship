@@ -156,13 +156,8 @@ GlobalShortcut* KGlobalAccelDPrivate::addAction(QStringList const& actionId)
 
 Q_DECLARE_METATYPE(QStringList)
 
-KGlobalAccelD::KGlobalAccelD(QObject* parent)
-    : QObject(parent)
-    , d(new KGlobalAccelDPrivate(this))
-{
-}
-
-bool KGlobalAccelD::init()
+KGlobalAccelD::KGlobalAccelD()
+    : d(new KGlobalAccelDPrivate(this))
 {
     qDBusRegisterMetaType<QKeySequence>();
     qDBusRegisterMetaType<QList<QKeySequence>>();
@@ -182,18 +177,15 @@ bool KGlobalAccelD::init()
             &GlobalShortcutsRegistry::writeSettings);
 
     if (!QDBusConnection::sessionBus().registerService(QLatin1String("org.kde.kglobalaccel"))) {
-        qCWarning(KWIN_INPUT) << "Failed to register service org.kde.kglobalaccel";
-        return false;
+        throw std::runtime_error("Failed to register service org.kde.kglobalaccel");
     }
 
     if (!QDBusConnection::sessionBus().registerObject(
             QStringLiteral("/kglobalaccel"), this, QDBusConnection::ExportScriptableContents)) {
-        qCWarning(KWIN_INPUT) << "Failed to register object kglobalaccel in org.kde.kglobalaccel";
-        return false;
+        throw std::runtime_error("Failed to register object kglobalaccel in org.kde.kglobalaccel");
     }
 
     d->m_registry->loadSettings();
-    return true;
 }
 
 KGlobalAccelD::~KGlobalAccelD()
