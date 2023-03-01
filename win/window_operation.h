@@ -105,7 +105,7 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         rules::edit_book(*space.rule_book, *window, true);
         break;
     case base::options_qobject::SetupWindowShortcutOp:
-        setup_window_shortcut(space, window);
+        shortcut_dialog_create(space, window);
         break;
     case base::options_qobject::LowerOp:
         lower_window(space, window);

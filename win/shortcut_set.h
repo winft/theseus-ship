@@ -125,7 +125,7 @@ void set_shortcut(Win* win, QString const& shortcut)
 }
 
 template<typename Space>
-void setup_window_shortcut_done(Space& space, bool ok)
+void shortcut_dialog_done(Space& space, bool ok)
 {
     //    keys->setEnabled( true );
     //    disable_shortcuts_keys->setEnabled( true );
@@ -149,7 +149,7 @@ void setup_window_shortcut_done(Space& space, bool ok)
 }
 
 template<typename Space, typename Win>
-void setup_window_shortcut(Space& space, Win* window)
+void shortcut_dialog_create(Space& space, Win* window)
 {
     assert(!space.client_keys_dialog);
 
@@ -163,7 +163,7 @@ void setup_window_shortcut(Space& space, Win* window)
     QObject::connect(space.client_keys_dialog,
                      &win::shortcut_dialog::dialogDone,
                      space.qobject.get(),
-                     [&space](auto&& ok) { setup_window_shortcut_done(space, ok); });
+                     [&space](auto&& ok) { shortcut_dialog_done(space, ok); });
 
     auto area = space_window_area(space, ScreenArea, window);
     auto size = space.client_keys_dialog->sizeHint();

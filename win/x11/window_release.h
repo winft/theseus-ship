@@ -48,7 +48,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     }
 
     if (space.client_keys_client == var_win(win)) {
-        setup_window_shortcut_done(space, false);
+        shortcut_dialog_done(space, false);
     }
     if (!win->control->shortcut.isEmpty()) {
         // Remove from client_keys.

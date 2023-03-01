@@ -416,7 +416,7 @@ public:
                 stacking.last_active = {};
             }
             if (window_t(window) == client_keys_client) {
-                setup_window_shortcut_done(*this, false);
+                shortcut_dialog_done(*this, false);
             }
             if (!window->control->shortcut.isEmpty()) {
                 // Remove from client_keys.
