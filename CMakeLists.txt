@@ -855,8 +855,6 @@ if (KF6DocTools_FOUND)
     add_subdirectory(docs)
 endif()
 
-add_subdirectory(kconf_update)
-
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
 include(CMakePackageConfigHelpers)
