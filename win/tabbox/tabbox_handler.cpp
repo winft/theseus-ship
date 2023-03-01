@@ -264,7 +264,7 @@ QObject* tabbox_handler_private::create_switcher_item(bool desktopMode)
     }
     m_qml_component->loadUrl(QUrl::fromLocalFile(file));
     if (m_qml_component->isError()) {
-        qCDebug(KWIN_TABBOX) << "Component failed to load: " << m_qml_component->errors();
+        qCWarning(KWIN_TABBOX) << "Component failed to load: " << m_qml_component->errors();
         QStringList args;
         args << QStringLiteral("--passivepopup")
              << i18n(
