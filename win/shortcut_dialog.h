@@ -24,7 +24,8 @@ public:
     QKeySequence shortcut() const;
 
     void allow_shortcut(QKeySequence const& seq);
-    void reject_shortcut(QKeySequence const& seq, QString const& action, QString const& app);
+    void
+    reject_shortcut(QKeySequence const& seq, std::string const& action, std::string const& app);
 
 public Q_SLOTS:
     void keySequenceChanged();

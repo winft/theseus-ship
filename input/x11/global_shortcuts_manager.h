@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "input/global_shortcut.h"
+#include "input/types.h"
 #include "kwinglobals.h"
 
 #include <memory>
@@ -21,9 +23,21 @@ namespace x11
 
 class global_shortcuts_manager : public QObject
 {
+    Q_OBJECT
 public:
     global_shortcuts_manager();
     ~global_shortcuts_manager() override;
+
+    std::vector<KeyboardShortcut> get_keyboard_shortcut(QKeySequence const& seq);
+    QList<QKeySequence> get_keyboard_shortcut(QAction* action);
+    QList<QKeySequence> get_keyboard_shortcut(QString const& componentName,
+                                              QString const& actionId);
+
+    bool register_keyboard_default_shortcut(QAction* action, QList<QKeySequence> const& shortcut);
+    bool register_keyboard_shortcut(QAction* action,
+                                    QList<QKeySequence> const& shortcut,
+                                    shortcut_loading load);
+    void remove_keyboard_shortcut(QAction* action);
 
     void registerPointerShortcut(QAction* action,
                                  Qt::KeyboardModifiers modifiers,
@@ -64,6 +78,9 @@ public:
                                   uint /*fingerCount*/)
     {
     }
+
+Q_SIGNALS:
+    void keyboard_shortcut_changed(QAction* action, QKeySequence const& seq);
 
 private:
     void objectDeleted(QObject* object);

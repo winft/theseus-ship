@@ -6,6 +6,9 @@
 */
 #pragma once
 
+#include "input/global_shortcut.h"
+#include "input/types.h"
+
 #include "kwinglobals.h"
 
 #include <memory>
@@ -39,6 +42,16 @@ public:
     ~global_shortcuts_manager() override;
     void init();
 
+    std::vector<KeyboardShortcut> get_keyboard_shortcut(QKeySequence const& seq);
+    QList<QKeySequence> get_keyboard_shortcut(QAction* action);
+    QList<QKeySequence> get_keyboard_shortcut(QString const& componentName,
+                                              QString const& actionId);
+
+    bool register_keyboard_default_shortcut(QAction* action, QList<QKeySequence> const& shortcut);
+    bool register_keyboard_shortcut(QAction* action,
+                                    QList<QKeySequence> const& shortcut,
+                                    shortcut_loading load);
+    void remove_keyboard_shortcut(QAction* action);
     /**
      * @brief Registers an internal global pointer shortcut
      *
@@ -115,6 +128,9 @@ public:
     void processPinchUpdate(qreal scale, qreal angleDelta, const QSizeF& delta);
     void processPinchCancel();
     void processPinchEnd();
+
+Q_SIGNALS:
+    void keyboard_shortcut_changed(QAction* action, QKeySequence const& seq);
 
 private:
     void objectDeleted(QObject* object);

@@ -22,7 +22,6 @@
 
 #include <KAuthorized>
 #include <KConfig>
-#include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KProcess>
 #include <QAction>
@@ -610,7 +609,7 @@ private:
         });
 
         auto setShortcut = [this](QAction* action, const QString& actionName) {
-            const auto shortcuts = KGlobalAccel::self()->shortcut(
+            auto const shortcuts = space.base.input->shortcuts->get_keyboard_shortcut(
                 space.qobject->template findChild<QAction*>(actionName));
             if (!shortcuts.isEmpty()) {
                 action->setShortcut(shortcuts.first());
@@ -809,7 +808,7 @@ private:
         auto shortcut = [this](const QString& name) {
             auto action = space.qobject->template findChild<QAction*>(name);
             Q_ASSERT(action != nullptr);
-            const auto shortcuts = KGlobalAccel::self()->shortcut(action);
+            auto const shortcuts = space.base.input->shortcuts->get_keyboard_shortcut(action);
             return QStringLiteral("%1 (%2)")
                 .arg(action->text())
                 .arg(shortcuts.isEmpty() ? QString()

@@ -539,8 +539,9 @@ public:
             slotOutputEnabled(output);
         }
 
-        connect(KGlobalAccel::self(),
-                &KGlobalAccel::globalShortcutChanged,
+        connect(compositor.platform.base.input->shortcuts.get(),
+                &decltype(compositor.platform.base.input
+                              ->shortcuts)::element_type::keyboard_shortcut_changed,
                 this,
                 &effects_handler_impl::globalShortcutChanged);
     }
@@ -668,16 +669,18 @@ public:
     QList<QKeySequence> registerGlobalShortcut(QList<QKeySequence> const& shortcut,
                                                QAction* action) override
     {
-        KGlobalAccel::self()->setShortcut(action, shortcut);
+        compositor.platform.base.input->shortcuts->register_keyboard_shortcut(
+            action, shortcut, input::shortcut_loading::global_lookup);
         compositor.platform.base.input->registerShortcut(
             shortcut.empty() ? QKeySequence() : shortcut.front(), action);
-        return KGlobalAccel::self()->shortcut(action);
+        return compositor.platform.base.input->shortcuts->get_keyboard_shortcut(action);
     }
 
     QList<QKeySequence> registerGlobalShortcutAndDefault(QList<QKeySequence> const& shortcut,
                                                          QAction* action) override
     {
-        KGlobalAccel::self()->setDefaultShortcut(action, shortcut);
+        compositor.platform.base.input->shortcuts->register_keyboard_default_shortcut(action,
+                                                                                      shortcut);
         return registerGlobalShortcut(shortcut, action);
     }
 

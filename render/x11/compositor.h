@@ -24,7 +24,6 @@
 #include "win/space_window_release.h"
 #include "win/stacking_order.h"
 
-#include <KGlobalAccel>
 #include <KNotification>
 #include <QAction>
 #include <QObject>
@@ -254,8 +253,8 @@ public:
 
         if (flags(reason & suspend_reason::script)) {
             // When disabled show a shortcut how the user can get back compositing.
-            const auto shortcuts
-                = KGlobalAccel::self()->shortcut(this->space->qobject->template findChild<QAction*>(
+            auto const shortcuts = platform.base.input->shortcuts->get_keyboard_shortcut(
+                this->space->qobject->template findChild<QAction*>(
                     QStringLiteral("Suspend Compositing")));
             if (!shortcuts.isEmpty()) {
                 // Display notification only if there is the shortcut.

@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/virtual_desktops.h"
 
 #include <KConfigGroup>
-#include <KGlobalAccel>
 
 #include <linux/input.h>
 

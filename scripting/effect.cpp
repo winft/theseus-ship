@@ -16,7 +16,6 @@
 #include <kwineffects/effects_handler.h>
 
 #include <KConfigGroup>
-#include <KGlobalAccel>
 #include <kconfigloader.h>
 
 #include <QAction>

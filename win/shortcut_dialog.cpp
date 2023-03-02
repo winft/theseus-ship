@@ -96,8 +96,8 @@ void shortcut_dialog::allow_shortcut(QKeySequence const& seq)
 }
 
 void shortcut_dialog::reject_shortcut(QKeySequence const& seq,
-                                      QString const& action,
-                                      QString const& app)
+                                      std::string const& action,
+                                      std::string const& app)
 {
     if (seq != m_ui.keySequenceEdit->keySequence()) {
         // Already changed again
@@ -112,8 +112,8 @@ void shortcut_dialog::reject_shortcut(QKeySequence const& seq,
         i18nc("keyboard shortcut '%1' is used by action '%2' in application '%3'",
               "<b>%1</b> is used by %2 in %3",
               seq_string,
-              action,
-              app));
+              QString::fromStdString(action),
+              QString::fromStdString(app)));
     m_ui.warning->show();
 
     m_ui.keySequenceEdit->setKeySequence(shortcut());

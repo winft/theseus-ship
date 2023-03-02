@@ -532,7 +532,6 @@ set(kwin_KDE_LIBS
     KF5::ConfigCore
     KF5::ConfigWidgets
     KF5::CoreAddons
-    KF5::GlobalAccel
     KF5::I18n
     KF5::Notifications
     KF5::Package
@@ -652,6 +651,7 @@ target_link_libraries(kwin_x11_lib
 PUBLIC
     kwin
     KF5::Crash
+    KF5::GlobalAccel
 PRIVATE
     Qt::X11Extras
     X11::Xi
@@ -757,6 +757,7 @@ add_library(kwin_wayland_lib SHARED
 target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
+  KF5::GlobalAccel
   WraplandClient
   WraplandServer
   Wayland::Server

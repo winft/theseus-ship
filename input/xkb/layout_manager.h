@@ -16,7 +16,6 @@
 #include "kwin_export.h"
 
 #include <KConfigGroup>
-#include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KSharedConfig>
 #include <QAction>
@@ -69,9 +68,10 @@ public:
         switchKeyboardAction->setProperty("componentName",
                                           QStringLiteral("KDE Keyboard Layout Switcher"));
         QKeySequence sequence{Qt::META | Qt::ALT | Qt::Key_K};
-        KGlobalAccel::self()->setDefaultShortcut(switchKeyboardAction,
-                                                 QList<QKeySequence>({sequence}));
-        KGlobalAccel::self()->setShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
+        redirect.platform.shortcuts->register_keyboard_default_shortcut(switchKeyboardAction,
+                                                                        {sequence});
+        redirect.platform.shortcuts->register_keyboard_shortcut(
+            switchKeyboardAction, {sequence}, input::shortcut_loading::global_lookup);
         redirect.platform.setup_action_for_global_accel(switchKeyboardAction);
         QObject::connect(switchKeyboardAction, &QAction::triggered, qobject.get(), [this] {
             switchToNextLayout();
@@ -210,7 +210,8 @@ private:
             const QString action
                 = QStringLiteral("Switch keyboard layout to %1")
                       .arg(translated_keyboard_layout(xkb->layout_name_from_index(i)));
-            const auto shortcuts = KGlobalAccel::self()->globalShortcut(componentName, action);
+            auto const shortcuts
+                = redirect.platform.shortcuts->get_keyboard_shortcut(componentName, action);
             if (shortcuts.isEmpty()) {
                 continue;
             }
@@ -219,7 +220,8 @@ private:
             a->setProperty("componentName", componentName);
             QObject::connect(
                 a, &QAction::triggered, qobject.get(), [this, i] { switchToLayout(i); });
-            KGlobalAccel::self()->setShortcut(a, shortcuts, KGlobalAccel::Autoloading);
+            redirect.platform.shortcuts->register_keyboard_shortcut(
+                a, shortcuts, shortcut_loading::global_lookup);
             m_layoutShortcuts << a;
         }
     }
