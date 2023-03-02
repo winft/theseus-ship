@@ -152,7 +152,7 @@ public:
      * @param shortcut The global shortcut which should trigger the action
      * @param action The action which gets triggered when the shortcut matches
      */
-    virtual void registerGlobalShortcut(const QKeySequence& shortcut, QAction* action) = 0;
+    virtual void registerGlobalShortcut(QList<QKeySequence> const& shortcut, QAction* action) = 0;
     /**
      * @brief Registers a global pointer shortcut with the provided @p action.
      *

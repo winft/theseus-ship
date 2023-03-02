@@ -685,9 +685,7 @@ void effect::registerShortcut(const QString& objectName,
     QAction* action = new QAction(this);
     action->setObjectName(objectName);
     action->setText(text);
-    const QKeySequence shortcut = QKeySequence(keySequence);
-    KGlobalAccel::self()->setShortcut(action, QList<QKeySequence>() << shortcut);
-    effects.registerGlobalShortcut(shortcut, action);
+    effects.registerGlobalShortcut({QKeySequence(keySequence)}, action);
     connect(action, &QAction::triggered, this, [this, action, callback]() {
         QJSValue actionObject = m_engine->newQObject(action);
         QQmlEngine::setObjectOwnership(action, QQmlEngine::CppOwnership);

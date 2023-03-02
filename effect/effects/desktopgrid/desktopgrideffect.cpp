@@ -46,12 +46,12 @@ DesktopGridEffect::DesktopGridEffect()
 
     m_toggleAction->setObjectName(QStringLiteral("ShowDesktopGrid"));
     m_toggleAction->setText(i18n("Show Desktop Grid"));
+
     KGlobalAccel::self()->setDefaultShortcut(
         m_toggleAction, QList<QKeySequence>() << (static_cast<Qt::Key>(Qt::META) + Qt::Key_F8));
-    KGlobalAccel::self()->setShortcut(
-        m_toggleAction, QList<QKeySequence>() << (static_cast<Qt::Key>(Qt::META) + Qt::Key_F8));
+    effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::META) + Qt::Key_F8}, m_toggleAction);
     m_toggleShortcut = KGlobalAccel::self()->shortcut(m_toggleAction);
-    effects->registerGlobalShortcut(static_cast<Qt::Key>(Qt::META) + Qt::Key_F8, m_toggleAction);
+
     connect(m_toggleAction, &QAction::triggered, this, [this]() {
         if (isRunning()) {
             deactivate(animationDuration());

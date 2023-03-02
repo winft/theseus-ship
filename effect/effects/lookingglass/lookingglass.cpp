@@ -54,23 +54,17 @@ LookingGlassEffect::LookingGlassEffect()
     a = KStandardAction::zoomIn(this, SLOT(zoomIn()), this);
     KGlobalAccel::self()->setDefaultShortcut(
         a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal);
-    KGlobalAccel::self()->setShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal);
-    effects->registerGlobalShortcut(static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal, a);
+    effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal}, a);
 
     a = KStandardAction::zoomOut(this, SLOT(zoomOut()), this);
     KGlobalAccel::self()->setDefaultShortcut(
         a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_Minus);
-    KGlobalAccel::self()->setShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_Minus);
-    effects->registerGlobalShortcut(static_cast<Qt::Key>(Qt::META) + Qt::Key_Minus, a);
+    effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::META) + Qt::Key_Minus}, a);
 
     a = KStandardAction::actualSize(this, SLOT(toggle()), this);
     KGlobalAccel::self()->setDefaultShortcut(
         a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_0);
-    KGlobalAccel::self()->setShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_0);
-    effects->registerGlobalShortcut(static_cast<Qt::Key>(Qt::META) + Qt::Key_0, a);
+    effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::META) + Qt::Key_0}, a);
 
     connect(effects, &EffectsHandler::mouseChanged, this, &LookingGlassEffect::slotMouseChanged);
     connect(effects, &EffectsHandler::windowDamaged, this, &LookingGlassEffect::slotWindowDamaged);

@@ -29,7 +29,6 @@ ShowPaintEffect::ShowPaintEffect()
     toggleAction->setObjectName(QStringLiteral("Toggle"));
     toggleAction->setText(i18n("Toggle Show Paint"));
     KGlobalAccel::self()->setDefaultShortcut(toggleAction, {});
-    KGlobalAccel::self()->setShortcut(toggleAction, {});
     effects->registerGlobalShortcut({}, toggleAction);
 
     connect(toggleAction, &QAction::triggered, this, &ShowPaintEffect::toggle);

@@ -200,24 +200,23 @@ void CubeEffect::reconfigure(ReconfigureFlags)
         cubeAction->setText(i18n("Desktop Cube"));
         KGlobalAccel::self()->setDefaultShortcut(
             cubeAction, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11);
-        KGlobalAccel::self()->setShortcut(
-            cubeAction, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11);
-        effects->registerGlobalShortcut(static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11, cubeAction);
+        effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11}, cubeAction);
         effects->registerPointerShortcut(
             Qt::ControlModifier | Qt::AltModifier, Qt::LeftButton, cubeAction);
         cubeShortcut = KGlobalAccel::self()->shortcut(cubeAction);
+
         QAction* cylinderAction = m_cylinderAction;
         cylinderAction->setObjectName(QStringLiteral("Cylinder"));
         cylinderAction->setText(i18n("Desktop Cylinder"));
-        KGlobalAccel::self()->setShortcut(cylinderAction, QList<QKeySequence>());
-        effects->registerGlobalShortcut(QKeySequence(), cylinderAction);
+        effects->registerGlobalShortcut({}, cylinderAction);
         cylinderShortcut = KGlobalAccel::self()->shortcut(cylinderAction);
+
         QAction* sphereAction = m_sphereAction;
         sphereAction->setObjectName(QStringLiteral("Sphere"));
         sphereAction->setText(i18n("Desktop Sphere"));
-        KGlobalAccel::self()->setShortcut(sphereAction, QList<QKeySequence>());
+        effects->registerGlobalShortcut({}, sphereAction);
         sphereShortcut = KGlobalAccel::self()->shortcut(sphereAction);
-        effects->registerGlobalShortcut(QKeySequence(), sphereAction);
+
         connect(cubeAction, &QAction::triggered, this, &CubeEffect::toggleCube);
         connect(cylinderAction, &QAction::triggered, this, &CubeEffect::toggleCylinder);
         connect(sphereAction, &QAction::triggered, this, &CubeEffect::toggleSphere);

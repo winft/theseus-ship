@@ -31,9 +31,8 @@ OverviewEffect::OverviewEffect()
     m_toggleAction->setObjectName(QStringLiteral("Overview"));
     m_toggleAction->setText(i18n("Toggle Overview"));
     KGlobalAccel::self()->setDefaultShortcut(m_toggleAction, {defaultToggleShortcut});
-    KGlobalAccel::self()->setShortcut(m_toggleAction, {defaultToggleShortcut});
-    m_toggleShortcut = KGlobalAccel::self()->shortcut(m_toggleAction);
     effects->registerGlobalShortcut({defaultToggleShortcut}, m_toggleAction);
+    m_toggleShortcut = KGlobalAccel::self()->shortcut(m_toggleAction);
 
     m_realtimeToggleAction = new QAction(this);
     connect(m_realtimeToggleAction, &QAction::triggered, this, [this]() {

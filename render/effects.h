@@ -660,9 +660,11 @@ public:
         Q_EMIT screenGeometryChanged(size);
     }
 
-    void registerGlobalShortcut(const QKeySequence& shortcut, QAction* action) override
+    void registerGlobalShortcut(QList<QKeySequence> const& shortcut, QAction* action) override
     {
-        compositor.platform.base.input->registerShortcut(shortcut, action);
+        KGlobalAccel::self()->setShortcut(action, shortcut);
+        compositor.platform.base.input->registerShortcut(
+            shortcut.empty() ? QKeySequence() : shortcut.front(), action);
     }
 
     void registerPointerShortcut(Qt::KeyboardModifiers modifiers,
