@@ -54,40 +54,30 @@ WindowViewEffect::WindowViewEffect()
 
     m_exposeAction->setObjectName(QStringLiteral("Expose"));
     m_exposeAction->setText(i18n("Toggle Present Windows (Current desktop)"));
-    KGlobalAccel::self()->setDefaultShortcut(
-        m_exposeAction, QList<QKeySequence>() << (static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F9));
-    effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F9}, m_exposeAction);
-    m_shortcut = KGlobalAccel::self()->shortcut(m_exposeAction);
+    m_shortcut = effects->registerGlobalShortcutAndDefault(
+        {static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F9}, m_exposeAction);
     connect(
         m_exposeAction, &QAction::triggered, this, [this]() { toggleMode(ModeCurrentDesktop); });
 
     m_exposeAllAction->setObjectName(QStringLiteral("ExposeAll"));
     m_exposeAllAction->setText(i18n("Toggle Present Windows (All desktops)"));
-    KGlobalAccel::self()->setDefaultShortcut(
-        m_exposeAllAction,
-        QList<QKeySequence>() << (static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F10) << Qt::Key_LaunchC);
-    effects->registerGlobalShortcut({Qt::CTRL | Qt::Key_F10, Qt::Key_LaunchC}, m_exposeAllAction);
-    m_shortcutAll = KGlobalAccel::self()->shortcut(m_exposeAllAction);
+    m_shortcutAll = effects->registerGlobalShortcutAndDefault(
+        {static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F10, Qt::Key_LaunchC}, m_exposeAllAction);
     connect(
         m_exposeAllAction, &QAction::triggered, this, [this]() { toggleMode(ModeAllDesktops); });
 
     m_exposeClassAction->setObjectName(QStringLiteral("ExposeClass"));
     m_exposeClassAction->setText(i18n("Toggle Present Windows (Window class)"));
-    KGlobalAccel::self()->setDefaultShortcut(m_exposeClassAction,
-                                             QList<QKeySequence>() << (Qt::CTRL | Qt::Key_F7));
-    effects->registerGlobalShortcut({Qt::CTRL | Qt::Key_F7}, m_exposeClassAction);
-    m_shortcutClass = KGlobalAccel::self()->shortcut(m_exposeClassAction);
+    m_shortcutClass = effects->registerGlobalShortcutAndDefault(
+        {static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F7}, m_exposeClassAction);
     connect(
         m_exposeClassAction, &QAction::triggered, this, [this]() { toggleMode(ModeWindowClass); });
 
     m_exposeClassCurrentDesktopAction->setObjectName(QStringLiteral("ExposeClassCurrentDesktop"));
     m_exposeClassCurrentDesktopAction->setText(
         i18n("Toggle Present Windows (Window class on current desktop)"));
-    KGlobalAccel::self()->setDefaultShortcut(m_exposeClassCurrentDesktopAction,
-                                             QList<QKeySequence>()); // no default shortcut
-    effects->registerGlobalShortcut({}, m_exposeClassCurrentDesktopAction);
     m_shortcutClassCurrentDesktop
-        = KGlobalAccel::self()->shortcut(m_exposeClassCurrentDesktopAction);
+        = effects->registerGlobalShortcutAndDefault({}, m_exposeClassCurrentDesktopAction);
     connect(m_exposeClassCurrentDesktopAction, &QAction::triggered, this, [this]() {
         toggleMode(ModeWindowClassCurrentDesktop);
     });

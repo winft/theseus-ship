@@ -9,13 +9,11 @@
 #include "kwineffects/effect_window.h"
 #include "kwineffects/effects_handler.h"
 
+#include <KLocalizedString>
 #include <QAction>
 #include <QQuickItem>
 #include <QTimer>
 #include <cmath>
-
-#include <KGlobalAccel>
-#include <KLocalizedString>
 
 namespace KWin
 {
@@ -46,11 +44,8 @@ DesktopGridEffect::DesktopGridEffect()
 
     m_toggleAction->setObjectName(QStringLiteral("ShowDesktopGrid"));
     m_toggleAction->setText(i18n("Show Desktop Grid"));
-
-    KGlobalAccel::self()->setDefaultShortcut(
-        m_toggleAction, QList<QKeySequence>() << (static_cast<Qt::Key>(Qt::META) + Qt::Key_F8));
-    effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::META) + Qt::Key_F8}, m_toggleAction);
-    m_toggleShortcut = KGlobalAccel::self()->shortcut(m_toggleAction);
+    m_toggleShortcut = effects->registerGlobalShortcutAndDefault(
+        {static_cast<Qt::Key>(Qt::META) + Qt::Key_F8}, m_toggleAction);
 
     connect(m_toggleAction, &QAction::triggered, this, [this]() {
         if (isRunning()) {

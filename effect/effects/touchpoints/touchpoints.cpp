@@ -11,11 +11,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kwingl/utils.h>
 
 #include <KConfigGroup>
-#include <KGlobalAccel>
-
 #include <QAction>
 #include <QPainter>
-
 #include <cmath>
 
 namespace KWin

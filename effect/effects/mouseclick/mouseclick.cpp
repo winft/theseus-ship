@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kwingl/utils.h>
 
 #include <KConfigGroup>
-#include <KGlobalAccel>
 #include <QAction>
 #include <QPainter>
 
@@ -30,9 +29,8 @@ MouseClickEffect::MouseClickEffect()
     QAction* a = new QAction(this);
     a->setObjectName(QStringLiteral("ToggleMouseClick"));
     a->setText(i18n("Toggle Mouse Click Effect"));
-    KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_Asterisk);
-    effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::META) + Qt::Key_Asterisk}, a);
+    effects->registerGlobalShortcutAndDefault({static_cast<Qt::Key>(Qt::META) + Qt::Key_Asterisk},
+                                              a);
     connect(a, &QAction::triggered, this, &MouseClickEffect::toggleEnabled);
 
     reconfigure(ReconfigureAll);

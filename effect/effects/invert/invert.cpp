@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kwingl/platform.h>
 #include <kwingl/utils.h>
 
-#include <KGlobalAccel>
 #include <KLocalizedString>
 #include <QAction>
 #include <QFile>
@@ -41,17 +40,13 @@ InvertEffect::InvertEffect()
     QAction* a = new QAction(this);
     a->setObjectName(QStringLiteral("Invert"));
     a->setText(i18n("Toggle Invert Effect"));
-    KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << Qt::CTRL + Qt::META + Qt::Key_I);
-    effects->registerGlobalShortcut({Qt::CTRL + Qt::META + Qt::Key_I}, a);
+    effects->registerGlobalShortcutAndDefault({Qt::CTRL + Qt::META + Qt::Key_I}, a);
     connect(a, &QAction::triggered, this, &InvertEffect::toggleScreenInversion);
 
     QAction* b = new QAction(this);
     b->setObjectName(QStringLiteral("InvertWindow"));
     b->setText(i18n("Toggle Invert Effect on Window"));
-    KGlobalAccel::self()->setDefaultShortcut(
-        b, QList<QKeySequence>() << Qt::CTRL + Qt::META + Qt::Key_U);
-    effects->registerGlobalShortcut({Qt::CTRL + Qt::META + Qt::Key_U}, b);
+    effects->registerGlobalShortcutAndDefault({Qt::CTRL + Qt::META + Qt::Key_U}, b);
     connect(b, &QAction::triggered, this, &InvertEffect::toggleWindow);
 
     connect(effects, &EffectsHandler::windowClosed, this, &InvertEffect::slotWindowClosed);

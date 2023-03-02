@@ -16,7 +16,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kwingl/platform.h>
 #include <kwingl/utils.h>
 
-#include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KStandardAction>
 #include <QAction>
@@ -52,19 +51,13 @@ LookingGlassEffect::LookingGlassEffect()
     initConfig<LookingGlassConfig>();
     QAction* a;
     a = KStandardAction::zoomIn(this, SLOT(zoomIn()), this);
-    KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal);
-    effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal}, a);
+    effects->registerGlobalShortcutAndDefault({static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal}, a);
 
     a = KStandardAction::zoomOut(this, SLOT(zoomOut()), this);
-    KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_Minus);
-    effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::META) + Qt::Key_Minus}, a);
+    effects->registerGlobalShortcutAndDefault({static_cast<Qt::Key>(Qt::META) + Qt::Key_Minus}, a);
 
     a = KStandardAction::actualSize(this, SLOT(toggle()), this);
-    KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META) + Qt::Key_0);
-    effects->registerGlobalShortcut({static_cast<Qt::Key>(Qt::META) + Qt::Key_0}, a);
+    effects->registerGlobalShortcutAndDefault({static_cast<Qt::Key>(Qt::META) + Qt::Key_0}, a);
 
     connect(effects, &EffectsHandler::mouseChanged, this, &LookingGlassEffect::slotMouseChanged);
     connect(effects, &EffectsHandler::windowDamaged, this, &LookingGlassEffect::slotWindowDamaged);

@@ -18,10 +18,10 @@ target_link_libraries(kwin4_effect_desktopgrid PRIVATE
     kwineffects
 
     KF5::ConfigGui
-    KF5::GlobalAccel
     KF5::I18n
 
     Qt::Quick
+    Qt::Widgets
     )
 
 #######################################

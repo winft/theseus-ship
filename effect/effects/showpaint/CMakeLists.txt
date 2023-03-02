@@ -14,7 +14,7 @@ kwin4_add_effect_module(kwin4_effect_showpaint ${showpaint_SOURCES})
 target_link_libraries(kwin4_effect_showpaint PRIVATE
     kwineffects
     kwinglutils
-    KF5::GlobalAccel
+    Qt::Widgets
     KF5::I18n
 )
 

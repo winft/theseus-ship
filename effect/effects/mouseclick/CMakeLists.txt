@@ -19,8 +19,8 @@ target_link_libraries(kwin4_effect_mouseclick PRIVATE
     kwineffects
     kwinglutils
     KF5::ConfigGui
-    KF5::GlobalAccel
     KF5::I18n
+    Qt::Widgets
 )
 
 ##########################
