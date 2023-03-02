@@ -163,6 +163,7 @@ public:
                                 space.base.x11_data.time);
             space.atoms.reset();
             core.x11.atoms = nullptr;
+            win::x11::net::reset_atoms();
 
             render::compositor_destroy_selection(*space.base.render->compositor);
             space.base.x11_data.connection = nullptr;

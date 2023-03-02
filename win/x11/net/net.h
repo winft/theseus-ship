@@ -194,6 +194,8 @@ KWIN_EXPORT bool typeMatchesMask(win::win_type type, win::window_type_mask mask)
 */
 KWIN_EXPORT int timestampCompare(unsigned long time1_, unsigned long time2_);
 
+KWIN_EXPORT void reset_atoms();
+
 }
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::win::x11::net::Properties)

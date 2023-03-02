@@ -60,4 +60,9 @@ void Atoms::init()
     }
 }
 
+void reset_atoms()
+{
+    s_gAtomsHash->clear();
+}
+
 }
