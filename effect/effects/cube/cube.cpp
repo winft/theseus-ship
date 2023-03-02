@@ -18,7 +18,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kwingl/platform.h>
 #include <kwingl/utils.h>
 
-#include <KGlobalAccel>
 #include <KLocalizedString>
 #include <QAction>
 #include <QApplication>
@@ -216,8 +215,8 @@ void CubeEffect::reconfigure(ReconfigureFlags)
         connect(cubeAction, &QAction::triggered, this, &CubeEffect::toggleCube);
         connect(cylinderAction, &QAction::triggered, this, &CubeEffect::toggleCylinder);
         connect(sphereAction, &QAction::triggered, this, &CubeEffect::toggleSphere);
-        connect(KGlobalAccel::self(),
-                &KGlobalAccel::globalShortcutChanged,
+        connect(effects,
+                &EffectsHandler::globalShortcutChanged,
                 this,
                 &CubeEffect::globalShortcutChanged);
         shortcutsRegistered = true;

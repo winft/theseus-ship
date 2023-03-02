@@ -10,12 +10,10 @@
 #include "windowview1adaptor.h"
 #include "windowviewconfig.h"
 
+#include <KLocalizedString>
 #include <QAction>
 #include <QQuickItem>
 #include <QTimer>
-
-#include <KGlobalAccel>
-#include <KLocalizedString>
 #include <QtQml/qqml.h>
 #include <quuid.h>
 
@@ -82,8 +80,8 @@ WindowViewEffect::WindowViewEffect()
         toggleMode(ModeWindowClassCurrentDesktop);
     });
 
-    connect(KGlobalAccel::self(),
-            &KGlobalAccel::globalShortcutChanged,
+    connect(effects,
+            &EffectsHandler::globalShortcutChanged,
             this,
             [this](QAction* action, const QKeySequence& seq) {
                 if (action->objectName() == QStringLiteral("Expose")) {

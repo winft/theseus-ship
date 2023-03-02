@@ -538,6 +538,11 @@ public:
         for (base::output* output : outputs) {
             slotOutputEnabled(output);
         }
+
+        connect(KGlobalAccel::self(),
+                &KGlobalAccel::globalShortcutChanged,
+                this,
+                &effects_handler_impl::globalShortcutChanged);
     }
 
     ~effects_handler_impl() override

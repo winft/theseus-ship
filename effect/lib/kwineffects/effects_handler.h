@@ -1256,6 +1256,8 @@ Q_SIGNALS:
 
     void frameRendered();
 
+    void globalShortcutChanged(QAction* action, QKeySequence const& seq);
+
 protected:
     virtual EffectWindow* find_window_by_wid(WId id) const = 0;
     virtual EffectWindow* find_window_by_surface(Wrapland::Server::Surface* surface) const = 0;
