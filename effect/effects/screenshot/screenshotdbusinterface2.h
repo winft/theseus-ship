@@ -54,6 +54,7 @@ public Q_SLOTS:
     QVariantMap CaptureActiveScreen(const QVariantMap& options, QDBusUnixFileDescriptor pipe);
     QVariantMap
     CaptureInteractive(uint kind, const QVariantMap& options, QDBusUnixFileDescriptor pipe);
+    QVariantMap CaptureWorkspace(const QVariantMap& options, QDBusUnixFileDescriptor pipe);
 
 private:
     void takeScreenShot(EffectScreen* screen, ScreenShotFlags flags, ScreenShotSinkPipe2* sink);
