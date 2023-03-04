@@ -5,11 +5,7 @@
 */
 #include "client.h"
 
-#ifdef CATCH2_TESTS
 #include "setup.h"
-#else
-#include "app.h"
-#endif
 
 #include <QThread>
 #include <QtTest>

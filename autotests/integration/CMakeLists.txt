@@ -3,51 +3,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 add_subdirectory(helper)
-
-add_library(KWinIntegrationTestFramework SHARED
-  lib/app.cpp
-  lib/client.cpp
-  lib/helpers.cpp
-)
-
-target_link_libraries(KWinIntegrationTestFramework
-PUBLIC
-  kwin_wayland_lib
-  Qt::Test
-  KF5::WindowSystem
-PRIVATE
-  KF5::Crash
-  # Static plugins
-  KWinQpaPlugin
-  KF5WindowSystemKWinPlugin
-  KF5IdleTimeKWinPlugin
-)
-target_compile_definitions(KWinIntegrationTestFramework PUBLIC WLR_USE_UNSTABLE)
-
-function(integrationTest)
-  set(options WAYLAND_ONLY)
-  set(oneValueArgs NAME)
-  set(multiValueArgs SRCS LIBS)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  add_executable(${ARGS_NAME} ${ARGS_SRCS})
-  target_link_libraries(${ARGS_NAME} KWinIntegrationTestFramework ${ARGS_LIBS})
-  add_test(
-    NAME kwin-${ARGS_NAME}
-    COMMAND ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}
-  )
-
-  if (${ARGS_WAYLAND_ONLY})
-    add_executable(${ARGS_NAME}_waylandonly ${ARGS_SRCS})
-    set_target_properties(${ARGS_NAME}_waylandonly PROPERTIES COMPILE_DEFINITIONS "NO_XWAYLAND")
-    target_link_libraries(${ARGS_NAME}_waylandonly KWinIntegrationTestFramework ${ARGS_LIBS})
-    add_test(
-      NAME kwin-${ARGS_NAME}-waylandonly
-      COMMAND ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}_waylandonly
-    )
-  endif()
-endfunction()
-
 add_subdirectory(fakes)
 
 add_executable(tests
@@ -147,8 +102,6 @@ PRIVATE
   KF5WindowSystemKWinPlugin
   KF5IdleTimeKWinPlugin
 )
-
-target_compile_definitions(tests PRIVATE CATCH2_TESTS)
 
 include(Catch)
 catch_discover_tests(tests)

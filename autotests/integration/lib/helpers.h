@@ -27,12 +27,7 @@ class SubSurface;
 class Surface;
 }
 
-namespace KWin
-{
-
-class WaylandTestApplication;
-
-namespace Test
+namespace KWin::Test
 {
 
 class client;
@@ -48,10 +43,6 @@ struct KWIN_EXPORT output {
     QRect geometry;
     double scale;
 };
-
-#ifndef CATCH2_TESTS
-KWIN_EXPORT WaylandTestApplication* app();
-#endif
 
 KWIN_EXPORT input::wayland::cursor<space::input_t>* cursor();
 
@@ -262,5 +253,4 @@ KWIN_EXPORT void prepare_app_env(std::string const& qpa_plugin_path);
 KWIN_EXPORT void prepare_sys_env(std::string const& socket_name);
 KWIN_EXPORT std::string create_socket_name(std::string base);
 
-}
 }
