@@ -56,13 +56,13 @@ TEST_CASE("struts", "[win]")
 
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection(Test::global_selection::plasma_shell);
-    Test::cursor()->set_pos(QPoint(640, 512));
+    test_outputs_default();
+    setup_wayland_connection(global_selection::plasma_shell);
+    cursor()->set_pos(QPoint(640, 512));
 
-    auto plasma_shell = Test::get_client().interfaces.plasma_shell.get();
+    auto plasma_shell = get_client().interfaces.plasma_shell.get();
     auto get_x11_window_from_id
-        = [&](uint32_t id) { return Test::get_x11_window(setup.base->space->windows_map.at(id)); };
+        = [&](uint32_t id) { return get_x11_window(setup.base->space->windows_map.at(id)); };
 
     SECTION("wayland struts")
     {
@@ -216,17 +216,16 @@ TEST_CASE("struts", "[win]")
         // create the panels
         std::vector<client_holder> clients;
         for (auto const& window_geo : test_data.window_geos) {
-            auto surface = Test::create_surface();
-            auto shellSurface
-                = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+            auto surface = create_surface();
+            auto shellSurface = create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly);
             auto plasmaSurface = std::unique_ptr<Wrapland::Client::PlasmaShellSurface>(
                 plasma_shell->createSurface(surface.get()));
             plasmaSurface->setPosition(window_geo.topLeft());
             plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-            Test::init_xdg_shell_toplevel(surface, shellSurface);
+            init_xdg_shell_toplevel(surface, shellSurface);
 
             // map the window
-            auto c = Test::render_and_wait_for_shown(
+            auto c = render_and_wait_for_shown(
                 surface, window_geo.size(), Qt::red, QImage::Format_RGB32);
 
             QVERIFY(c);
@@ -292,17 +291,16 @@ TEST_CASE("struts", "[win]")
         // this test verifies that repositioning a Wayland panel updates the client area
         using namespace Wrapland::Client;
         const QRect windowGeometry(0, 1000, 1280, 24);
-        auto surface = Test::create_surface();
-        auto shellSurface
-            = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+        auto surface = create_surface();
+        auto shellSurface = create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
             plasma_shell->createSurface(surface.get()));
         plasmaSurface->setPosition(windowGeometry.topLeft());
         plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        init_xdg_shell_toplevel(surface, shellSurface);
 
         // map the window
-        auto c = Test::render_and_wait_for_shown(
+        auto c = render_and_wait_for_shown(
             surface, windowGeometry.size(), Qt::red, QImage::Format_RGB32);
         QVERIFY(c);
         QVERIFY(!c->control->active);
@@ -352,17 +350,16 @@ TEST_CASE("struts", "[win]")
 
         // create first top panel
         const QRect windowGeometry(0, 0, 1280, 60);
-        auto surface = Test::create_surface();
-        auto shellSurface
-            = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+        auto surface = create_surface();
+        auto shellSurface = create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
             plasma_shell->createSurface(surface.get()));
         plasmaSurface->setPosition(windowGeometry.topLeft());
         plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        init_xdg_shell_toplevel(surface, shellSurface);
 
         // map the first panel
-        auto c = Test::render_and_wait_for_shown(
+        auto c = render_and_wait_for_shown(
             surface, windowGeometry.size(), Qt::red, QImage::Format_RGB32);
         QVERIFY(c);
         QVERIFY(!c->control->active);
@@ -384,16 +381,16 @@ TEST_CASE("struts", "[win]")
 
         // create another bottom panel
         const QRect windowGeometry2(0, 874, 1280, 150);
-        std::unique_ptr<Surface> surface2(Test::create_surface());
+        std::unique_ptr<Surface> surface2(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface2(
-            Test::create_xdg_shell_toplevel(surface2, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface2, CreationSetup::CreateOnly));
         std::unique_ptr<PlasmaShellSurface> plasmaSurface2(
             plasma_shell->createSurface(surface2.get()));
         plasmaSurface2->setPosition(windowGeometry2.topLeft());
         plasmaSurface2->setRole(PlasmaShellSurface::Role::Panel);
-        Test::init_xdg_shell_toplevel(surface2, shellSurface2);
+        init_xdg_shell_toplevel(surface2, shellSurface2);
 
-        auto c1 = Test::render_and_wait_for_shown(
+        auto c1 = render_and_wait_for_shown(
             surface2, windowGeometry2.size(), Qt::blue, QImage::Format_RGB32);
 
         QVERIFY(c1);
@@ -415,9 +412,9 @@ TEST_CASE("struts", "[win]")
 
         // Destroy test clients.
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(c));
+        QVERIFY(wait_for_destroyed(c));
         shellSurface2.reset();
-        QVERIFY(Test::wait_for_destroyed(c1));
+        QVERIFY(wait_for_destroyed(c1));
     }
 
     SECTION("x11 struts")
@@ -903,8 +900,8 @@ TEST_CASE("struts", "[win]")
         // two screens in a vertical setup, aligned to right border with panel on the bottom screen
         auto const geometries = std::vector<QRect>{{0, 0, 1920, 1080}, {554, 1080, 1366, 768}};
         setup.set_outputs(geometries);
-        QCOMPARE(Test::get_output(0)->geometry(), geometries.at(0));
-        QCOMPARE(Test::get_output(1)->geometry(), geometries.at(1));
+        QCOMPARE(get_output(0)->geometry(), geometries.at(0));
+        QCOMPARE(get_output(1)->geometry(), geometries.at(1));
         QCOMPARE(setup.base->topology.size, QSize(1920, 1848));
 
         // create an xcb window
@@ -1001,8 +998,8 @@ TEST_CASE("struts", "[win]")
         // dead area
         auto const geometries = std::vector<QRect>{{0, 282, 1366, 768}, {1366, 0, 1680, 1050}};
         setup.set_outputs(geometries);
-        QCOMPARE(Test::get_output(0)->geometry(), geometries.at(0));
-        QCOMPARE(Test::get_output(1)->geometry(), geometries.at(1));
+        QCOMPARE(get_output(0)->geometry(), geometries.at(0));
+        QCOMPARE(get_output(1)->geometry(), geometries.at(1));
         QCOMPARE(setup.base->topology.size, QSize(3046, 1050));
 
         // create the panel
@@ -1143,8 +1140,8 @@ TEST_CASE("struts", "[win]")
         // left screen must be smaller than right screen
         auto const geometries = std::vector<QRect>{{0, 282, 1366, 768}, {1366, 0, 1680, 1050}};
         setup.set_outputs(geometries);
-        QCOMPARE(Test::get_output(0)->geometry(), geometries.at(0));
-        QCOMPARE(Test::get_output(1)->geometry(), geometries.at(1));
+        QCOMPARE(get_output(0)->geometry(), geometries.at(0));
+        QCOMPARE(get_output(1)->geometry(), geometries.at(1));
         QCOMPARE(setup.base->topology.size, QSize(3046, 1050));
 
         // create the panel on the right screen, left edge
@@ -1258,10 +1255,10 @@ TEST_CASE("struts", "[win]")
                  QPoint(1500, 400) - QPoint(win::left_border(client2), win::top_border(client2)));
 
         const QRect origGeo = client2->geo.frame;
-        Test::cursor()->set_pos(origGeo.center());
+        cursor()->set_pos(origGeo.center());
         win::perform_window_operation(client2, base::options_qobject::MoveOp);
 
-        QTRY_COMPARE(Test::get_x11_window(setup.base->space->move_resize_window), client2);
+        QTRY_COMPARE(get_x11_window(setup.base->space->move_resize_window), client2);
         QVERIFY(win::is_move(client2));
 
         // move to next screen - step is 8 pixel, so 800 pixel

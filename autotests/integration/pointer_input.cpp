@@ -84,17 +84,17 @@ TEST_CASE("pointer input", "[input]")
     test::setup setup("pointer-input");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::cursor()->set_pos(QPoint(640, 512));
+    test_outputs_default();
+    cursor()->set_pos(QPoint(640, 512));
 
     auto loadReferenceThemeCursor = [&](auto const& shape) {
         if (!setup.base->server->internal_connection.shm) {
             return PlatformCursorImage();
         }
 
-        using cursor_t = std::remove_pointer_t<decltype(Test::cursor())>;
+        using cursor_t = std::remove_pointer_t<decltype(cursor())>;
         auto cursorTheme = std::make_unique<input::wayland::cursor_theme<cursor_t>>(
-            *Test::cursor(), setup.base->server->internal_connection.shm);
+            *cursor(), setup.base->server->internal_connection.shm);
 
         wl_cursor_image* cursor = cursorTheme->get(shape);
         if (!cursor) {
@@ -126,18 +126,17 @@ TEST_CASE("pointer input", "[input]")
     };
 
     auto get_wayland_window_from_id = [&](uint32_t id) {
-        return Test::get_window<Test::wayland_window>(setup.base->space->windows_map.at(id));
+        return get_window<wayland_window>(setup.base->space->windows_map.at(id));
     };
 
     auto render = [](auto const& surface, QSize const& size = QSize(100, 50)) {
-        Test::render(surface, size, Qt::blue);
-        Test::flush_wayland_connection();
+        test::render(surface, size, Qt::blue);
+        flush_wayland_connection();
     };
 
-    Test::setup_wayland_connection(Test::global_selection::seat
-                                   | Test::global_selection::xdg_decoration);
-    QVERIFY(Test::wait_for_wayland_pointer());
-    auto seat = Test::get_client().interfaces.seat.get();
+    setup_wayland_connection(global_selection::seat | global_selection::xdg_decoration);
+    QVERIFY(wait_for_wayland_pointer());
+    auto seat = get_client().interfaces.seat.get();
 
     SECTION("warping updates focus")
     {
@@ -156,14 +155,14 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
 
         // currently there should not be a focused pointer surface
@@ -171,7 +170,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(!pointer->enteredSurface());
 
         // enter
-        Test::cursor()->set_pos(QPoint(25, 25));
+        cursor()->set_pos(QPoint(25, 25));
         QVERIFY(enteredSpy.wait());
         QCOMPARE(enteredSpy.count(), 1);
         QCOMPARE(enteredSpy.first().at(1).toPointF(), QPointF(25, 25));
@@ -181,7 +180,7 @@ TEST_CASE("pointer input", "[input]")
         QCOMPARE(setup.base->server->seat()->pointers().get_focus().surface, window->surface);
 
         // and out again
-        Test::cursor()->set_pos(QPoint(250, 250));
+        cursor()->set_pos(QPoint(250, 250));
         QVERIFY(leftSpy.wait());
         QCOMPARE(leftSpy.count(), 1);
 
@@ -207,22 +206,22 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
 
         // enter
-        Test::pointer_motion_absolute(QPointF(25, 25), 1);
+        pointer_motion_absolute(QPointF(25, 25), 1);
         QVERIFY(enteredSpy.wait());
         QCOMPARE(enteredSpy.first().at(1).toPointF(), QPointF(25, 25));
 
         // now warp
-        Test::cursor()->set_pos(QPoint(26, 26));
+        cursor()->set_pos(QPoint(26, 26));
         QVERIFY(movedSpy.wait());
         QCOMPARE(movedSpy.count(), 1);
         QCOMPARE(movedSpy.last().first().toPointF(), QPointF(26, 26));
@@ -242,23 +241,23 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(movedSpy.isValid());
 
         // warp cursor into expected geometry
-        Test::cursor()->set_pos(10, 10);
+        cursor()->set_pos(10, 10);
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
 
         QCOMPARE(window->geo.pos(), QPoint(0, 0));
-        QVERIFY(window->geo.frame.contains(Test::cursor()->pos()));
+        QVERIFY(window->geo.frame.contains(cursor()->pos()));
 
         // is window view effect for top left screen edge loaded
         // TODO(romangg): Use OpenGl in this test and remove the expected fail once we can run tests
@@ -268,10 +267,10 @@ TEST_CASE("pointer input", "[input]")
 
         QVERIFY(movedSpy.isEmpty());
         quint32 timestamp = 0;
-        Test::pointer_motion_absolute(QPoint(0, 0), timestamp++);
+        pointer_motion_absolute(QPoint(0, 0), timestamp++);
 
         // screen edges push back
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 1));
+        QCOMPARE(cursor()->pos(), QPoint(1, 1));
         QVERIFY(movedSpy.wait());
         QCOMPARE(movedSpy.count(), 2);
         QCOMPARE(movedSpy.at(0).first().toPoint(), QPoint(0, 0));
@@ -285,7 +284,7 @@ TEST_CASE("pointer input", "[input]")
         using namespace Wrapland::Client;
 
         // Ensure cursor is on second screen.
-        Test::cursor()->set_pos(1500, 300);
+        cursor()->set_pos(1500, 300);
 
         // Create pointer and signal spy for enter and motion.
         auto pointer = seat->createPointer(seat);
@@ -299,17 +298,17 @@ TEST_CASE("pointer input", "[input]")
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
 
         render(surface, QSize(1280, 1024));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
-        QVERIFY(!window->geo.frame.contains(Test::cursor()->pos()));
+        QVERIFY(!window->geo.frame.contains(cursor()->pos()));
 
         QSignalSpy screensChangedSpy(setup.base.get(), &base::platform::topology_changed);
         QVERIFY(screensChangedSpy.isValid());
@@ -318,11 +317,11 @@ TEST_CASE("pointer input", "[input]")
         auto geometries = std::vector<QRect>({{0, 0, 1280, 1024}});
         setup.set_outputs(geometries);
         QCOMPARE(screensChangedSpy.count(), 1);
-        Test::test_outputs_geometries(geometries);
+        test_outputs_geometries(geometries);
 
         // This should have warped the cursor.
-        QCOMPARE(Test::cursor()->pos(), QPoint(639, 511));
-        QVERIFY(window->geo.frame.contains(Test::cursor()->pos()));
+        QCOMPARE(cursor()->pos(), QPoint(639, 511));
+        QVERIFY(window->geo.frame.contains(cursor()->pos()));
 
         // And we should get an enter event.
         // TODO(romangg): geometry contains cursor but no enter event
@@ -391,40 +390,40 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
 
         // move cursor on window
-        Test::cursor()->set_pos(window->geo.frame.center());
+        cursor()->set_pos(window->geo.frame.center());
 
         // simulate modifier+click
         quint32 timestamp = 1;
 
         if (is_capslock) {
-            Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
+            keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
         }
 
-        Test::keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
         QVERIFY(!win::is_move(window));
-        Test::pointer_button_pressed(mouse_button, timestamp++);
+        pointer_button_pressed(mouse_button, timestamp++);
         QVERIFY(win::is_move(window));
 
         // release modifier should not change it
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QVERIFY(win::is_move(window));
 
         // but releasing the key should end move/resize
-        Test::pointer_button_released(mouse_button, timestamp++);
+        pointer_button_released(mouse_button, timestamp++);
         QVERIFY(!win::is_move(window));
 
         if (is_capslock) {
-            Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
+            keyboard_key_released(KEY_CAPSLOCK, timestamp++);
         }
 
         // all of that should not have triggered button events on the surface
@@ -465,13 +464,13 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
 
         // disable global shortcuts
@@ -480,18 +479,18 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(setup.base->space->global_shortcuts_disabled);
 
         // move cursor on window
-        Test::cursor()->set_pos(window->geo.frame.center());
+        cursor()->set_pos(window->geo.frame.center());
 
         // simulate modifier+click
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+        keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
         QVERIFY(!win::is_move(window));
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
         QVERIFY(!win::is_move(window));
         // release modifier should not change it
-        Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
+        keyboard_key_released(KEY_LEFTMETA, timestamp++);
         QVERIFY(!win::is_move(window));
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
 
         win::set_global_shortcuts_disabled(*setup.base->space, false);
     }
@@ -546,37 +545,37 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
         // set the opacity to 0.5
         window->setOpacity(0.5);
         QCOMPARE(window->opacity(), 0.5);
 
         // move cursor on window
-        Test::cursor()->set_pos(window->geo.frame.center());
+        cursor()->set_pos(window->geo.frame.center());
 
         // simulate modifier+wheel
         quint32 timestamp = 1;
 
         if (is_capslock) {
-            Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
+            keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
         }
 
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::pointer_axis_vertical(-5, timestamp++, 0);
+        keyboard_key_pressed(modifier, timestamp++);
+        pointer_axis_vertical(-5, timestamp++, 0);
         QCOMPARE(window->opacity(), 0.6);
-        Test::pointer_axis_vertical(5, timestamp++, 0);
+        pointer_axis_vertical(5, timestamp++, 0);
         QCOMPARE(window->opacity(), 0.5);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
 
         if (is_capslock) {
-            Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
+            keyboard_key_released(KEY_CAPSLOCK, timestamp++);
         }
 
         // axis should have been filtered out
@@ -608,21 +607,21 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
         // set the opacity to 0.5
         window->setOpacity(0.5);
         QCOMPARE(window->opacity(), 0.5);
 
         // move cursor on window
-        Test::cursor()->set_pos(window->geo.frame.center());
+        cursor()->set_pos(window->geo.frame.center());
 
         // disable global shortcuts
         QVERIFY(!setup.base->space->global_shortcuts_disabled);
@@ -631,12 +630,12 @@ TEST_CASE("pointer input", "[input]")
 
         // simulate modifier+wheel
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-        Test::pointer_axis_vertical(-5, timestamp++, 0);
+        keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+        pointer_axis_vertical(-5, timestamp++, 0);
         QCOMPARE(window->opacity(), 0.5);
-        Test::pointer_axis_vertical(5, timestamp++, 0);
+        pointer_axis_vertical(5, timestamp++, 0);
         QCOMPARE(window->opacity(), 0.5);
-        Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
+        keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
         win::set_global_shortcuts_disabled(*setup.base->space, false);
     }
@@ -661,32 +660,32 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface1 = Test::create_surface();
+        auto surface1 = create_surface();
         QVERIFY(surface1);
-        auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
+        auto shellSurface1 = create_xdg_shell_toplevel(surface1);
         QVERIFY(shellSurface1);
         render(surface1);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window1 = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window1 = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window1);
-        auto surface2 = Test::create_surface();
+        auto surface2 = create_surface();
         QVERIFY(surface2);
-        auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
+        auto shellSurface2 = create_xdg_shell_toplevel(surface2);
         QVERIFY(shellSurface2);
         render(surface2);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window2 = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window2 = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window2);
         QVERIFY(window1 != window2);
 
         // move cursor to the inactive window
-        Test::cursor()->set_pos(window1->geo.frame.center());
+        cursor()->set_pos(window1->geo.frame.center());
 
         quint32 timestamp = 1;
         QVERIFY(!window1->control->active);
-        Test::pointer_axis_vertical(5, timestamp++, 0);
+        pointer_axis_vertical(5, timestamp++, 0);
         QVERIFY(window1->control->active);
 
         // but also the wheel event should be passed to the window
@@ -706,7 +705,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(pointer->isValid());
 
         // move cursor out of the way of first window to be created
-        Test::cursor()->set_pos(900, 900);
+        cursor()->set_pos(900, 900);
 
         // first modify the config for this run
         auto group = setup.base->config.main->group("Windows");
@@ -727,28 +726,27 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface1 = Test::create_surface();
+        auto surface1 = create_surface();
         QVERIFY(surface1);
-        auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
+        auto shellSurface1 = create_xdg_shell_toplevel(surface1);
         QVERIFY(shellSurface1);
         render(surface1, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window1 = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window1 = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window1);
-        auto surface2 = Test::create_surface();
+        auto surface2 = create_surface();
         QVERIFY(surface2);
-        auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
+        auto shellSurface2 = create_xdg_shell_toplevel(surface2);
         QVERIFY(shellSurface2);
         render(surface2, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window2 = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window2 = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window2);
         QVERIFY(window1 != window2);
-        QCOMPARE(
-            Test::get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
-            window2);
+        QCOMPARE(get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
+                 window2);
         // geometry of the two windows should be overlapping
         QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
 
@@ -766,34 +764,31 @@ TEST_CASE("pointer input", "[input]")
         // move on top of first window
         QVERIFY(window1->geo.frame.contains(10, 10));
         QVERIFY(!window2->geo.frame.contains(10, 10));
-        Test::cursor()->set_pos(10, 10);
+        cursor()->set_pos(10, 10);
         QVERIFY(stackingOrderChangedSpy.wait());
         QCOMPARE(stackingOrderChangedSpy.count(), 1);
-        QCOMPARE(
-            Test::get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
-            window1);
+        QCOMPARE(get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
+                 window1);
         QTRY_VERIFY(window1->control->active);
 
         // move on second window, but move away before active window change delay hits
-        Test::cursor()->set_pos(810, 810);
+        cursor()->set_pos(810, 810);
         QVERIFY(stackingOrderChangedSpy.wait());
         QCOMPARE(stackingOrderChangedSpy.count(), 2);
-        QCOMPARE(
-            Test::get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
-            window2);
-        Test::cursor()->set_pos(10, 10);
+        QCOMPARE(get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
+                 window2);
+        cursor()->set_pos(10, 10);
         QVERIFY(!activeWindowChangedSpy.wait(200));
         QVERIFY(window1->control->active);
-        QCOMPARE(
-            Test::get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
-            window1);
+        QCOMPARE(get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
+                 window1);
 
         // as we moved back on window 1 that should been raised in the mean time
         QCOMPARE(stackingOrderChangedSpy.count(), 3);
 
         // quickly move on window 2 and back on window 1 should not raise window 2
-        Test::cursor()->set_pos(810, 810);
-        Test::cursor()->set_pos(10, 10);
+        cursor()->set_pos(810, 810);
+        cursor()->set_pos(10, 10);
         QVERIFY(!stackingOrderChangedSpy.wait(200));
     }
 
@@ -821,31 +816,30 @@ TEST_CASE("pointer input", "[input]")
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
-        auto surface1 = Test::create_surface();
+        auto surface1 = create_surface();
         QVERIFY(surface1);
-        auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
+        auto shellSurface1 = create_xdg_shell_toplevel(surface1);
         QVERIFY(shellSurface1);
 
         render(surface1, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window1 = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window1 = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window1);
 
-        auto surface2 = Test::create_surface();
+        auto surface2 = create_surface();
         QVERIFY(surface2);
-        auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
+        auto shellSurface2 = create_xdg_shell_toplevel(surface2);
         QVERIFY(shellSurface2);
 
         render(surface2, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window2 = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window2 = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window2);
         QVERIFY(window1 != window2);
-        QCOMPARE(
-            Test::get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
-            window2);
+        QCOMPARE(get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
+                 window2);
 
         // Geometry of the two windows should be overlapping.
         QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
@@ -864,7 +858,7 @@ TEST_CASE("pointer input", "[input]")
         // Move on top of first window.
         QVERIFY(window1->geo.frame.contains(10, 10));
         QVERIFY(!window2->geo.frame.contains(10, 10));
-        Test::cursor()->set_pos(10, 10);
+        cursor()->set_pos(10, 10);
 
         // No focus follows mouse.
         QVERIFY(!stackingOrderChangedSpy.wait(200));
@@ -874,19 +868,18 @@ TEST_CASE("pointer input", "[input]")
 
         // And click.
         quint32 timestamp = 1;
-        Test::pointer_button_pressed(button, timestamp++);
+        pointer_button_pressed(button, timestamp++);
 
         // Should raise window1 and activate it.
         QCOMPARE(stackingOrderChangedSpy.count(), 1);
         QVERIFY(!activeWindowChangedSpy.isEmpty());
-        QCOMPARE(
-            Test::get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
-            window1);
+        QCOMPARE(get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
+                 window1);
         QVERIFY(window1->control->active);
         QVERIFY(!window2->control->active);
 
         // Release again.
-        Test::pointer_button_released(button, timestamp++);
+        pointer_button_released(button, timestamp++);
     }
 
     SECTION("mouse action active window")
@@ -917,43 +910,41 @@ TEST_CASE("pointer input", "[input]")
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
-        auto surface1 = Test::create_surface();
+        auto surface1 = create_surface();
         QVERIFY(surface1);
-        auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
+        auto shellSurface1 = create_xdg_shell_toplevel(surface1);
         QVERIFY(shellSurface1);
         render(surface1, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window1 = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window1 = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window1);
         QSignalSpy window1DestroyedSpy(window1->qobject.get(), &QObject::destroyed);
         QVERIFY(window1DestroyedSpy.isValid());
 
-        auto surface2 = Test::create_surface();
+        auto surface2 = create_surface();
         QVERIFY(surface2);
-        auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
+        auto shellSurface2 = create_xdg_shell_toplevel(surface2);
         QVERIFY(shellSurface2);
         render(surface2, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window2 = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window2 = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window2);
         QVERIFY(window1 != window2);
 
         QSignalSpy window2DestroyedSpy(window2->qobject.get(), &QObject::destroyed);
         QVERIFY(window2DestroyedSpy.isValid());
-        QCOMPARE(
-            Test::get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
-            window2);
+        QCOMPARE(get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
+                 window2);
 
         // Geometry of the two windows should be overlapping.
         QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
 
         // lower the currently active window
         win::lower_window(*setup.base->space, window2);
-        QCOMPARE(
-            Test::get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
-            window1);
+        QCOMPARE(get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
+                 window1);
 
         // Signal spy for stacking order spy.
         QSignalSpy stackingOrderChangedSpy(setup.base->space->stacking.order.qobject.get(),
@@ -963,29 +954,28 @@ TEST_CASE("pointer input", "[input]")
         // Move on top of second window.
         QVERIFY(!window1->geo.frame.contains(900, 900));
         QVERIFY(window2->geo.frame.contains(900, 900));
-        Test::cursor()->set_pos(900, 900);
+        cursor()->set_pos(900, 900);
 
         // And click.
         quint32 timestamp = 1;
-        Test::pointer_button_pressed(button, timestamp++);
+        pointer_button_pressed(button, timestamp++);
         QVERIFY(buttonSpy.wait());
 
         if (click_raise) {
             QCOMPARE(stackingOrderChangedSpy.count(), 1);
-            QTRY_COMPARE_WITH_TIMEOUT(Test::get_wayland_window(win::top_client_on_desktop(
-                                          *setup.base->space, 1, nullptr)),
-                                      window2,
-                                      200);
+            QTRY_COMPARE_WITH_TIMEOUT(
+                get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
+                window2,
+                200);
         } else {
             QCOMPARE(stackingOrderChangedSpy.count(), 0);
             QVERIFY(!stackingOrderChangedSpy.wait(100));
-            QCOMPARE(Test::get_wayland_window(
-                         win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
+            QCOMPARE(get_wayland_window(win::top_client_on_desktop(*setup.base->space, 1, nullptr)),
                      window1);
         }
 
         // Release again.
-        Test::pointer_button_released(button, timestamp++);
+        pointer_button_released(button, timestamp++);
 
         surface1.reset();
         QVERIFY(window1DestroyedSpy.wait());
@@ -1007,11 +997,11 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(enteredSpy.isValid());
 
         // Move cursor somewhere the new window won't open.
-        Test::cursor()->set_pos(800, 800);
+        cursor()->set_pos(800, 800);
         auto& p = setup.base->space->input->pointer;
 
         // At the moment it should be the fallback cursor.
-        auto const fallback_cursor = Test::cursor()->image();
+        auto const fallback_cursor = cursor()->image();
         QVERIFY(!fallback_cursor.isNull());
 
         // Create a window.
@@ -1019,27 +1009,27 @@ TEST_CASE("pointer input", "[input]")
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
 
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
 
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
 
         // Move the cursor to center of window. This should first set a null pointer. So we still
         // show the old cursor.
-        Test::cursor()->set_pos(window->geo.frame.center());
-        QCOMPARE(Test::get_wayland_window(p->focus.window), window);
-        QCOMPARE(Test::cursor()->image(), fallback_cursor);
+        cursor()->set_pos(window->geo.frame.center());
+        QCOMPARE(get_wayland_window(p->focus.window), window);
+        QCOMPARE(cursor()->image(), fallback_cursor);
         QVERIFY(enteredSpy.wait());
 
         // Create a cursor on the pointer.
-        auto cursorSurface = Test::create_surface();
+        auto cursorSurface = create_surface();
         QVERIFY(cursorSurface);
         QSignalSpy cursorRenderedSpy(cursorSurface.get(), &Surface::frameRendered);
         QVERIFY(cursorRenderedSpy.isValid());
@@ -1047,62 +1037,62 @@ TEST_CASE("pointer input", "[input]")
         auto red = QImage(QSize(10, 10), QImage::Format_ARGB32_Premultiplied);
         red.fill(Qt::red);
 
-        cursorSurface->attachBuffer(Test::get_client().interfaces.shm->createBuffer(red));
+        cursorSurface->attachBuffer(get_client().interfaces.shm->createBuffer(red));
         cursorSurface->damage(QRect(0, 0, 10, 10));
         cursorSurface->commit();
 
         pointer->setCursor(cursorSurface.get(), QPoint(5, 5));
         QVERIFY(cursorRenderedSpy.wait());
-        QCOMPARE(Test::cursor()->image(), red);
-        QCOMPARE(Test::cursor()->hotspot(), QPoint(5, 5));
+        QCOMPARE(cursor()->image(), red);
+        QCOMPARE(cursor()->hotspot(), QPoint(5, 5));
 
         // Change hotspot.
         pointer->setCursor(cursorSurface.get(), QPoint(6, 6));
-        Test::flush_wayland_connection();
-        QTRY_COMPARE(Test::cursor()->hotspot(), QPoint(6, 6));
-        QCOMPARE(Test::cursor()->image(), red);
+        flush_wayland_connection();
+        QTRY_COMPARE(cursor()->hotspot(), QPoint(6, 6));
+        QCOMPARE(cursor()->image(), red);
 
         // Change the buffer.
         auto blue = QImage(QSize(10, 10), QImage::Format_ARGB32_Premultiplied);
         blue.fill(Qt::blue);
 
-        auto b = Test::get_client().interfaces.shm->createBuffer(blue);
+        auto b = get_client().interfaces.shm->createBuffer(blue);
         cursorSurface->attachBuffer(b);
         cursorSurface->damage(QRect(0, 0, 10, 10));
         cursorSurface->commit();
 
         QVERIFY(cursorRenderedSpy.wait());
-        QTRY_COMPARE(Test::cursor()->image(), blue);
-        QCOMPARE(Test::cursor()->hotspot(), QPoint(6, 6));
+        QTRY_COMPARE(cursor()->image(), blue);
+        QCOMPARE(cursor()->hotspot(), QPoint(6, 6));
 
         // Scaled cursor
         auto blueScaled = QImage(QSize(20, 20), QImage::Format_ARGB32_Premultiplied);
         blueScaled.setDevicePixelRatio(2);
         blueScaled.fill(Qt::blue);
 
-        auto bs = Test::get_client().interfaces.shm->createBuffer(blueScaled);
+        auto bs = get_client().interfaces.shm->createBuffer(blueScaled);
         cursorSurface->attachBuffer(bs);
         cursorSurface->setScale(2);
         cursorSurface->damage(QRect(0, 0, 20, 20));
         cursorSurface->commit();
 
         QVERIFY(cursorRenderedSpy.wait());
-        QTRY_COMPARE(Test::cursor()->image(), blueScaled);
+        QTRY_COMPARE(cursor()->image(), blueScaled);
 
         // Surface-local (so not changed)
-        QCOMPARE(Test::cursor()->hotspot(), QPoint(6, 6));
+        QCOMPARE(cursor()->hotspot(), QPoint(6, 6));
 
         // Hide the cursor.
         pointer->setCursor(nullptr);
 
-        Test::flush_wayland_connection();
-        QTRY_VERIFY(Test::cursor()->image().isNull());
+        flush_wayland_connection();
+        QTRY_VERIFY(cursor()->image().isNull());
 
         // Move cursor somewhere else, should reset to fallback cursor.
-        Test::cursor()->set_pos(window->geo.frame.bottomLeft() + QPoint(20, 20));
+        cursor()->set_pos(window->geo.frame.bottomLeft() + QPoint(20, 20));
         QVERIFY(!p->focus.window);
-        QVERIFY(!Test::cursor()->image().isNull());
-        QCOMPARE(Test::cursor()->image(), fallback_cursor);
+        QVERIFY(!cursor()->image().isNull());
+        QCOMPARE(cursor()->image(), fallback_cursor);
     }
 
     SECTION("effect override cursor image")
@@ -1120,10 +1110,10 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(leftSpy.isValid());
 
         // Move cursor somewhere the new window won't open.
-        Test::cursor()->set_pos(800, 800);
+        cursor()->set_pos(800, 800);
 
         // Mere we should have the fallback cursor.
-        auto const fallback_cursor = Test::cursor()->image();
+        auto const fallback_cursor = cursor()->image();
         QVERIFY(!fallback_cursor.isNull());
 
         // Now let's create a window.
@@ -1131,54 +1121,54 @@ TEST_CASE("pointer input", "[input]")
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
 
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
 
         // And move cursor to the window.
         QVERIFY(!window->geo.frame.contains(QPoint(800, 800)));
-        Test::cursor()->set_pos(window->geo.frame.center());
+        cursor()->set_pos(window->geo.frame.center());
         QVERIFY(enteredSpy.wait());
 
         // Cursor image should still be fallback.
-        QCOMPARE(Test::cursor()->image(), fallback_cursor);
+        QCOMPARE(cursor()->image(), fallback_cursor);
 
         // Now create an effect and set an override cursor.
         std::unique_ptr<HelperEffect> effect(new HelperEffect);
         effects->startMouseInterception(effect.get(), Qt::SizeAllCursor);
 
-        const QImage sizeAll = Test::cursor()->image();
+        const QImage sizeAll = cursor()->image();
         QVERIFY(!sizeAll.isNull());
         QVERIFY(sizeAll != fallback_cursor);
         QVERIFY(leftSpy.wait());
 
         // Let's change to arrow cursor, this should be our fallback.
         effects->defineCursor(Qt::ArrowCursor);
-        QCOMPARE(Test::cursor()->image(), fallback_cursor);
+        QCOMPARE(cursor()->image(), fallback_cursor);
 
         // Back to size all.
         effects->defineCursor(Qt::SizeAllCursor);
-        QCOMPARE(Test::cursor()->image(), sizeAll);
+        QCOMPARE(cursor()->image(), sizeAll);
 
         // Move cursor outside the window area.
-        Test::cursor()->set_pos(800, 800);
+        cursor()->set_pos(800, 800);
 
         // And end the override, which should switch to fallback.
         effects->stopMouseInterception(effect.get());
-        QCOMPARE(Test::cursor()->image(), fallback_cursor);
+        QCOMPARE(cursor()->image(), fallback_cursor);
 
         // Start mouse interception again.
         effects->startMouseInterception(effect.get(), Qt::SizeAllCursor);
-        QCOMPARE(Test::cursor()->image(), sizeAll);
+        QCOMPARE(cursor()->image(), sizeAll);
 
         // Move cursor to area of window.
-        Test::cursor()->set_pos(window->geo.frame.center());
+        cursor()->set_pos(window->geo.frame.center());
 
         // This should not result in an enter event.
         QVERIFY(!enteredSpy.wait(100));
@@ -1186,7 +1176,7 @@ TEST_CASE("pointer input", "[input]")
         // After ending the interception we should get an enter event.
         effects->stopMouseInterception(effect.get());
         QVERIFY(enteredSpy.wait());
-        QVERIFY(Test::cursor()->image().isNull());
+        QVERIFY(cursor()->image().isNull());
     }
 
     SECTION("popup")
@@ -1208,30 +1198,30 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy motionSpy(pointer, &Pointer::motion);
         QVERIFY(motionSpy.isValid());
 
-        Test::cursor()->set_pos(800, 800);
+        cursor()->set_pos(800, 800);
 
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
         QCOMPARE(window->transient->input_grab, false);
         // move pointer into window
         QVERIFY(!window->geo.frame.contains(QPoint(800, 800)));
-        Test::cursor()->set_pos(window->geo.frame.center());
+        cursor()->set_pos(window->geo.frame.center());
         QVERIFY(enteredSpy.wait());
 
         // click inside window to create serial
         quint32 timestamp = 0;
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
         QVERIFY(buttonStateChangedSpy.wait());
 
         // Now create the popup surface.
@@ -1252,9 +1242,9 @@ TEST_CASE("pointer input", "[input]")
         pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
         pos_data.gravity = pos_data.anchor.edge;
 
-        auto popupSurface = Test::create_surface();
+        auto popupSurface = create_surface();
         QVERIFY(popupSurface);
-        auto popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, pos_data);
+        auto popupShellSurface = create_xdg_shell_popup(popupSurface, shellSurface, pos_data);
         QVERIFY(popupShellSurface);
         QSignalSpy popupDoneSpy(popupShellSurface.get(), &XdgShellPopup::popupDone);
         QVERIFY(popupDoneSpy.isValid());
@@ -1266,14 +1256,14 @@ TEST_CASE("pointer input", "[input]")
             = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
         QVERIFY(popupClient);
         QVERIFY(popupClient != window);
-        QCOMPARE(window, Test::get_wayland_window(setup.base->space->stacking.active));
+        QCOMPARE(window, get_wayland_window(setup.base->space->stacking.active));
         QCOMPARE(popupClient->transient->lead(), window);
         QCOMPARE(popupClient->geo.pos(), window->geo.pos() + QPoint(80, 20));
         QCOMPARE(popupClient->transient->input_grab, true);
         QVERIFY(popupClient->mapped);
 
         // Let's move the pointer into the center of the window.
-        Test::cursor()->set_pos(popupClient->geo.frame.center());
+        cursor()->set_pos(popupClient->geo.frame.center());
         QVERIFY(enteredSpy.wait());
         QCOMPARE(enteredSpy.count(), 2);
         QCOMPARE(leftSpy.count(), 1);
@@ -1281,36 +1271,36 @@ TEST_CASE("pointer input", "[input]")
 
         // Let's move the pointer outside of the popup window but inside the parent window.
         // This should not really change anything, client gets an enter/leave event combo.
-        Test::cursor()->set_pos(QPoint(10, 10));
-        QVERIFY(window->geo.frame.contains(Test::cursor()->pos()));
-        QVERIFY(!popupClient->geo.frame.contains(Test::cursor()->pos()));
+        cursor()->set_pos(QPoint(10, 10));
+        QVERIFY(window->geo.frame.contains(cursor()->pos()));
+        QVERIFY(!popupClient->geo.frame.contains(cursor()->pos()));
         QVERIFY(enteredSpy.wait());
         QCOMPARE(enteredSpy.count(), 3);
         QCOMPARE(leftSpy.count(), 2);
         QVERIFY(popupDoneSpy.isEmpty());
 
         // Now click, should not trigger popupDone but receive button events client-side..
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
         QVERIFY(buttonStateChangedSpy.wait());
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
         QVERIFY(buttonStateChangedSpy.wait());
         QVERIFY(popupDoneSpy.isEmpty());
 
         // Let's move the pointer outside of both windows.
         // This should not really change anything, client gets a leave event.
-        Test::cursor()->set_pos(popupClient->geo.frame.bottomRight() + QPoint(2, 2));
-        QVERIFY(!window->geo.frame.contains(Test::cursor()->pos()));
-        QVERIFY(!popupClient->geo.frame.contains(Test::cursor()->pos()));
+        cursor()->set_pos(popupClient->geo.frame.bottomRight() + QPoint(2, 2));
+        QVERIFY(!window->geo.frame.contains(cursor()->pos()));
+        QVERIFY(!popupClient->geo.frame.contains(cursor()->pos()));
         QVERIFY(leftSpy.wait());
         QCOMPARE(leftSpy.count(), 3);
         QVERIFY(popupDoneSpy.isEmpty());
 
         // Now click, should trigger popupDone.
         buttonStateChangedSpy.clear();
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
         QVERIFY(popupDoneSpy.wait());
         QVERIFY(buttonStateChangedSpy.empty());
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
     }
 
     SECTION("deco cancels popup")
@@ -1332,41 +1322,40 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy motionSpy(pointer, &Pointer::motion);
         QVERIFY(motionSpy.isValid());
 
-        Test::cursor()->set_pos(800, 800);
+        cursor()->set_pos(800, 800);
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface
-            = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+        auto shellSurface = create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly);
         QVERIFY(shellSurface);
 
-        auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+        auto deco = get_client().interfaces.xdg_decoration->getToplevelDecoration(
             shellSurface.get(), shellSurface.get());
         QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
         QVERIFY(decoSpy.isValid());
         deco->setMode(XdgDecoration::Mode::ServerSide);
         QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        init_xdg_shell_toplevel(surface, shellSurface);
         QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
         QCOMPARE(window->transient->input_grab, false);
         QVERIFY(win::decoration(window));
 
         // move pointer into window
         QVERIFY(!window->geo.frame.contains(QPoint(800, 800)));
-        Test::cursor()->set_pos(window->geo.frame.center());
+        cursor()->set_pos(window->geo.frame.center());
         QVERIFY(enteredSpy.wait());
         // click inside window to create serial
         quint32 timestamp = 0;
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
         QVERIFY(buttonStateChangedSpy.wait());
 
         // now create the popup surface
@@ -1376,9 +1365,9 @@ TEST_CASE("pointer input", "[input]")
         pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
         pos_data.gravity = pos_data.anchor.edge;
 
-        auto popupSurface = Test::create_surface();
+        auto popupSurface = create_surface();
         QVERIFY(popupSurface);
-        auto popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, pos_data);
+        auto popupShellSurface = create_xdg_shell_popup(popupSurface, shellSurface, pos_data);
         QVERIFY(popupShellSurface);
         QSignalSpy popupDoneSpy(popupShellSurface.get(), &XdgShellPopup::popupDone);
         QVERIFY(popupDoneSpy.isValid());
@@ -1390,23 +1379,22 @@ TEST_CASE("pointer input", "[input]")
             = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
         QVERIFY(popupClient);
         QVERIFY(popupClient != window);
-        QCOMPARE(window, Test::get_wayland_window(setup.base->space->stacking.active));
+        QCOMPARE(window, get_wayland_window(setup.base->space->stacking.active));
         QCOMPARE(popupClient->transient->lead(), window);
         QCOMPARE(popupClient->geo.pos(),
                  win::frame_to_client_pos(window, window->geo.pos()) + QPoint(80, 20));
         QCOMPARE(popupClient->transient->input_grab, true);
 
         // let's move the pointer into the center of the deco
-        Test::cursor()->set_pos(
-            window->geo.frame.center().x(),
-            window->geo.pos().y()
-                + (window->geo.size().height()
-                   - win::frame_to_client_size(window, window->geo.size()).height())
-                    / 2);
+        cursor()->set_pos(window->geo.frame.center().x(),
+                          window->geo.pos().y()
+                              + (window->geo.size().height()
+                                 - win::frame_to_client_size(window, window->geo.size()).height())
+                                  / 2);
 
-        Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
+        pointer_button_pressed(BTN_RIGHT, timestamp++);
         QVERIFY(popupDoneSpy.wait());
-        Test::pointer_button_released(BTN_RIGHT, timestamp++);
+        pointer_button_released(BTN_RIGHT, timestamp++);
     }
 
     SECTION("window under cursor while button pressed")
@@ -1425,27 +1413,27 @@ TEST_CASE("pointer input", "[input]")
         QSignalSpy leftSpy(pointer, &Pointer::left);
         QVERIFY(leftSpy.isValid());
 
-        Test::cursor()->set_pos(800, 800);
+        cursor()->set_pos(800, 800);
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window);
 
         // move cursor over window
         QVERIFY(!window->geo.frame.contains(QPoint(800, 800)));
-        Test::cursor()->set_pos(window->geo.frame.center());
+        cursor()->set_pos(window->geo.frame.center());
         QVERIFY(enteredSpy.wait());
         // click inside window
         quint32 timestamp = 0;
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
 
         // now create a second window as transient
         Wrapland::Client::xdg_shell_positioner_data pos_data;
@@ -1454,9 +1442,9 @@ TEST_CASE("pointer input", "[input]")
         pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
         pos_data.gravity = pos_data.anchor.edge;
 
-        auto popupSurface = Test::create_surface();
+        auto popupSurface = create_surface();
         QVERIFY(popupSurface);
-        auto popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, pos_data);
+        auto popupShellSurface = create_xdg_shell_popup(popupSurface, shellSurface, pos_data);
         QVERIFY(popupShellSurface);
         render(popupSurface, pos_data.size);
         QVERIFY(clientAddedSpy.wait());
@@ -1464,11 +1452,11 @@ TEST_CASE("pointer input", "[input]")
             = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
         QVERIFY(popupClient);
         QVERIFY(popupClient != window);
-        QVERIFY(window->geo.frame.contains(Test::cursor()->pos()));
-        QVERIFY(popupClient->geo.frame.contains(Test::cursor()->pos()));
+        QVERIFY(window->geo.frame.contains(cursor()->pos()));
+        QVERIFY(popupClient->geo.frame.contains(cursor()->pos()));
         QVERIFY(!leftSpy.wait());
 
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
         // now that the button is no longer pressed we should get the leave event
         QVERIFY(leftSpy.wait());
         QCOMPARE(leftSpy.count(), 1);
@@ -1564,15 +1552,15 @@ TEST_CASE("pointer input", "[input]")
                                                    {2560, 0, 1280, 1024},
                                                    {1280, 1024, 1280, 1024}};
         setup.set_outputs(geometries);
-        Test::test_outputs_geometries(geometries);
+        test_outputs_geometries(geometries);
 
         // move pointer to initial position
-        Test::cursor()->set_pos(start);
-        QCOMPARE(Test::cursor()->pos(), start);
+        cursor()->set_pos(start);
+        QCOMPARE(cursor()->pos(), start);
 
         // perform movement
-        Test::pointer_motion_absolute(test_data.target, 1);
-        QCOMPARE(Test::cursor()->pos(), test_data.expected);
+        pointer_motion_absolute(test_data.target, 1);
+        QCOMPARE(cursor()->pos(), test_data.expected);
     }
 
     SECTION("resize cursor")
@@ -1606,11 +1594,11 @@ TEST_CASE("pointer input", "[input]")
 
         // create a test client
         using namespace Wrapland::Client;
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
         // move the cursor to the test position
@@ -1632,31 +1620,31 @@ TEST_CASE("pointer input", "[input]")
             cursorPos.setY(c->geo.frame.center().y());
         }
 
-        Test::cursor()->set_pos(cursorPos);
+        cursor()->set_pos(cursorPos);
 
         const PlatformCursorImage arrowCursor = loadReferenceThemeCursor(Qt::ArrowCursor);
         QVERIFY(!arrowCursor.image().isNull());
-        QCOMPARE(Test::cursor()->platform_image().image(), arrowCursor.image());
-        QCOMPARE(Test::cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
+        QCOMPARE(cursor()->platform_image().image(), arrowCursor.image());
+        QCOMPARE(cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
 
         // start resizing the client
         int timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-        Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
+        keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+        pointer_button_pressed(BTN_RIGHT, timestamp++);
         QVERIFY(win::is_resize(c));
 
         auto const resizeCursor = loadReferenceThemeCursor(test_data.cursor_shape);
         QVERIFY(!resizeCursor.image().isNull());
-        QCOMPARE(Test::cursor()->platform_image().image(), resizeCursor.image());
-        QCOMPARE(Test::cursor()->platform_image().hotSpot(), resizeCursor.hotSpot());
+        QCOMPARE(cursor()->platform_image().image(), resizeCursor.image());
+        QCOMPARE(cursor()->platform_image().hotSpot(), resizeCursor.hotSpot());
 
         // finish resizing the client
-        Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
-        Test::pointer_button_released(BTN_RIGHT, timestamp++);
+        keyboard_key_released(KEY_LEFTMETA, timestamp++);
+        pointer_button_released(BTN_RIGHT, timestamp++);
         QVERIFY(!win::is_resize(c));
 
-        QCOMPARE(Test::cursor()->platform_image().image(), arrowCursor.image());
-        QCOMPARE(Test::cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
+        QCOMPARE(cursor()->platform_image().image(), arrowCursor.image());
+        QCOMPARE(cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
     }
 
     SECTION("move cursor")
@@ -1675,44 +1663,44 @@ TEST_CASE("pointer input", "[input]")
 
         // create a test client
         using namespace Wrapland::Client;
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
         // move cursor to the test position
-        Test::cursor()->set_pos(c->geo.frame.center());
+        cursor()->set_pos(c->geo.frame.center());
 
         const PlatformCursorImage arrowCursor = loadReferenceThemeCursor(Qt::ArrowCursor);
         QVERIFY(!arrowCursor.image().isNull());
-        QCOMPARE(Test::cursor()->platform_image().image(), arrowCursor.image());
-        QCOMPARE(Test::cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
+        QCOMPARE(cursor()->platform_image().image(), arrowCursor.image());
+        QCOMPARE(cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
 
         // start moving the client
         int timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
         QVERIFY(win::is_move(c));
 
         const PlatformCursorImage sizeAllCursor = loadReferenceThemeCursor(Qt::SizeAllCursor);
         QVERIFY(!sizeAllCursor.image().isNull());
-        QCOMPARE(Test::cursor()->platform_image().image(), sizeAllCursor.image());
-        QCOMPARE(Test::cursor()->platform_image().hotSpot(), sizeAllCursor.hotSpot());
+        QCOMPARE(cursor()->platform_image().image(), sizeAllCursor.image());
+        QCOMPARE(cursor()->platform_image().hotSpot(), sizeAllCursor.hotSpot());
 
         // finish moving the client
-        Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        keyboard_key_released(KEY_LEFTMETA, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
         QVERIFY(!win::is_move(c));
 
-        QCOMPARE(Test::cursor()->platform_image().image(), arrowCursor.image());
-        QCOMPARE(Test::cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
+        QCOMPARE(cursor()->platform_image().image(), arrowCursor.image());
+        QCOMPARE(cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
     }
 
     SECTION("hide show cursor")
     {
-        auto cursor = Test::cursor();
+        auto cursor = test::cursor();
         QCOMPARE(cursor->is_hidden(), false);
         cursor->hide();
         QCOMPARE(cursor->is_hidden(), true);

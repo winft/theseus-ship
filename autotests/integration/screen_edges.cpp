@@ -55,13 +55,12 @@ TEST_CASE("screen edges", "[input],[win]")
 
     test::setup setup("screen-edges");
     setup.start();
-    Test::setup_wayland_connection();
-    Test::cursor()->set_pos(QPoint(640, 512));
+    setup_wayland_connection();
+    cursor()->set_pos(QPoint(640, 512));
 
     auto reset_edger = [&](KSharedConfig::Ptr config) {
         setup.base->config.main = config;
-        setup.base->space->edges
-            = std::make_unique<win::screen_edger<Test::space>>(*setup.base->space);
+        setup.base->space->edges = std::make_unique<win::screen_edger<space>>(*setup.base->space);
     };
 
     auto unreserve = [&](uint32_t id, ElectricBorder border) {
@@ -298,14 +297,14 @@ TEST_CASE("screen edges", "[input],[win]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
-        Test::render(surface, QSize(100, 50), Qt::blue);
-        Test::flush_wayland_connection();
+        render(surface, QSize(100, 50), Qt::blue);
+        flush_wayland_connection();
         QVERIFY(clientAddedSpy.wait());
-        auto client = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto client = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(client);
 
         win::set_move_resize_window(*setup.base->space, *client);
@@ -370,27 +369,27 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(it != edges.cend());
 
         auto setPos = [](const QPoint& pos) {
-            Test::pointer_motion_absolute(pos, QDateTime::currentMSecsSinceEpoch());
+            pointer_motion_absolute(pos, QDateTime::currentMSecsSinceEpoch());
         };
 
         setPos(QPoint(0, 50));
 
         // doesn't trigger as the edge was not triggered yet
         QVERIFY(spy.isEmpty());
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 50));
+        QCOMPARE(cursor()->pos(), QPoint(1, 50));
 
         // test doesn't trigger due to too much offset
         QTest::qWait(160);
         setPos(QPoint(0, 100));
         QVERIFY(spy.isEmpty());
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 100));
+        QCOMPARE(cursor()->pos(), QPoint(1, 100));
 
         // doesn't trigger as we are waiting too long already
         QTest::qWait(200);
         setPos(QPoint(0, 101));
 
         QVERIFY(spy.isEmpty());
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 101));
+        QCOMPARE(cursor()->pos(), QPoint(1, 101));
 
         spy.clear();
 
@@ -398,7 +397,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QTest::qWait(50);
         setPos(QPoint(0, 100));
         QVERIFY(spy.isEmpty());
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 100));
+        QCOMPARE(cursor()->pos(), QPoint(1, 100));
 
         // and this one triggers
         QTest::qWait(110);
@@ -408,7 +407,7 @@ TEST_CASE("screen edges", "[input],[win]")
         REQUIRE_FALSE(!spy.isEmpty());
 
         // TODO(romangg): No dead pixel on Wayland? Needs investigation.
-        REQUIRE_FALSE(Test::cursor()->pos() == QPoint(1, 101));
+        REQUIRE_FALSE(cursor()->pos() == QPoint(1, 101));
 
         // now let's try to trigger again
         QTest::qWait(351);
@@ -419,7 +418,7 @@ TEST_CASE("screen edges", "[input],[win]")
         REQUIRE_FALSE(spy.count() == 1);
 
         // TODO(romangg): No pushback on Wayland. Needs investigation.
-        REQUIRE_FALSE(Test::cursor()->pos() == QPoint(1, 100));
+        REQUIRE_FALSE(cursor()->pos() == QPoint(1, 100));
 
         // it's still under the reactivation
         QTest::qWait(50);
@@ -430,7 +429,7 @@ TEST_CASE("screen edges", "[input],[win]")
         REQUIRE_FALSE(spy.count() == 1);
 
         // TODO(romangg):
-        REQUIRE_FALSE(Test::cursor()->pos() == QPoint(1, 100));
+        REQUIRE_FALSE(cursor()->pos() == QPoint(1, 100));
 
         // now it should trigger again
         QTest::qWait(250);
@@ -443,7 +442,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
         QCOMPARE(spy.first().first().value<ElectricBorder>(), ElectricLeft);
         QCOMPARE(spy.last().first().value<ElectricBorder>(), ElectricLeft);
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 100));
+        QCOMPARE(cursor()->pos(), QPoint(1, 100));
 
         // let's disable pushback
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -463,7 +462,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QCOMPARE(spy.at(2).first().value<ElectricBorder>(), ElectricLeft);
 #endif
         // TODO(romangg): No dead pixel on Wayland? Needs investigation.
-        REQUIRE_FALSE(Test::cursor()->pos() == QPoint(0, 100));
+        REQUIRE_FALSE(cursor()->pos() == QPoint(0, 100));
 
         // now let's unreserve again
         unreserve_many(border_ids, ElectricTopLeft);
@@ -502,18 +501,18 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(spy.isEmpty());
 
         // try a direct activate without pushback
-        Test::cursor()->set_pos(0, 50);
+        cursor()->set_pos(0, 50);
         screenEdges->check(QPoint(0, 50), QDateTime::currentDateTimeUtc(), true);
 
         // TODO(romangg): Is twice on Wayland. Should be only one. Needs investigation.
         REQUIRE_FALSE(spy.count() == 1);
 
         // TODO(romangg): Cursor moves on other output. Needs investigation.
-        REQUIRE_FALSE(Test::cursor()->pos() == QPoint(0, 50));
+        REQUIRE_FALSE(cursor()->pos() == QPoint(0, 50));
 
         // use a different edge, this time with pushback
         border_ids.push_back(screenEdges->reserve(KWin::ElectricRight, cb));
-        Test::cursor()->set_pos(99, 50);
+        cursor()->set_pos(99, 50);
         screenEdges->check(QPoint(99, 50), QDateTime::currentDateTimeUtc());
 
         // TODO(romangg): Should have been triggered. Needs investigation.
@@ -523,13 +522,13 @@ TEST_CASE("screen edges", "[input],[win]")
         QCOMPARE(spy.last().first().value<ElectricBorder>(), ElectricLeft);
 
         // TODO(romangg): No dead pixel on Wayland? Needs investigation.
-        REQUIRE_FALSE(Test::cursor()->pos() == QPoint(98, 50));
+        REQUIRE_FALSE(cursor()->pos() == QPoint(98, 50));
 
-        Test::cursor()->set_pos(98, 50);
+        cursor()->set_pos(98, 50);
 
         // and trigger it again
         QTest::qWait(160);
-        Test::cursor()->set_pos(99, 50);
+        cursor()->set_pos(99, 50);
         screenEdges->check(QPoint(99, 50), QDateTime::currentDateTimeUtc());
 
         // TODO(romangg): Should have been triggered once more. Needs investigation.
@@ -537,7 +536,7 @@ TEST_CASE("screen edges", "[input],[win]")
         // TODO(romangg): Follow up
         REQUIRE_FALSE(spy.last().first().value<ElectricBorder>() == ElectricRight);
         // TODO(romangg): Follow up
-        REQUIRE_FALSE(Test::cursor()->pos() == QPoint(98, 50));
+        REQUIRE_FALSE(cursor()->pos() == QPoint(98, 50));
 
         unreserve_many(border_ids, ElectricLeft);
         unreserve_many(border_ids, ElectricRight);
@@ -614,19 +613,19 @@ TEST_CASE("screen edges", "[input],[win]")
 
         auto id = screenEdges->reserve(test_data.border, cb);
 
-        Test::cursor()->set_pos(test_data.trigger);
+        cursor()->set_pos(test_data.trigger);
 
         QVERIFY(spy.isEmpty());
 
         // TODO: Does not work for all data at the moment on Wayland.
 #if 0
-        REQUIRE(Test::cursor()->pos() == test_data.expected);
+        REQUIRE(cursor()->pos() == test_data.expected);
 
         // do the same without the event, but the check method
-        Test::cursor()->set_pos(trigger);
+        cursor()->set_pos(trigger);
         screenEdges->check(trigger, QDateTime::currentDateTimeUtc());
         QVERIFY(spy.isEmpty());
-        QTEST(Test::cursor()->pos(), "expected");
+        QTEST(cursor()->pos(), "expected");
 #endif
 
         unreserve(id, test_data.border);
@@ -641,15 +640,15 @@ TEST_CASE("screen edges", "[input],[win]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
-        Test::render(surface, QSize(100, 50), Qt::blue);
-        Test::flush_wayland_connection();
+        render(surface, QSize(100, 50), Qt::blue);
+        flush_wayland_connection();
         QVERIFY(clientAddedSpy.wait());
 
-        auto client = Test::get_window<Test::wayland_window>(setup.base->space->stacking.active);
+        auto client = get_window<wayland_window>(setup.base->space->stacking.active);
         QVERIFY(client);
 
         reset_edger(config);
@@ -675,9 +674,9 @@ TEST_CASE("screen edges", "[input],[win]")
             REQUIRE(e->activatesForTouchGesture() == (e->border == KWin::ElectricRight));
         }
 
-        Test::cursor()->set_pos(0, 50);
+        cursor()->set_pos(0, 50);
         QVERIFY(spy.isEmpty());
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 50));
+        QCOMPARE(cursor()->pos(), QPoint(1, 50));
 
         client->setFrameGeometry(QRect({}, setup.base->topology.size));
         win::set_active(client, true);
@@ -693,12 +692,12 @@ TEST_CASE("screen edges", "[input],[win]")
         }
         // calling again should not trigger
         QTest::qWait(160);
-        Test::cursor()->set_pos(0, 50);
+        cursor()->set_pos(0, 50);
         QVERIFY(spy.isEmpty());
 
         // and no pushback
         // TODO(romangg): Does for some reason pushback on Wayland.
-        REQUIRE_FALSE(Test::cursor()->pos() == QPoint(0, 50));
+        REQUIRE_FALSE(cursor()->pos() == QPoint(0, 50));
 
         // let's make the client not fullscreen, which should trigger
         client->setFullScreen(false);
@@ -710,7 +709,7 @@ TEST_CASE("screen edges", "[input],[win]")
         // TODO: Does not trigger for some reason on Wayland.
 #if 0
         QVERIFY(!spy.isEmpty());
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 50));
+        QCOMPARE(cursor()->pos(), QPoint(1, 50));
 
         // let's make the client fullscreen again, but with a geometry not intersecting the left edge
         QTest::qWait(351);
@@ -718,28 +717,28 @@ TEST_CASE("screen edges", "[input],[win]")
         client->setFrameGeometry(client->geo.frame.translated(10, 0));
         Q_EMIT screenEdges->checkBlocking();
         spy.clear();
-        Test::cursor()->set_pos(0, 50);
+        cursor()->set_pos(0, 50);
         QVERIFY(spy.isEmpty());
         // and a pushback
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 50));
+        QCOMPARE(cursor()->pos(), QPoint(1, 50));
 
         // just to be sure, let's set geometry back
         client->setFrameGeometry(QRect({}, setup.base->space->size));
         Q_EMIT screenEdges->checkBlocking();
-        Test::cursor()->set_pos(0, 50);
+        cursor()->set_pos(0, 50);
         QVERIFY(spy.isEmpty());
         // and no pushback
-        QCOMPARE(Test::cursor()->pos(), QPoint(0, 50));
+        QCOMPARE(cursor()->pos(), QPoint(0, 50));
 
         // the corner should always trigger
         screenEdges->unreserve(KWin::ElectricLeft, &callback);
-        Test::cursor()->set_pos(99, 99);
+        cursor()->set_pos(99, 99);
         QVERIFY(spy.isEmpty());
 
         // and pushback
-        QCOMPARE(Test::cursor()->pos(), QPoint(98, 98));
+        QCOMPARE(cursor()->pos(), QPoint(98, 98));
         QTest::qWait(160);
-        Test::cursor()->set_pos(99, 99);
+        cursor()->set_pos(99, 99);
         QVERIFY(!spy.isEmpty());
 #endif
 
@@ -752,15 +751,15 @@ TEST_CASE("screen edges", "[input],[win]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
-        Test::render(surface, QSize(100, 50), Qt::blue);
-        Test::flush_wayland_connection();
+        render(surface, QSize(100, 50), Qt::blue);
+        flush_wayland_connection();
         QVERIFY(clientAddedSpy.wait());
 
-        auto client = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto client = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(client);
 
         client->setFrameGeometry(QRect(10, 50, 10, 50));
@@ -793,14 +792,14 @@ TEST_CASE("screen edges", "[input],[win]")
         screenEdges->reserve(client, KWin::ElectricLeft);
         QCOMPARE(client->isHiddenInternal(), true);
 
-        Test::cursor()->set_pos(0, 50);
+        cursor()->set_pos(0, 50);
 
         // autohiding panels shall activate instantly
         // TODO(romangg): Is hidden on Wayland but was not on X11. Needs investigation.
         REQUIRE_FALSE(!client->isHiddenInternal());
         return;
 
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 50));
+        QCOMPARE(cursor()->pos(), QPoint(1, 50));
 
         // now let's reserve the client for each of the edges, in the end for the right one
         client->hideClient(true);
@@ -836,19 +835,19 @@ TEST_CASE("screen edges", "[input],[win]")
         // now let's try to trigger the client showing with the check method instead of enter notify
         screenEdges->reserve(client, KWin::ElectricTop);
         QCOMPARE(client->isHiddenInternal(), true);
-        Test::cursor()->set_pos(50, 0);
+        cursor()->set_pos(50, 0);
         screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc());
         QCOMPARE(client->isHiddenInternal(), false);
-        QCOMPARE(Test::cursor()->pos(), QPoint(50, 1));
+        QCOMPARE(cursor()->pos(), QPoint(50, 1));
 
         // unreserve by setting to none edge
         screenEdges->reserve(client, KWin::ElectricNone);
         // check on previous edge again, should fail
         client->hideClient(true);
-        Test::cursor()->set_pos(50, 0);
+        cursor()->set_pos(50, 0);
         screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc());
         QCOMPARE(client->isHiddenInternal(), true);
-        QCOMPARE(Test::cursor()->pos(), QPoint(50, 0));
+        QCOMPARE(cursor()->pos(), QPoint(50, 0));
 
         // set to windows can cover
         client->setFrameGeometry(QRect({}, setup.base->topology.size));
@@ -858,10 +857,10 @@ TEST_CASE("screen edges", "[input],[win]")
         REQUIRE(client->control->keep_below);
         REQUIRE(!client->isHiddenInternal());
 
-        Test::cursor()->set_pos(0, 50);
+        cursor()->set_pos(0, 50);
         REQUIRE(!client->control->keep_below);
         REQUIRE(!client->isHiddenInternal());
-        QCOMPARE(Test::cursor()->pos(), QPoint(1, 50));
+        QCOMPARE(cursor()->pos(), QPoint(1, 50));
     }
 
     SECTION("touch edge")
@@ -913,7 +912,7 @@ TEST_CASE("screen edges", "[input],[win]")
                                   &win::screen_edger_qobject::approaching);
         QVERIFY(approachingSpy.isValid());
 
-        auto setPos = [](const QPoint& pos) { Test::cursor()->set_pos(pos); };
+        auto setPos = [](const QPoint& pos) { cursor()->set_pos(pos); };
         setPos(QPoint(0, 50));
         QVERIFY(approachingSpy.isEmpty());
         // let's also verify the check

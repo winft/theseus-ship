@@ -28,13 +28,13 @@ TEST_CASE("screens", "[base]")
 {
     test::setup setup("screens");
     setup.start();
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
     setup.set_outputs(1);
-    Test::set_current_output(0);
-    Test::cursor()->set_pos(QPoint(640, 512));
+    set_current_output(0);
+    cursor()->set_pos(QPoint(640, 512));
 
     SECTION("reconfigure")
     {
@@ -206,7 +206,7 @@ TEST_CASE("screens", "[base]")
         QSignalSpy current_changed_spy(base.get(), &base::platform::current_output_changed);
         QVERIFY(current_changed_spy.isValid());
 
-        Test::set_current_output(test_data.current);
+        set_current_output(test_data.current);
         QCOMPARE(
             base::get_output_index(base->outputs, *win::get_current_output(*setup.base->space)),
             test_data.current);
@@ -230,18 +230,18 @@ TEST_CASE("screens", "[base]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
-        Test::render(surface, QSize(100, 50), Qt::blue);
-        Test::flush_wayland_connection();
+        render(surface, QSize(100, 50), Qt::blue);
+        flush_wayland_connection();
         QVERIFY(clientAddedSpy.wait());
-        auto client = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto client = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(client);
 
         win::move(client, QPoint(101, 0));
-        QCOMPARE(setup.base->space->stacking.active, Test::space::window_t(client));
+        QCOMPARE(setup.base->space->stacking.active, space::window_t(client));
         win::unset_active_window(*setup.base->space);
         QVERIFY(!setup.base->space->stacking.active);
 
@@ -260,7 +260,7 @@ TEST_CASE("screens", "[base]")
         // making the client active should affect things
         win::set_active(client, true);
         win::set_active_window(*setup.base->space, *client);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), client);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client);
 
         // first of all current should be changed just by the fact that there is an active client
         output = base::get_output(setup.base->get_outputs(), 1);
@@ -319,7 +319,7 @@ TEST_CASE("screens", "[base]")
         group.sync();
         win::space_reconfigure(*setup.base->space);
 
-        Test::pointer_motion_absolute(QPointF(0, 0), 1);
+        pointer_motion_absolute(QPointF(0, 0), 1);
 
         auto output = base::get_output(setup.base->get_outputs(), 0);
         QVERIFY(output);
@@ -328,7 +328,7 @@ TEST_CASE("screens", "[base]")
         setup.set_outputs(test_data.geometries);
         QCOMPARE(changedSpy.count(), 1);
 
-        Test::pointer_motion_absolute(test_data.cursor_pos, 2);
+        pointer_motion_absolute(test_data.cursor_pos, 2);
 
         output = base::get_output(setup.base->get_outputs(), test_data.expected);
         QVERIFY(output);

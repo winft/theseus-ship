@@ -34,13 +34,13 @@ TEST_CASE("no crash empty deco", "[win]")
     test::setup setup("no-crash-empty-deco", base::operation_mode::xwayland);
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
+    test_outputs_default();
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 
-    Test::cursor()->set_pos(QPoint(640, 512));
+    cursor()->set_pos(QPoint(640, 512));
 
     // create an xcb window
     xcb_connection_t* c = xcb_connect(nullptr, nullptr);
@@ -70,7 +70,7 @@ TEST_CASE("no crash empty deco", "[win]")
     QVERIFY(windowCreatedSpy.wait());
 
     auto win_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(setup.base->space->windows_map.at(win_id));
+    auto client = get_x11_window(setup.base->space->windows_map.at(win_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(win::decoration(client));

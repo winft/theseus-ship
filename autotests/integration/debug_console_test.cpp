@@ -61,8 +61,8 @@ TEST_CASE("debug console", "[debug]")
     test::setup setup("debug-console", base::operation_mode::xwayland);
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection();
+    test_outputs_default();
+    setup_wayland_connection();
 
     SECTION("toplevel")
     {
@@ -321,15 +321,15 @@ TEST_CASE("debug console", "[debug]")
         QVERIFY(rowsInsertedSpy.isValid());
 
         // create our connection
-        Test::setup_wayland_connection();
+        setup_wayland_connection();
 
         // create the Surface and ShellSurface
         using namespace Wrapland::Client;
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface->isValid());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
-        Test::render(surface, QSize(10, 10), Qt::red);
+        render(surface, QSize(10, 10), Qt::red);
 
         // now we have the window, it should be added to our model
         QVERIFY(rowsInsertedSpy.wait());
@@ -391,7 +391,7 @@ TEST_CASE("debug console", "[debug]")
         surface->attachBuffer(Buffer::Ptr());
         surface->commit(Surface::CommitFlag::None);
         shellSurface.reset();
-        Test::flush_wayland_connection();
+        flush_wayland_connection();
         QVERIFY(rowsRemovedSpy.wait(500));
         surface.reset();
 
@@ -500,7 +500,7 @@ TEST_CASE("debug console", "[debug]")
         QTRY_COMPARE(clientAddedSpy.count(), 1);
 
         auto win_id = clientAddedSpy.first().first().value<quint32>();
-        auto c = Test::get_internal_window(setup.base->space->windows_map.at(win_id));
+        auto c = get_internal_window(setup.base->space->windows_map.at(win_id));
         QVERIFY(c);
         QVERIFY(c->isInternal());
         QCOMPARE(c->internalWindow(), console->windowHandle());

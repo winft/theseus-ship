@@ -32,7 +32,7 @@ TEST_CASE("no crash cancel animation", "[render]")
     REQUIRE(setup.base->render->compositor);
     REQUIRE(effects);
 
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
     // load a scripted effect which deletes animation data
     auto effect = scripting::effect::create(QStringLiteral("crashy"),
@@ -59,16 +59,16 @@ TEST_CASE("no crash cancel animation", "[render]")
     using namespace Wrapland::Client;
 
     // create a window
-    auto surface = std::unique_ptr<Wrapland::Client::Surface>(Test::create_surface());
+    auto surface = std::unique_ptr<Wrapland::Client::Surface>(create_surface());
     QVERIFY(surface);
-    auto shellSurface = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(
-        Test::create_xdg_shell_toplevel(surface));
+    auto shellSurface
+        = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
 
     // let's render
-    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+    auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+    QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
 
     // make sure we animate
     QTest::qWait(200);

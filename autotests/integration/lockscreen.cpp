@@ -109,15 +109,15 @@ Q_SIGNALS:
     QCOMPARE(lockStateChangedSpy.count(), expectedLockCount + 1);                                  \
     QVERIFY(!base::wayland::is_screen_locked(setup.base));
 
-#define MOTION(target) Test::pointer_motion_absolute(target, timestamp++)
+#define MOTION(target) pointer_motion_absolute(target, timestamp++)
 
-#define PRESS Test::pointer_button_pressed(BTN_LEFT, timestamp++)
+#define PRESS pointer_button_pressed(BTN_LEFT, timestamp++)
 
-#define RELEASE Test::pointer_button_released(BTN_LEFT, timestamp++)
+#define RELEASE pointer_button_released(BTN_LEFT, timestamp++)
 
-#define KEYPRESS(key) Test::keyboard_key_pressed(key, timestamp++)
+#define KEYPRESS(key) keyboard_key_pressed(key, timestamp++)
 
-#define KEYRELEASE(key) Test::keyboard_key_released(key, timestamp++)
+#define KEYRELEASE(key) keyboard_key_released(key, timestamp++)
 
 TEST_CASE("lockscreen", "[base]")
 {
@@ -126,17 +126,17 @@ TEST_CASE("lockscreen", "[base]")
     test::setup setup("lockscreen", base::operation_mode::xwayland);
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
+    test_outputs_default();
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 
-    Test::setup_wayland_connection(Test::global_selection::seat);
-    QVERIFY(Test::wait_for_wayland_pointer());
+    setup_wayland_connection(global_selection::seat);
+    QVERIFY(wait_for_wayland_pointer());
 
-    Test::set_current_output(0);
-    Test::cursor()->set_pos(QPoint(640, 512));
+    set_current_output(0);
+    cursor()->set_pos(QPoint(640, 512));
 
     std::unique_ptr<Wrapland::Client::Surface> surface_holder;
     std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel_holder;
@@ -144,16 +144,16 @@ TEST_CASE("lockscreen", "[base]")
     auto showWindow = [&]() {
         using namespace Wrapland::Client;
 
-        surface_holder = Test::create_surface();
+        surface_holder = create_surface();
         REQUIRE(surface_holder.get());
-        toplevel_holder = Test::create_xdg_shell_toplevel(surface_holder);
+        toplevel_holder = create_xdg_shell_toplevel(surface_holder);
         REQUIRE(toplevel_holder.get());
 
         // Let's render.
-        auto c = Test::render_and_wait_for_shown(surface_holder, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface_holder, QSize(100, 50), Qt::blue);
 
         REQUIRE(c);
-        REQUIRE(Test::get_wayland_window(setup.base->space->stacking.active) == c);
+        REQUIRE(get_wayland_window(setup.base->space->stacking.active) == c);
 
         return c;
     };
@@ -168,7 +168,7 @@ TEST_CASE("lockscreen", "[base]")
         LOCK QVERIFY(clientAddedSpy.wait());
 
         auto window_id = clientAddedSpy.first().first().value<quint32>();
-        auto client = Test::get_wayland_window(setup.base->space->windows_map.at(window_id));
+        auto client = get_wayland_window(setup.base->space->windows_map.at(window_id));
         QVERIFY(client);
         QVERIFY(client->isLockScreen());
         QCOMPARE(win::get_layer(*client), win::layer::unmanaged);
@@ -180,7 +180,7 @@ TEST_CASE("lockscreen", "[base]")
     {
         using namespace Wrapland::Client;
 
-        std::unique_ptr<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
+        std::unique_ptr<Pointer> pointer(get_client().interfaces.seat->createPointer());
         QVERIFY(pointer);
 
         QSignalSpy enteredSpy(pointer.get(), &Pointer::entered);
@@ -228,7 +228,7 @@ TEST_CASE("lockscreen", "[base]")
     {
         using namespace Wrapland::Client;
 
-        std::unique_ptr<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
+        std::unique_ptr<Pointer> pointer(get_client().interfaces.seat->createPointer());
         QVERIFY(pointer);
 
         QSignalSpy enteredSpy(pointer.get(), &Pointer::entered);
@@ -272,7 +272,7 @@ TEST_CASE("lockscreen", "[base]")
     {
         using namespace Wrapland::Client;
 
-        std::unique_ptr<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
+        std::unique_ptr<Pointer> pointer(get_client().interfaces.seat->createPointer());
         QVERIFY(pointer);
 
         QSignalSpy axisChangedSpy(pointer.get(), &Pointer::axisChanged);
@@ -289,15 +289,15 @@ TEST_CASE("lockscreen", "[base]")
         QVERIFY(enteredSpy.wait());
 
         // And simulate axis.
-        Test::pointer_axis_horizontal(5.0, timestamp++, 0);
+        pointer_axis_horizontal(5.0, timestamp++, 0);
         QVERIFY(axisChangedSpy.wait());
 
         LOCK
 
             // Simulate axis one more time. Now without change.
-            Test::pointer_axis_horizontal(5.0, timestamp++, 0);
+            pointer_axis_horizontal(5.0, timestamp++, 0);
         QVERIFY(!axisChangedSpy.wait(500));
-        Test::pointer_axis_vertical(5.0, timestamp++, 0);
+        pointer_axis_vertical(5.0, timestamp++, 0);
         QVERIFY(!axisChangedSpy.wait(500));
 
         // And unlock.
@@ -305,9 +305,9 @@ TEST_CASE("lockscreen", "[base]")
         QTRY_COMPARE(enteredSpy.count(), 2);
 
         // And move axis again.
-        Test::pointer_axis_horizontal(5.0, timestamp++, 0);
+        pointer_axis_horizontal(5.0, timestamp++, 0);
         QVERIFY(axisChangedSpy.wait());
-        Test::pointer_axis_vertical(5.0, timestamp++, 0);
+        pointer_axis_vertical(5.0, timestamp++, 0);
         QVERIFY(axisChangedSpy.wait());
     }
 
@@ -315,7 +315,7 @@ TEST_CASE("lockscreen", "[base]")
     {
         using namespace Wrapland::Client;
 
-        std::unique_ptr<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
+        std::unique_ptr<Keyboard> keyboard(get_client().interfaces.seat->createKeyboard());
         QVERIFY(keyboard);
 
         QSignalSpy enteredSpy(keyboard.get(), &Keyboard::entered);
@@ -534,37 +534,37 @@ TEST_CASE("lockscreen", "[base]")
         quint32 timestamp = 1;
 
         win::active_window_move(*setup.base->space);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->move_resize_window), c);
+        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), c);
         QVERIFY(win::is_move(c));
 
-        Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
-        Test::keyboard_key_released(KEY_RIGHT, timestamp++);
+        keyboard_key_pressed(KEY_RIGHT, timestamp++);
+        keyboard_key_released(KEY_RIGHT, timestamp++);
         QEXPECT_FAIL("", "First event is ignored", Continue);
         QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
         // TODO: Adjust once the expected fail is fixed.
-        Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
-        Test::keyboard_key_released(KEY_RIGHT, timestamp++);
+        keyboard_key_pressed(KEY_RIGHT, timestamp++);
+        keyboard_key_released(KEY_RIGHT, timestamp++);
         QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
         // While locking our window should continue to be in move resize.
         LOCK;
-        QCOMPARE(Test::get_wayland_window(setup.base->space->move_resize_window), c);
+        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), c);
         QVERIFY(win::is_move(c));
-        Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
-        Test::keyboard_key_released(KEY_RIGHT, timestamp++);
+        keyboard_key_pressed(KEY_RIGHT, timestamp++);
+        keyboard_key_released(KEY_RIGHT, timestamp++);
         QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
         UNLOCK
-        QCOMPARE(Test::get_wayland_window(setup.base->space->move_resize_window), c);
+        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), c);
         QVERIFY(win::is_move(c));
 
-        Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
-        Test::keyboard_key_released(KEY_RIGHT, timestamp++);
+        keyboard_key_pressed(KEY_RIGHT, timestamp++);
+        keyboard_key_released(KEY_RIGHT, timestamp++);
         QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
 
-        Test::keyboard_key_pressed(KEY_ESC, timestamp++);
-        Test::keyboard_key_released(KEY_ESC, timestamp++);
+        keyboard_key_pressed(KEY_ESC, timestamp++);
+        keyboard_key_released(KEY_ESC, timestamp++);
         QVERIFY(!win::is_move(c));
     }
 
@@ -583,12 +583,12 @@ TEST_CASE("lockscreen", "[base]")
         quint32 timestamp = 1;
 
 #define PERFORM(expectedCount)                                                                     \
-    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);                                         \
+    keyboard_key_pressed(KEY_LEFTMETA, timestamp++);                                               \
     PRESS;                                                                                         \
     QCoreApplication::instance()->processEvents();                                                 \
     QCOMPARE(actionSpy.count(), expectedCount);                                                    \
     RELEASE;                                                                                       \
-    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);                                        \
+    keyboard_key_released(KEY_LEFTMETA, timestamp++);                                              \
     QCoreApplication::instance()->processEvents();                                                 \
     QCOMPARE(actionSpy.count(), expectedCount);
 
@@ -628,14 +628,14 @@ TEST_CASE("lockscreen", "[base]")
         quint32 timestamp = 1;
 
 #define PERFORM(expectedCount)                                                                     \
-    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);                                         \
+    keyboard_key_pressed(KEY_LEFTMETA, timestamp++);                                               \
     if (direction == Qt::Vertical)                                                                 \
-        Test::pointer_axis_vertical(sign * 5.0, timestamp++, 0);                                   \
+        pointer_axis_vertical(sign * 5.0, timestamp++, 0);                                         \
     else                                                                                           \
-        Test::pointer_axis_horizontal(sign * 5.0, timestamp++, 0);                                 \
+        pointer_axis_horizontal(sign * 5.0, timestamp++, 0);                                       \
     QCoreApplication::instance()->processEvents();                                                 \
     QCOMPARE(actionSpy.count(), expectedCount);                                                    \
-    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);                                        \
+    keyboard_key_released(KEY_LEFTMETA, timestamp++);                                              \
     QCoreApplication::instance()->processEvents();                                                 \
     QCOMPARE(actionSpy.count(), expectedCount);
 
@@ -659,7 +659,7 @@ TEST_CASE("lockscreen", "[base]")
         QVERIFY(actionSpy.isValid());
 
         action->setProperty("componentName", QStringLiteral(KWIN_NAME));
-        action->setObjectName("LockScreenTest::testKeyboardShortcut");
+        action->setObjectName("LockScreentestKeyboardShortcut");
 
         KGlobalAccel::self()->setDefaultShortcut(
             action.get(), QList<QKeySequence>{Qt::CTRL + Qt::META + Qt::ALT + Qt::Key_Space});
@@ -709,8 +709,7 @@ TEST_CASE("lockscreen", "[base]")
     {
         using namespace Wrapland::Client;
 
-        auto touch = Test::get_client().interfaces.seat->createTouch(
-            Test::get_client().interfaces.seat.get());
+        auto touch = get_client().interfaces.seat->createTouch(get_client().interfaces.seat.get());
         QVERIFY(touch);
         QVERIFY(touch->isValid());
 
@@ -726,25 +725,25 @@ TEST_CASE("lockscreen", "[base]")
 
         quint32 timestamp = 1;
 
-        Test::touch_down(1, QPointF(25, 25), timestamp++);
+        touch_down(1, QPointF(25, 25), timestamp++);
         QVERIFY(sequenceStartedSpy.wait());
         QCOMPARE(sequenceStartedSpy.count(), 1);
 
         LOCK QVERIFY(cancelSpy.wait());
 
-        Test::touch_up(1, timestamp++);
+        touch_up(1, timestamp++);
 
         QVERIFY(!pointRemovedSpy.wait(500));
-        Test::touch_down(1, QPointF(25, 25), timestamp++);
-        Test::touch_motion(1, QPointF(26, 26), timestamp++);
-        Test::touch_up(1, timestamp++);
+        touch_down(1, QPointF(25, 25), timestamp++);
+        touch_motion(1, QPointF(26, 26), timestamp++);
+        touch_up(1, timestamp++);
 
         UNLOCK
-        Test::touch_down(1, QPointF(25, 25), timestamp++);
+        touch_down(1, QPointF(25, 25), timestamp++);
         QVERIFY(sequenceStartedSpy.wait());
         QCOMPARE(sequenceStartedSpy.count(), 2);
 
-        Test::touch_up(1, timestamp++);
+        touch_up(1, timestamp++);
         QVERIFY(pointRemovedSpy.wait());
         QCOMPARE(pointRemovedSpy.count(), 1);
     }

@@ -27,7 +27,7 @@ class SubSurface;
 class Surface;
 }
 
-namespace KWin::Test
+namespace KWin::detail::test
 {
 
 class client;

@@ -40,11 +40,11 @@ Q_DECLARE_METATYPE(Qt::WindowFrameSection)
 namespace KWin::detail::test
 {
 
-#define MOTION(target) Test::pointer_motion_absolute(target, timestamp++)
+#define MOTION(target) pointer_motion_absolute(target, timestamp++)
 
-#define PRESS Test::pointer_button_pressed(BTN_LEFT, timestamp++)
+#define PRESS pointer_button_pressed(BTN_LEFT, timestamp++)
 
-#define RELEASE Test::pointer_button_released(BTN_LEFT, timestamp++)
+#define RELEASE pointer_button_released(BTN_LEFT, timestamp++)
 
 class EventHelper : public QObject
 {
@@ -81,7 +81,7 @@ TEST_CASE("decoration input", "[input],[win]")
         std::unique_ptr<Wrapland::Client::Surface> surface;
     } client;
 
-    auto showWindow = [&]() -> Test::space::wayland_window* {
+    auto showWindow = [&]() -> space::wayland_window* {
         using namespace Wrapland::Client;
 
 #define VERIFY(statement)                                                                          \
@@ -91,21 +91,20 @@ TEST_CASE("decoration input", "[input],[win]")
     if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))                \
         return nullptr;
 
-        client.surface = Test::create_surface();
+        client.surface = create_surface();
         VERIFY(client.surface.get());
-        client.toplevel
-            = Test::create_xdg_shell_toplevel(client.surface, Test::CreationSetup::CreateOnly);
+        client.toplevel = create_xdg_shell_toplevel(client.surface, CreationSetup::CreateOnly);
         VERIFY(client.toplevel.get());
 
         QSignalSpy configureRequestedSpy(client.toplevel.get(), &XdgShellToplevel::configured);
 
-        auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+        auto deco = get_client().interfaces.xdg_decoration->getToplevelDecoration(
             client.toplevel.get(), client.toplevel.get());
         QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
         VERIFY(decoSpy.isValid());
         deco->setMode(XdgDecoration::Mode::ServerSide);
         COMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-        Test::init_xdg_shell_toplevel(client.surface, client.toplevel);
+        init_xdg_shell_toplevel(client.surface, client.toplevel);
         COMPARE(decoSpy.count(), 1);
         COMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 
@@ -115,9 +114,9 @@ TEST_CASE("decoration input", "[input],[win]")
         client.toplevel->ackConfigure(configureRequestedSpy.back().front().toInt());
 
         // let's render
-        auto c = Test::render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);
         VERIFY(c);
-        COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        COMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         COMPARE(c->userCanSetNoBorder(), true);
         COMPARE(win::decoration(c) != nullptr, true);
 
@@ -140,11 +139,10 @@ TEST_CASE("decoration input", "[input],[win]")
 
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection(Test::global_selection::seat
-                                   | Test::global_selection::xdg_decoration);
-    QVERIFY(Test::wait_for_wayland_pointer());
-    Test::cursor()->set_pos(QPoint(640, 512));
+    test_outputs_default();
+    setup_wayland_connection(global_selection::seat | global_selection::xdg_decoration);
+    QVERIFY(wait_for_wayland_pointer());
+    cursor()->set_pos(QPoint(640, 512));
 
     SECTION("axis")
     {
@@ -174,13 +172,13 @@ TEST_CASE("decoration input", "[input],[win]")
 
         // TODO: mouse wheel direction looks wrong to me
         // simulate wheel
-        Test::pointer_axis_vertical(5.0, timestamp++, 0);
+        pointer_axis_vertical(5.0, timestamp++, 0);
         QVERIFY(c->control->keep_below);
         QVERIFY(!c->control->keep_above);
-        Test::pointer_axis_vertical(-5.0, timestamp++, 0);
+        pointer_axis_vertical(-5.0, timestamp++, 0);
         QVERIFY(!c->control->keep_below);
         QVERIFY(!c->control->keep_above);
-        Test::pointer_axis_vertical(-5.0, timestamp++, 0);
+        pointer_axis_vertical(-5.0, timestamp++, 0);
         QVERIFY(!c->control->keep_below);
         QVERIFY(c->control->keep_above);
 
@@ -189,11 +187,11 @@ TEST_CASE("decoration input", "[input],[win]")
         MOTION(test_data.deco_point);
         QVERIFY(setup.base->space->input->pointer->focus.deco.client);
         QVERIFY(setup.base->space->input->pointer->focus.deco.window);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->input->pointer->focus.window), c);
+        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), c);
         REQUIRE(
             setup.base->space->input->pointer->focus.deco.client->decoration()->sectionUnderMouse()
             == test_data.expected_section);
-        Test::pointer_axis_vertical(5.0, timestamp++, 0);
+        pointer_axis_vertical(5.0, timestamp++, 0);
         QVERIFY(!c->control->keep_below);
 
         // Button at (0,0;24x24) filters out the event.
@@ -237,7 +235,7 @@ TEST_CASE("decoration input", "[input],[win]")
         MOTION(test_data.deco_point);
         QVERIFY(setup.base->space->input->pointer->focus.deco.client);
         QVERIFY(setup.base->space->input->pointer->focus.deco.window);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->input->pointer->focus.window), c);
+        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), c);
         REQUIRE(
             setup.base->space->input->pointer->focus.deco.client->decoration()->sectionUnderMouse()
             == test_data.expected_section);
@@ -270,17 +268,17 @@ TEST_CASE("decoration input", "[input],[win]")
                               win::frame_to_client_pos(c, QPoint()).y() / 2);
 
         // double tap
-        Test::touch_down(0, tapPoint, timestamp++);
-        Test::touch_up(0, timestamp++);
-        Test::touch_down(0, tapPoint, timestamp++);
-        Test::touch_up(0, timestamp++);
+        touch_down(0, tapPoint, timestamp++);
+        touch_up(0, timestamp++);
+        touch_down(0, tapPoint, timestamp++);
+        touch_up(0, timestamp++);
         QVERIFY(win::on_all_desktops(c));
         // double tap again
-        Test::touch_down(0, tapPoint, timestamp++);
-        Test::touch_up(0, timestamp++);
+        touch_down(0, tapPoint, timestamp++);
+        touch_up(0, timestamp++);
         QVERIFY(win::on_all_desktops(c));
-        Test::touch_down(0, tapPoint, timestamp++);
-        Test::touch_up(0, timestamp++);
+        touch_down(0, tapPoint, timestamp++);
+        touch_up(0, timestamp++);
         QVERIFY(!win::on_all_desktops(c));
 
         // test top most deco pixel, BUG: 362860
@@ -290,17 +288,17 @@ TEST_CASE("decoration input", "[input],[win]")
         win::move(c, QPoint(10, 10));
 
         // double click
-        Test::touch_down(0, test_data.deco_point, timestamp++);
+        touch_down(0, test_data.deco_point, timestamp++);
         QVERIFY(setup.base->space->input->touch->focus.deco.client);
         QVERIFY(setup.base->space->input->touch->focus.deco.window);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->input->touch->focus.window), c);
+        QCOMPARE(get_wayland_window(setup.base->space->input->touch->focus.window), c);
         REQUIRE(
             setup.base->space->input->touch->focus.deco.client->decoration()->sectionUnderMouse()
             == test_data.expected_section);
-        Test::touch_up(0, timestamp++);
+        touch_up(0, timestamp++);
         QVERIFY(!win::on_all_desktops(c));
-        Test::touch_down(0, test_data.deco_point, timestamp++);
-        Test::touch_up(0, timestamp++);
+        touch_down(0, test_data.deco_point, timestamp++);
+        touch_up(0, timestamp++);
         QVERIFY(win::on_all_desktops(c));
     }
 
@@ -380,7 +378,7 @@ TEST_CASE("decoration input", "[input],[win]")
         QVERIFY(win::decoration(c));
         QVERIFY(!c->noBorder());
         win::move(c,
-                  Test::get_output(0)->geometry().center()
+                  get_output(0)->geometry().center()
                       - QPoint(c->geo.size().width() / 2, c->geo.size().height() / 2));
         QSignalSpy startMoveResizedSpy(c->qobject.get(),
                                        &win::window_qobject::clientStartUserMovedResized);
@@ -448,7 +446,7 @@ TEST_CASE("decoration input", "[input],[win]")
         QVERIFY(win::decoration(c));
         QVERIFY(!c->noBorder());
         win::move(c,
-                  Test::get_output(0)->geometry().center()
+                  get_output(0)->geometry().center()
                       - QPoint(c->geo.size().width() / 2, c->geo.size().height() / 2));
         QSignalSpy startMoveResizedSpy(c->qobject.get(),
                                        &win::window_qobject::clientStartUserMovedResized);
@@ -461,15 +459,15 @@ TEST_CASE("decoration input", "[input],[win]")
         QPoint p = QPoint(c->geo.frame.center().x(),
                           c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2);
 
-        Test::touch_down(0, p, timestamp++);
+        touch_down(0, p, timestamp++);
         QVERIFY(!win::is_move(c));
         QCOMPARE(setup.base->space->input->touch->decorationPressId(), 0);
-        Test::touch_motion(0, p + test_data.offset, timestamp++);
+        touch_motion(0, p + test_data.offset, timestamp++);
         const QPoint oldPos = c->geo.pos();
         QVERIFY(win::is_move(c));
         QCOMPARE(startMoveResizedSpy.count(), 1);
 
-        Test::touch_up(0, timestamp++);
+        touch_up(0, timestamp++);
         QTRY_VERIFY(!win::is_move(c));
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
 
@@ -477,23 +475,23 @@ TEST_CASE("decoration input", "[input],[win]")
         REQUIRE(c->geo.pos() != oldPos + test_data.offset);
 
         // again
-        Test::touch_down(1, p + test_data.offset, timestamp++);
+        touch_down(1, p + test_data.offset, timestamp++);
         QCOMPARE(setup.base->space->input->touch->decorationPressId(), 1);
         QVERIFY(!win::is_move(c));
-        Test::touch_motion(1,
-                           QPoint(c->geo.frame.center().x(),
-                                  c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
-                               + test_data.offset2,
-                           timestamp++);
+        touch_motion(1,
+                     QPoint(c->geo.frame.center().x(),
+                            c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
+                         + test_data.offset2,
+                     timestamp++);
         QVERIFY(win::is_move(c));
         QCOMPARE(startMoveResizedSpy.count(), 2);
-        Test::touch_motion(1,
-                           QPoint(c->geo.frame.center().x(),
-                                  c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
-                               + test_data.offset3,
-                           timestamp++);
+        touch_motion(1,
+                     QPoint(c->geo.frame.center().x(),
+                            c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2)
+                         + test_data.offset3,
+                     timestamp++);
 
-        Test::touch_up(1, timestamp++);
+        touch_up(1, timestamp++);
         QTRY_VERIFY(!win::is_move(c));
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 2);
 
@@ -525,7 +523,7 @@ TEST_CASE("decoration input", "[input],[win]")
         QVERIFY(win::decoration(c));
         QVERIFY(!c->noBorder());
         win::move(c,
-                  Test::get_output(0)->geometry().center()
+                  get_output(0)->geometry().center()
                       - QPoint(c->geo.size().width() / 2, c->geo.size().height() / 2));
         QVERIFY(c->geo.frame != win::input_geometry(c));
         QVERIFY(win::input_geometry(c).contains(c->geo.frame));
@@ -549,7 +547,7 @@ TEST_CASE("decoration input", "[input],[win]")
             break;
         }
 
-        QVERIFY(!c->geo.frame.contains(Test::cursor()->pos()));
+        QVERIFY(!c->geo.frame.contains(cursor()->pos()));
 
         // pressing should trigger resize
         PRESS;
@@ -601,35 +599,34 @@ TEST_CASE("decoration input", "[input],[win]")
         QVERIFY(win::decoration(c));
         QVERIFY(!c->noBorder());
         win::move(c,
-                  Test::get_output(0)->geometry().center()
+                  get_output(0)->geometry().center()
                       - QPoint(c->geo.size().width() / 2, c->geo.size().height() / 2));
 
         // move cursor on window
-        Test::cursor()->set_pos(
-            QPoint(c->geo.frame.center().x(),
-                   c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
+        cursor()->set_pos(QPoint(c->geo.frame.center().x(),
+                                 c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
 
         // simulate modifier+click
         quint32 timestamp = 1;
         if (caps_lock) {
-            Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
+            keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
         }
 
-        Test::keyboard_key_pressed(modifier.key, timestamp++);
+        keyboard_key_pressed(modifier.key, timestamp++);
         QVERIFY(!win::is_move(c));
-        Test::pointer_button_pressed(mouse_button, timestamp++);
+        pointer_button_pressed(mouse_button, timestamp++);
         QVERIFY(win::is_move(c));
 
         // release modifier should not change it
-        Test::keyboard_key_released(modifier.key, timestamp++);
+        keyboard_key_released(modifier.key, timestamp++);
         QVERIFY(win::is_move(c));
 
         // but releasing the key should end move/resize
-        Test::pointer_button_released(mouse_button, timestamp++);
+        pointer_button_released(mouse_button, timestamp++);
         QVERIFY(!win::is_move(c));
 
         if (caps_lock) {
-            Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
+            keyboard_key_released(KEY_CAPSLOCK, timestamp++);
         }
     }
 
@@ -658,13 +655,12 @@ TEST_CASE("decoration input", "[input],[win]")
         QVERIFY(win::decoration(c));
         QVERIFY(!c->noBorder());
         win::move(c,
-                  Test::get_output(0)->geometry().center()
+                  get_output(0)->geometry().center()
                       - QPoint(c->geo.size().width() / 2, c->geo.size().height() / 2));
 
         // move cursor on window
-        Test::cursor()->set_pos(
-            QPoint(c->geo.frame.center().x(),
-                   c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
+        cursor()->set_pos(QPoint(c->geo.frame.center().x(),
+                                 c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
 
         // set the opacity to 0.5
         c->setOpacity(0.5);
@@ -673,18 +669,18 @@ TEST_CASE("decoration input", "[input],[win]")
         // simulate modifier+wheel
         quint32 timestamp = 1;
         if (caps_lock) {
-            Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
+            keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
         }
 
-        Test::keyboard_key_pressed(modifier.key, timestamp++);
-        Test::pointer_axis_vertical(-5, timestamp++, 0);
+        keyboard_key_pressed(modifier.key, timestamp++);
+        pointer_axis_vertical(-5, timestamp++, 0);
         QCOMPARE(c->opacity(), 0.6);
-        Test::pointer_axis_vertical(5, timestamp++, 0);
+        pointer_axis_vertical(5, timestamp++, 0);
         QCOMPARE(c->opacity(), 0.5);
-        Test::keyboard_key_released(modifier.key, timestamp++);
+        keyboard_key_released(modifier.key, timestamp++);
 
         if (caps_lock) {
-            Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
+            keyboard_key_released(KEY_CAPSLOCK, timestamp++);
         }
     }
 
@@ -708,25 +704,25 @@ TEST_CASE("decoration input", "[input],[win]")
                               win::frame_to_client_pos(c, QPoint()).y() / 2);
 
         QVERIFY(!setup.base->space->input->touch->focus.deco.client);
-        Test::touch_down(0, tapPoint, timestamp++);
+        touch_down(0, tapPoint, timestamp++);
         QVERIFY(setup.base->space->input->touch->focus.deco.client);
         QCOMPARE(setup.base->space->input->touch->focus.deco.client->decoration(),
                  win::decoration(c));
         QCOMPARE(hoverMoveSpy.count(), 1);
         QCOMPARE(hoverLeaveSpy.count(), 0);
-        Test::touch_up(0, timestamp++);
+        touch_up(0, timestamp++);
         QCOMPARE(hoverMoveSpy.count(), 1);
         QCOMPARE(hoverLeaveSpy.count(), 1);
 
         QCOMPARE(win::is_move(c), false);
 
         // let's check that a hover motion is sent if the pointer is on deco, when touch release
-        Test::cursor()->set_pos(tapPoint);
+        cursor()->set_pos(tapPoint);
         QCOMPARE(hoverMoveSpy.count(), 2);
-        Test::touch_down(0, tapPoint, timestamp++);
+        touch_down(0, tapPoint, timestamp++);
         QCOMPARE(hoverMoveSpy.count(), 3);
         QCOMPARE(hoverLeaveSpy.count(), 1);
-        Test::touch_up(0, timestamp++);
+        touch_up(0, timestamp++);
         QCOMPARE(hoverMoveSpy.count(), 3);
         QCOMPARE(hoverLeaveSpy.count(), 2);
     }
@@ -736,7 +732,7 @@ TEST_CASE("decoration input", "[input],[win]")
         // Verifies that a tooltip on the decoration does not steal key events, see BUG: 393253.
 
         // first create a keyboard
-        auto seat = Test::get_client().interfaces.seat.get();
+        auto seat = get_client().interfaces.seat.get();
         auto keyboard = seat->createKeyboard(seat);
         QVERIFY(keyboard);
         QSignalSpy enteredSpy(keyboard, &Wrapland::Client::Keyboard::entered);
@@ -759,20 +755,20 @@ TEST_CASE("decoration input", "[input],[win]")
 
         QVERIFY(clientAddedSpy.wait());
         auto win_id = clientAddedSpy.first().first().value<quint32>();
-        auto internal = Test::get_internal_window(setup.base->space->windows_map.at(win_id));
+        auto internal = get_internal_window(setup.base->space->windows_map.at(win_id));
         QVERIFY(internal);
         QVERIFY(internal->isInternal());
         QVERIFY(internal->internalWindow()->flags().testFlag(Qt::ToolTip));
 
         // now send a key
         quint32 timestamp = 0;
-        Test::keyboard_key_pressed(KEY_A, timestamp++);
+        keyboard_key_pressed(KEY_A, timestamp++);
         QVERIFY(keyEvent.wait());
-        Test::keyboard_key_released(KEY_A, timestamp++);
+        keyboard_key_released(KEY_A, timestamp++);
         QVERIFY(keyEvent.wait());
 
         c->control->deco.client->requestHideToolTip();
-        Test::wait_for_destroyed(internal);
+        wait_for_destroyed(internal);
     }
 }
 

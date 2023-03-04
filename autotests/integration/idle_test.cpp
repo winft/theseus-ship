@@ -21,15 +21,15 @@ TEST_CASE("idle", "[input]")
     test::setup setup("idle");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection(Test::global_selection::seat);
+    test_outputs_default();
+    setup_wayland_connection(global_selection::seat);
 
     SECTION("idle")
     {
         auto& idle = setup.base->input->idle;
         QCOMPARE(idle.inhibit_count, 0);
 
-        auto& client = Test::get_client();
+        auto& client = get_client();
         auto notification = std::unique_ptr<Wrapland::Client::idle_notification_v1>(
             client.interfaces.idle_notifier->get_notification(1000, client.interfaces.seat.get()));
         QVERIFY(notification->isValid());
@@ -45,8 +45,8 @@ TEST_CASE("idle", "[input]")
 
         // Now resume.
         uint32_t time{};
-        Test::pointer_button_pressed(BTN_LEFT, ++time);
-        Test::pointer_button_released(BTN_LEFT, ++time);
+        pointer_button_pressed(BTN_LEFT, ++time);
+        pointer_button_released(BTN_LEFT, ++time);
         QVERIFY(resume_spy.wait());
         QCOMPARE(resume_spy.size(), 1);
         QCOMPARE(idle_spy.size(), 1);
@@ -61,7 +61,7 @@ TEST_CASE("idle", "[input]")
         auto& idle = setup.base->input->idle;
         QCOMPARE(idle.inhibit_count, 0);
 
-        auto& client = Test::get_client();
+        auto& client = get_client();
         auto notification = std::unique_ptr<Wrapland::Client::idle_notification_v1>(
             client.interfaces.idle_notifier->get_notification(2000, client.interfaces.seat.get()));
         QVERIFY(notification->isValid());
@@ -73,18 +73,18 @@ TEST_CASE("idle", "[input]")
 
         // Fake user activity so that idle is never fired. We choose 3*500+1000=2500 > 2000ms.
         uint32_t time{};
-        Test::pointer_button_pressed(BTN_LEFT, ++time);
+        pointer_button_pressed(BTN_LEFT, ++time);
         QTest::qWait(500);
         QVERIFY(idle_spy.empty());
 
-        Test::pointer_button_released(BTN_LEFT, ++time);
+        pointer_button_released(BTN_LEFT, ++time);
         QTest::qWait(500);
         QVERIFY(idle_spy.empty());
 
-        Test::pointer_button_pressed(BTN_LEFT, ++time);
+        pointer_button_pressed(BTN_LEFT, ++time);
         QTest::qWait(500);
 
-        Test::pointer_button_released(BTN_LEFT, ++time);
+        pointer_button_released(BTN_LEFT, ++time);
         QVERIFY(!idle_spy.wait(1000));
         QVERIFY(idle_spy.empty());
 
@@ -93,8 +93,8 @@ TEST_CASE("idle", "[input]")
         QCOMPARE(idle_spy.size(), 1);
 
         // Now resume.
-        Test::pointer_button_pressed(BTN_LEFT, ++time);
-        Test::pointer_button_released(BTN_LEFT, ++time);
+        pointer_button_pressed(BTN_LEFT, ++time);
+        pointer_button_released(BTN_LEFT, ++time);
         QVERIFY(resume_spy.wait());
         QCOMPARE(resume_spy.size(), 1);
         QCOMPARE(idle_spy.size(), 1);
@@ -105,9 +105,9 @@ TEST_CASE("idle", "[input]")
         struct notification_wrap {
             notification_wrap(uint32_t duration)
                 : interface {
-                Test::get_client().interfaces.idle_notifier->get_notification(
+                get_client().interfaces.idle_notifier->get_notification(
                     duration,
-                    Test::get_client().interfaces.seat.get())
+                    get_client().interfaces.seat.get())
             }, idle_spy{interface.get(), &Wrapland::Client::idle_notification_v1::idled},
                 resume_spy{interface.get(), &Wrapland::Client::idle_notification_v1::resumed}
             {
@@ -178,8 +178,8 @@ TEST_CASE("idle", "[input]")
         notification2.clear_spies();
 
         uint32_t time{};
-        Test::pointer_button_pressed(BTN_LEFT, ++time);
-        Test::pointer_button_released(BTN_LEFT, ++time);
+        pointer_button_pressed(BTN_LEFT, ++time);
+        pointer_button_released(BTN_LEFT, ++time);
 
         QVERIFY(notification1.resume_spy.wait());
         TRY_REQUIRE(notification2.resume_spy.size() == 1);

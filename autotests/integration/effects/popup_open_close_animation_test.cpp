@@ -45,7 +45,7 @@ TEST_CASE("popup open close animation", "[effect]")
     config->sync();
 
     setup.start();
-    Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
+    setup_wayland_connection(global_selection::xdg_decoration);
 
     SECTION("animate popups")
     {
@@ -58,12 +58,11 @@ TEST_CASE("popup open close animation", "[effect]")
 
         // Create the main window.
         using namespace Wrapland::Client;
-        std::unique_ptr<Surface> mainWindowSurface(Test::create_surface());
+        std::unique_ptr<Surface> mainWindowSurface(create_surface());
         QVERIFY(mainWindowSurface);
-        auto mainWindowShellSurface = Test::create_xdg_shell_toplevel(mainWindowSurface);
+        auto mainWindowShellSurface = create_xdg_shell_toplevel(mainWindowSurface);
         QVERIFY(mainWindowShellSurface);
-        auto mainWindow
-            = Test::render_and_wait_for_shown(mainWindowSurface, QSize(100, 50), Qt::blue);
+        auto mainWindow = render_and_wait_for_shown(mainWindowSurface, QSize(100, 50), Qt::blue);
         QVERIFY(mainWindow);
 
         // Load effect that will be tested.
@@ -76,7 +75,7 @@ TEST_CASE("popup open close animation", "[effect]")
         QVERIFY(!effect->isActive());
 
         // Create a popup, it should be animated.
-        std::unique_ptr<Surface> popupSurface(Test::create_surface());
+        std::unique_ptr<Surface> popupSurface(create_surface());
         QVERIFY(popupSurface);
 
         xdg_shell_positioner_data pos_data;
@@ -86,9 +85,9 @@ TEST_CASE("popup open close animation", "[effect]")
         pos_data.gravity = Qt::BottomEdge | Qt::RightEdge;
 
         auto popupShellSurface
-            = Test::create_xdg_shell_popup(popupSurface, mainWindowShellSurface, pos_data);
+            = create_xdg_shell_popup(popupSurface, mainWindowShellSurface, pos_data);
         QVERIFY(popupShellSurface);
-        auto popup = Test::render_and_wait_for_shown(popupSurface, pos_data.size, Qt::red);
+        auto popup = render_and_wait_for_shown(popupSurface, pos_data.size, Qt::red);
         QVERIFY(popup);
         QVERIFY(win::is_popup(popup));
         QCOMPARE(popup->transient->lead(), mainWindow);
@@ -110,7 +109,7 @@ TEST_CASE("popup open close animation", "[effect]")
 
         // Destroy the main window.
         mainWindowSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(mainWindow));
+        QVERIFY(wait_for_destroyed(mainWindow));
     }
 
     SECTION("animate user actions popup")
@@ -124,11 +123,11 @@ TEST_CASE("popup open close animation", "[effect]")
 
         // Create the test client.
         using namespace Wrapland::Client;
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
-        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(client);
 
         // Load effect that will be tested.
@@ -151,8 +150,8 @@ TEST_CASE("popup open close animation", "[effect]")
         QTRY_VERIFY(!effect->isActive());
 
         // Close the user actions popup.
-        Test::keyboard_key_pressed(KEY_ESC, 0);
-        Test::keyboard_key_released(KEY_ESC, 1);
+        keyboard_key_pressed(KEY_ESC, 0);
+        keyboard_key_released(KEY_ESC, 1);
         QTRY_VERIFY(!userActionsMenu->isShown());
         QVERIFY(!userActionsMenu->hasClient());
         QVERIFY(effect->isActive());
@@ -162,7 +161,7 @@ TEST_CASE("popup open close animation", "[effect]")
 
         // Destroy the test client.
         surface.reset();
-        QVERIFY(Test::wait_for_destroyed(client));
+        QVERIFY(wait_for_destroyed(client));
     }
 
     SECTION("animate decoration tooltips")
@@ -176,16 +175,15 @@ TEST_CASE("popup open close animation", "[effect]")
 
         // Create the test client.
         using namespace Wrapland::Client;
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         std::unique_ptr<XdgDecoration> deco(
-            Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
-                shellSurface.get()));
+            get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get()));
         QVERIFY(deco);
         deco->setMode(XdgDecoration::Mode::ServerSide);
-        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(client);
         QVERIFY(win::decoration(client));
 
@@ -206,7 +204,7 @@ TEST_CASE("popup open close animation", "[effect]")
         QVERIFY(tooltipAddedSpy.wait());
 
         auto tooltip_id = tooltipAddedSpy.first().first().value<quint32>();
-        auto tooltip = Test::get_internal_window(setup.base->space->windows_map.at(tooltip_id));
+        auto tooltip = get_internal_window(setup.base->space->windows_map.at(tooltip_id));
         QVERIFY(tooltip);
         QVERIFY(tooltip->isInternal());
         QVERIFY(win::is_popup(tooltip));
@@ -228,7 +226,7 @@ TEST_CASE("popup open close animation", "[effect]")
 
         // Destroy the test client.
         surface.reset();
-        QVERIFY(Test::wait_for_destroyed(client));
+        QVERIFY(wait_for_destroyed(client));
     }
 }
 

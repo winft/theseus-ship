@@ -35,19 +35,19 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
 
     test::setup setup("debug-console", base::operation_mode::xwayland);
 
-    auto config = Test::app()->base->config.main;
+    auto config = app()->base->config.main;
     config->group("org.kde.kdecoration2").writeEntry("library", "org.kde.kwin.aurorae");
     config->sync();
 
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
+    test_outputs_default();
 
-    auto& scene = Test::app()->base->render->compositor->scene;
+    auto& scene = app()->base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 
-    Test::cursor()->set_pos(QPoint(640, 512));
+    cursor()->set_pos(QPoint(640, 512));
 
     SECTION("borderless maximized window")
     {
@@ -55,12 +55,12 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
         // option BorderlessMaximizedWindows, see BUG 362772.
 
         // first adjust the config
-        auto group = Test::app()->base->config.main->group("Windows");
+        auto group = app()->base->config.main->group("Windows");
         group.writeEntry("BorderlessMaximizedWindows", true);
         group.sync();
 
-        win::space_reconfigure(*Test::app()->base->space);
-        QCOMPARE(Test::app()->base->options->qobject->borderlessMaximizedWindows(), true);
+        win::space_reconfigure(*app()->base->space);
+        QCOMPARE(app()->base->options->qobject->borderlessMaximizedWindows(), true);
 
         // create an xcb window
         xcb_connection_t* c = xcb_connect(nullptr, nullptr);
@@ -70,7 +70,7 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
         xcb_create_window(c,
                           XCB_COPY_FROM_PARENT,
                           w,
-                          Test::app()->base->x11_data.root_window,
+                          app()->base->x11_data.root_window,
                           0,
                           0,
                           100,
@@ -84,13 +84,13 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
         xcb_flush(c);
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(Test::app()->base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(app()->base->space->qobject.get(),
                                     &win::space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = Test::get_x11_window(Test::app()->base->space->windows_map.at(client_id));
+        auto client = get_x11_window(app()->base->space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QVERIFY(win::decoration(client) != nullptr);
@@ -113,10 +113,9 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
                                             &win::window_qobject::maximize_mode_changed);
         QVERIFY(maximizedStateChangedSpy.isValid());
         quint32 timestamp = 1;
-        Test::pointer_motion_absolute(client->geo.frame.topLeft() + scenePoint.toPoint(),
-                                      timestamp++);
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        pointer_motion_absolute(client->geo.frame.topLeft() + scenePoint.toPoint(), timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
         QVERIFY(maximizedStateChangedSpy.wait());
         QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
         QCOMPARE(client->noBorder(), true);

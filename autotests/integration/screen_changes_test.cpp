@@ -24,8 +24,8 @@ TEST_CASE("screen changes", "[base]")
 
     test::setup setup("screen-changes");
     setup.start();
-    Test::setup_wayland_connection();
-    Test::cursor()->set_pos(QPoint(640, 512));
+    setup_wayland_connection();
+    cursor()->set_pos(QPoint(640, 512));
 
     // first create a registry to get signals about Outputs announced/removed
     Registry registry;
@@ -35,7 +35,7 @@ TEST_CASE("screen changes", "[base]")
     QVERIFY(outputAnnouncedSpy.isValid());
     QSignalSpy outputRemovedSpy(&registry, &Registry::outputRemoved);
     QVERIFY(outputRemovedSpy.isValid());
-    registry.create(Test::get_client().connection);
+    registry.create(get_client().connection);
     QVERIFY(registry.isValid());
     registry.setup();
     QVERIFY(allAnnounced.wait());
@@ -57,7 +57,7 @@ TEST_CASE("screen changes", "[base]")
     setup.set_outputs(geometries);
 
     QCOMPARE(outputs_changed_spy.count(), 1);
-    Test::test_outputs_geometries(geometries);
+    test_outputs_geometries(geometries);
 
     // this should result in it getting announced, two new outputs are added...
     TRY_REQUIRE(outputAnnouncedSpy.size() == 2);
@@ -117,7 +117,7 @@ TEST_CASE("screen changes", "[base]")
     setup.set_outputs(geometries2);
 
     QCOMPARE(outputs_changed_spy.count(), 1);
-    Test::test_outputs_geometries(geometries2);
+    test_outputs_geometries(geometries2);
 
     TRY_REQUIRE(outputAnnouncedSpy.size() == 1);
     TRY_REQUIRE(o1RemovedSpy.size() == 1);

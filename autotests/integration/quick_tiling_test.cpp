@@ -91,11 +91,11 @@ TEST_CASE("quick tiling", "[win]")
 
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
+    test_outputs_default();
+    setup_wayland_connection(global_selection::xdg_decoration);
 
     auto get_x11_window_from_id
-        = [&](uint32_t id) { return Test::get_x11_window(setup.base->space->windows_map.at(id)); };
+        = [&](uint32_t id) { return get_x11_window(setup.base->space->windows_map.at(id)); };
 
     SECTION("quick tiling")
     {
@@ -145,15 +145,15 @@ TEST_CASE("quick tiling", "[win]")
                                        {1280, 0, 1280, 1024},
                                        win::quicktiles::none});
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
 
         // Map the client.
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -188,7 +188,7 @@ TEST_CASE("quick tiling", "[win]")
 
         // attach a new image
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, test_data.expected_geo.size(), Qt::red);
+        render(surface, test_data.expected_geo.size(), Qt::red);
 
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(geometryChangedSpy.count(), 1);
@@ -217,15 +217,15 @@ TEST_CASE("quick tiling", "[win]")
 
         auto mode = GENERATE(win::quicktiles::maximize, win::quicktiles::none);
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
 
         // Map the client.
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
         QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -270,7 +270,7 @@ TEST_CASE("quick tiling", "[win]")
 
         // Attach a new image.
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, cfgdata.size, Qt::red);
+        render(surface, cfgdata.size, Qt::red);
 
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(geometryChangedSpy.count(), 1);
@@ -300,7 +300,7 @@ TEST_CASE("quick tiling", "[win]")
 
         // render again
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, QSize(100, 50), Qt::yellow);
+        render(surface, QSize(100, 50), Qt::yellow);
 
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(geometryChangedSpy.count(), 2);
@@ -326,17 +326,17 @@ TEST_CASE("quick tiling", "[win]")
                        data{{0, 512}, win::quicktiles::left},
                        data{{0, 24}, win::quicktiles::top | win::quicktiles::left});
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
 
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
 
         // let's render
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
         QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -345,31 +345,31 @@ TEST_CASE("quick tiling", "[win]")
         QVERIFY(quickTileChangedSpy.isValid());
 
         win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
-        QCOMPARE(c, Test::get_wayland_window(setup.base->space->move_resize_window));
-        QCOMPARE(Test::cursor()->pos(), QPoint(49, 24));
+        QCOMPARE(c, get_wayland_window(setup.base->space->move_resize_window));
+        QCOMPARE(cursor()->pos(), QPoint(49, 24));
 
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
-        while (Test::cursor()->pos().x() > test_data.target.x()) {
-            Test::keyboard_key_pressed(KEY_LEFT, timestamp++);
-            Test::keyboard_key_released(KEY_LEFT, timestamp++);
+        keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+        while (cursor()->pos().x() > test_data.target.x()) {
+            keyboard_key_pressed(KEY_LEFT, timestamp++);
+            keyboard_key_released(KEY_LEFT, timestamp++);
         }
-        while (Test::cursor()->pos().x() < test_data.target.x()) {
-            Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
-            Test::keyboard_key_released(KEY_RIGHT, timestamp++);
+        while (cursor()->pos().x() < test_data.target.x()) {
+            keyboard_key_pressed(KEY_RIGHT, timestamp++);
+            keyboard_key_released(KEY_RIGHT, timestamp++);
         }
-        while (Test::cursor()->pos().y() < test_data.target.y()) {
-            Test::keyboard_key_pressed(KEY_DOWN, timestamp++);
-            Test::keyboard_key_released(KEY_DOWN, timestamp++);
+        while (cursor()->pos().y() < test_data.target.y()) {
+            keyboard_key_pressed(KEY_DOWN, timestamp++);
+            keyboard_key_released(KEY_DOWN, timestamp++);
         }
-        while (Test::cursor()->pos().y() > test_data.target.y()) {
-            Test::keyboard_key_pressed(KEY_UP, timestamp++);
-            Test::keyboard_key_released(KEY_UP, timestamp++);
+        while (cursor()->pos().y() > test_data.target.y()) {
+            keyboard_key_pressed(KEY_UP, timestamp++);
+            keyboard_key_released(KEY_UP, timestamp++);
         }
-        Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
-        Test::keyboard_key_pressed(KEY_ENTER, timestamp++);
-        Test::keyboard_key_released(KEY_ENTER, timestamp++);
-        QCOMPARE(Test::cursor()->pos(), test_data.target);
+        keyboard_key_released(KEY_LEFTCTRL, timestamp++);
+        keyboard_key_pressed(KEY_ENTER, timestamp++);
+        keyboard_key_released(KEY_ENTER, timestamp++);
+        QCOMPARE(cursor()->pos(), test_data.target);
         QVERIFY(!setup.base->space->move_resize_window);
 
         QCOMPARE(quickTileChangedSpy.count(), 1);
@@ -393,11 +393,10 @@ TEST_CASE("quick tiling", "[win]")
                        data{{0, 512}, win::quicktiles::left},
                        data{{0, 24}, win::quicktiles::top | win::quicktiles::left});
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
 
-        auto shellSurface
-            = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+        auto shellSurface = create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly);
         QVERIFY(shellSurface);
 
         // wait for the initial configure event
@@ -409,10 +408,10 @@ TEST_CASE("quick tiling", "[win]")
 
         // let's render
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
         QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -425,16 +424,16 @@ TEST_CASE("quick tiling", "[win]")
         QVERIFY(quickTileChangedSpy.isValid());
 
         win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
-        QCOMPARE(c, Test::get_wayland_window(setup.base->space->move_resize_window));
-        QCOMPARE(Test::cursor()->pos(), QPoint(49, 24));
+        QCOMPARE(c, get_wayland_window(setup.base->space->move_resize_window));
+        QCOMPARE(cursor()->pos(), QPoint(49, 24));
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 3);
 
         quint32 timestamp = 1;
-        Test::pointer_motion_absolute(test_data.target, timestamp++);
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
-        QCOMPARE(Test::cursor()->pos(), test_data.target);
+        pointer_motion_absolute(test_data.target, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
+        QCOMPARE(cursor()->pos(), test_data.target);
         QVERIFY(!setup.base->space->move_resize_window);
 
         QCOMPARE(quickTileChangedSpy.count(), 1);
@@ -463,14 +462,13 @@ TEST_CASE("quick tiling", "[win]")
                        data{{0, 512}, win::quicktiles::left},
                        data{{0, 24}, win::quicktiles::top | win::quicktiles::left});
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
 
-        auto shellSurface
-            = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+        auto shellSurface = create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly);
         QVERIFY(shellSurface);
 
-        auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+        auto deco = get_client().interfaces.xdg_decoration->getToplevelDecoration(
             shellSurface.get(), shellSurface.get());
         QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
         QVERIFY(decoSpy.isValid());
@@ -481,19 +479,19 @@ TEST_CASE("quick tiling", "[win]")
         QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
         QVERIFY(configureRequestedSpy.isValid());
 
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        init_xdg_shell_toplevel(surface, shellSurface);
         QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
         QCOMPARE(configureRequestedSpy.count(), 1);
         QVERIFY(configureRequestedSpy.last().first().toSize().isEmpty());
 
         // let's render
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        auto c = Test::render_and_wait_for_shown(surface, QSize(1000, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(1000, 50), Qt::blue);
 
         QVERIFY(c);
         QVERIFY(win::decoration(c));
         auto const decoration = win::decoration(c);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QCOMPARE(c->geo.frame,
                  QRect(-decoration->borderLeft(),
                        0,
@@ -510,16 +508,16 @@ TEST_CASE("quick tiling", "[win]")
         QVERIFY(quickTileChangedSpy.isValid());
 
         quint32 timestamp = 1;
-        Test::touch_down(
+        touch_down(
             0,
             QPointF(c->geo.frame.center().x(), c->geo.frame.y() + decoration->borderTop() / 2),
             timestamp++);
         QVERIFY(configureRequestedSpy.wait());
-        QCOMPARE(c, Test::get_wayland_window(setup.base->space->move_resize_window));
+        QCOMPARE(c, get_wayland_window(setup.base->space->move_resize_window));
         QCOMPARE(configureRequestedSpy.count(), 3);
 
-        Test::touch_motion(0, test_data.target, timestamp++);
-        Test::touch_up(0, timestamp++);
+        touch_motion(0, test_data.target, timestamp++);
+        touch_up(0, timestamp++);
         QVERIFY(!setup.base->space->move_resize_window);
 
         // When there are no borders, there is no change to them when quick-tiling.
@@ -762,15 +760,15 @@ TEST_CASE("quick tiling", "[win]")
                  win::quicktiles::bottom | win::quicktiles::right,
                  {640, 512, 640, 512}});
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
 
         // Map the client.
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -818,7 +816,7 @@ TEST_CASE("quick tiling", "[win]")
                                       &win::window_qobject::frame_geometry_changed);
         QVERIFY(geometryChangedSpy.isValid());
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, test_data.expected_geo.size(), Qt::red);
+        render(surface, test_data.expected_geo.size(), Qt::red);
 
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(geometryChangedSpy.count(), 1);
@@ -847,15 +845,15 @@ TEST_CASE("quick tiling", "[win]")
             data{"Left", win::quicktiles::left, {0, 0, 640, 1024}},
             data{"Right", win::quicktiles::right, {640, 0, 640, 1024}});
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
 
         // Map the client.
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -908,7 +906,7 @@ TEST_CASE("quick tiling", "[win]")
 
         // attach a new image
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, test_data.expected_geo.size(), Qt::red);
+        render(surface, test_data.expected_geo.size(), Qt::red);
 
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(geometryChangedSpy.count(), 1);

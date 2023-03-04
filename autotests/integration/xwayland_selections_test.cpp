@@ -27,8 +27,8 @@ TEST_CASE("xwayland selections", "[win],[xwl]")
     test::setup setup("xwayland-selections", base::operation_mode::xwayland);
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection();
+    test_outputs_default();
+    setup_wayland_connection();
 
     SECTION("sync")
     {
@@ -89,7 +89,7 @@ TEST_CASE("xwayland selections", "[win],[xwl]")
         copy_process->start();
         QVERIFY(copy_process->waitForStarted());
 
-        std::optional<Test::space::window_t> copyClient;
+        std::optional<space::window_t> copyClient;
         if (copy_platform == QLatin1String("xcb")) {
             QVERIFY(clientAddedSpy.wait());
             auto copy_client_id = clientAddedSpy.first().first().value<quint32>();
@@ -130,7 +130,7 @@ TEST_CASE("xwayland selections", "[win],[xwl]")
         paste_process->start();
         QVERIFY(paste_process->waitForStarted());
 
-        std::optional<Test::space::window_t> pasteClient;
+        std::optional<space::window_t> pasteClient;
         if (paste_platform == QLatin1String("xcb")) {
             QVERIFY(clientAddedSpy.wait());
             auto paste_client_id = clientAddedSpy.last().first().value<quint32>();

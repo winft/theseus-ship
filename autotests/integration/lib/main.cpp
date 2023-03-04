@@ -20,7 +20,7 @@ Q_IMPORT_PLUGIN(KWinIdleTimePoller)
 int main(int argc, char* argv[])
 {
     KCrash::setDrKonqiEnabled(false);
-    KWin::Test::prepare_app_env(argv[0]);
+    KWin::detail::test::prepare_app_env(argv[0]);
 
     KWin::base::app_singleton app_singleton;
     QApplication app(argc, argv);

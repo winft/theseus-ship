@@ -40,36 +40,36 @@ TEST_CASE("no crash no border", "[win]")
 
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
+    test_outputs_default();
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 
-    Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
-    Test::cursor()->set_pos(QPoint(640, 512));
+    setup_wayland_connection(global_selection::xdg_decoration);
+    cursor()->set_pos(QPoint(640, 512));
 
-    std::unique_ptr<Surface> surface(Test::create_surface());
+    std::unique_ptr<Surface> surface(create_surface());
     QVERIFY(surface);
     std::unique_ptr<XdgShellToplevel> shellSurface(
-        Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+        create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
     QVERIFY(shellSurface);
 
-    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
-        shellSurface.get(), shellSurface.get());
+    auto deco = get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(),
+                                                                              shellSurface.get());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::init_xdg_shell_toplevel(surface, shellSurface);
+    init_xdg_shell_toplevel(surface, shellSurface);
 
     // Without server-side decoration available the mode set by the compositor will be client-side.
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
 
     // let's render
-    auto c = Test::render_and_wait_for_shown(surface, QSize(500, 50), Qt::blue);
+    auto c = render_and_wait_for_shown(surface, QSize(500, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+    QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
     QVERIFY(!win::decoration(c));
 }
 

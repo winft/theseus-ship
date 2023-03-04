@@ -149,15 +149,14 @@ TEST_CASE("internal window", "[win]")
     test::setup setup("internal-window");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
+    test_outputs_default();
 
-    Test::cursor()->set_pos(QPoint(1280, 512));
-    Test::setup_wayland_connection(Test::global_selection::seat);
-    QVERIFY(Test::wait_for_wayland_keyboard());
+    cursor()->set_pos(QPoint(1280, 512));
+    setup_wayland_connection(global_selection::seat);
+    QVERIFY(wait_for_wayland_keyboard());
 
-    auto get_internal_window_from_id = [&](uint32_t id) {
-        return Test::get_internal_window(setup.base->space->windows_map.at(id));
-    };
+    auto get_internal_window_from_id
+        = [&](uint32_t id) { return get_internal_window(setup.base->space->windows_map.at(id)); };
 
     SECTION("enter leave")
     {
@@ -179,8 +178,7 @@ TEST_CASE("internal window", "[win]")
         QCOMPARE(setup.base->space->findInternal(&win), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 100));
         QVERIFY(c->isShown());
-        QVERIFY(contains(win::render_stack(setup.base->space->stacking.order),
-                         Test::space::window_t(c)));
+        QVERIFY(contains(win::render_stack(setup.base->space->stacking.order), space::window_t(c)));
 
         QSignalSpy enterSpy(&win, &HelperWindow::entered);
         QVERIFY(enterSpy.isValid());
@@ -190,24 +188,24 @@ TEST_CASE("internal window", "[win]")
         QVERIFY(moveSpy.isValid());
 
         quint32 timestamp = 1;
-        Test::pointer_motion_absolute(QPoint(50, 50), timestamp++);
+        pointer_motion_absolute(QPoint(50, 50), timestamp++);
         QTRY_COMPARE(moveSpy.count(), 1);
 
-        Test::pointer_motion_absolute(QPoint(60, 50), timestamp++);
+        pointer_motion_absolute(QPoint(60, 50), timestamp++);
         QTRY_COMPARE(moveSpy.count(), 2);
         QCOMPARE(moveSpy[1].first().toPoint(), QPoint(60, 50));
 
-        Test::pointer_motion_absolute(QPoint(101, 50), timestamp++);
+        pointer_motion_absolute(QPoint(101, 50), timestamp++);
         QTRY_COMPARE(leaveSpy.count(), 1);
 
         // set a mask on the window
         win.setMask(QRegion(10, 20, 30, 40));
         // outside the mask we should not get an enter
-        Test::pointer_motion_absolute(QPoint(5, 5), timestamp++);
+        pointer_motion_absolute(QPoint(5, 5), timestamp++);
         QVERIFY(!enterSpy.wait(100));
         QCOMPARE(enterSpy.count(), 1);
         // inside the mask we should still get an enter
-        Test::pointer_motion_absolute(QPoint(25, 27), timestamp++);
+        pointer_motion_absolute(QPoint(25, 27), timestamp++);
         QTRY_COMPARE(enterSpy.count(), 2);
     }
 
@@ -227,11 +225,11 @@ TEST_CASE("internal window", "[win]")
         QTRY_COMPARE(clientAddedSpy.count(), 1);
 
         quint32 timestamp = 1;
-        Test::pointer_motion_absolute(QPoint(50, 50), timestamp++);
+        pointer_motion_absolute(QPoint(50, 50), timestamp++);
 
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
         QTRY_COMPARE(pressSpy.count(), 1);
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
         QTRY_COMPARE(releaseSpy.count(), 1);
     }
 
@@ -248,11 +246,11 @@ TEST_CASE("internal window", "[win]")
         QTRY_COMPARE(clientAddedSpy.count(), 1);
 
         quint32 timestamp = 1;
-        Test::pointer_motion_absolute(QPoint(50, 50), timestamp++);
+        pointer_motion_absolute(QPoint(50, 50), timestamp++);
 
-        Test::pointer_axis_vertical(5.0, timestamp++, 0);
+        pointer_axis_vertical(5.0, timestamp++, 0);
         QTRY_COMPARE(wheelSpy.count(), 1);
-        Test::pointer_axis_horizontal(5.0, timestamp++, 0);
+        pointer_axis_horizontal(5.0, timestamp++, 0);
         QTRY_COMPARE(wheelSpy.count(), 2);
     }
 
@@ -285,12 +283,12 @@ TEST_CASE("internal window", "[win]")
         QVERIFY(internalClient->render_data.ready_for_painting);
 
         quint32 timestamp = 1;
-        Test::pointer_motion_absolute(cursor_pos, timestamp++);
+        pointer_motion_absolute(cursor_pos, timestamp++);
 
-        Test::keyboard_key_pressed(KEY_A, timestamp++);
+        keyboard_key_pressed(KEY_A, timestamp++);
         QTRY_COMPARE(pressSpy.count(), 1);
         QCOMPARE(releaseSpy.count(), 0);
-        Test::keyboard_key_released(KEY_A, timestamp++);
+        keyboard_key_released(KEY_A, timestamp++);
         QTRY_COMPARE(releaseSpy.count(), 1);
         QCOMPARE(pressSpy.count(), 1);
     }
@@ -317,13 +315,13 @@ TEST_CASE("internal window", "[win]")
 
         quint32 timestamp = 1;
         const QPoint cursorPos = QPoint(50, 50);
-        Test::pointer_motion_absolute(cursorPos, timestamp++);
+        pointer_motion_absolute(cursorPos, timestamp++);
 
-        Test::keyboard_key_pressed(KEY_A, timestamp++);
+        keyboard_key_pressed(KEY_A, timestamp++);
         QCOMPARE(pressSpy.count(), 0);
         QVERIFY(!pressSpy.wait(100));
         QCOMPARE(releaseSpy.count(), 0);
-        Test::keyboard_key_released(KEY_A, timestamp++);
+        keyboard_key_released(KEY_A, timestamp++);
         QCOMPARE(releaseSpy.count(), 0);
         QVERIFY(!releaseSpy.wait(100));
         QCOMPARE(pressSpy.count(), 0);
@@ -333,18 +331,18 @@ TEST_CASE("internal window", "[win]")
     {
         // this test verifies that a leave event is sent to a client when an internal window
         // gets a key event
-        std::unique_ptr<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
+        std::unique_ptr<Keyboard> keyboard(get_client().interfaces.seat->createKeyboard());
         QVERIFY(keyboard);
         QVERIFY(keyboard->isValid());
         QSignalSpy enteredSpy(keyboard.get(), &Keyboard::entered);
         QVERIFY(enteredSpy.isValid());
         QSignalSpy leftSpy(keyboard.get(), &Keyboard::left);
         QVERIFY(leftSpy.isValid());
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
 
         // now let's render
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(c->control->active);
 
@@ -376,22 +374,22 @@ TEST_CASE("internal window", "[win]")
 
         // now let's trigger a key, which should result in a leave
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(KEY_A, timestamp++);
+        keyboard_key_pressed(KEY_A, timestamp++);
         QVERIFY(leftSpy.wait());
         QCOMPARE(pressSpy.count(), 1);
 
-        Test::keyboard_key_released(KEY_A, timestamp++);
+        keyboard_key_released(KEY_A, timestamp++);
         QTRY_COMPARE(releaseSpy.count(), 1);
 
         // after hiding the internal window, next key press should trigger an enter
         win.hide();
-        Test::keyboard_key_pressed(KEY_A, timestamp++);
+        keyboard_key_pressed(KEY_A, timestamp++);
         QVERIFY(enteredSpy.wait());
-        Test::keyboard_key_released(KEY_A, timestamp++);
+        keyboard_key_released(KEY_A, timestamp++);
 
         // Destroy the test client.
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(c));
+        QVERIFY(wait_for_destroyed(c));
     }
 
     SECTION("touch")
@@ -414,46 +412,46 @@ TEST_CASE("internal window", "[win]")
 
         quint32 timestamp = 1;
         QCOMPARE(win.pressedButtons(), Qt::MouseButtons());
-        Test::touch_down(0, QPointF(50, 50), timestamp++);
+        touch_down(0, QPointF(50, 50), timestamp++);
         QCOMPARE(pressSpy.count(), 1);
         QCOMPARE(win.latestGlobalMousePos(), QPoint(50, 50));
         QCOMPARE(win.pressedButtons(), Qt::MouseButtons(Qt::LeftButton));
 
         // further touch down should not trigger
-        Test::touch_down(1, QPointF(75, 75), timestamp++);
+        touch_down(1, QPointF(75, 75), timestamp++);
         QCOMPARE(pressSpy.count(), 1);
-        Test::touch_up(1, timestamp++);
+        touch_up(1, timestamp++);
         QCOMPARE(releaseSpy.count(), 0);
         QCOMPARE(win.latestGlobalMousePos(), QPoint(50, 50));
         QCOMPARE(win.pressedButtons(), Qt::MouseButtons(Qt::LeftButton));
 
         // another press
-        Test::touch_down(1, QPointF(10, 10), timestamp++);
+        touch_down(1, QPointF(10, 10), timestamp++);
         QCOMPARE(pressSpy.count(), 1);
         QCOMPARE(win.latestGlobalMousePos(), QPoint(50, 50));
         QCOMPARE(win.pressedButtons(), Qt::MouseButtons(Qt::LeftButton));
 
         // simulate the move
         QCOMPARE(moveSpy.count(), 0);
-        Test::touch_motion(0, QPointF(80, 90), timestamp++);
+        touch_motion(0, QPointF(80, 90), timestamp++);
         QCOMPARE(moveSpy.count(), 1);
         QCOMPARE(win.latestGlobalMousePos(), QPoint(80, 90));
         QCOMPARE(win.pressedButtons(), Qt::MouseButtons(Qt::LeftButton));
 
         // move on other ID should not do anything
-        Test::touch_motion(1, QPointF(20, 30), timestamp++);
+        touch_motion(1, QPointF(20, 30), timestamp++);
         QCOMPARE(moveSpy.count(), 1);
         QCOMPARE(win.latestGlobalMousePos(), QPoint(80, 90));
         QCOMPARE(win.pressedButtons(), Qt::MouseButtons(Qt::LeftButton));
 
         // now up our main point
-        Test::touch_up(0, timestamp++);
+        touch_up(0, timestamp++);
         QCOMPARE(releaseSpy.count(), 1);
         QCOMPARE(win.latestGlobalMousePos(), QPoint(80, 90));
         QCOMPARE(win.pressedButtons(), Qt::MouseButtons());
 
         // and up the additional point
-        Test::touch_up(1, timestamp++);
+        touch_up(1, timestamp++);
         QCOMPARE(releaseSpy.count(), 1);
         QCOMPARE(moveSpy.count(), 1);
         QCOMPARE(win.latestGlobalMousePos(), QPoint(80, 90));
@@ -583,19 +581,19 @@ TEST_CASE("internal window", "[win]")
                  base::options_qobject::MouseUnrestrictedMove);
 
         // move cursor on window
-        Test::cursor()->set_pos(internalClient->geo.frame.center());
+        cursor()->set_pos(internalClient->geo.frame.center());
 
         // simulate modifier+click
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+        keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
         QVERIFY(!win::is_move(internalClient));
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
         QVERIFY(win::is_move(internalClient));
         // release modifier should not change it
-        Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
+        keyboard_key_released(KEY_LEFTMETA, timestamp++);
         QVERIFY(win::is_move(internalClient));
         // but releasing the key should end move/resize
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
         QVERIFY(!win::is_move(internalClient));
     }
 
@@ -621,18 +619,18 @@ TEST_CASE("internal window", "[win]")
         win::space_reconfigure(*setup.base->space);
 
         // move cursor on window
-        Test::cursor()->set_pos(internalClient->geo.frame.center());
+        cursor()->set_pos(internalClient->geo.frame.center());
 
         // set the opacity to 0.5
         internalClient->setOpacity(0.5);
         QCOMPARE(internalClient->opacity(), 0.5);
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-        Test::pointer_axis_vertical(-5, timestamp++, 0);
+        keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+        pointer_axis_vertical(-5, timestamp++, 0);
         QCOMPARE(internalClient->opacity(), 0.6);
-        Test::pointer_axis_vertical(5, timestamp++, 0);
+        pointer_axis_vertical(5, timestamp++, 0);
         QCOMPARE(internalClient->opacity(), 0.5);
-        Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
+        keyboard_key_released(KEY_LEFTMETA, timestamp++);
     }
 
     SECTION("popup")
@@ -653,8 +651,8 @@ TEST_CASE("internal window", "[win]")
 
     SECTION("scale")
     {
-        setup.set_outputs({Test::output(QRect(0, 0, 1280, 1024), 2),
-                           Test::output(QRect(1280 / 2, 0, 1280, 1024), 2)});
+        setup.set_outputs(
+            {output(QRect(0, 0, 1280, 1024), 2), output(QRect(1280 / 2, 0, 1280, 1024), 2)});
 
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::internalClientAdded);

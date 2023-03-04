@@ -96,7 +96,7 @@ TEST_CASE("screen edge script", "[script]")
         QVERIFY(showDesktopSpy.isValid());
 
         // trigger the edge
-        Test::cursor()->set_pos(test_data.trigger_pos);
+        cursor()->set_pos(test_data.trigger_pos);
         QCOMPARE(showDesktopSpy.count(), 1);
         QVERIFY(setup.base->space->showing_desktop);
     }
@@ -142,9 +142,9 @@ TEST_CASE("screen edge script", "[script]")
 
         // trigger the edge
         quint32 timestamp = 0;
-        Test::touch_down(0, test_data.trigger_pos, timestamp++);
-        Test::touch_motion(0, test_data.motion_pos, timestamp++);
-        Test::touch_up(0, timestamp++);
+        touch_down(0, test_data.trigger_pos, timestamp++);
+        touch_motion(0, test_data.motion_pos, timestamp++);
+        touch_up(0, timestamp++);
         QVERIFY(showDesktopSpy.wait());
         QCOMPARE(showDesktopSpy.count(), 1);
         QVERIFY(setup.base->space->showing_desktop);
@@ -171,27 +171,27 @@ TEST_CASE("screen edge script", "[script]")
         QVERIFY(showDesktopSpy.isValid());
 
         // trigger the edge
-        Test::cursor()->set_pos(triggerPos);
+        cursor()->set_pos(triggerPos);
         QCOMPARE(showDesktopSpy.count(), 1);
 
         // reset
-        Test::cursor()->set_pos(500, 500);
+        cursor()->set_pos(500, 500);
         win::toggle_show_desktop(*setup.base->space);
         showDesktopSpy.clear();
 
         // trigger again, to show that retriggering works
-        Test::cursor()->set_pos(triggerPos);
+        cursor()->set_pos(triggerPos);
         QCOMPARE(showDesktopSpy.count(), 1);
 
         // reset
-        Test::cursor()->set_pos(500, 500);
+        cursor()->set_pos(500, 500);
         win::toggle_show_desktop(*setup.base->space);
         showDesktopSpy.clear();
 
         // make the script unregister the edge
         configGroup.writeEntry("mode", "unregister");
         triggerConfigReload();
-        Test::cursor()->set_pos(triggerPos);
+        cursor()->set_pos(triggerPos);
         QCOMPARE(showDesktopSpy.count(), 0); // not triggered
 
         // force the script to unregister a non-registered edge to prove it doesn't explode
@@ -216,9 +216,9 @@ TEST_CASE("screen edge script", "[script]")
 
         // Trigger the edge through touch
         quint32 timestamp = 0;
-        Test::touch_down(0, QPointF(0, 50), timestamp++);
-        Test::touch_motion(0, QPointF(500, 50), timestamp++);
-        Test::touch_up(0, timestamp++);
+        touch_down(0, QPointF(0, 50), timestamp++);
+        touch_motion(0, QPointF(500, 50), timestamp++);
+        touch_up(0, timestamp++);
 
         QVERIFY(showDesktopSpy.wait());
     }

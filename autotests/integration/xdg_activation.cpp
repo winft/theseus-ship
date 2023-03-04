@@ -30,38 +30,37 @@ TEST_CASE("xdg activation", "[win]")
 
     test::setup setup("xdg-activation");
     setup.start();
-    Test::setup_wayland_connection(Test::global_selection::seat
-                                   | Test::global_selection::xdg_activation);
+    setup_wayland_connection(global_selection::seat | global_selection::xdg_activation);
 
     SECTION("single client")
     {
         // Check that XDG Activation works for two different surfaces of a single client.
 
-        std::unique_ptr<Clt::Surface> surface1(Test::create_surface());
-        auto shell_surface1 = Test::create_xdg_shell_toplevel(surface1);
+        std::unique_ptr<Clt::Surface> surface1(create_surface());
+        auto shell_surface1 = create_xdg_shell_toplevel(surface1);
         QVERIFY(surface1);
         QVERIFY(shell_surface1);
 
-        auto window1 = Test::render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
+        auto window1 = render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
         QVERIFY(window1);
         QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
         QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
         QVERIFY(window1->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
 
-        std::unique_ptr<Clt::Surface> surface2(Test::create_surface());
-        auto shell_surface2 = Test::create_xdg_shell_toplevel(surface2);
+        std::unique_ptr<Clt::Surface> surface2(create_surface());
+        auto shell_surface2 = create_xdg_shell_toplevel(surface2);
         QVERIFY(surface2);
         QVERIFY(shell_surface2);
 
-        auto window2 = Test::render_and_wait_for_shown(surface2, QSize(400, 200), Qt::blue);
+        auto window2 = render_and_wait_for_shown(surface2, QSize(400, 200), Qt::blue);
         QVERIFY(window2);
         QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
         QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
         QVERIFY(window2->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window2);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window2);
 
-        auto activation = Test::get_client().interfaces.xdg_activation.get();
+        auto activation = get_client().interfaces.xdg_activation.get();
         QVERIFY(activation);
 
         auto server_activation = setup.base->space->xdg_activation->interface.get();
@@ -71,7 +70,7 @@ TEST_CASE("xdg activation", "[win]")
         QVERIFY(token_spy.isValid());
 
         auto token = std::unique_ptr<Clt::XdgActivationTokenV1>(activation->create_token());
-        token->set_serial(0, Test::get_client().interfaces.seat.get());
+        token->set_serial(0, get_client().interfaces.seat.get());
         token->set_surface(surface2.get());
         token->set_app_id("testclient1");
         token->commit();
@@ -105,42 +104,40 @@ TEST_CASE("xdg activation", "[win]")
         QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(),
                  window1->surface);
         QVERIFY(window1->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
     }
 
     SECTION("multi client")
     {
         // Check that XDG Activation works for two different clients.
 
-        std::unique_ptr<Clt::Surface> surface1(Test::create_surface());
-        auto shell_surface1 = Test::create_xdg_shell_toplevel(surface1);
+        std::unique_ptr<Clt::Surface> surface1(create_surface());
+        auto shell_surface1 = create_xdg_shell_toplevel(surface1);
         QVERIFY(surface1);
         QVERIFY(shell_surface1);
 
-        auto window1 = Test::render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
+        auto window1 = render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
         QVERIFY(window1);
         QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
         QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
         QVERIFY(window1->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
 
         // Create a second client.
-        Test::setup_wayland_connection(Test::global_selection::seat
-                                       | Test::global_selection::xdg_activation);
-        auto& client2 = Test::get_all_clients().back();
+        setup_wayland_connection(global_selection::seat | global_selection::xdg_activation);
+        auto& client2 = get_all_clients().back();
 
-        std::unique_ptr<Clt::Surface> surface2(Test::create_surface(client2));
-        auto shell_surface2 = Test::create_xdg_shell_toplevel(client2, surface2);
+        std::unique_ptr<Clt::Surface> surface2(create_surface(client2));
+        auto shell_surface2 = create_xdg_shell_toplevel(client2, surface2);
         QVERIFY(surface2);
         QVERIFY(shell_surface2);
 
-        auto window2
-            = Test::render_and_wait_for_shown(client2, surface2, QSize(400, 200), Qt::blue);
+        auto window2 = render_and_wait_for_shown(client2, surface2, QSize(400, 200), Qt::blue);
         QVERIFY(window2);
         QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
         QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
         QVERIFY(window2->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window2);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window2);
 
         auto activation2 = client2.interfaces.xdg_activation.get();
         QVERIFY(activation2);
@@ -170,7 +167,7 @@ TEST_CASE("xdg activation", "[win]")
 
         QCOMPARE(done_spy.front().front().value<std::string>(), token_string);
 
-        auto activation1 = Test::get_client().interfaces.xdg_activation.get();
+        auto activation1 = get_client().interfaces.xdg_activation.get();
         activation1->activate(token_string, surface1.get());
 
         QSignalSpy xdg_activate_spy(server_activation,
@@ -187,43 +184,42 @@ TEST_CASE("xdg activation", "[win]")
         QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(),
                  window1->surface);
         QVERIFY(window1->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
     }
 
     SECTION("plasma activation feedback")
     {
         // Check that Plasma activation feedback works together with xdg activation.
 
-        std::unique_ptr<Clt::Surface> surface1(Test::create_surface());
-        auto shell_surface1 = Test::create_xdg_shell_toplevel(surface1);
+        std::unique_ptr<Clt::Surface> surface1(create_surface());
+        auto shell_surface1 = create_xdg_shell_toplevel(surface1);
         QVERIFY(surface1);
         QVERIFY(shell_surface1);
 
-        auto window1 = Test::render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
+        auto window1 = render_and_wait_for_shown(surface1, QSize(200, 100), Qt::red);
         QVERIFY(window1);
         QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
         QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
         QVERIFY(window1->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
 
-        std::unique_ptr<Clt::Surface> surface2(Test::create_surface());
-        auto shell_surface2 = Test::create_xdg_shell_toplevel(surface2);
+        std::unique_ptr<Clt::Surface> surface2(create_surface());
+        auto shell_surface2 = create_xdg_shell_toplevel(surface2);
         QVERIFY(surface2);
         QVERIFY(shell_surface2);
 
-        auto window2 = Test::render_and_wait_for_shown(surface2, QSize(400, 200), Qt::blue);
+        auto window2 = render_and_wait_for_shown(surface2, QSize(400, 200), Qt::blue);
         QVERIFY(window2);
         QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
         QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
         QVERIFY(window2->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window2);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window2);
 
-        QSignalSpy plasma_activation_spy(
-            Test::get_client().interfaces.plasma_activation_feedback.get(),
-            &Wrapland::Client::plasma_activation_feedback::activation);
+        QSignalSpy plasma_activation_spy(get_client().interfaces.plasma_activation_feedback.get(),
+                                         &Wrapland::Client::plasma_activation_feedback::activation);
         QVERIFY(plasma_activation_spy.isValid());
 
-        auto activation = Test::get_client().interfaces.xdg_activation.get();
+        auto activation = get_client().interfaces.xdg_activation.get();
         QVERIFY(activation);
 
         auto server_activation = setup.base->space->xdg_activation->interface.get();
@@ -234,7 +230,7 @@ TEST_CASE("xdg activation", "[win]")
 
         auto token = std::unique_ptr<Clt::XdgActivationTokenV1>(activation->create_token());
         auto const appid = std::string("testclient1");
-        token->set_serial(0, Test::get_client().interfaces.seat.get());
+        token->set_serial(0, get_client().interfaces.seat.get());
         token->set_surface(surface2.get());
         token->set_app_id(appid);
         token->commit();
@@ -274,7 +270,7 @@ TEST_CASE("xdg activation", "[win]")
         QVERIFY(plasma_activation_finished_spy.wait());
 
         QVERIFY(window1->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
 
         QVERIFY(plasma_activation->is_finished());
         delete plasma_activation;

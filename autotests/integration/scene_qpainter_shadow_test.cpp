@@ -507,17 +507,17 @@ TEST_CASE("qpainter shadow", "[render]")
                             // Window is too small: do not render any shadow tiles.
                             data{{1, 1}, {}});
 
-        Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
+        setup_wayland_connection(global_selection::xdg_decoration);
 
         // Create a decorated client.
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
-        Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(),
-                                                                            shellSurface.get());
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
+        get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(),
+                                                                      shellSurface.get());
+        init_xdg_shell_toplevel(surface, shellSurface);
 
-        auto client = Test::render_and_wait_for_shown(surface, test_data.window_size, Qt::blue);
+        auto client = render_and_wait_for_shown(surface, test_data.window_size, Qt::blue);
 
         // Check the client is decorated.
         QVERIFY(client);
@@ -567,15 +567,15 @@ TEST_CASE("qpainter shadow", "[render]")
 
     SECTION("shadow texture reconstruction")
     {
-        Test::setup_wayland_connection(Test::global_selection::shadow);
+        setup_wayland_connection(global_selection::shadow);
 
         // Create a surface.
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto client = Test::render_and_wait_for_shown(surface, QSize(512, 512), Qt::blue);
+        auto client = render_and_wait_for_shown(surface, QSize(512, 512), Qt::blue);
         QVERIFY(client);
         QVERIFY(!win::decoration(client));
 
@@ -597,10 +597,10 @@ TEST_CASE("qpainter shadow", "[render]")
 
         // Create shadow.
         std::unique_ptr<Wrapland::Client::Shadow> clientShadow(
-            Test::get_client().interfaces.shadow_manager->createShadow(surface.get()));
+            get_client().interfaces.shadow_manager->createShadow(surface.get()));
         QVERIFY(clientShadow->isValid());
 
-        auto shmPool = Test::get_client().interfaces.shm.get();
+        auto shmPool = get_client().interfaces.shm.get();
 
         Buffer::Ptr bufferTopLeft
             = shmPool->createBuffer(referenceShadowTexture.copy(QRect(0, 0, 128, 128)));

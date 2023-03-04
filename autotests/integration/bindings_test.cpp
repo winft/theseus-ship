@@ -32,26 +32,26 @@ TEST_CASE("bindings", "[input],[win]")
 {
     test::setup setup("bindings");
     setup.start();
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
-    Test::cursor()->set_pos(QPoint(640, 512));
-    QCOMPARE(Test::cursor()->pos(), QPoint(640, 512));
+    cursor()->set_pos(QPoint(640, 512));
+    QCOMPARE(cursor()->pos(), QPoint(640, 512));
 
     SECTION("switch window")
     {
         // first create windows
-        auto surface1 = Test::create_surface();
-        auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
-        auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
-        auto surface2 = Test::create_surface();
-        auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
-        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
-        auto surface3 = Test::create_surface();
-        auto shellSurface3 = Test::create_xdg_shell_toplevel(surface3);
-        auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
-        auto surface4 = Test::create_surface();
-        auto shellSurface4 = Test::create_xdg_shell_toplevel(surface4);
-        auto c4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
+        auto surface1 = create_surface();
+        auto shellSurface1 = create_xdg_shell_toplevel(surface1);
+        auto c1 = render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
+        auto surface2 = create_surface();
+        auto shellSurface2 = create_xdg_shell_toplevel(surface2);
+        auto c2 = render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
+        auto surface3 = create_surface();
+        auto shellSurface3 = create_xdg_shell_toplevel(surface3);
+        auto c3 = render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
+        auto surface4 = create_surface();
+        auto shellSurface4 = create_xdg_shell_toplevel(surface4);
+        auto c4 = render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
 
         QVERIFY(c4->control->active);
         QVERIFY(c4 != c3);
@@ -82,22 +82,22 @@ TEST_CASE("bindings", "[input],[win]")
             QDBusConnection::sessionBus().asyncCall(msg);
         };
         invokeShortcut(QStringLiteral("Switch Window Up"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c1);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c1);
         invokeShortcut(QStringLiteral("Switch Window Right"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c2);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c2);
         invokeShortcut(QStringLiteral("Switch Window Down"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c3);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c3);
         invokeShortcut(QStringLiteral("Switch Window Left"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c4);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c4);
         // test opposite direction
         invokeShortcut(QStringLiteral("Switch Window Left"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c3);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c3);
         invokeShortcut(QStringLiteral("Switch Window Down"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c2);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c2);
         invokeShortcut(QStringLiteral("Switch Window Right"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c1);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c1);
         invokeShortcut(QStringLiteral("Switch Window Up"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c4);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c4);
     }
 
     SECTION("switch window script")
@@ -105,18 +105,18 @@ TEST_CASE("bindings", "[input],[win]")
         QVERIFY(setup.base->space->scripting);
 
         // first create windows
-        auto surface1 = Test::create_surface();
-        auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
-        auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
-        auto surface2 = Test::create_surface();
-        auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
-        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
-        auto surface3 = Test::create_surface();
-        auto shellSurface3 = Test::create_xdg_shell_toplevel(surface3);
-        auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
-        auto surface4 = Test::create_surface();
-        auto shellSurface4 = Test::create_xdg_shell_toplevel(surface4);
-        auto c4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
+        auto surface1 = create_surface();
+        auto shellSurface1 = create_xdg_shell_toplevel(surface1);
+        auto c1 = render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
+        auto surface2 = create_surface();
+        auto shellSurface2 = create_xdg_shell_toplevel(surface2);
+        auto c2 = render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
+        auto surface3 = create_surface();
+        auto shellSurface3 = create_xdg_shell_toplevel(surface3);
+        auto c3 = render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
+        auto surface4 = create_surface();
+        auto shellSurface4 = create_xdg_shell_toplevel(surface4);
+        auto c4 = render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
 
         QVERIFY(c4->control->active);
         QVERIFY(c4 != c3);
@@ -148,13 +148,13 @@ TEST_CASE("bindings", "[input],[win]")
         };
 
         runScript(QStringLiteral("slotSwitchWindowUp"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c1);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c1);
         runScript(QStringLiteral("slotSwitchWindowRight"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c2);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c2);
         runScript(QStringLiteral("slotSwitchWindowDown"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c3);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c3);
         runScript(QStringLiteral("slotSwitchWindowLeft"));
-        QTRY_COMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c4);
+        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c4);
     }
 
     SECTION("switch window script")
@@ -166,15 +166,15 @@ TEST_CASE("bindings", "[input],[win]")
         vd_manager->setCurrent(vd_manager->desktops().first());
 
         // now create a window
-        auto surface = Test::create_surface();
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto surface = create_surface();
+        auto shellSurface = create_xdg_shell_toplevel(surface);
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QSignalSpy desktopChangedSpy(c->qobject.get(), &win::window_qobject::desktopChanged);
         QVERIFY(desktopChangedSpy.isValid());
 
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
 
         vd_manager->setCount(desktop);
 

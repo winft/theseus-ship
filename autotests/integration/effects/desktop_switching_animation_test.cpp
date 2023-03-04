@@ -58,15 +58,15 @@ TEST_CASE("desktop switching animation", "[effect]")
     QCOMPARE(vd_manager->current(), 1u);
     QCOMPARE(vd_manager->count(), 2u);
 
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
     // The Fade Desktop effect will do nothing if there are no clients to fade,
     // so we have to create a dummy test client.
-    std::unique_ptr<Surface> surface(Test::create_surface());
+    std::unique_ptr<Surface> surface(create_surface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+    auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QCOMPARE(client->topo.desktops.count(), 1);
     QCOMPARE(client->topo.desktops.constFirst(), vd_manager->desktops().first());
@@ -93,7 +93,7 @@ TEST_CASE("desktop switching animation", "[effect]")
 
     // Destroy the test client.
     surface.reset();
-    QVERIFY(Test::wait_for_destroyed(client));
+    QVERIFY(wait_for_destroyed(client));
 }
 
 }

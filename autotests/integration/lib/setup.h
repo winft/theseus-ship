@@ -42,9 +42,9 @@ struct setup final {
     /// Sets @ref count horizontally lined up outputs with a default size of 1280x1024 at scale 1.
     void set_outputs(size_t count);
     void set_outputs(std::vector<QRect> const& geometries);
-    void set_outputs(std::vector<Test::output> const& outputs);
+    void set_outputs(std::vector<output> const& outputs);
 
-    void add_client(Test::global_selection globals);
+    void add_client(global_selection globals);
 
     std::unique_ptr<base_t> base;
 
@@ -52,7 +52,7 @@ struct setup final {
     wlr_keyboard* keyboard{nullptr};
     wlr_touch* touch{nullptr};
 
-    std::vector<Test::client> clients;
+    std::vector<client> clients;
     bool ready{false};
 
 private:
@@ -60,11 +60,6 @@ private:
     void create_xwayland();
 };
 
-}
-
-namespace KWin::Test
-{
-
-detail::test::setup* app();
+setup* app();
 
 }

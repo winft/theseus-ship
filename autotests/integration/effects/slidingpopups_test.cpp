@@ -78,7 +78,7 @@ TEST_CASE("slidingpopups", "[effect]")
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 
-    Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
+    setup_wayland_connection(global_selection::xdg_decoration);
 
     SECTION("with other effect")
     {
@@ -180,7 +180,7 @@ TEST_CASE("slidingpopups", "[effect]")
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QVERIFY(win::is_normal(client));
@@ -266,7 +266,7 @@ TEST_CASE("slidingpopups", "[effect]")
         using namespace Wrapland::Client;
         // the test created the slide protocol, let's create a Registry and listen for it
         std::unique_ptr<Registry> registry(new Registry);
-        registry->create(Test::get_client().connection);
+        registry->create(get_client().connection);
 
         QSignalSpy interfacesAnnouncedSpy(registry.get(), &Registry::interfacesAnnounced);
         QVERIFY(interfacesAnnouncedSpy.isValid());
@@ -279,15 +279,15 @@ TEST_CASE("slidingpopups", "[effect]")
         QVERIFY(slideManager);
 
         // create Wayland window
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
         std::unique_ptr<Slide> slide(slideManager->createSlide(surface.get()));
         slide->setLocation(Slide::Location::Left);
         slide->commit();
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
         QCOMPARE(windowAddedSpy.count(), 0);
-        auto client = Test::render_and_wait_for_shown(surface, QSize(10, 20), Qt::blue);
+        auto client = render_and_wait_for_shown(surface, QSize(10, 20), Qt::blue);
         QVERIFY(client);
         QVERIFY(win::is_normal(client));
 

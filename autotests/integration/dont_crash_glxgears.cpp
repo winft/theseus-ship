@@ -36,7 +36,7 @@ TEST_CASE("no crash glxgears", "[xwl],[win]")
     QCOMPARE(clientAddedSpy.count(), 1);
     QCOMPARE(setup.base->space->windows.size(), 1);
 
-    auto glxgearsClient = Test::get_x11_window(setup.base->space->windows.front());
+    auto glxgearsClient = get_x11_window(setup.base->space->windows.front());
     QVERIFY(glxgearsClient);
     QVERIFY(win::decoration(glxgearsClient));
     QSignalSpy closedSpy(glxgearsClient->qobject.get(), &win::window_qobject::closed);

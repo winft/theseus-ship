@@ -30,9 +30,8 @@ TEST_CASE("idle inhibition", "[win]")
     test::setup setup("idle-inhibition");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection(Test::global_selection::idle_inhibition
-                                   | Test::global_selection::seat);
+    test_outputs_default();
+    setup_wayland_connection(global_selection::idle_inhibition | global_selection::seat);
 
     SECTION("inhibit")
     {
@@ -40,12 +39,12 @@ TEST_CASE("idle inhibition", "[win]")
         QCOMPARE(idle.inhibit_count, 0);
 
         // now create window
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
 
         auto notification = std::unique_ptr<Wrapland::Client::idle_notification_v1>(
-            Test::get_client().interfaces.idle_notifier->get_notification(
-                0, Test::get_client().interfaces.seat.get()));
+            get_client().interfaces.idle_notifier->get_notification(
+                0, get_client().interfaces.seat.get()));
         QVERIFY(notification->isValid());
 
         QSignalSpy idle_spy(notification.get(), &Wrapland::Client::idle_notification_v1::idled);
@@ -58,11 +57,11 @@ TEST_CASE("idle inhibition", "[win]")
 
         // now create inhibition on window
         std::unique_ptr<IdleInhibitor> inhibitor(
-            Test::get_client().interfaces.idle_inhibit->createInhibitor(surface.get()));
+            get_client().interfaces.idle_inhibit->createInhibitor(surface.get()));
         QVERIFY(inhibitor->isValid());
 
         // render the client
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
         // this should inhibit our server object
@@ -73,8 +72,8 @@ TEST_CASE("idle inhibition", "[win]")
 
         // Activity should though.
         uint32_t time{};
-        Test::pointer_button_pressed(BTN_LEFT, ++time);
-        Test::pointer_button_released(BTN_LEFT, ++time);
+        pointer_button_pressed(BTN_LEFT, ++time);
+        pointer_button_released(BTN_LEFT, ++time);
         QVERIFY(resume_spy.wait());
 
         // With the inhibit no idle will be sent.
@@ -86,15 +85,15 @@ TEST_CASE("idle inhibition", "[win]")
         QCOMPARE(idle.inhibit_count, 0);
 
         // inhibit again and destroy window
-        Test::get_client().interfaces.idle_inhibit->createInhibitor(surface.get(), surface.get());
-        Test::pointer_button_pressed(BTN_LEFT, ++time);
-        Test::pointer_button_released(BTN_LEFT, ++time);
+        get_client().interfaces.idle_inhibit->createInhibitor(surface.get(), surface.get());
+        pointer_button_pressed(BTN_LEFT, ++time);
+        pointer_button_released(BTN_LEFT, ++time);
         QVERIFY(resume_spy.wait());
         QVERIFY(!idle_spy.wait(200));
         QTRY_COMPARE(idle.inhibit_count, 1);
 
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(c));
+        QVERIFY(wait_for_destroyed(c));
         QCOMPARE(idle.inhibit_count, 0);
     }
 
@@ -112,18 +111,18 @@ TEST_CASE("idle inhibition", "[win]")
         QCOMPARE(idle.inhibit_count, 0);
 
         // Create the test client.
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
 
         // Create the inhibitor object.
         std::unique_ptr<IdleInhibitor> inhibitor(
-            Test::get_client().interfaces.idle_inhibit->createInhibitor(surface.get()));
+            get_client().interfaces.idle_inhibit->createInhibitor(surface.get()));
         QVERIFY(inhibitor->isValid());
 
         // Render the client.
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
         // The test client should be only on the first virtual desktop.
@@ -149,7 +148,7 @@ TEST_CASE("idle inhibition", "[win]")
 
         // Destroy the test client.
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(c));
+        QVERIFY(wait_for_destroyed(c));
         QCOMPARE(idle.inhibit_count, 0);
     }
 
@@ -163,18 +162,18 @@ TEST_CASE("idle inhibition", "[win]")
         QCOMPARE(idle.inhibit_count, 0);
 
         // Create the test client.
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
 
         // Create the inhibitor object.
         std::unique_ptr<IdleInhibitor> inhibitor(
-            Test::get_client().interfaces.idle_inhibit->createInhibitor(surface.get()));
+            get_client().interfaces.idle_inhibit->createInhibitor(surface.get()));
         QVERIFY(inhibitor->isValid());
 
         // Render the client.
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
         // This should inhibit our server object.
@@ -190,7 +189,7 @@ TEST_CASE("idle inhibition", "[win]")
 
         // Destroy the test client.
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(c));
+        QVERIFY(wait_for_destroyed(c));
         QCOMPARE(idle.inhibit_count, 0);
     }
 
@@ -204,18 +203,18 @@ TEST_CASE("idle inhibition", "[win]")
         QCOMPARE(idle.inhibit_count, 0);
 
         // Create the test client.
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
 
         // Create the inhibitor object.
         std::unique_ptr<IdleInhibitor> inhibitor(
-            Test::get_client().interfaces.idle_inhibit->createInhibitor(surface.get()));
+            get_client().interfaces.idle_inhibit->createInhibitor(surface.get()));
         QVERIFY(inhibitor->isValid());
 
         // Render the client.
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
         // This should inhibit our server object.
@@ -235,7 +234,7 @@ TEST_CASE("idle inhibition", "[win]")
         // Map the client.
         QSignalSpy windowShownSpy(c->qobject.get(), &win::window_qobject::windowShown);
         QVERIFY(windowShownSpy.isValid());
-        Test::render(surface, QSize(100, 50), Qt::blue);
+        render(surface, QSize(100, 50), Qt::blue);
         QVERIFY(windowShownSpy.wait());
 
         // The test client became visible again, so the compositor has to honor the idle
@@ -244,7 +243,7 @@ TEST_CASE("idle inhibition", "[win]")
 
         // Destroy the test client.
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(c));
+        QVERIFY(wait_for_destroyed(c));
         QCOMPARE(idle.inhibit_count, 0);
     }
 
@@ -262,18 +261,18 @@ TEST_CASE("idle inhibition", "[win]")
         QCOMPARE(idle.inhibit_count, 0);
 
         // Create the test client.
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
 
         // Create the inhibitor object.
         std::unique_ptr<IdleInhibitor> inhibitor(
-            Test::get_client().interfaces.idle_inhibit->createInhibitor(surface.get()));
+            get_client().interfaces.idle_inhibit->createInhibitor(surface.get()));
         QVERIFY(inhibitor->isValid());
 
         // Render the client.
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
         // The test client should be only on the first virtual desktop.
@@ -299,7 +298,7 @@ TEST_CASE("idle inhibition", "[win]")
 
         // Destroy the test client.
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(c));
+        QVERIFY(wait_for_destroyed(c));
         QCOMPARE(idle.inhibit_count, 0);
     }
 }

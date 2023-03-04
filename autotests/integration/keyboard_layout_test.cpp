@@ -158,8 +158,8 @@ TEST_CASE("keyboard layout", "[input]")
     layout_group.sync();
 
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection();
+    test_outputs_default();
+    setup_wayland_connection();
 
     uint32_t keyboards_index{0};
 
@@ -176,7 +176,7 @@ TEST_CASE("keyboard layout", "[input]")
         auto keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
         auto name = "headless-keyboard" + std::to_string(keyboards_index);
         wlr_keyboard_init(keyboard, nullptr, name.c_str());
-        Test::wlr_signal_emit_safe(&setup.base->backend->events.new_input, keyboard);
+        wlr_signal_emit_safe(&setup.base->backend->events.new_input, keyboard);
         return keyboard;
     };
 
@@ -383,8 +383,8 @@ TEST_CASE("keyboard layout", "[input]")
 
         // Now switch on the first keyboard to German through the XKB shortcut.
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
-        Test::keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++);
+        keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+        keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++);
         QVERIFY(spies->v1.layout_changed.wait());
         QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
 
@@ -393,11 +393,11 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(spies->v2.layout_changed.front().front(), 0);
         QCOMPARE(spies->v2.layout_changed.front().back(), 1);
 
-        Test::keyboard_key_released(KEY_RIGHTCTRL, timestamp++);
+        keyboard_key_released(KEY_RIGHTCTRL, timestamp++);
         spies->v2.layout_changed.clear();
 
         // Switch to next layout.
-        Test::keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++);
+        keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++);
         QVERIFY(spies->v1.layout_changed.wait());
         QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
 
@@ -406,8 +406,8 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(spies->v2.layout_changed.front().front(), 0);
         QCOMPARE(spies->v2.layout_changed.front().back(), 2);
 
-        Test::keyboard_key_released(KEY_RIGHTCTRL, timestamp++);
-        Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
+        keyboard_key_released(KEY_RIGHTCTRL, timestamp++);
+        keyboard_key_released(KEY_LEFTCTRL, timestamp++);
         spies->v1.layout_changed.clear();
         spies->v2.layout_changed.clear();
 
@@ -415,8 +415,8 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(xkb2->layout_name(), "English (US)");
 
         // Now on the second keyboard switch to German through the XKB shortcut.
-        Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++, wlr_keyboard2);
-        Test::keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+        keyboard_key_pressed(KEY_LEFTCTRL, timestamp++, wlr_keyboard2);
+        keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
         QVERIFY(!spies->v1.layout_changed.wait(500));
         QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
 
@@ -426,11 +426,11 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(spies->v2.layout_changed.front().front(), keyboards_index);
         QCOMPARE(spies->v2.layout_changed.front().back(), 1);
 
-        Test::keyboard_key_released(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+        keyboard_key_released(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
         spies->v2.layout_changed.clear();
 
         // Switch to next layout.
-        Test::keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+        keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
         QVERIFY(!spies->v1.layout_changed.wait(500));
         QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
         QCOMPARE(xkb->layout_name(), "German (Neo 2)");
@@ -439,11 +439,11 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(spies->v2.layout_changed.front().front(), keyboards_index);
         QCOMPARE(spies->v2.layout_changed.front().back(), 2);
 
-        Test::keyboard_key_released(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+        keyboard_key_released(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
         spies->v2.layout_changed.clear();
 
         // Switch to next layout on the second keyboard, which is again English.
-        Test::keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+        keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
         QVERIFY(!spies->v1.layout_changed.wait(500));
         QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
         QCOMPARE(xkb->layout_name(), "German (Neo 2)");
@@ -452,8 +452,8 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(spies->v2.layout_changed.front().front(), keyboards_index);
         QCOMPARE(spies->v2.layout_changed.front().back(), 0);
 
-        Test::keyboard_key_released(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
-        Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++, wlr_keyboard2);
+        keyboard_key_released(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+        keyboard_key_released(KEY_LEFTCTRL, timestamp++, wlr_keyboard2);
 
         remove_input_device(wlr_keyboard2);
         QVERIFY(spies->v2.keyboard_removed.wait());
@@ -505,9 +505,9 @@ TEST_CASE("keyboard layout", "[input]")
 
         // Now switch to German through the global shortcut.
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
-        Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
-        Test::keyboard_key_pressed(KEY_2, timestamp++);
+        keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+        keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+        keyboard_key_pressed(KEY_2, timestamp++);
         QVERIFY(spies->v1.layout_changed.wait());
         QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
 
@@ -516,20 +516,20 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(spies->v2.layout_changed.front().front(), 0);
         QCOMPARE(spies->v2.layout_changed.front().back(), 1);
 
-        Test::keyboard_key_released(KEY_2, timestamp++);
+        keyboard_key_released(KEY_2, timestamp++);
         spies->v2.layout_changed.clear();
 
         // Switch back to English.
-        Test::keyboard_key_pressed(KEY_1, timestamp++);
+        keyboard_key_pressed(KEY_1, timestamp++);
         QVERIFY(spies->v1.layout_changed.wait());
         QCOMPARE(xkb->layout_name(), "English (US)");
         QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
         QCOMPARE(spies->v2.layout_changed.front().front(), 0);
         QCOMPARE(spies->v2.layout_changed.front().back(), 0);
 
-        Test::keyboard_key_released(KEY_1, timestamp++);
-        Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
-        Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
+        keyboard_key_released(KEY_1, timestamp++);
+        keyboard_key_released(KEY_LEFTALT, timestamp++);
+        keyboard_key_released(KEY_LEFTCTRL, timestamp++);
         spies->v1.layout_changed.clear();
         spies->v2.layout_changed.clear();
 
@@ -664,13 +664,13 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(xkb->layout_name(), "English (US)");
 
         // Create a window.
-        std::unique_ptr<Wrapland::Client::Surface> surface(Test::create_surface());
+        std::unique_ptr<Wrapland::Client::Surface> surface(create_surface());
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface));
+            create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto c1 = Test::render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
+        auto c1 = render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
         QVERIFY(c1);
 
         // Now switch layout.
@@ -679,13 +679,13 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(xkb->layout_name(), "German");
 
         // Create a second window.
-        std::unique_ptr<Wrapland::Client::Surface> surface2(Test::create_surface());
+        std::unique_ptr<Wrapland::Client::Surface> surface2(create_surface());
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> shellSurface2(
-            Test::create_xdg_shell_toplevel(surface2));
+            create_xdg_shell_toplevel(surface2));
         QVERIFY(surface2);
         QVERIFY(shellSurface2);
 
-        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 100), Qt::red);
+        auto c2 = render_and_wait_for_shown(surface2, QSize(100, 100), Qt::red);
         QVERIFY(c2);
 
         // This should have switched back to English.
@@ -716,19 +716,19 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(xkb->layout_name(), "English (US)");
 
         // Create a window.
-        std::unique_ptr<Wrapland::Client::Surface> surface(Test::create_surface());
+        std::unique_ptr<Wrapland::Client::Surface> surface(create_surface());
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface));
+            create_xdg_shell_toplevel(surface));
         shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
-        auto c1 = Test::render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
+        auto c1 = render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
         QVERIFY(c1);
 
         // Create a second window.
-        std::unique_ptr<Wrapland::Client::Surface> surface2(Test::create_surface());
+        std::unique_ptr<Wrapland::Client::Surface> surface2(create_surface());
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> shellSurface2(
-            Test::create_xdg_shell_toplevel(surface2));
+            create_xdg_shell_toplevel(surface2));
         shellSurface2->setAppId(QByteArrayLiteral("org.kde.foo"));
-        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 100), Qt::red);
+        auto c2 = render_and_wait_for_shown(surface2, QSize(100, 100), Qt::red);
         QVERIFY(c2);
 
         // Now switch layout.
@@ -760,7 +760,7 @@ TEST_CASE("keyboard layout", "[input]")
 
         shellSurface2.reset();
         surface2.reset();
-        QVERIFY(Test::wait_for_destroyed(c2));
+        QVERIFY(wait_for_destroyed(c2));
         QVERIFY(!spies->v1.layout_changed.wait(1000));
         QCOMPARE(xkb->layout_name(), "German (Neo 2)");
 
@@ -777,15 +777,15 @@ TEST_CASE("keyboard layout", "[input]")
         // By default not set.
         QVERIFY(!(xkb->leds & input::keyboard_leds::num_lock));
         quint32 timestamp = 0;
-        Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
-        Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
+        keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
+        keyboard_key_released(KEY_NUMLOCK, timestamp++);
 
         // Now it should be on.
         QVERIFY(flags(xkb->leds & input::keyboard_leds::num_lock));
 
         // And back to off.
-        Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
-        Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
+        keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
+        keyboard_key_released(KEY_NUMLOCK, timestamp++);
         QVERIFY(!(xkb->leds & input::keyboard_leds::num_lock));
 
         // Let's reconfigure to enable through config.
@@ -803,13 +803,13 @@ TEST_CASE("keyboard layout", "[input]")
         QVERIFY(flags(xkb->leds & input::keyboard_leds::num_lock));
 
         // Pressing should result in it being off.
-        Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
-        Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
+        keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
+        keyboard_key_released(KEY_NUMLOCK, timestamp++);
         QVERIFY(!(xkb->leds & input::keyboard_leds::num_lock));
 
         // Pressing again should enable it.
-        Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
-        Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
+        keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
+        keyboard_key_released(KEY_NUMLOCK, timestamp++);
         QVERIFY(flags(xkb->leds & input::keyboard_leds::num_lock));
 
         // Now reconfigure to disable on load.

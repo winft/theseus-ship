@@ -46,7 +46,7 @@ TEST_CASE("no crash reinit compositor", "[render]")
 
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
+    test_outputs_default();
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
@@ -59,13 +59,13 @@ TEST_CASE("no crash reinit compositor", "[render]")
     QVERIFY(effectsImpl);
 
     // Create the test client.
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
-    std::unique_ptr<Surface> surface(Test::create_surface());
+    std::unique_ptr<Surface> surface(create_surface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+    auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // Make sure that only the test effect is loaded.

@@ -43,19 +43,19 @@ TEST_CASE("no crash cursor physical size empty", "[win]")
     test::setup setup("no-crash-cursor-empty");
     setup.start();
 
-    Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
-    Test::cursor()->set_pos(QPoint(640, 512));
+    setup_wayland_connection(global_selection::xdg_decoration);
+    cursor()->set_pos(QPoint(640, 512));
 
     SECTION("move cursor over deco")
     {
         // This test ensures that there is no endless recursion if the cursor theme cannot be
         // created a reason for creation failure could be physical size not existing see BUG: 390314
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(),
-                                                                            shellSurface.get());
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(),
+                                                                      shellSurface.get());
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(win::decoration(c));
 
@@ -64,9 +64,9 @@ TEST_CASE("no crash cursor physical size empty", "[win]")
         output->set_physical_size(QSize(0, 0));
 
         // and fake a cursor theme change, so that the theme gets recreated
-        Q_EMIT Test::cursor()->theme_changed();
+        Q_EMIT cursor()->theme_changed();
 
-        Test::cursor()->set_pos(
+        cursor()->set_pos(
             QPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
     }
 }

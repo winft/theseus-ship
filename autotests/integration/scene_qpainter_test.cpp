@@ -60,7 +60,7 @@ TEST_CASE("scene qpainter", "[render]")
     config->sync();
 
     setup.start();
-    Test::setup_wayland_connection(Test::global_selection::seat);
+    setup_wayland_connection(global_selection::seat);
 
     SECTION("start frame")
     {
@@ -79,7 +79,7 @@ TEST_CASE("scene qpainter", "[render]")
         auto const cursorImage = sw_cursor->image();
 
         QVERIFY(!cursorImage.isNull());
-        p.drawImage(Test::cursor()->pos() - sw_cursor->hotspot(), cursorImage);
+        p.drawImage(cursor()->pos() - sw_cursor->hotspot(), cursorImage);
         QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(setup.base->outputs.at(0)));
     }
 
@@ -89,17 +89,17 @@ TEST_CASE("scene qpainter", "[render]")
         auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->render->compositor->scene.get());
         QVERIFY(scene);
 
-        auto surface = Test::create_surface();
-        auto xdg_shell = Test::create_xdg_shell_toplevel(surface);
+        auto surface = create_surface();
+        auto xdg_shell = create_xdg_shell_toplevel(surface);
 
         QSignalSpy frameRenderedSpy(surface.get(), &Wrapland::Client::Surface::frameRendered);
         QVERIFY(frameRenderedSpy.isValid());
 
-        QVERIFY(Test::render_and_wait_for_shown(surface, QSize(1, 1), Qt::transparent));
+        QVERIFY(render_and_wait_for_shown(surface, QSize(1, 1), Qt::transparent));
         surface->commit();
         QVERIFY(frameRenderedSpy.wait());
 
-        auto cursor = Test::cursor();
+        auto cursor = test::cursor();
 
         cursor->set_pos(0, 0);
         surface->commit();
@@ -139,18 +139,18 @@ TEST_CASE("scene qpainter", "[render]")
 
     SECTION("window")
     {
-        auto cursor = Test::cursor();
+        auto cursor = test::cursor();
         cursor->set_pos(45, 45);
         // this test verifies that a window is rendered correctly
         using namespace Wrapland::Client;
 
-        QVERIFY(Test::wait_for_wayland_pointer());
-        std::unique_ptr<Surface> s(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s));
+        QVERIFY(wait_for_wayland_pointer());
+        std::unique_ptr<Surface> s(create_surface());
+        std::unique_ptr<XdgShellToplevel> ss(create_xdg_shell_toplevel(s));
         QVERIFY(s);
         QVERIFY(ss);
 
-        std::unique_ptr<Pointer> p(Test::get_client().interfaces.seat->createPointer());
+        std::unique_ptr<Pointer> p(get_client().interfaces.seat->createPointer());
 
         QSignalSpy frameRenderedSpy(s.get(), &Wrapland::Client::Surface::frameRendered);
         QVERIFY(frameRenderedSpy.isValid());
@@ -159,7 +159,7 @@ TEST_CASE("scene qpainter", "[render]")
         QVERIFY(scene);
 
         // now let's map the window
-        QVERIFY(Test::render_and_wait_for_shown(s, QSize(200, 300), Qt::blue));
+        QVERIFY(render_and_wait_for_shown(s, QSize(200, 300), Qt::blue));
 
         // which should trigger a frame
         s->commit();
@@ -173,9 +173,9 @@ TEST_CASE("scene qpainter", "[render]")
         painter.fillRect(0, 0, 200, 300, Qt::blue);
 
         // now let's set a cursor image
-        std::unique_ptr<Surface> cs(Test::create_surface());
+        std::unique_ptr<Surface> cs(create_surface());
         QVERIFY(cs);
-        Test::render(cs, QSize(10, 10), Qt::red);
+        render(cs, QSize(10, 10), Qt::red);
         p->setCursor(cs.get(), QPoint(5, 5));
         s->commit();
         QVERIFY(frameRenderedSpy.wait());
@@ -202,15 +202,15 @@ TEST_CASE("scene qpainter", "[render]")
         // this test verifies that a window is rendered correctly
         using namespace Wrapland::Client;
 
-        Test::cursor()->set_pos(10, 10);
-        QVERIFY(Test::wait_for_wayland_pointer());
+        cursor()->set_pos(10, 10);
+        QVERIFY(wait_for_wayland_pointer());
 
-        std::unique_ptr<Surface> s(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s));
+        std::unique_ptr<Surface> s(create_surface());
+        std::unique_ptr<XdgShellToplevel> ss(create_xdg_shell_toplevel(s));
         QVERIFY(s);
         QVERIFY(ss);
 
-        std::unique_ptr<Pointer> p(Test::get_client().interfaces.seat->createPointer());
+        std::unique_ptr<Pointer> p(get_client().interfaces.seat->createPointer());
 
         QSignalSpy frameRenderedSpy(s.get(), &Wrapland::Client::Surface::frameRendered);
         QVERIFY(frameRenderedSpy.isValid());
@@ -221,9 +221,9 @@ TEST_CASE("scene qpainter", "[render]")
         QVERIFY(scene);
 
         // now let's set a cursor image
-        std::unique_ptr<Surface> cs(Test::create_surface());
+        std::unique_ptr<Surface> cs(create_surface());
         QVERIFY(cs);
-        Test::render(cs, QSize(10, 10), Qt::red);
+        render(cs, QSize(10, 10), Qt::red);
 
         // now let's map the window
         s->setScale(2);
@@ -236,7 +236,7 @@ TEST_CASE("scene qpainter", "[render]")
         surfacePainter.fillRect(200, 300, 200, 200, Qt::red);
 
         // Add buffer, also commit one more time with default flag to get frame event.
-        Test::render(s, img);
+        render(s, img);
         s->commit();
         QVERIFY(pointerEnteredSpy.wait());
         p->setCursor(cs.get(), QPoint(5, 5));
@@ -257,15 +257,15 @@ TEST_CASE("scene qpainter", "[render]")
     {
         // this test verifies that the compositor/SceneQPainter survive a restart of the compositor
         // and still render correctly
-        Test::cursor()->set_pos(400, 400);
+        cursor()->set_pos(400, 400);
 
         // first create a window
         using namespace Wrapland::Client;
-        std::unique_ptr<Surface> s(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s));
+        std::unique_ptr<Surface> s(create_surface());
+        std::unique_ptr<XdgShellToplevel> ss(create_xdg_shell_toplevel(s));
         QVERIFY(s);
         QVERIFY(ss);
-        QVERIFY(Test::render_and_wait_for_shown(s, QSize(200, 300), Qt::blue));
+        QVERIFY(render_and_wait_for_shown(s, QSize(200, 300), Qt::blue));
         s->commit();
 
         QSignalSpy frameRenderedSpy(s.get(), &Wrapland::Client::Surface::frameRendered);
@@ -314,13 +314,13 @@ TEST_CASE("scene qpainter", "[render]")
         QVERIFY(windowAddedSpy.isValid());
 
         // Helper window to wait for frame events.
-        auto surface = Test::create_surface();
-        auto xdg_shell = Test::create_xdg_shell_toplevel(surface);
+        auto surface = create_surface();
+        auto xdg_shell = create_xdg_shell_toplevel(surface);
 
         QSignalSpy frameRenderedSpy(surface.get(), &Wrapland::Client::Surface::frameRendered);
         QVERIFY(frameRenderedSpy.isValid());
 
-        QVERIFY(Test::render_and_wait_for_shown(surface, QSize(1, 1), Qt::transparent));
+        QVERIFY(render_and_wait_for_shown(surface, QSize(1, 1), Qt::transparent));
         surface->commit();
         QVERIFY(frameRenderedSpy.wait());
 
@@ -358,7 +358,7 @@ TEST_CASE("scene qpainter", "[render]")
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QCOMPARE(win::frame_to_client_size(client, client->geo.size()), QSize(100, 200));

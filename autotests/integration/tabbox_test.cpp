@@ -36,36 +36,36 @@ TEST_CASE("tabbox", "[win]")
     c->sync();
 
     setup.start();
-    Test::setup_wayland_connection();
-    Test::cursor()->set_pos(QPoint(640, 512));
+    setup_wayland_connection();
+    cursor()->set_pos(QPoint(640, 512));
 
     SECTION("move forward")
     {
         // this test verifies that Alt+tab works correctly moving forward
 
         // first create three windows
-        std::unique_ptr<Surface> surface1(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+        std::unique_ptr<Surface> surface1(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface1(create_xdg_shell_toplevel(surface1));
         QVERIFY(surface1);
         QVERIFY(shellSurface1);
 
-        auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
+        auto c1 = render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
         QVERIFY(c1);
         QVERIFY(c1->control->active);
-        std::unique_ptr<Surface> surface2(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+        std::unique_ptr<Surface> surface2(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface2(create_xdg_shell_toplevel(surface2));
         QVERIFY(surface2);
         QVERIFY(shellSurface2);
 
-        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
+        auto c2 = render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
         QVERIFY(c2);
         QVERIFY(c2->control->active);
-        std::unique_ptr<Surface> surface3(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+        std::unique_ptr<Surface> surface3(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface3(create_xdg_shell_toplevel(surface3));
         QVERIFY(surface3);
         QVERIFY(shellSurface3);
 
-        auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
+        auto c3 = render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
         QVERIFY(c3);
         QVERIFY(c3->control->active);
 
@@ -79,26 +79,26 @@ TEST_CASE("tabbox", "[win]")
 
         // press alt+tab
         quint32 timestamp = 0;
-        Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+        keyboard_key_pressed(KEY_LEFTALT, timestamp++);
         QCOMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input), Qt::AltModifier);
-        Test::keyboard_key_pressed(KEY_TAB, timestamp++);
-        Test::keyboard_key_released(KEY_TAB, timestamp++);
+        keyboard_key_pressed(KEY_TAB, timestamp++);
+        keyboard_key_released(KEY_TAB, timestamp++);
 
         QVERIFY(tabboxAddedSpy.wait());
         QVERIFY(setup.base->space->tabbox->is_grabbed());
 
         // release alt
-        Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+        keyboard_key_released(KEY_LEFTALT, timestamp++);
         QCOMPARE(tabboxClosedSpy.count(), 1);
         QCOMPARE(setup.base->space->tabbox->is_grabbed(), false);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c2);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c2);
 
         surface3.reset();
-        QVERIFY(Test::wait_for_destroyed(c3));
+        QVERIFY(wait_for_destroyed(c3));
         surface2.reset();
-        QVERIFY(Test::wait_for_destroyed(c2));
+        QVERIFY(wait_for_destroyed(c2));
         surface1.reset();
-        QVERIFY(Test::wait_for_destroyed(c1));
+        QVERIFY(wait_for_destroyed(c1));
     }
 
     SECTION("move backward")
@@ -106,28 +106,28 @@ TEST_CASE("tabbox", "[win]")
         // this test verifies that Alt+Shift+tab works correctly moving backward
 
         // first create three windows
-        std::unique_ptr<Surface> surface1(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+        std::unique_ptr<Surface> surface1(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface1(create_xdg_shell_toplevel(surface1));
         QVERIFY(surface1);
         QVERIFY(shellSurface1);
 
-        auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
+        auto c1 = render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
         QVERIFY(c1);
         QVERIFY(c1->control->active);
-        std::unique_ptr<Surface> surface2(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+        std::unique_ptr<Surface> surface2(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface2(create_xdg_shell_toplevel(surface2));
         QVERIFY(surface2);
         QVERIFY(shellSurface2);
 
-        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
+        auto c2 = render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
         QVERIFY(c2);
         QVERIFY(c2->control->active);
-        std::unique_ptr<Surface> surface3(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+        std::unique_ptr<Surface> surface3(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface3(create_xdg_shell_toplevel(surface3));
         QVERIFY(surface3);
         QVERIFY(shellSurface3);
 
-        auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
+        auto c3 = render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
         QVERIFY(c3);
         QVERIFY(c3->control->active);
 
@@ -141,31 +141,31 @@ TEST_CASE("tabbox", "[win]")
 
         // press alt+shift+tab
         quint32 timestamp = 0;
-        Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+        keyboard_key_pressed(KEY_LEFTALT, timestamp++);
         QCOMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input), Qt::AltModifier);
-        Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
+        keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
         REQUIRE(input::xkb::get_active_keyboard_modifiers(*setup.base->input)
                 == (Qt::AltModifier | Qt::ShiftModifier));
-        Test::keyboard_key_pressed(KEY_TAB, timestamp++);
-        Test::keyboard_key_released(KEY_TAB, timestamp++);
+        keyboard_key_pressed(KEY_TAB, timestamp++);
+        keyboard_key_released(KEY_TAB, timestamp++);
 
         QVERIFY(tabboxAddedSpy.wait());
         QVERIFY(setup.base->space->tabbox->is_grabbed());
 
         // release alt
-        Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
+        keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
         QCOMPARE(tabboxClosedSpy.count(), 0);
-        Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+        keyboard_key_released(KEY_LEFTALT, timestamp++);
         QCOMPARE(tabboxClosedSpy.count(), 1);
         QCOMPARE(setup.base->space->tabbox->is_grabbed(), false);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c1);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c1);
 
         surface3.reset();
-        QVERIFY(Test::wait_for_destroyed(c3));
+        QVERIFY(wait_for_destroyed(c3));
         surface2.reset();
-        QVERIFY(Test::wait_for_destroyed(c2));
+        QVERIFY(wait_for_destroyed(c2));
         surface1.reset();
-        QVERIFY(Test::wait_for_destroyed(c1));
+        QVERIFY(wait_for_destroyed(c1));
     }
 
     SECTION("caps lock")
@@ -174,33 +174,33 @@ TEST_CASE("tabbox", "[win]")
         // bug 368590
 
         // first create three windows
-        std::unique_ptr<Surface> surface1(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+        std::unique_ptr<Surface> surface1(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface1(create_xdg_shell_toplevel(surface1));
         QVERIFY(surface1);
         QVERIFY(shellSurface1);
 
-        auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
+        auto c1 = render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
         QVERIFY(c1);
         QVERIFY(c1->control->active);
-        std::unique_ptr<Surface> surface2(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+        std::unique_ptr<Surface> surface2(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface2(create_xdg_shell_toplevel(surface2));
         QVERIFY(surface2);
         QVERIFY(shellSurface2);
 
-        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
+        auto c2 = render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
         QVERIFY(c2);
         QVERIFY(c2->control->active);
-        std::unique_ptr<Surface> surface3(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+        std::unique_ptr<Surface> surface3(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface3(create_xdg_shell_toplevel(surface3));
         QVERIFY(surface3);
         QVERIFY(shellSurface3);
 
-        auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
+        auto c3 = render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
         QVERIFY(c3);
         QVERIFY(c3->control->active);
 
         QTRY_COMPARE(setup.base->space->stacking.order.stack,
-                     (std::deque<Test::space::window_t>{c1, c2, c3}));
+                     (std::deque<space::window_t>{c1, c2, c3}));
 
         // Setup tabbox signal spies
         QSignalSpy tabboxAddedSpy(setup.base->space->tabbox->qobject.get(),
@@ -212,43 +212,43 @@ TEST_CASE("tabbox", "[win]")
 
         // enable capslock
         quint32 timestamp = 0;
-        Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
-        Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
+        keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
+        keyboard_key_released(KEY_CAPSLOCK, timestamp++);
         QCOMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input), Qt::ShiftModifier);
 
         // press alt+tab
-        Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+        keyboard_key_pressed(KEY_LEFTALT, timestamp++);
         REQUIRE(input::xkb::get_active_keyboard_modifiers(*setup.base->input)
                 == (Qt::ShiftModifier | Qt::AltModifier));
-        Test::keyboard_key_pressed(KEY_TAB, timestamp++);
-        Test::keyboard_key_released(KEY_TAB, timestamp++);
+        keyboard_key_pressed(KEY_TAB, timestamp++);
+        keyboard_key_released(KEY_TAB, timestamp++);
 
         QVERIFY(tabboxAddedSpy.wait());
         QVERIFY(setup.base->space->tabbox->is_grabbed());
 
         // release alt
-        Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+        keyboard_key_released(KEY_LEFTALT, timestamp++);
         QCOMPARE(tabboxClosedSpy.count(), 1);
         QCOMPARE(setup.base->space->tabbox->is_grabbed(), false);
 
         // release caps lock
-        Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
-        Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
+        keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
+        keyboard_key_released(KEY_CAPSLOCK, timestamp++);
         QCOMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input), Qt::NoModifier);
         QCOMPARE(tabboxClosedSpy.count(), 1);
         QCOMPARE(setup.base->space->tabbox->is_grabbed(), false);
 
         // Has walked backwards to the previously lowest client in the stacking order.
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c1);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c1);
         QCOMPARE(setup.base->space->stacking.order.stack,
-                 (std::deque<Test::space::window_t>{c2, c3, c1}));
+                 (std::deque<space::window_t>{c2, c3, c1}));
 
         surface3.reset();
-        QVERIFY(Test::wait_for_destroyed(c3));
+        QVERIFY(wait_for_destroyed(c3));
         surface2.reset();
-        QVERIFY(Test::wait_for_destroyed(c2));
+        QVERIFY(wait_for_destroyed(c2));
         surface1.reset();
-        QVERIFY(Test::wait_for_destroyed(c1));
+        QVERIFY(wait_for_destroyed(c1));
     }
 }
 

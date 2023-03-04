@@ -114,7 +114,7 @@ TEST_CASE("translucency", "[effect]")
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QVERIFY(win::decoration(client));
@@ -127,7 +127,7 @@ TEST_CASE("translucency", "[effect]")
         win::send_window_to_desktop(*setup.base->space, client, 2, false);
         effects->setCurrentDesktop(2);
         QVERIFY(!translucency_effect->isActive());
-        Test::cursor()->set_pos(client->geo.frame.center());
+        cursor()->set_pos(client->geo.frame.center());
         win::perform_window_operation(client, base::options_qobject::MoveOp);
         QVERIFY(translucency_effect->isActive());
         QTest::qWait(200);
@@ -199,7 +199,7 @@ TEST_CASE("translucency", "[effect]")
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QVERIFY(win::decoration(client));

@@ -42,12 +42,12 @@ TEST_CASE("keymap creation failure", "[input]")
     layoutGroup.writeEntry("Options", "no");
     layoutGroup.sync();
 
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
     // now create the crashing condition
     // which is sending in a pointer event
-    Test::pointer_button_pressed(BTN_LEFT, 0);
-    Test::pointer_button_released(BTN_LEFT, 1);
+    pointer_button_pressed(BTN_LEFT, 0);
+    pointer_button_released(BTN_LEFT, 1);
 }
 
 }

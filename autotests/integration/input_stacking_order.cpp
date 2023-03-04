@@ -35,15 +35,15 @@ TEST_CASE("input stacking order", "[win]")
     test::setup setup("input-stacking-order");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
+    test_outputs_default();
 
-    Test::setup_wayland_connection(Test::global_selection::seat);
-    QVERIFY(Test::wait_for_wayland_pointer());
-    Test::cursor()->set_pos(QPoint(640, 512));
+    setup_wayland_connection(global_selection::seat);
+    QVERIFY(wait_for_wayland_pointer());
+    cursor()->set_pos(QPoint(640, 512));
 
     auto render = [](std::unique_ptr<Wrapland::Client::Surface> const& surface) {
-        Test::render(surface, QSize(100, 50), Qt::blue);
-        Test::flush_wayland_connection();
+        test::render(surface, QSize(100, 50), Qt::blue);
+        flush_wayland_connection();
     };
 
     SECTION("pointer focus updates on stacking order change")
@@ -54,7 +54,7 @@ TEST_CASE("input stacking order", "[win]")
         // other window should gain focus without a mouse event in between
         using namespace Wrapland::Client;
         // create pointer and signal spy for enter and leave signals
-        auto seat = Test::get_client().interfaces.seat.get();
+        auto seat = get_client().interfaces.seat.get();
         auto pointer = seat->createPointer(seat);
         QVERIFY(pointer);
         QVERIFY(pointer->isValid());
@@ -67,23 +67,23 @@ TEST_CASE("input stacking order", "[win]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        auto surface1 = Test::create_surface();
+        auto surface1 = create_surface();
         QVERIFY(surface1);
-        auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
+        auto shellSurface1 = create_xdg_shell_toplevel(surface1);
         QVERIFY(shellSurface1);
         render(surface1);
         QVERIFY(clientAddedSpy.wait());
-        auto window1 = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window1 = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window1);
 
-        auto surface2 = Test::create_surface();
+        auto surface2 = create_surface();
         QVERIFY(surface2);
-        auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
+        auto shellSurface2 = create_xdg_shell_toplevel(surface2);
         QVERIFY(shellSurface2);
         render(surface2);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window2 = Test::get_wayland_window(setup.base->space->stacking.active);
+        auto window2 = get_wayland_window(setup.base->space->stacking.active);
         QVERIFY(window2);
         QVERIFY(window1 != window2);
 
@@ -92,7 +92,7 @@ TEST_CASE("input stacking order", "[win]")
         QCOMPARE(window1->geo.frame, window2->geo.frame);
 
         // enter
-        Test::pointer_motion_absolute(QPointF(25, 25), 1);
+        pointer_motion_absolute(QPointF(25, 25), 1);
         QVERIFY(enteredSpy.wait());
         QCOMPARE(enteredSpy.count(), 1);
         // window 2 should have focus

@@ -21,8 +21,8 @@ TEST_CASE("night color", "[render]")
     test::setup setup("night-color");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection();
+    test_outputs_default();
+    setup_wayland_connection();
 
     SECTION("config read")
     {

@@ -70,7 +70,7 @@ TEST_CASE("dbus interface", "[base]")
     setup.start();
     setup.base->space->virtual_desktop_manager->setCount(4);
 
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
     SECTION("get window info with invalid uuid")
     {
@@ -88,18 +88,18 @@ TEST_CASE("dbus interface", "[base]")
                                   &win::space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
         shellSurface->setTitle(QStringLiteral("Test window"));
 
         // now let's render
-        Test::render(surface, QSize(100, 50), Qt::blue);
+        render(surface, QSize(100, 50), Qt::blue);
         QVERIFY(clientAddedSpy.isEmpty());
         QVERIFY(clientAddedSpy.wait());
 
         auto client_id = clientAddedSpy.first().first().value<quint32>();
-        auto client = Test::get_wayland_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_wayland_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
 
         // let's get the window info
@@ -249,7 +249,7 @@ TEST_CASE("dbus interface", "[base]")
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QCOMPARE(win::frame_to_client_size(client, client->geo.size()), windowGeometry.size());

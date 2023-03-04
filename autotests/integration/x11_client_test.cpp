@@ -44,10 +44,10 @@ TEST_CASE("x11 window", "[win]")
 {
     test::setup setup("x11-window", base::operation_mode::xwayland);
     setup.start();
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
     auto get_x11_window_from_id
-        = [&](uint32_t id) { return Test::get_x11_window(setup.base->space->windows_map.at(id)); };
+        = [&](uint32_t id) { return get_x11_window(setup.base->space->windows_map.at(id)); };
 
     SECTION("trim caption")
     {
@@ -168,38 +168,34 @@ TEST_CASE("x11 window", "[win]")
         win::active_window_set_fullscreen(*setup.base->space);
         QVERIFY(client->control->fullscreen);
         QCOMPARE(win::get_layer(*client), win::layer::active);
-        QCOMPARE(Test::get_x11_window(setup.base->space->stacking.order.stack.back()), client);
+        QCOMPARE(get_x11_window(setup.base->space->stacking.order.stack.back()), client);
 
         // now let's open a Wayland window
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto waylandClient = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto waylandClient = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(waylandClient);
         QVERIFY(waylandClient->control->active);
         QCOMPARE(win::get_layer(*waylandClient), win::layer::normal);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.order.stack.back()),
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.order.stack.back()), waylandClient);
+        QCOMPARE(get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
                  waylandClient);
-        QCOMPARE(
-            Test::get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
-            waylandClient);
         QCOMPARE(win::get_layer(*client), win::layer::normal);
 
         // now activate fullscreen again
         win::activate_window(*setup.base->space, *client);
         QTRY_VERIFY(client->control->active);
         QCOMPARE(win::get_layer(*client), win::layer::active);
-        QCOMPARE(Test::get_x11_window(setup.base->space->stacking.order.stack.back()), client);
-        QCOMPARE(Test::get_x11_window(win::render_stack(setup.base->space->stacking.order).back()),
+        QCOMPARE(get_x11_window(setup.base->space->stacking.order.stack.back()), client);
+        QCOMPARE(get_x11_window(win::render_stack(setup.base->space->stacking.order).back()),
                  client);
 
         // activate wayland window again
         win::activate_window(*setup.base->space, *waylandClient);
         QTRY_VERIFY(waylandClient->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.order.stack.back()),
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.order.stack.back()), waylandClient);
+        QCOMPARE(get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
                  waylandClient);
-        QCOMPARE(
-            Test::get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
-            waylandClient);
 
         // back to x window
         win::activate_window(*setup.base->space, *client);
@@ -211,18 +207,16 @@ TEST_CASE("x11 window", "[win]")
         // and fullscreen again
         win::active_window_set_fullscreen(*setup.base->space);
         QVERIFY(client->control->fullscreen);
-        QCOMPARE(Test::get_x11_window(setup.base->space->stacking.order.stack.back()), client);
-        QCOMPARE(Test::get_x11_window(win::render_stack(setup.base->space->stacking.order).back()),
+        QCOMPARE(get_x11_window(setup.base->space->stacking.order.stack.back()), client);
+        QCOMPARE(get_x11_window(win::render_stack(setup.base->space->stacking.order).back()),
                  client);
 
         // activate wayland window again
         win::activate_window(*setup.base->space, *waylandClient);
         QTRY_VERIFY(waylandClient->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.order.stack.back()),
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.order.stack.back()), waylandClient);
+        QCOMPARE(get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
                  waylandClient);
-        QCOMPARE(
-            Test::get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
-            waylandClient);
 
         // back to X11 window
         win::activate_window(*setup.base->space, *client);
@@ -255,24 +249,22 @@ TEST_CASE("x11 window", "[win]")
 
         QVERIFY(fullscreen_spy.wait());
         QTRY_VERIFY(client->control->fullscreen);
-        QCOMPARE(Test::get_x11_window(setup.base->space->stacking.order.stack.back()), client);
-        QCOMPARE(Test::get_x11_window(win::render_stack(setup.base->space->stacking.order).back()),
+        QCOMPARE(get_x11_window(setup.base->space->stacking.order.stack.back()), client);
+        QCOMPARE(get_x11_window(win::render_stack(setup.base->space->stacking.order).back()),
                  client);
 
         // activate wayland window again
         win::activate_window(*setup.base->space, *waylandClient);
         QTRY_VERIFY(waylandClient->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.order.stack.back()),
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.order.stack.back()), waylandClient);
+        QCOMPARE(get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
                  waylandClient);
-        QCOMPARE(
-            Test::get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
-            waylandClient);
         QCOMPARE(win::get_layer(*client), win::layer::normal);
 
         // close the window
         shellSurface.reset();
         surface.reset();
-        QVERIFY(Test::wait_for_destroyed(waylandClient));
+        QVERIFY(wait_for_destroyed(waylandClient));
         QTRY_VERIFY(client->control->active);
         QCOMPARE(win::get_layer(*client), win::layer::active);
 
@@ -324,9 +316,9 @@ TEST_CASE("x11 window", "[win]")
         QVERIFY(client->control->active);
 
         // create Wayland window
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto waylandClient = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto waylandClient = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(waylandClient);
         QVERIFY(waylandClient->control->active);
 
@@ -338,7 +330,7 @@ TEST_CASE("x11 window", "[win]")
         // and close Wayland window again
         shellSurface.reset();
         surface.reset();
-        QVERIFY(Test::wait_for_destroyed(waylandClient));
+        QVERIFY(wait_for_destroyed(waylandClient));
 
         // and try to activate the x11 client through X11 api
         const auto cookie
@@ -410,9 +402,9 @@ TEST_CASE("x11 window", "[win]")
         QCOMPARE(rootInfo.activeWindow(), client->xcb_windows.client);
 
         // activate a wayland window
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto waylandClient = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto waylandClient = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(waylandClient);
         QVERIFY(waylandClient->control->active);
         xcb_flush(setup.base->x11_data.connection);
@@ -423,7 +415,7 @@ TEST_CASE("x11 window", "[win]")
         // back to X11 client
         shellSurface.reset();
         surface.reset();
-        QVERIFY(Test::wait_for_destroyed(waylandClient));
+        QVERIFY(wait_for_destroyed(waylandClient));
 
         QTRY_VERIFY(client->control->active);
         win::x11::net::root_info rootInfo3(c.get(), win::x11::net::WMAllProperties);
@@ -524,7 +516,7 @@ TEST_CASE("x11 window", "[win]")
         QCOMPARE(clientAddedSpy.count(), 1);
         QCOMPARE(setup.base->space->windows.size(), 1);
 
-        auto glxgearsClient = Test::get_x11_window(setup.base->space->windows.front());
+        auto glxgearsClient = get_x11_window(setup.base->space->windows.front());
         QVERIFY(glxgearsClient);
         QCOMPARE(win::caption(glxgearsClient), QStringLiteral("glxgears"));
 
@@ -842,13 +834,13 @@ TEST_CASE("x11 window", "[win]")
             connection.get(), XCB_INPUT_FOCUS_POINTER_ROOT, window1, XCB_CURRENT_TIME);
         xcb_destroy_window(connection.get(), window2);
         xcb_flush(connection.get());
-        QVERIFY(Test::wait_for_destroyed(client2));
+        QVERIFY(wait_for_destroyed(client2));
         QVERIFY(client1->control->active);
 
         // Destroy the first test window.
         xcb_destroy_window(connection.get(), window1);
         xcb_flush(connection.get());
-        QVERIFY(Test::wait_for_destroyed(client1));
+        QVERIFY(wait_for_destroyed(client1));
     }
 }
 

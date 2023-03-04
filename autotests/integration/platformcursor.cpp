@@ -21,17 +21,17 @@ TEST_CASE("platform cursor", "[input]")
     setup.start();
 
     // cursor should be centered on screen
-    QCOMPARE(Test::cursor()->pos(), QPoint(639, 511));
+    QCOMPARE(cursor()->pos(), QPoint(639, 511));
     QCOMPARE(QCursor::pos(), QPoint(639, 511));
 
     // let's set the pos through QCursor API
     QCursor::setPos(QPoint(10, 10));
-    QCOMPARE(Test::cursor()->pos(), QPoint(10, 10));
+    QCOMPARE(cursor()->pos(), QPoint(10, 10));
     QCOMPARE(QCursor::pos(), QPoint(10, 10));
 
     // and let's set the pos through Cursor API
     QCursor::setPos(QPoint(20, 20));
-    QCOMPARE(Test::cursor()->pos(), QPoint(20, 20));
+    QCOMPARE(cursor()->pos(), QPoint(20, 20));
     QCOMPARE(QCursor::pos(), QPoint(20, 20));
 }
 

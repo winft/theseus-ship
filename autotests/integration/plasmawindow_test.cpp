@@ -38,14 +38,14 @@ namespace
 struct wayland_test_window {
     wayland_test_window(test::setup& /*setup*/, QSize const& size, QColor const& color)
     {
-        client.surface = Test::create_surface();
-        client.toplevel = Test::create_xdg_shell_toplevel(client.surface);
+        client.surface = create_surface();
+        client.toplevel = create_xdg_shell_toplevel(client.surface);
 
-        server.window = Test::render_and_wait_for_shown(client.surface, size, color);
+        server.window = render_and_wait_for_shown(client.surface, size, color);
         QVERIFY(server.window);
         QVERIFY(server.window->control->active);
 
-        QSignalSpy plasma_window_spy(Test::get_client().interfaces.window_management.get(),
+        QSignalSpy plasma_window_spy(get_client().interfaces.window_management.get(),
                                      &Wrapland::Client::PlasmaWindowManagement::windowCreated);
         QVERIFY(plasma_window_spy.isValid());
         QVERIFY(plasma_window_spy.wait());
@@ -55,7 +55,7 @@ struct wayland_test_window {
         QVERIFY(client.plasma);
     }
 
-    wayland_test_window(test::setup& setup)
+    wayland_test_window(setup& setup)
         : wayland_test_window(setup, QSize(100, 50), Qt::blue)
     {
     }
@@ -67,7 +67,7 @@ struct wayland_test_window {
     } client;
 
     struct {
-        Test::wayland_window* window{nullptr};
+        wayland_window* window{nullptr};
     } server;
 };
 
@@ -107,7 +107,7 @@ struct x11_test_window {
         QVERIFY(window_spy.wait());
 
         auto window_id = window_spy.first().first().value<quint32>();
-        server.window = Test::get_x11_window(setup.base->space->windows_map.at(window_id));
+        server.window = get_x11_window(setup.base->space->windows_map.at(window_id));
         QVERIFY(server.window);
         QCOMPARE(server.window->xcb_windows.client, client.window);
         QVERIFY(win::decoration(server.window));
@@ -122,7 +122,7 @@ struct x11_test_window {
         }
         QVERIFY(server.window->surface);
 
-        QSignalSpy plasma_window_spy(Test::get_client().interfaces.window_management.get(),
+        QSignalSpy plasma_window_spy(get_client().interfaces.window_management.get(),
                                      &Wrapland::Client::PlasmaWindowManagement::windowCreated);
         QVERIFY(plasma_window_spy.isValid());
         QVERIFY(plasma_window_spy.wait());
@@ -170,7 +170,7 @@ struct x11_test_window {
     } client;
 
     struct {
-        win::wayland::xwl_window<Test::space>* window{nullptr};
+        win::wayland::xwl_window<space>* window{nullptr};
     } server;
 };
 
@@ -219,13 +219,13 @@ TEST_CASE("plasma window", "[win]")
     test::setup setup("plasma-window", base::operation_mode::xwayland);
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::cursor()->set_pos(QPoint(640, 512));
+    test_outputs_default();
+    cursor()->set_pos(QPoint(640, 512));
 
     setenv("QMLSCENE_DEVICE", "softwarecontext", true);
 
-    Test::setup_wayland_connection(Test::global_selection::window_management);
-    auto window_management = Test::get_client().interfaces.window_management.get();
+    setup_wayland_connection(global_selection::window_management);
+    auto window_management = get_client().interfaces.window_management.get();
 
     SECTION("create destroy x11 plasma window")
     {
@@ -270,7 +270,7 @@ TEST_CASE("plasma window", "[win]")
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QVERIFY(win::decoration(client));
@@ -347,11 +347,10 @@ TEST_CASE("plasma window", "[win]")
         QVERIFY(plasmaWindowCreatedSpy.isValid());
 
         // first create the parent window
-        std::unique_ptr<Surface> parentSurface(Test::create_surface());
+        std::unique_ptr<Surface> parentSurface(create_surface());
         std::unique_ptr<XdgShellToplevel> parentShellSurface(
-            Test::create_xdg_shell_toplevel(parentSurface));
-        auto parentClient
-            = Test::render_and_wait_for_shown(parentSurface, QSize(100, 50), Qt::blue);
+            create_xdg_shell_toplevel(parentSurface));
+        auto parentClient = render_and_wait_for_shown(parentSurface, QSize(100, 50), Qt::blue);
         QVERIFY(parentClient);
         QVERIFY(plasmaWindowCreatedSpy.wait());
         QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
@@ -363,19 +362,19 @@ TEST_CASE("plasma window", "[win]")
         pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
         pos_data.gravity = pos_data.anchor.edge;
 
-        std::unique_ptr<Surface> popupSurface(Test::create_surface());
+        std::unique_ptr<Surface> popupSurface(create_surface());
         std::unique_ptr<XdgShellPopup> popupShellSurface(
-            Test::create_xdg_shell_popup(popupSurface, parentShellSurface, pos_data));
-        auto popupClient = Test::render_and_wait_for_shown(popupSurface, pos_data.size, Qt::blue);
+            create_xdg_shell_popup(popupSurface, parentShellSurface, pos_data));
+        auto popupClient = render_and_wait_for_shown(popupSurface, pos_data.size, Qt::blue);
         QVERIFY(popupClient);
         QVERIFY(!plasmaWindowCreatedSpy.wait(100));
         QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
 
         // let's destroy the windows
         popupShellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(popupClient));
+        QVERIFY(wait_for_destroyed(popupClient));
         parentShellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(parentClient));
+        QVERIFY(wait_for_destroyed(parentClient));
     }
 
     SECTION("lockscreen no plasma window")
@@ -397,8 +396,8 @@ TEST_CASE("plasma window", "[win]")
         auto outputs_count = setup.base->get_outputs().size();
         TRY_REQUIRE(clientAddedSpy.count() == static_cast<int>(outputs_count));
 
-        QVERIFY(Test::get_wayland_window(setup.base->space->windows_map.at(
-                                             clientAddedSpy.first().first().value<quint32>()))
+        QVERIFY(get_wayland_window(setup.base->space->windows_map.at(
+                                       clientAddedSpy.first().first().value<quint32>()))
                     ->isLockScreen());
 
         // should not be sent to the client
@@ -430,11 +429,11 @@ TEST_CASE("plasma window", "[win]")
         QVERIFY(plasmaWindowCreatedSpy.isValid());
 
         // first create the parent window
-        std::unique_ptr<Surface> parentSurface(Test::create_surface());
+        std::unique_ptr<Surface> parentSurface(create_surface());
         std::unique_ptr<XdgShellToplevel> parentShellSurface(
-            Test::create_xdg_shell_toplevel(parentSurface));
+            create_xdg_shell_toplevel(parentSurface));
         // map that window
-        Test::render(parentSurface, QSize(100, 50), Qt::blue);
+        render(parentSurface, QSize(100, 50), Qt::blue);
         // this should create a plasma window
         QVERIFY(plasmaWindowCreatedSpy.wait());
         QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
@@ -456,9 +455,9 @@ TEST_CASE("plasma window", "[win]")
         auto& outputs = setup.base->outputs;
         QCOMPARE(outputs.size(), 2);
 
-        QCOMPARE(Test::get_output(0), test_window.server.window->topo.central_output);
+        QCOMPARE(get_output(0), test_window.server.window->topo.central_output);
 
-        auto& client_outputs = Test::get_client().interfaces.outputs;
+        auto& client_outputs = get_client().interfaces.outputs;
         QCOMPARE(client_outputs.size(), 2);
         QCOMPARE(test_window.client.surface->outputs().size(), 1);
 
@@ -477,7 +476,7 @@ TEST_CASE("plasma window", "[win]")
 
         QCOMPARE(test_window.client.surface->outputs().size(), 1);
         QCOMPARE(target_client_output, test_window.client.surface->outputs().at(0));
-        QCOMPARE(Test::get_output(1), test_window.server.window->topo.central_output);
+        QCOMPARE(get_output(1), test_window.server.window->topo.central_output);
     }
 
     SECTION("stacking order")

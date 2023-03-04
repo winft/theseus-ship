@@ -45,8 +45,8 @@ TEST_CASE("screen edge window show", "[win]")
 
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::cursor()->set_pos(QPoint(640, 512));
+    test_outputs_default();
+    cursor()->set_pos(QPoint(640, 512));
 
     SECTION("edge show hide x11")
     {
@@ -119,7 +119,7 @@ TEST_CASE("screen edge window show", "[win]")
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.last().first().value<quint32>();
-        auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
 
         // TODO(romangg): For unknown reason the windows of some data points have a deco.
@@ -148,7 +148,7 @@ TEST_CASE("screen edge window show", "[win]")
         // now trigger the edge
         QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
         QVERIFY(effectsWindowShownSpy.isValid());
-        Test::cursor()->set_pos(test_data.trigger_pos);
+        cursor()->set_pos(test_data.trigger_pos);
         QVERIFY(!client->isHiddenInternal());
         QCOMPARE(effectsWindowShownSpy.count(), 1);
 
@@ -156,7 +156,7 @@ TEST_CASE("screen edge window show", "[win]")
         QTest::qWait(1);
 
         // hide window again
-        Test::cursor()->set_pos(QPoint(640, 512));
+        cursor()->set_pos(QPoint(640, 512));
         xcb_change_property(
             c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &test_data.location);
         xcb_flush(c.get());
@@ -166,7 +166,7 @@ TEST_CASE("screen edge window show", "[win]")
         // resize while hidden
         client->setFrameGeometry(test_data.resized_window_geo);
         // test_data.trigger_pos shouldn't be valid anymore
-        Test::cursor()->set_pos(test_data.trigger_pos);
+        cursor()->set_pos(test_data.trigger_pos);
         QVERIFY(client->isHiddenInternal());
 
         // destroy window again
@@ -249,7 +249,7 @@ TEST_CASE("screen edge window show", "[win]")
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.last().first().value<quint32>();
-        auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
         QVERIFY(!win::decoration(client));
         QCOMPARE(client->geo.frame, test_data.window_geo);
@@ -277,9 +277,9 @@ TEST_CASE("screen edge window show", "[win]")
         QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
         QVERIFY(effectsWindowShownSpy.isValid());
         quint32 timestamp = 0;
-        Test::touch_down(0, test_data.touch_down, timestamp++);
-        Test::touch_motion(0, test_data.target, timestamp++);
-        Test::touch_up(0, timestamp++);
+        touch_down(0, test_data.touch_down, timestamp++);
+        touch_motion(0, test_data.target, timestamp++);
+        touch_up(0, timestamp++);
         QVERIFY(effectsWindowShownSpy.wait());
         QVERIFY(!client->isHiddenInternal());
         QCOMPARE(effectsWindowShownSpy.count(), 1);

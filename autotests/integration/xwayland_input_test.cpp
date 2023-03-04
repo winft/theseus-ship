@@ -90,8 +90,8 @@ TEST_CASE("xwayland input", "[input],[xwl]")
     test::setup setup("xwayland-input", base::operation_mode::xwayland);
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::cursor()->set_pos(QPoint(640, 512));
+    test_outputs_default();
+    cursor()->set_pos(QPoint(640, 512));
 
     SECTION("pointer enter leave")
     {
@@ -148,7 +148,7 @@ TEST_CASE("xwayland input", "[input],[xwl]")
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.last().first().value<quint32>();
-        auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
         QVERIFY(win::decoration(client));
         QVERIFY(!client->hasStrut());
@@ -164,15 +164,15 @@ TEST_CASE("xwayland input", "[input],[xwl]")
         QVERIFY(client->surface);
 
         // move pointer into the window, should trigger an enter
-        QVERIFY(!client->geo.frame.contains(Test::cursor()->pos()));
+        QVERIFY(!client->geo.frame.contains(cursor()->pos()));
         QVERIFY(enteredSpy.isEmpty());
-        Test::cursor()->set_pos(client->geo.frame.center());
+        cursor()->set_pos(client->geo.frame.center());
         QCOMPARE(setup.base->server->seat()->pointers().get_focus().surface, client->surface);
         QVERIFY(!setup.base->server->seat()->pointers().get_focus().devices.empty());
         QVERIFY(enteredSpy.wait());
 
         // move out of window
-        Test::cursor()->set_pos(client->geo.frame.bottomRight() + QPoint(10, 10));
+        cursor()->set_pos(client->geo.frame.bottomRight() + QPoint(10, 10));
         QVERIFY(leftSpy.wait());
 
         // destroy window again

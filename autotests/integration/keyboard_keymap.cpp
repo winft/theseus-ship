@@ -42,7 +42,7 @@ struct test_window {
         if (window) {
             QSignalSpy windowDeletedSpy(window->qobject.get(), &win::window_qobject::closed);
             QVERIFY(windowDeletedSpy.isValid());
-            QVERIFY(Test::wait_for_destroyed(window));
+            QVERIFY(wait_for_destroyed(window));
             QCOMPARE(windowDeletedSpy.size(), 1);
         }
     }
@@ -58,19 +58,19 @@ TEST_CASE("keyboard keymap", "[input]")
     test::setup setup("keyboard-keymap");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::cursor()->set_pos(QPoint(512, 512));
+    test_outputs_default();
+    cursor()->set_pos(QPoint(512, 512));
 
-    auto create_window = [](Test::client const& client) {
+    auto create_window = [](client const& client) {
         test_window ret;
-        ret.client_surface = Test::create_surface(client);
-        ret.client_toplevel = Test::create_xdg_shell_toplevel(client, ret.client_surface);
-        ret.window = Test::render_and_wait_for_shown(
-            client, ret.client_surface, QSize(1280, 1024), Qt::red);
+        ret.client_surface = create_surface(client);
+        ret.client_toplevel = create_xdg_shell_toplevel(client, ret.client_surface);
+        ret.window
+            = render_and_wait_for_shown(client, ret.client_surface, QSize(1280, 1024), Qt::red);
         return ret;
     };
 
-    auto create_focus_client = []() { return Test::client(Test::global_selection::seat); };
+    auto create_focus_client = []() { return client(global_selection::seat); };
 
     auto create_keymap = []() -> std::string {
         auto context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
@@ -117,7 +117,7 @@ TEST_CASE("keyboard keymap", "[input]")
         QVERIFY(client1_keymap_spy.isValid());
 
         auto window1 = create_window(focus_client1);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window1.window);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1.window);
 
         // After focus we don't yet get the current keymap as none was set yet.
         QVERIFY(!client1_keymap_spy.wait(500));
@@ -125,15 +125,15 @@ TEST_CASE("keyboard keymap", "[input]")
 
         // Now we press some key, so we get the current keymap.
         uint32_t timestamp{0};
-        Test::keyboard_key_pressed(KEY_E, timestamp++);
-        Test::keyboard_key_released(KEY_E, timestamp++);
+        keyboard_key_pressed(KEY_E, timestamp++);
+        keyboard_key_released(KEY_E, timestamp++);
         QVERIFY(client1_keymap_spy.wait());
         QCOMPARE(client1_keymap_spy.size(), 1);
 
         // On a second window with focus we now directly get the current keymap.
         auto focus_client2 = create_focus_client();
         auto window2 = create_window(focus_client2);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window2.window);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window2.window);
 
         auto keyboard2 = std::unique_ptr<Wrapland::Client::Keyboard>(
             focus_client2.interfaces.seat->createKeyboard());
@@ -146,7 +146,7 @@ TEST_CASE("keyboard keymap", "[input]")
 
         // We switch back and don't get a new keymap.
         win::activate_window(*setup.base->space, *window1.window);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window1.window);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1.window);
 
         QVERIFY(!client1_keymap_spy.wait(500));
         QCOMPARE(client1_keymap_spy.size(), 1);

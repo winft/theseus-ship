@@ -39,7 +39,7 @@ TEST_CASE("maximize animation", "[effect]")
     config->sync();
 
     setup.start();
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
     SECTION("maximize restore")
     {
@@ -49,11 +49,11 @@ TEST_CASE("maximize animation", "[effect]")
         using namespace Wrapland::Client;
 
         // Create the test client.
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
 
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
 
         // Wait for the initial configure event.
         QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
@@ -71,7 +71,7 @@ TEST_CASE("maximize animation", "[effect]")
 
         // Draw contents of the surface.
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(client);
         QVERIFY(client->control->active);
         QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
@@ -114,7 +114,7 @@ TEST_CASE("maximize animation", "[effect]")
 
         // Draw contents of the maximized client.
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, QSize(1280, 1024), Qt::red);
+        render(surface, QSize(1280, 1024), Qt::red);
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(geometryChangedSpy.count(), 1);
         QCOMPARE(maximizeChangedSpy.count(), 1);
@@ -136,7 +136,7 @@ TEST_CASE("maximize animation", "[effect]")
 
         // Draw contents of the restored client.
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, QSize(100, 50), Qt::blue);
+        render(surface, QSize(100, 50), Qt::blue);
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(geometryChangedSpy.count(), 2);
         QCOMPARE(maximizeChangedSpy.count(), 2);
@@ -148,7 +148,7 @@ TEST_CASE("maximize animation", "[effect]")
 
         // Destroy the test client.
         surface.reset();
-        QVERIFY(Test::wait_for_destroyed(client));
+        QVERIFY(wait_for_destroyed(client));
     }
 }
 

@@ -32,9 +32,9 @@ TEST_CASE("plasma surface", "[win]")
 {
     test::setup setup("plasma-surface");
     setup.start();
-    Test::cursor()->set_pos(640, 512);
-    Test::setup_wayland_connection(Test::global_selection::plasma_shell);
-    auto plasma_shell = Test::get_client().interfaces.plasma_shell.get();
+    cursor()->set_pos(640, 512);
+    setup_wayland_connection(global_selection::plasma_shell);
+    auto plasma_shell = get_client().interfaces.plasma_shell.get();
 
     SECTION("role on all desktops")
     {
@@ -54,18 +54,18 @@ TEST_CASE("plasma surface", "[win]")
                                   data{PlasmaShellSurface::Role::CriticalNotification, true},
                                   data{PlasmaShellSurface::Role::AppletPopup, true});
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
             plasma_shell->createSurface(surface.get()));
         QVERIFY(plasmaSurface);
 
         // now render to map the window
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
 
         // currently the role is not yet set, so the window should not be on all desktops
         QCOMPARE(win::on_all_desktops(c), false);
@@ -79,16 +79,16 @@ TEST_CASE("plasma surface", "[win]")
 
         // let's create a second window where we init a little bit different
         // first creating the PlasmaSurface then the Shell Surface
-        std::unique_ptr<Surface> surface2(Test::create_surface());
+        std::unique_ptr<Surface> surface2(create_surface());
         QVERIFY(surface2);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface2(
             plasma_shell->createSurface(surface2.get()));
         QVERIFY(plasmaSurface2);
         plasmaSurface2->setRole(test_data.role);
-        std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+        std::unique_ptr<XdgShellToplevel> shellSurface2(create_xdg_shell_toplevel(surface2));
         QVERIFY(shellSurface2);
 
-        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
+        auto c2 = render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
         QVERIFY(c2);
         QVERIFY(c != c2);
 
@@ -115,9 +115,9 @@ TEST_CASE("plasma surface", "[win]")
                        data{PlasmaShellSurface::Role::CriticalNotification, false, false},
                        data{PlasmaShellSurface::Role::AppletPopup, true, true});
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
             plasma_shell->createSurface(surface.get()));
@@ -125,7 +125,7 @@ TEST_CASE("plasma surface", "[win]")
         plasmaSurface->setRole(test_data.role);
 
         // now render to map the window
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
         REQUIRE(c->wantsInput() == test_data.wants_input);
@@ -134,9 +134,9 @@ TEST_CASE("plasma surface", "[win]")
 
     SECTION("desktop is opaque")
     {
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
             plasma_shell->createSurface(surface.get()));
@@ -144,7 +144,7 @@ TEST_CASE("plasma surface", "[win]")
         plasmaSurface->setRole(PlasmaShellSurface::Role::Desktop);
 
         // now render to map the window
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
         QCOMPARE(c->windowType(), win::win_type::desktop);
@@ -178,9 +178,9 @@ TEST_CASE("plasma surface", "[win]")
                                   data{{1250, 0, 30, 800}, {1080, 0, 200, 300}, {1279, 100}},
                                   data{{1250, 200, 30, 824}, {1080, 0, 200, 300}, {1279, 250}});
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
             plasma_shell->createSurface(surface.get()));
@@ -190,7 +190,7 @@ TEST_CASE("plasma surface", "[win]")
         plasmaSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::WindowsCanCover);
 
         // now render and map the window
-        auto panel = Test::render_and_wait_for_shown(surface, test_data.panel_geo.size(), Qt::blue);
+        auto panel = render_and_wait_for_shown(surface, test_data.panel_geo.size(), Qt::blue);
 
         QVERIFY(panel);
         QCOMPARE(panel->windowType(), win::win_type::dock);
@@ -202,12 +202,12 @@ TEST_CASE("plasma surface", "[win]")
         QCOMPARE(win::get_layer(*panel), KWin::win::layer::normal);
 
         // create a Window
-        std::unique_ptr<Surface> surface2(Test::create_surface());
+        std::unique_ptr<Surface> surface2(create_surface());
         QVERIFY(surface2);
-        std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+        std::unique_ptr<XdgShellToplevel> shellSurface2(create_xdg_shell_toplevel(surface2));
         QVERIFY(shellSurface2);
 
-        auto c = Test::render_and_wait_for_shown(surface2, test_data.window_geo.size(), Qt::red);
+        auto c = render_and_wait_for_shown(surface2, test_data.window_geo.size(), Qt::red);
         QVERIFY(c);
         QCOMPARE(c->windowType(), win::win_type::normal);
         QVERIFY(c->control->active);
@@ -217,27 +217,27 @@ TEST_CASE("plasma surface", "[win]")
 
         auto stackingOrder = setup.base->space->stacking.order.stack;
         QCOMPARE(stackingOrder.size(), 2);
-        QCOMPARE(Test::get_wayland_window(stackingOrder.front()), panel);
-        QCOMPARE(Test::get_wayland_window(stackingOrder.back()), c);
+        QCOMPARE(get_wayland_window(stackingOrder.front()), panel);
+        QCOMPARE(get_wayland_window(stackingOrder.back()), c);
 
         QSignalSpy stackingOrderChangedSpy(setup.base->space->stacking.order.qobject.get(),
                                            &win::stacking_order_qobject::changed);
         QVERIFY(stackingOrderChangedSpy.isValid());
 
         // trigger screenedge
-        Test::cursor()->set_pos(test_data.trigger_point);
+        cursor()->set_pos(test_data.trigger_point);
         QCOMPARE(stackingOrderChangedSpy.count(), 1);
         stackingOrder = setup.base->space->stacking.order.stack;
         QCOMPARE(stackingOrder.size(), 2);
-        QCOMPARE(Test::get_wayland_window(stackingOrder.front()), c);
-        QCOMPARE(Test::get_wayland_window(stackingOrder.back()), panel);
+        QCOMPARE(get_wayland_window(stackingOrder.front()), c);
+        QCOMPARE(get_wayland_window(stackingOrder.back()), panel);
     }
 
     SECTION("osd placement")
     {
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
             plasma_shell->createSurface(surface.get()));
@@ -245,7 +245,7 @@ TEST_CASE("plasma surface", "[win]")
         plasmaSurface->setRole(PlasmaShellSurface::Role::OnScreenDisplay);
 
         // now render and map the window
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
         QCOMPARE(c->windowType(), win::win_type::on_screen_display);
@@ -260,7 +260,7 @@ TEST_CASE("plasma surface", "[win]")
         setup.set_outputs(geometries);
 
         QCOMPARE(screensChangedSpy.count(), 1);
-        Test::test_outputs_geometries(geometries);
+        test_outputs_geometries(geometries);
         QCOMPARE(c->geo.frame, QRect(590, 657, 100, 50));
 
         // change size of window
@@ -268,14 +268,14 @@ TEST_CASE("plasma surface", "[win]")
                                       &win::window_qobject::frame_geometry_changed);
         QVERIFY(geometryChangedSpy.isValid());
 
-        Test::render(surface, QSize(200, 100), Qt::red);
+        render(surface, QSize(200, 100), Qt::red);
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(c->geo.frame, QRect(540, 632, 200, 100));
     }
 
     SECTION("osd placement manual position")
     {
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
             plasma_shell->createSurface(surface.get()));
@@ -284,11 +284,11 @@ TEST_CASE("plasma surface", "[win]")
         plasmaSurface->setRole(PlasmaShellSurface::Role::OnScreenDisplay);
         plasmaSurface->setPosition(QPoint(50, 70));
 
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
 
         // now render and map the window
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
         QVERIFY(c->isInitialPositionSet());
@@ -323,9 +323,9 @@ TEST_CASE("plasma surface", "[win]")
                                        {0, 0, 1280, 1024},
                                        win::layer::above});
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<QObject> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<QObject> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
             plasma_shell->createSurface(surface.get()));
@@ -335,7 +335,7 @@ TEST_CASE("plasma surface", "[win]")
         plasmaSurface->setPanelBehavior(test_data.panel_behavior);
 
         // now render and map the window
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
         QCOMPARE(c->windowType(), win::win_type::dock);
@@ -351,9 +351,9 @@ TEST_CASE("plasma surface", "[win]")
     {
         auto activate = GENERATE(true, false);
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
             plasma_shell->createSurface(surface.get()));
@@ -361,7 +361,7 @@ TEST_CASE("plasma surface", "[win]")
         plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
         plasmaSurface->setPanelTakesFocus(activate);
 
-        auto panel = Test::render_and_wait_for_shown(surface, QSize(100, 200), Qt::blue);
+        auto panel = render_and_wait_for_shown(surface, QSize(100, 200), Qt::blue);
 
         QVERIFY(panel);
         QCOMPARE(panel->windowType(), win::win_type::dock);
@@ -382,12 +382,12 @@ TEST_CASE("plasma surface", "[win]")
                                   data{{50, 50}, {0, 25, 100, 50}},
                                   data{{500, 400}, {450, 375, 100, 50}});
 
-        Test::cursor()->set_pos(test_data.cursor_pos);
+        cursor()->set_pos(test_data.cursor_pos);
 
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         QVERIFY(surface);
 
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
         QVERIFY(shellSurface);
 
         auto plasmaSurface
@@ -395,8 +395,7 @@ TEST_CASE("plasma surface", "[win]")
         QVERIFY(plasmaSurface);
         plasmaSurface->request_open_under_cursor();
 
-        auto c
-            = Test::render_and_wait_for_shown(surface, test_data.expected_place.size(), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, test_data.expected_place.size(), Qt::blue);
 
         QVERIFY(c);
         QCOMPARE(c->geo.frame, test_data.expected_place);

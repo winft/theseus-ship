@@ -65,10 +65,9 @@ TEST_CASE("xdg-shell window", "[win]")
     test::setup setup("xdg-shell-window");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::cursor()->set_pos(QPoint(1280, 512));
-    Test::setup_wayland_connection(Test::global_selection::xdg_decoration
-                                   | Test::global_selection::appmenu);
+    test_outputs_default();
+    cursor()->set_pos(QPoint(1280, 512));
+    setup_wayland_connection(global_selection::xdg_decoration | global_selection::appmenu);
 
     SECTION("map unmap map")
     {
@@ -81,17 +80,17 @@ TEST_CASE("xdg-shell window", "[win]")
         QSignalSpy effectsWindowHiddenSpy(effects, &EffectsHandler::windowHidden);
         QVERIFY(effectsWindowHiddenSpy.isValid());
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
 
         // now let's render
-        Test::render(surface, QSize(100, 50), Qt::blue);
+        render(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(clientAddedSpy.isEmpty());
         QVERIFY(clientAddedSpy.wait());
 
         auto client_id = clientAddedSpy.first().first().value<quint32>();
-        auto client = Test::get_wayland_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_wayland_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
         QVERIFY(client->isShown());
         QCOMPARE(client->isHiddenInternal(), false);
@@ -99,7 +98,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(client->render_data.bit_depth, 32);
         QVERIFY(win::has_alpha(*client));
         QCOMPARE(client->control->icon.name(), QStringLiteral("wayland"));
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), client);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client);
         QVERIFY(effectsWindowShownSpy.isEmpty());
         QVERIFY(client->isMaximizable());
         QVERIFY(client->isMovable());
@@ -117,8 +116,8 @@ TEST_CASE("xdg-shell window", "[win]")
                          &win::space::qobject_t::remnant_created,
                          client->qobject.get(),
                          [&setup, &deletedUuid](auto win_id) {
-                             auto remnant_win = Test::get_wayland_window(
-                                 setup.base->space->windows_map.at(win_id));
+                             auto remnant_win
+                                 = get_wayland_window(setup.base->space->windows_map.at(win_id));
                              deletedUuid = remnant_win->meta.internal_id;
                          });
 
@@ -141,7 +140,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         QSignalSpy windowShownSpy(client->qobject.get(), &win::window_qobject::windowShown);
         QVERIFY(windowShownSpy.isValid());
-        Test::render(surface, QSize(100, 50), Qt::blue, QImage::Format_RGB32);
+        render(surface, QSize(100, 50), Qt::blue, QImage::Format_RGB32);
         QCOMPARE(clientAddedSpy.count(), 1);
         QVERIFY(windowShownSpy.wait());
         QCOMPARE(windowShownSpy.count(), 1);
@@ -150,7 +149,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(client->isHiddenInternal(), false);
         QCOMPARE(client->render_data.bit_depth, 24);
         QVERIFY(!win::has_alpha(*client));
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), client);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client);
         QCOMPARE(effectsWindowShownSpy.count(), 1);
         QCOMPARE(effectsWindowShownSpy.first().first().value<EffectWindow*>(),
                  client->render->effect.get());
@@ -180,12 +179,12 @@ TEST_CASE("xdg-shell window", "[win]")
     SECTION("desktop precence changed")
     {
         // this test verifies that the desktop presence changed signals are properly emitted
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QCOMPARE(win::get_desktop(*c), 1);
         effects->setNumberOfDesktops(4);
@@ -221,9 +220,9 @@ TEST_CASE("xdg-shell window", "[win]")
     {
         // this test simulates the situation that a transient window gets reused and the parent
         // window moved between the two usages
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
         // create the Transient window
@@ -234,9 +233,9 @@ TEST_CASE("xdg-shell window", "[win]")
         pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
         pos_data.gravity = pos_data.anchor.edge;
 
-        std::unique_ptr<Surface> transientSurface(Test::create_surface());
+        std::unique_ptr<Surface> transientSurface(create_surface());
         std::unique_ptr<XdgShellPopup> transientShellSurface(
-            Test::create_xdg_shell_popup(transientSurface, shellSurface, pos_data));
+            create_xdg_shell_popup(transientSurface, shellSurface, pos_data));
         QVERIFY(transientSurface);
         QVERIFY(transientShellSurface);
 
@@ -244,7 +243,7 @@ TEST_CASE("xdg-shell window", "[win]")
                                            &XdgShellPopup::configureRequested);
         QVERIFY(transient_configure_spy.isValid());
 
-        auto transient = Test::render_and_wait_for_shown(transientSurface, pos_data.size, Qt::blue);
+        auto transient = render_and_wait_for_shown(transientSurface, pos_data.size, Qt::blue);
         QVERIFY(transient);
         QCOMPARE(transient->geo.frame,
                  QRect(c->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
@@ -264,7 +263,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(windowShownSpy.isValid());
         QVERIFY(transient_configure_spy.wait());
         transientShellSurface->ackConfigure(transient_configure_spy.back().back().value<quint32>());
-        Test::render(transientSurface, QSize(50, 40), Qt::blue);
+        render(transientSurface, QSize(50, 40), Qt::blue);
         QVERIFY(windowShownSpy.wait());
 
         QCOMPARE(transient->geo.frame,
@@ -273,8 +272,8 @@ TEST_CASE("xdg-shell window", "[win]")
 
     SECTION("window outputs")
     {
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
@@ -283,7 +282,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QSignalSpy outputEnteredSpy(surface.get(), &Surface::outputEntered);
         QSignalSpy outputLeftSpy(surface.get(), &Surface::outputLeft);
 
-        auto c = Test::render_and_wait_for_shown(surface, size, Qt::blue);
+        auto c = render_and_wait_for_shown(surface, size, Qt::blue);
         // move to be in the first screen
         c->setFrameGeometry(QRect(QPoint(100, 100), size));
         // we don't don't know where the compositor first placed this window,
@@ -314,15 +313,15 @@ TEST_CASE("xdg-shell window", "[win]")
     SECTION("minimize active window")
     {
         // this test verifies that when minimizing the active window it gets deactivated
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<QObject> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<QObject> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(c->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QVERIFY(c->wantsInput());
         QVERIFY(win::wants_tab_focus(c));
         QVERIFY(c->isShown());
@@ -342,7 +341,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(c->wantsInput());
         QVERIFY(win::wants_tab_focus(c));
         QVERIFY(c->isShown());
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
     }
 
     SECTION("fullscreen")
@@ -350,25 +349,25 @@ TEST_CASE("xdg-shell window", "[win]")
         // this test verifies that a window can be properly fullscreened
         auto deco_mode = GENERATE(XdgDecoration::Mode::ClientSide, XdgDecoration::Mode::ServerSide);
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         QVERIFY(shellSurface);
 
         // create deco
-        auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+        auto deco = get_client().interfaces.xdg_decoration->getToplevelDecoration(
             shellSurface.get(), shellSurface.get());
         QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
         QVERIFY(decoSpy.isValid());
         deco->setMode(deco_mode);
         QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        init_xdg_shell_toplevel(surface, shellSurface);
         QCOMPARE(deco->mode(), deco_mode);
 
         QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
         QVERIFY(configureRequestedSpy.isValid());
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(c->control->active);
         QCOMPARE(win::get_layer(*c), win::layer::normal);
@@ -383,7 +382,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         auto cfgdata = shellSurface->get_configure_data();
         QCOMPARE(cfgdata.size, QSize(100, 50));
-        QCOMPARE(cfgdata.bounds, Test::get_output(0)->geometry().size());
+        QCOMPARE(cfgdata.bounds, get_output(0)->geometry().size());
 
         QSignalSpy fullscreenChangedSpy(c->qobject.get(), &win::window_qobject::fullScreenChanged);
         QVERIFY(fullscreenChangedSpy.isValid());
@@ -398,18 +397,17 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(configureRequestedSpy.count(), 2);
 
         cfgdata = shellSurface->get_configure_data();
-        QCOMPARE(cfgdata.size, Test::get_output(0)->geometry().size());
+        QCOMPARE(cfgdata.size, get_output(0)->geometry().size());
 
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, cfgdata.size, Qt::red);
+        render(surface, cfgdata.size, Qt::red);
 
         // This is the server-side change.
         QVERIFY(fullscreenChangedSpy.wait());
 
         QVERIFY(c->control->fullscreen);
         QVERIFY(!win::decoration(c));
-        QCOMPARE(win::frame_to_client_size(c, c->geo.size()),
-                 Test::get_output(0)->geometry().size());
+        QCOMPARE(win::frame_to_client_size(c, c->geo.size()), get_output(0)->geometry().size());
         QVERIFY(!geometryChangedSpy.isEmpty());
 
         QVERIFY(c->control->fullscreen);
@@ -427,7 +425,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(cfgdata.size, QSize(100, 50));
 
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, cfgdata.size, Qt::red);
+        render(surface, cfgdata.size, Qt::red);
 
         QVERIFY(fullscreenChangedSpy.wait());
 
@@ -439,9 +437,8 @@ TEST_CASE("xdg-shell window", "[win]")
     SECTION("fullscreen restore")
     {
         // this test verifies that windows created fullscreen can be later properly restored
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        auto shell_surface
-            = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+        std::unique_ptr<Surface> surface(create_surface());
+        auto shell_surface = create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly);
         QSignalSpy configureRequestedSpy(shell_surface.get(), &XdgShellToplevel::configured);
 
         // fullscreen the window
@@ -452,11 +449,11 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(configureRequestedSpy.count(), 1);
 
         auto cfgdata = shell_surface->get_configure_data();
-        QCOMPARE(cfgdata.size, Test::get_output(0)->geometry().size());
+        QCOMPARE(cfgdata.size, get_output(0)->geometry().size());
         QVERIFY(cfgdata.states & Wrapland::Client::xdg_shell_state::fullscreen);
         shell_surface->ackConfigure(configureRequestedSpy.front().front().toUInt());
 
-        auto c = Test::render_and_wait_for_shown(surface, cfgdata.size, Qt::blue);
+        auto c = render_and_wait_for_shown(surface, cfgdata.size, Qt::blue);
         QVERIFY(c);
         QVERIFY(c->control->fullscreen);
 
@@ -481,7 +478,7 @@ TEST_CASE("xdg-shell window", "[win]")
             shell_surface->ackConfigure(sig.front().toUInt());
         }
 
-        Test::render(surface, QSize(100, 50), Qt::red);
+        render(surface, QSize(100, 50), Qt::red);
 
         QVERIFY(fullscreenChangedSpy.wait());
         QCOMPARE(geometryChangedSpy.count(), 1);
@@ -491,12 +488,12 @@ TEST_CASE("xdg-shell window", "[win]")
 
     SECTION("user can set fullscreen")
     {
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(c->control->active);
         QVERIFY(!c->control->fullscreen);
@@ -507,9 +504,9 @@ TEST_CASE("xdg-shell window", "[win]")
     {
         auto send_fs_geo = GENERATE(true, false);
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         QVERIFY(shellSurface);
 
         // wait for the initial configure event
@@ -520,7 +517,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(configureRequestedSpy.count(), 1);
 
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(c->control->active);
         QVERIFY(!c->control->fullscreen);
@@ -540,7 +537,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QTRY_COMPARE(configureRequestedSpy.count(), 3);
 
         auto cfgdata = shellSurface->get_configure_data();
-        QCOMPARE(cfgdata.size, Test::get_output(0)->geometry().size());
+        QCOMPARE(cfgdata.size, get_output(0)->geometry().size());
         QVERIFY(cfgdata.states.testFlag(Wrapland::Client::xdg_shell_state::fullscreen));
         QVERIFY(cfgdata.states.testFlag(Wrapland::Client::xdg_shell_state::activated));
         QVERIFY(!cfgdata.states.testFlag(Wrapland::Client::xdg_shell_state::maximized));
@@ -552,7 +549,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(geometry_spy.isValid());
 
         if (send_fs_geo) {
-            Test::render(surface, Test::get_output(0)->geometry().size(), Qt::green);
+            render(surface, get_output(0)->geometry().size(), Qt::green);
         }
 
         QCOMPARE(geometry_spy.wait(100), send_fs_geo);
@@ -576,7 +573,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         shellSurface->ackConfigure(configureRequestedSpy.front().front().value<quint32>());
 
-        Test::render(surface, cfgdata.size, Qt::red);
+        render(surface, cfgdata.size, Qt::red);
         QCOMPARE(geometry_spy.wait(100), send_fs_geo);
 
         REQUIRE(fullscreenChangedSpy.count() == (send_fs_geo ? 2 : 0));
@@ -589,24 +586,24 @@ TEST_CASE("xdg-shell window", "[win]")
 
         auto deco_mode = GENERATE(XdgDecoration::Mode::ClientSide, XdgDecoration::Mode::ServerSide);
 
-        std::unique_ptr<Wrapland::Client::Surface> surface(Test::create_surface());
+        std::unique_ptr<Wrapland::Client::Surface> surface(create_surface());
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         QVERIFY(shellSurface);
 
         // create deco
-        auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+        auto deco = get_client().interfaces.xdg_decoration->getToplevelDecoration(
             shellSurface.get(), shellSurface.get());
         QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
         QVERIFY(decoSpy.isValid());
         deco->setMode(deco_mode);
         QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        init_xdg_shell_toplevel(surface, shellSurface);
         QCOMPARE(deco->mode(), deco_mode);
 
         auto const has_ssd = deco_mode == XdgDecoration::Mode::ServerSide;
 
-        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(client);
         QVERIFY(client->control->active);
         QVERIFY(!client->control->fullscreen);
@@ -633,13 +630,13 @@ TEST_CASE("xdg-shell window", "[win]")
         shellSurface->setMaximized(true);
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
 
-        Test::render(surface, cfgdata.size, Qt::red);
+        render(surface, cfgdata.size, Qt::red);
 
         QVERIFY(configureRequestedSpy.wait());
 
         cfgdata = shellSurface->get_configure_data();
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, cfgdata.size, Qt::red);
+        render(surface, cfgdata.size, Qt::red);
 
         maximize_spy.wait();
 
@@ -657,10 +654,10 @@ TEST_CASE("xdg-shell window", "[win]")
         cfgdata = shellSurface->get_configure_data();
 
         // With or without deco on fullscreen clients will be requested to provide the screeen size.
-        QCOMPARE(cfgdata.size, Test::get_output(0)->geometry().size());
+        QCOMPARE(cfgdata.size, get_output(0)->geometry().size());
 
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, cfgdata.size, Qt::red);
+        render(surface, cfgdata.size, Qt::red);
 
         // Receive request server-side.
         QVERIFY(fullscreenChangedSpy.wait());
@@ -686,7 +683,7 @@ TEST_CASE("xdg-shell window", "[win]")
         }
 
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, cfgdata.size, Qt::red);
+        render(surface, cfgdata.size, Qt::red);
 
         QVERIFY(fullscreenChangedSpy.wait());
 
@@ -699,29 +696,27 @@ TEST_CASE("xdg-shell window", "[win]")
     {
         // this test creates a window which is as large as the screen, but is decorated
         // the window should get resized to fit into the screen, BUG: 366632
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
 
         QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
         QVERIFY(configureRequestedSpy.isValid());
 
         // create deco
-        auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+        auto deco = get_client().interfaces.xdg_decoration->getToplevelDecoration(
             shellSurface.get(), shellSurface.get());
         QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
         QVERIFY(decoSpy.isValid());
         deco->setMode(XdgDecoration::Mode::ServerSide);
         QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        init_xdg_shell_toplevel(surface, shellSurface);
         QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 
-        auto c = Test::render_and_wait_for_shown(
-            surface, Test::get_output(0)->geometry().size(), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, get_output(0)->geometry().size(), Qt::blue);
         QVERIFY(c);
         QVERIFY(c->control->active);
-        QCOMPARE(win::frame_to_client_size(c, c->geo.size()),
-                 Test::get_output(0)->geometry().size());
+        QCOMPARE(win::frame_to_client_size(c, c->geo.size()), get_output(0)->geometry().size());
         QVERIFY(win::decoration(c));
 
         QVERIFY(configureRequestedSpy.wait());
@@ -732,15 +727,15 @@ TEST_CASE("xdg-shell window", "[win]")
     SECTION("hidden")
     {
         // this test verifies that when hiding window it doesn't get shown
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<QObject> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<QObject> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(c->control->active);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QVERIFY(c->wantsInput());
         QVERIFY(win::wants_tab_focus(c));
         QVERIFY(c->isShown());
@@ -764,13 +759,13 @@ TEST_CASE("xdg-shell window", "[win]")
     {
         QIcon::setThemeName(QStringLiteral("breeze"));
         // this test verifies that desktop file name is passed correctly to the window
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
 
         // only xdg-shell as ShellSurface misses the setter
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QCOMPARE(c->control->desktop_file_name, QByteArrayLiteral("org.kde.foo"));
         QCOMPARE(c->meta.wm_class.res_class, QByteArrayLiteral("org.kde.foo"));
@@ -806,14 +801,14 @@ TEST_CASE("xdg-shell window", "[win]")
     {
         // this test verifies that caption is properly trimmed
         // see BUG 323798 comment #12
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         // only done for xdg-shell as ShellSurface misses the setter
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         const QString origTitle = QString::fromUtf8(QByteArrayLiteral(
             "Was tun, wenn Schüler Autismus haben?\342\200\250\342\200\250\342\200\250 – Marlies "
             "Hübner - Mozilla Firefox"));
         shellSurface->setTitle(origTitle);
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(win::caption(c) != origTitle);
         QCOMPARE(win::caption(c), origTitle.simplified());
@@ -821,37 +816,37 @@ TEST_CASE("xdg-shell window", "[win]")
 
     SECTION("caption multiple windows")
     {
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         shellSurface->setTitle(QStringLiteral("foo"));
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QCOMPARE(win::caption(c), QStringLiteral("foo"));
         QCOMPARE(c->meta.caption.normal, QStringLiteral("foo"));
         QCOMPARE(c->meta.caption.suffix, QString());
 
-        std::unique_ptr<Surface> surface2(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+        std::unique_ptr<Surface> surface2(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface2(create_xdg_shell_toplevel(surface2));
         shellSurface2->setTitle(QStringLiteral("foo"));
-        auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
+        auto c2 = render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
         QVERIFY(c2);
         QCOMPARE(win::caption(c2), QStringLiteral("foo <2>"));
         QCOMPARE(c2->meta.caption.normal, QStringLiteral("foo"));
         QCOMPARE(c2->meta.caption.suffix, QStringLiteral(" <2>"));
 
-        std::unique_ptr<Surface> surface3(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+        std::unique_ptr<Surface> surface3(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface3(create_xdg_shell_toplevel(surface3));
         shellSurface3->setTitle(QStringLiteral("foo"));
-        auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
+        auto c3 = render_and_wait_for_shown(surface3, QSize(100, 50), Qt::blue);
         QVERIFY(c3);
         QCOMPARE(win::caption(c3), QStringLiteral("foo <3>"));
         QCOMPARE(c3->meta.caption.normal, QStringLiteral("foo"));
         QCOMPARE(c3->meta.caption.suffix, QStringLiteral(" <3>"));
 
-        std::unique_ptr<Surface> surface4(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
+        std::unique_ptr<Surface> surface4(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface4(create_xdg_shell_toplevel(surface4));
         shellSurface4->setTitle(QStringLiteral("bar"));
-        auto c4 = Test::render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
+        auto c4 = render_and_wait_for_shown(surface4, QSize(100, 50), Qt::blue);
         QVERIFY(c4);
         QCOMPARE(win::caption(c4), QStringLiteral("bar"));
         QCOMPARE(c4->meta.caption.normal, QStringLiteral("bar"));
@@ -908,8 +903,7 @@ TEST_CASE("xdg-shell window", "[win]")
         ::kill(process->processId(), SIGUSR1); // send a signal to freeze the process
 
         auto kill_client_id = shellClientAddedSpy.first().first().value<quint32>();
-        auto killClient
-            = Test::get_wayland_window(setup.base->space->windows_map.at(kill_client_id));
+        auto killClient = get_wayland_window(setup.base->space->windows_map.at(kill_client_id));
         QVERIFY(killClient);
         QSignalSpy unresponsiveSpy(killClient->qobject.get(),
                                    &win::window_qobject::unresponsiveChanged);
@@ -956,15 +950,14 @@ TEST_CASE("xdg-shell window", "[win]")
         // register a faux appmenu client
         QVERIFY(QDBusConnection::sessionBus().registerService("org.kde.kappmenu"));
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        std::unique_ptr<AppMenu> menu(
-            Test::get_client().interfaces.app_menu->create(surface.get()));
+        std::unique_ptr<AppMenu> menu(get_client().interfaces.app_menu->create(surface.get()));
         QSignalSpy spy(c->qobject.get(), &win::window_qobject::hasApplicationMenuChanged);
         menu->setAddress("service.name", "object/path");
         spy.wait();
@@ -978,22 +971,22 @@ TEST_CASE("xdg-shell window", "[win]")
     {
         // this test verifies that the decoration follows the default mode if no mode is explicitly
         // requested
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
 
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
 
-        auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+        auto deco = get_client().interfaces.xdg_decoration->getToplevelDecoration(
             shellSurface.get(), shellSurface.get());
         QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
         QVERIFY(decoSpy.isValid());
         deco->unsetMode();
         QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        init_xdg_shell_toplevel(surface, shellSurface);
         QCOMPARE(decoSpy.count(), 1);
         QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QCOMPARE(c->noBorder(), false);
         QVERIFY(win::decoration(c));
@@ -1005,22 +998,21 @@ TEST_CASE("xdg-shell window", "[win]")
         // to that desktop
 
         setup.base->space->virtual_desktop_manager->setCount(2);
-        std::unique_ptr<Surface> surface{Test::create_surface()};
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface{create_surface()};
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
         // let's create a transient window
-        std::unique_ptr<Surface> transientSurface{Test::create_surface()};
+        std::unique_ptr<Surface> transientSurface{create_surface()};
         std::unique_ptr<XdgShellToplevel> transientShellSurface(
-            Test::create_xdg_shell_toplevel(transientSurface));
+            create_xdg_shell_toplevel(transientSurface));
         transientShellSurface->setTransientFor(shellSurface.get());
 
-        auto transient
-            = Test::render_and_wait_for_shown(transientSurface, QSize(100, 50), Qt::blue);
+        auto transient = render_and_wait_for_shown(transientSurface, QSize(100, 50), Qt::blue);
         QVERIFY(transient);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), transient);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), transient);
         QCOMPARE(transient->transient->lead(), c);
         QVERIFY(contains(c->transient->children, transient));
 
@@ -1035,7 +1027,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         // activate c
         win::activate_window(*setup.base->space, *c);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QVERIFY(c->control->active);
 
         // and send it to the desktop it's already on
@@ -1054,18 +1046,18 @@ TEST_CASE("xdg-shell window", "[win]")
         // transients will be minimized/unminimized as well
 
         // create the main window
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(!c->control->minimized);
 
         // create a transient window
-        std::unique_ptr<Surface> transientSurface(Test::create_surface());
+        std::unique_ptr<Surface> transientSurface(create_surface());
         std::unique_ptr<XdgShellToplevel> transientShellSurface(
-            Test::create_xdg_shell_toplevel(transientSurface));
+            create_xdg_shell_toplevel(transientSurface));
         transientShellSurface->setTransientFor(shellSurface.get());
-        auto transient = Test::render_and_wait_for_shown(transientSurface, QSize(100, 50), Qt::red);
+        auto transient = render_and_wait_for_shown(transientSurface, QSize(100, 50), Qt::red);
         QVERIFY(transient);
         QVERIFY(!transient->control->minimized);
         QCOMPARE(transient->transient->lead(), c);
@@ -1086,19 +1078,18 @@ TEST_CASE("xdg-shell window", "[win]")
     {
         auto deco_mode = GENERATE(XdgDecoration::Mode::ClientSide, XdgDecoration::Mode::ServerSide);
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         std::unique_ptr<XdgDecoration> deco(
-            Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
-                shellSurface.get()));
+            get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get()));
 
         QSignalSpy decorationConfiguredSpy(deco.get(), &XdgDecoration::modeChanged);
         QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
 
         deco->setMode(deco_mode);
 
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        init_xdg_shell_toplevel(surface, shellSurface);
 
         QCOMPARE(configureRequestedSpy.count(), 1);
         QCOMPARE(decorationConfiguredSpy.count(), 1);
@@ -1107,7 +1098,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         shellSurface->ackConfigure(configureRequestedSpy.back().front().toInt());
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         REQUIRE(c->userCanSetNoBorder() == (deco_mode == XdgDecoration::Mode::ServerSide));
         REQUIRE((win::decoration(c) != nullptr) == (deco_mode == XdgDecoration::Mode::ServerSide));
     }
@@ -1116,18 +1107,18 @@ TEST_CASE("xdg-shell window", "[win]")
     {
         // check we don't crash if we create a shell object but delete the XdgShellClient before
         // committing it
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         QVERIFY(surface);
         QVERIFY(shellSurface);
     }
 
     SECTION("initial state")
     {
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
         QVERIFY(configureRequestedSpy.isValid());
         surface->commit(Surface::CommitFlag::None);
@@ -1140,19 +1131,19 @@ TEST_CASE("xdg-shell window", "[win]")
 
         // client should chose it's preferred size
         QCOMPARE(cfgdata.size, QSize(0, 0));
-        QCOMPARE(cfgdata.bounds, Test::get_output(0)->geometry().size());
+        QCOMPARE(cfgdata.bounds, get_output(0)->geometry().size());
 
         shellSurface->ackConfigure(configureRequestedSpy.front().front().toUInt());
 
-        auto c = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::blue);
+        auto c = render_and_wait_for_shown(surface, QSize(200, 100), Qt::blue);
         QCOMPARE(c->geo.size(), QSize(200, 100));
     }
 
     SECTION("initially maximized")
     {
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
 
         shellSurface->setMaximized(true);
@@ -1169,7 +1160,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         shellSurface->ackConfigure(configureRequestedSpy.front().front().toUInt());
 
-        auto c = Test::render_and_wait_for_shown(surface, cfgdata.size, Qt::blue);
+        auto c = render_and_wait_for_shown(surface, cfgdata.size, Qt::blue);
         QCOMPARE(c->maximizeMode(), win::maximize_mode::full);
         QCOMPARE(c->geo.size(), QSize(1280, 1024));
 
@@ -1191,9 +1182,9 @@ TEST_CASE("xdg-shell window", "[win]")
 
     SECTION("initially fullscreen")
     {
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
 
         shellSurface->setFullscreen(true);
@@ -1208,16 +1199,16 @@ TEST_CASE("xdg-shell window", "[win]")
 
         shellSurface->ackConfigure(configureRequestedSpy.front().front().toUInt());
 
-        auto c = Test::render_and_wait_for_shown(surface, cfgdata.size, Qt::blue);
+        auto c = render_and_wait_for_shown(surface, cfgdata.size, Qt::blue);
         QCOMPARE(c->control->fullscreen, true);
         QCOMPARE(c->geo.size(), QSize(1280, 1024));
     }
 
     SECTION("initially minimized")
     {
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
 
         shellSurface->requestMinimize();
@@ -1232,8 +1223,8 @@ TEST_CASE("xdg-shell window", "[win]")
 
         shellSurface->ackConfigure(configureRequestedSpy.front().front().toUInt());
 
-        auto c = Test::render_and_wait_for_shown(
-            surface, cfgdata.size, Qt::blue, QImage::Format_ARGB32, 10);
+        auto c
+            = render_and_wait_for_shown(surface, cfgdata.size, Qt::blue, QImage::Format_ARGB32, 10);
         // TODO(romangg): Client created in a minimised state is not exposed to kwin bug 404838
         REQUIRE_FALSE(c);
         return;
@@ -1246,12 +1237,12 @@ TEST_CASE("xdg-shell window", "[win]")
         // bounding rectangle of the main surface and its sub-surfaces if no window
         // geometry is set by the client.
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto client = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
+        auto client = render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
         QVERIFY(client);
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
         QCOMPARE(client->geo.frame.size(), QSize(200, 100));
@@ -1261,18 +1252,18 @@ TEST_CASE("xdg-shell window", "[win]")
         QSignalSpy geometryChangedSpy(client->qobject.get(),
                                       &win::window_qobject::frame_geometry_changed);
         QVERIFY(geometryChangedSpy.isValid());
-        Test::render(surface, QSize(100, 50), Qt::blue);
+        render(surface, QSize(100, 50), Qt::blue);
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(client->geo.frame.topLeft(), oldPosition);
         QCOMPARE(client->geo.frame.size(), QSize(100, 50));
         QCOMPARE(win::render_geometry(client).topLeft(), oldPosition);
         QCOMPARE(win::render_geometry(client).size(), QSize(100, 50));
 
-        std::unique_ptr<Surface> childSurface(Test::create_surface());
-        std::unique_ptr<SubSurface> subSurface(Test::create_subsurface(childSurface, surface));
+        std::unique_ptr<Surface> childSurface(create_surface());
+        std::unique_ptr<SubSurface> subSurface(create_subsurface(childSurface, surface));
         QVERIFY(subSurface);
         subSurface->setPosition(QPoint(-20, -10));
-        Test::render(childSurface, QSize(100, 50), Qt::blue);
+        render(childSurface, QSize(100, 50), Qt::blue);
         surface->commit(Surface::CommitFlag::None);
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(client->geo.frame.topLeft(), oldPosition);
@@ -1288,9 +1279,9 @@ TEST_CASE("xdg-shell window", "[win]")
         // again. Notice that the window geometry must remain the same even if the new
         // buffer is smaller.
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto client = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto client = render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
         QVERIFY(client);
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
         QCOMPARE(client->geo.frame.size(), QSize(200, 100));
@@ -1315,7 +1306,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
 
         // Now reduce the size from 200x100 to 100x50.
-        Test::render(surface, QSize(100, 50), Qt::blue);
+        render(surface, QSize(100, 50), Qt::blue);
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(client->geo.frame.topLeft(), first_pos);
 
@@ -1336,19 +1327,19 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(win::render_geometry(client).size(), QSize(100, 50));
 
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(client));
+        QVERIFY(wait_for_destroyed(client));
     }
 
     SECTION("send to screen")
     {
         // This test verifies that we can send xdg-shell toplevels and popups to other screens.
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shell_surface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shell_surface(create_xdg_shell_toplevel(surface));
 
-        auto window = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
+        auto window = render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
         QVERIFY(window);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window);
         QCOMPARE(window->geo.frame.size(), QSize(200, 100));
 
         Wrapland::Client::xdg_shell_positioner_data pos_data;
@@ -1358,9 +1349,9 @@ TEST_CASE("xdg-shell window", "[win]")
         pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
         pos_data.gravity = pos_data.anchor.edge;
 
-        std::unique_ptr<Surface> popup_surface(Test::create_surface());
+        std::unique_ptr<Surface> popup_surface(create_surface());
         std::unique_ptr<XdgShellPopup> popup_shell_surface(
-            Test::create_xdg_shell_popup(popup_surface, shell_surface, pos_data));
+            create_xdg_shell_popup(popup_surface, shell_surface, pos_data));
         QVERIFY(popup_surface);
         QVERIFY(popup_shell_surface);
 
@@ -1368,7 +1359,7 @@ TEST_CASE("xdg-shell window", "[win]")
                                        &XdgShellPopup::configureRequested);
         QVERIFY(popup_configure_spy.isValid());
 
-        auto popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
+        auto popup = render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
         QVERIFY(popup);
         QCOMPARE(popup->geo.frame,
                  QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
@@ -1403,9 +1394,9 @@ TEST_CASE("xdg-shell window", "[win]")
         // when a new sub-surface is added and xdg_surface.set_window_geometry is
         // not called again.
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto client = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto client = render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
         QVERIFY(client);
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
         QCOMPARE(client->geo.frame.size(), QSize(200, 100));
@@ -1430,12 +1421,12 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(win::render_geometry(client).topLeft(), first_pos - QPoint(10, 10));
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
 
-        std::unique_ptr<Surface> childSurface(Test::create_surface());
-        std::unique_ptr<SubSurface> subSurface(Test::create_subsurface(childSurface, surface));
+        std::unique_ptr<Surface> childSurface(create_surface());
+        std::unique_ptr<SubSurface> subSurface(create_subsurface(childSurface, surface));
         QVERIFY(subSurface);
 
         subSurface->setPosition(subsurface_offset);
-        Test::render(childSurface, QSize(100, 50), Qt::blue);
+        render(childSurface, QSize(100, 50), Qt::blue);
         surface->commit(Surface::CommitFlag::None);
 
         QCOMPARE(client->geo.frame.topLeft(), first_pos);
@@ -1461,9 +1452,9 @@ TEST_CASE("xdg-shell window", "[win]")
         // This test verifies that correct window geometry is provided along each
         // configure event when an xdg-shell is being interactively resized.
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto client = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto client = render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
         QVERIFY(client);
         QVERIFY(client->control->active);
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
@@ -1496,7 +1487,7 @@ TEST_CASE("xdg-shell window", "[win]")
         // Start interactively resizing the client.
         QVERIFY(!setup.base->space->move_resize_window);
         win::active_window_resize(*setup.base->space);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->move_resize_window), client);
+        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 2);
@@ -1505,10 +1496,10 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(cfgdata.states.testFlag(xdg_shell_state::resizing));
 
         // Go right.
-        auto cursorPos = Test::cursor()->pos();
+        auto cursorPos = cursor()->pos();
         win::key_press_event(client, Qt::Key_Right);
-        win::update_move_resize(client, Test::cursor()->pos());
-        QCOMPARE(Test::cursor()->pos(), cursorPos + QPoint(8, 0));
+        win::update_move_resize(client, cursor()->pos());
+        QCOMPARE(cursor()->pos(), cursorPos + QPoint(8, 0));
 
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 3);
@@ -1519,7 +1510,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         shellSurface->setWindowGeometry(QRect(10, 10, 188, 80));
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, QSize(208, 100), Qt::blue);
+        render(surface, QSize(208, 100), Qt::blue);
 
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
@@ -1527,10 +1518,10 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(client->geo.frame.size(), QSize(188, 80));
 
         // Go down.
-        cursorPos = Test::cursor()->pos();
+        cursorPos = cursor()->pos();
         win::key_press_event(client, Qt::Key_Down);
-        win::update_move_resize(client, Test::cursor()->pos());
-        QCOMPARE(Test::cursor()->pos(), cursorPos + QPoint(0, 8));
+        win::update_move_resize(client, cursor()->pos());
+        QCOMPARE(cursor()->pos(), cursorPos + QPoint(0, 8));
 
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 4);
@@ -1541,7 +1532,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         shellSurface->setWindowGeometry(QRect(10, 10, 188, 88));
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
-        Test::render(surface, QSize(208, 108), Qt::blue);
+        render(surface, QSize(208, 108), Qt::blue);
 
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
@@ -1562,7 +1553,7 @@ TEST_CASE("xdg-shell window", "[win]")
 #endif
 
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(client));
+        QVERIFY(wait_for_destroyed(client));
     }
 
     SECTION("window geo fullscreen")
@@ -1570,9 +1561,9 @@ TEST_CASE("xdg-shell window", "[win]")
         // This test verifies that an xdg-shell receives correct window geometry when
         // its fullscreen state gets changed.
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto client = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto client = render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
         QVERIFY(client);
         QVERIFY(client->control->active);
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
@@ -1613,7 +1604,7 @@ TEST_CASE("xdg-shell window", "[win]")
         shellSurface->setWindowGeometry(QRect(0, 0, 1280, 1024));
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
 
-        Test::render(surface, QSize(1280, 1024), Qt::blue);
+        render(surface, QSize(1280, 1024), Qt::blue);
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(win::render_geometry(client).size(), QSize(1280, 1024));
         QCOMPARE(client->geo.frame.size(), QSize(1280, 1024));
@@ -1629,13 +1620,13 @@ TEST_CASE("xdg-shell window", "[win]")
         shellSurface->setWindowGeometry(QRect(10, 10, 180, 80));
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
 
-        Test::render(surface, QSize(200, 100), Qt::blue);
+        render(surface, QSize(200, 100), Qt::blue);
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
         QCOMPARE(client->geo.frame.size(), QSize(180, 80));
 
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(client));
+        QVERIFY(wait_for_destroyed(client));
     }
 
     SECTION("window geo maximize")
@@ -1643,9 +1634,9 @@ TEST_CASE("xdg-shell window", "[win]")
         // This test verifies that an xdg-shell receives correct window geometry when
         // its maximized state gets changed.
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto client = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto client = render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
         QVERIFY(client);
         QVERIFY(client->control->active);
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
@@ -1676,7 +1667,7 @@ TEST_CASE("xdg-shell window", "[win]")
         shellSurface->setWindowGeometry(QRect(0, 0, 1280, 1024));
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
 
-        Test::render(surface, QSize(1280, 1024), Qt::blue);
+        render(surface, QSize(1280, 1024), Qt::blue);
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(win::render_geometry(client).size(), QSize(1280, 1024));
         QCOMPARE(client->geo.frame.size(), QSize(1280, 1024));
@@ -1692,13 +1683,13 @@ TEST_CASE("xdg-shell window", "[win]")
         shellSurface->setWindowGeometry(QRect(10, 10, 180, 80));
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());
 
-        Test::render(surface, QSize(200, 100), Qt::blue);
+        render(surface, QSize(200, 100), Qt::blue);
         QVERIFY(geometryChangedSpy.wait());
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
         QCOMPARE(client->geo.frame.size(), QSize(180, 80));
 
         shellSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(client));
+        QVERIFY(wait_for_destroyed(client));
     }
 
     SECTION("multi maximize")
@@ -1707,9 +1698,9 @@ TEST_CASE("xdg-shell window", "[win]")
         // separated by the initial commit is handled properly.
 
         // Create the test surface.
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shell_surface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         shell_surface->setMaximized(true);
         surface->commit(Surface::CommitFlag::None);
 
@@ -1739,7 +1730,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         shell_surface->ackConfigure(configureRequestedSpy.back().front().toUInt());
 
-        auto client = Test::render_and_wait_for_shown(surface, cfgdata.size, Qt::blue);
+        auto client = render_and_wait_for_shown(surface, cfgdata.size, Qt::blue);
 
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 3);
@@ -1799,9 +1790,9 @@ TEST_CASE("xdg-shell window", "[win]")
     SECTION("wm capabilities")
     {
         // Checks that capabilities are initially sent correctly
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(
-            Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+            create_xdg_shell_toplevel(surface, CreationSetup::CreateOnly));
         QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configured);
         QVERIFY(configureRequestedSpy.isValid());
 
@@ -1820,12 +1811,12 @@ TEST_CASE("xdg-shell window", "[win]")
     SECTION("popup reposition")
     {
         // Checks that xdg-popups are positioned and repositioned correctly.
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shell_surface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shell_surface(create_xdg_shell_toplevel(surface));
 
-        auto window = Test::render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
+        auto window = render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
         QVERIFY(window);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window);
         QCOMPARE(window->geo.frame.size(), QSize(200, 100));
 
         Wrapland::Client::xdg_shell_positioner_data pos_data;
@@ -1834,9 +1825,9 @@ TEST_CASE("xdg-shell window", "[win]")
         pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
         pos_data.gravity = pos_data.anchor.edge;
 
-        std::unique_ptr<Surface> popup_surface(Test::create_surface());
+        std::unique_ptr<Surface> popup_surface(create_surface());
         std::unique_ptr<XdgShellPopup> popup_shell_surface(
-            Test::create_xdg_shell_popup(popup_surface, shell_surface, pos_data));
+            create_xdg_shell_popup(popup_surface, shell_surface, pos_data));
         QVERIFY(popup_surface);
         QVERIFY(popup_shell_surface);
 
@@ -1845,7 +1836,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(repositioned_spy.isValid());
         QVERIFY(configure_spy.isValid());
 
-        auto popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
+        auto popup = render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
         QVERIFY(popup);
         QCOMPARE(popup->geo.frame,
                  QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
@@ -1856,7 +1847,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         // Reposition the popup
         pos_data.anchor.rect = QRect(0, 0, 15, 20);
-        auto positioner = Test::get_client().interfaces.xdg_shell->create_positioner(pos_data);
+        auto positioner = get_client().interfaces.xdg_shell->create_positioner(pos_data);
         uint32_t token = 1234;
         popup_shell_surface->reposition(positioner, token);
         delete positioner;
@@ -1883,16 +1874,16 @@ TEST_CASE("xdg-shell window", "[win]")
                        QRect{0, 0, 50, 100},
                        QRect{QRect{10, 15, 0, 0}.topLeft(), QRect{0, 0, 50, 100}.size()});
 
-        std::unique_ptr<Surface> parent_surface(Test::create_surface());
+        std::unique_ptr<Surface> parent_surface(create_surface());
         std::unique_ptr<XdgShellToplevel> parent_shell_surface(
-            Test::create_xdg_shell_toplevel(parent_surface));
+            create_xdg_shell_toplevel(parent_surface));
         QSignalSpy parent_configure_spy(parent_shell_surface.get(), &XdgShellToplevel::configured);
         QVERIFY(parent_configure_spy.isValid());
 
         QSize parent_size(200, 100);
-        auto window = Test::render_and_wait_for_shown(parent_surface, parent_size, Qt::red);
+        auto window = render_and_wait_for_shown(parent_surface, parent_size, Qt::red);
         QVERIFY(window);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window);
         QCOMPARE(window->geo.frame.size(), parent_size);
 
         QSignalSpy parent_geo_spy(window->qobject.get(),
@@ -1905,9 +1896,9 @@ TEST_CASE("xdg-shell window", "[win]")
         pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
         pos_data.gravity = pos_data.anchor.edge;
 
-        std::unique_ptr<Surface> popup_surface(Test::create_surface());
+        std::unique_ptr<Surface> popup_surface(create_surface());
         std::unique_ptr<XdgShellPopup> popup_shell_surface(
-            Test::create_xdg_shell_popup(popup_surface, parent_shell_surface, pos_data));
+            create_xdg_shell_popup(popup_surface, parent_shell_surface, pos_data));
         QVERIFY(popup_surface);
         QVERIFY(popup_shell_surface);
 
@@ -1916,7 +1907,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(popup_done_spy.isValid());
         QVERIFY(configure_spy.isValid());
 
-        auto popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
+        auto popup = render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
         QVERIFY(popup);
         QCOMPARE(popup->geo.frame,
                  QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));
@@ -1935,7 +1926,7 @@ TEST_CASE("xdg-shell window", "[win]")
             }
             QVERIFY(parent_configure_spy.wait());
             parent_shell_surface->ackConfigure(parent_configure_spy.back().back().value<quint32>());
-            Test::render(Test::get_client(), parent_surface, geo.size(), Qt::red);
+            render(get_client(), parent_surface, geo.size(), Qt::red);
             QVERIFY(parent_geo_spy.wait());
         };
 
@@ -1949,9 +1940,8 @@ TEST_CASE("xdg-shell window", "[win]")
 
         // Now create a new popup, which is reactive.
         pos_data.is_reactive = true;
-        popup_surface = Test::create_surface();
-        popup_shell_surface
-            = Test::create_xdg_shell_popup(popup_surface, parent_shell_surface, pos_data);
+        popup_surface = create_surface();
+        popup_shell_surface = create_xdg_shell_popup(popup_surface, parent_shell_surface, pos_data);
         QVERIFY(popup_surface);
         QVERIFY(popup_shell_surface);
 
@@ -1960,7 +1950,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(popup_done_spy2.isValid());
         QVERIFY(configure_spy2.isValid());
 
-        popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
+        popup = render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
         QVERIFY(popup);
         QCOMPARE(popup->geo.frame,
                  QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));

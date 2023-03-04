@@ -54,8 +54,8 @@ TEST_CASE("minimize all", "[script]")
     test::setup setup("minimize-all");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection();
+    test_outputs_default();
+    setup_wayland_connection();
 
     setup.base->space->scripting->loadScript(locateMainScript(s_scriptName), s_scriptName);
     QTRY_VERIFY(setup.base->space->scripting->isScriptLoaded(s_scriptName));
@@ -68,48 +68,48 @@ TEST_CASE("minimize all", "[script]")
     QTRY_COMPARE(runningChangedSpy.count(), 1);
 
     // Create a couple of test clients.
-    std::unique_ptr<Surface> surface1(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
-    auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface1(create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface1(create_xdg_shell_toplevel(surface1));
+    auto client1 = render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
     QVERIFY(client1->control->active);
     QVERIFY(client1->isMinimizable());
 
-    std::unique_ptr<Surface> surface2(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
-    auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface2(create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface2(create_xdg_shell_toplevel(surface2));
+    auto client2 = render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(client2);
     QVERIFY(client2->control->active);
     QVERIFY(client2->isMinimizable());
 
     // Minimize the windows.
     quint32 timestamp = 1;
-    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    Test::keyboard_key_pressed(KEY_D, timestamp++);
-    Test::keyboard_key_released(KEY_D, timestamp++);
-    Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
-    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
+    keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+    keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
+    keyboard_key_pressed(KEY_D, timestamp++);
+    keyboard_key_released(KEY_D, timestamp++);
+    keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
+    keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
     QTRY_VERIFY(client1->control->minimized);
     QTRY_VERIFY(client2->control->minimized);
 
     // Unminimize the windows.
-    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    Test::keyboard_key_pressed(KEY_D, timestamp++);
-    Test::keyboard_key_released(KEY_D, timestamp++);
-    Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
-    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
+    keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+    keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
+    keyboard_key_pressed(KEY_D, timestamp++);
+    keyboard_key_released(KEY_D, timestamp++);
+    keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
+    keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
     QTRY_VERIFY(!client1->control->minimized);
     QTRY_VERIFY(!client2->control->minimized);
 
     // Destroy test clients.
     shellSurface2.reset();
-    QVERIFY(Test::wait_for_destroyed(client2));
+    QVERIFY(wait_for_destroyed(client2));
     shellSurface1.reset();
-    QVERIFY(Test::wait_for_destroyed(client1));
+    QVERIFY(wait_for_destroyed(client1));
 }
 
 }

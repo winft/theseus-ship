@@ -41,12 +41,12 @@ TEST_CASE("window rules", "[win]")
     test::setup setup("window-rules", base::operation_mode::xwayland);
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection();
-    Test::cursor()->set_pos(QPoint(640, 512));
+    test_outputs_default();
+    setup_wayland_connection();
+    cursor()->set_pos(QPoint(640, 512));
 
     auto get_x11_window_from_id
-        = [&](uint32_t id) { return Test::get_x11_window(setup.base->space->windows_map.at(id)); };
+        = [&](uint32_t id) { return get_x11_window(setup.base->space->windows_map.at(id)); };
 
     auto get_config = [&]() -> std::tuple<KSharedConfigPtr, KConfigGroup> {
         auto config = setup.base->config.main;

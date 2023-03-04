@@ -41,10 +41,9 @@ TEST_CASE("transient placement", "[win]")
     test::setup setup("transient-placement");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::cursor()->set_pos(QPoint(640, 512));
-    Test::setup_wayland_connection(Test::global_selection::xdg_decoration
-                                   | Test::global_selection::plasma_shell);
+    test_outputs_default();
+    cursor()->set_pos(QPoint(640, 512));
+    setup_wayland_connection(global_selection::xdg_decoration | global_selection::plasma_shell);
 
     SECTION("xdg popup")
     {
@@ -446,12 +445,12 @@ TEST_CASE("transient placement", "[win]")
         const QRect expectedRelativeGeometry
             = test_data.expected_geo.translated(-test_data.parent_pos);
 
-        auto surface = std::unique_ptr<Wrapland::Client::Surface>(Test::create_surface());
+        auto surface = std::unique_ptr<Wrapland::Client::Surface>(create_surface());
         QVERIFY(surface);
         auto parentShellSurface = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(
-            Test::create_xdg_shell_toplevel(surface));
+            create_xdg_shell_toplevel(surface));
         QVERIFY(parentShellSurface);
-        auto parent = Test::render_and_wait_for_shown(surface, test_data.parent_size, Qt::blue);
+        auto parent = render_and_wait_for_shown(surface, test_data.parent_size, Qt::blue);
         QVERIFY(parent);
 
         QVERIFY(!win::decoration(parent));
@@ -459,13 +458,11 @@ TEST_CASE("transient placement", "[win]")
         QCOMPARE(parent->geo.frame, QRect(test_data.parent_pos, test_data.parent_size));
 
         // create popup
-        auto transientSurface = std::unique_ptr<Wrapland::Client::Surface>(Test::create_surface());
+        auto transientSurface = std::unique_ptr<Wrapland::Client::Surface>(create_surface());
         QVERIFY(transientSurface);
 
-        auto popup = Test::create_xdg_shell_popup(transientSurface,
-                                                  parentShellSurface,
-                                                  test_data.pos_data,
-                                                  Test::CreationSetup::CreateOnly);
+        auto popup = create_xdg_shell_popup(
+            transientSurface, parentShellSurface, test_data.pos_data, CreationSetup::CreateOnly);
         QSignalSpy configureRequestedSpy(popup.get(), &XdgShellPopup::configureRequested);
         transientSurface->commit(Surface::CommitFlag::None);
 
@@ -474,8 +471,8 @@ TEST_CASE("transient placement", "[win]")
         QCOMPARE(configureRequestedSpy.first()[0].value<QRect>(), expectedRelativeGeometry);
         popup->ackConfigure(configureRequestedSpy.first()[1].toUInt());
 
-        auto transient = Test::render_and_wait_for_shown(
-            transientSurface, expectedRelativeGeometry.size(), Qt::red);
+        auto transient
+            = render_and_wait_for_shown(transientSurface, expectedRelativeGeometry.size(), Qt::red);
         QVERIFY(transient);
 
         QVERIFY(!win::decoration(transient));
@@ -490,18 +487,17 @@ TEST_CASE("transient placement", "[win]")
 
         using namespace Wrapland::Client;
 
-        std::unique_ptr<Surface> surface{Test::create_surface()};
+        std::unique_ptr<Surface> surface{create_surface()};
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> dockShellSurface{
-            Test::create_xdg_shell_toplevel(surface)};
+        std::unique_ptr<XdgShellToplevel> dockShellSurface{create_xdg_shell_toplevel(surface)};
         QVERIFY(dockShellSurface);
         std::unique_ptr<PlasmaShellSurface> plasmaSurface(
-            Test::get_client().interfaces.plasma_shell->createSurface(surface.get()));
+            get_client().interfaces.plasma_shell->createSurface(surface.get()));
         QVERIFY(plasmaSurface);
 
         // Put the panel at the lower screen border.
         plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-        plasmaSurface->setPosition(QPoint(0, Test::get_output(0)->geometry().height() - 50));
+        plasmaSurface->setPosition(QPoint(0, get_output(0)->geometry().height() - 50));
         plasmaSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
 
         // Placement area still full screen.
@@ -509,33 +505,32 @@ TEST_CASE("transient placement", "[win]")
                 == win::space_window_area(*setup.base->space, FullScreenArea, 0, 1));
 
         // Now map the panel and placement area is reduced.
-        auto dock = Test::render_and_wait_for_shown(surface, QSize(1280, 50), Qt::blue);
+        auto dock = render_and_wait_for_shown(surface, QSize(1280, 50), Qt::blue);
         QVERIFY(dock);
         QCOMPARE(dock->windowType(), win::win_type::dock);
         QVERIFY(win::is_dock(dock));
-        QCOMPARE(dock->geo.frame,
-                 QRect(0, Test::get_output(0)->geometry().height() - 50, 1280, 50));
+        QCOMPARE(dock->geo.frame, QRect(0, get_output(0)->geometry().height() - 50, 1280, 50));
         QCOMPARE(dock->hasStrut(), true);
         QVERIFY(win::space_window_area(*setup.base->space, PlacementArea, 0, 1)
                 != win::space_window_area(*setup.base->space, FullScreenArea, 0, 1));
 
         // Create parent
-        auto parentSurface = Test::create_surface();
+        auto parentSurface = create_surface();
         QVERIFY(parentSurface);
-        auto parentShellSurface = Test::create_xdg_shell_toplevel(parentSurface);
+        auto parentShellSurface = create_xdg_shell_toplevel(parentSurface);
         QVERIFY(parentShellSurface);
-        auto parent = Test::render_and_wait_for_shown(parentSurface, {800, 600}, Qt::blue);
+        auto parent = render_and_wait_for_shown(parentSurface, {800, 600}, Qt::blue);
         QVERIFY(parent);
 
         QVERIFY(!win::decoration(parent));
 
-        win::move(parent, {0, Test::get_output(0)->geometry().height() - 300});
+        win::move(parent, {0, get_output(0)->geometry().height() - 300});
         win::keep_in_area(
             parent, win::space_window_area(*setup.base->space, PlacementArea, parent), false);
         QCOMPARE(parent->geo.frame,
-                 QRect(0, Test::get_output(0)->geometry().height() - 600 - 50, 800, 600));
+                 QRect(0, get_output(0)->geometry().height() - 600 - 50, 800, 600));
 
-        auto transientSurface = Test::create_surface();
+        auto transientSurface = create_surface();
         QVERIFY(transientSurface);
 
         xdg_shell_positioner_data pos_data;
@@ -544,17 +539,17 @@ TEST_CASE("transient placement", "[win]")
         pos_data.constraint_adjustments = xdg_shell_constraint_adjustment::slide_y;
 
         auto transientShellSurface
-            = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, pos_data);
-        auto transient = Test::render_and_wait_for_shown(transientSurface, pos_data.size, Qt::red);
+            = create_xdg_shell_popup(transientSurface, parentShellSurface, pos_data);
+        auto transient = render_and_wait_for_shown(transientSurface, pos_data.size, Qt::red);
         QVERIFY(transient);
 
         QVERIFY(!win::decoration(transient));
         QCOMPARE(transient->geo.frame,
-                 QRect(50, Test::get_output(0)->geometry().height() - 200 - 50, 200, 200));
+                 QRect(50, get_output(0)->geometry().height() - 200 - 50, 200, 200));
 
         transientShellSurface.reset();
         transientSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(transient));
+        QVERIFY(wait_for_destroyed(transient));
 
         // now parent to fullscreen - on fullscreen the panel is ignored
         QSignalSpy fullscreenSpy{parentShellSurface.get(), &XdgShellToplevel::configured};
@@ -566,29 +561,29 @@ TEST_CASE("transient placement", "[win]")
                                            &win::window_qobject::frame_geometry_changed};
         QVERIFY(geometryShapeChangedSpy.isValid());
 
-        Test::render(parentSurface, parentShellSurface->get_configure_data().size, Qt::red);
+        render(parentSurface, parentShellSurface->get_configure_data().size, Qt::red);
         QVERIFY(geometryShapeChangedSpy.wait());
-        QCOMPARE(parent->geo.frame, Test::get_output(0)->geometry());
+        QCOMPARE(parent->geo.frame, get_output(0)->geometry());
         QVERIFY(parent->control->fullscreen);
 
         // another transient, with same hints as before from bottom of window
-        transientSurface = Test::create_surface();
+        transientSurface = create_surface();
         QVERIFY(transientSurface);
 
         xdg_shell_positioner_data pos_data2;
         pos_data2.size = QSize(200, 200);
-        pos_data2.anchor.rect = QRect(50, Test::get_output(0)->geometry().height() - 100, 200, 200);
+        pos_data2.anchor.rect = QRect(50, get_output(0)->geometry().height() - 100, 200, 200);
         pos_data2.constraint_adjustments = xdg_shell_constraint_adjustment::slide_y;
 
         transientShellSurface
-            = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, pos_data2);
+            = create_xdg_shell_popup(transientSurface, parentShellSurface, pos_data2);
         QVERIFY(transientShellSurface);
-        transient = Test::render_and_wait_for_shown(transientSurface, pos_data2.size, Qt::red);
+        transient = render_and_wait_for_shown(transientSurface, pos_data2.size, Qt::red);
         QVERIFY(transient);
 
         QVERIFY(!win::decoration(transient));
         QCOMPARE(transient->geo.frame,
-                 QRect(50, Test::get_output(0)->geometry().height() - 200, 200, 200));
+                 QRect(50, get_output(0)->geometry().height() - 200, 200, 200));
     }
 }
 

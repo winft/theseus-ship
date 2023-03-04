@@ -42,7 +42,7 @@ Clt::LayerSurfaceV1* create_layer_surface(Clt::Surface* surface,
                                           std::string domain,
                                           QObject* parent = nullptr)
 {
-    auto layer_shell = Test::get_client().interfaces.layer_shell.get();
+    auto layer_shell = get_client().interfaces.layer_shell.get();
     if (!layer_shell) {
         return nullptr;
     }
@@ -122,14 +122,13 @@ TEST_CASE("layer shell", "[win]")
     setup.start();
     auto geometries = std::vector<QRect>{{0, 0, 1000, 500}, {1000, 0, 1000, 500}};
     setup.set_outputs(geometries);
-    Test::test_outputs_geometries(geometries);
-    Test::cursor()->set_pos(QPoint(1280, 512));
+    test_outputs_geometries(geometries);
+    cursor()->set_pos(QPoint(1280, 512));
 
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
-    auto get_wayland_window_from_id = [&](uint32_t id) {
-        return Test::get_wayland_window(setup.base->space->windows_map.at(id));
-    };
+    auto get_wayland_window_from_id
+        = [&](uint32_t id) { return get_wayland_window(setup.base->space->windows_map.at(id)); };
 
     SECTION("create")
     {
@@ -138,10 +137,10 @@ TEST_CASE("layer shell", "[win]")
                               &win::space::qobject_t::wayland_window_added);
         QVERIFY(window_spy.isValid());
 
-        auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
+        auto surface = std::unique_ptr<Clt::Surface>(create_surface());
         auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(
             create_layer_surface(surface.get(),
-                                 Test::get_client().interfaces.outputs.at(1).get(),
+                                 get_client().interfaces.outputs.at(1).get(),
                                  Clt::LayerShellV1::layer::top,
                                  ""));
 
@@ -150,11 +149,11 @@ TEST_CASE("layer shell", "[win]")
         configure_payload payload;
         init_ack_layer_surface(surface.get(), layer_surface.get(), payload);
 
-        auto const output1_geo = Test::get_output(1)->geometry();
+        auto const output1_geo = get_output(1)->geometry();
         QCOMPARE(payload.size, output1_geo.size());
 
         auto render_size = QSize(100, 50);
-        Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
+        render_and_wait_for_shown(surface, render_size, Qt::blue);
         QVERIFY(!window_spy.isEmpty());
 
         auto window = get_wayland_window_from_id(window_spy.first().first().value<quint32>());
@@ -182,10 +181,10 @@ TEST_CASE("layer shell", "[win]")
 
         window_spy.clear();
 
-        auto surface2 = std::unique_ptr<Clt::Surface>(Test::create_surface());
+        auto surface2 = std::unique_ptr<Clt::Surface>(create_surface());
         auto layer_surface2 = std::unique_ptr<Clt::LayerSurfaceV1>(
             create_layer_surface(surface2.get(),
-                                 Test::get_client().interfaces.outputs.at(1).get(),
+                                 get_client().interfaces.outputs.at(1).get(),
                                  Clt::LayerShellV1::layer::bottom,
                                  ""));
 
@@ -203,7 +202,7 @@ TEST_CASE("layer shell", "[win]")
         // width. The protocol at the moment does not forbid this.
         render_size = payload.size / 2;
 
-        Test::render_and_wait_for_shown(surface2, render_size, Qt::red);
+        render_and_wait_for_shown(surface2, render_size, Qt::red);
         QVERIFY(!window_spy.isEmpty());
 
         auto window2 = get_wayland_window_from_id(window_spy.first().first().value<quint32>());
@@ -211,7 +210,7 @@ TEST_CASE("layer shell", "[win]")
         QVERIFY(window2->isShown());
         QCOMPARE(window2->isHiddenInternal(), false);
         QCOMPARE(window2->render_data.ready_for_painting, true);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window2);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window2);
 
         // Surface is centered.
         QCOMPARE(window2->geo.frame,
@@ -256,10 +255,10 @@ TEST_CASE("layer shell", "[win]")
                               &win::space::qobject_t::wayland_window_added);
         QVERIFY(window_spy.isValid());
 
-        auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
+        auto surface = std::unique_ptr<Clt::Surface>(create_surface());
         auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(
             create_layer_surface(surface.get(),
-                                 Test::get_client().interfaces.outputs.at(output).get(),
+                                 get_client().interfaces.outputs.at(output).get(),
                                  Clt::LayerShellV1::layer::top,
                                  ""));
 
@@ -271,13 +270,13 @@ TEST_CASE("layer shell", "[win]")
         init_ack_layer_surface(surface.get(), layer_surface.get(), payload);
 
         auto const render_size = QSize(100, 50);
-        Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
+        render_and_wait_for_shown(surface, render_size, Qt::blue);
         QVERIFY(!window_spy.isEmpty());
 
         auto window = get_wayland_window_from_id(window_spy.first().first().value<quint32>());
         QVERIFY(window);
 
-        auto geo = target_geo(Test::get_client().interfaces.outputs.at(output)->geometry(),
+        auto geo = target_geo(get_client().interfaces.outputs.at(output)->geometry(),
                               render_size,
                               margin,
                               anchor_data.is_mid.horizontal,
@@ -300,13 +299,13 @@ TEST_CASE("layer shell", "[win]")
         setup.base->all_outputs.back()->force_geometry(output_geo);
         base::update_output_topology(*setup.base);
 
-        QTRY_COMPARE(Test::get_client().interfaces.outputs.size(), 3);
-        QTRY_COMPARE(Test::get_client().interfaces.outputs.at(2)->geometry(), output_geo);
+        QTRY_COMPARE(get_client().interfaces.outputs.size(), 3);
+        QTRY_COMPARE(get_client().interfaces.outputs.at(2)->geometry(), output_geo);
 
-        auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
+        auto surface = std::unique_ptr<Clt::Surface>(create_surface());
         auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(
             create_layer_surface(surface.get(),
-                                 Test::get_client().interfaces.outputs.at(2).get(),
+                                 get_client().interfaces.outputs.at(2).get(),
                                  Clt::LayerShellV1::layer::top,
                                  ""));
 
@@ -323,7 +322,7 @@ TEST_CASE("layer shell", "[win]")
         QCOMPARE(configure_spy.size(), 1);
 
         auto render_size = QSize(100, 50);
-        Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
+        render_and_wait_for_shown(surface, render_size, Qt::blue);
         QVERIFY(!window_spy.isEmpty());
 
         auto window = get_wayland_window_from_id(window_spy.first().first().value<quint32>());
@@ -365,10 +364,10 @@ TEST_CASE("layer shell", "[win]")
         QVERIFY(window_spy.isValid());
 
         // First create the layer surface.
-        auto surface = Test::create_surface();
+        auto surface = create_surface();
         auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(
             create_layer_surface(surface.get(),
-                                 Test::get_client().interfaces.outputs.at(1).get(),
+                                 get_client().interfaces.outputs.at(1).get(),
                                  Clt::LayerShellV1::layer::top,
                                  ""));
 
@@ -377,11 +376,11 @@ TEST_CASE("layer shell", "[win]")
         configure_payload payload;
         init_ack_layer_surface(surface.get(), layer_surface.get(), payload);
 
-        auto const output1_geo = Test::get_output(1)->geometry();
+        auto const output1_geo = get_output(1)->geometry();
         QCOMPARE(payload.size, output1_geo.size());
 
         auto render_size = QSize(100, 50);
-        Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
+        render_and_wait_for_shown(surface, render_size, Qt::blue);
         QVERIFY(!window_spy.isEmpty());
 
         auto window = get_wayland_window_from_id(window_spy.first().first().value<quint32>());
@@ -400,13 +399,13 @@ TEST_CASE("layer shell", "[win]")
         pos_data.anchor.edge = Qt::BottomEdge | Qt::RightEdge;
         pos_data.gravity = pos_data.anchor.edge;
 
-        auto popup_surface = Test::create_surface();
-        auto popup = Test::create_xdg_shell_popup(
-            popup_surface, nullptr, pos_data, Test::CreationSetup::CreateOnly);
+        auto popup_surface = create_surface();
+        auto popup
+            = create_xdg_shell_popup(popup_surface, nullptr, pos_data, CreationSetup::CreateOnly);
         layer_surface->get_popup(popup.get());
-        Test::init_xdg_shell_popup(popup_surface, popup);
+        init_xdg_shell_popup(popup_surface, popup);
 
-        auto server_popup = Test::render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
+        auto server_popup = render_and_wait_for_shown(popup_surface, pos_data.size, Qt::blue);
         QVERIFY(server_popup);
         QCOMPARE(server_popup->geo.frame,
                  QRect(window->geo.frame.topLeft() + QPoint(5, 10), QSize(50, 40)));

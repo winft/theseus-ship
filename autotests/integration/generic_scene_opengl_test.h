@@ -11,8 +11,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::detail::test
 {
 
-inline std::unique_ptr<test::setup> generic_scene_opengl_get_setup(std::string const& test_name,
-                                                                   std::string const& env_var)
+inline std::unique_ptr<setup> generic_scene_opengl_get_setup(std::string const& test_name,
+                                                             std::string const& env_var)
 {
     qputenv("XCURSOR_THEME", QByteArrayLiteral("DMZ-White"));
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("24"));

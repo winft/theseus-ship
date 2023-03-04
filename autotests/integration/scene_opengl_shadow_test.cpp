@@ -493,16 +493,16 @@ TEST_CASE("opengl shadow", "[render]")
                             // Window is too small: do not render any shadow tiles.
                             data{{1, 1}, {}});
 
-        Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
+        setup_wayland_connection(global_selection::xdg_decoration);
 
         // Create a decorated client.
-        auto surface = Test::create_surface();
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface);
-        Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(),
-                                                                            shellSurface.get());
+        auto surface = create_surface();
+        auto shellSurface = create_xdg_shell_toplevel(surface);
+        get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(),
+                                                                      shellSurface.get());
 
         // Check the client is decorated.
-        auto client = Test::render_and_wait_for_shown(surface, test_data.window_size, Qt::blue);
+        auto client = render_and_wait_for_shown(surface, test_data.window_size, Qt::blue);
         QVERIFY(client);
         QVERIFY(win::decoration(client));
         auto decoration = win::decoration(client);
@@ -553,12 +553,12 @@ TEST_CASE("opengl shadow", "[render]")
         // this test verifies that top/right/bottom/left shadow tiles are
         // still drawn even when corner tiles are missing
 
-        Test::setup_wayland_connection(Test::global_selection::shadow);
+        setup_wayland_connection(global_selection::shadow);
 
         // Create a surface.
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto* client = Test::render_and_wait_for_shown(surface, QSize(512, 512), Qt::blue);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto* client = render_and_wait_for_shown(surface, QSize(512, 512), Qt::blue);
         QVERIFY(client);
         QVERIFY(!win::decoration(client));
 
@@ -573,10 +573,10 @@ TEST_CASE("opengl shadow", "[render]")
 
         // Submit the shadow to KWin.
         std::unique_ptr<Wrapland::Client::Shadow> clientShadow(
-            Test::get_client().interfaces.shadow_manager.get()->createShadow(surface.get()));
+            get_client().interfaces.shadow_manager.get()->createShadow(surface.get()));
         QVERIFY(clientShadow->isValid());
 
-        auto shmPool = Test::get_client().interfaces.shm.get();
+        auto shmPool = get_client().interfaces.shm.get();
 
         Buffer::Ptr bufferTop
             = shmPool->createBuffer(referenceShadowTexture.copy(QRect(128, 0, 1, 128)));
@@ -657,24 +657,24 @@ TEST_CASE("opengl shadow", "[render]")
     {
         // this test verifies that huge corner tiles are distributed correctly
 
-        Test::setup_wayland_connection(Test::global_selection::shadow);
+        setup_wayland_connection(global_selection::shadow);
 
         // Create a surface.
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto* client = Test::render_and_wait_for_shown(surface, QSize(64, 64), Qt::blue);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto* client = render_and_wait_for_shown(surface, QSize(64, 64), Qt::blue);
         QVERIFY(client);
         QVERIFY(!win::decoration(client));
 
         // Submit the shadow to KWin.
         std::unique_ptr<Wrapland::Client::Shadow> clientShadow(
-            Test::get_client().interfaces.shadow_manager.get()->createShadow(surface.get()));
+            get_client().interfaces.shadow_manager.get()->createShadow(surface.get()));
         QVERIFY(clientShadow->isValid());
 
         QImage referenceTileTexture(512, 512, QImage::Format_ARGB32_Premultiplied);
         referenceTileTexture.fill(Qt::transparent);
 
-        auto shmPool = Test::get_client().interfaces.shm.get();
+        auto shmPool = get_client().interfaces.shm.get();
 
         Buffer::Ptr bufferTopLeft = shmPool->createBuffer(referenceTileTexture);
         clientShadow->attachTopLeft(bufferTopLeft);

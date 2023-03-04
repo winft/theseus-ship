@@ -67,7 +67,7 @@ TEST_CASE("virtual desktop", "[win]")
         QVERIFY(ok);
     }
 
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
     auto& vd_manager = setup.base->space->virtual_desktop_manager;
     vd_manager->setCount(1);
     vd_manager->setCurrent(0u);
@@ -762,12 +762,12 @@ TEST_CASE("virtual desktop", "[win]")
         QCOMPARE(vd_manager->current(), 2u);
 
         // now create a window on this desktop
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(client);
         QCOMPARE(win::get_desktop(*client), 2);
@@ -801,12 +801,12 @@ TEST_CASE("virtual desktop", "[win]")
         QCOMPARE(vd_manager->current(), 3u);
 
         // now create a window on this desktop
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(client);
         QCOMPARE(win::get_desktop(*client), 3u);
@@ -884,12 +884,12 @@ TEST_CASE("virtual desktop", "[win]")
         QCOMPARE(vd_manager->current(), 3u);
 
         // now create a window on this desktop
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
         QVERIFY(shellSurface);
 
-        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(client);
         QCOMPARE(win::get_desktop(*client), 3u);

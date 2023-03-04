@@ -41,7 +41,7 @@ setup::setup(std::string const& test_name,
 {
     current_setup = this;
 
-    auto const socket_name = Test::create_socket_name(test_name);
+    auto const socket_name = create_socket_name(test_name);
 
     auto rm_config = [](auto name) {
         auto const path = QStandardPaths::locate(QStandardPaths::ConfigLocation, name);
@@ -77,7 +77,7 @@ setup::setup(std::string const& test_name,
     base->render = std::make_unique<render::backend::wlroots::platform<base_t>>(*base);
 
     base->process_environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
-    Test::prepare_sys_env(socket_name);
+    prepare_sys_env(socket_name);
 }
 
 setup::~setup()
@@ -137,9 +137,9 @@ void setup::start()
     wlr_pointer_init(pointer, nullptr, "headless-pointer");
     wlr_touch_init(touch, nullptr, "headless-touch");
 
-    Test::wlr_signal_emit_safe(&base->backend->events.new_input, keyboard);
-    Test::wlr_signal_emit_safe(&base->backend->events.new_input, pointer);
-    Test::wlr_signal_emit_safe(&base->backend->events.new_input, touch);
+    wlr_signal_emit_safe(&base->backend->events.new_input, keyboard);
+    wlr_signal_emit_safe(&base->backend->events.new_input, pointer);
+    wlr_signal_emit_safe(&base->backend->events.new_input, touch);
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.
@@ -168,12 +168,12 @@ void setup::start()
 
 void setup::set_outputs(size_t count)
 {
-    auto outputs = std::vector<Test::output>();
+    auto outputs = std::vector<output>();
     auto const size = QSize(1280, 1024);
     auto width = 0;
 
     for (size_t i = 0; i < count; i++) {
-        auto const out = Test::output({QPoint(width, 0), size});
+        auto const out = output({QPoint(width, 0), size});
         outputs.push_back(out);
         width += size.width();
     }
@@ -183,15 +183,15 @@ void setup::set_outputs(size_t count)
 
 void setup::set_outputs(std::vector<QRect> const& geometries)
 {
-    auto outputs = std::vector<Test::output>();
+    auto outputs = std::vector<output>();
     for (auto&& geo : geometries) {
-        auto const out = Test::output(geo);
+        auto const out = output(geo);
         outputs.push_back(out);
     }
     set_outputs(outputs);
 }
 
-void setup::set_outputs(std::vector<Test::output> const& outputs)
+void setup::set_outputs(std::vector<output> const& outputs)
 {
     auto outputs_copy = base->all_outputs;
     for (auto output : outputs_copy) {
@@ -208,7 +208,7 @@ void setup::set_outputs(std::vector<Test::output> const& outputs)
     base::update_output_topology(*base);
 }
 
-void setup::add_client(Test::global_selection globals)
+void setup::add_client(global_selection globals)
 {
     clients.emplace_back(globals);
 }
@@ -242,14 +242,9 @@ void setup::create_xwayland()
     }
 }
 
-}
-
-namespace KWin::Test
+setup* app()
 {
-
-detail::test::setup* app()
-{
-    return detail::test::current_setup;
+    return current_setup;
 }
 
 }

@@ -32,8 +32,8 @@ TEST_CASE("input method", "[input],[win]")
     using wayland_space = win::wayland::space<base::wayland::platform>;
     using wayland_window = win::wayland::window<wayland_space>;
 
-    Test::client ti_client;
-    Test::client im_client;
+    client ti_client;
+    client im_client;
 
     std::unique_ptr<Wrapland::Client::text_input_v3> text_input;
     std::unique_ptr<Wrapland::Client::input_method_v2> input_method;
@@ -41,12 +41,10 @@ TEST_CASE("input method", "[input],[win]")
     test::setup setup("input-method");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
+    test_outputs_default();
 
-    ti_client = Test::client(Test::global_selection::seat
-                             | Test::global_selection::text_input_manager_v3);
-    im_client
-        = Test::client(Test::global_selection::seat | Test::global_selection::input_method_v2);
+    ti_client = client(global_selection::seat | global_selection::text_input_manager_v3);
+    im_client = client(global_selection::seat | global_selection::input_method_v2);
 
     text_input.reset(ti_client.interfaces.text_input_manager_v3->get_text_input(
         ti_client.interfaces.seat.get()));
@@ -80,10 +78,9 @@ TEST_CASE("input method", "[input],[win]")
     QVERIFY(setup.base->server->seat()->get_input_method_v2());
 
     auto make_toplevel = [&]() {
-        toplevel.client_surface = Test::create_surface(ti_client);
-        toplevel.client_toplevel
-            = Test::create_xdg_shell_toplevel(ti_client, toplevel.client_surface);
-        toplevel.window = Test::render_and_wait_for_shown(
+        toplevel.client_surface = create_surface(ti_client);
+        toplevel.client_toplevel = create_xdg_shell_toplevel(ti_client, toplevel.client_surface);
+        toplevel.window = render_and_wait_for_shown(
             ti_client, toplevel.client_surface, QSize(1280, 1024), Qt::red);
     };
 
@@ -119,7 +116,7 @@ TEST_CASE("input method", "[input],[win]")
                              &Wrapland::Server::input_method_v2::popup_surface_created);
         QVERIFY(popup_spy.isValid());
 
-        popup.client_surface = Test::create_surface(im_client);
+        popup.client_surface = create_surface(im_client);
         QVERIFY(popup.client_surface.get());
         popup.client_popup_surface
             = input_method->get_input_popup_surface(popup.client_surface.get());
@@ -147,8 +144,8 @@ TEST_CASE("input method", "[input],[win]")
 
     auto render_popup = [&]() {
         QSignalSpy spy(popup.window->surface, &Wrapland::Server::Surface::committed);
-        Test::render(im_client, popup.client_surface, QSize(60, 30), Qt::blue);
-        Test::flush_wayland_connection(im_client);
+        render(im_client, popup.client_surface, QSize(60, 30), Qt::blue);
+        flush_wayland_connection(im_client);
         QVERIFY(spy.wait());
     };
 
@@ -186,7 +183,7 @@ TEST_CASE("input method", "[input],[win]")
         QSignalSpy key_changed_spy(keyboard_grab,
                                    &Wrapland::Client::input_method_keyboard_grab_v2::key_changed);
         QVERIFY(key_changed_spy.isValid());
-        Test::keyboard_key_pressed(62, 1500);
+        keyboard_key_pressed(62, 1500);
         QVERIFY(!key_changed_spy.wait(500));
 
         // Enable text-input, trigger input method activation.
@@ -199,7 +196,7 @@ TEST_CASE("input method", "[input],[win]")
         QVERIFY(enabled_spy.back().front().toBool());
 
         // Now keyboard input is catched.
-        Test::keyboard_key_pressed(62, 1500);
+        keyboard_key_pressed(62, 1500);
 
         QVERIFY(key_changed_spy.wait());
         auto key_changed_payload = key_changed_spy.takeFirst();
@@ -209,7 +206,7 @@ TEST_CASE("input method", "[input],[win]")
                  Wrapland::Client::Keyboard::KeyState::Pressed);
         QCOMPARE(key_changed_payload.at(2).value<quint32>(), 1500);
 
-        Test::keyboard_key_released(62, 1505);
+        keyboard_key_released(62, 1505);
 
         QVERIFY(key_changed_spy.wait());
         key_changed_payload = key_changed_spy.takeFirst();
@@ -235,7 +232,7 @@ TEST_CASE("input method", "[input],[win]")
         text_input->commit();
         QVERIFY(enabled_spy.wait());
         QVERIFY(enabled_spy.back().front().toBool());
-        Test::keyboard_key_pressed(70, 1600);
+        keyboard_key_pressed(70, 1600);
         QVERIFY(!key_changed_spy.wait(500));
     }
 
@@ -276,8 +273,7 @@ TEST_CASE("input method", "[input],[win]")
         render_popup();
 
         auto signal_id = window_added_spy.back().front().value<quint32>();
-        QCOMPARE(popup.window,
-                 Test::get_wayland_window(setup.base->space->windows_map.at(signal_id)));
+        QCOMPARE(popup.window, get_wayland_window(setup.base->space->windows_map.at(signal_id)));
 
         QVERIFY(popup.window->isInputMethod());
         QVERIFY(!popup.text_area.intersects(popup.window->geo.frame));
@@ -344,8 +340,7 @@ TEST_CASE("input method", "[input],[win]")
         render_popup();
 
         auto signal_id = window_added_spy.back().front().value<quint32>();
-        QCOMPARE(popup.window,
-                 Test::get_wayland_window(setup.base->space->windows_map.at(signal_id)));
+        QCOMPARE(popup.window, get_wayland_window(setup.base->space->windows_map.at(signal_id)));
 
         QVERIFY(popup.window->isInputMethod());
         QVERIFY(!popup.text_area.intersects(popup.window->geo.frame));

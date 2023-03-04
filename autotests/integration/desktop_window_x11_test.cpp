@@ -40,9 +40,9 @@ TEST_CASE("x11 desktop window", "[xwl],[win]")
     test::setup setup("x11-desktop-window", base::operation_mode::xwayland);
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
+    test_outputs_default();
 
-    Test::cursor()->set_pos(QPoint(640, 512));
+    cursor()->set_pos(QPoint(640, 512));
 
     // create an xcb window
     auto c = create_xcb_connection();
@@ -121,7 +121,7 @@ TEST_CASE("x11 desktop window", "[xwl],[win]")
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = Test::get_x11_window(setup.base->space->windows_map.at(client_id));
+    auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));

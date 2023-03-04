@@ -46,7 +46,7 @@ TEST_CASE("window open close animation", "[effect]")
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
     SECTION("animate toplevels")
     {
@@ -69,11 +69,11 @@ TEST_CASE("window open close animation", "[effect]")
 
         // Create the test client.
         using namespace Wrapland::Client;
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
-        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(client);
         QVERIFY(effect->isActive());
 
@@ -106,13 +106,12 @@ TEST_CASE("window open close animation", "[effect]")
 
         // Create the main window.
         using namespace Wrapland::Client;
-        std::unique_ptr<Surface> mainWindowSurface(Test::create_surface());
+        std::unique_ptr<Surface> mainWindowSurface(create_surface());
         QVERIFY(mainWindowSurface);
         std::unique_ptr<XdgShellToplevel> mainWindowShellSurface(
-            Test::create_xdg_shell_toplevel(mainWindowSurface));
+            create_xdg_shell_toplevel(mainWindowSurface));
         QVERIFY(mainWindowShellSurface);
-        auto mainWindow
-            = Test::render_and_wait_for_shown(mainWindowSurface, QSize(100, 50), Qt::blue);
+        auto mainWindow = render_and_wait_for_shown(mainWindowSurface, QSize(100, 50), Qt::blue);
         QVERIFY(mainWindow);
 
         // Load effect that will be tested.
@@ -125,7 +124,7 @@ TEST_CASE("window open close animation", "[effect]")
         QVERIFY(!effect->isActive());
 
         // Create a popup, it should not be animated.
-        std::unique_ptr<Surface> popupSurface(Test::create_surface());
+        std::unique_ptr<Surface> popupSurface(create_surface());
         QVERIFY(popupSurface);
 
         Wrapland::Client::xdg_shell_positioner_data pos_data;
@@ -135,9 +134,9 @@ TEST_CASE("window open close animation", "[effect]")
         pos_data.gravity = Qt::BottomEdge | Qt::RightEdge;
 
         std::unique_ptr<XdgShellPopup> popupShellSurface(
-            Test::create_xdg_shell_popup(popupSurface, mainWindowShellSurface, pos_data));
+            create_xdg_shell_popup(popupSurface, mainWindowShellSurface, pos_data));
         QVERIFY(popupShellSurface);
-        auto popup = Test::render_and_wait_for_shown(popupSurface, pos_data.size, Qt::red);
+        auto popup = render_and_wait_for_shown(popupSurface, pos_data.size, Qt::red);
         QVERIFY(popup);
         QVERIFY(win::is_popup(popup));
         QCOMPARE(popup->transient->lead(), mainWindow);
@@ -153,7 +152,7 @@ TEST_CASE("window open close animation", "[effect]")
 
         // Destroy the main window.
         mainWindowSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(mainWindow));
+        QVERIFY(wait_for_destroyed(mainWindow));
     }
 }
 

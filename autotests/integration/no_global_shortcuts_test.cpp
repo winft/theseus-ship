@@ -81,7 +81,7 @@ TEST_CASE("no global shortcuts", "[input]")
                       base::operation_mode::wayland,
                       base::wayland::start_options::no_global_shortcuts);
     setup.start();
-    Test::cursor()->set_pos(QPoint(640, 512));
+    cursor()->set_pos(QPoint(640, 512));
 
     SECTION("trigger")
     {
@@ -158,14 +158,14 @@ TEST_CASE("no global shortcuts", "[input]")
 
         // configured shortcut should trigger
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         REQUIRE(!triggeredSpy.wait(100));
 
         // the other shortcuts should not trigger
         for (auto mod : non_triggering_mods) {
-            Test::keyboard_key_pressed(mod, timestamp++);
-            Test::keyboard_key_released(mod, timestamp++);
+            keyboard_key_pressed(mod, timestamp++);
+            keyboard_key_released(mod, timestamp++);
             REQUIRE(triggeredSpy.size() == 0);
         }
     }
@@ -184,19 +184,19 @@ TEST_CASE("no global shortcuts", "[input]")
 
         // press meta+shift+w
         quint32 timestamp = 0;
-        Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+        keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
         QCOMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input), Qt::MetaModifier);
 
-        Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
+        keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
         REQUIRE(input::xkb::get_active_keyboard_modifiers(*setup.base->input)
                 == (Qt::ShiftModifier | Qt::MetaModifier));
 
-        Test::keyboard_key_pressed(KEY_W, timestamp++);
-        Test::keyboard_key_released(KEY_W, timestamp++);
+        keyboard_key_pressed(KEY_W, timestamp++);
+        keyboard_key_released(KEY_W, timestamp++);
 
         // release meta+shift
-        Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
-        Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
+        keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
+        keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
         REQUIRE(!triggeredSpy.wait(100));
         QCOMPARE(triggeredSpy.count(), 0);
@@ -204,7 +204,7 @@ TEST_CASE("no global shortcuts", "[input]")
 
     SECTION("pointer shortcut")
     {
-        // based on LockScreenTest::testPointerShortcut
+        // based on LockScreentestPointerShortcut
         std::unique_ptr<QAction> action(new QAction(nullptr));
         QSignalSpy actionSpy(action.get(), &QAction::triggered);
         QVERIFY(actionSpy.isValid());
@@ -213,12 +213,12 @@ TEST_CASE("no global shortcuts", "[input]")
 
         // try to trigger the shortcut
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
         QCoreApplication::instance()->processEvents();
         QCOMPARE(actionSpy.count(), 0);
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
-        Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
+        keyboard_key_released(KEY_LEFTMETA, timestamp++);
         QCoreApplication::instance()->processEvents();
         QCOMPARE(actionSpy.count(), 0);
     }
@@ -228,7 +228,7 @@ TEST_CASE("no global shortcuts", "[input]")
         auto sign = GENERATE(-1, 1);
         auto direction = GENERATE(Qt::Vertical, Qt::Horizontal);
 
-        // based on LockScreenTest::testAxisShortcut
+        // based on LockScreentestAxisShortcut
         std::unique_ptr<QAction> action(new QAction(nullptr));
         QSignalSpy actionSpy(action.get(), &QAction::triggered);
         QVERIFY(actionSpy.isValid());
@@ -245,30 +245,30 @@ TEST_CASE("no global shortcuts", "[input]")
 
         // try to trigger the shortcut
         quint32 timestamp = 1;
-        Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+        keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
 
         if (direction == Qt::Vertical)
-            Test::pointer_axis_vertical(sign * 5.0, timestamp++, 0);
+            pointer_axis_vertical(sign * 5.0, timestamp++, 0);
         else
-            Test::pointer_axis_horizontal(sign * 5.0, timestamp++, 0);
+            pointer_axis_horizontal(sign * 5.0, timestamp++, 0);
 
         QCoreApplication::instance()->processEvents();
         QCOMPARE(actionSpy.count(), 0);
-        Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
+        keyboard_key_released(KEY_LEFTMETA, timestamp++);
         QCoreApplication::instance()->processEvents();
         QCOMPARE(actionSpy.count(), 0);
     }
 
     SECTION("screen edge")
     {
-        // based on LockScreenTest::testScreenEdge
+        // based on LockScreentestScreenEdge
         QSignalSpy screenEdgeSpy(setup.base->space->edges->qobject.get(),
                                  &win::screen_edger_qobject::approaching);
         QVERIFY(screenEdgeSpy.isValid());
         QCOMPARE(screenEdgeSpy.count(), 0);
 
         quint32 timestamp = 1;
-        Test::pointer_motion_absolute({5, 5}, timestamp++);
+        pointer_motion_absolute({5, 5}, timestamp++);
         QCOMPARE(screenEdgeSpy.count(), 0);
     }
 }

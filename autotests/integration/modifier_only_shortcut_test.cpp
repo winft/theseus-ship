@@ -72,8 +72,8 @@ TEST_CASE("modifier only shortcut", "[input]")
 
     test::setup setup("mod-only-shortcut");
     setup.start();
-    Test::setup_wayland_connection();
-    Test::cursor()->set_pos(QPoint(640, 512));
+    setup_wayland_connection();
+    cursor()->set_pos(QPoint(640, 512));
 
     SECTION("trigger")
     {
@@ -150,99 +150,99 @@ TEST_CASE("modifier only shortcut", "[input]")
         // configured shortcut should trigger
         quint32 timestamp = 1;
 
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         TRY_REQUIRE(triggeredSpy.size() == 1);
 
         // the other shortcuts should not trigger
         for (auto mod : non_triggering_mods) {
-            Test::keyboard_key_pressed(mod, timestamp++);
-            Test::keyboard_key_released(mod, timestamp++);
+            keyboard_key_pressed(mod, timestamp++);
+            keyboard_key_released(mod, timestamp++);
             QCOMPARE(triggeredSpy.count(), 1);
         }
 
         // try configured again
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         TRY_REQUIRE(triggeredSpy.size() == 2);
 
         // click another key while modifier is held
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_pressed(KEY_A, timestamp++);
-        Test::keyboard_key_released(KEY_A, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_pressed(KEY_A, timestamp++);
+        keyboard_key_released(KEY_A, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // release other key after modifier release
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_pressed(KEY_A, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
-        Test::keyboard_key_released(KEY_A, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_pressed(KEY_A, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
+        keyboard_key_released(KEY_A, timestamp++);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // press key before pressing modifier
-        Test::keyboard_key_pressed(KEY_A, timestamp++);
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
-        Test::keyboard_key_released(KEY_A, timestamp++);
+        keyboard_key_pressed(KEY_A, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
+        keyboard_key_released(KEY_A, timestamp++);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // mouse button pressed before clicking modifier
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
         QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::LeftButton);
 
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
         QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::NoButton);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // mouse button press before mod press, release before mod release
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
         QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::LeftButton);
 
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::NoButton);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // mouse button click while mod is pressed
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        pointer_button_pressed(BTN_LEFT, timestamp++);
         QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::LeftButton);
 
-        Test::pointer_button_released(BTN_LEFT, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        pointer_button_released(BTN_LEFT, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::NoButton);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // scroll while mod is pressed
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::pointer_axis_vertical(5.0, timestamp++, 0);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        pointer_axis_vertical(5.0, timestamp++, 0);
+        keyboard_key_released(modifier, timestamp++);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // same for horizontal
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::pointer_axis_horizontal(5.0, timestamp++, 0);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        pointer_axis_horizontal(5.0, timestamp++, 0);
+        keyboard_key_released(modifier, timestamp++);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // now try to lock the screen while modifier key is pressed
-        Test::keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
 
-        Test::lock_screen();
+        lock_screen();
 
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // now trigger while screen is locked, should also not work
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QCOMPARE(triggeredSpy.count(), 2);
 
-        Test::unlock_screen();
+        unlock_screen();
     }
 
     SECTION("caps lock")
@@ -265,21 +265,21 @@ TEST_CASE("modifier only shortcut", "[input]")
         // first test that the normal shortcut triggers
         quint32 timestamp = 1;
         const int modifier = KEY_LEFTSHIFT;
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QTRY_COMPARE(triggeredSpy.count(), 1);
 
         // now capslock
-        Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
-        Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
+        keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
+        keyboard_key_released(KEY_CAPSLOCK, timestamp++);
         QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input),
                      Qt::ShiftModifier);
         QTRY_COMPARE(triggeredSpy.count(), 1);
 
         // currently caps lock is on
         // shift still triggers
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input),
                      Qt::ShiftModifier);
         QTRY_COMPARE(triggeredSpy.count(), 2);
@@ -293,14 +293,14 @@ TEST_CASE("modifier only shortcut", "[input]")
         group.sync();
         win::space_reconfigure(*setup.base->space);
 
-        Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+        keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
         TRY_REQUIRE(input::xkb::get_active_keyboard_modifiers(*setup.base->input)
                     == (Qt::ShiftModifier | Qt::MetaModifier));
         TRY_REQUIRE(input::xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(
                         *setup.base->input)
                     == Qt::MetaModifier);
 
-        Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
+        keyboard_key_released(KEY_LEFTMETA, timestamp++);
         QTRY_COMPARE(triggeredSpy.count(), 3);
 
         // set back to shift to ensure we don't trigger with capslock
@@ -313,8 +313,8 @@ TEST_CASE("modifier only shortcut", "[input]")
         win::space_reconfigure(*setup.base->space);
 
         // release caps lock
-        Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
-        Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
+        keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
+        keyboard_key_released(KEY_CAPSLOCK, timestamp++);
         QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input), Qt::NoModifier);
         QTRY_COMPARE(triggeredSpy.count(), 3);
     }
@@ -375,8 +375,8 @@ TEST_CASE("modifier only shortcut", "[input]")
         // trigger once to verify the shortcut works
         quint32 timestamp = 1;
         QVERIFY(!setup.base->space->global_shortcuts_disabled);
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QTRY_COMPARE(triggeredSpy.count(), 1);
         triggeredSpy.clear();
 
@@ -384,8 +384,8 @@ TEST_CASE("modifier only shortcut", "[input]")
         win::set_global_shortcuts_disabled(*setup.base->space, true);
         QVERIFY(setup.base->space->global_shortcuts_disabled);
         // Should not get triggered
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QTRY_COMPARE(triggeredSpy.count(), 0);
         triggeredSpy.clear();
 
@@ -393,8 +393,8 @@ TEST_CASE("modifier only shortcut", "[input]")
         win::set_global_shortcuts_disabled(*setup.base->space, false);
         QVERIFY(!setup.base->space->global_shortcuts_disabled);
         // should get triggered again
-        Test::keyboard_key_pressed(modifier, timestamp++);
-        Test::keyboard_key_released(modifier, timestamp++);
+        keyboard_key_pressed(modifier, timestamp++);
+        keyboard_key_released(modifier, timestamp++);
         QTRY_COMPARE(triggeredSpy.count(), 1);
     }
 }

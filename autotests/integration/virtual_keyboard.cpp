@@ -45,7 +45,7 @@ struct test_window {
     wayland_window* window{nullptr};
 };
 
-std::unique_ptr<Wrapland::Client::virtual_keyboard_v1> create_virtual_keyboard(Test::client& client)
+std::unique_ptr<Wrapland::Client::virtual_keyboard_v1> create_virtual_keyboard(client& client)
 {
     return std::unique_ptr<Wrapland::Client::virtual_keyboard_v1>(
         client.interfaces.virtual_keyboard_manager_v1->create_virtual_keyboard(
@@ -59,19 +59,18 @@ TEST_CASE("virtual keyboard", "[input]")
     test::setup setup("virtual-keyboard");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
-    Test::setup_wayland_connection();
+    test_outputs_default();
+    setup_wayland_connection();
 
-    auto vk_client = Test::client(Test::global_selection::seat
-                                  | Test::global_selection::virtual_keyboard_manager_v1);
-    auto focus_client = Test::client(Test::global_selection::seat);
+    auto vk_client = client(global_selection::seat | global_selection::virtual_keyboard_manager_v1);
+    auto focus_client = client(global_selection::seat);
 
     auto create_window = [](auto const& client) {
         test_window ret;
-        ret.client_surface = Test::create_surface(client);
-        ret.client_toplevel = Test::create_xdg_shell_toplevel(client, ret.client_surface);
-        ret.window = Test::render_and_wait_for_shown(
-            client, ret.client_surface, QSize(1280, 1024), Qt::red);
+        ret.client_surface = create_surface(client);
+        ret.client_toplevel = create_xdg_shell_toplevel(client, ret.client_surface);
+        ret.window
+            = render_and_wait_for_shown(client, ret.client_surface, QSize(1280, 1024), Qt::red);
         return std::move(ret);
     };
 
@@ -117,15 +116,15 @@ TEST_CASE("virtual keyboard", "[input]")
         QVERIFY(client_keymap_spy.isValid());
 
         auto window = create_window(focus_client);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window.window);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window.window);
 
         // After focus we don't yet get the current keymap as none was set yet.
         QVERIFY(!client_keymap_spy.wait(500));
 
         // Now we press some key, so we get the current keymap.
         uint32_t timestamp{0};
-        Test::keyboard_key_pressed(KEY_Y, timestamp++);
-        Test::keyboard_key_released(KEY_Y, timestamp++);
+        keyboard_key_pressed(KEY_Y, timestamp++);
+        keyboard_key_released(KEY_Y, timestamp++);
         QVERIFY(client_keymap_spy.wait());
 
         QSignalSpy vk_spy(setup.base->input->virtual_keyboard.get(),
@@ -192,7 +191,7 @@ TEST_CASE("virtual keyboard", "[input]")
         QVERIFY(key_spy.isValid());
 
         auto window = create_window(focus_client);
-        QCOMPARE(Test::get_wayland_window(setup.base->space->stacking.active), window.window);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window.window);
 
         // Now we press on the virtual keyboard and we should get the new new keymap.
         int timestamp{0};

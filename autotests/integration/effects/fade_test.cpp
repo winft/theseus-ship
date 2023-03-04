@@ -45,7 +45,7 @@ TEST_CASE("fade", "[effect]")
 
     setup.start();
     QVERIFY(setup.base->render->compositor);
-    Test::setup_wayland_connection();
+    setup_wayland_connection();
 
     // load the translucency effect
     auto& e = setup.base->render->compositor->effects;
@@ -80,9 +80,9 @@ TEST_CASE("fade", "[effect]")
         QSignalSpy windowClosedSpy(effects, &EffectsHandler::windowClosed);
         QVERIFY(windowClosedSpy.isValid());
 
-        std::unique_ptr<Surface> surface(Test::create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-        auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QTRY_COMPARE(windowAddedSpy.count(), 1);
         QTRY_COMPARE(fade_effect->isActive(), true);
@@ -97,7 +97,7 @@ TEST_CASE("fade", "[effect]")
         QCOMPARE(fade_effect->isActive(), false);
 
         // and map again
-        Test::render(surface, QSize(100, 50), Qt::red);
+        render(surface, QSize(100, 50), Qt::red);
         QVERIFY(windowShownSpy.wait());
         QCOMPARE(fade_effect->isActive(), false);
 

@@ -39,17 +39,17 @@ TEST_CASE("no crash useractions menu", "[win]")
     test::setup setup("no-crash-useractions-menu");
     setup.start();
     setup.set_outputs(2);
-    Test::test_outputs_default();
+    test_outputs_default();
 
-    Test::setup_wayland_connection();
-    Test::cursor()->set_pos(QPoint(1280, 512));
+    setup_wayland_connection();
+    cursor()->set_pos(QPoint(1280, 512));
 
-    std::unique_ptr<Surface> surface1(Test::create_surface());
-    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    std::unique_ptr<Surface> surface1(create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface1(create_xdg_shell_toplevel(surface1));
     QVERIFY(surface1);
     QVERIFY(shellSurface1);
 
-    auto client = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
+    auto client = render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     setup.base->space->user_actions_menu->show(QRect(), client);
@@ -57,8 +57,8 @@ TEST_CASE("no crash useractions menu", "[win]")
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
 
-    Test::keyboard_key_pressed(KEY_ESC, 0);
-    Test::keyboard_key_released(KEY_ESC, 1);
+    keyboard_key_pressed(KEY_ESC, 0);
+    keyboard_key_released(KEY_ESC, 1);
     QTRY_VERIFY(!userActionsMenu->isShown());
     QVERIFY(!userActionsMenu->hasClient());
 

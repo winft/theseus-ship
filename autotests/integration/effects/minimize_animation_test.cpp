@@ -49,8 +49,7 @@ TEST_CASE("minimize animation", "[effect]")
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), OpenGLCompositing);
 
-    Test::setup_wayland_connection(Test::global_selection::plasma_shell
-                                   | Test::global_selection::window_management);
+    setup_wayland_connection(global_selection::plasma_shell | global_selection::window_management);
 
     SECTION("minimize unminimize")
     {
@@ -60,24 +59,24 @@ TEST_CASE("minimize animation", "[effect]")
 
         auto effectName = GENERATE(QString("magiclamp"), QString("kwin4_effect_squash"));
 
-        QSignalSpy plasmaWindowCreatedSpy(Test::get_client().interfaces.window_management.get(),
+        QSignalSpy plasmaWindowCreatedSpy(get_client().interfaces.window_management.get(),
                                           &PlasmaWindowManagement::windowCreated);
         QVERIFY(plasmaWindowCreatedSpy.isValid());
 
         // Create a panel at the top of the screen.
         const QRect panelRect = QRect(0, 0, 1280, 36);
-        std::unique_ptr<Surface> panelSurface(Test::create_surface());
+        std::unique_ptr<Surface> panelSurface(create_surface());
         QVERIFY(panelSurface);
         std::unique_ptr<XdgShellToplevel> panelShellSurface(
-            Test::create_xdg_shell_toplevel(panelSurface));
+            create_xdg_shell_toplevel(panelSurface));
         QVERIFY(panelShellSurface);
         std::unique_ptr<PlasmaShellSurface> plasmaPanelShellSurface(
-            Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.get()));
+            get_client().interfaces.plasma_shell->createSurface(panelSurface.get()));
         QVERIFY(plasmaPanelShellSurface);
         plasmaPanelShellSurface->setRole(PlasmaShellSurface::Role::Panel);
         plasmaPanelShellSurface->setPosition(panelRect.topLeft());
         plasmaPanelShellSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
-        auto panel = Test::render_and_wait_for_shown(panelSurface, panelRect.size(), Qt::blue);
+        auto panel = render_and_wait_for_shown(panelSurface, panelRect.size(), Qt::blue);
         QVERIFY(panel);
         QVERIFY(win::is_dock(panel));
         QCOMPARE(panel->geo.frame, panelRect);
@@ -85,11 +84,11 @@ TEST_CASE("minimize animation", "[effect]")
         QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
 
         // Create the test client.
-        std::unique_ptr<Surface> surface(Test::create_surface());
+        std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
-        std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(shellSurface);
-        auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::red);
+        auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::red);
         QVERIFY(client);
         QVERIFY(plasmaWindowCreatedSpy.wait());
         QCOMPARE(plasmaWindowCreatedSpy.count(), 2);
@@ -100,7 +99,7 @@ TEST_CASE("minimize animation", "[effect]")
         QVERIFY(window);
         const QRect iconRect = QRect(0, 0, 42, 36);
         window->setMinimizedGeometry(panelSurface.get(), iconRect);
-        Test::flush_wayland_connection();
+        flush_wayland_connection();
         QTRY_COMPARE(win::get_icon_geometry(*client),
                      iconRect.translated(panel->geo.frame.topLeft()));
 
@@ -130,11 +129,11 @@ TEST_CASE("minimize animation", "[effect]")
 
         // Destroy the panel.
         panelSurface.reset();
-        QVERIFY(Test::wait_for_destroyed(panel));
+        QVERIFY(wait_for_destroyed(panel));
 
         // Destroy the test client.
         surface.reset();
-        QVERIFY(Test::wait_for_destroyed(client));
+        QVERIFY(wait_for_destroyed(client));
     }
 }
 
