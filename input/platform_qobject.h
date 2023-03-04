@@ -10,8 +10,6 @@
 #include <QObject>
 #include <functional>
 
-class KGlobalAccelInterface;
-
 namespace KWin::input
 {
 
@@ -24,10 +22,8 @@ class KWIN_EXPORT platform_qobject : public QObject
 {
     Q_OBJECT
 public:
-    platform_qobject(std::function<void(KGlobalAccelInterface*)> accel);
+    platform_qobject();
     ~platform_qobject() override;
-
-    std::function<void(KGlobalAccelInterface*)> register_global_accel;
 
 Q_SIGNALS:
     void keyboard_added(KWin::input::keyboard*);

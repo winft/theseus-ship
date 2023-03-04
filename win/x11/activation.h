@@ -31,7 +31,7 @@ void do_set_active(Win& win)
 {
     // Demand attention again if it's still urgent.
     update_urgency(&win);
-    win.net_info->setState(win.control->active ? NET::Focused : NET::States(), NET::Focused);
+    win.net_info->setState(win.control->active ? net::Focused : net::States(), net::Focused);
 }
 
 }

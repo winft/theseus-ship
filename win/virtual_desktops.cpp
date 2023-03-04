@@ -8,11 +8,10 @@
 #include "virtual_desktops.h"
 
 #include "singleton_interface.h"
+#include "x11/net/root_info.h"
 
 #include <KConfigGroup>
-#include <KGlobalAccel>
 #include <KLocalizedString>
-#include <NETWM>
 #include <QAction>
 #include <QUuid>
 #include <Wrapland/Server/plasma_virtual_desktop.h>
@@ -253,7 +252,7 @@ virtual_desktop_manager::~virtual_desktop_manager()
     singleton_interface::virtual_desktops = {};
 }
 
-void virtual_desktop_manager::setRootInfo(NETRootInfo* info)
+void virtual_desktop_manager::setRootInfo(x11::net::root_info* info)
 {
     m_rootInfo = info;
 
@@ -265,7 +264,7 @@ void virtual_desktop_manager::setRootInfo(NETRootInfo* info)
         }
 
         m_rootInfo->setDesktopLayout(
-            NET::OrientationHorizontal, columns, m_rows, NET::DesktopLayoutCornerTopLeft);
+            x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
         updateRootInfo();
         m_rootInfo->setCurrentDesktop(currentDesktop()->x11DesktopNumber());
 
@@ -712,7 +711,7 @@ void virtual_desktop_manager::setRows(uint rows)
 
     if (m_rootInfo) {
         m_rootInfo->setDesktopLayout(
-            NET::OrientationHorizontal, columns, m_rows, NET::DesktopLayoutCornerTopLeft);
+            x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
         m_rootInfo->activate();
     }
 
@@ -732,7 +731,7 @@ void virtual_desktop_manager::updateRootInfo()
     const int n = count();
     m_rootInfo->setNumberOfDesktops(n);
 
-    NETPoint* viewports = new NETPoint[n];
+    auto viewports = new x11::net::point[n];
     m_rootInfo->setDesktopViewport(n, *viewports);
     delete[] viewports;
 
@@ -751,7 +750,7 @@ void virtual_desktop_manager::updateLayout()
         // TODO: Is there a sane way to avoid overriding the existing grid?
         columns = m_rootInfo->desktopLayoutColumnsRows().width();
         m_rows = qMax(1, m_rootInfo->desktopLayoutColumnsRows().height());
-        orientation = m_rootInfo->desktopLayoutOrientation() == NET::OrientationHorizontal
+        orientation = m_rootInfo->desktopLayoutOrientation() == x11::net::OrientationHorizontal
             ? Qt::Horizontal
             : Qt::Vertical;
     }
@@ -908,44 +907,42 @@ void virtual_desktop_manager::setNETDesktopLayout(Qt::Orientation orientation,
 
 void virtual_desktop_manager::connect_gestures()
 {
-    KGlobalAccel::connect(
-        m_swipeGestureReleasedX.get(), &QAction::triggered, qobject.get(), [this]() {
-            // Note that if desktop wrapping is disabled and there's no desktop to left or right,
-            // toLeft() and toRight() will return the current desktop.
-            virtual_desktop* target = m_current;
-            if (m_currentDesktopOffset.x() <= -GESTURE_SWITCH_THRESHOLD) {
-                target = toLeft(m_current, isNavigationWrappingAround());
-            } else if (m_currentDesktopOffset.x() >= GESTURE_SWITCH_THRESHOLD) {
-                target = toRight(m_current, isNavigationWrappingAround());
-            }
+    QObject::connect(m_swipeGestureReleasedX.get(), &QAction::triggered, qobject.get(), [this]() {
+        // Note that if desktop wrapping is disabled and there's no desktop to left or right,
+        // toLeft() and toRight() will return the current desktop.
+        virtual_desktop* target = m_current;
+        if (m_currentDesktopOffset.x() <= -GESTURE_SWITCH_THRESHOLD) {
+            target = toLeft(m_current, isNavigationWrappingAround());
+        } else if (m_currentDesktopOffset.x() >= GESTURE_SWITCH_THRESHOLD) {
+            target = toRight(m_current, isNavigationWrappingAround());
+        }
 
-            // If the current desktop has not changed, consider that the gesture has been canceled.
-            if (m_current != target) {
-                setCurrent(target);
-            } else {
-                Q_EMIT qobject->currentChangingCancelled();
-            }
-            m_currentDesktopOffset = QPointF(0, 0);
-        });
-    KGlobalAccel::connect(
-        m_swipeGestureReleasedY.get(), &QAction::triggered, qobject.get(), [this]() {
-            // Note that if desktop wrapping is disabled and there's no desktop above or below,
-            // above() and below() will return the current desktop.
-            virtual_desktop* target = m_current;
-            if (m_currentDesktopOffset.y() <= -GESTURE_SWITCH_THRESHOLD) {
-                target = above(m_current, isNavigationWrappingAround());
-            } else if (m_currentDesktopOffset.y() >= GESTURE_SWITCH_THRESHOLD) {
-                target = below(m_current, isNavigationWrappingAround());
-            }
+        // If the current desktop has not changed, consider that the gesture has been canceled.
+        if (m_current != target) {
+            setCurrent(target);
+        } else {
+            Q_EMIT qobject->currentChangingCancelled();
+        }
+        m_currentDesktopOffset = QPointF(0, 0);
+    });
+    QObject::connect(m_swipeGestureReleasedY.get(), &QAction::triggered, qobject.get(), [this]() {
+        // Note that if desktop wrapping is disabled and there's no desktop above or below,
+        // above() and below() will return the current desktop.
+        virtual_desktop* target = m_current;
+        if (m_currentDesktopOffset.y() <= -GESTURE_SWITCH_THRESHOLD) {
+            target = above(m_current, isNavigationWrappingAround());
+        } else if (m_currentDesktopOffset.y() >= GESTURE_SWITCH_THRESHOLD) {
+            target = below(m_current, isNavigationWrappingAround());
+        }
 
-            // If the current desktop has not changed, consider that the gesture has been canceled.
-            if (m_current != target) {
-                setCurrent(target);
-            } else {
-                Q_EMIT qobject->currentChangingCancelled();
-            }
-            m_currentDesktopOffset = QPointF(0, 0);
-        });
+        // If the current desktop has not changed, consider that the gesture has been canceled.
+        if (m_current != target) {
+            setCurrent(target);
+        } else {
+            Q_EMIT qobject->currentChangingCancelled();
+        }
+        m_currentDesktopOffset = QPointF(0, 0);
+    });
 }
 
 void virtual_desktop_manager::slotSwitchTo(QAction& action)

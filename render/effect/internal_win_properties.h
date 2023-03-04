@@ -5,13 +5,20 @@
 */
 #pragma once
 
-#include <KWindowEffects>
 #include <QVariant>
 #include <string_view>
 #include <variant>
 
 namespace KWin::render
 {
+
+enum class slide_from_location_edge {
+    none = 0,
+    top,
+    right,
+    bottom,
+    left,
+};
 
 template<typename PropType>
 class internal_effect_property
@@ -37,8 +44,7 @@ public:
 using internal_int_property = internal_effect_property<int>;
 using internal_region_property = internal_effect_property<QRegion>;
 using internal_double_property = internal_effect_property<double>;
-using internal_slide_from_location_property
-    = internal_effect_property<KWindowEffects::SlideFromLocation>;
+using internal_slide_from_location_property = internal_effect_property<slide_from_location_edge>;
 
 // TODO(romangg): Instead of constructing the array at runtime, we could try to create the list of
 //                types at compile time with the property name as template argument of the
@@ -74,4 +80,4 @@ inline internal_slide_properties get_internal_slide_properties()
 
 }
 
-Q_DECLARE_METATYPE(KWindowEffects::SlideFromLocation)
+Q_DECLARE_METATYPE(KWin::render::slide_from_location_edge)

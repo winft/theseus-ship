@@ -20,7 +20,6 @@
 #include "swap_event_filter.h"
 
 #include <epoxy/glx.h>
-#include <fixx11h.h>
 #include <memory>
 #include <unordered_map>
 #include <xcb/glx.h>

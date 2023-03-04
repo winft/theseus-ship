@@ -11,8 +11,8 @@
 #include "shortcut_set.h"
 
 #include "config-kwin.h"
+#include "input/types.h"
 
-#include <KGlobalAccel>
 #include <QRegularExpression>
 
 namespace KWin::win
@@ -26,11 +26,11 @@ bool shortcut_available(Space& space, const QKeySequence& cut, Win* ignore)
     }
 
     // Check if the shortcut is already registered.
-    auto const registeredShortcuts = KGlobalAccel::globalShortcutsByKey(cut);
+    auto const registeredShortcuts = space.base.input->shortcuts->get_keyboard_shortcut(cut);
     for (auto const& shortcut : registeredShortcuts) {
         // Only return "not available" if is not a client activation shortcut, as it may be no
         // longer valid.
-        if (!shortcut.uniqueName().startsWith(QStringLiteral("_k_session:"))) {
+        if (!QString::fromStdString(shortcut.id).startsWith(QStringLiteral("_k_session:"))) {
             return false;
         }
     }
@@ -125,7 +125,7 @@ void set_shortcut(Win* win, QString const& shortcut)
 }
 
 template<typename Space>
-void setup_window_shortcut_done(Space& space, bool ok)
+void shortcut_dialog_done(Space& space, bool ok)
 {
     //    keys->setEnabled( true );
     //    disable_shortcuts_keys->setEnabled( true );
@@ -149,7 +149,7 @@ void setup_window_shortcut_done(Space& space, bool ok)
 }
 
 template<typename Space, typename Win>
-void setup_window_shortcut(Space& space, Win* window)
+void shortcut_dialog_create(Space& space, Win* window)
 {
     assert(!space.client_keys_dialog);
 
@@ -161,9 +161,22 @@ void setup_window_shortcut(Space& space, Win* window)
     space.client_keys_client = window;
 
     QObject::connect(space.client_keys_dialog,
+                     &win::shortcut_dialog::shortcut_changed,
+                     space.qobject.get(),
+                     [&space](auto&& seq) {
+                         auto const conflicts
+                             = space.base.input->shortcuts->get_keyboard_shortcut(seq);
+                         if (conflicts.empty()) {
+                             space.client_keys_dialog->allow_shortcut(seq);
+                         } else {
+                             space.client_keys_dialog->reject_shortcut(
+                                 seq, conflicts.at(0).name, conflicts.at(0).consumer);
+                         }
+                     });
+    QObject::connect(space.client_keys_dialog,
                      &win::shortcut_dialog::dialogDone,
                      space.qobject.get(),
-                     [&space](auto&& ok) { setup_window_shortcut_done(space, ok); });
+                     [&space](auto&& ok) { shortcut_dialog_done(space, ok); });
 
     auto area = space_window_area(space, ScreenArea, window);
     auto size = space.client_keys_dialog->sizeHint();
@@ -203,12 +216,13 @@ void window_shortcut_updated(Space& space, Win* window)
 
         // no autoloading, since it's configured explicitly here and is not meant to be reused
         // (the key is the window id anyway, which is kind of random)
-        KGlobalAccel::self()->setShortcut(action,
-                                          QList<QKeySequence>() << window->control->shortcut,
-                                          KGlobalAccel::NoAutoloading);
+        space.base.input->shortcuts->register_keyboard_shortcut(action,
+                                                                QList<QKeySequence>()
+                                                                    << window->control->shortcut,
+                                                                input::shortcut_loading::none);
         action->setEnabled(true);
     } else {
-        KGlobalAccel::self()->removeAllShortcuts(action);
+        space.base.input->shortcuts->remove_keyboard_shortcut(action);
         delete action;
     }
 }

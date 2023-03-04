@@ -7,12 +7,12 @@
 
 #include "config.h"
 #include "dbus/device_manager.h"
-#include "global_shortcuts_manager.h"
 #include "keyboard.h"
 #include "platform_qobject.h"
 #include "singleton_interface.h"
 #include "xkb/manager.h"
 
+#include "kwinglobals.h"
 #include "utils/algorithm.h"
 
 #include <QAction>
@@ -134,12 +134,6 @@ void platform_register_realtime_touchpad_pinch_shortcut(Platform& platform,
 {
     platform.shortcuts->registerRealtimeTouchpadPinch(
         onUp, progressCallback, direction, fingerCount);
-}
-
-template<typename Platform>
-void platform_register_global_accel(Platform& platform, KGlobalAccelInterface* interface)
-{
-    platform.shortcuts->setKGlobalAccelInterface(interface);
 }
 
 template<typename Platform>

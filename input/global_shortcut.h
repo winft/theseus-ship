@@ -19,11 +19,15 @@ class swipe_gesture;
 class pinch_gesture;
 
 struct KeyboardShortcut {
-    QKeySequence sequence;
     bool operator==(const KeyboardShortcut& rhs) const
     {
         return sequence == rhs.sequence;
     }
+
+    QKeySequence sequence;
+    std::string id;
+    std::string name;
+    std::string consumer;
 };
 
 struct PointerButtonShortcut {
@@ -75,7 +79,7 @@ using Shortcut = std::variant<KeyboardShortcut,
                               RealtimeFeedbackSwipeShortcut,
                               RealtimeFeedbackPinchShortcut>;
 
-class global_shortcut
+class KWIN_EXPORT global_shortcut
 {
 public:
     global_shortcut(Shortcut&& shortcut, QAction* action);
@@ -93,5 +97,22 @@ private:
     Shortcut m_shortcut{};
     QAction* m_action{nullptr};
 };
+
+template<typename ShortcutInfo>
+std::vector<KeyboardShortcut> get_internal_shortcuts(QList<ShortcutInfo> const& list)
+{
+    std::vector<KeyboardShortcut> ret;
+    ret.reserve(list.size());
+
+    for (auto&& el : qAsConst(list)) {
+        auto const keys = el.keys();
+        auto const seq = keys.empty() ? QKeySequence() : keys.front();
+        ret.push_back(KeyboardShortcut{.sequence = seq,
+                                       .id = el.uniqueName().toStdString(),
+                                       .name = el.friendlyName().toStdString(),
+                                       .consumer = el.componentFriendlyName().toStdString()});
+    }
+    return ret;
+}
 
 }

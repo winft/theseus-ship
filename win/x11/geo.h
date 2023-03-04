@@ -92,33 +92,33 @@ void detect_no_border(Win* win)
     }
 
     switch (win->windowType()) {
-    case NET::Desktop:
-    case NET::Dock:
-    case NET::TopMenu:
-    case NET::Splash:
-    case NET::Notification:
-    case NET::OnScreenDisplay:
-    case NET::CriticalNotification:
-    case NET::AppletPopup:
+    case window_type::desktop:
+    case window_type::dock:
+    case window_type::top_menu:
+    case window_type::splash:
+    case window_type::notification:
+    case window_type::on_screen_display:
+    case window_type::critical_notification:
+    case window_type::applet_popup:
         win->user_no_border = true;
         win->app_no_border = true;
         break;
-    case NET::Unknown:
-    case NET::Normal:
-    case NET::Toolbar:
-    case NET::Menu:
-    case NET::Dialog:
-    case NET::Utility:
+    case window_type::unknown:
+    case window_type::normal:
+    case window_type::toolbar:
+    case window_type::menu:
+    case window_type::dialog:
+    case window_type::utility:
         win->user_no_border = false;
         break;
     default:
         abort();
     }
 
-    // NET::Override is some strange beast without clear definition, usually
+    // window_type::Override is some strange beast without clear definition, usually
     // just meaning "no_border", so let's treat it only as such flag, and ignore it as
     // a window type otherwise (SUPPORTED_WINDOW_TYPES_MASK doesn't include it)
-    if (win->net_info->windowType(NET::OverrideMask) == NET::Override) {
+    if (win->net_info->windowType(window_type_mask::override) == window_type::override) {
         win->user_no_border = true;
         win->app_no_border = true;
     }
@@ -338,7 +338,7 @@ void do_set_fullscreen(Win& win, bool full)
         raise_window(win.space, &win);
     } else {
         // TODO(romangg): Can we do this also in setFullScreen? What about deco update?
-        win.net_info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);
+        win.net_info->setState(full ? net::FullScreen : net::States(), net::FullScreen);
         win.updateDecoration(false, false);
 
         // Need to update the server geometry in case the decoration changed.
@@ -1142,7 +1142,7 @@ void sync_geometry(Win* win, QRect const& frame_geo)
  * top, bottom, left, and right edges of the window when the fullscreen state is enabled.
  */
 template<typename Win>
-QRect fullscreen_monitors_area(Win* win, NETFullscreenMonitors requestedTopology)
+QRect fullscreen_monitors_area(Win* win, net::fullscreen_monitors requestedTopology)
 {
     QRect top, bottom, left, right, total;
     auto const& outputs = win->space.base.outputs;
@@ -1162,7 +1162,7 @@ QRect fullscreen_monitors_area(Win* win, NETFullscreenMonitors requestedTopology
 }
 
 template<typename Win>
-void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
+void update_fullscreen_monitors(Win* win, net::fullscreen_monitors topology)
 {
     auto count = static_cast<int>(win->space.base.outputs.size());
 
@@ -1180,10 +1180,10 @@ void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
 }
 
 template<typename Win>
-NETExtendedStrut strut(Win const* win)
+net::extended_strut strut(Win const* win)
 {
-    NETExtendedStrut ext = win->net_info->extendedStrut();
-    NETStrut str = win->net_info->strut();
+    auto ext = win->net_info->extendedStrut();
+    auto str = win->net_info->strut();
     auto const displaySize = win->space.base.topology.size;
 
     if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0 && ext.bottom_width == 0
@@ -1216,7 +1216,7 @@ NETExtendedStrut strut(Win const* win)
 template<typename Win>
 bool has_strut(Win const& win)
 {
-    NETExtendedStrut ext = strut(&win);
+    net::extended_strut ext = strut(&win);
     if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0
         && ext.bottom_width == 0) {
         return false;
@@ -1228,7 +1228,7 @@ template<typename Win>
 QRect adjusted_client_area(Win const* win, QRect const& desktopArea, QRect const& area)
 {
     auto rect = area;
-    NETExtendedStrut str = strut(win);
+    net::extended_strut str = strut(win);
 
     QRect stareaL = QRect(0, str.left_start, str.left_width, str.left_end - str.left_start + 1);
     QRect stareaR = QRect(desktopArea.right() - str.right_width + 1,
@@ -1288,7 +1288,7 @@ strut_rect get_strut_rect(Win const* win, strut_area area)
     assert(area != strut_area::all);
 
     auto const displaySize = win->space.base.topology.size;
-    NETExtendedStrut strutArea = strut(win);
+    net::extended_strut strutArea = strut(win);
 
     switch (area) {
     case strut_area::top:

@@ -19,8 +19,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/x11/window.h"
 
 #include <Wrapland/Client/surface.h>
-
-#include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
 using namespace Wrapland::Client;
@@ -131,8 +129,11 @@ void X11ClientTest::testTrimCaption()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo winInfo(
-        c.get(), w, Test::app()->base->x11_data.root_window, NET::Properties(), NET::Properties2());
+    win::x11::net::win_info winInfo(c.get(),
+                                    w,
+                                    Test::app()->base->x11_data.root_window,
+                                    win::x11::net::Properties(),
+                                    win::x11::net::Properties2());
     QFETCH(QByteArray, originalTitle);
     winInfo.setName(originalTitle);
     xcb_map_window(c.get(), w);
@@ -281,11 +282,14 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QTest::qWait(200);
 
     // and fullscreen through X API
-    NETWinInfo info(
-        c.get(), w, Test::app()->base->x11_data.root_window, NET::Properties(), NET::Properties2());
-    info.setState(NET::FullScreen, NET::FullScreen);
-    NETRootInfo rootInfo(c.get(), NET::Properties());
-    rootInfo.setActiveWindow(w, NET::FromApplication, XCB_CURRENT_TIME, XCB_WINDOW_NONE);
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::Properties(),
+                                 win::x11::net::Properties2());
+    info.setState(win::x11::net::FullScreen, win::x11::net::FullScreen);
+    win::x11::net::root_info rootInfo(c.get(), win::x11::net::Properties());
+    rootInfo.setActiveWindow(w, win::x11::net::FromApplication, XCB_CURRENT_TIME, XCB_WINDOW_NONE);
 
     QSignalSpy fullscreen_spy(client->qobject.get(), &win::window_qobject::fullScreenChanged);
     QVERIFY(fullscreen_spy.isValid());
@@ -446,7 +450,7 @@ void X11ClientTest::testX11WindowId()
                                  Test::app()->base->space->windows_map.at(win_id));
                   });
 
-    NETRootInfo rootInfo(c.get(), NET::WMAllProperties);
+    win::x11::net::root_info rootInfo(c.get(), win::x11::net::WMAllProperties);
     QCOMPARE(rootInfo.activeWindow(), client->xcb_windows.client);
 
     // activate a wayland window
@@ -457,7 +461,7 @@ void X11ClientTest::testX11WindowId()
     QVERIFY(waylandClient->control->active);
     xcb_flush(Test::app()->base->x11_data.connection);
 
-    NETRootInfo rootInfo2(c.get(), NET::WMAllProperties);
+    win::x11::net::root_info rootInfo2(c.get(), win::x11::net::WMAllProperties);
     QCOMPARE(rootInfo2.activeWindow(), 0u);
 
     // back to X11 client
@@ -466,7 +470,7 @@ void X11ClientTest::testX11WindowId()
     QVERIFY(Test::wait_for_destroyed(waylandClient));
 
     QTRY_VERIFY(client->control->active);
-    NETRootInfo rootInfo3(c.get(), NET::WMAllProperties);
+    win::x11::net::root_info rootInfo3(c.get(), win::x11::net::WMAllProperties);
     QCOMPARE(rootInfo3.activeWindow(), client->xcb_windows.client);
 
     // and destroy the window again
@@ -509,8 +513,11 @@ void X11ClientTest::testCaptionChanges()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(
-        c.get(), w, Test::app()->base->x11_data.root_window, NET::Properties(), NET::Properties2());
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::Properties(),
+                                 win::x11::net::Properties2());
     info.setName("foo");
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
@@ -595,8 +602,11 @@ void X11ClientTest::testCaptionMultipleWindows()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo info(
-        c.get(), w, Test::app()->base->x11_data.root_window, NET::Properties(), NET::Properties2());
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::Properties(),
+                                 win::x11::net::Properties2());
     info.setName("foo");
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
@@ -627,11 +637,11 @@ void X11ClientTest::testCaptionMultipleWindows()
                       0,
                       nullptr);
     xcb_icccm_set_wm_normal_hints(c.get(), w2, &hints);
-    NETWinInfo info2(c.get(),
-                     w2,
-                     Test::app()->base->x11_data.root_window,
-                     NET::Properties(),
-                     NET::Properties2());
+    win::x11::net::win_info info2(c.get(),
+                                  w2,
+                                  Test::app()->base->x11_data.root_window,
+                                  win::x11::net::Properties(),
+                                  win::x11::net::Properties2());
     info2.setName("foo");
     info2.setIconName("foo");
     xcb_map_window(c.get(), w2);
@@ -644,22 +654,22 @@ void X11ClientTest::testCaptionMultipleWindows()
     QVERIFY(client2);
     QCOMPARE(client2->xcb_windows.client, w2);
     QCOMPARE(win::caption(client2), QStringLiteral("foo <2>\u200E"));
-    NETWinInfo info3(Test::app()->base->x11_data.connection,
-                     w2,
-                     Test::app()->base->x11_data.root_window,
-                     NET::WMVisibleName | NET::WMVisibleIconName,
-                     NET::Properties2());
+    win::x11::net::win_info info3(Test::app()->base->x11_data.connection,
+                                  w2,
+                                  Test::app()->base->x11_data.root_window,
+                                  win::x11::net::WMVisibleName | win::x11::net::WMVisibleIconName,
+                                  win::x11::net::Properties2());
     QCOMPARE(QByteArray(info3.visibleName()), QByteArrayLiteral("foo <2>\u200E"));
     QCOMPARE(QByteArray(info3.visibleIconName()), QByteArrayLiteral("foo <2>\u200E"));
 
     QSignalSpy captionChangedSpy(client2->qobject.get(), &win::window_qobject::captionChanged);
     QVERIFY(captionChangedSpy.isValid());
 
-    NETWinInfo info4(c.get(),
-                     w2,
-                     Test::app()->base->x11_data.root_window,
-                     NET::Properties(),
-                     NET::Properties2());
+    win::x11::net::win_info info4(c.get(),
+                                  w2,
+                                  Test::app()->base->x11_data.root_window,
+                                  win::x11::net::Properties(),
+                                  win::x11::net::Properties2());
     info4.setName("foobar");
     info4.setIconName("foobar");
     xcb_map_window(c.get(), w2);
@@ -667,11 +677,11 @@ void X11ClientTest::testCaptionMultipleWindows()
 
     QVERIFY(captionChangedSpy.wait());
     QCOMPARE(win::caption(client2), QStringLiteral("foobar"));
-    NETWinInfo info5(Test::app()->base->x11_data.connection,
-                     w2,
-                     Test::app()->base->x11_data.root_window,
-                     NET::WMVisibleName | NET::WMVisibleIconName,
-                     NET::Properties2());
+    win::x11::net::win_info info5(Test::app()->base->x11_data.connection,
+                                  w2,
+                                  Test::app()->base->x11_data.root_window,
+                                  win::x11::net::WMVisibleName | win::x11::net::WMVisibleIconName,
+                                  win::x11::net::Properties2());
     QCOMPARE(QByteArray(info5.visibleName()), QByteArray());
     QTRY_COMPARE(QByteArray(info5.visibleIconName()), QByteArray());
 }

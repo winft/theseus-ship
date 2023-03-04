@@ -538,6 +538,12 @@ public:
         for (base::output* output : outputs) {
             slotOutputEnabled(output);
         }
+
+        connect(compositor.platform.base.input->shortcuts.get(),
+                &decltype(compositor.platform.base.input
+                              ->shortcuts)::element_type::keyboard_shortcut_changed,
+                this,
+                &effects_handler_impl::globalShortcutChanged);
     }
 
     ~effects_handler_impl() override
@@ -660,9 +666,22 @@ public:
         Q_EMIT screenGeometryChanged(size);
     }
 
-    void registerGlobalShortcut(const QKeySequence& shortcut, QAction* action) override
+    QList<QKeySequence> registerGlobalShortcut(QList<QKeySequence> const& shortcut,
+                                               QAction* action) override
     {
-        compositor.platform.base.input->registerShortcut(shortcut, action);
+        compositor.platform.base.input->shortcuts->register_keyboard_shortcut(
+            action, shortcut, input::shortcut_loading::global_lookup);
+        compositor.platform.base.input->registerShortcut(
+            shortcut.empty() ? QKeySequence() : shortcut.front(), action);
+        return compositor.platform.base.input->shortcuts->get_keyboard_shortcut(action);
+    }
+
+    QList<QKeySequence> registerGlobalShortcutAndDefault(QList<QKeySequence> const& shortcut,
+                                                         QAction* action) override
+    {
+        compositor.platform.base.input->shortcuts->register_keyboard_default_shortcut(action,
+                                                                                      shortcut);
+        return registerGlobalShortcut(shortcut, action);
     }
 
     void registerPointerShortcut(Qt::KeyboardModifiers modifiers,

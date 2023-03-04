@@ -16,14 +16,14 @@ template<typename Win>
 void propagate_fullscreen_update(Win* win, bool full)
 {
     if (full) {
-        win->net_info->setState(NET::FullScreen, NET::FullScreen);
+        win->net_info->setState(net::FullScreen, net::FullScreen);
         update_fullscreen_enable(win);
         if (win->net_info->fullscreenMonitors().isSet()) {
             win->setFrameGeometry(
                 fullscreen_monitors_area(win, win->net_info->fullscreenMonitors()));
         }
     } else {
-        win->net_info->setState(NET::States(), NET::FullScreen);
+        win->net_info->setState(net::States(), net::FullScreen);
         update_fullscreen_disable(win);
     }
 }

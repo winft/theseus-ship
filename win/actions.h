@@ -8,6 +8,7 @@
 #include "layers.h"
 #include "rules/types.h"
 #include "scene.h"
+#include "x11/net/net.h"
 
 namespace KWin::win
 {
@@ -25,8 +26,9 @@ void set_keep_above(Win* win, bool keep)
     if (keep == win->control->keep_above) {
         // force hint change if different
         if constexpr (requires(Win win) { win.net_info; }) {
-            if (static_cast<bool>(win->net_info->state() & NET::KeepAbove) != keep) {
-                win->net_info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
+            if (static_cast<bool>(win->net_info->state() & x11::net::KeepAbove) != keep) {
+                win->net_info->setState(keep ? x11::net::KeepAbove : x11::net::States(),
+                                        x11::net::KeepAbove);
             }
         }
         return;
@@ -34,7 +36,8 @@ void set_keep_above(Win* win, bool keep)
     win->control->keep_above = keep;
 
     if constexpr (requires(Win win) { win.net_info; }) {
-        win->net_info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
+        win->net_info->setState(keep ? x11::net::KeepAbove : x11::net::States(),
+                                x11::net::KeepAbove);
     }
 
     update_layer(win);
@@ -57,8 +60,9 @@ void set_keep_below(Win* win, bool keep)
     if (keep == win->control->keep_below) {
         // force hint change if different
         if constexpr (requires(Win win) { win.net_info; }) {
-            if (static_cast<bool>(win->net_info->state() & NET::KeepBelow) != keep) {
-                win->net_info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
+            if (static_cast<bool>(win->net_info->state() & x11::net::KeepBelow) != keep) {
+                win->net_info->setState(keep ? x11::net::KeepBelow : x11::net::States(),
+                                        x11::net::KeepBelow);
             }
         }
 
@@ -67,7 +71,8 @@ void set_keep_below(Win* win, bool keep)
     win->control->keep_below = keep;
 
     if constexpr (requires(Win win) { win.net_info; }) {
-        win->net_info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
+        win->net_info->setState(keep ? x11::net::KeepBelow : x11::net::States(),
+                                x11::net::KeepBelow);
     }
 
     update_layer(win);

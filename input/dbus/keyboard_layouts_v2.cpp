@@ -11,7 +11,6 @@
 #include "input/xkb/layout_manager.h"
 #include "input/xkb/layout_policies.h"
 
-#include <KGlobalAccel>
 #include <KLocalizedString>
 #include <QAction>
 #include <QDBusConnection>

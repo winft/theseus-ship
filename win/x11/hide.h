@@ -175,7 +175,7 @@ void update_visibility(Win* win)
     }
 
     if (win->hidden) {
-        win->net_info->setState(NET::Hidden, NET::Hidden);
+        win->net_info->setState(net::Hidden, net::Hidden);
         win::set_skip_taskbar(win, true);
         if (win->space.base.render->compositor->scene
             && win->space.base.options->qobject->hiddenPreviews() == base::HiddenPreviewsAlways) {
@@ -189,7 +189,7 @@ void update_visibility(Win* win)
     win::set_skip_taskbar(win, win->control->original_skip_taskbar);
 
     if (win->control->minimized) {
-        win->net_info->setState(NET::Hidden, NET::Hidden);
+        win->net_info->setState(net::Hidden, net::Hidden);
         if (win->space.base.render->compositor->scene
             && win->space.base.options->qobject->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
@@ -199,7 +199,7 @@ void update_visibility(Win* win)
         return;
     }
 
-    win->net_info->setState(NET::States(), NET::Hidden);
+    win->net_info->setState(net::States(), net::Hidden);
     if (!on_current_desktop(win)) {
         if (win->space.base.render->compositor->scene
             && win->space.base.options->qobject->hiddenPreviews() != base::HiddenPreviewsNever) {

@@ -52,15 +52,17 @@ static const char* const window_type_names[] = {"Unknown",
                                                 "Splash"};
 // change also the two functions below when adding new entries
 
-static inline char const* window_type_to_txt(NET::WindowType type)
+static inline char const* window_type_to_txt(window_type type)
 {
-    if (type >= NET::Unknown && type <= NET::Splash) {
+    auto int_type = static_cast<int>(type);
+    if (int_type >= static_cast<int>(window_type::unknown)
+        && int_type <= static_cast<int>(window_type::splash)) {
         // +1 (unknown==-1)
-        return window_type_names[type + 1];
+        return window_type_names[int_type + 1];
     }
 
-    if (type == -2) {
-        // undefined (not really part of NET::WindowType)
+    if (int_type == -2) {
+        // undefined (not really part of window_type)
         return "Undefined";
     }
 
@@ -68,17 +70,18 @@ static inline char const* window_type_to_txt(NET::WindowType type)
     return nullptr;
 }
 
-static inline NET::WindowType txt_to_window_type(const char* txt)
+static inline window_type txt_to_window_type(const char* txt)
 {
-    for (int i = NET::Unknown; i <= NET::Splash; ++i) {
+    for (int i = static_cast<int>(window_type::unknown); i <= static_cast<int>(window_type::splash);
+         ++i) {
         // Compare with window_type_names at i+1.
         if (qstrcmp(txt, window_type_names[i + 1]) == 0) {
-            return static_cast<NET::WindowType>(i);
+            return static_cast<window_type>(i);
         }
     }
 
     // undefined
-    return static_cast<NET::WindowType>(-2);
+    return static_cast<window_type>(-2);
 }
 
 /**
@@ -102,7 +105,8 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
                                     return;
                                 }
 
-                                if (win->windowType() > NET::Splash) {
+                                if (static_cast<unsigned int>(win->windowType())
+                                    > static_cast<unsigned int>(window_type::splash)) {
                                     // window types outside this are not tooltips/menus/OSDs
                                     // typically these will be unmanaged and not in this list
                                     // anyway, but that is not enforced
@@ -259,8 +263,8 @@ void load_subsession_info(Space& space, QString const& name)
 template<typename Win>
 static bool session_info_window_type_match(Win const& c, win::session_info* info)
 {
-    if (info->windowType == -2) {
-        // undefined (not really part of NET::WindowType)
+    if (static_cast<int>(info->windowType) == -2) {
+        // undefined (not really part of window_type)
         return !is_special_window(c);
     }
     return info->windowType == c->windowType();

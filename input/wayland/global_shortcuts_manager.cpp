@@ -6,21 +6,20 @@
 */
 #include "global_shortcuts_manager.h"
 
-#include "gestures.h"
-#include "global_shortcut.h"
-#include "logging.h"
+#include "input/gestures.h"
+#include "input/global_shortcut.h"
+#include "input/logging.h"
+#include "kglobalaccel/runtime/global_accel_d.h"
 
-#include <KGlobalAccel/private/kglobalaccel_interface.h>
-#include <KGlobalAccel/private/kglobalacceld.h>
+#include <KGlobalAccel>
 #include <QAction>
 
-namespace KWin::input
+namespace KWin::input::wayland
 {
 
-global_shortcuts_manager::global_shortcuts_manager(base::operation_mode mode)
+global_shortcuts_manager::global_shortcuts_manager()
     : m_touchpadGestureRecognizer{std::make_unique<gesture_recognizer>()}
     , m_touchscreenGestureRecognizer{std::make_unique<gesture_recognizer>()}
-    , windowing_mode{mode}
 {
 }
 
@@ -28,16 +27,56 @@ global_shortcuts_manager::~global_shortcuts_manager() = default;
 
 void global_shortcuts_manager::init()
 {
-    if (base::should_use_wayland_for_compositing(windowing_mode)) {
-        qputenv("KGLOBALACCELD_PLATFORM", QByteArrayLiteral("org.kde.kwin"));
+    qputenv("KGLOBALACCELD_PLATFORM", QByteArrayLiteral("org.kde.kwin"));
+    try {
         m_kglobalAccel = std::make_unique<KGlobalAccelD>();
-        if (!m_kglobalAccel->init()) {
-            qCDebug(KWIN_INPUT) << "Init of kglobalaccel failed";
-            m_kglobalAccel.reset();
-        } else {
-            qCDebug(KWIN_INPUT) << "KGlobalAcceld inited";
-        }
+        QObject::connect(KGlobalAccel::self(),
+                         &KGlobalAccel::globalShortcutChanged,
+                         this,
+                         &global_shortcuts_manager::keyboard_shortcut_changed);
+    } catch (std::runtime_error& exc) {
+        qCWarning(KWIN_INPUT) << exc.what();
     }
+}
+
+std::vector<KeyboardShortcut>
+global_shortcuts_manager::get_keyboard_shortcut(QKeySequence const& seq)
+{
+    return get_internal_shortcuts(KGlobalAccel::globalShortcutsByKey(seq));
+}
+
+QList<QKeySequence> global_shortcuts_manager::get_keyboard_shortcut(QAction* action)
+{
+    return KGlobalAccel::self()->shortcut(action);
+}
+
+QList<QKeySequence> global_shortcuts_manager::get_keyboard_shortcut(QString const& componentName,
+                                                                    QString const& actionId)
+{
+    return KGlobalAccel::self()->globalShortcut(componentName, actionId);
+}
+
+bool global_shortcuts_manager::register_keyboard_default_shortcut(
+    QAction* action,
+    QList<QKeySequence> const& shortcut)
+{
+    return KGlobalAccel::self()->setDefaultShortcut(action, shortcut);
+}
+
+bool global_shortcuts_manager::register_keyboard_shortcut(QAction* action,
+                                                          QList<QKeySequence> const& shortcut,
+                                                          shortcut_loading load)
+{
+    return KGlobalAccel::self()->setShortcut(action,
+                                             shortcut,
+                                             load == shortcut_loading::global_lookup
+                                                 ? KGlobalAccel::Autoloading
+                                                 : KGlobalAccel::NoAutoloading);
+}
+
+void global_shortcuts_manager::remove_keyboard_shortcut(QAction* action)
+{
+    KGlobalAccel::self()->removeAllShortcuts(action);
 }
 
 void global_shortcuts_manager::objectDeleted(QObject* object)
@@ -52,13 +91,29 @@ void global_shortcuts_manager::objectDeleted(QObject* object)
     }
 }
 
-bool global_shortcuts_manager::addIfNotExists(global_shortcut sc, DeviceType device)
+bool global_shortcuts_manager::shortcut_exists(global_shortcut const& sc)
 {
     for (const auto& cs : qAsConst(m_shortcuts)) {
         if (sc.shortcut() == cs.shortcut()) {
             return false;
         }
     }
+
+    return true;
+}
+
+void global_shortcuts_manager::add_shortcut(global_shortcut sc)
+{
+    assert(!shortcut_exists(sc));
+
+    QObject::connect(
+        sc.action(), &QAction::destroyed, this, &global_shortcuts_manager::objectDeleted);
+    m_shortcuts.push_back(std::move(sc));
+}
+
+void global_shortcuts_manager::add_gesture_shortcut(global_shortcut sc, DeviceType device)
+{
+    assert(!shortcut_exists(sc));
 
     auto const& recognizer = device == DeviceType::Touchpad ? m_touchpadGestureRecognizer
                                                             : m_touchscreenGestureRecognizer;
@@ -67,35 +122,39 @@ bool global_shortcuts_manager::addIfNotExists(global_shortcut sc, DeviceType dev
     } else if (std::holds_alternative<RealtimeFeedbackPinchShortcut>(sc.shortcut())) {
         recognizer->registerPinchGesture(sc.pinchGesture());
     }
-    QObject::connect(
-        sc.action(), &QAction::destroyed, this, &global_shortcuts_manager::objectDeleted);
-    m_shortcuts.push_back(std::move(sc));
-    return true;
+
+    add_shortcut(sc);
 }
 
 void global_shortcuts_manager::registerPointerShortcut(QAction* action,
                                                        Qt::KeyboardModifiers modifiers,
                                                        Qt::MouseButtons pointerButtons)
 {
-    addIfNotExists(global_shortcut(PointerButtonShortcut{modifiers, pointerButtons}, action));
+    auto sc = global_shortcut(PointerButtonShortcut{modifiers, pointerButtons}, action);
+    if (!shortcut_exists(sc)) {
+        add_shortcut(sc);
+    }
 }
 
 void global_shortcuts_manager::registerAxisShortcut(QAction* action,
                                                     Qt::KeyboardModifiers modifiers,
                                                     PointerAxisDirection axis)
 {
-    addIfNotExists(global_shortcut(PointerAxisShortcut{modifiers, axis}, action));
+    auto sc = global_shortcut(PointerAxisShortcut{modifiers, axis}, action);
+    if (!shortcut_exists(sc)) {
+        add_shortcut(sc);
+    }
 }
 
 void global_shortcuts_manager::registerTouchpadSwipe(QAction* action,
                                                      SwipeDirection direction,
                                                      uint fingerCount)
 {
-    addIfNotExists(
-        global_shortcut(
-            RealtimeFeedbackSwipeShortcut{DeviceType::Touchpad, direction, {}, fingerCount},
-            action),
-        DeviceType::Touchpad);
+    auto sc = global_shortcut(
+        RealtimeFeedbackSwipeShortcut{DeviceType::Touchpad, direction, {}, fingerCount}, action);
+    if (!shortcut_exists(sc)) {
+        add_gesture_shortcut(sc, DeviceType::Touchpad);
+    }
 }
 
 void global_shortcuts_manager::registerRealtimeTouchpadSwipe(
@@ -104,20 +163,23 @@ void global_shortcuts_manager::registerRealtimeTouchpadSwipe(
     SwipeDirection direction,
     uint fingerCount)
 {
-    addIfNotExists(global_shortcut(
-                       RealtimeFeedbackSwipeShortcut{
-                           DeviceType::Touchpad, direction, progressCallback, fingerCount},
-                       action),
-                   DeviceType::Touchpad);
+    auto sc = global_shortcut(
+        RealtimeFeedbackSwipeShortcut{
+            DeviceType::Touchpad, direction, progressCallback, fingerCount},
+        action);
+    if (!shortcut_exists(sc)) {
+        add_gesture_shortcut(sc, DeviceType::Touchpad);
+    }
 }
 
 void global_shortcuts_manager::registerTouchpadPinch(QAction* action,
                                                      PinchDirection direction,
                                                      uint fingerCount)
 {
-    addIfNotExists(
-        global_shortcut(RealtimeFeedbackPinchShortcut{direction, {}, fingerCount}, action),
-        DeviceType::Touchpad);
+    auto sc = global_shortcut(RealtimeFeedbackPinchShortcut{direction, {}, fingerCount}, action);
+    if (!shortcut_exists(sc)) {
+        add_gesture_shortcut(sc, DeviceType::Touchpad);
+    }
 }
 
 void global_shortcuts_manager::registerRealtimeTouchpadPinch(
@@ -126,10 +188,11 @@ void global_shortcuts_manager::registerRealtimeTouchpadPinch(
     PinchDirection direction,
     uint fingerCount)
 {
-    addIfNotExists(
-        global_shortcut(RealtimeFeedbackPinchShortcut{direction, progressCallback, fingerCount},
-                        onUp),
-        DeviceType::Touchpad);
+    auto sc = global_shortcut(
+        RealtimeFeedbackPinchShortcut{direction, progressCallback, fingerCount}, onUp);
+    if (!shortcut_exists(sc)) {
+        add_gesture_shortcut(sc, DeviceType::Touchpad);
+    }
 }
 
 void global_shortcuts_manager::registerTouchscreenSwipe(QAction* action,
@@ -137,57 +200,50 @@ void global_shortcuts_manager::registerTouchscreenSwipe(QAction* action,
                                                         SwipeDirection direction,
                                                         uint fingerCount)
 {
-    addIfNotExists(global_shortcut(
-                       RealtimeFeedbackSwipeShortcut{
-                           DeviceType::Touchscreen, direction, progressCallback, fingerCount},
-                       action),
-                   DeviceType::Touchscreen);
+    auto sc = global_shortcut(
+        RealtimeFeedbackSwipeShortcut{
+            DeviceType::Touchscreen, direction, progressCallback, fingerCount},
+        action);
+    if (!shortcut_exists(sc)) {
+        add_gesture_shortcut(sc, DeviceType::Touchscreen);
+    }
 }
 
 bool global_shortcuts_manager::processKey(Qt::KeyboardModifiers mods, int keyQt)
 {
-    if (m_kglobalAccelInterface) {
-        if (!keyQt && !mods) {
-            return false;
-        }
-        auto check = [this](Qt::KeyboardModifiers mods, int keyQt) {
-            bool retVal = false;
-            QMetaObject::invokeMethod(m_kglobalAccelInterface,
-                                      "checkKeyPressed",
-                                      Qt::DirectConnection,
-                                      Q_RETURN_ARG(bool, retVal),
-                                      Q_ARG(int, int(mods) | keyQt));
-            return retVal;
-        };
-        if (check(mods, keyQt)) {
+    if (!keyQt && !mods) {
+        return false;
+    }
+
+    auto check = [this](Qt::KeyboardModifiers mods, int keyQt) {
+        return m_kglobalAccel->keyPressed(int(mods) | keyQt);
+    };
+
+    if (check(mods, keyQt)) {
+        return true;
+    }
+    if (keyQt == Qt::Key_Backtab) {
+        // KGlobalAccel on X11 has some workaround for Backtab
+        // see kglobalaccel/src/runtime/plugins/xcb/kglobalccel_x11.cpp method x11KeyPress
+        // Apparently KKeySequenceWidget captures Shift+Tab instead of Backtab
+        // thus if the key is backtab we should adjust to add shift again and use tab
+        // in addition KWin registers the shortcut incorrectly as Alt+Shift+Backtab
+        // this should be changed to either Alt+Backtab or Alt+Shift+Tab to match
+        // KKeySequenceWidget trying the variants
+        if (check(mods | Qt::ShiftModifier, keyQt)) {
             return true;
-        } else if (keyQt == Qt::Key_Backtab) {
-            // KGlobalAccel on X11 has some workaround for Backtab
-            // see kglobalaccel/src/runtime/plugins/xcb/kglobalccel_x11.cpp method x11KeyPress
-            // Apparently KKeySequenceWidget captures Shift+Tab instead of Backtab
-            // thus if the key is backtab we should adjust to add shift again and use tab
-            // in addition KWin registers the shortcut incorrectly as Alt+Shift+Backtab
-            // this should be changed to either Alt+Backtab or Alt+Shift+Tab to match
-            // KKeySequenceWidget trying the variants
-            if (check(mods | Qt::ShiftModifier, keyQt)) {
-                return true;
-            }
-            if (check(mods | Qt::ShiftModifier, Qt::Key_Tab)) {
-                return true;
-            }
+        }
+        if (check(mods | Qt::ShiftModifier, Qt::Key_Tab)) {
+            return true;
         }
     }
+
     return false;
 }
 
 bool global_shortcuts_manager::processKeyRelease(Qt::KeyboardModifiers mods, int keyQt)
 {
-    if (m_kglobalAccelInterface) {
-        QMetaObject::invokeMethod(m_kglobalAccelInterface,
-                                  "checkKeyReleased",
-                                  Qt::DirectConnection,
-                                  Q_ARG(int, int(mods) | keyQt));
-    }
+    m_kglobalAccel->keyReleased(int(mods) | keyQt);
     return false;
 }
 

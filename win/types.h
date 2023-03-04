@@ -129,6 +129,55 @@ enum class fsp_level {
     extreme,
 };
 
+enum class window_type {
+    unknown = -1,
+    normal = 0,
+    desktop = 1,
+    dock = 2,
+    toolbar = 3,
+    menu = 4,
+    dialog = 5,
+    /**
+           @deprecated has unclear meaning and is KDE-only
+    **/
+    override = 6, // NON STANDARD
+    top_menu = 7, // NON STANDARD
+    utility = 8,
+    splash = 9,
+    dropdown_menu = 10,
+    popup_menu = 11,
+    tooltip = 12,
+    notification = 13,
+    combo_box = 14,
+    dnd_icon = 15,
+    on_screen_display = 16,     // NON STANDARD
+    critical_notification = 17, // NON STANDARD
+    applet_popup = 18,          // NON STANDARD
+};
+
+enum class window_type_mask : unsigned int {
+    normal = 1u << 0,
+    desktop = 1u << 1,
+    dock = 1u << 2,
+    toolbar = 1u << 3,
+    menu = 1u << 4,
+    dialog = 1u << 5,
+    override = 1u << 6,
+    top_menu = 1u << 7,
+    utility = 1u << 8,
+    splash = 1u << 9,
+    dropdown_menu = 1u << 10,
+    popup_menu = 1u << 11,
+    tooltip = 1u << 12,
+    notification = 1u << 13,
+    combo_box = 1u << 14,
+    dnd_icon = 1u << 15,
+    on_screen_display = 1u << 16,
+    critical_notification = 1u << 17,
+    applet_popup = 1u << 18,
+    all_types = 0xffffffff,
+};
+
 }
 
 ENUM_FLAGS(KWin::win::position)
@@ -136,3 +185,4 @@ ENUM_FLAGS(KWin::win::maximize_mode)
 ENUM_FLAGS(KWin::win::same_client_check)
 ENUM_FLAGS(KWin::win::strut_area)
 ENUM_FLAGS(KWin::win::quicktiles)
+ENUM_FLAGS(KWin::win::window_type_mask)

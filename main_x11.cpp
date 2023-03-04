@@ -12,10 +12,10 @@
 
 #include "base/options.h"
 #include "base/seat/backend/logind/session.h"
+#include "base/x11/selection_owner.h"
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
 #include "desktop/screen_locker_watcher.h"
-#include "input/global_shortcuts_manager.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
@@ -29,7 +29,6 @@
 #include <KCrash>
 #include <KLocalizedString>
 #include <KPluginMetaData>
-#include <KSelectionOwner>
 #include <KSignalHandler>
 
 #include <qplatformdefs.h>
@@ -100,12 +99,12 @@ private:
     QComboBox* wmList;
 };
 
-class KWinSelectionOwner : public KSelectionOwner
+class KWinSelectionOwner : public base::x11::selection_owner
 {
     Q_OBJECT
 public:
     KWinSelectionOwner(xcb_connection_t* con, int screen)
-        : KSelectionOwner(make_selection_atom(con, screen), screen)
+        : selection_owner(make_selection_atom(con, screen), screen)
         , con{con}
     {
     }
@@ -117,12 +116,12 @@ private:
             xcb_change_property(con, XCB_PROP_MODE_REPLACE, requestor_P,
                                 property_P, XCB_ATOM_INTEGER, 32, 2, version);
         } else
-            return KSelectionOwner::genericReply(target_P, property_P, requestor_P);
+            return selection_owner::genericReply(target_P, property_P, requestor_P);
         return true;
     }
 
     void replyTargets(xcb_atom_t property_P, xcb_window_t requestor_P) override {
-        KSelectionOwner::replyTargets(property_P, requestor_P);
+        selection_owner::replyTargets(property_P, requestor_P);
         xcb_atom_t atoms[ 1 ] = { xa_version };
         // PropModeAppend !
         xcb_change_property(con, XCB_PROP_MODE_APPEND, requestor_P,
@@ -130,7 +129,7 @@ private:
     }
 
     void getAtoms() override {
-        KSelectionOwner::getAtoms();
+        selection_owner::getAtoms();
         if (xa_version == XCB_ATOM_NONE) {
             const QByteArray name(QByteArrayLiteral("VERSION"));
             unique_cptr<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
@@ -212,19 +211,18 @@ void ApplicationX11::start()
 
     using base_t = base::x11::platform;
     base.is_crash_restart = crashes > 0;
-    base.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
 
     crashChecking();
     base.x11_data.screen_number = QX11Info::appScreen();
     base::x11::xcb::extensions::create(base.x11_data);
 
     owner.reset(new KWinSelectionOwner(base.x11_data.connection, base.x11_data.screen_number));
-    connect(owner.data(), &KSelectionOwner::failedToClaimOwnership, []{
+    connect(owner.data(), &KWinSelectionOwner::failedToClaimOwnership, []{
         fputs(i18n("kwin: unable to claim manager selection, another wm running? (try using --replace)\n").toLocal8Bit().constData(), stderr);
         ::exit(1);
     });
-    connect(owner.data(), &KSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
-    connect(owner.data(), &KSelectionOwner::claimedOwnership, [this]{
+    connect(owner.data(), &KWinSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
+    connect(owner.data(), &KWinSelectionOwner::claimedOwnership, [this]{
         base.options = base::create_options(base::operation_mode::x11, base.config.main);
 
         // Check  whether another windowmanager is running
@@ -244,11 +242,8 @@ void ApplicationX11::start()
         }
 
         base.session = std::make_unique<base::seat::backend::logind::session>();
-
+        base.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
         base.input = std::make_unique<input::x11::platform<base_t>>(base);
-        base.input->shortcuts
-            = std::make_unique<input::global_shortcuts_manager>(base::operation_mode::x11);
-        base.input->shortcuts->init();
 
         base.update_outputs();
         auto render = static_cast<render::backend::x11::platform<base_t>*>(base.render.get());

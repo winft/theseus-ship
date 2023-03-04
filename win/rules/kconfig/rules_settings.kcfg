@@ -69,7 +69,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
     <entry name="types" type="UInt">
       <label>Window types that match</label>
-      <default>NET::AllTypesMask</default>
+      <default>static_cast&lt;unsigned int&gt;(window_type_mask::all_types)</default>
     </entry>
 
     <entry name="placement" type="int">
@@ -177,9 +177,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
     <entry name="type" type="Int">
       <label>Set window type to</label>
-      <min code="true">NET::Normal</min>
-      <max code="true">NET::CriticalNotification</max>
-      <default code="true">NET::Unknown</default>
+      <min code="true">static_cast&lt;int&gt;(window_type::normal)</min>
+      <max code="true">static_cast&lt;int&gt;(window_type::critical_notification)</max>
+      <default code="true">static_cast&lt;int&gt;(window_type::unknown)</default>
     </entry>
     <entry name="typerule" type="Int">
       <label>Set window type rule type</label>

@@ -76,7 +76,6 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     Notifications
     Package
     Plasma
-    Wayland
     WidgetsAddons
     WindowSystem
 )
@@ -378,6 +377,7 @@ set(kwin_SRCS
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
     base/x11/grabs.cpp
+    base/x11/selection_owner.cpp
     base/x11/xcb/extensions.cpp
     base/logging.cpp
     base/options.cpp
@@ -397,7 +397,6 @@ set(kwin_SRCS
     input/cursor_shape.cpp
     input/gestures.cpp
     input/global_shortcut.cpp
-    input/global_shortcuts_manager.cpp
     input/logging.cpp
     input/pointer.cpp
     input/xkb/keyboard.cpp
@@ -448,6 +447,11 @@ set(kwin_SRCS
     win/space_qobject.cpp
     win/virtual_desktops.cpp
     win/x11/client_machine.cpp
+    win/x11/extras.cpp
+    win/x11/key_server.cpp
+    win/x11/net/atoms.cpp
+    win/x11/net/root_info.cpp
+    win/x11/net/win_info.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.
     base/output.h
@@ -521,22 +525,24 @@ set(kwin_QT_LIBS
     Qt::Concurrent
     Qt::DBus
     Qt::Quick
+    Qt::X11Extras
 )
 
 set(kwin_KDE_LIBS
     KF5::ConfigCore
     KF5::ConfigWidgets
     KF5::CoreAddons
-    KF5::GlobalAccel
-    KF5::GlobalAccelPrivate
     KF5::I18n
     KF5::Notifications
     KF5::Package
     KF5::Service
-    KF5::WindowSystem
 
     KDecoration2::KDecoration
     KDecoration2::KDecoration2Private
+)
+
+set(kwin_X11_LIBS
+  ${X11_LIBRARIES}
 )
 
 set(kwin_XCB_LIBS
@@ -563,6 +569,7 @@ set(kwinLibs
     ${kwin_OWN_LIBS}
     ${kwin_QT_LIBS}
     ${kwin_KDE_LIBS}
+    ${kwin_X11_LIBS}
     ${kwin_XCB_LIBS}
     ${kwin_INPUT_LIBS}
 
@@ -611,6 +618,7 @@ set(kwin_X11_SRCS
    base/backend/x11/randr_filter.cpp
    base/x11/output.cpp
    input/x11/cursor.cpp
+   input/x11/global_shortcuts_manager.cpp
    input/x11/xfixes_cursor_event_filter.cpp
    input/logging.cpp
    render/backend/x11/non_composited_outline.cpp
@@ -643,6 +651,7 @@ target_link_libraries(kwin_x11_lib
 PUBLIC
     kwin
     KF5::Crash
+    KF5::GlobalAccel
 PRIVATE
     Qt::X11Extras
     X11::Xi
@@ -703,8 +712,16 @@ set(kwin_WAYLAND_SRCS
    input/dbus/keyboard_layouts_v2.cpp
    input/dbus/tablet_mode_manager.cpp
    input/spies/keyboard_repeat.cpp
+   input/wayland/global_shortcuts_manager.cpp
    input/logging.cpp
    input/switch.cpp
+   input/wayland/kglobalaccel/runtime/component.cpp
+   input/wayland/kglobalaccel/runtime/global_accel_d.cpp
+   input/wayland/kglobalaccel/runtime/global_shortcut.cpp
+   input/wayland/kglobalaccel/runtime/global_shortcut_context.cpp
+   input/wayland/kglobalaccel/runtime/global_shortcuts_registry.cpp
+   input/wayland/kglobalaccel/runtime/service_action_component.cpp
+   input/wayland/kglobalaccel/runtime/sequence_helpers.cpp
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
 
@@ -740,6 +757,7 @@ add_library(kwin_wayland_lib SHARED
 target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
+  KF5::GlobalAccel
   WraplandClient
   WraplandServer
   Wayland::Server
@@ -766,7 +784,6 @@ target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)
 add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
     kwin_wayland_lib
-    KF5GlobalAccelKWinPlugin
     KF5IdleTimeKWinPlugin
     KF5WindowSystemKWinPlugin
     KWinQpaPlugin

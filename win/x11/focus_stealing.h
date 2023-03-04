@@ -138,10 +138,10 @@ bool allow_window_activation(Space& space,
     // Low or medium FSP level, usertime comparism is possible
     auto const user_time = std::visit(overload{[](auto&& win) { return win->userTime(); }}, *ac);
     qCDebug(KWIN_CORE) << "Activation, compared:" << window << ":" << time << ":" << user_time
-                       << ":" << (NET::timestampCompare(time, user_time) >= 0);
+                       << ":" << (net::timestampCompare(time, user_time) >= 0);
 
     // time >= user_time
-    return NET::timestampCompare(time, user_time) >= 0;
+    return net::timestampCompare(time, user_time) >= 0;
 }
 
 // basically the same like allowClientActivation(), this time allowing
@@ -193,10 +193,10 @@ bool allow_full_window_raising(Space& space, Win const* window, xcb_timestamp_t 
 
             auto const user_time = ac->userTime();
             qCDebug(KWIN_CORE) << "Raising, compared:" << time << ":" << user_time << ":"
-                               << (NET::timestampCompare(time, user_time) >= 0);
+                               << (net::timestampCompare(time, user_time) >= 0);
 
             // time >= user_time
-            return NET::timestampCompare(time, user_time) >= 0;
+            return net::timestampCompare(time, user_time) >= 0;
         }},
         *ac);
 }

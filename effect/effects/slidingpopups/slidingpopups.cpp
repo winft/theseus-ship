@@ -12,7 +12,6 @@
 #include <kwineffects/effects_handler.h>
 #include <kwineffects/paint_data.h>
 
-#include <KWindowEffects>
 #include <QFontMetrics>
 #include <QGuiApplication>
 

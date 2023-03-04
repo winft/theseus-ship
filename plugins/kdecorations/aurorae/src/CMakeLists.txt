@@ -25,7 +25,6 @@ target_link_libraries(kwin5_aurorae
     KF5::ConfigWidgets
     KF5::I18n
     KF5::Package
-    KF5::WindowSystem
     Qt::Quick
     Qt::UiTools
 )

@@ -18,7 +18,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kwingl/platform.h>
 #include <kwingl/utils.h>
 
-#include <KGlobalAccel>
 #include <KLocalizedString>
 #include <QAction>
 #include <QApplication>
@@ -198,31 +197,26 @@ void CubeEffect::reconfigure(ReconfigureFlags)
         QAction* cubeAction = m_cubeAction;
         cubeAction->setObjectName(QStringLiteral("Cube"));
         cubeAction->setText(i18n("Desktop Cube"));
-        KGlobalAccel::self()->setDefaultShortcut(
-            cubeAction, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11);
-        KGlobalAccel::self()->setShortcut(
-            cubeAction, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11);
-        effects->registerGlobalShortcut(static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11, cubeAction);
+        cubeShortcut = effects->registerGlobalShortcutAndDefault(
+            {static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F11}, cubeAction);
         effects->registerPointerShortcut(
             Qt::ControlModifier | Qt::AltModifier, Qt::LeftButton, cubeAction);
-        cubeShortcut = KGlobalAccel::self()->shortcut(cubeAction);
+
         QAction* cylinderAction = m_cylinderAction;
         cylinderAction->setObjectName(QStringLiteral("Cylinder"));
         cylinderAction->setText(i18n("Desktop Cylinder"));
-        KGlobalAccel::self()->setShortcut(cylinderAction, QList<QKeySequence>());
-        effects->registerGlobalShortcut(QKeySequence(), cylinderAction);
-        cylinderShortcut = KGlobalAccel::self()->shortcut(cylinderAction);
+        cylinderShortcut = effects->registerGlobalShortcut({}, cylinderAction);
+
         QAction* sphereAction = m_sphereAction;
         sphereAction->setObjectName(QStringLiteral("Sphere"));
         sphereAction->setText(i18n("Desktop Sphere"));
-        KGlobalAccel::self()->setShortcut(sphereAction, QList<QKeySequence>());
-        sphereShortcut = KGlobalAccel::self()->shortcut(sphereAction);
-        effects->registerGlobalShortcut(QKeySequence(), sphereAction);
+        sphereShortcut = effects->registerGlobalShortcut({}, sphereAction);
+
         connect(cubeAction, &QAction::triggered, this, &CubeEffect::toggleCube);
         connect(cylinderAction, &QAction::triggered, this, &CubeEffect::toggleCylinder);
         connect(sphereAction, &QAction::triggered, this, &CubeEffect::toggleSphere);
-        connect(KGlobalAccel::self(),
-                &KGlobalAccel::globalShortcutChanged,
+        connect(effects,
+                &EffectsHandler::globalShortcutChanged,
                 this,
                 &CubeEffect::globalShortcutChanged);
         shortcutsRegistered = true;

@@ -56,12 +56,14 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     }
 
     // Window types that are supported as unmanaged (mainly for compositing).
-    NET::WindowTypes constexpr supported_default_types = NET::NormalMask | NET::DesktopMask
-        | NET::DockMask | NET::ToolbarMask | NET::MenuMask
-        | NET::DialogMask /*| NET::OverrideMask*/ | NET::TopMenuMask | NET::UtilityMask
-        | NET::SplashMask | NET::DropdownMenuMask | NET::PopupMenuMask | NET::TooltipMask
-        | NET::NotificationMask | NET::ComboBoxMask | NET::DNDIconMask | NET::OnScreenDisplayMask
-        | NET::CriticalNotificationMask;
+    window_type_mask const supported_default_types = window_type_mask::normal
+        | window_type_mask::desktop | window_type_mask::dock | window_type_mask::toolbar
+        | window_type_mask::menu
+        | window_type_mask::dialog /*| window_type_mask::override*/ | window_type_mask::top_menu
+        | window_type_mask::utility | window_type_mask::splash | window_type_mask::dropdown_menu
+        | window_type_mask::popup_menu | window_type_mask::tooltip | window_type_mask::notification
+        | window_type_mask::combo_box | window_type_mask::dnd_icon
+        | window_type_mask::on_screen_display | window_type_mask::critical_notification;
 
     auto con = space.base.x11_data.connection;
     base::x11::server_grabber xserverGrabber(con);
@@ -94,12 +96,12 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     check_screen(*win);
     win->xcb_visual = attr->visual;
     win->render_data.bit_depth = geo->depth;
-    win->net_info = new NETWinInfo(con,
-                                   xcb_win,
-                                   win->space.base.x11_data.root_window,
-                                   NET::WMWindowType | NET::WMPid,
-                                   NET::WM2Opacity | NET::WM2WindowRole | NET::WM2WindowClass
-                                       | NET::WM2OpaqueRegion);
+    win->net_info = new net::win_info(con,
+                                      xcb_win,
+                                      win->space.base.x11_data.root_window,
+                                      net::WMWindowType | net::WMPid,
+                                      net::WM2Opacity | net::WM2WindowRole | net::WM2WindowClass
+                                          | net::WM2OpaqueRegion);
     fetch_wm_class(*win);
 
     // TODO(romangg): Can't chain these two calls, because the second only takes non-const refs.
@@ -172,25 +174,25 @@ template<typename Win>
 bool unmanaged_event(Win* win, xcb_generic_event_t* event)
 {
     auto old_opacity = win->opacity();
-    NET::Properties dirtyProperties;
-    NET::Properties2 dirtyProperties2;
+    net::Properties dirtyProperties;
+    net::Properties2 dirtyProperties2;
 
     // Pass through the NET stuff.
     win->net_info->event(event, &dirtyProperties, &dirtyProperties2);
 
-    if (dirtyProperties2 & NET::WM2Opacity) {
+    if (dirtyProperties2 & net::WM2Opacity) {
         if (win->space.base.render->compositor->scene) {
             add_full_repaint(*win);
             Q_EMIT win->qobject->opacityChanged(old_opacity);
         }
     }
-    if (dirtyProperties2 & NET::WM2OpaqueRegion) {
+    if (dirtyProperties2 & net::WM2OpaqueRegion) {
         fetch_wm_opaque_region(*win);
     }
-    if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
+    if (dirtyProperties2.testFlag(net::WM2WindowRole)) {
         Q_EMIT win->qobject->windowRoleChanged();
     }
-    if (dirtyProperties2.testFlag(NET::WM2WindowClass)) {
+    if (dirtyProperties2.testFlag(net::WM2WindowClass)) {
         fetch_wm_class(*win);
     }
 

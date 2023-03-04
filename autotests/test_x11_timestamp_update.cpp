@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <memory>
 
 #include "base/backend/x11/platform.h"
+#include "base/seat/backend/logind/session.h"
 #include "base/x11/grabs.h"
 #include "main.h"
 #include "render/backend/x11/platform.h"
@@ -50,6 +51,7 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
+    base.session = std::make_unique<base::seat::backend::logind::session>();
     base.render = std::make_unique<render::backend::x11::platform<base::x11::platform>>(base);
 }
 

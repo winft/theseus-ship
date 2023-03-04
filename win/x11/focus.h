@@ -22,7 +22,7 @@ void focus_take(Win& win)
         set_demands_attention(&win, false);
     }
 
-    if (win.net_info->supportsProtocol(NET::TakeFocusProtocol)) {
+    if (win.net_info->supportsProtocol(net::TakeFocusProtocol)) {
         base::x11::update_time_from_clock(win.space.base);
         send_client_message(win.space.base.x11_data,
                             win.xcb_windows.client,

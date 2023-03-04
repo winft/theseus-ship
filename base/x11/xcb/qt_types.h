@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "base/os/kkeyserver.h"
+#include "win/x11/key_server.h"
 
 #include <xcb/xcb.h>
 
@@ -65,10 +65,10 @@ inline Qt::KeyboardModifiers to_qt_keyboard_modifiers(int state)
     if (state & XCB_KEY_BUT_MASK_CONTROL) {
         ret |= Qt::ControlModifier;
     }
-    if (state & KKeyServer::modXAlt()) {
+    if (state & win::x11::key_server::modXAlt()) {
         ret |= Qt::AltModifier;
     }
-    if (state & KKeyServer::modXMeta()) {
+    if (state & win::x11::key_server::modXMeta()) {
         ret |= Qt::MetaModifier;
     }
 

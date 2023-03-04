@@ -48,8 +48,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <unordered_map>
 #include <vector>
 
-class KStartupInfo;
-
 namespace KWin::win
 {
 
@@ -102,10 +100,7 @@ public:
     std::unique_ptr<qobject_t> qobject;
 
     win::space_areas areas;
-
-    KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
-
     std::unique_ptr<rules::book> rule_book;
 
     std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;
@@ -162,5 +157,3 @@ public:
 };
 
 }
-
-Q_DECLARE_METATYPE(NET::WindowType)

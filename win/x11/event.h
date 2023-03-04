@@ -14,13 +14,11 @@
 #include "geo.h"
 #include "meta.h"
 #include "stacking.h"
-#include "startup_info.h"
 #include "transient.h"
 #include "user_time.h"
 #include "window_release.h"
 #include "xcb.h"
 
-#include "base/os/kkeyserver.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/qt_types.h"
 #include "render/types.h"
@@ -246,7 +244,7 @@ void configure_request_event(Win* win, xcb_configure_request_event_t* e)
         configure_request(win, e->value_mask, e->x, e->y, e->width, e->height, 0, false);
     }
     if (e->value_mask & XCB_CONFIG_WINDOW_STACK_MODE) {
-        restack_window(win, e->sibling, e->stack_mode, NET::FromApplication, user_time(win), false);
+        restack_window(win, e->sibling, e->stack_mode, net::FromApplication, user_time(win), false);
     }
 
     // TODO(romangg): remove or check for size change at least?
@@ -407,9 +405,9 @@ template<typename Win>
 static inline bool modKeyDown(Win& win, int state)
 {
     uint const keyModX = (win.space.base.options->qobject->keyCmdAllModKey() == Qt::Key_Meta)
-        ? KKeyServer::modXMeta()
-        : KKeyServer::modXAlt();
-    return keyModX && (state & KKeyServer::accelModMaskX()) == keyModX;
+        ? key_server::modXMeta()
+        : key_server::modXAlt();
+    return keyModX && (state & key_server::accelModMaskX()) == keyModX;
 }
 
 // return value matters only when filtering events before decoration gets them
@@ -755,22 +753,22 @@ void focus_out_event(Win* win, xcb_focus_out_event_t* e)
 
 // performs _NET_WM_MOVERESIZE
 template<typename Win>
-void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
+void net_move_resize(Win* win, int x_root, int y_root, net::Direction direction)
 {
     auto& mov_res = win->control->move_resize;
     auto& cursor = win->space.input->cursor;
 
-    if (direction == NET::Move) {
+    if (direction == net::Move) {
         // move cursor to the provided position to prevent the window jumping there on first
         // movement the expectation is that the cursor is already at the provided position, thus
         // it's more a safety measurement
         cursor->set_pos(QPoint(x_root, y_root));
         perform_mouse_command(*win, base::options_qobject::MouseMove, {x_root, y_root});
-    } else if (mov_res.enabled && direction == NET::MoveResizeCancel) {
+    } else if (mov_res.enabled && direction == net::MoveResizeCancel) {
         win::finish_move_resize(win, true);
         mov_res.button_down = false;
         win::update_cursor(win);
-    } else if (direction >= NET::TopLeft && direction <= NET::Left) {
+    } else if (direction >= net::TopLeft && direction <= net::Left) {
         static const win::position convert[] = {win::position::top_left,
                                                 win::position::top,
                                                 win::position::top_right,
@@ -796,13 +794,13 @@ void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
             mov_res.button_down = false;
         }
         win::update_cursor(win);
-    } else if (direction == NET::KeyboardMove) {
+    } else if (direction == net::KeyboardMove) {
         // ignore mouse coordinates given in the message, mouse position is used by the moving
         // algorithm
         cursor->set_pos(win->geo.frame.center());
         perform_mouse_command(
             *win, base::options_qobject::MouseUnrestrictedMove, win->geo.frame.center());
-    } else if (direction == NET::KeyboardSize) {
+    } else if (direction == net::KeyboardSize) {
         // ignore mouse coordinates given in the message, mouse position is used by the resizing
         // algorithm
         cursor->set_pos(win->geo.frame.bottomRight());
@@ -826,79 +824,76 @@ bool window_event(Win* win, xcb_generic_event_t* e)
 {
     if (find_event_window(e) == win->xcb_windows.client) {
         // avoid doing stuff on frame or wrapper
-        NET::Properties dirtyProperties;
-        NET::Properties2 dirtyProperties2;
+        net::Properties dirtyProperties;
+        net::Properties2 dirtyProperties2;
         auto old_opacity = win->opacity();
 
         // pass through the NET stuff
         win->net_info->event(e, &dirtyProperties, &dirtyProperties2);
 
-        if ((dirtyProperties & NET::WMName) != 0) {
+        if ((dirtyProperties & net::WMName) != 0) {
             fetch_name(win);
         }
-        if ((dirtyProperties & NET::WMIconName) != 0) {
+        if ((dirtyProperties & net::WMIconName) != 0) {
             fetch_iconic_name(win);
         }
-        if ((dirtyProperties & NET::WMStrut) != 0
-            || (dirtyProperties2 & NET::WM2ExtendedStrut) != 0) {
+        if ((dirtyProperties & net::WMStrut) != 0
+            || (dirtyProperties2 & net::WM2ExtendedStrut) != 0) {
             update_space_areas(win->space);
         }
-        if ((dirtyProperties & NET::WMIcon) != 0) {
+        if ((dirtyProperties & net::WMIcon) != 0) {
             get_icons(win);
         }
 
         // Note there's a difference between userTime() and net_info->userTime()
         // net_info->userTime() is the value of the property, userTime() also includes
         // updates of the time done by KWin (ButtonPress on windowrapper etc.).
-        if ((dirtyProperties2 & NET::WM2UserTime) != 0) {
+        if ((dirtyProperties2 & net::WM2UserTime) != 0) {
             mark_as_user_interaction(win->space);
             update_user_time(win, win->net_info->userTime());
         }
-        if ((dirtyProperties2 & NET::WM2StartupId) != 0) {
-            startup_id_changed(win);
-        }
-        if (dirtyProperties2 & NET::WM2Opacity) {
+        if (dirtyProperties2 & net::WM2Opacity) {
             if (win->space.base.render->compositor->scene) {
                 add_full_repaint(*win);
                 Q_EMIT win->qobject->opacityChanged(old_opacity);
             } else {
                 // forward to the frame if there's possibly another compositing manager running
-                NETWinInfo i(win->space.base.x11_data.connection,
-                             win->frameId(),
-                             win->space.base.x11_data.root_window,
-                             NET::Properties(),
-                             NET::Properties2());
+                net::win_info i(win->space.base.x11_data.connection,
+                                win->frameId(),
+                                win->space.base.x11_data.root_window,
+                                net::Properties(),
+                                net::Properties2());
                 i.setOpacity(win->net_info->opacity());
             }
         }
-        if (dirtyProperties2 & NET::WM2FrameOverlap) {
+        if (dirtyProperties2 & net::WM2FrameOverlap) {
             // Property is deprecated.
         }
-        if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
+        if (dirtyProperties2.testFlag(net::WM2WindowRole)) {
             Q_EMIT win->qobject->windowRoleChanged();
         }
-        if (dirtyProperties2.testFlag(NET::WM2WindowClass)) {
+        if (dirtyProperties2.testFlag(net::WM2WindowClass)) {
             fetch_wm_class(*win);
         }
-        if (dirtyProperties2.testFlag(NET::WM2BlockCompositing)) {
+        if (dirtyProperties2.testFlag(net::WM2BlockCompositing)) {
             win->setBlockingCompositing(win->net_info->isBlockingCompositing());
         }
-        if (dirtyProperties2.testFlag(NET::WM2GroupLeader)) {
+        if (dirtyProperties2.testFlag(net::WM2GroupLeader)) {
             check_group(win, nullptr);
 
             // Group affects isMinimizable()
             update_allowed_actions(win);
         }
-        if (dirtyProperties2.testFlag(NET::WM2Urgency)) {
+        if (dirtyProperties2.testFlag(net::WM2Urgency)) {
             update_urgency(win);
         }
-        if (dirtyProperties2 & NET::WM2OpaqueRegion) {
+        if (dirtyProperties2 & net::WM2OpaqueRegion) {
             fetch_wm_opaque_region(*win);
         }
-        if (dirtyProperties2 & NET::WM2DesktopFileName) {
+        if (dirtyProperties2 & net::WM2DesktopFileName) {
             win::set_desktop_file_name(win, QByteArray(win->net_info->desktopFileName()));
         }
-        if (dirtyProperties2 & NET::WM2GTKFrameExtents) {
+        if (dirtyProperties2 & net::WM2GTKFrameExtents) {
             auto& orig_extents = win->geo.update.original.client_frame_extents;
 
             orig_extents = win->geo.client_frame_extents;

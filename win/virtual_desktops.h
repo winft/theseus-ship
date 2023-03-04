@@ -18,7 +18,6 @@
 #include <QSize>
 
 class KLocalizedString;
-class NETRootInfo;
 class QAction;
 class Options;
 
@@ -29,6 +28,11 @@ class PlasmaVirtualDesktopManager;
 
 namespace KWin::win
 {
+
+namespace x11::net
+{
+class root_info;
+}
 
 class KWIN_EXPORT virtual_desktop : public QObject
 {
@@ -207,7 +211,7 @@ public:
     /**
      * @internal, for X11 case
      */
-    void setRootInfo(NETRootInfo* info);
+    void setRootInfo(x11::net::root_info* info);
     /**
      * @internal, for Wayland case
      */
@@ -502,7 +506,7 @@ private:
     bool m_navigationWrapsAround{false};
     virtual_desktop_grid m_grid;
     // TODO: QPointer
-    NETRootInfo* m_rootInfo{nullptr};
+    x11::net::root_info* m_rootInfo{nullptr};
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement = nullptr;
     KSharedConfig::Ptr m_config;
 

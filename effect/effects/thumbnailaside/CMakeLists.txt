@@ -18,8 +18,8 @@ kwin4_add_effect_module(kwin4_effect_thumbnailaside ${thumbnailaside_SOURCES})
 target_link_libraries(kwin4_effect_thumbnailaside PRIVATE
     kwineffects
     kwinglutils
+    Qt::Widgets
     KF5::ConfigGui
-    KF5::GlobalAccel
     KF5::I18n
 )
 

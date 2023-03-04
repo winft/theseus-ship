@@ -5,9 +5,9 @@
 */
 #pragma once
 
-#include "base/x11/event_filter.h"
+#include "key_server.h"
 
-#include "base/os/kkeyserver.h"
+#include "base/x11/event_filter.h"
 #include "win/x11/event.h"
 #include "win/x11/stacking.h"
 
@@ -47,7 +47,7 @@ public:
                              int keyQt;
                              xcb_key_press_event_t* keyEvent
                                  = reinterpret_cast<xcb_key_press_event_t*>(event);
-                             KKeyServer::xcbKeyPressEventToQt(keyEvent, &keyQt);
+                             key_server::xcbKeyPressEventToQt(keyEvent, &keyQt);
                              key_press_event(win, keyQt, keyEvent->time);
                              return true;
                          }

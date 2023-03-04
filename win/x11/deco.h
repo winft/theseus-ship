@@ -50,7 +50,7 @@ void layout_decoration_rects(Win* win, QRect& left, QRect& top, QRect& right, QR
 template<typename Win>
 void set_frame_extents(Win* win)
 {
-    NETStrut strut;
+    net::strut strut;
     strut.left = win::left_border(win);
     strut.right = win::right_border(win);
     strut.top = win::top_border(win);
@@ -250,7 +250,7 @@ void deco_set_no_border(Win& win, bool set)
 template<typename Win>
 void show_context_help(Win& win)
 {
-    if (!win.net_info->supportsProtocol(NET::ContextHelpProtocol)) {
+    if (!win.net_info->supportsProtocol(net::ContextHelpProtocol)) {
         return;
     }
     send_client_message(win.space.base.x11_data,

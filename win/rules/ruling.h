@@ -9,7 +9,6 @@
 #include "types.h"
 
 #include <QRect>
-#include <netwm_def.h>
 
 #include "base/options.h"
 #include "win/types.h"
@@ -39,14 +38,10 @@ class KWIN_EXPORT ruling
 public:
     ruling();
     explicit ruling(settings const*);
-    ruling(QString const&, bool temporary);
 
     void write(settings*) const;
     bool isEmpty() const;
-
     bool discardUsed(bool withdrawn);
-    bool isTemporary() const;
-    bool discardTemporary(bool force); // removes if temporary and forced or too old
 
     bool applyPlacement(win::placement& placement) const;
     bool applyGeometry(QRect& rect, bool init) const;
@@ -62,7 +57,7 @@ public:
                        QVector<virtual_desktop*>& vds,
                        bool init) const;
     bool applyScreen(int& screen, bool init) const;
-    bool applyType(NET::WindowType& type) const;
+    bool applyType(window_type& type) const;
     bool applyMaximizeVert(win::maximize_mode& mode, bool init) const;
     bool applyMaximizeHoriz(win::maximize_mode& mode, bool init) const;
     bool applyMinimize(bool& minimize, bool init) const;
@@ -87,7 +82,7 @@ public:
     bool applyDisableGlobalShortcuts(bool& disable) const;
     bool applyDesktopFile(QString& desktopFile, bool init) const;
 
-    bool matchType(NET::WindowType match_type) const;
+    bool matchType(window_type match_type) const;
     bool matchWMClass(QByteArray const& match_class, QByteArray const& match_name) const;
     bool matchRole(QByteArray const& match_role) const;
     bool matchTitle(QString const& match_title) const;
@@ -136,10 +131,9 @@ public:
     bytes_match clientmachine;
     string_match title;
 
-    int temporary_state; // e.g. for kstart
     QString description;
     bool wmclasscomplete;
-    NET::WindowTypes types; // types for matching
+    window_type_mask types;
 
     set_ruler<bool> above;
     set_ruler<bool> below;
@@ -175,7 +169,7 @@ public:
     force_ruler<int> opacityinactive;
     force_ruler<int> placement;
     force_ruler<bool> strictgeometry;
-    force_ruler<NET::WindowType> type;
+    force_ruler<window_type> type;
 
     friend QDebug& operator<<(QDebug& stream, ruling const*);
 };

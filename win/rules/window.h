@@ -6,9 +6,6 @@
 */
 #pragma once
 
-#include <QRect>
-#include <netwm_def.h>
-
 #include "base/options.h"
 #include "base/output_helpers.h"
 #include "kwin_export.h"
@@ -16,6 +13,7 @@
 #include "win/types.h"
 #include "win/virtual_desktops.h"
 
+#include <QRect>
 #include <functional>
 #include <vector>
 
@@ -42,7 +40,6 @@ public:
     explicit window(std::vector<ruling*> const& rules);
     window();
 
-    void discardTemporary();
     bool contains(ruling const* rule) const;
     void remove(ruling* rule);
     placement checkPlacement(win::placement placement) const;
@@ -86,7 +83,7 @@ public:
         return base::get_output(outputs, index);
     }
 
-    NET::WindowType checkType(NET::WindowType type) const;
+    window_type checkType(window_type type) const;
     maximize_mode checkMaximize(maximize_mode mode, bool init = false) const;
     bool checkMinimize(bool minimized, bool init = false) const;
     bool checkSkipTaskbar(bool skip, bool init = false) const;

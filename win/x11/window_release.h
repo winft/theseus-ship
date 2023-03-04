@@ -48,7 +48,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
     }
 
     if (space.client_keys_client == var_win(win)) {
-        setup_window_shortcut_done(space, false);
+        shortcut_dialog_done(space, false);
     }
     if (!win->control->shortcut.isEmpty()) {
         // Remove from client_keys.
@@ -278,7 +278,7 @@ void release_window(Win* win, bool on_shutdown)
         win->net_info->setDesktop(0);
 
         // Reset all state flags
-        win->net_info->setState(NET::States(), win->net_info->state());
+        win->net_info->setState(net::States(), win->net_info->state());
     }
 
     auto& atoms = win->space.atoms;
@@ -446,7 +446,7 @@ void close_window(Win& win)
     // Update user time, because the window may create a confirming dialog.
     update_user_time(&win);
 
-    if (win.net_info->supportsProtocol(NET::DeleteWindowProtocol)) {
+    if (win.net_info->supportsProtocol(net::DeleteWindowProtocol)) {
         send_client_message(win.space.base.x11_data,
                             win.xcb_windows.client,
                             win.space.atoms->wm_protocols,

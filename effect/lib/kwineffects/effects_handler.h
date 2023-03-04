@@ -152,7 +152,11 @@ public:
      * @param shortcut The global shortcut which should trigger the action
      * @param action The action which gets triggered when the shortcut matches
      */
-    virtual void registerGlobalShortcut(const QKeySequence& shortcut, QAction* action) = 0;
+    virtual QList<QKeySequence> registerGlobalShortcut(QList<QKeySequence> const& shortcut,
+                                                       QAction* action)
+        = 0;
+    virtual QList<QKeySequence>
+    registerGlobalShortcutAndDefault(QList<QKeySequence> const& shortcut, QAction* action) = 0;
     /**
      * @brief Registers a global pointer shortcut with the provided @p action.
      *
@@ -1251,6 +1255,8 @@ Q_SIGNALS:
     void windowExpandedGeometryChanged(KWin::EffectWindow* window);
 
     void frameRendered();
+
+    void globalShortcutChanged(QAction* action, QKeySequence const& seq);
 
 protected:
     virtual EffectWindow* find_window_by_wid(WId id) const = 0;

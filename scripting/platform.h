@@ -196,6 +196,8 @@ public:
 
     void register_shortcut(QKeySequence const& shortcut, QAction* action) override
     {
+        space.base.input->shortcuts->register_keyboard_shortcut(
+            action, {shortcut}, input::shortcut_loading::global_lookup);
         space.base.input->registerShortcut(shortcut, action);
     }
 

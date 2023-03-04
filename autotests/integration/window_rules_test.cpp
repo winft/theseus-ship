@@ -17,7 +17,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
 
-#include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
 namespace KWin
@@ -38,6 +37,16 @@ private Q_SLOTS:
 Test::space::x11_window* get_x11_window_from_id(uint32_t id)
 {
     return Test::get_x11_window(Test::app()->base->space->windows_map.at(id));
+}
+
+std::tuple<KSharedConfigPtr, KConfigGroup> get_config()
+{
+    auto config = Test::app()->base->config.main;
+
+    auto group = config->group("1");
+    group.deleteGroup();
+    config->group("General").writeEntry("count", 1);
+    return {config, group};
 }
 
 void WindowRuleTest::initTestCase()
@@ -87,11 +96,22 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
 {
     // this test creates the situation of BUG 367554: creates a window and initial apply maximize
     // vertical the window is matched by class and role load the rule
-    QFile ruleFile(QFINDTESTDATA("./data/rules/maximize-vert-apply-initial"));
-    QVERIFY(ruleFile.open(QIODevice::ReadOnly | QIODevice::Text));
-
-    Test::app()->base->space->rule_book->temporaryRulesMessage(
-        QString::fromUtf8(ruleFile.readAll()));
+    auto [config, group] = get_config();
+    group.writeEntry("maximizevert", true);
+    group.writeEntry("maximizevertrule", 3);
+    group.writeEntry("title", "KPatience");
+    group.writeEntry("titlematch", 0);
+    group.writeEntry("types", 1);
+    group.writeEntry("windowrole", "mainwindow");
+    group.writeEntry("windowrolematch", 1);
+    group.writeEntry("clientmachine", "localhost");
+    group.writeEntry("clientmachinematch", 0);
+    group.writeEntry("wmclass", "kpat");
+    group.writeEntry("wmclasscomplete", false);
+    group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
+    group.sync();
+    Test::app()->base->space->rule_book->config = config;
+    win::space_reconfigure(*Test::app()->base->space);
 
     // create the test window
     auto c = create_xcb_connection();
@@ -130,12 +150,12 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
                         role.length(),
                         role.constData());
 
-    NETWinInfo info(c.get(),
-                    w,
-                    Test::app()->base->x11_data.root_window,
-                    NET::WMAllProperties,
-                    NET::WM2AllProperties);
-    info.setWindowType(NET::Normal);
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::WMAllProperties,
+                                 win::x11::net::WM2AllProperties);
+    info.setWindowType(win::window_type::normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -169,10 +189,8 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
 
 void WindowRuleTest::testWindowClassChange()
 {
-    KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("General").writeEntry("count", 1);
+    auto [config, group] = get_config();
 
-    auto group = config->group("1");
     group.writeEntry("above", true);
     group.writeEntry("aboverule", 2);
     group.writeEntry("wmclass", "org.kde.foo");
@@ -210,12 +228,12 @@ void WindowRuleTest::testWindowClassChange()
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     xcb_icccm_set_wm_class(c.get(), w, 23, "org.kde.bar\0org.kde.bar");
 
-    NETWinInfo info(c.get(),
-                    w,
-                    Test::app()->base->x11_data.root_window,
-                    NET::WMAllProperties,
-                    NET::WM2AllProperties);
-    info.setWindowType(NET::Normal);
+    win::x11::net::win_info info(c.get(),
+                                 w,
+                                 Test::app()->base->x11_data.root_window,
+                                 win::x11::net::WMAllProperties,
+                                 win::x11::net::WM2AllProperties);
+    info.setWindowType(win::window_type::normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 

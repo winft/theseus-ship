@@ -10,21 +10,28 @@
 #include "kill_window.h"
 #include "types.h"
 
+#include "input/types.h"
 #include "render/platform.h"
 #include "render/post/night_color_manager.h"
 #include "render/post/night_color_setup.h"
 
+#include <KLazyLocalizedString>
+#include <KLocalizedString>
 #include <QAction>
 #include <QKeySequence>
 #include <QString>
 #include <QVariant>
 
-#include <KGlobalAccel>
-#include <KLazyLocalizedString>
-#include <KLocalizedString>
-
 namespace KWin::win
 {
+
+template<typename Input>
+void set_global_shortcut_with_default(Input& input, QAction& action, QKeySequence const& shortcut)
+{
+    input.shortcuts->register_keyboard_default_shortcut(&action, {shortcut});
+    input.shortcuts->register_keyboard_shortcut(
+        &action, {shortcut}, input::shortcut_loading::global_lookup);
+}
 
 template<typename Manager, typename Input, typename Slot>
 QAction* add_virtual_desktop_action(Manager& manager,
@@ -38,7 +45,7 @@ QAction* add_virtual_desktop_action(Manager& manager,
     a->setObjectName(name);
     a->setText(label);
 
-    KGlobalAccel::setGlobalShortcut(a, QKeySequence());
+    set_global_shortcut_with_default(input, *a, {});
     input.registerShortcut(QKeySequence(), a, manager.qobject.get(), slot);
 
     return a;
@@ -59,7 +66,7 @@ QAction* add_virtual_desktop_action(Manager& manager,
     a->setText(label.subs(value).toString());
     a->setData(value);
 
-    KGlobalAccel::setGlobalShortcut(a, key);
+    set_global_shortcut_with_default(input, *a, key);
     input.registerShortcut(key, a, manager.qobject.get(), [a, slot] { slot(*a); });
 
     return a;
@@ -137,29 +144,30 @@ void shortcuts_init_virtual_desktops(Space& space)
                                      QStringLiteral("Switch One Desktop to the Right"),
                                      i18n("Switch One Desktop to the Right"),
                                      [manager] { manager->slotRight(); });
-    KGlobalAccel::setGlobalShortcut(slotRightAction,
-                                    QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Right));
+    set_global_shortcut_with_default(
+        input, *slotRightAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Right));
     QAction* slotLeftAction
         = add_virtual_desktop_action(*manager,
                                      input,
                                      QStringLiteral("Switch One Desktop to the Left"),
                                      i18n("Switch One Desktop to the Left"),
                                      [manager] { manager->slotLeft(); });
-    KGlobalAccel::setGlobalShortcut(slotLeftAction,
-                                    QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Left));
+    set_global_shortcut_with_default(
+        input, *slotLeftAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Left));
     QAction* slotUpAction = add_virtual_desktop_action(*manager,
                                                        input,
                                                        QStringLiteral("Switch One Desktop Up"),
                                                        i18n("Switch One Desktop Up"),
                                                        [manager] { manager->slotUp(); });
-    KGlobalAccel::setGlobalShortcut(slotUpAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Up));
+    set_global_shortcut_with_default(
+        input, *slotUpAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Up));
     QAction* slotDownAction = add_virtual_desktop_action(*manager,
                                                          input,
                                                          QStringLiteral("Switch One Desktop Down"),
                                                          i18n("Switch One Desktop Down"),
                                                          [manager] { manager->slotDown(); });
-    KGlobalAccel::setGlobalShortcut(slotDownAction,
-                                    QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Down));
+    set_global_shortcut_with_default(
+        input, *slotDownAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Down));
 
     // Gestures
     // These connections decide which desktop to end on after gesture ends
@@ -265,8 +273,7 @@ QAction* prepare_shortcut_action(Space& space,
         action->setData(data);
     }
 
-    KGlobalAccel::self()->setDefaultShortcut(action, QList<QKeySequence>() << shortcut);
-    KGlobalAccel::self()->setShortcut(action, QList<QKeySequence>() << shortcut);
+    set_global_shortcut_with_default(*space.base.input, *action, shortcut);
     return action;
 }
 

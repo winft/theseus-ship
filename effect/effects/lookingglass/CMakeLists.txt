@@ -21,7 +21,6 @@ target_link_libraries(kwin4_effect_lookingglass PRIVATE
     kwinglutils
     KF5::ConfigGui
     KF5::ConfigWidgets
-    KF5::GlobalAccel
     KF5::I18n
 )
 

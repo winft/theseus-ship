@@ -15,13 +15,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kwineffects/paint_data.h>
 #include <kwingl/utils.h>
 
-#include <KGlobalAccel>
 #include <KLocalizedString>
 #include <QAction>
 #include <QMatrix4x4>
 #include <QPainter>
 #include <QTime>
-
 #include <cmath>
 
 namespace KWin
@@ -38,9 +36,7 @@ TrackMouseEffect::TrackMouseEffect()
     m_action = new QAction(this);
     m_action->setObjectName(QStringLiteral("TrackMouse"));
     m_action->setText(i18n("Track mouse"));
-    KGlobalAccel::self()->setDefaultShortcut(m_action, QList<QKeySequence>());
-    KGlobalAccel::self()->setShortcut(m_action, QList<QKeySequence>());
-    effects->registerGlobalShortcut(QKeySequence(), m_action);
+    effects->registerGlobalShortcutAndDefault({}, m_action);
 
     connect(m_action, &QAction::triggered, this, &TrackMouseEffect::toggle);
 

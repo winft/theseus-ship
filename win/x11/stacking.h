@@ -263,10 +263,10 @@ void raise_client_within_application(Space& space, Win* window)
 template<typename Space, typename Win>
 void raise_client_request(Space& space,
                           Win* c,
-                          NET::RequestSource src = NET::FromApplication,
+                          net::RequestSource src = net::FromApplication,
                           xcb_timestamp_t timestamp = 0)
 {
-    if (src == NET::FromTool || allow_full_window_raising(space, c, timestamp)) {
+    if (src == net::FromTool || allow_full_window_raising(space, c, timestamp)) {
         raise_window(space, c);
     } else {
         raise_client_within_application(space, c);
@@ -277,14 +277,14 @@ void raise_client_request(Space& space,
 template<typename Space, typename Win>
 void lower_client_request(Space& space,
                           Win* c,
-                          NET::RequestSource src,
+                          net::RequestSource src,
                           [[maybe_unused]] xcb_timestamp_t /*timestamp*/)
 {
     // If the client has support for all this focus stealing prevention stuff,
     // do only lowering within the application, as that's the more logical
     // variant of lowering when application requests it.
     // No demanding of attention here of course.
-    if (src == NET::FromTool || !has_user_time_support(c)) {
+    if (src == net::FromTool || !has_user_time_support(c)) {
         lower_window(space, c);
     } else {
         lower_client_within_application(space, c);
@@ -295,7 +295,7 @@ template<typename Win>
 void restack_window(Win* win,
                     xcb_window_t above,
                     int detail,
-                    NET::RequestSource src,
+                    net::RequestSource src,
                     xcb_timestamp_t timestamp,
                     bool send_event = false)
 {
@@ -350,7 +350,7 @@ void restack_window(Win* win,
                 // the other one is top on stack
                 // invalidate and force
                 it = begin;
-                src = NET::FromTool;
+                src = net::FromTool;
                 break;
             }
 

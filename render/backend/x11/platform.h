@@ -22,7 +22,7 @@
 #include <memory>
 
 #include <X11/Xlib-xcb.h>
-#include <fixx11h.h>
+#include <base/x11/fixx11h.h>
 
 namespace KWin::render::backend::x11
 {

@@ -12,7 +12,6 @@
 #include "scripting_logging.h"
 
 #include <KConfigGroup>
-#include <KGlobalAccel>
 #include <QAction>
 #include <QPointer>
 #include <QQmlEngine>
@@ -67,9 +66,7 @@ bool js_engine_global_methods_wrapper::registerShortcut(const QString& name,
     QAction* a = new QAction(this);
     a->setObjectName(name);
     a->setText(text);
-    const QKeySequence shortcut = QKeySequence(keys);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>{shortcut});
-    platform.register_shortcut(shortcut, a);
+    platform.register_shortcut(keys, a);
 
     connect(a, &QAction::triggered, this, [=, this]() mutable {
         QJSValueList arguments;

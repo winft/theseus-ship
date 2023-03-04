@@ -37,7 +37,8 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     win->topo.desktops = desktops;
     win->control->set_desktops(desktops);
 
-    if ((was_desk == NET::OnAllDesktops) != (get_desktop(*win) == NET::OnAllDesktops)) {
+    if ((was_desk == x11::net::win_info::OnAllDesktops)
+        != (get_desktop(*win) == x11::net::win_info::OnAllDesktops)) {
         // OnAllDesktops changed
         propagate_on_all_desktops_to_children(*win);
     }
@@ -79,13 +80,13 @@ template<typename Win>
 void set_desktop(Win* win, int desktop)
 {
     auto const desktops_count = static_cast<int>(win->space.virtual_desktop_manager->count());
-    if (desktop != NET::OnAllDesktops) {
+    if (desktop != x11::net::win_info::OnAllDesktops) {
         // Check range.
         desktop = std::max(1, std::min(desktops_count, desktop));
     }
 
     QVector<virtual_desktop*> desktops;
-    if (desktop != NET::OnAllDesktops) {
+    if (desktop != x11::net::win_info::OnAllDesktops) {
         desktops << win->space.virtual_desktop_manager->desktopForX11Id(desktop);
     }
     set_desktops(win, desktops);

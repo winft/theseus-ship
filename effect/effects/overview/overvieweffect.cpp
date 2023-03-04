@@ -8,9 +8,7 @@
 #include "kwineffects/effects_handler.h"
 #include "overviewconfig.h"
 
-#include <KGlobalAccel>
 #include <KLocalizedString>
-
 #include <QAction>
 #include <QDebug>
 #include <QQuickItem>
@@ -30,10 +28,8 @@ OverviewEffect::OverviewEffect()
     connect(m_toggleAction, &QAction::triggered, this, &OverviewEffect::toggle);
     m_toggleAction->setObjectName(QStringLiteral("Overview"));
     m_toggleAction->setText(i18n("Toggle Overview"));
-    KGlobalAccel::self()->setDefaultShortcut(m_toggleAction, {defaultToggleShortcut});
-    KGlobalAccel::self()->setShortcut(m_toggleAction, {defaultToggleShortcut});
-    m_toggleShortcut = KGlobalAccel::self()->shortcut(m_toggleAction);
-    effects->registerGlobalShortcut({defaultToggleShortcut}, m_toggleAction);
+    m_toggleShortcut
+        = effects->registerGlobalShortcutAndDefault({defaultToggleShortcut}, m_toggleAction);
 
     m_realtimeToggleAction = new QAction(this);
     connect(m_realtimeToggleAction, &QAction::triggered, this, [this]() {

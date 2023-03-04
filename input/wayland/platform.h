@@ -5,11 +5,11 @@
 */
 #pragma once
 
+#include "global_shortcuts_manager.h"
 #include "idle.h"
 
 #include "base/wayland/server.h"
 #include "input/dbus/dbus.h"
-#include "input/global_shortcuts_manager.h"
 #include "input/platform.h"
 #include "input/types.h"
 
@@ -28,8 +28,7 @@ public:
     using space_t = typename Base::space_t;
 
     platform(Base& base, input::config config)
-        : qobject{std::make_unique<platform_qobject>(
-            [this](auto accel) { platform_register_global_accel(*this, accel); })}
+        : qobject{std::make_unique<platform_qobject>()}
         , config{std::move(config)}
         , xkb{xkb::manager<type>(this)}
         , kde_idle{base.server->display->create_kde_idle()}
@@ -78,9 +77,9 @@ public:
         QObject::connect(action, &QAction::triggered, receiver, slot);
     }
 
-    void install_shortcuts(base::operation_mode mode)
+    void install_shortcuts()
     {
-        this->shortcuts = std::make_unique<input::global_shortcuts_manager>(mode);
+        this->shortcuts = std::make_unique<global_shortcuts_manager>();
         this->shortcuts->init();
         setup_touchpad_shortcuts();
     }
@@ -172,16 +171,19 @@ private:
         off_action->setObjectName(QStringLiteral("Disable Touchpad"));
         off_action->setProperty("componentName", component);
 
-        KGlobalAccel::self()->setDefaultShortcut(toggle_action,
-                                                 QList<QKeySequence>{Qt::Key_TouchpadToggle});
-        KGlobalAccel::self()->setShortcut(toggle_action,
-                                          QList<QKeySequence>{Qt::Key_TouchpadToggle});
-        KGlobalAccel::self()->setDefaultShortcut(on_action,
-                                                 QList<QKeySequence>{Qt::Key_TouchpadOn});
-        KGlobalAccel::self()->setShortcut(on_action, QList<QKeySequence>{Qt::Key_TouchpadOn});
-        KGlobalAccel::self()->setDefaultShortcut(off_action,
-                                                 QList<QKeySequence>{Qt::Key_TouchpadOff});
-        KGlobalAccel::self()->setShortcut(off_action, QList<QKeySequence>{Qt::Key_TouchpadOff});
+        shortcuts->register_keyboard_default_shortcut(toggle_action,
+                                                      QList<QKeySequence>{Qt::Key_TouchpadToggle});
+        shortcuts->register_keyboard_shortcut(toggle_action,
+                                              QList<QKeySequence>{Qt::Key_TouchpadToggle},
+                                              shortcut_loading::global_lookup);
+        shortcuts->register_keyboard_default_shortcut(on_action,
+                                                      QList<QKeySequence>{Qt::Key_TouchpadOn});
+        shortcuts->register_keyboard_shortcut(
+            on_action, QList<QKeySequence>{Qt::Key_TouchpadOn}, shortcut_loading::global_lookup);
+        shortcuts->register_keyboard_default_shortcut(off_action,
+                                                      QList<QKeySequence>{Qt::Key_TouchpadOff});
+        shortcuts->register_keyboard_shortcut(
+            off_action, QList<QKeySequence>{Qt::Key_TouchpadOff}, shortcut_loading::global_lookup);
 
         registerShortcut(Qt::Key_TouchpadToggle, toggle_action);
         registerShortcut(Qt::Key_TouchpadOn, on_action);

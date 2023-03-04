@@ -12,6 +12,7 @@
 #include "client.h"
 #include "event.h"
 #include "geo.h"
+#include "net/root_info.h"
 #include "root_info_filter.h"
 #include "stacking.h"
 #include "window_find.h"
@@ -19,7 +20,6 @@
 #include "utils/memory.h"
 #include "win/activation.h"
 
-#include <NETWM>
 #include <memory>
 #include <xcb/xcb.h>
 
@@ -30,7 +30,7 @@ namespace KWin::win::x11
  * NET WM Protocol handler class
  */
 template<typename Space>
-class root_info : public NETRootInfo
+class root_info : public net::root_info
 {
 public:
     using window_t = typename Space::x11_window;
@@ -65,78 +65,78 @@ public:
         }
 
         // clang-format off
-        const NET::Properties properties = NET::Supported |
-            NET::SupportingWMCheck |
-            NET::ClientList |
-            NET::ClientListStacking |
-            NET::DesktopGeometry |
-            NET::NumberOfDesktops |
-            NET::CurrentDesktop |
-            NET::ActiveWindow |
-            NET::WorkArea |
-            NET::CloseWindow |
-            NET::DesktopNames |
-            NET::WMName |
-            NET::WMVisibleName |
-            NET::WMDesktop |
-            NET::WMWindowType |
-            NET::WMState |
-            NET::WMStrut |
-            NET::WMIconGeometry |
-            NET::WMIcon |
-            NET::WMPid |
-            NET::WMMoveResize |
-            NET::WMFrameExtents |
-            NET::WMPing;
-        const NET::WindowTypes types = NET::NormalMask |
-            NET::DesktopMask |
-            NET::DockMask |
-            NET::ToolbarMask |
-            NET::MenuMask |
-            NET::DialogMask |
-            NET::OverrideMask |
-            NET::UtilityMask |
-            NET::SplashMask; // No compositing window types here unless we support them also as managed window types
-        const NET::States states = NET::Modal |
-            //NET::Sticky | // Large desktops not supported (and probably never will be)
-            NET::MaxVert |
-            NET::MaxHoriz |
-            // NET::Shaded | // Shading not supported
-            NET::SkipTaskbar |
-            NET::KeepAbove |
-            //NET::StaysOnTop | // The same like KeepAbove
-            NET::SkipPager |
-            NET::Hidden |
-            NET::FullScreen |
-            NET::KeepBelow |
-            NET::DemandsAttention |
-            NET::SkipSwitcher |
-            NET::Focused;
-        NET::Properties2 properties2 = NET::WM2UserTime |
-            NET::WM2StartupId |
-            NET::WM2AllowedActions |
-            NET::WM2RestackWindow |
-            NET::WM2MoveResizeWindow |
-            NET::WM2ExtendedStrut |
-            NET::WM2KDETemporaryRules |
-            NET::WM2ShowingDesktop |
-            NET::WM2DesktopLayout |
-            NET::WM2FullPlacement |
-            NET::WM2FullscreenMonitors |
-            NET::WM2KDEShadow |
-            NET::WM2OpaqueRegion |
-            NET::WM2GTKFrameExtents |
-            NET::WM2GTKShowWindowMenu;
-        const NET::Actions actions = NET::ActionMove |
-            NET::ActionResize |
-            NET::ActionMinimize |
-            // NET::ActionShade | // Shading not supported
-            //NET::ActionStick | // Sticky state is not supported
-            NET::ActionMaxVert |
-            NET::ActionMaxHoriz |
-            NET::ActionFullScreen |
-            NET::ActionChangeDesktop |
-            NET::ActionClose;
+        const net::Properties properties = net::Supported |
+            net::SupportingWMCheck |
+            net::ClientList |
+            net::ClientListStacking |
+            net::DesktopGeometry |
+            net::NumberOfDesktops |
+            net::CurrentDesktop |
+            net::ActiveWindow |
+            net::WorkArea |
+            net::CloseWindow |
+            net::DesktopNames |
+            net::WMName |
+            net::WMVisibleName |
+            net::WMDesktop |
+            net::WMWindowType |
+            net::WMState |
+            net::WMStrut |
+            net::WMIconGeometry |
+            net::WMIcon |
+            net::WMPid |
+            net::WMMoveResize |
+            net::WMFrameExtents |
+            net::WMPing;
+        const window_type_mask types = window_type_mask::normal |
+            window_type_mask::desktop |
+            window_type_mask::dock |
+            window_type_mask::toolbar |
+            window_type_mask::menu |
+            window_type_mask::dialog |
+            window_type_mask::override |
+            window_type_mask::utility |
+            window_type_mask::splash; // No compositing window types here unless we support them also as managed window types
+        const net::States states = net::Modal |
+            //net::Sticky | // Large desktops not supported (and probably never will be)
+            net::MaxVert |
+            net::MaxHoriz |
+            // net::Shaded | // Shading not supported
+            net::SkipTaskbar |
+            net::KeepAbove |
+            //net::StaysOnTop | // The same like KeepAbove
+            net::SkipPager |
+            net::Hidden |
+            net::FullScreen |
+            net::KeepBelow |
+            net::DemandsAttention |
+            net::SkipSwitcher |
+            net::Focused;
+        net::Properties2 properties2 = net::WM2UserTime |
+            net::WM2StartupId |
+            net::WM2AllowedActions |
+            net::WM2RestackWindow |
+            net::WM2MoveResizeWindow |
+            net::WM2ExtendedStrut |
+            net::WM2KDETemporaryRules |
+            net::WM2ShowingDesktop |
+            net::WM2DesktopLayout |
+            net::WM2FullPlacement |
+            net::WM2FullscreenMonitors |
+            net::WM2KDEShadow |
+            net::WM2OpaqueRegion |
+            net::WM2GTKFrameExtents |
+            net::WM2GTKShowWindowMenu;
+        const net::Actions actions = net::ActionMove |
+            net::ActionResize |
+            net::ActionMinimize |
+            // net::ActionShade | // Shading not supported
+            //net::ActionStick | // Sticky state is not supported
+            net::ActionMaxVert |
+            net::ActionMaxHoriz |
+            net::ActionFullScreen |
+            net::ActionChangeDesktop |
+            net::ActionClose;
         // clang-format on
 
         return std::make_unique<root_info<Space>>(space,
@@ -153,21 +153,21 @@ public:
     root_info(Space& space,
               xcb_window_t w,
               const char* name,
-              NET::Properties properties,
-              NET::WindowTypes types,
-              NET::States states,
-              NET::Properties2 properties2,
-              NET::Actions actions,
+              net::Properties properties,
+              window_type_mask types,
+              net::States states,
+              net::Properties2 properties2,
+              net::Actions actions,
               int scr = -1)
-        : NETRootInfo(space.base.x11_data.connection,
-                      w,
-                      name,
-                      properties,
-                      types,
-                      states,
-                      properties2,
-                      actions,
-                      scr)
+        : net::root_info(space.base.x11_data.connection,
+                         w,
+                         name,
+                         properties,
+                         types,
+                         states,
+                         properties2,
+                         actions,
+                         scr)
         , space{space}
         , m_activeWindow(activeWindow())
         , m_eventFilter(std::make_unique<root_info_filter<root_info<Space>>>(this))
@@ -194,7 +194,7 @@ protected:
     }
 
     void changeActiveWindow(xcb_window_t w,
-                            NET::RequestSource src,
+                            net::RequestSource src,
                             xcb_timestamp_t timestamp,
                             xcb_window_t active_window) override
     {
@@ -203,15 +203,15 @@ protected:
         if (auto c = find_controlled_window<window_t>(space, predicate_match::window, w)) {
             if (timestamp == XCB_CURRENT_TIME)
                 timestamp = c->userTime();
-            if (src != NET::FromApplication && src != FromTool)
-                src = NET::FromTool;
+            if (src != net::FromApplication && src != net::FromTool)
+                src = net::FromTool;
 
-            if (src == NET::FromTool) {
+            if (src == net::FromTool) {
                 force_activate_window(space, *c);
             } else if (var_win(c) == most_recently_activated_window(space)) {
                 return; // WORKAROUND? With > 1 plasma activities, we cause this ourselves. bug
                         // #240673
-            } else {    // NET::FromApplication
+            } else {    // net::FromApplication
                 window_t* c2;
                 if (allow_window_activation(space, c, timestamp, false, true)) {
                     activate_window(space, *c);
@@ -225,8 +225,8 @@ protected:
                          && allow_window_activation(
                              space,
                              c2,
-                             timestampCompare(timestamp,
-                                              c2->userTime() > 0 ? timestamp : c2->userTime()),
+                             net::timestampCompare(timestamp,
+                                                   c2->userTime() > 0 ? timestamp : c2->userTime()),
                              false,
                              true)) {
                     activate_window(space, *c);
@@ -248,7 +248,7 @@ protected:
         if (auto win = find_controlled_window<window_t>(space, predicate_match::window, w)) {
             // otherwise grabbing may have old timestamp - this message should include timestamp
             base::x11::update_time_from_clock(space.base);
-            x11::net_move_resize(win, x_root, y_root, static_cast<Direction>(direction));
+            x11::net_move_resize(win, x_root, y_root, static_cast<net::Direction>(direction));
         }
     }
 
@@ -274,7 +274,7 @@ protected:
     }
 
     void restackWindow(xcb_window_t w,
-                       RequestSource source,
+                       net::RequestSource source,
                        xcb_window_t above,
                        int detail,
                        xcb_timestamp_t timestamp) override
@@ -283,8 +283,8 @@ protected:
             if (timestamp == XCB_CURRENT_TIME) {
                 timestamp = c->userTime();
             }
-            if (source != NET::FromApplication && source != FromTool) {
-                source = NET::FromTool;
+            if (source != net::FromApplication && source != net::FromTool) {
+                source = net::FromTool;
             }
             x11::restack_window(c, above, detail, source, timestamp, true);
         }

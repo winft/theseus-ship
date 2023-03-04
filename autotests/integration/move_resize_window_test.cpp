@@ -714,9 +714,12 @@ void MoveResizeWindowTest::testNetMove()
     xcb_icccm_size_hints_set_size(&hints, 1, 100, 100);
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
     // let's set a no-border
-    NETWinInfo winInfo(
-        c.get(), w, Test::app()->base->x11_data.root_window, NET::WMWindowType, NET::Properties2());
-    winInfo.setWindowType(NET::Override);
+    win::x11::net::win_info winInfo(c.get(),
+                                    w,
+                                    Test::app()->base->x11_data.root_window,
+                                    win::x11::net::WMWindowType,
+                                    win::x11::net::Properties2());
+    winInfo.setWindowType(win::window_type::override);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -745,8 +748,8 @@ void MoveResizeWindowTest::testNetMove()
     QVERIFY(!Test::app()->base->space->move_resize_window);
 
     // use NETRootInfo to trigger a move request
-    NETRootInfo root(c.get(), NET::Properties());
-    root.moveResizeRequest(w, origGeo.center().x(), origGeo.center().y(), NET::Move);
+    win::x11::net::root_info root(c.get(), win::x11::net::Properties());
+    root.moveResizeRequest(w, origGeo.center().x(), origGeo.center().y(), win::x11::net::Move);
     xcb_flush(c.get());
 
     QVERIFY(moveStartSpy.wait());
@@ -761,8 +764,10 @@ void MoveResizeWindowTest::testNetMove()
     QCOMPARE(moveStepSpy.first().last().toRect(), origGeo.translated(10, 10));
 
     // let's cancel the move resize again through the net API
-    root.moveResizeRequest(
-        w, client->geo.frame.center().x(), client->geo.frame.center().y(), NET::MoveResizeCancel);
+    root.moveResizeRequest(w,
+                           client->geo.frame.center().x(),
+                           client->geo.frame.center().y(),
+                           win::x11::net::MoveResizeCancel);
     xcb_flush(c.get());
     QVERIFY(moveEndSpy.wait());
 
@@ -821,9 +826,12 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     xcb_icccm_size_hints_set_position(&hints, 1, panelGeometry.x(), panelGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, panelGeometry.width(), panelGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo winInfo(
-        c.get(), w, Test::app()->base->x11_data.root_window, NET::WMWindowType, NET::Properties2());
-    winInfo.setWindowType(NET::Dock);
+    win::x11::net::win_info winInfo(c.get(),
+                                    w,
+                                    Test::app()->base->x11_data.root_window,
+                                    win::x11::net::WMWindowType,
+                                    win::x11::net::Properties2());
+    winInfo.setWindowType(win::window_type::dock);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 

@@ -51,7 +51,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <iomanip>
 
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
-Q_IMPORT_PLUGIN(KGlobalAccelImpl)
 Q_IMPORT_PLUGIN(KWindowSystemKWinPlugin)
 Q_IMPORT_PLUGIN(KWinIdleTimePoller)
 
@@ -174,19 +173,19 @@ void ApplicationWayland::start(base::operation_mode mode,
                                     base::backend::wlroots::start_options::none);
     base->operation_mode = mode;
 
-    using render_t = render::backend::wlroots::platform<base_t>;
-    base->render = std::make_unique<render_t>(*base);
-
     base->options = base::create_options(mode, base->config.main);
 
     auto session = new base::seat::backend::wlroots::session(base->wlroots_session, base->backend);
     base->session.reset(session);
     session->take_control(base->server->display->native());
 
+    using render_t = render::backend::wlroots::platform<base_t>;
+    base->render = std::make_unique<render_t>(*base);
+
     base->input = std::make_unique<input::backend::wlroots::platform>(
         *base, input::config(KConfig::NoGlobals));
     input::wayland::add_dbus(base->input.get());
-    base->input->install_shortcuts(mode);
+    base->input->install_shortcuts();
 
     try {
         static_cast<render_t&>(*base->render).init();

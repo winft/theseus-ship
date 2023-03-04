@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include <NETWM>
+#include "win/types.h"
+
 #include <xcb/sync.h>
 
 namespace KWin::win::x11
@@ -36,10 +37,12 @@ constexpr long client_win_mask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_R
     | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
 
 // Window types with control.
-constexpr NET::WindowTypes supported_managed_window_types_mask = NET::NormalMask | NET::DesktopMask
-    | NET::DockMask | NET::ToolbarMask | NET::MenuMask
-    | NET::DialogMask /*| NET::OverrideMask*/ | NET::TopMenuMask | NET::UtilityMask
-    | NET::SplashMask | NET::NotificationMask | NET::OnScreenDisplayMask
-    | NET::CriticalNotificationMask | NET::AppletPopupMask;
+const window_type_mask supported_managed_window_types_mask = window_type_mask::normal
+    | window_type_mask::desktop | window_type_mask::dock | window_type_mask::toolbar
+    | window_type_mask::menu
+    | window_type_mask::dialog /*| window_type_mask::override*/ | window_type_mask::top_menu
+    | window_type_mask::utility | window_type_mask::splash | window_type_mask::notification
+    | window_type_mask::on_screen_display | window_type_mask::critical_notification
+    | window_type_mask::applet_popup;
 
 }

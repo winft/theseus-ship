@@ -45,19 +45,6 @@ void window::remove(ruling* rule)
     remove_all(rules, rule);
 }
 
-void window::discardTemporary()
-{
-    auto it2 = rules.begin();
-    for (auto it = rules.begin(); it != rules.end();) {
-        if ((*it)->discardTemporary(true))
-            ++it;
-        else {
-            *it2++ = *it++;
-        }
-    }
-    rules.erase(it2, rules.end());
-}
-
 QRect window::checkGeometry(QRect rect, bool init) const
 {
     return QRect(checkPosition(rect.topLeft(), init), checkSize(rect.size(), init));
@@ -163,7 +150,7 @@ int window::checkOpacityInactive(int s) const
     return check_force(s, &ruling::applyOpacityInactive);
 }
 
-NET::WindowType window::checkType(NET::WindowType type) const
+window_type window::checkType(window_type type) const
 {
     return check_force(type, &ruling::applyType);
 }

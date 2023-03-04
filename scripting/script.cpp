@@ -19,8 +19,6 @@
 #include "base/options.h"
 
 #include <KConfigGroup>
-#include <KGlobalAccel>
-
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
@@ -367,10 +365,7 @@ bool script::registerShortcut(const QString& objectName,
     QAction* action = new QAction(this);
     action->setObjectName(objectName);
     action->setText(text);
-
-    const QKeySequence shortcut = keySequence;
-    KGlobalAccel::self()->setShortcut(action, {shortcut});
-    platform.register_shortcut(shortcut, action);
+    platform.register_shortcut(keySequence, action);
 
     connect(action, &QAction::triggered, this, [this, action, callback]() {
         QJSValue(callback).call({m_engine->toScriptValue(action)});

@@ -16,12 +16,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb/proto.h"
+#include "input/types.h"
 #include "input/xkb/helpers.h"
 #include "kwin_export.h"
 #include "kwinglobals.h"
 #include "win/activation.h"
 
-#include <KGlobalAccel>
 #include <KLazyLocalizedString>
 #include <QAction>
 #include <QKeyEvent>
@@ -459,8 +459,8 @@ public:
         key(s_desktopListRev, [this] { slot_walk_back_through_desktop_list(); });
 
         QObject::connect(
-            KGlobalAccel::self(),
-            &KGlobalAccel::globalShortcutChanged,
+            space.base.input->shortcuts.get(),
+            &decltype(space.base.input->shortcuts)::element_type::keyboard_shortcut_changed,
             qobject.get(),
             [this](auto action, auto const& seq) { global_shortcut_changed(action, seq); });
     }
@@ -1237,9 +1237,12 @@ private:
         a->setProperty("componentName", QStringLiteral(KWIN_NAME));
         a->setObjectName(QString::fromUtf8(action_name.untranslatedText()));
         a->setText(action_name.toString());
-        KGlobalAccel::self()->setGlobalShortcut(a, QList<QKeySequence>() << shortcut);
+
+        space.base.input->shortcuts->register_keyboard_shortcut(
+            a, QList<QKeySequence>() << shortcut, input::shortcut_loading::global_lookup);
         space.base.input->registerShortcut(shortcut, a, qobject.get(), slot);
-        auto cuts = KGlobalAccel::self()->shortcut(a);
+
+        auto cuts = space.base.input->shortcuts->get_keyboard_shortcut(a);
         global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
     }
 

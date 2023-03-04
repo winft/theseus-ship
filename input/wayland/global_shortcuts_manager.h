@@ -6,19 +6,24 @@
 */
 #pragma once
 
-#include "base/types.h"
+#include "input/global_shortcut.h"
+#include "input/types.h"
+
 #include "kwinglobals.h"
 
 #include <memory>
 
 class QAction;
 class KGlobalAccelD;
-class KGlobalAccelInterface;
 
 namespace KWin::input
 {
+
 class gesture_recognizer;
 class global_shortcut;
+
+namespace wayland
+{
 
 /**
  * @brief Manager for the global shortcut system inside KWin.
@@ -33,10 +38,20 @@ class KWIN_EXPORT global_shortcuts_manager : public QObject
 {
     Q_OBJECT
 public:
-    global_shortcuts_manager(base::operation_mode mode);
+    global_shortcuts_manager();
     ~global_shortcuts_manager() override;
     void init();
 
+    std::vector<KeyboardShortcut> get_keyboard_shortcut(QKeySequence const& seq);
+    QList<QKeySequence> get_keyboard_shortcut(QAction* action);
+    QList<QKeySequence> get_keyboard_shortcut(QString const& componentName,
+                                              QString const& actionId);
+
+    bool register_keyboard_default_shortcut(QAction* action, QList<QKeySequence> const& shortcut);
+    bool register_keyboard_shortcut(QAction* action,
+                                    QList<QKeySequence> const& shortcut,
+                                    shortcut_loading load);
+    void remove_keyboard_shortcut(QAction* action);
     /**
      * @brief Registers an internal global pointer shortcut
      *
@@ -114,22 +129,22 @@ public:
     void processPinchCancel();
     void processPinchEnd();
 
-    void setKGlobalAccelInterface(KGlobalAccelInterface* interface)
-    {
-        m_kglobalAccelInterface = interface;
-    }
+Q_SIGNALS:
+    void keyboard_shortcut_changed(QAction* action, QKeySequence const& seq);
 
 private:
     void objectDeleted(QObject* object);
-    bool addIfNotExists(global_shortcut sc, DeviceType device = DeviceType::Touchpad);
+
+    bool shortcut_exists(global_shortcut const& sc);
+    void add_shortcut(global_shortcut sc);
+    void add_gesture_shortcut(global_shortcut sc, DeviceType device);
 
     QVector<global_shortcut> m_shortcuts;
 
     std::unique_ptr<KGlobalAccelD> m_kglobalAccel;
-    KGlobalAccelInterface* m_kglobalAccelInterface = nullptr;
     std::unique_ptr<gesture_recognizer> m_touchpadGestureRecognizer;
     std::unique_ptr<gesture_recognizer> m_touchscreenGestureRecognizer;
-    base::operation_mode windowing_mode;
 };
 
+}
 }

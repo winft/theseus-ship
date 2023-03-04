@@ -26,7 +26,8 @@
 
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
-#include <fixx11h.h>
+
+#include "base/x11/fixx11h.h"
 
 namespace KWin::input::x11
 {

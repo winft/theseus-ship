@@ -7,6 +7,7 @@
 
 #include "move.h"
 #include "space_areas.h"
+#include "x11/net/geo.h"
 
 #include "base/platform.h"
 
@@ -76,7 +77,7 @@ void update_space_areas_impl(Space& space, bool force)
         space.areas = new_areas;
 
         if (space.root_info) {
-            NETRect rect;
+            x11::net::rect rect;
             for (int desktop = 1; desktop <= desktops_count; desktop++) {
                 rect.pos.x = space.areas.work[desktop].x();
                 rect.pos.y = space.areas.work[desktop].y();

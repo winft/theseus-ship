@@ -272,11 +272,6 @@ public:
         return ref_win->windowRole();
     }
 
-    NET::WindowType windowType() const override
-    {
-        return ref_win->windowType();
-    }
-
     bool isDesktop() const override
     {
         return win::is_desktop(ref_win);

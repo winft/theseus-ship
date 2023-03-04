@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "global_shortcuts_manager.h"
+
 #include "config-kwin.h"
 #include "input/platform.h"
 
@@ -23,10 +25,10 @@ public:
     using space_t = typename Base::space_t;
 
     platform(Base& base)
-        : qobject{std::make_unique<platform_qobject>(
-            [this](auto accel) { platform_register_global_accel(*this, accel); })}
+        : qobject{std::make_unique<platform_qobject>()}
         , config{input::config(KConfig::NoGlobals)}
         , xkb{xkb::manager<type>(this)}
+        , shortcuts{std::make_unique<global_shortcuts_manager>()}
         , base{base}
     {
         qRegisterMetaType<button_state>();

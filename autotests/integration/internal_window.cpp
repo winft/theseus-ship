@@ -27,6 +27,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <linux/input.h>
 
+Q_DECLARE_METATYPE(NET::WindowType)
+
 using namespace Wrapland::Client;
 
 namespace KWin
@@ -732,6 +734,8 @@ void InternalWindowTest::testWindowType_data()
     QTest::newRow("AppletPopup") << NET::AppletPopup;
 }
 
+#define COMPARE_WIN_TYPES(val1, val2) static_cast<int>(val1) == static_cast<int>(val2)
+
 void InternalWindowTest::testWindowType()
 {
     QSignalSpy clientAddedSpy(Test::app()->base->space->qobject.get(),
@@ -746,7 +750,7 @@ void InternalWindowTest::testWindowType()
     auto internalClient
         = get_internal_window_from_id(clientAddedSpy.first().first().value<quint32>());
     QVERIFY(internalClient);
-    QCOMPARE(internalClient->windowType(), windowType);
+    QVERIFY(COMPARE_WIN_TYPES(internalClient->windowType(), windowType));
 }
 
 void InternalWindowTest::testChangeWindowType_data()
@@ -782,15 +786,17 @@ void InternalWindowTest::testChangeWindowType()
     auto internalClient
         = get_internal_window_from_id(clientAddedSpy.first().first().value<quint32>());
     QVERIFY(internalClient);
-    QCOMPARE(internalClient->windowType(), NET::Normal);
+    QCOMPARE(internalClient->windowType(), win::window_type::normal);
 
     QFETCH(NET::WindowType, windowType);
     KWindowSystem::setType(win.winId(), windowType);
-    QTRY_COMPARE(internalClient->windowType(), windowType);
+    QTRY_VERIFY(COMPARE_WIN_TYPES(internalClient->windowType(), windowType));
 
     KWindowSystem::setType(win.winId(), NET::Normal);
-    QTRY_COMPARE(internalClient->windowType(), NET::Normal);
+    QTRY_COMPARE(internalClient->windowType(), win::window_type::normal);
 }
+
+#undef COMPARE_WIN_TYPES
 
 void InternalWindowTest::testEffectWindow()
 {

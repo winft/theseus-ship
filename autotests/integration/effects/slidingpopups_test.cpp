@@ -21,7 +21,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/slide.h>
 #include <Wrapland/Client/surface.h>
 
-#include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
 namespace KWin
@@ -198,9 +197,12 @@ void SlidingPopupsTest::testWithOtherEffect()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    NETWinInfo winInfo(
-        c.get(), w, Test::app()->base->x11_data.root_window, NET::Properties(), NET::Properties2());
-    winInfo.setWindowType(NET::Normal);
+    win::x11::net::win_info winInfo(c.get(),
+                                    w,
+                                    Test::app()->base->x11_data.root_window,
+                                    win::x11::net::Properties(),
+                                    win::x11::net::Properties2());
+    winInfo.setWindowType(win::window_type::normal);
 
     // and get the slide atom
     const QByteArray effectAtomName = QByteArrayLiteral("_KDE_SLIDE");

@@ -215,11 +215,6 @@ public:
         rules.remove(rule);
     }
 
-    void discard_temporary_rules()
-    {
-        rules.discardTemporary();
-    }
-
     using scripting_t = scripting::window_impl<var_win>;
     std::unique_ptr<scripting_t> scripting;
     Wrapland::Server::PlasmaWindow* plasma_wayland_integration{nullptr};

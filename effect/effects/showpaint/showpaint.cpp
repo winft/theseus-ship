@@ -10,9 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kwineffects/paint_data.h>
 #include <kwingl/utils.h>
 
-#include <KGlobalAccel>
 #include <KLocalizedString>
-
 #include <QAction>
 #include <QPainter>
 
@@ -28,9 +26,7 @@ ShowPaintEffect::ShowPaintEffect()
     auto* toggleAction = new QAction(this);
     toggleAction->setObjectName(QStringLiteral("Toggle"));
     toggleAction->setText(i18n("Toggle Show Paint"));
-    KGlobalAccel::self()->setDefaultShortcut(toggleAction, {});
-    KGlobalAccel::self()->setShortcut(toggleAction, {});
-    effects->registerGlobalShortcut({}, toggleAction);
+    effects->registerGlobalShortcutAndDefault({}, toggleAction);
 
     connect(toggleAction, &QAction::triggered, this, &ShowPaintEffect::toggle);
 }

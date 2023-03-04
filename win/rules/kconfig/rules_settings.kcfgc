@@ -3,7 +3,7 @@
 ; SPDX-License-Identifier: GPL-2.0-or-later
 
 File=rules_settings.kcfg
-IncludeFiles=\"win/rules/ruling.h\",\"win/placement.h\",\"utils/geo.h\",netwm_def.h
+IncludeFiles=\"win/rules/ruling.h\",\"win/placement.h\",\"utils/geo.h\"
 NameSpace=KWin::win::rules
 ClassName=settings
 UseEnumTypes=true

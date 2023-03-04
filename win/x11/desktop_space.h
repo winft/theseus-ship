@@ -17,7 +17,7 @@ void handle_desktop_resize(Info* info, QSize const& size)
         return;
     }
 
-    NETSize desktop_geometry;
+    net::size desktop_geometry;
     desktop_geometry.width = size.width();
     desktop_geometry.height = size.height();
     info->setDesktopGeometry(desktop_geometry);

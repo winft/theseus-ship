@@ -452,11 +452,6 @@ public:
         return std::visit(overload{[](auto&& win) { return win->windowRole(); }}, ref_win);
     }
 
-    NET::WindowType windowType() const override
-    {
-        return std::visit(overload{[](auto&& win) { return win->windowType(); }}, ref_win);
-    }
-
     bool isDesktop() const override
     {
         return std::visit(overload{[](auto&& win) { return win::is_desktop(win); }}, ref_win);

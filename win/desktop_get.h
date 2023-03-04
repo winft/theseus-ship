@@ -5,10 +5,10 @@
 */
 #pragma once
 
-#include "base/types.h"
-#include "win/virtual_desktops.h"
+#include "virtual_desktops.h"
+#include "x11/net/win_info.h"
 
-#include <NETWM>
+#include "base/types.h"
 
 namespace KWin::win
 {
@@ -21,7 +21,7 @@ namespace KWin::win
 template<typename Win>
 int get_desktop(Win const& win)
 {
-    return win.topo.desktops.isEmpty() ? static_cast<int>(NET::OnAllDesktops)
+    return win.topo.desktops.isEmpty() ? static_cast<int>(x11::net::win_info::OnAllDesktops)
                                        : win.topo.desktops.last()->x11DesktopNumber();
 }
 
@@ -30,7 +30,7 @@ bool on_all_desktops(Win* win)
 {
     return base::should_use_wayland_for_compositing(win->space.base.operation_mode)
         ? win->topo.desktops.isEmpty()
-        : get_desktop(*win) == NET::OnAllDesktops;
+        : get_desktop(*win) == x11::net::win_info::OnAllDesktops;
 }
 
 template<typename Win>
