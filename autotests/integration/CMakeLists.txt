@@ -75,6 +75,10 @@ add_executable(tests
   xdgshellclient_test.cpp
   xwayland_input_test.cpp
   xwayland_selections_test.cpp
+  ../test_client_machine.cpp
+  ../test_x11_timestamp_update.cpp
+  ../test_xcb_size_hints.cpp
+  ../test_xcb_wrapper.cpp
   # effect tests
   effects/desktop_switching_animation_test.cpp
   effects/fade_test.cpp
@@ -88,6 +92,26 @@ add_executable(tests
   # scripting tests
   scripting/minimizeall_test.cpp
   scripting/screenedge_test.cpp
+  # unit tests
+  ../libkwineffects/kwinglplatformtest.cpp
+  ../libkwineffects/timelinetest.cpp
+  ../libkwineffects/windowquadlisttest.cpp
+  ../onscreennotificationtest.cpp
+  ../opengl_context_attribute_builder_test.cpp
+  ../tabbox/test_desktopchain.cpp
+  ../tabbox/test_tabbox_clientmodel.cpp
+  ../tabbox/test_tabbox_config.cpp
+  ../tabbox/test_tabbox_handler.cpp
+  ../test_gestures.cpp
+  ../test_screen_paint_data.cpp
+  ../test_window_paint_data.cpp
+  ../test_xcb_window.cpp
+  ../test_xkb.cpp
+  # unit tests support
+  ../libkwineffects/mock_gl.cpp
+  ../tabbox/mock_tabboxclient.cpp
+  ../tabbox/mock_tabboxhandler.cpp
+  ../../render/backend/x11/glx_context_attribute_builder.cpp
 )
 
 target_link_libraries(tests
