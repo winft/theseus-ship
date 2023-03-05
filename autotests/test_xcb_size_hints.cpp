@@ -252,7 +252,7 @@ void TestXcbSizeHints::testSizeHints()
     QCOMPARE(sizeHints->winGravity, gravity);
 
     // copy
-    base::x11::xcb::geometry_hints::normal_hints::size_hints sizeHints2 = *sizeHints;
+    auto sizeHints2 = *sizeHints;
     QTEST(sizeHints2.flags, "expectedFlags");
     QTEST(sizeHints2.pad[0], "expectedPad0");
     QTEST(sizeHints2.pad[1], "expectedPad1");
