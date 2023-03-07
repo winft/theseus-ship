@@ -201,10 +201,6 @@ public Q_SLOTS:
     Q_SCRIPTABLE QString debug(const QString& name, const QString& parameter = QString()) const;
 
 protected:
-    void slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to);
-    void slotTabAdded(EffectWindow* from, EffectWindow* to);
-    void slotTabRemoved(EffectWindow* c, EffectWindow* newActiveWindow);
-
     void effectsChanged();
 
     virtual void final_paint_screen(paint_type mask, QRegion const& region, ScreenPaintData& data)
