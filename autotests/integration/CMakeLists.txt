@@ -14,6 +14,7 @@ add_executable(tests
   activation_test.cpp
   bindings_test.cpp
   buffer_size_change_test.cpp
+  client_machine.cpp
   colorcorrect_nightcolor_test.cpp
   dbus_interface_test.cpp
   debug_console_test.cpp
@@ -70,15 +71,14 @@ add_executable(tests
   window_rules_test.cpp
   window_selection_test.cpp
   x11_client_test.cpp
+  x11_timestamp_update.cpp
+  xcb_size_hints.cpp
+  xcb_wrapper.cpp
   xdg_activation.cpp
   xdgshellclient_rules_test.cpp
   xdgshellclient_test.cpp
   xwayland_input_test.cpp
   xwayland_selections_test.cpp
-  ../test_client_machine.cpp
-  ../test_x11_timestamp_update.cpp
-  ../test_xcb_size_hints.cpp
-  ../test_xcb_wrapper.cpp
   # effect tests
   effects/desktop_switching_animation_test.cpp
   effects/fade_test.cpp
