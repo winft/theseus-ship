@@ -48,7 +48,7 @@ bool on_desktop(Win const& win, virtual_desktop* vd)
 {
     return (base::should_use_wayland_for_compositing(win->space.base.operation_mode)
                 ? win->topo.desktops.contains(vd)
-                : get_desktop(*win) == vd->x11DesktopNumber())
+                : get_desktop(*win) == static_cast<int>(vd->x11DesktopNumber()))
         || on_all_desktops(win);
 }
 

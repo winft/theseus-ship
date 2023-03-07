@@ -58,7 +58,7 @@ inline xcb_screen_t* get_default_screen(x11::data const& data)
 template<typename Base>
 void update_time_from_clock(Base& base)
 {
-    auto get_monotonic_time = [] -> uint32_t {
+    auto get_monotonic_time = []() -> uint32_t {
         timespec ts;
 
         if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
