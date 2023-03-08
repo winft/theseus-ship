@@ -247,11 +247,11 @@ void shortcuts_init_virtual_desktops(Space& space)
     // axis events
     input::platform_register_axis_shortcut(
         input,
-        Qt::ControlModifier | Qt::AltModifier,
+        Qt::MetaModifier | Qt::AltModifier,
         PointerAxisDown,
         manager->qobject->template findChild<QAction*>(QStringLiteral("Switch to Next Desktop")));
     input::platform_register_axis_shortcut(input,
-                                           Qt::ControlModifier | Qt::AltModifier,
+                                           Qt::MetaModifier | Qt::AltModifier,
                                            PointerAxisUp,
                                            manager->qobject->template findChild<QAction*>(
                                                QStringLiteral("Switch to Previous Desktop")));
