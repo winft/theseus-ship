@@ -585,7 +585,7 @@ void StrutsTest::testX11Struts()
                                  Test::app()->base->x11_data.root_window,
                                  win::x11::net::WMAllProperties,
                                  win::x11::net::WM2AllProperties);
-    info.setWindowType(win::window_type::dock);
+    info.setWindowType(win::win_type::dock);
     // set the extended strut
     QFETCH(int, leftStrut);
     QFETCH(int, rightStrut);
@@ -627,7 +627,7 @@ void StrutsTest::testX11Struts()
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->windowType(), win::window_type::dock);
+    QCOMPARE(client->windowType(), win::win_type::dock);
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // this should have affected the client area
@@ -756,7 +756,7 @@ void StrutsTest::test363804()
                                  Test::app()->base->x11_data.root_window,
                                  win::x11::net::WMAllProperties,
                                  win::x11::net::WM2AllProperties);
-    info.setWindowType(win::window_type::dock);
+    info.setWindowType(win::win_type::dock);
 
     win::x11::net::extended_strut strut;
     strut.left_start = 0;
@@ -785,7 +785,7 @@ void StrutsTest::test363804()
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->windowType(), win::window_type::dock);
+    QCOMPARE(client->windowType(), win::win_type::dock);
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // now verify the actual updated client areas
@@ -854,7 +854,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
                                  Test::app()->base->x11_data.root_window,
                                  win::x11::net::WMAllProperties,
                                  win::x11::net::WM2AllProperties);
-    info.setWindowType(win::window_type::dock);
+    info.setWindowType(win::win_type::dock);
 
     win::x11::net::extended_strut strut;
     strut.left_start = 0;
@@ -883,7 +883,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->windowType(), win::window_type::dock);
+    QCOMPARE(client->windowType(), win::win_type::dock);
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // now verify the actual updated client areas
@@ -996,7 +996,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
                                  Test::app()->base->x11_data.root_window,
                                  win::x11::net::WMAllProperties,
                                  win::x11::net::WM2AllProperties);
-    info.setWindowType(win::window_type::dock);
+    info.setWindowType(win::win_type::dock);
 
     win::x11::net::extended_strut strut;
     strut.left_start = 0;
@@ -1025,7 +1025,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->windowType(), win::window_type::dock);
+    QCOMPARE(client->windowType(), win::win_type::dock);
     QCOMPARE(client->geo.frame, windowGeometry);
 
     // now verify the actual updated client areas

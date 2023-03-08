@@ -345,7 +345,7 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
 }
 
 template<typename Win>
-window_type get_window_type_direct(Win& win)
+win_type get_window_type_direct(Win& win)
 {
     if (win.remnant) {
         return win.window_type;
@@ -354,7 +354,7 @@ window_type get_window_type_direct(Win& win)
 }
 
 template<typename Win>
-window_type get_window_type(Win& win)
+win_type get_window_type(Win& win)
 {
     auto wt = get_window_type_direct(win);
     if (!win.control) {
@@ -371,9 +371,9 @@ window_type get_window_type(Win& win)
     }
 
     // hacks here
-    if (wt == window_type::unknown) {
+    if (wt == win_type::unknown) {
         // this is more or less suggested in NETWM spec
-        wt = win.transient->lead() ? window_type::dialog : window_type::normal;
+        wt = win.transient->lead() ? win_type::dialog : win_type::normal;
     }
     return wt;
 }

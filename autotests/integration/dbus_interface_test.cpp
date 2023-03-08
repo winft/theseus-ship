@@ -121,7 +121,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(!windowData.isEmpty());
     QCOMPARE(windowData.size(), 25);
     QCOMPARE(windowData.value(QStringLiteral("type")).toInt(),
-             static_cast<int>(win::window_type::normal));
+             static_cast<int>(win::win_type::normal));
     QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->geo.pos().x());
     QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->geo.pos().y());
     QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->geo.size().width());
@@ -284,7 +284,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(!windowData.isEmpty());
     QCOMPARE(windowData.size(), 25);
     QCOMPARE(windowData.value(QStringLiteral("type")).toInt(),
-             static_cast<int>(win::window_type::normal));
+             static_cast<int>(win::win_type::normal));
     QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->geo.pos().x());
     QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->geo.pos().y());
     QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->geo.size().width());

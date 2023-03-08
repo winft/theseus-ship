@@ -104,12 +104,12 @@ public:
         return net_info->pid();
     }
 
-    window_type get_window_type_direct() const
+    win_type get_window_type_direct() const
     {
         return x11::get_window_type_direct(*this);
     }
 
-    window_type windowType() const
+    win_type windowType() const
     {
         return get_window_type(*this);
     }
@@ -598,7 +598,7 @@ public:
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
 
     // Only used as a cache for window as a remnant.
-    win::window_type window_type{window_type::normal};
+    win::win_type window_type{win_type::normal};
 
     Space& space;
 };

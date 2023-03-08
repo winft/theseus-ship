@@ -135,7 +135,7 @@ void X11DesktopWindowTest::testDesktopWindow()
                                  Test::app()->base->x11_data.root_window,
                                  win::x11::net::WMAllProperties,
                                  win::x11::net::WM2AllProperties);
-    info.setWindowType(win::window_type::desktop);
+    info.setWindowType(win::win_type::desktop);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -154,7 +154,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));
-    QCOMPARE(client->windowType(), win::window_type::desktop);
+    QCOMPARE(client->windowType(), win::win_type::desktop);
     QCOMPARE(client->geo.frame, windowGeometry);
     QVERIFY(win::is_desktop(client));
     QCOMPARE(client->render_data.bit_depth, 24);

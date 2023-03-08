@@ -465,40 +465,40 @@ void install_plasma_shell_surface(Win& win, Wrapland::Server::PlasmaShellSurface
         win.setFrameGeometry(QRect(surface->position(), win.geo.update.frame.size()));
     };
     auto update_role = [&win, surface] {
-        auto type = window_type::unknown;
+        auto type = win_type::unknown;
         switch (surface->role()) {
         case PSS::Role::Desktop:
-            type = window_type::desktop;
+            type = win_type::desktop;
             break;
         case PSS::Role::Panel:
-            type = window_type::dock;
+            type = win_type::dock;
             break;
         case PSS::Role::OnScreenDisplay:
-            type = window_type::on_screen_display;
+            type = win_type::on_screen_display;
             break;
         case PSS::Role::Notification:
-            type = window_type::notification;
+            type = win_type::notification;
             break;
         case PSS::Role::ToolTip:
-            type = window_type::tooltip;
+            type = win_type::tooltip;
             break;
         case PSS::Role::CriticalNotification:
-            type = window_type::critical_notification;
+            type = win_type::critical_notification;
             break;
         case PSS::Role::AppletPopup:
-            type = window_type::applet_popup;
+            type = win_type::applet_popup;
             break;
         case PSS::Role::Normal:
         default:
-            type = window_type::normal;
+            type = win_type::normal;
             break;
         }
         if (type != win.window_type) {
             win.window_type = type;
-            if (type == window_type::desktop || type == window_type::dock
-                || type == window_type::on_screen_display || type == window_type::notification
-                || type == window_type::tooltip || type == window_type::critical_notification
-                || type == window_type::applet_popup) {
+            if (type == win_type::desktop || type == win_type::dock
+                || type == win_type::on_screen_display || type == win_type::notification
+                || type == win_type::tooltip || type == win_type::critical_notification
+                || type == win_type::applet_popup) {
                 set_on_all_desktops(&win, true);
             }
             win::update_space_areas(win.space);

@@ -83,7 +83,7 @@ public:
         return base::get_output(outputs, index);
     }
 
-    window_type checkType(window_type type) const;
+    win_type checkType(win_type type) const;
     maximize_mode checkMaximize(maximize_mode mode, bool init = false) const;
     bool checkMinimize(bool minimized, bool init = false) const;
     bool checkSkipTaskbar(bool skip, bool init = false) const;

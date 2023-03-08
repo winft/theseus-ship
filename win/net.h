@@ -13,65 +13,65 @@ namespace KWin::win
 template<typename Win>
 bool is_desktop(Win const* win)
 {
-    return win->windowType() == window_type::desktop;
+    return win->windowType() == win_type::desktop;
 }
 
 template<typename Win>
 bool is_dock(Win const* win)
 {
-    return win->windowType() == window_type::dock;
+    return win->windowType() == win_type::dock;
 }
 
 template<typename Win>
 bool is_menu(Win const* win)
 {
-    return win->windowType() == window_type::menu;
+    return win->windowType() == win_type::menu;
 }
 
 template<typename Win>
 bool is_toolbar(Win const* win)
 {
-    return win->windowType() == window_type::toolbar;
+    return win->windowType() == win_type::toolbar;
 }
 
 template<typename Win>
 bool is_splash(Win const* win)
 {
-    return win->windowType() == window_type::splash;
+    return win->windowType() == win_type::splash;
 }
 
 template<typename Win>
 bool is_utility(Win const* win)
 {
-    return win->windowType() == window_type::utility;
+    return win->windowType() == win_type::utility;
 }
 
 template<typename Win>
 bool is_dialog(Win const* win)
 {
-    return win->windowType() == window_type::dialog;
+    return win->windowType() == win_type::dialog;
 }
 
 template<typename Win>
 bool is_normal(Win const* win)
 {
-    return win->windowType() == window_type::normal;
+    return win->windowType() == win_type::normal;
 }
 
 template<typename Win>
 bool is_dropdown_menu(Win const* win)
 {
-    return win->windowType() == window_type::dropdown_menu;
+    return win->windowType() == win_type::dropdown_menu;
 }
 
 template<typename Win>
 bool is_popup(Win const* win)
 {
     switch (win->windowType()) {
-    case window_type::combo_box:
-    case window_type::dropdown_menu:
-    case window_type::popup_menu:
-    case window_type::tooltip:
+    case win_type::combo_box:
+    case win_type::dropdown_menu:
+    case win_type::popup_menu:
+    case win_type::tooltip:
         return true;
     default:
         if constexpr (requires(Win win) { win.is_popup_end(); }) {
@@ -85,49 +85,49 @@ bool is_popup(Win const* win)
 template<typename Win>
 bool is_popup_menu(Win const* win)
 {
-    return win->windowType() == window_type::popup_menu;
+    return win->windowType() == win_type::popup_menu;
 }
 
 template<typename Win>
 bool is_tooltip(Win const* win)
 {
-    return win->windowType() == window_type::tooltip;
+    return win->windowType() == win_type::tooltip;
 }
 
 template<typename Win>
 bool is_notification(Win const* win)
 {
-    return win->windowType() == window_type::notification;
+    return win->windowType() == win_type::notification;
 }
 
 template<typename Win>
 bool is_critical_notification(Win const* win)
 {
-    return win->windowType() == window_type::critical_notification;
+    return win->windowType() == win_type::critical_notification;
 }
 
 template<typename Win>
 bool is_applet_popup(Win const* win)
 {
-    return win->windowType() == window_type::applet_popup;
+    return win->windowType() == win_type::applet_popup;
 }
 
 template<typename Win>
 bool is_on_screen_display(Win const* win)
 {
-    return win->windowType() == window_type::on_screen_display;
+    return win->windowType() == win_type::on_screen_display;
 }
 
 template<typename Win>
 bool is_combo_box(Win const* win)
 {
-    return win->windowType() == window_type::combo_box;
+    return win->windowType() == win_type::combo_box;
 }
 
 template<typename Win>
 bool is_dnd_icon(Win const* win)
 {
-    return win->windowType() == window_type::dnd_icon;
+    return win->windowType() == win_type::dnd_icon;
 }
 
 template<typename Win>

@@ -202,7 +202,7 @@ void SlidingPopupsTest::testWithOtherEffect()
                                     Test::app()->base->x11_data.root_window,
                                     win::x11::net::Properties(),
                                     win::x11::net::Properties2());
-    winInfo.setWindowType(win::window_type::normal);
+    winInfo.setWindowType(win::win_type::normal);
 
     // and get the slide atom
     const QByteArray effectAtomName = QByteArrayLiteral("_KDE_SLIDE");

@@ -136,8 +136,8 @@ void ruling::readFromSettings(rules::settings const* settings)
     placement = read_force_rule(settings->placement(), settings->placementrule());
     strictgeometry = read_force_rule(settings->strictgeometry(), settings->strictgeometryrule());
 
-    type = read_force_rule(static_cast<window_type>(settings->type()), settings->typerule());
-    if (type.data == window_type::unknown) {
+    type = read_force_rule(static_cast<win_type>(settings->type()), settings->typerule());
+    if (type.data == win_type::unknown) {
         type.rule = force_rule::unused;
     }
 }
@@ -279,12 +279,12 @@ QString ruling::getDecoColor(QString const& themeName)
                                       + QLatin1String(".colors"));
 }
 
-bool ruling::matchType(window_type match_type) const
+bool ruling::matchType(win_type match_type) const
 {
     if (types != window_type_mask::all_types) {
-        if (match_type == window_type::unknown) {
-            // window_type::Unknown->window_type::Normal is only here for matching
-            match_type = window_type::normal;
+        if (match_type == win_type::unknown) {
+            // win_type::Unknown->win_type::Normal is only here for matching
+            match_type = win_type::normal;
         }
         if (!x11::net::typeMatchesMask(match_type, types))
             return false;
@@ -543,7 +543,7 @@ bool ruling::applyOpacityInactive(int& s) const
     return apply_force(s, this->opacityinactive);
 }
 
-bool ruling::applyType(window_type& type) const
+bool ruling::applyType(win_type& type) const
 {
     return apply_force(type, this->type);
 }

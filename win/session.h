@@ -52,17 +52,17 @@ static const char* const window_type_names[] = {"Unknown",
                                                 "Splash"};
 // change also the two functions below when adding new entries
 
-static inline char const* window_type_to_txt(window_type type)
+static inline char const* window_type_to_txt(win_type type)
 {
     auto int_type = static_cast<int>(type);
-    if (int_type >= static_cast<int>(window_type::unknown)
-        && int_type <= static_cast<int>(window_type::splash)) {
+    if (int_type >= static_cast<int>(win_type::unknown)
+        && int_type <= static_cast<int>(win_type::splash)) {
         // +1 (unknown==-1)
         return window_type_names[int_type + 1];
     }
 
     if (int_type == -2) {
-        // undefined (not really part of window_type)
+        // undefined (not really part of win_type)
         return "Undefined";
     }
 
@@ -70,18 +70,18 @@ static inline char const* window_type_to_txt(window_type type)
     return nullptr;
 }
 
-static inline window_type txt_to_window_type(const char* txt)
+static inline win_type txt_to_window_type(const char* txt)
 {
-    for (int i = static_cast<int>(window_type::unknown); i <= static_cast<int>(window_type::splash);
+    for (int i = static_cast<int>(win_type::unknown); i <= static_cast<int>(win_type::splash);
          ++i) {
         // Compare with window_type_names at i+1.
         if (qstrcmp(txt, window_type_names[i + 1]) == 0) {
-            return static_cast<window_type>(i);
+            return static_cast<win_type>(i);
         }
     }
 
     // undefined
-    return static_cast<window_type>(-2);
+    return static_cast<win_type>(-2);
 }
 
 /**
@@ -106,7 +106,7 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
                                 }
 
                                 if (static_cast<unsigned int>(win->windowType())
-                                    > static_cast<unsigned int>(window_type::splash)) {
+                                    > static_cast<unsigned int>(win_type::splash)) {
                                     // window types outside this are not tooltips/menus/OSDs
                                     // typically these will be unmanaged and not in this list
                                     // anyway, but that is not enforced

@@ -57,7 +57,7 @@ public:
                        QVector<virtual_desktop*>& vds,
                        bool init) const;
     bool applyScreen(int& screen, bool init) const;
-    bool applyType(window_type& type) const;
+    bool applyType(win_type& type) const;
     bool applyMaximizeVert(win::maximize_mode& mode, bool init) const;
     bool applyMaximizeHoriz(win::maximize_mode& mode, bool init) const;
     bool applyMinimize(bool& minimize, bool init) const;
@@ -82,7 +82,7 @@ public:
     bool applyDisableGlobalShortcuts(bool& disable) const;
     bool applyDesktopFile(QString& desktopFile, bool init) const;
 
-    bool matchType(window_type match_type) const;
+    bool matchType(win_type match_type) const;
     bool matchWMClass(QByteArray const& match_class, QByteArray const& match_name) const;
     bool matchRole(QByteArray const& match_role) const;
     bool matchTitle(QString const& match_title) const;
@@ -169,7 +169,7 @@ public:
     force_ruler<int> opacityinactive;
     force_ruler<int> placement;
     force_ruler<bool> strictgeometry;
-    force_ruler<window_type> type;
+    force_ruler<win_type> type;
 
     friend QDebug& operator<<(QDebug& stream, ruling const*);
 };
