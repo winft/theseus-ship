@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/output.h>
 #include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/xdgoutput.h>
+#include <catch2/generators/catch_generators.hpp>
 
 using namespace Wrapland::Client;
 
@@ -22,7 +23,8 @@ TEST_CASE("screen changes", "[base]")
 {
     // this test verifies that when a new screen is added it gets synced to Wayland
 
-    test::setup setup("screen-changes");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("screen-changes", operation_mode);
     setup.start();
     setup_wayland_connection();
     cursor()->set_pos(QPoint(640, 512));

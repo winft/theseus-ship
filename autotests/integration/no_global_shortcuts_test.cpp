@@ -77,9 +77,9 @@ TEST_CASE("no global shortcuts", "[input]")
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
-    test::setup setup("no-global-shortcuts",
-                      base::operation_mode::wayland,
-                      base::wayland::start_options::no_global_shortcuts);
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup(
+        "no-global-shortcuts", operation_mode, base::wayland::start_options::no_global_shortcuts);
     setup.start();
     cursor()->set_pos(QPoint(640, 512));
 

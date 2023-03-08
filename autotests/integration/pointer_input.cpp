@@ -81,7 +81,8 @@ TEST_CASE("pointer input", "[input]")
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("24"));
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
-    test::setup setup("pointer-input");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("pointer-input", operation_mode);
     setup.start();
     setup.set_outputs(2);
     test_outputs_default();

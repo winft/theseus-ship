@@ -53,6 +53,7 @@ TEST_CASE("screen edges", "[input],[win]")
 {
     qRegisterMetaType<KWin::ElectricBorder>("ElectricBorder");
 
+    // TODO(romangg): This test fails with Xwayland enabled. Fix it!
     test::setup setup("screen-edges");
     setup.start();
     setup_wayland_connection();

@@ -34,7 +34,8 @@ TEST_CASE("window selection", "[win]")
 {
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
-    test::setup setup("window-selection");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("window-selection", operation_mode);
     setup.start();
     setup.set_outputs(2);
     test_outputs_default();

@@ -16,6 +16,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KPackage/PackageLoader>
 #include <Wrapland/Client/surface.h>
 
+#include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 
 namespace KWin::detail::test
@@ -51,7 +52,8 @@ TEST_CASE("minimize all", "[script]")
 
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    test::setup setup("minimize-all");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("minimize-all", operation_mode);
     setup.start();
     setup.set_outputs(2);
     test_outputs_default();

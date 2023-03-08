@@ -17,6 +17,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
+#include <catch2/generators/catch_generators.hpp>
 
 namespace KWin::detail::test
 {
@@ -26,7 +27,8 @@ TEST_CASE("maximize animation", "[effect]")
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    test::setup setup("maximize-animation");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("maximize-animation", operation_mode);
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames

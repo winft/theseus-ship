@@ -47,7 +47,8 @@ TEST_CASE("virtual desktop", "[win]")
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
-    test::setup setup("virtual-desktop");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("virtual-desktop", operation_mode);
     setup.start();
 
     if (setup.base->x11_data.connection) {
@@ -627,7 +628,12 @@ TEST_CASE("virtual desktop", "[win]")
         // TODO(romangg): Fails when run in Xwayland mode and passes otherwise. The root cause
         //                seems to be the update from root info in
         //                win::virtual_desktop_manager::updateLayout.
-        REQUIRE(vd_manager->rows() == 2);
+        if (operation_mode == base::operation_mode::wayland) {
+            REQUIRE(vd_manager->rows() == 2);
+        } else {
+            REQUIRE(operation_mode == base::operation_mode::xwayland);
+            REQUIRE(vd_manager->rows() == 4);
+        }
     }
 
     SECTION("load")

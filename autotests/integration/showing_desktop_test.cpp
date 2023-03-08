@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/surface.h>
+#include <catch2/generators/catch_generators.hpp>
 
 using namespace Wrapland::Client;
 
@@ -22,7 +23,8 @@ namespace KWin::detail::test
 
 TEST_CASE("showing desktop", "[win]")
 {
-    test::setup setup("showing-desktop");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("showing-desktop", operation_mode);
     setup.start();
     setup_wayland_connection(global_selection::plasma_shell);
 

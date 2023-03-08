@@ -18,6 +18,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KConfigGroup>
 #include <Wrapland/Client/surface.h>
 
+#include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 
 using namespace Wrapland::Client;
@@ -29,7 +30,8 @@ TEST_CASE("tabbox", "[win]")
 {
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
 
-    test::setup setup("tabbox");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("tabbox", operation_mode);
 
     auto c = setup.base->config.main;
     c->group("TabBox").writeEntry("ShowTabBox", false);

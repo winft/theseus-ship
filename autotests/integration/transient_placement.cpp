@@ -38,7 +38,8 @@ namespace KWin::detail::test
 
 TEST_CASE("transient placement", "[win]")
 {
-    test::setup setup("transient-placement");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("transient-placement", operation_mode);
     setup.start();
     setup.set_outputs(2);
     test_outputs_default();

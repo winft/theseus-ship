@@ -25,7 +25,8 @@ namespace KWin::detail::test
 
 TEST_CASE("touch input", "[input]")
 {
-    test::setup setup("touch-input");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("touch-input", operation_mode);
     setup.start();
     setup.set_outputs(2);
     test_outputs_default();

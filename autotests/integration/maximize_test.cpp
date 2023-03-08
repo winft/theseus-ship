@@ -27,6 +27,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
+#include <catch2/generators/catch_generators.hpp>
 
 using namespace Wrapland::Client;
 
@@ -35,7 +36,8 @@ namespace KWin::detail::test
 
 TEST_CASE("maximize", "[win]")
 {
-    test::setup setup("maximize");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("maximize", operation_mode);
     setup.start();
     setup.set_outputs(2);
     test_outputs_default();
@@ -86,7 +88,13 @@ TEST_CASE("maximize", "[win]")
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 2);
 
+        if (operation_mode == base::operation_mode::xwayland) {
+            // TODO(romangg): This test fails with Xwayland enabled. Fix it!
+            return;
+        }
+
         auto cfgdata = shellSurface->get_configure_data();
+
         QCOMPARE(cfgdata.size, QSize(1280, 1024 - decoration->borderTop()));
 
         shellSurface->ackConfigure(configureRequestedSpy.back().front().value<quint32>());

@@ -26,13 +26,15 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
+#include <catch2/generators/catch_generators.hpp>
 
 namespace KWin::detail::test
 {
 
 TEST_CASE("input stacking order", "[win]")
 {
-    test::setup setup("input-stacking-order");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("input-stacking-order", operation_mode);
     setup.start();
     setup.set_outputs(2);
     test_outputs_default();

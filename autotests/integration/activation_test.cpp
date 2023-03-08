@@ -16,13 +16,15 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/surface.h>
+#include <catch2/generators/catch_generators.hpp>
 
 namespace KWin::detail::test
 {
 
 TEST_CASE("activation", "[win]")
 {
-    test::setup setup("activation");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("activation", operation_mode);
     setup.start();
     setup.set_outputs(2);
     test_outputs_default();

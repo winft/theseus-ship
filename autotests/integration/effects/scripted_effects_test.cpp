@@ -110,7 +110,8 @@ TEST_CASE("scripted effects", "[effect]")
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
 
-    test::setup setup("scripted-effects");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("scripted-effects", operation_mode);
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = setup.base->config.main;

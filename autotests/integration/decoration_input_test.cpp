@@ -74,7 +74,8 @@ Q_SIGNALS:
 
 TEST_CASE("decoration input", "[input],[win]")
 {
-    test::setup setup("decoration-input");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("decoration-input", operation_mode);
 
     struct {
         std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;

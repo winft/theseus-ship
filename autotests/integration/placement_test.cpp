@@ -21,6 +21,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Client/xdgdecoration.h>
+#include <catch2/generators/catch_generators.hpp>
 
 using namespace Wrapland::Client;
 
@@ -54,7 +55,8 @@ const char* policy_to_string(win::placement policy)
 
 TEST_CASE("placement", "[win]")
 {
-    test::setup setup("placement");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("placement", operation_mode);
     setup.start();
     setup.set_outputs(2);
     test_outputs_default();

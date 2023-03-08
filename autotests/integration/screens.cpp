@@ -26,7 +26,8 @@ namespace KWin::detail::test
 
 TEST_CASE("screens", "[base]")
 {
-    test::setup setup("screens");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("screens", operation_mode);
     setup.start();
     setup_wayland_connection();
 

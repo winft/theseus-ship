@@ -30,7 +30,8 @@ namespace KWin::detail::test
 
 TEST_CASE("plasma surface", "[win]")
 {
-    test::setup setup("plasma-surface");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("plasma-surface", operation_mode);
     setup.start();
     cursor()->set_pos(640, 512);
     setup_wayland_connection(global_selection::plasma_shell);

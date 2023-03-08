@@ -30,7 +30,8 @@ namespace KWin::detail::test
 
 TEST_CASE("bindings", "[input],[win]")
 {
-    test::setup setup("bindings");
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("bindings", operation_mode);
     setup.start();
     setup_wayland_connection();
 
