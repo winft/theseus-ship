@@ -53,7 +53,7 @@ public:
     net::extended_strut extendedStrut() const;
     net::strut strut() const;
 
-    win::window_type windowType(win::window_type_mask supported_types) const;
+    win::win_type windowType(win::window_type_mask supported_types) const;
     bool hasWindowType() const;
 
     const char* name() const;
@@ -71,7 +71,7 @@ public:
     void setExtendedStrut(net::extended_strut const& extended_strut);
     void setStrut(net::strut strut);
     void setState(net::States state, net::States mask);
-    void setWindowType(win::window_type type);
+    void setWindowType(win::win_type type);
 
     void setName(const char* name);
     void setVisibleName(const char* visibleName);

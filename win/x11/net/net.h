@@ -186,7 +186,7 @@ enum Action {
 };
 Q_DECLARE_FLAGS(Actions, Action)
 
-KWIN_EXPORT bool typeMatchesMask(win::window_type type, win::window_type_mask mask);
+KWIN_EXPORT bool typeMatchesMask(win::win_type type, win::window_type_mask mask);
 
 /**
  Compares two X timestamps, taking into account wrapping and 64bit architectures.

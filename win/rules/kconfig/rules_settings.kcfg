@@ -177,9 +177,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
     <entry name="type" type="Int">
       <label>Set window type to</label>
-      <min code="true">static_cast&lt;int&gt;(window_type::normal)</min>
-      <max code="true">static_cast&lt;int&gt;(window_type::critical_notification)</max>
-      <default code="true">static_cast&lt;int&gt;(window_type::unknown)</default>
+      <min code="true">static_cast&lt;int&gt;(win_type::normal)</min>
+      <max code="true">static_cast&lt;int&gt;(win_type::critical_notification)</max>
+      <default code="true">static_cast&lt;int&gt;(win_type::unknown)</default>
     </entry>
     <entry name="typerule" type="Int">
       <label>Set window type rule type</label>

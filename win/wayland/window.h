@@ -182,12 +182,12 @@ public:
         setup_scale_scene_notify(*this);
     }
 
-    win::window_type windowType() const
+    win::win_type windowType() const
     {
         return window_type;
     }
 
-    win::window_type get_window_type_direct() const
+    win::win_type get_window_type_direct() const
     {
         return window_type;
     }
@@ -901,7 +901,7 @@ public:
 
     bool isCloseable() const
     {
-        return toplevel && window_type != window_type::desktop && window_type != window_type::dock;
+        return toplevel && window_type != win_type::desktop && window_type != win_type::dock;
     }
 
     bool isMaximizable() const
@@ -1259,7 +1259,7 @@ public:
     }
 
     bool initialized{false};
-    win::window_type window_type{window_type::normal};
+    win::win_type window_type{win_type::normal};
 
     bool user_no_border{false};
 

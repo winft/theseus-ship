@@ -719,7 +719,7 @@ void MoveResizeWindowTest::testNetMove()
                                     Test::app()->base->x11_data.root_window,
                                     win::x11::net::WMWindowType,
                                     win::x11::net::Properties2());
-    winInfo.setWindowType(win::window_type::override);
+    winInfo.setWindowType(win::win_type::override);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -831,7 +831,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
                                     Test::app()->base->x11_data.root_window,
                                     win::x11::net::WMWindowType,
                                     win::x11::net::Properties2());
-    winInfo.setWindowType(win::window_type::dock);
+    winInfo.setWindowType(win::win_type::dock);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 

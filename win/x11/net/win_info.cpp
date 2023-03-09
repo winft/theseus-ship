@@ -55,7 +55,7 @@ struct win_info_private {
     net::strut frame_strut; // strut?
     net::strut frame_overlap;
     net::strut gtk_frame_extents;
-    rarray<window_type> types;
+    rarray<win_type> types;
     char *name, *visible_name, *icon_name, *visible_icon_name;
     int desktop;
     int pid;
@@ -223,7 +223,7 @@ win_info::win_info(xcb_connection_t* connection,
     p->mapping_state = Withdrawn;
     p->mapping_state_dirty = true;
     p->state = net::States();
-    p->types[0] = window_type::unknown;
+    p->types[0] = win_type::unknown;
     p->name = (char*)nullptr;
     p->visible_name = (char*)nullptr;
     p->icon_name = (char*)nullptr;
@@ -724,7 +724,7 @@ void win_info::setState(net::States state, net::States mask)
     }
 }
 
-void win_info::setWindowType(win::window_type type)
+void win_info::setWindowType(win::win_type type)
 {
     assert(p->role == Client);
 
@@ -732,7 +732,7 @@ void win_info::setWindowType(win::window_type type)
     uint32_t data[2];
 
     switch (type) {
-    case window_type::override:
+    case win_type::override:
         // spec extension: override window type.  we must comply with the spec
         // and provide a fall back (normal seems best)
         data[0] = p->atom(_KDE_NET_WM_WINDOW_TYPE_OVERRIDE);
@@ -740,19 +740,19 @@ void win_info::setWindowType(win::window_type type)
         len = 2;
         break;
 
-    case window_type::dialog:
+    case win_type::dialog:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_DIALOG);
         data[1] = XCB_NONE;
         len = 1;
         break;
 
-    case window_type::menu:
+    case win_type::menu:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_MENU);
         data[1] = XCB_NONE;
         len = 1;
         break;
 
-    case window_type::top_menu:
+    case win_type::top_menu:
         // spec extension: override window type.  we must comply with the spec
         // and provide a fall back (dock seems best)
         data[0] = p->atom(_KDE_NET_WM_WINDOW_TYPE_TOPMENU);
@@ -760,92 +760,92 @@ void win_info::setWindowType(win::window_type type)
         len = 2;
         break;
 
-    case window_type::toolbar:
+    case win_type::toolbar:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_TOOLBAR);
         data[1] = XCB_NONE;
         len = 1;
         break;
 
-    case window_type::dock:
+    case win_type::dock:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_DOCK);
         data[1] = XCB_NONE;
         len = 1;
         break;
 
-    case window_type::desktop:
+    case win_type::desktop:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_DESKTOP);
         data[1] = XCB_NONE;
         len = 1;
         break;
 
-    case window_type::utility:
+    case win_type::utility:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_UTILITY);
         data[1] = p->atom(_NET_WM_WINDOW_TYPE_DIALOG); // fallback for old netwm version
         len = 2;
         break;
 
-    case window_type::splash:
+    case win_type::splash:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_SPLASH);
         data[1] = p->atom(_NET_WM_WINDOW_TYPE_DOCK); // fallback (dock seems best)
         len = 2;
         break;
 
-    case window_type::dropdown_menu:
+    case win_type::dropdown_menu:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_DROPDOWN_MENU);
         data[1] = p->atom(_NET_WM_WINDOW_TYPE_MENU); // fallback (tearoff seems to be the best)
         len = 1;
         break;
 
-    case window_type::popup_menu:
+    case win_type::popup_menu:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_POPUP_MENU);
         data[1] = p->atom(_NET_WM_WINDOW_TYPE_MENU); // fallback (tearoff seems to be the best)
         len = 1;
         break;
 
-    case window_type::tooltip:
+    case win_type::tooltip:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_TOOLTIP);
         data[1] = XCB_NONE;
         len = 1;
         break;
 
-    case window_type::notification:
+    case win_type::notification:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_NOTIFICATION);
         data[1] = p->atom(_NET_WM_WINDOW_TYPE_UTILITY); // fallback (utility seems to be the best)
         len = 1;
         break;
 
-    case window_type::combo_box:
+    case win_type::combo_box:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_COMBO);
         data[1] = XCB_NONE;
         len = 1;
         break;
 
-    case window_type::dnd_icon:
+    case win_type::dnd_icon:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_DND);
         data[1] = XCB_NONE;
         len = 1;
         break;
 
-    case window_type::on_screen_display:
+    case win_type::on_screen_display:
         data[0] = p->atom(_KDE_NET_WM_WINDOW_TYPE_ON_SCREEN_DISPLAY);
         data[1] = p->atom(_NET_WM_WINDOW_TYPE_NOTIFICATION);
         len = 2;
         break;
 
-    case window_type::critical_notification:
+    case win_type::critical_notification:
         data[0] = p->atom(_KDE_NET_WM_WINDOW_TYPE_CRITICAL_NOTIFICATION);
         data[1] = p->atom(_NET_WM_WINDOW_TYPE_NOTIFICATION);
         len = 2;
         break;
 
-    case window_type::applet_popup:
+    case win_type::applet_popup:
         data[0] = p->atom(_KDE_NET_WM_WINDOW_TYPE_APPLET_POPUP);
         data[1] = XCB_NONE;
         len = 1;
         break;
 
     default:
-    case window_type::normal:
+    case win_type::normal:
         data[0] = p->atom(_NET_WM_WINDOW_TYPE_NORMAL);
         data[1] = XCB_NONE;
         len = 1;
@@ -1968,7 +1968,7 @@ void win_info::update(net::Properties dirtyProperties, net::Properties2 dirtyPro
 
     if (dirty & WMWindowType) {
         p->types.reset();
-        p->types[0] = window_type::unknown;
+        p->types[0] = win_type::unknown;
         p->has_net_support = false;
 
         const QVector<xcb_atom_t> types
@@ -1980,79 +1980,79 @@ void win_info::update(net::Properties dirtyProperties, net::Properties2 dirtyPro
 
             for (const xcb_atom_t type : types) {
                 if (type == p->atom(_NET_WM_WINDOW_TYPE_NORMAL)) {
-                    p->types[pos++] = window_type::normal;
+                    p->types[pos++] = win_type::normal;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_DESKTOP)) {
-                    p->types[pos++] = window_type::desktop;
+                    p->types[pos++] = win_type::desktop;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_DOCK)) {
-                    p->types[pos++] = window_type::dock;
+                    p->types[pos++] = win_type::dock;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_TOOLBAR)) {
-                    p->types[pos++] = window_type::toolbar;
+                    p->types[pos++] = win_type::toolbar;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_MENU)) {
-                    p->types[pos++] = window_type::menu;
+                    p->types[pos++] = win_type::menu;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_DIALOG)) {
-                    p->types[pos++] = window_type::dialog;
+                    p->types[pos++] = win_type::dialog;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_UTILITY)) {
-                    p->types[pos++] = window_type::utility;
+                    p->types[pos++] = win_type::utility;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_SPLASH)) {
-                    p->types[pos++] = window_type::splash;
+                    p->types[pos++] = win_type::splash;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_DROPDOWN_MENU)) {
-                    p->types[pos++] = window_type::dropdown_menu;
+                    p->types[pos++] = win_type::dropdown_menu;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_POPUP_MENU)) {
-                    p->types[pos++] = window_type::popup_menu;
+                    p->types[pos++] = win_type::popup_menu;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_TOOLTIP)) {
-                    p->types[pos++] = window_type::tooltip;
+                    p->types[pos++] = win_type::tooltip;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_NOTIFICATION)) {
-                    p->types[pos++] = window_type::notification;
+                    p->types[pos++] = win_type::notification;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_COMBO)) {
-                    p->types[pos++] = window_type::combo_box;
+                    p->types[pos++] = win_type::combo_box;
                 }
 
                 else if (type == p->atom(_NET_WM_WINDOW_TYPE_DND)) {
-                    p->types[pos++] = window_type::dnd_icon;
+                    p->types[pos++] = win_type::dnd_icon;
                 }
 
                 else if (type == p->atom(_KDE_NET_WM_WINDOW_TYPE_OVERRIDE)) {
-                    p->types[pos++] = window_type::override;
+                    p->types[pos++] = win_type::override;
                 }
 
                 else if (type == p->atom(_KDE_NET_WM_WINDOW_TYPE_TOPMENU)) {
-                    p->types[pos++] = window_type::top_menu;
+                    p->types[pos++] = win_type::top_menu;
                 }
 
                 else if (type == p->atom(_KDE_NET_WM_WINDOW_TYPE_ON_SCREEN_DISPLAY)) {
-                    p->types[pos++] = window_type::on_screen_display;
+                    p->types[pos++] = win_type::on_screen_display;
                 }
 
                 else if (type == p->atom(_KDE_NET_WM_WINDOW_TYPE_CRITICAL_NOTIFICATION)) {
-                    p->types[pos++] = window_type::critical_notification;
+                    p->types[pos++] = win_type::critical_notification;
                 }
 
                 else if (type == p->atom(_KDE_NET_WM_WINDOW_TYPE_APPLET_POPUP)) {
-                    p->types[pos++] = window_type::applet_popup;
+                    p->types[pos++] = win_type::applet_popup;
                 }
             }
         }
@@ -2462,12 +2462,12 @@ net::fullscreen_monitors win_info::fullscreenMonitors() const
     return p->fullscreen_monitors;
 }
 
-bool net::typeMatchesMask(win::window_type type, win::window_type_mask mask)
+bool typeMatchesMask(win::win_type type, win::window_type_mask mask)
 {
     switch (type) {
         // clang-format off
 #define CHECK_TYPE_MASK( type ) \
-case win::window_type::type: \
+case win::win_type::type: \
     if( flags(mask & win::window_type_mask::type) ) \
         return true; \
     break;
@@ -2498,7 +2498,7 @@ case win::window_type::type: \
     return false;
 }
 
-win::window_type win_info::windowType(win::window_type_mask supported_types) const
+win::win_type win_info::windowType(win::window_type_mask supported_types) const
 {
     for (int i = 0; i < p->types.size(); ++i) {
         // return the type only if the application supports it
@@ -2506,7 +2506,7 @@ win::window_type win_info::windowType(win::window_type_mask supported_types) con
             return p->types[i];
         }
     }
-    return win::window_type::unknown;
+    return win::win_type::unknown;
 }
 
 bool win_info::hasWindowType() const

@@ -786,14 +786,14 @@ void InternalWindowTest::testChangeWindowType()
     auto internalClient
         = get_internal_window_from_id(clientAddedSpy.first().first().value<quint32>());
     QVERIFY(internalClient);
-    QCOMPARE(internalClient->windowType(), win::window_type::normal);
+    QCOMPARE(internalClient->windowType(), win::win_type::normal);
 
     QFETCH(NET::WindowType, windowType);
     KWindowSystem::setType(win.winId(), windowType);
     QTRY_VERIFY(COMPARE_WIN_TYPES(internalClient->windowType(), windowType));
 
     KWindowSystem::setType(win.winId(), NET::Normal);
-    QTRY_COMPARE(internalClient->windowType(), win::window_type::normal);
+    QTRY_COMPARE(internalClient->windowType(), win::win_type::normal);
 }
 
 #undef COMPARE_WIN_TYPES

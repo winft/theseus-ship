@@ -155,7 +155,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
                                  Test::app()->base->x11_data.root_window,
                                  win::x11::net::WMAllProperties,
                                  win::x11::net::WM2AllProperties);
-    info.setWindowType(win::window_type::normal);
+    info.setWindowType(win::win_type::normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -233,7 +233,7 @@ void WindowRuleTest::testWindowClassChange()
                                  Test::app()->base->x11_data.root_window,
                                  win::x11::net::WMAllProperties,
                                  win::x11::net::WM2AllProperties);
-    info.setWindowType(win::window_type::normal);
+    info.setWindowType(win::win_type::normal);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 

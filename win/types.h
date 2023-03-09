@@ -129,7 +129,7 @@ enum class fsp_level {
     extreme,
 };
 
-enum class window_type {
+enum class win_type {
     unknown = -1,
     normal = 0,
     desktop = 1,

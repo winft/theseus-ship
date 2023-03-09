@@ -220,7 +220,7 @@ void TranslucencyTest::testDialogClose()
                                     Test::app()->base->x11_data.root_window,
                                     win::x11::net::Properties(),
                                     win::x11::net::Properties2());
-    winInfo.setWindowType(win::window_type::dialog);
+    winInfo.setWindowType(win::win_type::dialog);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 

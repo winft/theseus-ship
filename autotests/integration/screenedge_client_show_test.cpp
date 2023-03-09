@@ -122,7 +122,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
                                  Test::app()->base->x11_data.root_window,
                                  win::x11::net::WMAllProperties,
                                  win::x11::net::WM2AllProperties);
-    info.setWindowType(win::window_type::dock);
+    info.setWindowType(win::win_type::dock);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -246,7 +246,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
                                  Test::app()->base->x11_data.root_window,
                                  win::x11::net::WMAllProperties,
                                  win::x11::net::WM2AllProperties);
-    info.setWindowType(win::window_type::dock);
+    info.setWindowType(win::win_type::dock);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 

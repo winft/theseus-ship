@@ -294,21 +294,21 @@ void layer_surface_handle_exclusive_zone(Win* win)
 }
 
 template<typename Win>
-window_type layer_surface_type(Win* win)
+win_type layer_surface_type(Win* win)
 {
     using layer = Wrapland::Server::LayerSurfaceV1::Layer;
     switch (win->layer_surface->layer()) {
     case layer::Background:
-        return window_type::desktop;
+        return win_type::desktop;
     case layer::Bottom:
-        return window_type::dock;
+        return win_type::dock;
     case layer::Top:
-        return window_type::notification;
+        return win_type::notification;
     case layer::Overlay:
-        return window_type::on_screen_display;
+        return win_type::on_screen_display;
     default:
         assert(false);
-        return window_type::normal;
+        return win_type::normal;
     }
 }
 
@@ -339,9 +339,8 @@ void process_layer_surface_commit(Win* win)
         win->control->keep_below = false;
     }
 
-    if (win->window_type == window_type::desktop
-        || win->window_type == window_type::on_screen_display
-        || win->window_type == window_type::notification) {
+    if (win->window_type == win_type::desktop || win->window_type == win_type::on_screen_display
+        || win->window_type == win_type::notification) {
         set_on_all_desktops(win, true);
     }
 

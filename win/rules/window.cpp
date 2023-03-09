@@ -150,7 +150,7 @@ int window::checkOpacityInactive(int s) const
     return check_force(s, &ruling::applyOpacityInactive);
 }
 
-window_type window::checkType(window_type type) const
+win_type window::checkType(win_type type) const
 {
     return check_force(type, &ruling::applyType);
 }

@@ -70,7 +70,7 @@ struct session_info {
     bool skipSwitcher;
     bool noBorder;
 
-    window_type windowType;
+    win_type windowType;
     QString shortcut;
 
     // means 'was active in the saved session'

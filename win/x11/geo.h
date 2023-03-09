@@ -92,23 +92,23 @@ void detect_no_border(Win* win)
     }
 
     switch (win->windowType()) {
-    case window_type::desktop:
-    case window_type::dock:
-    case window_type::top_menu:
-    case window_type::splash:
-    case window_type::notification:
-    case window_type::on_screen_display:
-    case window_type::critical_notification:
-    case window_type::applet_popup:
+    case win_type::desktop:
+    case win_type::dock:
+    case win_type::top_menu:
+    case win_type::splash:
+    case win_type::notification:
+    case win_type::on_screen_display:
+    case win_type::critical_notification:
+    case win_type::applet_popup:
         win->user_no_border = true;
         win->app_no_border = true;
         break;
-    case window_type::unknown:
-    case window_type::normal:
-    case window_type::toolbar:
-    case window_type::menu:
-    case window_type::dialog:
-    case window_type::utility:
+    case win_type::unknown:
+    case win_type::normal:
+    case win_type::toolbar:
+    case win_type::menu:
+    case win_type::dialog:
+    case win_type::utility:
         win->user_no_border = false;
         break;
     default:
@@ -118,7 +118,7 @@ void detect_no_border(Win* win)
     // window_type::Override is some strange beast without clear definition, usually
     // just meaning "no_border", so let's treat it only as such flag, and ignore it as
     // a window type otherwise (SUPPORTED_WINDOW_TYPES_MASK doesn't include it)
-    if (win->net_info->windowType(window_type_mask::override) == window_type::override) {
+    if (win->net_info->windowType(window_type_mask::override) == win_type::override) {
         win->user_no_border = true;
         win->app_no_border = true;
     }
