@@ -513,4 +513,4 @@ TEST_CASE("debug console", "[debug]")
 
 }
 
-#include "debug_console_test.moc"
+#include "debug_console.moc"

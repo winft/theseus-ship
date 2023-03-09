@@ -775,4 +775,4 @@ TEST_CASE("decoration input", "[input],[win]")
 
 }
 
-#include "decoration_input_test.moc"
+#include "decoration_input.moc"

@@ -822,4 +822,4 @@ TEST_CASE("keyboard layout", "[input]")
 
 }
 
-#include "keyboard_layout_test.moc"
+#include "keyboard_layout.moc"

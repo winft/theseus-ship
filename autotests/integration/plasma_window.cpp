@@ -578,4 +578,4 @@ TEST_CASE("plasma window", "[win]")
 
 }
 
-#include "plasmawindow_test.moc"
+#include "plasma_window.moc"

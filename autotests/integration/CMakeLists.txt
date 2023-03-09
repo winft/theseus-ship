@@ -11,106 +11,106 @@ add_executable(tests
   lib/main.cpp
   lib/setup.cpp
   # integration tests
-  activation_test.cpp
-  bindings_test.cpp
-  buffer_size_change_test.cpp
+  activation.cpp
+  bindings.cpp
+  buffer_size_change.cpp
   client_machine.cpp
-  colorcorrect_nightcolor_test.cpp
-  dbus_interface_test.cpp
-  debug_console_test.cpp
-  decoration_input_test.cpp
-  desktop_window_x11_test.cpp
-  dont_crash_aurorae_destroy_deco.cpp
-  dont_crash_cancel_animation.cpp
-  dont_crash_cursor_physical_size_empty.cpp
-  dont_crash_empty_deco.cpp
-  dont_crash_glxgears.cpp
-  dont_crash_no_border.cpp
-  dont_crash_reinitialize_compositor.cpp
-  dont_crash_useractions_menu.cpp
+  night_color.cpp
+  dbus_interface.cpp
+  debug_console.cpp
+  decoration_input.cpp
+  desktop_window_x11.cpp
+  no_crash_aurorae_destroy_deco.cpp
+  no_crash_cancel_animation.cpp
+  no_crash_cursor_physical_size_empty.cpp
+  no_crash_empty_deco.cpp
+  no_crash_glxgears.cpp
+  no_crash_no_border.cpp
+  no_crash_reinitialize_compositor.cpp
+  no_crash_useractions_menu.cpp
   gestures.cpp
-  globalshortcuts_test.cpp
-  idle_inhibition_test.cpp
-  idle_test.cpp
+  global_shortcuts.cpp
+  idle_inhibition.cpp
+  idle.cpp
   input_method.cpp
   input_stacking_order.cpp
   internal_window.cpp
   keyboard_keymap.cpp
-  keyboard_layout_test.cpp
-  keymap_creation_failure_test.cpp
+  keyboard_layout.cpp
+  keymap_creation_failure.cpp
   layer_shell.cpp
   lockscreen.cpp
-  maximize_test.cpp
-  modifier_only_shortcut_test.cpp
-  move_resize_window_test.cpp
-  no_global_shortcuts_test.cpp
-  no_xdg_runtime_dir_test.cpp
-  placement_test.cpp
-  plasma_surface_test.cpp
-  plasmawindow_test.cpp
-  platformcursor.cpp
-  pointer_constraints_test.cpp
+  maximize.cpp
+  modifier_only_shortcut.cpp
+  move_resize_window.cpp
+  no_global_shortcuts.cpp
+  no_xdg_runtime_dir.cpp
+  placement.cpp
+  plasma_surface.cpp
+  plasma_window.cpp
+  platform_cursor.cpp
+  pointer_constraints.cpp
   pointer_input.cpp
-  quick_tiling_test.cpp
-  scene_opengl_shadow_test.cpp
-  scene_opengl_test.cpp
-  scene_qpainter_shadow_test.cpp
-  scene_qpainter_test.cpp
-  screen_changes_test.cpp
+  quick_tiling.cpp
+  opengl_shadow.cpp
+  scene_opengl.cpp
+  qpainter_shadow.cpp
+  scene_qpainter.cpp
+  screen_changes.cpp
   screen_edges.cpp
-  screenedge_client_show_test.cpp
+  screen_edge_window_show.cpp
   screens.cpp
-  showing_desktop_test.cpp
-  stacking_order_test.cpp
-  struts_test.cpp
-  tabbox_test.cpp
-  touch_input_test.cpp
+  showing_desktop.cpp
+  stacking_order.cpp
+  struts.cpp
+  tabbox.cpp
+  touch_input.cpp
   transient_placement.cpp
-  virtual_desktop_test.cpp
+  virtual_desktop.cpp
   virtual_keyboard.cpp
-  window_rules_test.cpp
-  window_selection_test.cpp
-  x11_client_test.cpp
+  window_rules.cpp
+  window_selection.cpp
+  x11_client.cpp
   x11_timestamp_update.cpp
   xcb_size_hints.cpp
   xcb_wrapper.cpp
   xdg_activation.cpp
-  xdgshellclient_rules_test.cpp
-  xdgshellclient_test.cpp
-  xwayland_input_test.cpp
-  xwayland_selections_test.cpp
+  xdg-shell_rules.cpp
+  xdg-shell_window.cpp
+  xwayland_input.cpp
+  xwayland_selections.cpp
   # effect tests
-  effects/desktop_switching_animation_test.cpp
-  effects/fade_test.cpp
-  effects/maximize_animation_test.cpp
-  effects/minimize_animation_test.cpp
-  effects/popup_open_close_animation_test.cpp
-  effects/scripted_effects_test.cpp
-  effects/slidingpopups_test.cpp
-  effects/toplevel_open_close_animation_test.cpp
-  effects/translucency_test.cpp
+  effects/desktop_switching_animation.cpp
+  effects/fade.cpp
+  effects/maximize_animation.cpp
+  effects/minimize_animation.cpp
+  effects/popup_open_close_animation.cpp
+  effects/scripted_effects.cpp
+  effects/slidingpopups.cpp
+  effects/window_open_close_animation.cpp
+  effects/translucency.cpp
   # scripting tests
-  scripting/minimizeall_test.cpp
-  scripting/screenedge_test.cpp
+  scripting/minimize_all.cpp
+  scripting/screen_edge.cpp
   # unit tests
-  ../libkwineffects/kwinglplatformtest.cpp
-  ../libkwineffects/timelinetest.cpp
-  ../libkwineffects/windowquadlisttest.cpp
-  ../onscreennotificationtest.cpp
-  ../opengl_context_attribute_builder_test.cpp
-  ../tabbox/test_desktopchain.cpp
-  ../tabbox/test_tabbox_clientmodel.cpp
-  ../tabbox/test_tabbox_config.cpp
-  ../tabbox/test_tabbox_handler.cpp
-  ../test_gestures.cpp
-  ../test_screen_paint_data.cpp
-  ../test_window_paint_data.cpp
-  ../test_xcb_window.cpp
-  ../test_xkb.cpp
+  ../libkwineffects/opengl_platform.cpp
+  ../libkwineffects/timeline.cpp
+  ../libkwineffects/window_quad_list.cpp
+  ../on_screen_notifications.cpp
+  ../opengl_context_attribute_builder.cpp
+  ../tabbox/desktop_chain.cpp
+  ../tabbox/tabbox_client_model.cpp
+  ../tabbox/tabbox_config.cpp
+  ../tabbox/tabbox_handler.cpp
+  ../gestures.cpp
+  ../screen_paint_data.cpp
+  ../window_paint_data.cpp
+  ../xcb_window.cpp
+  ../xkb.cpp
   # unit tests support
   ../libkwineffects/mock_gl.cpp
-  ../tabbox/mock_tabboxclient.cpp
-  ../tabbox/mock_tabboxhandler.cpp
+  ../tabbox/mock_tabbox_client.cpp
+  ../tabbox/mock_tabbox_handler.cpp
   ../../render/backend/x11/glx_context_attribute_builder.cpp
 )
 

@@ -5,7 +5,7 @@ SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "../integration/lib/catch_macros.h"
-#include "mock_tabboxhandler.h"
+#include "mock_tabbox_handler.h"
 
 #include "win/tabbox/tabbox_client_model.h"
 

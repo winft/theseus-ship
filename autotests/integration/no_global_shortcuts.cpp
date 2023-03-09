@@ -275,4 +275,4 @@ TEST_CASE("no global shortcuts", "[input]")
 
 }
 
-#include "no_global_shortcuts_test.moc"
+#include "no_global_shortcuts.moc"

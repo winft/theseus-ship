@@ -625,4 +625,4 @@ TEST_CASE("window paint data", "[legacy],[effect]")
 
 }
 
-#include "test_window_paint_data.moc"
+#include "window_paint_data.moc"

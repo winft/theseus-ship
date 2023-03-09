@@ -187,4 +187,4 @@ TEST_CASE("xwayland input", "[input],[xwl]")
 
 }
 
-#include "xwayland_input_test.moc"
+#include "xwayland_input.moc"

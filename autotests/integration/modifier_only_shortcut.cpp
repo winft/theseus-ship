@@ -402,4 +402,4 @@ TEST_CASE("modifier only shortcut", "[input]")
 
 }
 
-#include "modifier_only_shortcut_test.moc"
+#include "modifier_only_shortcut.moc"

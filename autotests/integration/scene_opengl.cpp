@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "generic_scene_opengl_test.h"
+#include "generic_scene_opengl.h"
 
 namespace KWin::detail::test
 {

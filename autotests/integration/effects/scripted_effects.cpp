@@ -720,4 +720,4 @@ TEST_CASE("scripted effects", "[effect]")
 
 }
 
-#include "scripted_effects_test.moc"
+#include "scripted_effects.moc"
