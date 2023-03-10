@@ -3,124 +3,129 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 add_subdirectory(helper)
+add_subdirectory(fakes)
 
-add_library(KWinIntegrationTestFramework SHARED
-  lib/app.cpp
+add_executable(tests
   lib/client.cpp
   lib/helpers.cpp
-  generic_scene_opengl_test.cpp
+  lib/main.cpp
+  lib/setup.cpp
+  # integration tests
+  activation.cpp
+  bindings.cpp
+  buffer_size_change.cpp
+  client_machine.cpp
+  night_color.cpp
+  dbus_interface.cpp
+  debug_console.cpp
+  decoration_input.cpp
+  desktop_window_x11.cpp
+  no_crash_aurorae_destroy_deco.cpp
+  no_crash_cancel_animation.cpp
+  no_crash_cursor_physical_size_empty.cpp
+  no_crash_empty_deco.cpp
+  no_crash_glxgears.cpp
+  no_crash_no_border.cpp
+  no_crash_reinitialize_compositor.cpp
+  no_crash_useractions_menu.cpp
+  gestures.cpp
+  global_shortcuts.cpp
+  idle_inhibition.cpp
+  idle.cpp
+  input_method.cpp
+  input_stacking_order.cpp
+  internal_window.cpp
+  keyboard_keymap.cpp
+  keyboard_layout.cpp
+  keymap_creation_failure.cpp
+  layer_shell.cpp
+  lockscreen.cpp
+  maximize.cpp
+  modifier_only_shortcut.cpp
+  move_resize_window.cpp
+  no_global_shortcuts.cpp
+  no_xdg_runtime_dir.cpp
+  placement.cpp
+  plasma_surface.cpp
+  plasma_window.cpp
+  platform_cursor.cpp
+  pointer_constraints.cpp
+  pointer_input.cpp
+  quick_tiling.cpp
+  opengl_shadow.cpp
+  scene_opengl.cpp
+  qpainter_shadow.cpp
+  scene_qpainter.cpp
+  screen_changes.cpp
+  screen_edges.cpp
+  screen_edge_window_show.cpp
+  screens.cpp
+  showing_desktop.cpp
+  stacking_order.cpp
+  struts.cpp
+  tabbox.cpp
+  touch_input.cpp
+  transient_placement.cpp
+  virtual_desktop.cpp
+  virtual_keyboard.cpp
+  window_rules.cpp
+  window_selection.cpp
+  x11_client.cpp
+  x11_timestamp_update.cpp
+  xcb_size_hints.cpp
+  xcb_wrapper.cpp
+  xdg_activation.cpp
+  xdg-shell_rules.cpp
+  xdg-shell_window.cpp
+  xwayland_input.cpp
+  xwayland_selections.cpp
+  # effect tests
+  effects/desktop_switching_animation.cpp
+  effects/fade.cpp
+  effects/maximize_animation.cpp
+  effects/minimize_animation.cpp
+  effects/popup_open_close_animation.cpp
+  effects/scripted_effects.cpp
+  effects/slidingpopups.cpp
+  effects/window_open_close_animation.cpp
+  effects/translucency.cpp
+  # scripting tests
+  scripting/minimize_all.cpp
+  scripting/screen_edge.cpp
+  # unit tests
+  ../libkwineffects/opengl_platform.cpp
+  ../libkwineffects/timeline.cpp
+  ../libkwineffects/window_quad_list.cpp
+  ../on_screen_notifications.cpp
+  ../opengl_context_attribute_builder.cpp
+  ../tabbox/desktop_chain.cpp
+  ../tabbox/tabbox_client_model.cpp
+  ../tabbox/tabbox_config.cpp
+  ../tabbox/tabbox_handler.cpp
+  ../gestures.cpp
+  ../screen_paint_data.cpp
+  ../window_paint_data.cpp
+  ../xcb_window.cpp
+  ../xkb.cpp
+  # unit tests support
+  ../libkwineffects/mock_gl.cpp
+  ../tabbox/mock_tabbox_client.cpp
+  ../tabbox/mock_tabbox_handler.cpp
+  ../../render/backend/x11/glx_context_attribute_builder.cpp
 )
 
-target_link_libraries(KWinIntegrationTestFramework
-PUBLIC
+target_link_libraries(tests
+PRIVATE
   kwin_wayland_lib
   Qt::Test
-  KF5::WindowSystem
-PRIVATE
+  Catch2::Catch2WithMain
   KF5::Crash
+  KF5::WindowSystem
   # Static plugins
   KWinQpaPlugin
   KF5WindowSystemKWinPlugin
   KF5IdleTimeKWinPlugin
 )
-target_compile_definitions(KWinIntegrationTestFramework PUBLIC WLR_USE_UNSTABLE)
 
-function(integrationTest)
-  set(options WAYLAND_ONLY)
-  set(oneValueArgs NAME)
-  set(multiValueArgs SRCS LIBS)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  add_executable(${ARGS_NAME} ${ARGS_SRCS})
-  target_link_libraries(${ARGS_NAME} KWinIntegrationTestFramework ${ARGS_LIBS})
-  add_test(
-    NAME kwin-${ARGS_NAME}
-    COMMAND ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}
-  )
-
-  if (${ARGS_WAYLAND_ONLY})
-    add_executable(${ARGS_NAME}_waylandonly ${ARGS_SRCS})
-    set_target_properties(${ARGS_NAME}_waylandonly PROPERTIES COMPILE_DEFINITIONS "NO_XWAYLAND")
-    target_link_libraries(${ARGS_NAME}_waylandonly KWinIntegrationTestFramework ${ARGS_LIBS})
-    add_test(
-      NAME kwin-${ARGS_NAME}-waylandonly
-      COMMAND ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}_waylandonly
-    )
-  endif()
-endfunction()
-
-integrationTest(NAME testDontCrashGlxgears SRCS dont_crash_glxgears.cpp)
-integrationTest(NAME testLockScreen SRCS lockscreen.cpp)
-integrationTest(WAYLAND_ONLY NAME testScreens SRCS screens.cpp)
-
-# TODO: The screen edges test could be run in wayland-only mode too but is at the moment too
-#       unstable for that.
-integrationTest(NAME testScreenEdges SRCS screen_edges.cpp)
-
-integrationTest(WAYLAND_ONLY NAME testDecorationInput SRCS decoration_input_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testInternalWindow SRCS internal_window.cpp)
-integrationTest(WAYLAND_ONLY NAME testTouchInput SRCS touch_input_test.cpp)
-integrationTest(NAME testInputMethod SRCS input_method.cpp)
-integrationTest(WAYLAND_ONLY NAME testInputStackingOrder SRCS input_stacking_order.cpp)
-integrationTest(NAME testPointerInput SRCS pointer_input.cpp)
-integrationTest(NAME testPlatformCursor SRCS platformcursor.cpp)
-integrationTest(WAYLAND_ONLY NAME testDontCrashCancelAnimation SRCS dont_crash_cancel_animation.cpp)
-integrationTest(WAYLAND_ONLY NAME testTransientPlacement SRCS transient_placement.cpp)
-integrationTest(NAME testDebugConsole SRCS debug_console_test.cpp)
-integrationTest(NAME testDontCrashEmptyDeco SRCS dont_crash_empty_deco.cpp)
-integrationTest(WAYLAND_ONLY NAME testPlasmaSurface SRCS plasma_surface_test.cpp)
-integrationTest(NAME testLayerShell SRCS layer_shell.cpp)
-integrationTest(WAYLAND_ONLY NAME testMaximized SRCS maximize_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testXdgShellClient SRCS xdgshellclient_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testDontCrashNoBorder SRCS dont_crash_no_border.cpp)
-integrationTest(NAME testXwaylandSelections SRCS xwayland_selections_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testSceneOpenGL SRCS scene_opengl_test.cpp )
-integrationTest(WAYLAND_ONLY NAME testSceneOpenGLShadow SRCS scene_opengl_shadow_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testNoXdgRuntimeDir SRCS no_xdg_runtime_dir_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testScreenChanges SRCS screen_changes_test.cpp)
-integrationTest(NAME testModifierOnlyShortcut SRCS modifier_only_shortcut_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testTabBox SRCS tabbox_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testWindowSelection SRCS window_selection_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testPointerConstraints SRCS pointer_constraints_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testKeyboardLayout SRCS keyboard_layout_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testKeyboardKeymap SRCS keyboard_keymap.cpp)
-integrationTest(WAYLAND_ONLY NAME testKeymapCreationFailure SRCS keymap_creation_failure_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testShowingDesktop SRCS showing_desktop_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testDontCrashUseractionsMenu SRCS dont_crash_useractions_menu.cpp)
-integrationTest(WAYLAND_ONLY NAME testBindings SRCS bindings_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testVirtualDesktop SRCS virtual_desktop_test.cpp)
-integrationTest(NAME testVirtualKeyboard SRCS virtual_keyboard.cpp)
-integrationTest(WAYLAND_ONLY NAME testXdgShellClientRules SRCS xdgshellclient_rules_test.cpp)
-integrationTest(WAYLAND_ONLY NAME idle-test SRCS idle_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testIdleInhibition SRCS idle_inhibition_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testColorCorrectNightColor SRCS colorcorrect_nightcolor_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testDontCrashCursorPhysicalSizeEmpty SRCS dont_crash_cursor_physical_size_empty.cpp)
-integrationTest(WAYLAND_ONLY NAME testDontCrashReinitializeCompositor SRCS dont_crash_reinitialize_compositor.cpp)
-integrationTest(WAYLAND_ONLY NAME testNoGlobalShortcuts SRCS no_global_shortcuts_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testBufferSizeChange SRCS buffer_size_change_test.cpp )
-integrationTest(WAYLAND_ONLY NAME testPlacement SRCS placement_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testActivation SRCS activation_test.cpp)
-integrationTest(WAYLAND_ONLY NAME testXdgActivation SRCS xdg_activation.cpp)
-integrationTest(WAYLAND_ONLY NAME testGestures2 SRCS gestures.cpp)
-
-if (XCB_ICCCM_FOUND)
-    integrationTest(NAME testMoveResize SRCS move_resize_window_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testStruts SRCS struts_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testDontCrashAuroraeDestroyDeco SRCS dont_crash_aurorae_destroy_deco.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testPlasmaWindow SRCS plasmawindow_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testScreenEdgeClientShow SRCS screenedge_client_show_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testX11DesktopWindow SRCS desktop_window_x11_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testXwaylandInput SRCS xwayland_input_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testWindowRules SRCS window_rules_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testX11Client SRCS x11_client_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testQuickTiling SRCS quick_tiling_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testGlobalShortcuts SRCS globalshortcuts_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testSceneQPainter SRCS scene_qpainter_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testSceneQPainterShadow SRCS scene_qpainter_shadow_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testStackingOrder SRCS stacking_order_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testDbusInterface SRCS dbus_interface_test.cpp LIBS XCB::ICCCM)
-endif()
-
-add_subdirectory(scripting)
-add_subdirectory(effects)
-add_subdirectory(fakes)
+include(Catch)
+catch_discover_tests(tests)

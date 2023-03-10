@@ -1,14 +1,14 @@
 /*
 SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
-SPDX-FileCopyrightText: 2020 Roman Gilg <subdiff@gmail.com>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "base/options.h"
+#include "lib/setup.h"
 
+#include "base/options.h"
 #include "base/wayland/server.h"
 #include "input/cursor.h"
-#include "lib/app.h"
 
 #include "win/activation.h"
 #include "win/move.h"
@@ -19,421 +19,360 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/surface.h>
 
 #include <KConfigGroup>
+#include <catch2/generators/catch_generators.hpp>
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class TestScreens : public QObject
+TEST_CASE("screens", "[base]")
 {
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
+    auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+    test::setup setup("screens", operation_mode);
+    setup.start();
+    setup_wayland_connection();
 
-    void testReconfigure_data();
-    void testReconfigure();
-    void testSize_data();
-    void testSize();
-    void testCount();
-    void testIntersecting_data();
-    void testIntersecting();
-    void testCurrent_data();
-    void testCurrent();
-    void testCurrentClient();
-    void testCurrentWithFollowsMouse_data();
-    void testCurrentWithFollowsMouse();
-    void testCurrentPoint_data();
-    void testCurrentPoint();
+    setup_wayland_connection();
 
-private:
-    Wrapland::Client::Compositor* m_compositor = nullptr;
-};
+    setup.set_outputs(1);
+    set_current_output(0);
+    cursor()->set_pos(QPoint(640, 512));
 
-void TestScreens::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
+    SECTION("reconfigure")
+    {
+        struct data {
+            std::string focus_policy;
+            bool expected_default;
+        };
 
-    Test::app()->start();
-    QVERIFY(startup_spy.size() || startup_spy.wait());
-}
+        auto test_data = GENERATE(data{"ClickToFocus", false},
+                                  data{"FocusFollowsMouse", true},
+                                  data{"FocusUnderMouse", true},
+                                  data{"FocusStrictlyUnderMouse", true});
 
-void TestScreens::init()
-{
-    Test::setup_wayland_connection();
-    m_compositor = Test::get_client().interfaces.compositor.get();
+        auto original_config = setup.base->config.main;
+        auto& options = setup.base->options;
 
-    Test::app()->set_outputs(1);
-    Test::set_current_output(0);
-    Test::cursor()->set_pos(QPoint(640, 512));
-}
+        QCOMPARE(options->get_current_output_follows_mouse(), false);
 
-void TestScreens::cleanup()
-{
-    Test::destroy_wayland_connection();
-}
+        auto config
+            = KSharedConfig::openConfig("testScreens_testReconfigure", KConfig::SimpleConfig);
+        config->group("Windows").writeEntry("FocusPolicy",
+                                            QString::fromStdString(test_data.focus_policy));
+        config->group("Windows").deleteEntry("ActiveMouseScreen");
+        config->group("Windows").sync();
+        config->sync();
 
-void TestScreens::testReconfigure_data()
-{
-    QTest::addColumn<QString>("focusPolicy");
-    QTest::addColumn<bool>("expectedDefault");
+        setup.base->config.main = config;
+        options = std::make_unique<base::options>(setup.base->operation_mode, config);
+        options->loadConfig();
 
-    QTest::newRow("ClickToFocus") << QStringLiteral("ClickToFocus") << false;
-    QTest::newRow("FocusFollowsMouse") << QStringLiteral("FocusFollowsMouse") << true;
-    QTest::newRow("FocusUnderMouse") << QStringLiteral("FocusUnderMouse") << true;
-    QTest::newRow("FocusStrictlyUnderMouse") << QStringLiteral("FocusStrictlyUnderMouse") << true;
-}
+        QCOMPARE(options->get_current_output_follows_mouse(), test_data.expected_default);
 
-void TestScreens::testReconfigure()
-{
-    auto original_config = Test::app()->base->config.main;
-    auto& options = Test::app()->base->options;
+        config->group("Windows").writeEntry("ActiveMouseScreen", !test_data.expected_default);
+        config->sync();
+        options->updateSettings();
+        QCOMPARE(options->get_current_output_follows_mouse(), !test_data.expected_default);
 
-    QCOMPARE(options->get_current_output_follows_mouse(), false);
-    QFETCH(QString, focusPolicy);
-
-    auto config = KSharedConfig::openConfig("testScreens_testReconfigure", KConfig::SimpleConfig);
-    config->group("Windows").writeEntry("FocusPolicy", focusPolicy);
-    config->group("Windows").deleteEntry("ActiveMouseScreen");
-    config->group("Windows").sync();
-    config->sync();
-
-    Test::app()->base->config.main = config;
-    options = std::make_unique<base::options>(Test::app()->base->operation_mode, config);
-    options->loadConfig();
-
-    QFETCH(bool, expectedDefault);
-    QCOMPARE(options->get_current_output_follows_mouse(), expectedDefault);
-
-    config->group("Windows").writeEntry("ActiveMouseScreen", !expectedDefault);
-    config->sync();
-    options->updateSettings();
-    QCOMPARE(options->get_current_output_follows_mouse(), !expectedDefault);
-
-    Test::app()->base->config.main = original_config;
-    options = std::make_unique<base::options>(Test::app()->base->operation_mode, original_config);
-    options->loadConfig();
-    QCOMPARE(options->get_current_output_follows_mouse(), false);
-}
-
-auto to_vector(QList<QRect> const& list)
-{
-    std::vector<QRect> vector;
-    vector.resize(list.size());
-    size_t count{0};
-    for (auto const& element : list) {
-        vector.at(count) = element;
-        count++;
+        setup.base->config.main = original_config;
+        options = std::make_unique<base::options>(setup.base->operation_mode, original_config);
+        options->loadConfig();
+        QCOMPARE(options->get_current_output_follows_mouse(), false);
     }
-    return vector;
-}
 
-void TestScreens::testSize_data()
-{
-    QTest::addColumn<QList<QRect>>("geometries");
-    QTest::addColumn<QSize>("expectedSize");
-    QTest::addColumn<int>("changeCount");
+    SECTION("size")
+    {
+        struct data {
+            std::vector<QRect> geometries;
+            QSize expected_size;
+            int change_count;
+        };
 
-    // TODO(romangg): To test empty size does not make sense. Or does it?
-    // QTest::newRow("empty") << QList<QRect>{{QRect()}} << QSize(0, 0);
-    QTest::newRow("cloned") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{0, 0, 200, 100}}}
-                            << QSize(200, 100) << 2;
-    QTest::newRow("adjacent") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}}
-                              << QSize(600, 400) << 4;
-    QTest::newRow("overlapping") << QList<QRect>{{QRect{-10, -20, 50, 100}, QRect{0, 0, 100, 200}}}
-                                 << QSize(110, 220) << 3;
-    QTest::newRow("gap") << QList<QRect>{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}}
-                         << QSize(30, 60) << 3;
-}
+        auto test_data = GENERATE(
+            // TODO(romangg): To test empty size does not make sense. Or does it?
+            // data{{QRect()}, {0, 0}, 0},
+            // cloned
+            data{{QRect{0, 0, 200, 100}, QRect{0, 0, 200, 100}}, {200, 100}, 2},
+            // adjacent
+            data{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}, {600, 400}, 4},
+            // overlapping
+            data{{QRect{-10, -20, 50, 100}, QRect{0, 0, 100, 200}}, {110, 220}, 3},
+            // gap
+            data{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}, {30, 60}, 3});
 
-void TestScreens::testSize()
-{
-    QSignalSpy topology_spy(Test::app()->base.get(), &base::platform::topology_changed);
-    QVERIFY(topology_spy.isValid());
+        QSignalSpy topology_spy(setup.base.get(), &base::platform::topology_changed);
+        QVERIFY(topology_spy.isValid());
 
-    QFETCH(QList<QRect>, geometries);
-    Test::app()->set_outputs(to_vector(geometries));
+        setup.set_outputs(test_data.geometries);
 
-    QCOMPARE(topology_spy.count(), 1);
-    QTEST(Test::app()->base->topology.size, "expectedSize");
-}
+        QCOMPARE(topology_spy.count(), 1);
+        REQUIRE(setup.base->topology.size == test_data.expected_size);
+    }
 
-void TestScreens::testCount()
-{
-    auto const& base = Test::app()->base;
+    SECTION("count")
+    {
+        auto const& base = setup.base;
 
-    QSignalSpy output_added_spy(base.get(), &base::platform::output_added);
-    QSignalSpy output_removed_spy(base.get(), &base::platform::output_removed);
-    QVERIFY(output_added_spy.isValid());
-    QVERIFY(output_removed_spy.isValid());
+        QSignalSpy output_added_spy(base.get(), &base::platform::output_added);
+        QSignalSpy output_removed_spy(base.get(), &base::platform::output_removed);
+        QVERIFY(output_added_spy.isValid());
+        QVERIFY(output_removed_spy.isValid());
 
-    QCOMPARE(base->get_outputs().size(), 1);
+        QCOMPARE(base->get_outputs().size(), 1);
 
-    // change to two screens
-    QList<QRect> geometries{{QRect{0, 0, 100, 200}, QRect{100, 0, 100, 200}}};
-    Test::app()->set_outputs(to_vector(geometries));
+        // change to two screens
+        std::vector<QRect> geometries{{QRect{0, 0, 100, 200}, QRect{100, 0, 100, 200}}};
+        setup.set_outputs(geometries);
 
-    QCOMPARE(output_added_spy.count(), 2);
-    QCOMPARE(output_removed_spy.count(), 1);
-    QCOMPARE(base->get_outputs().size(), 2);
+        QCOMPARE(output_added_spy.count(), 2);
+        QCOMPARE(output_removed_spy.count(), 1);
+        QCOMPARE(base->get_outputs().size(), 2);
 
-    output_added_spy.clear();
-    output_removed_spy.clear();
+        output_added_spy.clear();
+        output_removed_spy.clear();
 
-    // go back to one screen
-    geometries.takeLast();
-    Test::app()->set_outputs(to_vector(geometries));
+        // go back to one screen
+        geometries.pop_back();
+        setup.set_outputs(geometries);
 
-    QCOMPARE(output_removed_spy.count(), 2);
-    QCOMPARE(output_added_spy.count(), 1);
-    QCOMPARE(base->get_outputs().size(), 1);
+        QCOMPARE(output_removed_spy.count(), 2);
+        QCOMPARE(output_added_spy.count(), 1);
+        QCOMPARE(base->get_outputs().size(), 1);
 
-    // Setting the same geometries should emit the signal again.
-    QSignalSpy changedSpy(Test::app()->base.get(), &base::platform::topology_changed);
-    QVERIFY(changedSpy.isValid());
+        // Setting the same geometries should emit the signal again.
+        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QVERIFY(changedSpy.isValid());
 
-    output_added_spy.clear();
-    output_removed_spy.clear();
+        output_added_spy.clear();
+        output_removed_spy.clear();
 
-    Test::app()->set_outputs(to_vector(geometries));
-    QCOMPARE(changedSpy.count(), 1);
-    QCOMPARE(output_removed_spy.count(), 1);
-    QCOMPARE(output_added_spy.count(), 1);
-}
+        setup.set_outputs(geometries);
+        QCOMPARE(changedSpy.count(), 1);
+        QCOMPARE(output_removed_spy.count(), 1);
+        QCOMPARE(output_added_spy.count(), 1);
+    }
 
-void TestScreens::testIntersecting_data()
-{
-    QTest::addColumn<QList<QRect>>("geometries");
-    QTest::addColumn<QRect>("testGeometry");
-    QTest::addColumn<int>("expectedCount");
+    SECTION("intersecting")
+    {
+        struct data {
+            std::vector<QRect> geometries;
+            QRect test_geo;
+            size_t expected_count;
+        };
 
-    QTest::newRow("null-rect") << QList<QRect>{{QRect{0, 0, 100, 100}}} << QRect() << 0;
-    QTest::newRow("non-overlapping")
-        << QList<QRect>{{QRect{0, 0, 100, 100}}} << QRect(100, 0, 100, 100) << 0;
-    QTest::newRow("in-between") << QList<QRect>{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}}
-                                << QRect(15, 0, 2, 2) << 0;
-    QTest::newRow("gap-overlapping") << QList<QRect>{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}}
-                                     << QRect(9, 10, 200, 200) << 2;
-    QTest::newRow("larger") << QList<QRect>{{QRect{0, 0, 100, 100}}} << QRect(-10, -10, 200, 200)
-                            << 1;
-    QTest::newRow("several") << QList<QRect>{{QRect{0, 0, 100, 100},
-                                              QRect{100, 0, 100, 100},
-                                              QRect{200, 100, 100, 100},
-                                              QRect{300, 100, 100, 100}}}
-                             << QRect(0, 0, 300, 300) << 3;
-}
+        auto test_data = GENERATE(
+            // null-rect
+            data{{QRect{0, 0, 100, 100}}, {}, 0},
+            // non-overlapping
+            data{{QRect{0, 0, 100, 100}}, {100, 0, 100, 100}, 0},
+            // in-between
+            data{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}, {15, 0, 2, 2}, 0},
+            // gap-overlapping
+            data{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}, {9, 10, 200, 200}, 2},
+            // larger
+            data{{QRect{0, 0, 100, 100}}, {-10, -10, 200, 200}, 1},
+            // several
+            data{{QRect{0, 0, 100, 100},
+                  QRect{100, 0, 100, 100},
+                  QRect{200, 100, 100, 100},
+                  QRect{300, 100, 100, 100}},
+                 {0, 0, 300, 300},
+                 3});
 
-void TestScreens::testIntersecting()
-{
-    QSignalSpy changedSpy(Test::app()->base.get(), &base::platform::topology_changed);
-    QVERIFY(changedSpy.isValid());
+        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QVERIFY(changedSpy.isValid());
 
-    QFETCH(QList<QRect>, geometries);
-    Test::app()->set_outputs(to_vector(geometries));
+        setup.set_outputs(test_data.geometries);
 
-    QCOMPARE(changedSpy.count(), 1);
+        QCOMPARE(changedSpy.count(), 1);
 
-    QFETCH(QRect, testGeometry);
-    auto const& outputs = Test::app()->base->get_outputs();
-    QCOMPARE(outputs.size(), geometries.count());
-    QTEST(static_cast<int>(base::get_intersecting_outputs(outputs, testGeometry).size()),
-          "expectedCount");
-}
+        auto const& outputs = setup.base->get_outputs();
+        QCOMPARE(outputs.size(), test_data.geometries.size());
+        REQUIRE(base::get_intersecting_outputs(outputs, test_data.test_geo).size()
+                == test_data.expected_count);
+    }
 
-void TestScreens::testCurrent_data()
-{
-    QTest::addColumn<int>("current");
-    QTest::addColumn<bool>("signal");
+    SECTION("current")
+    {
+        struct data {
+            int current;
+            bool signal;
+        };
 
-    QTest::newRow("unchanged") << 0 << false;
-    QTest::newRow("changed") << 1 << true;
-}
+        auto test_data = GENERATE(data{0, false}, data{1, true});
 
-void TestScreens::testCurrent()
-{
-    auto& base = Test::app()->base;
-    Test::app()->set_outputs(2);
-    QCOMPARE(base->get_outputs().size(), 2);
+        auto& base = setup.base;
+        setup.set_outputs(2);
+        QCOMPARE(base->get_outputs().size(), 2);
 
-    QSignalSpy current_changed_spy(base.get(), &base::platform::current_output_changed);
-    QVERIFY(current_changed_spy.isValid());
+        QSignalSpy current_changed_spy(base.get(), &base::platform::current_output_changed);
+        QVERIFY(current_changed_spy.isValid());
 
-    QFETCH(int, current);
-    Test::set_current_output(current);
-    QCOMPARE(
-        base::get_output_index(base->outputs, *win::get_current_output(*Test::app()->base->space)),
-        current);
-    QTEST(!current_changed_spy.isEmpty(), "signal");
-}
+        set_current_output(test_data.current);
+        QCOMPARE(
+            base::get_output_index(base->outputs, *win::get_current_output(*setup.base->space)),
+            test_data.current);
+        REQUIRE(current_changed_spy.isEmpty() != test_data.signal);
+    }
 
-void TestScreens::testCurrentClient()
-{
-    QSignalSpy changedSpy(Test::app()->base.get(), &base::platform::topology_changed);
-    QVERIFY(changedSpy.isValid());
-    QSignalSpy current_output_spy(Test::app()->base.get(), &base::platform::current_output_changed);
-    QVERIFY(current_output_spy.isValid());
+    SECTION("current window")
+    {
+        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QVERIFY(changedSpy.isValid());
+        QSignalSpy current_output_spy(setup.base.get(), &base::platform::current_output_changed);
+        QVERIFY(current_output_spy.isValid());
 
-    QList<QRect> geometries{{QRect{0, 0, 100, 100}, QRect{100, 0, 100, 100}}};
-    Test::app()->set_outputs(to_vector(geometries));
+        std::vector<QRect> geometries{{QRect{0, 0, 100, 100}, QRect{100, 0, 100, 100}}};
+        setup.set_outputs(geometries);
 
-    QCOMPARE(changedSpy.count(), 1);
-    changedSpy.clear();
+        QCOMPARE(changedSpy.count(), 1);
+        changedSpy.clear();
 
-    // Create a window.
-    QSignalSpy clientAddedSpy(Test::app()->base->space->qobject.get(),
-                              &win::space::qobject_t::wayland_window_added);
-    QVERIFY(clientAddedSpy.isValid());
-    auto surface = Test::create_surface();
-    QVERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
-    QVERIFY(shellSurface);
-    Test::render(surface, QSize(100, 50), Qt::blue);
-    Test::flush_wayland_connection();
-    QVERIFY(clientAddedSpy.wait());
-    auto client = Test::get_wayland_window(Test::app()->base->space->stacking.active);
-    QVERIFY(client);
+        // Create a window.
+        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+                                  &win::space::qobject_t::wayland_window_added);
+        QVERIFY(clientAddedSpy.isValid());
+        auto surface = create_surface();
+        QVERIFY(surface);
+        auto shellSurface = create_xdg_shell_toplevel(surface);
+        QVERIFY(shellSurface);
+        render(surface, QSize(100, 50), Qt::blue);
+        flush_wayland_connection();
+        QVERIFY(clientAddedSpy.wait());
+        auto client = get_wayland_window(setup.base->space->stacking.active);
+        QVERIFY(client);
 
-    win::move(client, QPoint(101, 0));
-    QCOMPARE(Test::app()->base->space->stacking.active, Test::space::window_t(client));
-    win::unset_active_window(*Test::app()->base->space);
-    QVERIFY(!Test::app()->base->space->stacking.active);
+        win::move(client, QPoint(101, 0));
+        QCOMPARE(setup.base->space->stacking.active, space::window_t(client));
+        win::unset_active_window(*setup.base->space);
+        QVERIFY(!setup.base->space->stacking.active);
 
-    QCOMPARE(win::get_current_output(*Test::app()->base->space),
-             base::get_output(Test::app()->base->get_outputs(), 0));
+        QCOMPARE(win::get_current_output(*setup.base->space),
+                 base::get_output(setup.base->get_outputs(), 0));
 
-    // it's not the active client, so changing won't work
-    win::set_current_output_by_window(*Test::app()->base, *client);
-    QVERIFY(changedSpy.isEmpty());
-    QVERIFY(current_output_spy.isEmpty());
+        // it's not the active client, so changing won't work
+        win::set_current_output_by_window(*setup.base, *client);
+        QVERIFY(changedSpy.isEmpty());
+        QVERIFY(current_output_spy.isEmpty());
 
-    auto output = base::get_output(Test::app()->base->get_outputs(), 0);
-    QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->base->space), output);
+        auto output = base::get_output(setup.base->get_outputs(), 0);
+        QVERIFY(output);
+        QCOMPARE(win::get_current_output(*setup.base->space), output);
 
-    // making the client active should affect things
-    win::set_active(client, true);
-    win::set_active_window(*Test::app()->base->space, *client);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), client);
+        // making the client active should affect things
+        win::set_active(client, true);
+        win::set_active_window(*setup.base->space, *client);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client);
 
-    // first of all current should be changed just by the fact that there is an active client
-    output = base::get_output(Test::app()->base->get_outputs(), 1);
-    QVERIFY(output);
-    QCOMPARE(client->topo.central_output, output);
-    QCOMPARE(win::get_current_output(*Test::app()->base->space), output);
+        // first of all current should be changed just by the fact that there is an active client
+        output = base::get_output(setup.base->get_outputs(), 1);
+        QVERIFY(output);
+        QCOMPARE(client->topo.central_output, output);
+        QCOMPARE(win::get_current_output(*setup.base->space), output);
 
-    // but also calling setCurrent should emit the changed signal
-    win::set_current_output_by_window(*Test::app()->base, *client);
-    QCOMPARE(changedSpy.count(), 0);
-    QCOMPARE(current_output_spy.count(), 1);
+        // but also calling setCurrent should emit the changed signal
+        win::set_current_output_by_window(*setup.base, *client);
+        QCOMPARE(changedSpy.count(), 0);
+        QCOMPARE(current_output_spy.count(), 1);
 
-    output = base::get_output(Test::app()->base->get_outputs(), 1);
-    QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->base->space), output);
+        output = base::get_output(setup.base->get_outputs(), 1);
+        QVERIFY(output);
+        QCOMPARE(win::get_current_output(*setup.base->space), output);
 
-    // setting current with the same client again should not change, though
-    win::set_current_output_by_window(*Test::app()->base, *client);
-    QCOMPARE(changedSpy.count(), 0);
-    QCOMPARE(current_output_spy.count(), 1);
+        // setting current with the same client again should not change, though
+        win::set_current_output_by_window(*setup.base, *client);
+        QCOMPARE(changedSpy.count(), 0);
+        QCOMPARE(current_output_spy.count(), 1);
 
-    // and it should even still be on screen 1 if we make the client non-current again
-    win::unset_active_window(*Test::app()->base->space);
-    win::set_active(client, false);
+        // and it should even still be on screen 1 if we make the client non-current again
+        win::unset_active_window(*setup.base->space);
+        win::set_active(client, false);
 
-    output = base::get_output(Test::app()->base->get_outputs(), 1);
-    QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->base->space), output);
-}
+        output = base::get_output(setup.base->get_outputs(), 1);
+        QVERIFY(output);
+        QCOMPARE(win::get_current_output(*setup.base->space), output);
+    }
 
-void TestScreens::testCurrentWithFollowsMouse_data()
-{
-    QTest::addColumn<QList<QRect>>("geometries");
-    QTest::addColumn<QPoint>("cursorPos");
-    QTest::addColumn<int>("expected");
+    SECTION("current with follows mouse")
+    {
+        struct data {
+            std::vector<QRect> geometries;
+            QPoint cursor_pos;
+            int expected;
+        };
 
-    // TODO(romangg): To test empty size does not make sense. Or does it?
-    // QTest::newRow("empty") << QList<QRect>{{QRect()}} << QPoint(100, 100) << 0;
-    QTest::newRow("cloned") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{0, 0, 200, 100}}}
-                            << QPoint(50, 50) << 0;
-    QTest::newRow("adjacent-0") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}}
-                                << QPoint(199, 99) << 0;
-    QTest::newRow("adjacent-1") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}}
-                                << QPoint(200, 100) << 1;
-    QTest::newRow("gap") << QList<QRect>{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}}
-                         << QPoint(15, 30) << 0;
-}
+        auto test_data = GENERATE(
+            // TODO(romangg): To test empty size does not make sense. Or does it?
+            // data{{QRect()}, {100, 100}, 0},
+            // cloned
+            data{{QRect{0, 0, 200, 100}, QRect{0, 0, 200, 100}}, {50, 50}, 0},
+            // adjacent-0
+            data{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}, {199, 99}, 0},
+            // adjacent-1
+            data{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}, {200, 100}, 1},
+            // gap
+            data{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}, {15, 30}, 0});
 
-void TestScreens::testCurrentWithFollowsMouse()
-{
-    QSignalSpy changedSpy(Test::app()->base.get(), &base::platform::topology_changed);
-    QVERIFY(changedSpy.isValid());
+        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QVERIFY(changedSpy.isValid());
 
-    auto group = Test::app()->base->config.main->group("Windows");
-    group.writeEntry("ActiveMouseScreen", true);
-    group.sync();
-    win::space_reconfigure(*Test::app()->base->space);
+        auto group = setup.base->config.main->group("Windows");
+        group.writeEntry("ActiveMouseScreen", true);
+        group.sync();
+        win::space_reconfigure(*setup.base->space);
 
-    Test::pointer_motion_absolute(QPointF(0, 0), 1);
+        pointer_motion_absolute(QPointF(0, 0), 1);
 
-    auto output = base::get_output(Test::app()->base->get_outputs(), 0);
-    QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->base->space), output);
+        auto output = base::get_output(setup.base->get_outputs(), 0);
+        QVERIFY(output);
+        QCOMPARE(win::get_current_output(*setup.base->space), output);
 
-    QFETCH(QList<QRect>, geometries);
-    Test::app()->set_outputs(to_vector(geometries));
-    QCOMPARE(changedSpy.count(), 1);
+        setup.set_outputs(test_data.geometries);
+        QCOMPARE(changedSpy.count(), 1);
 
-    QFETCH(QPoint, cursorPos);
-    Test::pointer_motion_absolute(cursorPos, 2);
+        pointer_motion_absolute(test_data.cursor_pos, 2);
 
-    QFETCH(int, expected);
-    output = base::get_output(Test::app()->base->get_outputs(), expected);
-    QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->base->space), output);
-}
+        output = base::get_output(setup.base->get_outputs(), test_data.expected);
+        QVERIFY(output);
+        QCOMPARE(win::get_current_output(*setup.base->space), output);
+    }
 
-void TestScreens::testCurrentPoint_data()
-{
-    QTest::addColumn<QList<QRect>>("geometries");
-    QTest::addColumn<QPoint>("cursorPos");
-    QTest::addColumn<int>("expected");
+    SECTION("current point")
+    {
+        struct data {
+            std::vector<QRect> geometries;
+            QPoint cursor_pos;
+            int expected;
+        };
 
-    // TODO(romangg): To test empty size does not make sense. Or does it?
-    // QTest::newRow("empty") << QList<QRect>{{QRect()}} << QPoint(100, 100) << 0;
-    QTest::newRow("cloned") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{0, 0, 200, 100}}}
-                            << QPoint(50, 50) << 0;
-    QTest::newRow("adjacent-0") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}}
-                                << QPoint(199, 99) << 0;
-    QTest::newRow("adjacent-1") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}}
-                                << QPoint(200, 100) << 1;
-    QTest::newRow("gap") << QList<QRect>{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}}
-                         << QPoint(15, 30) << 1;
-}
+        auto test_data = GENERATE(
+            // TODO(romangg): To test empty size does not make sense. Or does it?
+            // data{{QRect()}, {100, 100}, 0},
+            // cloned
+            data{{QRect{0, 0, 200, 100}, QRect{0, 0, 200, 100}}, {50, 50}, 0},
+            // adjacent-0
+            data{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}, {199, 99}, 0},
+            // adjacent-1
+            data{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}, {200, 100}, 1},
+            // gap
+            data{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}, {15, 30}, 1});
 
-void TestScreens::testCurrentPoint()
-{
-    QSignalSpy changedSpy(Test::app()->base.get(), &base::platform::topology_changed);
-    QVERIFY(changedSpy.isValid());
+        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QVERIFY(changedSpy.isValid());
 
-    auto group = Test::app()->base->config.main->group("Windows");
-    group.writeEntry("ActiveMouseScreen", false);
-    group.sync();
-    win::space_reconfigure(*Test::app()->base->space);
+        auto group = setup.base->config.main->group("Windows");
+        group.writeEntry("ActiveMouseScreen", false);
+        group.sync();
+        win::space_reconfigure(*setup.base->space);
 
-    QFETCH(QList<QRect>, geometries);
-    Test::app()->set_outputs(to_vector(geometries));
-    QCOMPARE(changedSpy.count(), 1);
+        setup.set_outputs(test_data.geometries);
+        QCOMPARE(changedSpy.count(), 1);
 
-    QFETCH(QPoint, cursorPos);
-    base::set_current_output_by_position(*Test::app()->base, cursorPos);
+        base::set_current_output_by_position(*setup.base, test_data.cursor_pos);
 
-    QFETCH(int, expected);
-    auto output = base::get_output(Test::app()->base->get_outputs(), expected);
-    QVERIFY(output);
-    QCOMPARE(win::get_current_output(*Test::app()->base->space), output);
+        auto output = base::get_output(setup.base->get_outputs(), test_data.expected);
+        QVERIFY(output);
+        QCOMPARE(win::get_current_output(*setup.base->space), output);
+    }
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::TestScreens)
-#include "screens.moc"

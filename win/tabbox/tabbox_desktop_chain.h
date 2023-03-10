@@ -20,7 +20,7 @@ namespace win
 /**
  * @brief A chain for last recently used virtual desktops.
  */
-class tabbox_desktop_chain
+class KWIN_EXPORT tabbox_desktop_chain
 {
 public:
     /**

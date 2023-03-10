@@ -7,7 +7,7 @@
 
 #include "utils/flags.h"
 
-namespace KWin::Test
+namespace KWin::detail::test
 {
 
 enum class global_selection {
@@ -28,4 +28,4 @@ enum class global_selection {
 
 }
 
-ENUM_FLAGS(KWin::Test::global_selection)
+ENUM_FLAGS(KWin::detail::test::global_selection)

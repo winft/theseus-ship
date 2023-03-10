@@ -36,7 +36,7 @@
 #include <memory>
 #include <vector>
 
-namespace KWin::Test
+namespace KWin::detail::test
 {
 
 class KWIN_EXPORT client

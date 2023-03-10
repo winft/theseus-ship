@@ -3,7 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
@@ -18,246 +18,224 @@
 #include <Wrapland/Client/pointergestures.h>
 #include <Wrapland/Client/surface.h>
 
-namespace KWin
+namespace KWin::detail::test
 {
 
-class gestures_test : public QObject
+TEST_CASE("gestures", "[input]")
 {
-    Q_OBJECT
+    test::setup setup("gestures");
+    setup.start();
 
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
+    cursor()->set_pos(QPoint(500, 500));
+    setup_wayland_connection(global_selection::seat | global_selection::pointer_gestures);
+    QVERIFY(wait_for_wayland_pointer());
 
-    void test_swipe_forward();
-    void test_pinch_forward();
-    void test_hold_forward();
-};
+    SECTION("forward swipe")
+    {
+        // This test verifies that swipe gestures are correctly forwarded to clients.
+        auto& client_gestures = get_client().interfaces.pointer_gestures;
 
-void gestures_test::initTestCase()
-{
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-    Test::app()->start();
-    QVERIFY(startup_spy.size() || startup_spy.wait());
-}
+        auto client_pointer = std::unique_ptr<Wrapland::Client::Pointer>(
+            get_client().interfaces.seat->createPointer());
+        auto client_gesture = std::unique_ptr<Wrapland::Client::PointerSwipeGesture>(
+            client_gestures->createSwipeGesture(client_pointer.get()));
 
-void gestures_test::init()
-{
-    Test::cursor()->set_pos(QPoint(500, 500));
-    Test::setup_wayland_connection(Test::global_selection::seat
-                                   | Test::global_selection::pointer_gestures);
-    QVERIFY(Test::wait_for_wayland_pointer());
-}
+        QSignalSpy begin_spy(client_gesture.get(), &Wrapland::Client::PointerSwipeGesture::started);
+        QSignalSpy update_spy(client_gesture.get(),
+                              &Wrapland::Client::PointerSwipeGesture::updated);
+        QSignalSpy end_spy(client_gesture.get(), &Wrapland::Client::PointerSwipeGesture::ended);
+        QSignalSpy cancel_spy(client_gesture.get(),
+                              &Wrapland::Client::PointerSwipeGesture::cancelled);
 
-void gestures_test::cleanup()
-{
-    Test::destroy_wayland_connection();
-}
+        // Arbitrary test values.
+        auto fingers = 3;
+        auto dx = 1;
+        auto dy = 2;
+        uint32_t time{0};
 
-void gestures_test::test_swipe_forward()
-{
-    // This test verifies that swipe gestures are correctly forwarded to clients.
-    auto& client_gestures = Test::get_client().interfaces.pointer_gestures;
+        auto surface = create_surface();
+        auto toplevel = create_xdg_shell_toplevel(surface);
+        auto window = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        QVERIFY(window->control->active);
 
-    auto client_pointer = std::unique_ptr<Wrapland::Client::Pointer>(
-        Test::get_client().interfaces.seat->createPointer());
-    auto client_gesture = std::unique_ptr<Wrapland::Client::PointerSwipeGesture>(
-        client_gestures->createSwipeGesture(client_pointer.get()));
+        // Swipes without surface focus aren't forwarded.
+        swipe_begin(fingers, ++time);
+        QVERIFY(!begin_spy.wait(50));
+        QCOMPARE(begin_spy.size(), 0);
 
-    QSignalSpy begin_spy(client_gesture.get(), &Wrapland::Client::PointerSwipeGesture::started);
-    QSignalSpy update_spy(client_gesture.get(), &Wrapland::Client::PointerSwipeGesture::updated);
-    QSignalSpy end_spy(client_gesture.get(), &Wrapland::Client::PointerSwipeGesture::ended);
-    QSignalSpy cancel_spy(client_gesture.get(), &Wrapland::Client::PointerSwipeGesture::cancelled);
+        swipe_update(fingers, ++dx, ++dy, ++time);
+        QVERIFY(!update_spy.wait(50));
+        QCOMPARE(update_spy.size(), 0);
 
-    // Arbitrary test values.
-    auto fingers = 3;
-    auto dx = 1;
-    auto dy = 2;
-    uint32_t time{0};
+        swipe_end(++time);
+        QVERIFY(!end_spy.wait(50));
+        QCOMPARE(end_spy.size(), 0);
 
-    auto surface = Test::create_surface();
-    auto toplevel = Test::create_xdg_shell_toplevel(surface);
-    auto window = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
-    QVERIFY(window->control->active);
+        cursor()->set_pos(QPoint(10, 10));
+        swipe_begin(fingers, ++time);
+        QVERIFY(begin_spy.wait());
+        QCOMPARE(begin_spy.back().back().toInt(), time);
+        QCOMPARE(client_gesture->fingerCount(), fingers);
+        QCOMPARE(begin_spy.size(), 1);
 
-    // Swipes without surface focus aren't forwarded.
-    Test::swipe_begin(fingers, ++time);
-    QVERIFY(!begin_spy.wait(50));
-    QCOMPARE(begin_spy.size(), 0);
+        swipe_update(fingers, ++dx, ++dy, ++time);
+        QVERIFY(update_spy.wait());
+        QCOMPARE(update_spy.back().front().toSizeF(), QSizeF(dx, dy));
+        QCOMPARE(update_spy.back().back().toInt(), time);
+        QCOMPARE(client_gesture->fingerCount(), fingers);
+        QCOMPARE(update_spy.size(), 1);
 
-    Test::swipe_update(fingers, ++dx, ++dy, ++time);
-    QVERIFY(!update_spy.wait(50));
-    QCOMPARE(update_spy.size(), 0);
+        swipe_end(++time);
+        QVERIFY(end_spy.wait());
+        QCOMPARE(end_spy.back().back().toInt(), time);
+        QCOMPARE(end_spy.size(), 1);
 
-    Test::swipe_end(++time);
-    QVERIFY(!end_spy.wait(50));
-    QCOMPARE(end_spy.size(), 0);
+        swipe_begin(++fingers, ++time);
+        QVERIFY(begin_spy.wait());
+        QCOMPARE(begin_spy.back().back().toInt(), time);
+        QCOMPARE(client_gesture->fingerCount(), fingers);
+        QCOMPARE(begin_spy.size(), 2);
 
-    Test::cursor()->set_pos(QPoint(10, 10));
-    Test::swipe_begin(fingers, ++time);
-    QVERIFY(begin_spy.wait());
-    QCOMPARE(begin_spy.back().back().toInt(), time);
-    QCOMPARE(client_gesture->fingerCount(), fingers);
-    QCOMPARE(begin_spy.size(), 1);
+        swipe_cancel(++time);
+        QVERIFY(cancel_spy.wait());
+        QCOMPARE(cancel_spy.back().back().toInt(), time);
+        QCOMPARE(cancel_spy.size(), 1);
+        QCOMPARE(end_spy.size(), 1);
+    }
 
-    Test::swipe_update(fingers, ++dx, ++dy, ++time);
-    QVERIFY(update_spy.wait());
-    QCOMPARE(update_spy.back().front().toSizeF(), QSizeF(dx, dy));
-    QCOMPARE(update_spy.back().back().toInt(), time);
-    QCOMPARE(client_gesture->fingerCount(), fingers);
-    QCOMPARE(update_spy.size(), 1);
+    SECTION("forward pinch")
+    {
+        // This test verifies that pinch gestures are correctly forwarded to clients.
+        auto& client_gestures = get_client().interfaces.pointer_gestures;
 
-    Test::swipe_end(++time);
-    QVERIFY(end_spy.wait());
-    QCOMPARE(end_spy.back().back().toInt(), time);
-    QCOMPARE(end_spy.size(), 1);
+        auto client_pointer = std::unique_ptr<Wrapland::Client::Pointer>(
+            get_client().interfaces.seat->createPointer());
+        auto client_gesture = std::unique_ptr<Wrapland::Client::PointerPinchGesture>(
+            client_gestures->createPinchGesture(client_pointer.get()));
 
-    Test::swipe_begin(++fingers, ++time);
-    QVERIFY(begin_spy.wait());
-    QCOMPARE(begin_spy.back().back().toInt(), time);
-    QCOMPARE(client_gesture->fingerCount(), fingers);
-    QCOMPARE(begin_spy.size(), 2);
+        QSignalSpy begin_spy(client_gesture.get(), &Wrapland::Client::PointerPinchGesture::started);
+        QSignalSpy update_spy(client_gesture.get(),
+                              &Wrapland::Client::PointerPinchGesture::updated);
+        QSignalSpy end_spy(client_gesture.get(), &Wrapland::Client::PointerPinchGesture::ended);
+        QSignalSpy cancel_spy(client_gesture.get(),
+                              &Wrapland::Client::PointerPinchGesture::cancelled);
 
-    Test::swipe_cancel(++time);
-    QVERIFY(cancel_spy.wait());
-    QCOMPARE(cancel_spy.back().back().toInt(), time);
-    QCOMPARE(cancel_spy.size(), 1);
-    QCOMPARE(end_spy.size(), 1);
-}
+        // Arbitrary test values.
+        auto fingers = 3;
+        auto dx = 1;
+        auto dy = 2;
+        auto scale = 2;
+        auto rotation = 180;
+        uint32_t time{0};
 
-void gestures_test::test_pinch_forward()
-{
-    // This test verifies that pinch gestures are correctly forwarded to clients.
-    auto& client_gestures = Test::get_client().interfaces.pointer_gestures;
+        auto surface = create_surface();
+        auto toplevel = create_xdg_shell_toplevel(surface);
+        auto window = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        QVERIFY(window->control->active);
 
-    auto client_pointer = std::unique_ptr<Wrapland::Client::Pointer>(
-        Test::get_client().interfaces.seat->createPointer());
-    auto client_gesture = std::unique_ptr<Wrapland::Client::PointerPinchGesture>(
-        client_gestures->createPinchGesture(client_pointer.get()));
+        // Pinches without surface focus aren't forwarded.
+        pinch_begin(fingers, ++time);
+        QVERIFY(!begin_spy.wait(50));
+        QCOMPARE(begin_spy.size(), 0);
 
-    QSignalSpy begin_spy(client_gesture.get(), &Wrapland::Client::PointerPinchGesture::started);
-    QSignalSpy update_spy(client_gesture.get(), &Wrapland::Client::PointerPinchGesture::updated);
-    QSignalSpy end_spy(client_gesture.get(), &Wrapland::Client::PointerPinchGesture::ended);
-    QSignalSpy cancel_spy(client_gesture.get(), &Wrapland::Client::PointerPinchGesture::cancelled);
+        pinch_update(fingers, ++dx, ++dy, ++scale, ++rotation, ++time);
+        QVERIFY(!update_spy.wait(50));
+        QCOMPARE(update_spy.size(), 0);
 
-    // Arbitrary test values.
-    auto fingers = 3;
-    auto dx = 1;
-    auto dy = 2;
-    auto scale = 2;
-    auto rotation = 180;
-    uint32_t time{0};
+        pinch_end(++time);
+        QVERIFY(!end_spy.wait(50));
+        QCOMPARE(end_spy.size(), 0);
 
-    auto surface = Test::create_surface();
-    auto toplevel = Test::create_xdg_shell_toplevel(surface);
-    auto window = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
-    QVERIFY(window->control->active);
+        cursor()->set_pos(QPoint(10, 10));
+        pinch_begin(fingers, ++time);
+        QVERIFY(begin_spy.wait());
+        QCOMPARE(begin_spy.back().back().toInt(), time);
+        QCOMPARE(client_gesture->fingerCount(), fingers);
+        QCOMPARE(begin_spy.size(), 1);
 
-    // Pinches without surface focus aren't forwarded.
-    Test::pinch_begin(fingers, ++time);
-    QVERIFY(!begin_spy.wait(50));
-    QCOMPARE(begin_spy.size(), 0);
+        pinch_update(fingers, ++dx, ++dy, ++scale, ++rotation, ++time);
+        QVERIFY(update_spy.wait());
+        QCOMPARE(update_spy.back().front().toSizeF(), QSizeF(dx, dy));
+        QCOMPARE(update_spy.back().back().toInt(), time);
+        QCOMPARE(client_gesture->fingerCount(), fingers);
+        QCOMPARE(update_spy.size(), 1);
 
-    Test::pinch_update(fingers, ++dx, ++dy, ++scale, ++rotation, ++time);
-    QVERIFY(!update_spy.wait(50));
-    QCOMPARE(update_spy.size(), 0);
+        pinch_end(++time);
+        QVERIFY(end_spy.wait());
+        QCOMPARE(end_spy.back().back().toInt(), time);
+        QCOMPARE(end_spy.size(), 1);
 
-    Test::pinch_end(++time);
-    QVERIFY(!end_spy.wait(50));
-    QCOMPARE(end_spy.size(), 0);
+        pinch_begin(++fingers, ++time);
+        QVERIFY(begin_spy.wait());
+        QCOMPARE(begin_spy.back().back().toInt(), time);
+        QCOMPARE(client_gesture->fingerCount(), fingers);
+        QCOMPARE(begin_spy.size(), 2);
 
-    Test::cursor()->set_pos(QPoint(10, 10));
-    Test::pinch_begin(fingers, ++time);
-    QVERIFY(begin_spy.wait());
-    QCOMPARE(begin_spy.back().back().toInt(), time);
-    QCOMPARE(client_gesture->fingerCount(), fingers);
-    QCOMPARE(begin_spy.size(), 1);
+        pinch_cancel(++time);
+        QVERIFY(cancel_spy.wait());
+        QCOMPARE(cancel_spy.back().back().toInt(), time);
+        QCOMPARE(cancel_spy.size(), 1);
+        QCOMPARE(end_spy.size(), 1);
+    }
 
-    Test::pinch_update(fingers, ++dx, ++dy, ++scale, ++rotation, ++time);
-    QVERIFY(update_spy.wait());
-    QCOMPARE(update_spy.back().front().toSizeF(), QSizeF(dx, dy));
-    QCOMPARE(update_spy.back().back().toInt(), time);
-    QCOMPARE(client_gesture->fingerCount(), fingers);
-    QCOMPARE(update_spy.size(), 1);
+    SECTION("forward hold")
+    {
+        // This test verifies that hold gestures are correctly forwarded to clients.
+        auto& client_gestures = get_client().interfaces.pointer_gestures;
 
-    Test::pinch_end(++time);
-    QVERIFY(end_spy.wait());
-    QCOMPARE(end_spy.back().back().toInt(), time);
-    QCOMPARE(end_spy.size(), 1);
+        auto client_pointer = std::unique_ptr<Wrapland::Client::Pointer>(
+            get_client().interfaces.seat->createPointer());
+        auto client_gesture = std::unique_ptr<Wrapland::Client::pointer_hold_gesture>(
+            client_gestures->create_hold_gesture(client_pointer.get()));
 
-    Test::pinch_begin(++fingers, ++time);
-    QVERIFY(begin_spy.wait());
-    QCOMPARE(begin_spy.back().back().toInt(), time);
-    QCOMPARE(client_gesture->fingerCount(), fingers);
-    QCOMPARE(begin_spy.size(), 2);
+        QSignalSpy begin_spy(client_gesture.get(),
+                             &Wrapland::Client::pointer_hold_gesture::started);
+        QSignalSpy end_spy(client_gesture.get(), &Wrapland::Client::pointer_hold_gesture::ended);
+        QSignalSpy cancel_spy(client_gesture.get(),
+                              &Wrapland::Client::pointer_hold_gesture::cancelled);
 
-    Test::pinch_cancel(++time);
-    QVERIFY(cancel_spy.wait());
-    QCOMPARE(cancel_spy.back().back().toInt(), time);
-    QCOMPARE(cancel_spy.size(), 1);
-    QCOMPARE(end_spy.size(), 1);
-}
+        // Arbitrary test values.
+        auto fingers = 3;
+        uint32_t time{0};
 
-void gestures_test::test_hold_forward()
-{
-    // This test verifies that hold gestures are correctly forwarded to clients.
-    auto& client_gestures = Test::get_client().interfaces.pointer_gestures;
+        auto surface = create_surface();
+        auto toplevel = create_xdg_shell_toplevel(surface);
+        auto window = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        QVERIFY(window->control->active);
 
-    auto client_pointer = std::unique_ptr<Wrapland::Client::Pointer>(
-        Test::get_client().interfaces.seat->createPointer());
-    auto client_gesture = std::unique_ptr<Wrapland::Client::pointer_hold_gesture>(
-        client_gestures->create_hold_gesture(client_pointer.get()));
+        // Holds without surface focus aren't forwarded.
+        hold_begin(fingers, ++time);
+        QVERIFY(!begin_spy.wait(50));
+        QCOMPARE(begin_spy.size(), 0);
 
-    QSignalSpy begin_spy(client_gesture.get(), &Wrapland::Client::pointer_hold_gesture::started);
-    QSignalSpy end_spy(client_gesture.get(), &Wrapland::Client::pointer_hold_gesture::ended);
-    QSignalSpy cancel_spy(client_gesture.get(), &Wrapland::Client::pointer_hold_gesture::cancelled);
+        hold_end(++time);
+        QVERIFY(!end_spy.wait(50));
+        QCOMPARE(end_spy.size(), 0);
 
-    // Arbitrary test values.
-    auto fingers = 3;
-    uint32_t time{0};
+        cursor()->set_pos(QPoint(10, 10));
+        hold_begin(fingers, ++time);
+        QVERIFY(begin_spy.wait());
+        QCOMPARE(begin_spy.back().back().toInt(), time);
+        QCOMPARE(client_gesture->fingerCount(), fingers);
+        QCOMPARE(begin_spy.size(), 1);
 
-    auto surface = Test::create_surface();
-    auto toplevel = Test::create_xdg_shell_toplevel(surface);
-    auto window = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
-    QVERIFY(window->control->active);
+        hold_end(++time);
+        QVERIFY(end_spy.wait());
+        QCOMPARE(end_spy.back().back().toInt(), time);
+        QCOMPARE(end_spy.size(), 1);
 
-    // Holds without surface focus aren't forwarded.
-    Test::hold_begin(fingers, ++time);
-    QVERIFY(!begin_spy.wait(50));
-    QCOMPARE(begin_spy.size(), 0);
+        hold_begin(++fingers, ++time);
+        QVERIFY(begin_spy.wait());
+        QCOMPARE(begin_spy.back().back().toInt(), time);
+        QCOMPARE(client_gesture->fingerCount(), fingers);
+        QCOMPARE(begin_spy.size(), 2);
 
-    Test::hold_end(++time);
-    QVERIFY(!end_spy.wait(50));
-    QCOMPARE(end_spy.size(), 0);
-
-    Test::cursor()->set_pos(QPoint(10, 10));
-    Test::hold_begin(fingers, ++time);
-    QVERIFY(begin_spy.wait());
-    QCOMPARE(begin_spy.back().back().toInt(), time);
-    QCOMPARE(client_gesture->fingerCount(), fingers);
-    QCOMPARE(begin_spy.size(), 1);
-
-    Test::hold_end(++time);
-    QVERIFY(end_spy.wait());
-    QCOMPARE(end_spy.back().back().toInt(), time);
-    QCOMPARE(end_spy.size(), 1);
-
-    Test::hold_begin(++fingers, ++time);
-    QVERIFY(begin_spy.wait());
-    QCOMPARE(begin_spy.back().back().toInt(), time);
-    QCOMPARE(client_gesture->fingerCount(), fingers);
-    QCOMPARE(begin_spy.size(), 2);
-
-    Test::hold_cancel(++time);
-    QVERIFY(cancel_spy.wait());
-    QCOMPARE(cancel_spy.back().back().toInt(), time);
-    QCOMPARE(cancel_spy.size(), 1);
-    QCOMPARE(end_spy.size(), 1);
+        hold_cancel(++time);
+        QVERIFY(cancel_spy.wait());
+        QCOMPARE(cancel_spy.back().back().toInt(), time);
+        QCOMPARE(cancel_spy.size(), 1);
+        QCOMPARE(end_spy.size(), 1);
+    }
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::gestures_test)
-#include "gestures.moc"

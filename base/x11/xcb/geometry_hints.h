@@ -15,6 +15,53 @@ class TestXcbSizeHints;
 namespace KWin::base::x11::xcb
 {
 
+/**
+ * normal_hints as specified in ICCCM 4.1.2.3.
+ */
+class normal_hints : public property
+{
+public:
+    struct size_hints {
+        enum Flags {
+            user_position = 1,
+            user_size = 2,
+            program_position = 4,
+            program_size = 8,
+            min_size = 16,
+            max_size = 32,
+            resize_increments = 64,
+            aspect = 128,
+            base_size = 256,
+            window_gravity = 512
+        };
+        qint32 flags = 0;
+        qint32 pad[4] = {0, 0, 0, 0};
+        qint32 minWidth = 0;
+        qint32 minHeight = 0;
+        qint32 maxWidth = 0;
+        qint32 maxHeight = 0;
+        qint32 widthInc = 0;
+        qint32 heightInc = 0;
+        qint32 minAspect[2] = {0, 0};
+        qint32 maxAspect[2] = {0, 0};
+        qint32 baseWidth = 0;
+        qint32 baseHeight = 0;
+        qint32 winGravity = 0;
+    };
+    explicit normal_hints(xcb_connection_t* con)
+        : property(con)
+    {
+    }
+    explicit normal_hints(xcb_connection_t* con, xcb_window_t window)
+        : property(con, 0, window, XCB_ATOM_WM_NORMAL_HINTS, XCB_ATOM_WM_SIZE_HINTS, 0, 18)
+    {
+    }
+    inline size_hints* sizeHints()
+    {
+        return value<size_hints*>(32, XCB_ATOM_WM_SIZE_HINTS, nullptr);
+    }
+};
+
 class geometry_hints
 {
 public:
@@ -135,56 +182,10 @@ public:
         return QSize(m_sizeHints->maxAspect[0], qMax(m_sizeHints->maxAspect[1], 1));
     }
 
+    normal_hints m_hints;
+    normal_hints::size_hints* m_sizeHints = nullptr;
+
 private:
-    /**
-     * normal_hints as specified in ICCCM 4.1.2.3.
-     */
-    class normal_hints : public property
-    {
-    public:
-        struct size_hints {
-            enum Flags {
-                user_position = 1,
-                user_size = 2,
-                program_position = 4,
-                program_size = 8,
-                min_size = 16,
-                max_size = 32,
-                resize_increments = 64,
-                aspect = 128,
-                base_size = 256,
-                window_gravity = 512
-            };
-            qint32 flags = 0;
-            qint32 pad[4] = {0, 0, 0, 0};
-            qint32 minWidth = 0;
-            qint32 minHeight = 0;
-            qint32 maxWidth = 0;
-            qint32 maxHeight = 0;
-            qint32 widthInc = 0;
-            qint32 heightInc = 0;
-            qint32 minAspect[2] = {0, 0};
-            qint32 maxAspect[2] = {0, 0};
-            qint32 baseWidth = 0;
-            qint32 baseHeight = 0;
-            qint32 winGravity = 0;
-        };
-        explicit normal_hints(xcb_connection_t* con)
-            : property(con)
-        {
-        }
-        explicit normal_hints(xcb_connection_t* con, xcb_window_t window)
-            : property(con, 0, window, XCB_ATOM_WM_NORMAL_HINTS, XCB_ATOM_WM_SIZE_HINTS, 0, 18)
-        {
-        }
-        inline size_hints* sizeHints()
-        {
-            return value<size_hints*>(32, XCB_ATOM_WM_SIZE_HINTS, nullptr);
-        }
-    };
-
-    friend TestXcbSizeHints;
-
     bool test_flag(normal_hints::size_hints::Flags flag) const
     {
         if (!m_window || !m_sizeHints) {
@@ -194,8 +195,6 @@ private:
     }
 
     xcb_window_t m_window = XCB_WINDOW_NONE;
-    normal_hints m_hints;
-    normal_hints::size_hints* m_sizeHints = nullptr;
     xcb_connection_t* con;
 };
 

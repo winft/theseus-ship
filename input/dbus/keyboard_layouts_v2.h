@@ -96,6 +96,7 @@ private:
     keyboard_v2_internal const* get_internal_keyboard(uint keyboard) const;
 
     std::unordered_map<uint, keyboard_v2_internal> keyboards;
+    uint keyboard_index{0};
 };
 
 KWIN_EXPORT QDBusArgument& operator<<(QDBusArgument& argument, keyboard_v2 const& keyboard);

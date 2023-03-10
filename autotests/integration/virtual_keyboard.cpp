@@ -1,9 +1,9 @@
 /*
-    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "lib/setup.h"
 
 #include "input/wayland/platform.h"
 #include "win/space.h"
@@ -23,243 +23,196 @@
 #include <linux/input.h>
 #include <memory>
 
-namespace KWin
+namespace KWin::detail::test
 {
 
 using wayland_space = win::wayland::space<base::wayland::platform>;
 using wayland_window = win::wayland::window<wayland_space>;
 
+namespace
+{
+
 struct test_window {
     test_window() = default;
     test_window(test_window const&) = delete;
     test_window& operator=(test_window const&) = delete;
-    test_window(test_window&& other) noexcept;
-    test_window& operator=(test_window&& other) noexcept;
-    ~test_window()
-    {
-        client_toplevel.reset();
-        if (window) {
-            QSignalSpy windowDeletedSpy(window->qobject.get(), &win::window_qobject::closed);
-            QVERIFY(windowDeletedSpy.isValid());
-            QVERIFY(Test::wait_for_destroyed(window));
-            QCOMPARE(windowDeletedSpy.size(), 1);
-        }
-    }
+    test_window(test_window&& other) noexcept = default;
+    test_window& operator=(test_window&& other) noexcept = default;
+    ~test_window() = default;
+
     std::unique_ptr<Wrapland::Client::Surface> client_surface;
     std::unique_ptr<Wrapland::Client::XdgShellToplevel> client_toplevel;
     wayland_window* window{nullptr};
 };
 
-class virtual_keyboard_test : public QObject
-{
-    Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void init();
-    void cleanup();
-
-    void test_keymap();
-    void test_keys();
-
-private:
-    Test::client vk_client;
-    Test::client focus_client;
-};
-
-void virtual_keyboard_test::initTestCase()
-{
-    qRegisterMetaType<Wrapland::Client::Output*>();
-    qRegisterMetaType<Wrapland::Client::Keyboard::KeyState>();
-
-    QSignalSpy startup_spy(Test::app(), &WaylandTestApplication::startup_finished);
-    QVERIFY(startup_spy.isValid());
-
-    Test::app()->start();
-    Test::app()->set_outputs(2);
-
-    QVERIFY(startup_spy.size() || startup_spy.wait());
-    Test::test_outputs_default();
-}
-
-std::unique_ptr<Wrapland::Client::virtual_keyboard_v1> create_virtual_keyboard(Test::client& client)
+std::unique_ptr<Wrapland::Client::virtual_keyboard_v1> create_virtual_keyboard(client& client)
 {
     return std::unique_ptr<Wrapland::Client::virtual_keyboard_v1>(
         client.interfaces.virtual_keyboard_manager_v1->create_virtual_keyboard(
             client.interfaces.seat.get()));
 }
 
-test_window create_window(Test::client const& client)
+}
+
+TEST_CASE("virtual keyboard", "[input]")
 {
-    test_window ret;
-    ret.client_surface = Test::create_surface(client);
-    ret.client_toplevel = Test::create_xdg_shell_toplevel(client, ret.client_surface);
-    ret.window
-        = Test::render_and_wait_for_shown(client, ret.client_surface, QSize(1280, 1024), Qt::red);
-    return ret;
-}
+    test::setup setup("virtual-keyboard");
+    setup.start();
+    setup.set_outputs(2);
+    test_outputs_default();
+    setup_wayland_connection();
 
-Test::client create_focus_client()
-{
-    return Test::client(Test::global_selection::seat);
-}
+    auto vk_client = client(global_selection::seat | global_selection::virtual_keyboard_manager_v1);
+    auto focus_client = client(global_selection::seat);
 
-std::string create_keymap()
-{
-    auto context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    auto create_window = [](auto const& client) {
+        test_window ret;
+        ret.client_surface = create_surface(client);
+        ret.client_toplevel = create_xdg_shell_toplevel(client, ret.client_surface);
+        ret.window
+            = render_and_wait_for_shown(client, ret.client_surface, QSize(1280, 1024), Qt::red);
+        return std::move(ret);
+    };
 
-    auto const model = "pc104";
-    auto const layout = "de";
-    auto const variant = "nodeadkeys";
-    auto const options = "";
+    auto create_keymap = []() {
+        auto context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
 
-    auto const rule_names = xkb_rule_names{
-        .rules = nullptr, .model = model, .layout = layout, .variant = variant, .options = options};
+        auto const model = "pc104";
+        auto const layout = "de";
+        auto const variant = "nodeadkeys";
+        auto const options = "";
 
-    auto keymap = xkb_keymap_new_from_names(context, &rule_names, XKB_KEYMAP_COMPILE_NO_FLAGS);
-    auto keymap_c_string = xkb_keymap_get_as_string(keymap, XKB_KEYMAP_FORMAT_TEXT_V1);
-    auto keymap_string = std::string(keymap_c_string);
+        auto const rule_names = xkb_rule_names{.rules = nullptr,
+                                               .model = model,
+                                               .layout = layout,
+                                               .variant = variant,
+                                               .options = options};
 
-    free(keymap_c_string);
-    xkb_keymap_unref(keymap);
-    xkb_context_unref(context);
-    return keymap_string;
-}
+        auto keymap = xkb_keymap_new_from_names(context, &rule_names, XKB_KEYMAP_COMPILE_NO_FLAGS);
+        auto keymap_c_string = xkb_keymap_get_as_string(keymap, XKB_KEYMAP_FORMAT_TEXT_V1);
+        auto keymap_string = std::string(keymap_c_string);
 
-void virtual_keyboard_test::init()
-{
-    vk_client = Test::client(Test::global_selection::seat
-                             | Test::global_selection::virtual_keyboard_manager_v1);
-    focus_client = create_focus_client();
-}
+        free(keymap_c_string);
+        xkb_keymap_unref(keymap);
+        xkb_context_unref(context);
+        return keymap_string;
+    };
 
-void virtual_keyboard_test::cleanup()
-{
-    // Make sure we animate.
-    QTest::qWait(1000);
-    QVERIFY(Test::app()->base->space->windows.empty());
+    SECTION("keymap")
+    {
+        // Verifies that keymaps are correctly submitted and updated.
 
-    vk_client = {};
-    focus_client = {};
+        QVERIFY(!focus_client.interfaces.seat->hasKeyboard());
 
-    Test::destroy_wayland_connection();
-}
+        QSignalSpy client_keyboard_spy(focus_client.interfaces.seat.get(),
+                                       &Wrapland::Client::Seat::hasKeyboardChanged);
+        QVERIFY(client_keyboard_spy.isValid());
+        QVERIFY(client_keyboard_spy.wait());
 
-/**
- * Verifies that keymaps are correctly submitted and updated.
- */
-void virtual_keyboard_test::test_keymap()
-{
-    QVERIFY(!focus_client.interfaces.seat->hasKeyboard());
+        auto keyboard = std::unique_ptr<Wrapland::Client::Keyboard>(
+            focus_client.interfaces.seat->createKeyboard());
 
-    QSignalSpy client_keyboard_spy(focus_client.interfaces.seat.get(),
-                                   &Wrapland::Client::Seat::hasKeyboardChanged);
-    QVERIFY(client_keyboard_spy.isValid());
-    QVERIFY(client_keyboard_spy.wait());
+        QSignalSpy client_keymap_spy(keyboard.get(), &Wrapland::Client::Keyboard::keymapChanged);
+        QVERIFY(client_keymap_spy.isValid());
 
-    auto keyboard = std::unique_ptr<Wrapland::Client::Keyboard>(
-        focus_client.interfaces.seat->createKeyboard());
+        auto window = create_window(focus_client);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window.window);
 
-    QSignalSpy client_keymap_spy(keyboard.get(), &Wrapland::Client::Keyboard::keymapChanged);
-    QVERIFY(client_keymap_spy.isValid());
+        // After focus we don't yet get the current keymap as none was set yet.
+        QVERIFY(!client_keymap_spy.wait(500));
 
-    auto window = create_window(focus_client);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), window.window);
+        // Now we press some key, so we get the current keymap.
+        uint32_t timestamp{0};
+        keyboard_key_pressed(KEY_Y, timestamp++);
+        keyboard_key_released(KEY_Y, timestamp++);
+        QVERIFY(client_keymap_spy.wait());
 
-    // After focus we don't yet get the current keymap as none was set yet.
-    QVERIFY(!client_keymap_spy.wait(500));
+        QSignalSpy vk_spy(setup.base->input->virtual_keyboard.get(),
+                          &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
+        QVERIFY(vk_spy.isValid());
 
-    // Now we press some key, so we get the current keymap.
-    uint32_t timestamp{0};
-    Test::keyboard_key_pressed(KEY_Y, timestamp++);
-    Test::keyboard_key_released(KEY_Y, timestamp++);
-    QVERIFY(client_keymap_spy.wait());
+        auto vk = create_virtual_keyboard(vk_client);
 
-    QSignalSpy vk_spy(Test::app()->base->input->virtual_keyboard.get(),
-                      &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
-    QVERIFY(vk_spy.isValid());
+        QVERIFY(vk_spy.wait());
+        auto server_vk = vk_spy.back().front().value<Wrapland::Server::virtual_keyboard_v1*>();
 
-    auto vk = create_virtual_keyboard(vk_client);
+        // Need to set a keymap first.
+        QSignalSpy vk_keymap_spy(server_vk, &Wrapland::Server::virtual_keyboard_v1::keymap);
+        QVERIFY(vk_keymap_spy.isValid());
 
-    QVERIFY(vk_spy.wait());
-    auto server_vk = vk_spy.back().front().value<Wrapland::Server::virtual_keyboard_v1*>();
+        auto keymap1 = create_keymap();
+        vk->keymap(keymap1);
+        QVERIFY(vk_keymap_spy.wait());
 
-    // Need to set a keymap first.
-    QSignalSpy vk_keymap_spy(server_vk, &Wrapland::Server::virtual_keyboard_v1::keymap);
-    QVERIFY(vk_keymap_spy.isValid());
+        // No change of keymap since the previous keyboard is still the actively used one.
+        QVERIFY(!client_keymap_spy.wait(500));
+        QCOMPARE(client_keymap_spy.size(), 1);
 
-    auto keymap1 = create_keymap();
-    vk->keymap(keymap1);
-    QVERIFY(vk_keymap_spy.wait());
+        // Now we press on the virtual keyboard and we should get the new new keymap.
+        vk->key(
+            std::chrono::milliseconds(++timestamp), KEY_Y, Wrapland::Client::key_state::pressed);
+        vk->key(
+            std::chrono::milliseconds(++timestamp), KEY_Y, Wrapland::Client::key_state::released);
 
-    // No change of keymap since the previous keyboard is still the actively used one.
-    QVERIFY(!client_keymap_spy.wait(500));
-    QCOMPARE(client_keymap_spy.size(), 1);
+        QVERIFY(client_keymap_spy.wait());
+    }
 
-    // Now we press on the virtual keyboard and we should get the new new keymap.
-    vk->key(std::chrono::milliseconds(++timestamp), KEY_Y, Wrapland::Client::key_state::pressed);
-    vk->key(std::chrono::milliseconds(++timestamp), KEY_Y, Wrapland::Client::key_state::released);
+    SECTION("keys")
+    {
+        // Verifies that keys are processed.
+        QSignalSpy vk_spy(setup.base->input->virtual_keyboard.get(),
+                          &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
+        QVERIFY(vk_spy.isValid());
 
-    QVERIFY(client_keymap_spy.wait());
-}
+        auto vk = create_virtual_keyboard(vk_client);
 
-/**
- * Verifies that keys are processed.
- */
-void virtual_keyboard_test::test_keys()
-{
-    QSignalSpy vk_spy(Test::app()->base->input->virtual_keyboard.get(),
-                      &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
-    QVERIFY(vk_spy.isValid());
+        QVERIFY(vk_spy.wait());
+        auto server_vk = vk_spy.back().front().value<Wrapland::Server::virtual_keyboard_v1*>();
 
-    auto vk = create_virtual_keyboard(vk_client);
+        // Need to set a keymap first.
+        QSignalSpy vk_keymap_spy(server_vk, &Wrapland::Server::virtual_keyboard_v1::keymap);
+        QVERIFY(vk_keymap_spy.isValid());
 
-    QVERIFY(vk_spy.wait());
-    auto server_vk = vk_spy.back().front().value<Wrapland::Server::virtual_keyboard_v1*>();
+        auto keymap1 = create_keymap();
+        vk->keymap(keymap1);
+        QVERIFY(vk_keymap_spy.wait());
 
-    // Need to set a keymap first.
-    QSignalSpy vk_keymap_spy(server_vk, &Wrapland::Server::virtual_keyboard_v1::keymap);
-    QVERIFY(vk_keymap_spy.isValid());
+        QVERIFY(!focus_client.interfaces.seat->hasKeyboard());
 
-    auto keymap1 = create_keymap();
-    vk->keymap(keymap1);
-    QVERIFY(vk_keymap_spy.wait());
+        QSignalSpy client_keyboard_spy(focus_client.interfaces.seat.get(),
+                                       &Wrapland::Client::Seat::hasKeyboardChanged);
+        QVERIFY(client_keyboard_spy.isValid());
+        QVERIFY(client_keyboard_spy.wait());
 
-    QVERIFY(!focus_client.interfaces.seat->hasKeyboard());
+        auto keyboard = std::unique_ptr<Wrapland::Client::Keyboard>(
+            focus_client.interfaces.seat->createKeyboard());
 
-    QSignalSpy client_keyboard_spy(focus_client.interfaces.seat.get(),
-                                   &Wrapland::Client::Seat::hasKeyboardChanged);
-    QVERIFY(client_keyboard_spy.isValid());
-    QVERIFY(client_keyboard_spy.wait());
+        QSignalSpy key_spy(keyboard.get(), &Wrapland::Client::Keyboard::keyChanged);
+        QVERIFY(key_spy.isValid());
 
-    auto keyboard = std::unique_ptr<Wrapland::Client::Keyboard>(
-        focus_client.interfaces.seat->createKeyboard());
+        auto window = create_window(focus_client);
+        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window.window);
 
-    QSignalSpy key_spy(keyboard.get(), &Wrapland::Client::Keyboard::keyChanged);
-    QVERIFY(key_spy.isValid());
+        // Now we press on the virtual keyboard and we should get the new new keymap.
+        int timestamp{0};
+        vk->key(
+            std::chrono::milliseconds(++timestamp), KEY_Y, Wrapland::Client::key_state::pressed);
+        QVERIFY(key_spy.wait());
 
-    auto window = create_window(focus_client);
-    QCOMPARE(Test::get_wayland_window(Test::app()->base->space->stacking.active), window.window);
+        QCOMPARE(key_spy.back().at(0).toInt(), KEY_Y);
+        QCOMPARE(key_spy.back().at(1).value<Wrapland::Client::Keyboard::KeyState>(),
+                 Wrapland::Client::Keyboard::KeyState::Pressed);
+        QCOMPARE(key_spy.back().at(2).toInt(), timestamp);
 
-    // Now we press on the virtual keyboard and we should get the new new keymap.
-    uint32_t timestamp{0};
-    vk->key(std::chrono::milliseconds(++timestamp), KEY_Y, Wrapland::Client::key_state::pressed);
-    QVERIFY(key_spy.wait());
+        vk->key(
+            std::chrono::milliseconds(++timestamp), KEY_Y, Wrapland::Client::key_state::released);
+        QVERIFY(key_spy.wait());
 
-    QCOMPARE(key_spy.back().at(0).toInt(), KEY_Y);
-    QCOMPARE(key_spy.back().at(1).value<Wrapland::Client::Keyboard::KeyState>(),
-             Wrapland::Client::Keyboard::KeyState::Pressed);
-    QCOMPARE(key_spy.back().at(2).toInt(), timestamp);
-
-    vk->key(std::chrono::milliseconds(++timestamp), KEY_Y, Wrapland::Client::key_state::released);
-    QVERIFY(key_spy.wait());
-
-    QCOMPARE(key_spy.back().at(0).toInt(), KEY_Y);
-    QCOMPARE(key_spy.back().at(1).value<Wrapland::Client::Keyboard::KeyState>(),
-             Wrapland::Client::Keyboard::KeyState::Released);
-    QCOMPARE(key_spy.back().at(2).toInt(), timestamp);
+        QCOMPARE(key_spy.back().at(0).toInt(), KEY_Y);
+        QCOMPARE(key_spy.back().at(1).value<Wrapland::Client::Keyboard::KeyState>(),
+                 Wrapland::Client::Keyboard::KeyState::Released);
+        QCOMPARE(key_spy.back().at(2).toInt(), timestamp);
+    }
 }
 
 }
-
-WAYLANDTEST_MAIN(KWin::virtual_keyboard_test)
-#include "virtual_keyboard.moc"

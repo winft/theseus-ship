@@ -23,8 +23,6 @@ namespace KWin::input::dbus
 
 constexpr auto dbus_object_path{"/LayoutsV2"};
 
-uint keyboard_index{0};
-
 keyboard_layouts_v2::keyboard_layouts_v2()
 {
     qRegisterMetaType<QVector<layout_names_v2>>("QVector<layout_names_v2>");

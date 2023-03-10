@@ -1,14 +1,14 @@
 /*
 SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "mock_gl.h"
-#include <epoxy/gl.h>
 
 MockGL* s_gl = nullptr;
 
-static const GLubyte* mock_glGetString(GLenum name)
+GLubyte const* mock_glGetString(GLenum name)
 {
     if (!s_gl) {
         return nullptr;
@@ -29,7 +29,7 @@ static const GLubyte* mock_glGetString(GLenum name)
     }
 }
 
-static const GLubyte* mock_glGetStringi(GLenum name, GLuint index)
+GLubyte const* mock_glGetStringi(GLenum name, GLuint index)
 {
     if (!s_gl) {
         return nullptr;
@@ -40,7 +40,7 @@ static const GLubyte* mock_glGetStringi(GLenum name, GLuint index)
     return nullptr;
 }
 
-static void mock_glGetIntegerv(GLenum pname, GLint* data)
+void mock_glGetIntegerv(GLenum pname, GLint* data)
 {
     Q_UNUSED(pname)
     Q_UNUSED(data)
@@ -50,7 +50,3 @@ static void mock_glGetIntegerv(GLenum pname, GLint* data)
         }
     }
 }
-
-PFNGLGETSTRINGPROC epoxy_glGetString = mock_glGetString;
-PFNGLGETSTRINGIPROC epoxy_glGetStringi = mock_glGetStringi;
-PFNGLGETINTEGERVPROC epoxy_glGetIntegerv = mock_glGetIntegerv;

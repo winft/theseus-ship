@@ -1,0 +1,120 @@
+/*
+SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+
+SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#include "lib/setup.h"
+
+#include "base/wayland/server.h"
+#include "render/compositor.h"
+#include "render/effect_loader.h"
+#include "render/effects.h"
+#include "win/space.h"
+#include "win/wayland/window.h"
+
+#include <KConfigGroup>
+
+#include <Wrapland/Client/buffer.h>
+#include <Wrapland/Client/surface.h>
+
+using namespace Wrapland::Client;
+
+namespace KWin::detail::test
+{
+
+TEST_CASE("fade", "[effect]")
+{
+    qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
+    qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
+    qRegisterMetaType<KWin::Effect*>();
+
+    test::setup setup("fade");
+
+    // disable all effects - we don't want to have it interact with the rendering
+    auto config = setup.base->config.main;
+    KConfigGroup plugins(config, QStringLiteral("Plugins"));
+    auto const builtinNames
+        = render::effect_loader(*effects, *setup.base->render->compositor).listOfKnownEffects();
+
+    for (const QString& name : builtinNames) {
+        plugins.writeEntry(name + QStringLiteral("Enabled"), false);
+    }
+
+    config->sync();
+
+    setup.start();
+    QVERIFY(setup.base->render->compositor);
+    setup_wayland_connection();
+
+    // load the translucency effect
+    auto& e = setup.base->render->compositor->effects;
+
+    // find the effectsloader
+    auto effectloader = e->findChild<render::basic_effect_loader*>();
+    QVERIFY(effectloader);
+    QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);
+    QVERIFY(effectLoadedSpy.isValid());
+
+    QVERIFY(!e->isEffectLoaded(QStringLiteral("kwin4_effect_fade")));
+    QVERIFY(e->loadEffect(QStringLiteral("kwin4_effect_fade")));
+    QVERIFY(e->isEffectLoaded(QStringLiteral("kwin4_effect_fade")));
+
+    QCOMPARE(effectLoadedSpy.count(), 1);
+
+    auto fade_effect = effectLoadedSpy.first().first().value<Effect*>();
+    QVERIFY(fade_effect);
+
+    SECTION("window close after hidden")
+    {
+        // this test simulates the showing/hiding/closing of a Wayland window
+        // especially the situation that a window got unmapped and destroyed way later
+        QVERIFY(!fade_effect->isActive());
+
+        QSignalSpy windowAddedSpy(effects, &EffectsHandler::windowAdded);
+        QVERIFY(windowAddedSpy.isValid());
+        QSignalSpy windowHiddenSpy(effects, &EffectsHandler::windowHidden);
+        QVERIFY(windowHiddenSpy.isValid());
+        QSignalSpy windowShownSpy(effects, &EffectsHandler::windowShown);
+        QVERIFY(windowShownSpy.isValid());
+        QSignalSpy windowClosedSpy(effects, &EffectsHandler::windowClosed);
+        QVERIFY(windowClosedSpy.isValid());
+
+        std::unique_ptr<Surface> surface(create_surface());
+        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
+        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
+        QVERIFY(c);
+        QTRY_COMPARE(windowAddedSpy.count(), 1);
+        QTRY_COMPARE(fade_effect->isActive(), true);
+
+        QTest::qWait(500);
+        QTRY_COMPARE(fade_effect->isActive(), false);
+
+        // now unmap the surface
+        surface->attachBuffer(Buffer::Ptr());
+        surface->commit(Surface::CommitFlag::None);
+        QVERIFY(windowHiddenSpy.wait());
+        QCOMPARE(fade_effect->isActive(), false);
+
+        // and map again
+        render(surface, QSize(100, 50), Qt::red);
+        QVERIFY(windowShownSpy.wait());
+        QCOMPARE(fade_effect->isActive(), false);
+
+        // and unmap once more
+        surface->attachBuffer(Buffer::Ptr());
+        surface->commit(Surface::CommitFlag::None);
+        QVERIFY(windowHiddenSpy.wait());
+        QCOMPARE(fade_effect->isActive(), false);
+
+        // and now destroy
+        shellSurface.reset();
+        surface.reset();
+        QVERIFY(windowClosedSpy.wait());
+        QCOMPARE(fade_effect->isActive(), true);
+        QTest::qWait(500);
+        QTRY_COMPARE(fade_effect->isActive(), false);
+    }
+}
+
+}

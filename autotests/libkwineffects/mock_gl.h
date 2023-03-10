@@ -1,5 +1,6 @@
 /*
 SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -8,6 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <QByteArray>
 #include <QVector>
+#include <epoxy/gl.h>
 
 struct MockGL {
     struct {
@@ -21,5 +23,9 @@ struct MockGL {
 };
 
 extern MockGL* s_gl;
+
+GLubyte const* mock_glGetString(GLenum name);
+GLubyte const* mock_glGetStringi(GLenum name, GLuint index);
+void mock_glGetIntegerv(GLenum pname, GLint* data);
 
 #endif

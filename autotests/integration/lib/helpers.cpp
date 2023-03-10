@@ -6,7 +6,7 @@
 */
 #include "helpers.h"
 
-#include "app.h"
+#include "setup.h"
 
 #include "base/output_helpers.h"
 #include "desktop/screen_locker_watcher.h"
@@ -25,7 +25,7 @@
 
 namespace Clt = Wrapland::Client;
 
-namespace KWin::Test
+namespace KWin::detail::test
 {
 
 output::output(QRect const& geometry)
@@ -37,11 +37,6 @@ output::output(QRect const& geometry, double scale)
     : geometry{geometry}
     , scale{scale}
 {
-}
-
-WaylandTestApplication* app()
-{
-    return static_cast<WaylandTestApplication*>(qApp);
 }
 
 input::wayland::cursor<space::input_t>* cursor()
@@ -61,17 +56,17 @@ void destroy_wayland_connection()
 
 base::output* get_output(size_t index)
 {
-    auto const& outputs = Test::app()->base->get_outputs();
+    auto const& outputs = app()->base->get_outputs();
     assert(index < outputs.size());
     return outputs.at(index);
 }
 
 void set_current_output(int index)
 {
-    auto const& outputs = Test::app()->base->get_outputs();
+    auto const& outputs = app()->base->get_outputs();
     auto output = base::get_output(outputs, index);
     QVERIFY(output);
-    base::set_current_output(*Test::app()->base, output);
+    base::set_current_output(*app()->base, output);
 }
 
 void test_outputs_default()
@@ -81,7 +76,7 @@ void test_outputs_default()
 
 void test_outputs_geometries(std::vector<QRect> const& geometries)
 {
-    auto const& outputs = Test::app()->base->get_outputs();
+    auto const& outputs = app()->base->get_outputs();
     QCOMPARE(outputs.size(), geometries.size());
 
     size_t index = 0;
@@ -331,24 +326,24 @@ void init_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
 
 void lock_screen()
 {
-    QVERIFY(!base::wayland::is_screen_locked(Test::app()->base));
+    QVERIFY(!base::wayland::is_screen_locked(app()->base));
 
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(Test::app()->base->screen_locker_watcher.get(),
+    QSignalSpy lockWatcherSpy(app()->base->screen_locker_watcher.get(),
                               &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
-    QVERIFY(base::wayland::is_screen_locked(Test::app()->base));
+    QVERIFY(base::wayland::is_screen_locked(app()->base));
     QVERIFY(lockWatcherSpy.wait());
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 2);
 
-    QVERIFY(Test::app()->base->screen_locker_watcher->is_locked());
+    QVERIFY(app()->base->screen_locker_watcher->is_locked());
 }
 
 void unlock_screen()
@@ -356,7 +351,7 @@ void unlock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(Test::app()->base->screen_locker_watcher.get(),
+    QSignalSpy lockWatcherSpy(app()->base->screen_locker_watcher.get(),
                               &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
@@ -387,9 +382,9 @@ void unlock_screen()
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
-    QVERIFY(!base::wayland::is_screen_locked(Test::app()->base));
+    QVERIFY(!base::wayland::is_screen_locked(app()->base));
 
-    QVERIFY(!Test::app()->base->screen_locker_watcher->is_locked());
+    QVERIFY(!app()->base->screen_locker_watcher->is_locked());
 }
 
 void prepare_app_env(std::string const& qpa_plugin_path)
@@ -428,7 +423,7 @@ std::string create_socket_name(std::string base)
     base.erase(std::remove_if(base.begin(), base.end(), [](char c) { return !isalpha(c); }),
                base.end());
     std::transform(base.begin(), base.end(), base.begin(), [](char c) { return std::tolower(c); });
-    return "wayland_" + base + "-0";
+    return "wayland-kwinft-test-" + base + "-0";
 }
 
 //
@@ -472,7 +467,7 @@ void wlr_signal_emit_safe(wl_signal* signal, void* data)
 
 void pointer_motion_absolute(QPointF const& position, uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
 
     QVERIFY(test_app->pointer);
     wlr_pointer_motion_absolute_event event{};
@@ -490,7 +485,7 @@ void pointer_motion_absolute(QPointF const& position, uint32_t time)
 
 void pointer_button_impl(uint32_t button, uint32_t time, wlr_button_state state)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
 
     QVERIFY(test_app->pointer);
     wlr_pointer_button_event event{};
@@ -521,7 +516,7 @@ void pointer_axis_impl(double delta,
                        wlr_axis_orientation orientation,
                        wlr_axis_source source)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
 
     QVERIFY(test_app->pointer);
     wlr_pointer_axis_event event{};
@@ -568,12 +563,12 @@ void keyboard_key_impl(uint32_t key,
 
 void keyboard_key_pressed(uint32_t key, uint32_t time)
 {
-    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_PRESSED, Test::app()->keyboard);
+    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_PRESSED, app()->keyboard);
 }
 
 void keyboard_key_released(uint32_t key, uint32_t time)
 {
-    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_RELEASED, Test::app()->keyboard);
+    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_RELEASED, app()->keyboard);
 }
 
 void keyboard_key_pressed(uint32_t key, uint32_t time, wlr_keyboard* keyboard)
@@ -597,7 +592,7 @@ QPointF get_relative_touch_position(QPointF const& pos)
 
 void touch_down(int32_t id, QPointF const& position, uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->touch);
 
     wlr_touch_down_event event{};
@@ -616,7 +611,7 @@ void touch_down(int32_t id, QPointF const& position, uint32_t time)
 
 void touch_up(int32_t id, uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->touch);
 
     wlr_touch_up_event event{};
@@ -631,7 +626,7 @@ void touch_up(int32_t id, uint32_t time)
 
 void touch_motion(int32_t id, QPointF const& position, uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->touch);
 
     wlr_touch_motion_event event{};
@@ -650,7 +645,7 @@ void touch_motion(int32_t id, QPointF const& position, uint32_t time)
 
 void touch_cancel()
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->touch);
 
     wlr_touch_cancel_event event{};
@@ -661,7 +656,7 @@ void touch_cancel()
 
 void swipe_begin(uint32_t fingers, uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_swipe_begin_event event{
@@ -672,7 +667,7 @@ void swipe_begin(uint32_t fingers, uint32_t time)
 
 void swipe_update(uint32_t fingers, double dx, double dy, uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_swipe_update_event event{
@@ -683,7 +678,7 @@ void swipe_update(uint32_t fingers, double dx, double dy, uint32_t time)
 
 void swipe_end(uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_swipe_end_event event{
@@ -694,7 +689,7 @@ void swipe_end(uint32_t time)
 
 void swipe_cancel(uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_swipe_end_event event{
@@ -705,7 +700,7 @@ void swipe_cancel(uint32_t time)
 
 void pinch_begin(uint32_t fingers, uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_pinch_begin_event event{
@@ -721,7 +716,7 @@ void pinch_update(uint32_t fingers,
                   double rotation,
                   uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_pinch_update_event event{.pointer = test_app->pointer,
@@ -737,7 +732,7 @@ void pinch_update(uint32_t fingers,
 
 void pinch_end(uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_pinch_end_event event{
@@ -748,7 +743,7 @@ void pinch_end(uint32_t time)
 
 void pinch_cancel(uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_pinch_end_event event{
@@ -759,7 +754,7 @@ void pinch_cancel(uint32_t time)
 
 void hold_begin(uint32_t fingers, uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_hold_begin_event event{
@@ -770,7 +765,7 @@ void hold_begin(uint32_t fingers, uint32_t time)
 
 void hold_end(uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_hold_end_event event{
@@ -781,7 +776,7 @@ void hold_end(uint32_t time)
 
 void hold_cancel(uint32_t time)
 {
-    auto test_app = Test::app();
+    auto test_app = app();
     QVERIFY(test_app->pointer);
 
     wlr_pointer_hold_end_event event{

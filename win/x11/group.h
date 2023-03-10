@@ -59,7 +59,7 @@ public:
                                space.base.x11_data.root_window,
                                net::WMIcon,
                                net::WM2IconPixmap);
-            auto readIcon = [&ic, &info, this](int size, bool scale = true) {
+            auto readIcon = [&ic, &info](int size, bool scale = true) {
                 auto const pix
                     = extras::icon(info, size, size, scale, extras::NETWM | extras::WMHints);
                 if (!pix.isNull()) {

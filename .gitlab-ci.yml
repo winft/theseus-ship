@@ -123,10 +123,10 @@ Stable Build:
     #   freeze off. Also see: https://bugreports.qt.io/browse/QTBUG-82911
     # * all others: the GLES2 backend of wlroots can't be run in CI/without GPU at the moment,
     #   see https://gitlab.freedesktop.org/wlroots/wlroots/-/issues/2871
-    CTEST_ARGS: "-E 'testLockScreen|testModifierOnlyShortcut|testDontCrashEmptyDeco|testDontCrashNoBorder|
-    |testSceneOpenGL|testSceneOpenGLShadow|testDontCrashReinitializeCompositor|testBufferSizeChange|
-    |testDontCrashAuroraeDestroyDeco|testSlidingPopups|testScriptedEffects|testToplevelOpenCloseAnimation|
-    |testDesktopSwitchingAnimation|testMinimizeAnimation'"
+    CTEST_ARGS: "-E 'lockscreen|modifier only shortcut|no crash empty deco|no crash no border\
+    |scene opengl|opengl shadow|no crash reinit compositor|buffer size change\
+    |no crash aurorae destroy deco|slidingpopups|scripted effects|window open close animation\
+    |desktop switching animation|minimize animation'"
     GCOVR_ARGS: --gcov-executable '/usr/bin/llvm-cov gcov' -e tests
 
 Master Tests:

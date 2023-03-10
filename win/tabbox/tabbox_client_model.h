@@ -27,7 +27,7 @@ namespace win
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @since 4.4
  */
-class tabbox_client_model : public QAbstractItemModel
+class KWIN_EXPORT tabbox_client_model : public QAbstractItemModel
 {
     Q_OBJECT
 public:
