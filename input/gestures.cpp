@@ -34,11 +34,11 @@ qreal swipe_gesture::deltaToProgress(const QSizeF& delta) const
     }
 
     switch (m_direction) {
-    case Direction::Up:
-    case Direction::Down:
+    case SwipeDirection::Up:
+    case SwipeDirection::Down:
         return std::min(std::abs(delta.height()) / std::abs(m_minimumDelta.height()), 1.0);
-    case Direction::Left:
-    case Direction::Right:
+    case SwipeDirection::Left:
+    case SwipeDirection::Right:
         return std::min(std::abs(delta.width()) / std::abs(m_minimumDelta.width()), 1.0);
     default:
         Q_UNREACHABLE();
@@ -159,14 +159,14 @@ int gesture_recognizer::startSwipeGesture(uint fingerCount,
 
         // Only add gestures who's direction aligns with current swipe axis
         switch (gesture->direction()) {
-        case swipe_gesture::Direction::Up:
-        case swipe_gesture::Direction::Down:
+        case SwipeDirection::Up:
+        case SwipeDirection::Down:
             if (m_currentSwipeAxis == Axis::Horizontal) {
                 continue;
             }
             break;
-        case swipe_gesture::Direction::Left:
-        case swipe_gesture::Direction::Right:
+        case SwipeDirection::Left:
+        case SwipeDirection::Right:
             if (m_currentSwipeAxis == Axis::Vertical) {
                 continue;
             }
@@ -184,7 +184,7 @@ void gesture_recognizer::updateSwipeGesture(const QSizeF& delta)
 {
     m_currentDelta += delta;
 
-    swipe_gesture::Direction direction; // Overall direction
+    SwipeDirection direction; // Overall direction
     Axis swipeAxis;
 
     // Pick an axis for gestures so horizontal ones don't change to vertical ones without lifting
@@ -192,12 +192,10 @@ void gesture_recognizer::updateSwipeGesture(const QSizeF& delta)
     if (m_currentSwipeAxis == Axis::None) {
         if (std::abs(m_currentDelta.width()) >= std::abs(m_currentDelta.height())) {
             swipeAxis = Axis::Horizontal;
-            direction = m_currentDelta.width() < 0 ? swipe_gesture::Direction::Left
-                                                   : swipe_gesture::Direction::Right;
+            direction = m_currentDelta.width() < 0 ? SwipeDirection::Left : SwipeDirection::Right;
         } else {
             swipeAxis = Axis::Vertical;
-            direction = m_currentDelta.height() < 0 ? swipe_gesture::Direction::Up
-                                                    : swipe_gesture::Direction::Down;
+            direction = m_currentDelta.height() < 0 ? SwipeDirection::Up : SwipeDirection::Down;
         }
         if (std::abs(m_currentDelta.width()) >= 5 || std::abs(m_currentDelta.height()) >= 5) {
             // only lock in a direction if the delta is big enough
@@ -211,12 +209,10 @@ void gesture_recognizer::updateSwipeGesture(const QSizeF& delta)
     // Find the current swipe direction
     switch (swipeAxis) {
     case Axis::Vertical:
-        direction = m_currentDelta.height() < 0 ? swipe_gesture::Direction::Up
-                                                : swipe_gesture::Direction::Down;
+        direction = m_currentDelta.height() < 0 ? SwipeDirection::Up : SwipeDirection::Down;
         break;
     case Axis::Horizontal:
-        direction = m_currentDelta.width() < 0 ? swipe_gesture::Direction::Left
-                                               : swipe_gesture::Direction::Right;
+        direction = m_currentDelta.width() < 0 ? SwipeDirection::Left : SwipeDirection::Right;
         break;
     default:
         Q_UNREACHABLE();
@@ -326,11 +322,11 @@ void gesture_recognizer::updatePinchGesture(qreal scale, qreal angleDelta, const
     m_currentScale = scale;
 
     // Determine the direction of the swipe
-    pinch_gesture::Direction direction;
+    PinchDirection direction;
     if (scale < 1) {
-        direction = pinch_gesture::Direction::Contracting;
+        direction = PinchDirection::Contracting;
     } else {
-        direction = pinch_gesture::Direction::Expanding;
+        direction = PinchDirection::Expanding;
     }
 
     // Eliminate wrong gestures (takes two iterations)
@@ -412,12 +408,12 @@ uint swipe_gesture::maximumFingerCount() const
     return m_maximumFingerCount;
 }
 
-swipe_gesture::Direction swipe_gesture::direction() const
+SwipeDirection swipe_gesture::direction() const
 {
     return m_direction;
 }
 
-void swipe_gesture::setDirection(Direction direction)
+void swipe_gesture::setDirection(SwipeDirection direction)
 {
     m_direction = direction;
 }
@@ -534,12 +530,12 @@ uint pinch_gesture::maximumFingerCount() const
     return m_maximumFingerCount;
 }
 
-pinch_gesture::Direction pinch_gesture::direction() const
+PinchDirection pinch_gesture::direction() const
 {
     return m_direction;
 }
 
-void pinch_gesture::setDirection(Direction direction)
+void pinch_gesture::setDirection(PinchDirection direction)
 {
     m_direction = direction;
 }

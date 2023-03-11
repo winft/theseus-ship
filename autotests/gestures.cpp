@@ -86,34 +86,31 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
     SECTION("swipe direction")
     {
-        auto swipe_direction = GENERATE(input::swipe_gesture::Direction::Up,
-                                        input::swipe_gesture::Direction::Left,
-                                        input::swipe_gesture::Direction::Right,
-                                        input::swipe_gesture::Direction::Down);
+        auto swipe_direction = GENERATE(
+            SwipeDirection::Up, SwipeDirection::Left, SwipeDirection::Right, SwipeDirection::Down);
 
         input::swipe_gesture gesture;
-        QCOMPARE(gesture.direction(), input::swipe_gesture::Direction::Down);
+        QCOMPARE(gesture.direction(), SwipeDirection::Down);
 
         gesture.setDirection(swipe_direction);
         QCOMPARE(gesture.direction(), swipe_direction);
 
-        gesture.setDirection(input::swipe_gesture::Direction::Down);
-        QCOMPARE(gesture.direction(), input::swipe_gesture::Direction::Down);
+        gesture.setDirection(SwipeDirection::Down);
+        QCOMPARE(gesture.direction(), SwipeDirection::Down);
     }
 
     SECTION("pinch direction")
     {
-        auto pinch_direction = GENERATE(input::pinch_gesture::Direction::Contracting,
-                                        input::pinch_gesture::Direction::Expanding);
+        auto pinch_direction = GENERATE(PinchDirection::Contracting, PinchDirection::Expanding);
 
         input::pinch_gesture gesture;
-        QCOMPARE(gesture.direction(), input::pinch_gesture::Direction::Expanding);
+        QCOMPARE(gesture.direction(), PinchDirection::Expanding);
 
         gesture.setDirection(pinch_direction);
         QCOMPARE(gesture.direction(), pinch_direction);
 
-        gesture.setDirection(input::pinch_gesture::Direction::Expanding);
-        QCOMPARE(gesture.direction(), input::pinch_gesture::Direction::Expanding);
+        gesture.setDirection(PinchDirection::Expanding);
+        QCOMPARE(gesture.direction(), PinchDirection::Expanding);
     }
 
     SECTION("minimum x")
@@ -208,26 +205,26 @@ TEST_CASE("gestures unit", "[input],[unit]")
     SECTION("minimum delta reached")
     {
         struct data {
-            input::swipe_gesture::Direction direction;
+            SwipeDirection direction;
             QSizeF min_delta;
             QSizeF delta;
             bool reached;
             double progress;
         };
 
-        auto test_data = GENERATE(
-            data{input::swipe_gesture::Direction::Up, {0, -30}, {0, -40}, true, 1.0},
-            data{input::swipe_gesture::Direction::Up, {0, -30}, {0, -30}, true, 1.0},
-            data{input::swipe_gesture::Direction::Up, {0, -30}, {0, -29}, false, 29.0 / 30.0},
-            data{input::swipe_gesture::Direction::Left, {30, -30}, {-40, 20}, true, 1.0},
-            data{input::swipe_gesture::Direction::Left, {30, -40}, {-30, 0}, true, 1.0},
-            data{input::swipe_gesture::Direction::Left, {30, -30}, {-29, 0}, false, 29.0 / 30.0},
-            data{input::swipe_gesture::Direction::Right, {30, -30}, {40, 20}, true, 1.0},
-            data{input::swipe_gesture::Direction::Right, {30, -40}, {30, 0}, true, 1.0},
-            data{input::swipe_gesture::Direction::Right, {30, -30}, {29, 0}, false, 29.0 / 30.0},
-            data{input::swipe_gesture::Direction::Down, {0, 30}, {0, 40}, true, 1.0},
-            data{input::swipe_gesture::Direction::Down, {0, 30}, {0, 30}, true, 1.0},
-            data{input::swipe_gesture::Direction::Down, {0, 30}, {0, 29}, false, 29.0 / 30.0});
+        auto test_data
+            = GENERATE(data{SwipeDirection::Up, {0, -30}, {0, -40}, true, 1.0},
+                       data{SwipeDirection::Up, {0, -30}, {0, -30}, true, 1.0},
+                       data{SwipeDirection::Up, {0, -30}, {0, -29}, false, 29.0 / 30.0},
+                       data{SwipeDirection::Left, {30, -30}, {-40, 20}, true, 1.0},
+                       data{SwipeDirection::Left, {30, -40}, {-30, 0}, true, 1.0},
+                       data{SwipeDirection::Left, {30, -30}, {-29, 0}, false, 29.0 / 30.0},
+                       data{SwipeDirection::Right, {30, -30}, {40, 20}, true, 1.0},
+                       data{SwipeDirection::Right, {30, -40}, {30, 0}, true, 1.0},
+                       data{SwipeDirection::Right, {30, -30}, {29, 0}, false, 29.0 / 30.0},
+                       data{SwipeDirection::Down, {0, 30}, {0, 40}, true, 1.0},
+                       data{SwipeDirection::Down, {0, 30}, {0, 30}, true, 1.0},
+                       data{SwipeDirection::Down, {0, 30}, {0, 29}, false, 29.0 / 30.0});
 
         input::gesture_recognizer recognizer;
 
@@ -273,7 +270,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
     {
         // pinch gesture
         input::pinch_gesture gesture;
-        gesture.setDirection(input::pinch_gesture::Direction::Contracting);
+        gesture.setDirection(PinchDirection::Contracting);
         gesture.setMinimumScaleDelta(.5);
         gesture.setMinimumFingerCount(3);
         gesture.setMaximumFingerCount(4);
@@ -361,10 +358,8 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
     SECTION("swipe cancel")
     {
-        auto direction = GENERATE(input::swipe_gesture::Direction::Up,
-                                  input::swipe_gesture::Direction::Left,
-                                  input::swipe_gesture::Direction::Right,
-                                  input::swipe_gesture::Direction::Down);
+        auto direction = GENERATE(
+            SwipeDirection::Up, SwipeDirection::Left, SwipeDirection::Right, SwipeDirection::Down);
 
         input::gesture_recognizer recognizer;
         QScopedPointer<input::swipe_gesture> gesture(new input::swipe_gesture);
@@ -389,14 +384,14 @@ TEST_CASE("gestures unit", "[input],[unit]")
     SECTION("swipe update trigger")
     {
         struct data {
-            input::swipe_gesture::Direction direction;
+            SwipeDirection direction;
             QSizeF delta;
         };
 
-        auto test_data = GENERATE(data{input::swipe_gesture::Direction::Up, {2, -3}},
-                                  data{input::swipe_gesture::Direction::Left, {-3, 1}},
-                                  data{input::swipe_gesture::Direction::Right, {20, -19}},
-                                  data{input::swipe_gesture::Direction::Down, {0, 50}});
+        auto test_data = GENERATE(data{SwipeDirection::Up, {2, -3}},
+                                  data{SwipeDirection::Left, {-3, 1}},
+                                  data{SwipeDirection::Right, {20, -19}},
+                                  data{SwipeDirection::Down, {0, 50}});
 
         input::gesture_recognizer recognizer;
         input::swipe_gesture gesture;
@@ -472,11 +467,11 @@ TEST_CASE("gestures unit", "[input],[unit]")
         input::swipe_gesture right;
         input::pinch_gesture expand;
         input::pinch_gesture contract;
-        up.setDirection(input::swipe_gesture::Direction::Up);
-        down.setDirection(input::swipe_gesture::Direction::Down);
-        right.setDirection(input::swipe_gesture::Direction::Right);
-        expand.setDirection(input::pinch_gesture::Direction::Expanding);
-        contract.setDirection(input::pinch_gesture::Direction::Contracting);
+        up.setDirection(SwipeDirection::Up);
+        down.setDirection(SwipeDirection::Down);
+        right.setDirection(SwipeDirection::Right);
+        expand.setDirection(PinchDirection::Expanding);
+        contract.setDirection(PinchDirection::Contracting);
         recognizer.registerSwipeGesture(&up);
         recognizer.registerSwipeGesture(&down);
         recognizer.registerSwipeGesture(&right);
