@@ -37,11 +37,6 @@ namespace KWin::scripting
 class KWIN_EXPORT space : public QObject
 {
     Q_OBJECT
-    /**
-     * @deprecated use the currentVirtualDesktop property instead
-     */
-    Q_PROPERTY(
-        int currentDesktop READ currentDesktop WRITE setCurrentDesktop NOTIFY currentDesktopChanged)
     Q_PROPERTY(KWin::win::virtual_desktop* currentVirtualDesktop READ currentVirtualDesktop WRITE
                    setCurrentVirtualDesktop NOTIFY currentVirtualDesktopChanged)
     Q_PROPERTY(KWin::scripting::window* activeClient READ activeClient WRITE setActiveClient NOTIFY
@@ -58,21 +53,6 @@ class KWIN_EXPORT space : public QObject
      */
     Q_PROPERTY(
         int desktops READ numberOfDesktops WRITE setNumberOfDesktops NOTIFY numberDesktopsChanged)
-    /**
-     * The same of the display, that is all screens.
-     * @deprecated since 5.0 use virtualScreenSize
-     */
-    Q_PROPERTY(QSize displaySize READ displaySize)
-    /**
-     * The width of the display, that is width of all combined screens.
-     * @deprecated since 5.0 use virtualScreenSize
-     */
-    Q_PROPERTY(int displayWidth READ displayWidth)
-    /**
-     * The height of the display, that is height of all combined screens.
-     * @deprecated since 5.0 use virtualScreenSize
-     */
-    Q_PROPERTY(int displayHeight READ displayHeight)
     Q_PROPERTY(int activeScreen READ activeScreen)
     Q_PROPERTY(int numScreens READ numScreens NOTIFY numberScreensChanged)
     Q_PROPERTY(QString currentActivity READ currentActivity WRITE setCurrentActivity NOTIFY
@@ -130,9 +110,7 @@ public:
     };
     Q_ENUM(ElectricBorder)
 
-    virtual int currentDesktop() const = 0;
     virtual win::virtual_desktop* currentVirtualDesktop() const = 0;
-    virtual void setCurrentDesktop(int desktop) = 0;
     virtual void setCurrentVirtualDesktop(win::virtual_desktop* desktop) = 0;
     virtual int numberOfDesktops() const = 0;
     virtual void setNumberOfDesktops(int count) = 0;
@@ -179,13 +157,7 @@ public:
      * @param desktop The desktop for which the area should be considered, in general there should
      * not be a difference
      * @returns The specified screen geometry
-     * @deprecated use clientArea(ClientAreaOption option, KWin::base::output* output,
-     * KWin::win::virtual_desktop* desktop)
      */
-    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, int screen, int desktop) const
-    {
-        return client_area_impl(static_cast<clientAreaOption>(option), screen, desktop);
-    }
     Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
                                   base::output* output,
                                   win::virtual_desktop* desktop) const
@@ -314,13 +286,13 @@ public Q_SLOTS:
     virtual void slotWindowRaiseOrLower() = 0;
     virtual void slotActivateAttentionWindow() = 0;
 
-    virtual void slotWindowPackLeft() = 0;
-    virtual void slotWindowPackRight() = 0;
-    virtual void slotWindowPackUp() = 0;
-    virtual void slotWindowPackDown() = 0;
+    virtual void slotWindowMoveLeft() = 0;
+    virtual void slotWindowMoveRight() = 0;
+    virtual void slotWindowMoveUp() = 0;
+    virtual void slotWindowMoveDown() = 0;
 
-    virtual void slotWindowGrowHorizontal() = 0;
-    virtual void slotWindowGrowVertical() = 0;
+    virtual void slotWindowExpandHorizontal() = 0;
+    virtual void slotWindowExpandVertical() = 0;
     virtual void slotWindowShrinkHorizontal() = 0;
     virtual void slotWindowShrinkVertical() = 0;
 
@@ -383,7 +355,6 @@ public Q_SLOTS:
 
 Q_SIGNALS:
     void desktopPresenceChanged(KWin::scripting::window* client, int desktop);
-    void currentDesktopChanged(int desktop, KWin::scripting::window* client);
     void clientAdded(KWin::scripting::window* client);
     void clientRemoved(KWin::scripting::window* client);
 
@@ -421,13 +392,6 @@ Q_SIGNALS:
      * @param count The new number of screens
      */
     void numberScreensChanged(int count);
-    /**
-     * This signal is emitted when the size of @p screen changes.
-     * Don't forget to fetch an updated client area.
-     *
-     * @deprecated Use QScreen::geometryChanged signal instead.
-     */
-    void screenResized(int screen);
     /**
      * Signal emitted whenever the current activity changed.
      * @param id id of the new activity
@@ -534,9 +498,6 @@ public:
     static window* atClientList(QQmlListProperty<KWin::scripting::window>* clients, int index);
 };
 
-// TODO Plasma 6: Remove it.
-KWIN_EXPORT void connect_legacy_screen_resize(space* receiver);
-
 template<typename Space, typename RefSpace>
 class template_space : public Space
 {
@@ -556,17 +517,6 @@ public:
                              auto ref_win = this->ref_space->windows_map.at(win_id);
                              auto window = get_window(ref_win);
                              Q_EMIT Space::desktopPresenceChanged(window, desktop);
-                         });
-
-        QObject::connect(ref_space->qobject.get(),
-                         &space_qobject::currentDesktopChanged,
-                         this,
-                         [this](auto desktop) {
-                             window* win{nullptr};
-                             if (auto& mrw = this->ref_space->move_resize_window) {
-                                 win = get_window(*mrw);
-                             }
-                             Q_EMIT Space::currentDesktopChanged(desktop, win);
                          });
 
         QObject::connect(
@@ -632,26 +582,14 @@ public:
             Q_EMIT Space::numberScreensChanged(this->ref_space->base.outputs.size());
         });
 
-        connect_legacy_screen_resize(this);
-
         for (auto win : ref_space->windows) {
             std::visit(overload{[&](auto&& win) { handle_client_added(win); }}, win);
         }
     }
 
-    int currentDesktop() const override
-    {
-        return ref_space->virtual_desktop_manager->current();
-    }
-
     win::virtual_desktop* currentVirtualDesktop() const override
     {
         return ref_space->virtual_desktop_manager->currentDesktop();
-    }
-
-    void setCurrentDesktop(int desktop) override
-    {
-        ref_space->virtual_desktop_manager->setCurrent(desktop);
     }
 
     int numberOfDesktops() const override
@@ -799,32 +737,32 @@ public:
         win::activate_attention_window(*ref_space);
     }
 
-    void slotWindowPackLeft() override
+    void slotWindowMoveLeft() override
     {
         win::active_window_pack_left(*ref_space);
     }
 
-    void slotWindowPackRight() override
+    void slotWindowMoveRight() override
     {
         win::active_window_pack_right(*ref_space);
     }
 
-    void slotWindowPackUp() override
+    void slotWindowMoveUp() override
     {
         win::active_window_pack_up(*ref_space);
     }
 
-    void slotWindowPackDown() override
+    void slotWindowMoveDown() override
     {
         win::active_window_pack_down(*ref_space);
     }
 
-    void slotWindowGrowHorizontal() override
+    void slotWindowExpandHorizontal() override
     {
         win::active_window_grow_horizontal(*ref_space);
     }
 
-    void slotWindowGrowVertical() override
+    void slotWindowExpandVertical() override
     {
         win::active_window_grow_vertical(*ref_space);
     }

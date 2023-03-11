@@ -146,10 +146,4 @@ window* declarative_script_space::atClientList(QQmlListProperty<window>* clients
     }
 }
 
-void connect_legacy_screen_resize(space* receiver)
-{
-    QObject::connect(
-        QApplication::desktop(), &QDesktopWidget::resized, receiver, &space::screenResized);
-}
-
 }
