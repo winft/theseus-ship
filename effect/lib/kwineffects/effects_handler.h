@@ -187,24 +187,16 @@ public:
      * @param action The action which gets triggered when the gesture triggers
      * @since 5.10
      */
-    virtual void
-    registerTouchpadSwipeShortcut(SwipeDirection direction, uint fingerCount, QAction* action)
+    virtual void registerTouchpadSwipeShortcut(SwipeDirection direction,
+                                               uint fingerCount,
+                                               QAction* action,
+                                               std::function<void(qreal)> progressCallback)
         = 0;
 
-    virtual void registerRealtimeTouchpadSwipeShortcut(SwipeDirection dir,
-                                                       uint fingerCount,
-                                                       QAction* onUp,
-                                                       std::function<void(qreal)> progressCallback)
-        = 0;
-
-    virtual void registerRealtimeTouchpadPinchShortcut(PinchDirection dir,
-                                                       uint fingerCount,
-                                                       QAction* onUp,
-                                                       std::function<void(qreal)> progressCallback)
-        = 0;
-
-    virtual void
-    registerTouchpadPinchShortcut(PinchDirection direction, uint fingerCount, QAction* action)
+    virtual void registerTouchpadPinchShortcut(PinchDirection direction,
+                                               uint fingerCount,
+                                               QAction* action,
+                                               std::function<void(qreal)> progressCallback)
         = 0;
 
     /**

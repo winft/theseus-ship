@@ -71,7 +71,7 @@ DesktopGridEffect::DesktopGridEffect()
         }
     });
 
-    effects->registerRealtimeTouchpadSwipeShortcut(
+    effects->registerTouchpadSwipeShortcut(
         SwipeDirection::Up, 4, m_realtimeToggleAction, [this](qreal progress) {
             if (!effects->hasActiveFullScreenEffect()
                 || effects->activeFullScreenEffect() == this) {

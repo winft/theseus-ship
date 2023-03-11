@@ -63,7 +63,7 @@ OverviewEffect::OverviewEffect()
         }
     };
 
-    effects->registerRealtimeTouchpadPinchShortcut(
+    effects->registerTouchpadPinchShortcut(
         PinchDirection::Contracting, 4, m_realtimeToggleAction, progressCallback);
     effects->registerTouchscreenSwipeShortcut(
         SwipeDirection::Up, 3, m_realtimeToggleAction, progressCallback);

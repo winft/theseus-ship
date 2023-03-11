@@ -46,29 +46,17 @@ public:
                               Qt::KeyboardModifiers modifiers,
                               PointerAxisDirection axis);
 
-    void registerTouchpadSwipe(QAction* /*action*/,
-                               SwipeDirection /*direction*/,
-                               uint /*fingerCount*/ = 4)
+    void registerTouchpadSwipe(SwipeDirection /*direction*/,
+                               uint /*fingerCount*/,
+                               QAction* /*action*/,
+                               std::function<void(qreal)> /*progressCallback*/)
     {
     }
 
-    void registerRealtimeTouchpadSwipe(QAction* /*onUp*/,
-                                       std::function<void(qreal)> /*progressCallback*/,
-                                       SwipeDirection /*direction*/,
-                                       uint /*fingerCount*/ = 4)
-    {
-    }
-
-    void registerTouchpadPinch(QAction* /*action*/,
-                               PinchDirection /*direction*/,
-                               uint /*fingerCount*/ = 4)
-    {
-    }
-
-    void registerRealtimeTouchpadPinch(QAction* /*onUp*/,
-                                       std::function<void(qreal)> /*progressCallback*/,
-                                       PinchDirection /*direction*/,
-                                       uint /*fingerCount*/ = 4)
+    void registerTouchpadPinch(PinchDirection /*direction*/,
+                               uint /*fingerCount*/,
+                               QAction* /*action*/,
+                               std::function<void(qreal)> /*progressCallback*/)
     {
     }
 

@@ -146,22 +146,10 @@ void global_shortcuts_manager::registerAxisShortcut(QAction* action,
     }
 }
 
-void global_shortcuts_manager::registerTouchpadSwipe(QAction* action,
-                                                     SwipeDirection direction,
-                                                     uint fingerCount)
-{
-    auto sc = global_shortcut(
-        RealtimeFeedbackSwipeShortcut{DeviceType::Touchpad, direction, {}, fingerCount}, action);
-    if (!shortcut_exists(sc)) {
-        add_gesture_shortcut(sc, DeviceType::Touchpad);
-    }
-}
-
-void global_shortcuts_manager::registerRealtimeTouchpadSwipe(
-    QAction* action,
-    std::function<void(qreal)> progressCallback,
-    SwipeDirection direction,
-    uint fingerCount)
+void global_shortcuts_manager::registerTouchpadSwipe(SwipeDirection direction,
+                                                     uint fingerCount,
+                                                     QAction* action,
+                                                     std::function<void(qreal)> progressCallback)
 {
     auto sc = global_shortcut(
         RealtimeFeedbackSwipeShortcut{
@@ -172,24 +160,13 @@ void global_shortcuts_manager::registerRealtimeTouchpadSwipe(
     }
 }
 
-void global_shortcuts_manager::registerTouchpadPinch(QAction* action,
-                                                     PinchDirection direction,
-                                                     uint fingerCount)
-{
-    auto sc = global_shortcut(RealtimeFeedbackPinchShortcut{direction, {}, fingerCount}, action);
-    if (!shortcut_exists(sc)) {
-        add_gesture_shortcut(sc, DeviceType::Touchpad);
-    }
-}
-
-void global_shortcuts_manager::registerRealtimeTouchpadPinch(
-    QAction* onUp,
-    std::function<void(qreal)> progressCallback,
-    PinchDirection direction,
-    uint fingerCount)
+void global_shortcuts_manager::registerTouchpadPinch(PinchDirection direction,
+                                                     uint fingerCount,
+                                                     QAction* action,
+                                                     std::function<void(qreal)> progressCallback)
 {
     auto sc = global_shortcut(
-        RealtimeFeedbackPinchShortcut{direction, progressCallback, fingerCount}, onUp);
+        RealtimeFeedbackPinchShortcut{direction, progressCallback, fingerCount}, action);
     if (!shortcut_exists(sc)) {
         add_gesture_shortcut(sc, DeviceType::Touchpad);
     }
