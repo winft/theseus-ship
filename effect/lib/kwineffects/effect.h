@@ -137,12 +137,10 @@ public:
     enum Feature {
         Nothing = 0,
         Resize,
-        GeometryTip, /**< @deprecated */
-        Outline,     /**< @deprecated */
         ScreenInversion,
         Blur,
         Contrast,
-        HighlightWindows
+        HighlightWindows,
     };
 
     /**
