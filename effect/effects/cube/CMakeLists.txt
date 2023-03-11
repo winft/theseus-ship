@@ -6,7 +6,6 @@
 # Effect
 set(cube_SOURCES
     cube.cpp
-    cube_proxy.cpp
     cube.qrc
     main.cpp
 )

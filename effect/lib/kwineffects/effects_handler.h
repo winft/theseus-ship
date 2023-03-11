@@ -212,12 +212,6 @@ public:
                                                   std::function<void(qreal)> progressCallback)
         = 0;
 
-    /**
-     * Retrieve the proxy class for an effect if it has one. Will return NULL if
-     * the effect isn't loaded or doesn't have a proxy class.
-     */
-    virtual void* getProxy(QString name) = 0;
-
     // Mouse polling
     virtual void startMousePolling() = 0;
     virtual void stopMousePolling() = 0;

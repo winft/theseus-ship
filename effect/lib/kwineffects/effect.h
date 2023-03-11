@@ -176,11 +176,6 @@ public:
     virtual void reconfigure(ReconfigureFlags flags);
 
     /**
-     * Called when another effect requests the proxy for this effect.
-     */
-    virtual void* proxy();
-
-    /**
      * Called before starting to paint the screen.
      * In this method you can:
      * @li set whether the windows or the entire screen will be transformed

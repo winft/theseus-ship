@@ -10,8 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kwineffects/time_line.h>
 #include <kwingl/utils.h>
 
-#include "cube_inside.h"
-#include "cube_proxy.h"
 #include "kwineffects/effect_screen.h"
 #include <QFont>
 #include <QMatrix4x4>
@@ -61,11 +59,6 @@ public:
     {
         return 50;
     }
-
-    // proxy functions
-    void* proxy() override;
-    void registerCubeInsideEffect(CubeInsideEffect* effect);
-    void unregisterCubeInsideEffect(CubeInsideEffect* effect);
 
     static bool supported();
 
@@ -241,10 +234,6 @@ private:
     QList<QKeySequence> cubeShortcut;
     QList<QKeySequence> cylinderShortcut;
     QList<QKeySequence> sphereShortcut;
-
-    // proxy
-    CubeEffectProxy m_proxy;
-    QList<CubeInsideEffect*> m_cubeInsideEffects;
 
     QAction* m_cubeAction;
     QAction* m_cylinderAction;

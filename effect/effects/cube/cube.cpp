@@ -8,8 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // KConfigSkeleton
 #include "cubeconfig.h"
 
-#include "cube_inside.h"
-
 #include <kwinconfig.h>
 #include <kwineffects/effect_frame.h>
 #include <kwineffects/effect_window.h>
@@ -77,7 +75,6 @@ CubeEffect::CubeEffect()
     , mAddedHeightCoeff1(0.0f)
     , mAddedHeightCoeff2(0.0f)
     , m_cubeCapBuffer(nullptr)
-    , m_proxy(this)
     , m_cubeAction(new QAction(this))
     , m_cylinderAction(new QAction(this))
     , m_sphereAction(new QAction(this))
@@ -1630,9 +1627,6 @@ void CubeEffect::rotateToDesktop(int desktop)
 
 void CubeEffect::setActive(bool active)
 {
-    for (auto const& inside : qAsConst(m_cubeInsideEffects)) {
-        inside->setActive(true);
-    }
     if (active) {
         QString capPath = CubeConfig::capPath();
         if (texturedCaps && !capTexture && !capPath.isEmpty()) {
@@ -1822,21 +1816,6 @@ void CubeEffect::globalShortcutChanged(QAction* action, const QKeySequence& seq)
         sphereShortcut.clear();
         sphereShortcut.append(seq);
     }
-}
-
-void* CubeEffect::proxy()
-{
-    return &m_proxy;
-}
-
-void CubeEffect::registerCubeInsideEffect(CubeInsideEffect* effect)
-{
-    m_cubeInsideEffects.append(effect);
-}
-
-void CubeEffect::unregisterCubeInsideEffect(CubeInsideEffect* effect)
-{
-    m_cubeInsideEffects.removeAll(effect);
 }
 
 bool CubeEffect::isActive() const

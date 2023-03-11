@@ -315,15 +315,6 @@ bool effects_handler_wrap::touchUp(qint32 id, quint32 time)
     return false;
 }
 
-void* effects_handler_wrap::getProxy(QString name)
-{
-    for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it)
-        if ((*it).first == name)
-            return (*it).second->proxy();
-
-    return nullptr;
-}
-
 bool effects_handler_wrap::hasKeyboardGrab() const
 {
     return keyboard_grab_effect != nullptr;

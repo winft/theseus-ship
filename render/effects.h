@@ -123,7 +123,6 @@ public:
     void startMouseInterception(Effect* effect, Qt::CursorShape shape) override;
     void stopMouseInterception(Effect* effect) override;
     bool isMouseInterception() const;
-    void* getProxy(QString name) override;
 
     void setElevatedWindow(KWin::EffectWindow* w, bool set) override;
 
