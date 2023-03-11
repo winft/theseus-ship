@@ -9,7 +9,7 @@
 #include "win/space.h"
 #include "win/virtual_desktops.h"
 
-namespace KWin::scripting::models::v3
+namespace KWin::scripting
 {
 
 virtual_desktop_model::virtual_desktop_model(QObject* parent)

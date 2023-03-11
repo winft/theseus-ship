@@ -10,7 +10,7 @@
 #include "scripting/singleton_interface.h"
 #include "scripting/space.h"
 
-namespace KWin::scripting::models::v3
+namespace KWin::scripting
 {
 
 client_model::client_model(QObject* parent)

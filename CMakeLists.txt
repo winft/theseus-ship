@@ -413,6 +413,7 @@ set(kwin_SRCS
     render/singleton_interface.cpp
     render/window_thumbnail_item.cpp
     render/x11/compositor_selection_owner.cpp
+    scripting/client_model.cpp
     scripting/dbus_call.cpp
     scripting/desktop_background_item.cpp
     scripting/js_engine_global_methods_wrapper.cpp
@@ -423,9 +424,8 @@ set(kwin_SRCS
     scripting/script_timer.cpp
     scripting/scripting_logging.cpp
     scripting/singleton_interface.cpp
-    scripting/v3/client_model.cpp
-    scripting/v3/virtual_desktop_model.cpp
     scripting/utils.cpp
+    scripting/virtual_desktop_model.cpp
     scripting/window.cpp
     scripting/space.cpp
     win/dbus/appmenu.cpp

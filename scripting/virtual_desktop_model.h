@@ -17,7 +17,7 @@ namespace win
 class virtual_desktop;
 }
 
-namespace scripting::models::v3
+namespace scripting
 {
 
 /**

@@ -15,10 +15,8 @@
 
 namespace KWin::scripting
 {
-class window;
 
-namespace models::v3
-{
+class window;
 
 class KWIN_EXPORT client_model : public QAbstractListModel
 {
@@ -127,5 +125,4 @@ private:
     bool m_showMinimizedWindows = true;
 };
 
-}
 }

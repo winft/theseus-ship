@@ -7,13 +7,13 @@
 */
 #pragma once
 
+#include "client_model.h"
 #include "dbus_call.h"
 #include "screen_edge_item.h"
 #include "script.h"
 #include "scripting/desktop_background_item.h"
 #include "space.h"
-#include "v3/client_model.h"
-#include "v3/virtual_desktop_model.h"
+#include "virtual_desktop_model.h"
 #include "window.h"
 
 #include "kwinglobals.h"
@@ -110,10 +110,9 @@ public:
         qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 3, 0, "WindowThumbnailItem");
         qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");
         qmlRegisterType<screen_edge_item>("org.kde.kwin", 3, 0, "ScreenEdgeItem");
-        qmlRegisterType<models::v3::client_model>("org.kde.kwin", 3, 0, "ClientModel");
-        qmlRegisterType<models::v3::client_filter_model>("org.kde.kwin", 3, 0, "ClientFilterModel");
-        qmlRegisterType<models::v3::virtual_desktop_model>(
-            "org.kde.kwin", 3, 0, "VirtualDesktopModel");
+        qmlRegisterType<client_model>("org.kde.kwin", 3, 0, "ClientModel");
+        qmlRegisterType<client_filter_model>("org.kde.kwin", 3, 0, "ClientFilterModel");
+        qmlRegisterType<virtual_desktop_model>("org.kde.kwin", 3, 0, "VirtualDesktopModel");
         qmlRegisterUncreatableType<KWin::QuickSceneView>(
             "org.kde.kwin",
             3,
