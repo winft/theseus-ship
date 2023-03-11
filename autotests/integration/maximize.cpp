@@ -77,7 +77,7 @@ TEST_CASE("maximize", "[win]")
         // now maximize
         QSignalSpy bordersChangedSpy(decoration, &KDecoration2::Decoration::bordersChanged);
         QVERIFY(bordersChangedSpy.isValid());
-        QSignalSpy maximizedChangedSpy(decoration->client().toStrongRef().data(),
+        QSignalSpy maximizedChangedSpy(decoration->client(),
                                        &KDecoration2::DecoratedClient::maximizedChanged);
         QVERIFY(maximizedChangedSpy.isValid());
         QSignalSpy geometryShapeChangedSpy(client->qobject.get(),

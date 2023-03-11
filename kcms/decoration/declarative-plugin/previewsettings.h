@@ -8,8 +8,8 @@
 
 #include <KDecoration2/Private/DecorationSettingsPrivate>
 #include <KDecoration2/DecorationSettings>
-#include <QObject>
 #include <QAbstractListModel>
+#include <QObject>
 #include <QPointer>
 
 namespace KDecoration2

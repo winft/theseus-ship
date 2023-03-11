@@ -1353,7 +1353,7 @@ public:
         if (auto deco = decoration(this); deco && deco->client()
             && !(space.base.options->qobject->borderlessMaximizedWindows()
                  && mode == maximize_mode::full)) {
-            auto const deco_client = win::decoration(this)->client().toStrongRef();
+            auto const deco_client = win::decoration(this)->client();
             if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
                 Q_EMIT deco_client->maximizedVerticallyChanged(
                     flags(mode & maximize_mode::vertical));

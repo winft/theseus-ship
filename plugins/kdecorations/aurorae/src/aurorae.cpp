@@ -45,7 +45,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QPainter>
-#include <QQuickItem>
 #include <QQuickRenderControl>
 #include <QQuickWindow>
 #include <QQmlComponent>
@@ -358,23 +357,25 @@ void Decoration::init()
         connect(m_extendedBorders, &KWin::Borders::topChanged, this, &Decoration::updateExtendedBorders);
         connect(m_extendedBorders, &KWin::Borders::bottomChanged, this, &Decoration::updateExtendedBorders);
     }
-    connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, &Decoration::updateBorders);
-    connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::shadedChanged, this, &Decoration::updateBorders);
+
+    auto decorationClient = client();
+    connect(decorationClient, &KDecoration2::DecoratedClient::maximizedChanged, this, &Decoration::updateBorders);
+    connect(decorationClient, &KDecoration2::DecoratedClient::shadedChanged, this, &Decoration::updateBorders);
     updateBorders();
     if (m_view) {
         auto resizeWindow = [this] {
             QRect rect(QPoint(0, 0), size());
-            if (m_padding && !client().toStrongRef().data()->isMaximized()) {
+            if (m_padding && !client()->isMaximized()) {
                 rect = rect.adjusted(-m_padding->left(), -m_padding->top(), m_padding->right(), m_padding->bottom());
             }
             m_view->setGeometry(rect);
             updateBlur();
         };
         connect(this, &Decoration::bordersChanged, this, resizeWindow);
-        connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::widthChanged, this, resizeWindow);
-        connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::heightChanged, this, resizeWindow);
-        connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, resizeWindow);
-        connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::shadedChanged, this, resizeWindow);
+        connect(client(), &KDecoration2::DecoratedClient::widthChanged, this, resizeWindow);
+        connect(client(), &KDecoration2::DecoratedClient::heightChanged, this, resizeWindow);
+        connect(client(), &KDecoration2::DecoratedClient::maximizedChanged, this, resizeWindow);
+        connect(client(), &KDecoration2::DecoratedClient::shadedChanged, this, resizeWindow);
         resizeWindow();
         updateBuffer();
     } else {
@@ -405,7 +406,7 @@ void Decoration::setupBorders(QQuickItem *item)
 void Decoration::updateBorders()
 {
     KWin::Borders *b = m_borders;
-    if (client().toStrongRef().data()->isMaximized() && m_maximizedBorders) {
+    if (client()->isMaximized() && m_maximizedBorders) {
         b = m_maximizedBorders;
     }
     if (!b) {
@@ -439,9 +440,7 @@ void Decoration::updateShadow()
     }
     bool updateShadow = false;
     const auto oldShadow = shadow();
-    if (m_padding &&
-            (m_padding->left() > 0 || m_padding->top() > 0 || m_padding->right() > 0 || m_padding->bottom() > 0) &&
-            !client().toStrongRef().data()->isMaximized()) {
+    if (m_padding && (m_padding->left() > 0 || m_padding->top() > 0 || m_padding->right() > 0 || m_padding->bottom() > 0) && !client()->isMaximized()) {
         if (oldShadow.isNull()) {
             updateShadow = true;
         } else {
@@ -567,17 +566,17 @@ void Decoration::updateExtendedBorders()
     int extBottom = m_extendedBorders->bottom();
 
     if (settings()->borderSize() == KDecoration2::BorderSize::None) {
-        if (!client().toStrongRef().data()->isMaximizedHorizontally()) {
-            extLeft = qMax(m_extendedBorders->left(), extSize);
-            extRight = qMax(m_extendedBorders->right(), extSize);
+        if (!client()->isMaximizedHorizontally()) {
+            extLeft = std::max(m_extendedBorders->left(), extSize);
+            extRight = std::max(m_extendedBorders->right(), extSize);
         }
-        if (!client().toStrongRef().data()->isMaximizedVertically()) {
-            extBottom = qMax(m_extendedBorders->bottom(), extSize);
+        if (!client()->isMaximizedVertically()) {
+            extBottom = std::max(m_extendedBorders->bottom(), extSize);
         }
 
-    } else if (settings()->borderSize() == KDecoration2::BorderSize::NoSides && !client().toStrongRef().data()->isMaximizedHorizontally() ) {
-        extLeft = qMax(m_extendedBorders->left(), extSize);
-        extRight = qMax(m_extendedBorders->right(), extSize);
+    } else if (settings()->borderSize() == KDecoration2::BorderSize::NoSides && !client()->isMaximizedHorizontally()) {
+        extLeft = std::max(m_extendedBorders->left(), extSize);
+        extRight = std::max(m_extendedBorders->right(), extSize);
     }
 
     setResizeOnlyBorders(QMargins(extLeft, 0, extRight, extBottom));
@@ -591,7 +590,7 @@ void Decoration::updateBlur()
 
     QRegion mask;
 
-    if (clientPointer() && clientPointer()->isMaximized()) {
+    if (client() && client()->isMaximized()) {
         mask = QRect(0, 0, m_item->width(), m_item->height());
     } else {
         const QVariant maskProperty = m_item->property("decorationMask");
@@ -618,9 +617,7 @@ void Decoration::updateBuffer()
         return;
     }
     m_contentRect = QRect(QPoint(0, 0), m_view->contentItem()->size().toSize());
-    if (m_padding &&
-            (m_padding->left() > 0 || m_padding->top() > 0 || m_padding->right() > 0 || m_padding->bottom() > 0) &&
-            !client().toStrongRef().data()->isMaximized()) {
+    if (m_padding && (m_padding->left() > 0 || m_padding->top() > 0 || m_padding->right() > 0 || m_padding->bottom() > 0) && !client()->isMaximized()) {
         m_contentRect = m_contentRect.adjusted(m_padding->left(), m_padding->top(), -m_padding->right(), -m_padding->bottom());
     }
     updateShadow();
@@ -628,9 +625,9 @@ void Decoration::updateBuffer()
     update();
 }
 
-KDecoration2::DecoratedClient *Decoration::clientPointer() const
+QQuickItem *Decoration::item() const
 {
-    return client().toStrongRef().data();
+    return m_item;
 }
 
 ThemeProvider::ThemeProvider(QObject *parent, const KPluginMetaData &data, const QVariantList &args)
