@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-import QtQuick 2.3
+import QtQuick
 
 QtObject {
     property bool visible: true
