@@ -25,7 +25,7 @@ class KWIN_EXPORT client_model : public QAbstractListModel
 public:
     enum Roles {
         ClientRole = Qt::UserRole + 1,
-        ScreenRole,
+        OutputRole,
         DesktopRole,
         ActivityRole,
     };

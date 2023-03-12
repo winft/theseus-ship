@@ -87,10 +87,6 @@ void property_window::setup_connections()
                      &property_window::geometryChanged);
     QObject::connect(
         &qtwin, &win::window_qobject::hasAlphaChanged, this, &property_window::hasAlphaChanged);
-    QObject::connect(&qtwin,
-                     &win::window_qobject::central_output_changed,
-                     this,
-                     &property_window::screenChanged);
     QObject::connect(
         &qtwin, &win::window_qobject::windowRoleChanged, this, &property_window::windowRoleChanged);
     QObject::connect(

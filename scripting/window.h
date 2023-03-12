@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "output.h"
+
 #include "input/cursor.h"
 #include "kwin_export.h"
 #include "win/actions.h"
@@ -24,6 +26,8 @@ namespace KWin::scripting
 class KWIN_EXPORT window : public win::property_window
 {
     Q_OBJECT
+
+    Q_PROPERTY(KWin::scripting::output* output READ output NOTIFY outputChanged)
 
     /// @deprecated. Use frameGeometry instead.
     Q_PROPERTY(QRect geometry READ frameGeometry WRITE setFrameGeometry NOTIFY geometryChanged)
@@ -49,6 +53,7 @@ class KWIN_EXPORT window : public win::property_window
 public:
     explicit window(win::window_qobject& qtwin);
 
+    virtual scripting::output* output() const = 0;
     virtual bool isOnDesktop(unsigned int desktop) const = 0;
     virtual bool isOnDesktop(win::virtual_desktop* desktop) const = 0;
     virtual bool isOnCurrentDesktop() const = 0;
@@ -66,6 +71,7 @@ public Q_SLOTS:
     virtual void closeWindow() = 0;
 
 Q_SIGNALS:
+    void outputChanged();
     void quickTileModeChanged();
 
     void moveResizeCursorChanged(input::cursor_shape);
@@ -363,16 +369,26 @@ public:
         std::visit(overload{[=](auto&& win) { win->setFullScreen(set); }}, ref_win);
     }
 
-    int screen() const override
+    scripting::output* output() const override
     {
-        return std::visit(overload{[](auto&& win) -> int {
-                              if (!win->topo.central_output) {
-                                  return 0;
-                              }
-                              return base::get_output_index(win->space.base.outputs,
-                                                            *win->topo.central_output);
-                          }},
-                          ref_win);
+        return std::visit(
+            overload{[](auto&& win) -> scripting::output* {
+                if (!win->topo.central_output) {
+                    return nullptr;
+                }
+                using space_t = std::remove_reference_t<decltype(win->space)>;
+                auto outputs = win->space.scripting->workspaceWrapper()->screens();
+                auto it = std::find_if(outputs.begin(), outputs.end(), [win](auto out) {
+                    auto out_impl
+                        = static_cast<output_impl<typename space_t::base_t::output_t>*>(out);
+                    return win->topo.central_output == &out_impl->ref_out;
+                });
+                if (it == outputs.end()) {
+                    return nullptr;
+                }
+                return *it;
+            }},
+            ref_win);
     }
 
     int desktop() const override

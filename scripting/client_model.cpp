@@ -38,8 +38,8 @@ void client_model::setupClientConnections(window* client)
     connect(client, &window::desktopChanged, this, [this, client]() {
         markRoleChanged(client, DesktopRole);
     });
-    connect(client, &window::screenChanged, this, [this, client]() {
-        markRoleChanged(client, ScreenRole);
+    connect(client, &window::outputChanged, this, [this, client]() {
+        markRoleChanged(client, OutputRole);
     });
 }
 
@@ -67,7 +67,7 @@ QHash<int, QByteArray> client_model::roleNames() const
     return {
         {Qt::DisplayRole, QByteArrayLiteral("display")},
         {ClientRole, QByteArrayLiteral("client")},
-        {ScreenRole, QByteArrayLiteral("screen")},
+        {OutputRole, QByteArrayLiteral("output")},
         {DesktopRole, QByteArrayLiteral("desktop")},
         {ActivityRole, QByteArrayLiteral("activity")},
     };
@@ -96,8 +96,8 @@ QVariant client_model::data(const QModelIndex& index, int role) const
         case Qt::DisplayRole:
         case ClientRole:
             return QVariant::fromValue(client);
-        case ScreenRole:
-            return client->screen();
+        case OutputRole:
+            return QVariant::fromValue(client->output());
         case DesktopRole:
             return client->desktop();
         case ActivityRole:
