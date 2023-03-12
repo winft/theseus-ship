@@ -515,10 +515,10 @@ void init_shortcuts(Space& space)
     def(kli18n("Window One Desktop Down"), 0, active_window_to_below_desktop<Space>);
 
     for (int i = 0; i < 8; ++i) {
-        def3(kli18n("Window to Screen %1"), 0, active_window_to_output<Space>, i);
+        def3(kli18n("Move Window to Screen %1"), 0, active_window_to_output<Space>, i);
     }
-    def(kli18n("Window to Next Screen"), 0, active_window_to_next_output<Space>);
-    def(kli18n("Window to Previous Screen"), 0, active_window_to_prev_output<Space>);
+    def(kli18n("Move Window to Next Screen"), 0, active_window_to_next_output<Space>);
+    def(kli18n("Move Window to Previous Screen"), 0, active_window_to_prev_output<Space>);
     def(kli18n("Show Desktop"),
         static_cast<Qt::Key>(Qt::META) + Qt::Key_D,
         toggle_show_desktop<Space>);
