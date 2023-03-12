@@ -29,9 +29,6 @@ class KWIN_EXPORT window : public win::property_window
 
     Q_PROPERTY(KWin::scripting::output* output READ output NOTIFY outputChanged)
 
-    /// @deprecated. Use frameGeometry instead.
-    Q_PROPERTY(QRect geometry READ frameGeometry WRITE setFrameGeometry NOTIFY geometryChanged)
-
     /// @deprecated
     Q_PROPERTY(QStringList activities READ activities NOTIFY activitiesChanged)
 
