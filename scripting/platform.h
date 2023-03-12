@@ -9,6 +9,7 @@
 
 #include "client_model.h"
 #include "dbus_call.h"
+#include "output.h"
 #include "screen_edge_item.h"
 #include "script.h"
 #include "scripting/desktop_background_item.h"
@@ -133,6 +134,7 @@ public:
         qmlRegisterSingletonInstance(
             "org.kde.kwin", 3, 0, "Options", space.base.options->qobject.get());
 
+        qmlRegisterAnonymousType<output>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<window>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<win::virtual_desktop>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);

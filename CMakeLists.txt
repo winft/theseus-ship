@@ -419,6 +419,7 @@ set(kwin_SRCS
     scripting/js_engine_global_methods_wrapper.cpp
     scripting/screen_edge_item.cpp
     scripting/effect.cpp
+    scripting/output.cpp
     scripting/platform.cpp
     scripting/script.cpp
     scripting/script_timer.cpp

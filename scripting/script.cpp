@@ -112,6 +112,7 @@ script::script(int id,
         QMetaType::registerConverter<QJSValue, QSize>(scriptValueToSize);
     }
 
+    qRegisterMetaType<QList<output*>>();
     qRegisterMetaType<QList<window*>>();
     qRegisterMetaType<QVector<KWin::win::virtual_desktop*>>();
 }
