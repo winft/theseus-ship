@@ -217,13 +217,13 @@ public:
                           ref_win);
     }
 
-    QByteArray resourceName() const override
+    QString resourceName() const override
     {
         return std::visit(overload{[](auto&& win) { return win->meta.wm_class.res_name; }},
                           ref_win);
     }
 
-    QByteArray resourceClass() const override
+    QString resourceClass() const override
     {
         return std::visit(overload{[](auto&& win) { return win->meta.wm_class.res_class; }},
                           ref_win);
@@ -450,7 +450,7 @@ public:
                           ref_win);
     }
 
-    QByteArray windowRole() const override
+    QString windowRole() const override
     {
         return std::visit(overload{[](auto&& win) { return win->windowRole(); }}, ref_win);
     }

@@ -40,12 +40,12 @@ public:
         return XCB_WINDOW_NONE;
     }
 
-    QByteArray resourceName() const override
+    QString resourceName() const override
     {
         return ref_win->meta.wm_class.res_name;
     }
 
-    QByteArray resourceClass() const override
+    QString resourceClass() const override
     {
         return ref_win->meta.wm_class.res_class;
     }
@@ -259,7 +259,7 @@ public:
         }
     }
 
-    QByteArray windowRole() const override
+    QString windowRole() const override
     {
         return ref_win->windowRole();
     }

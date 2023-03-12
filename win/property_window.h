@@ -31,8 +31,8 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(qulonglong frameId READ frameId)
     Q_PROPERTY(qulonglong windowId READ windowId CONSTANT)
 
-    Q_PROPERTY(QByteArray resourceName READ resourceName NOTIFY windowClassChanged)
-    Q_PROPERTY(QByteArray resourceClass READ resourceClass NOTIFY windowClassChanged)
+    Q_PROPERTY(QString resourceName READ resourceName NOTIFY windowClassChanged)
+    Q_PROPERTY(QString resourceClass READ resourceClass NOTIFY windowClassChanged)
 
     Q_PROPERTY(QString caption READ caption NOTIFY captionChanged)
     Q_PROPERTY(QIcon icon READ icon NOTIFY iconChanged)
@@ -74,7 +74,7 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(QVector<uint> x11DesktopIds READ x11DesktopIds NOTIFY x11DesktopIdsChanged)
     Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops WRITE setOnAllDesktops NOTIFY desktopChanged)
 
-    Q_PROPERTY(QByteArray windowRole READ windowRole NOTIFY windowRoleChanged)
+    Q_PROPERTY(QString windowRole READ windowRole NOTIFY windowRoleChanged)
 
     Q_PROPERTY(bool desktopWindow READ isDesktop CONSTANT)
     Q_PROPERTY(bool dock READ isDock CONSTANT)
@@ -154,8 +154,8 @@ public:
     virtual xcb_window_t frameId() const = 0;
     virtual quint32 windowId() const = 0;
 
-    virtual QByteArray resourceName() const = 0;
-    virtual QByteArray resourceClass() const = 0;
+    virtual QString resourceName() const = 0;
+    virtual QString resourceClass() const = 0;
 
     virtual QString caption() const = 0;
     virtual QIcon icon() const = 0;
@@ -202,7 +202,7 @@ public:
     virtual bool isOnAllDesktops() const = 0;
     virtual void setOnAllDesktops(bool set) = 0;
 
-    virtual QByteArray windowRole() const = 0;
+    virtual QString windowRole() const = 0;
 
     virtual bool isDesktop() const = 0;
     virtual bool isDock() const = 0;
