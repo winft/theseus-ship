@@ -168,21 +168,6 @@ public:
 
     /**
      * Overloaded method for convenience.
-     * @param option The type of area which should be considered
-     * @param point The coordinates which have to be included in the area
-     * @param desktop The desktop for which the area should be considered, in general there should
-     * not be a difference
-     * @returns The specified screen geometry
-     * @deprecated use clientArea(ClientAreaOption option, QPoint const& point,
-     * KWin::win::virtual_desktop* desktop)
-     */
-    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, QPoint const& point, int desktop) const
-    {
-        return client_area_impl(static_cast<clientAreaOption>(option), point, desktop);
-    }
-
-    /**
-     * Overloaded method for convenience.
      * @param client The Client for which the area should be retrieved
      * @returns The specified screen geometry
      */
@@ -407,12 +392,9 @@ protected:
     space() = default;
     virtual output* screen_at_impl(QPointF const& pos) const = 0;
 
-    virtual QRect client_area_impl(clientAreaOption option, int screen, int desktop) const = 0;
     virtual QRect client_area_impl(clientAreaOption option,
                                    scripting::output* output,
                                    win::virtual_desktop* desktop) const
-        = 0;
-    virtual QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const
         = 0;
     virtual QRect client_area_impl(clientAreaOption option, window* window) const = 0;
     virtual QRect client_area_impl(clientAreaOption option, window const* window) const = 0;
@@ -886,12 +868,6 @@ protected:
         return get_output(output);
     }
 
-    QRect client_area_impl(clientAreaOption option, int screen, int desktop) const override
-    {
-        auto output = base::get_output(ref_space->base.outputs, screen);
-        return win::space_window_area(*ref_space, option, output, desktop);
-    }
-
     QRect client_area_impl(clientAreaOption option,
                            scripting::output* output,
                            win::virtual_desktop* desktop) const override
@@ -899,11 +875,6 @@ protected:
         auto out_impl = static_cast<output_impl<typename RefSpace::base_t::output_t>*>(output);
         return win::space_window_area(
             *ref_space, option, &out_impl->ref_out, desktop->x11DesktopNumber());
-    }
-
-    QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const override
-    {
-        return win::space_window_area(*ref_space, option, point, desktop);
     }
 
     QRect client_area_impl(clientAreaOption option, window* win) const override
