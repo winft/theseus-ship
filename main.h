@@ -30,7 +30,6 @@ public:
     ~Application() override;
 
     void setupEventFilters();
-    void setupTranslator();
     void setupCommandLine(QCommandLineParser *parser);
     void processCommandLine(QCommandLineParser *parser);
 

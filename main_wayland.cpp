@@ -366,7 +366,6 @@ int main(int argc, char * argv[])
 
     KWin::base::app_singleton app_singleton;
     KWin::ApplicationWayland a(argc, argv);
-    a.setupTranslator();
 
     // Reset QT_QPA_PLATFORM so we don't propagate it to our children (e.g. apps launched from the
     // overview effect).
