@@ -1374,7 +1374,7 @@ protected:
     {
         auto qtwin = window.qobject.get();
 
-        QObject::connect(qtwin, &win::window_qobject::desktopChanged, this, [this, &window] {
+        QObject::connect(qtwin, &win::window_qobject::desktopsChanged, this, [this, &window] {
             Q_EMIT windowDesktopsChanged(window.render->effect.get());
         });
         QObject::connect(qtwin,

@@ -38,7 +38,7 @@ void idle_setup(Win& window)
     auto qwin = window.qobject.get();
 
     QObject::connect(window.surface, &Wrapland::Server::Surface::inhibitsIdleChanged, qwin, update);
-    QObject::connect(qwin, &Win::qobject_t::desktopChanged, qwin, update);
+    QObject::connect(qwin, &Win::qobject_t::desktopsChanged, qwin, update);
     QObject::connect(qwin, &Win::qobject_t::clientMinimized, qwin, update);
     QObject::connect(qwin, &Win::qobject_t::clientUnminimized, qwin, update);
     QObject::connect(qwin, &Win::qobject_t::windowHidden, qwin, update);

@@ -92,7 +92,7 @@ Q_SIGNALS:
 
     void activeChanged();
     void demandsAttentionChanged();
-    void desktopChanged();
+    void desktopsChanged();
 
     void minimizedChanged();
     void clientMinimized(bool animate);

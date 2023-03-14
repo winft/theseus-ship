@@ -182,7 +182,7 @@ void setup_plasma_management(Space* space, Win* win)
     plasma_win->setOnAllDesktops(on_all_desktops(win));
 
     // Only for the legacy mechanism.
-    QObject::connect(qtwin, &window_qobject::desktopChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(qtwin, &window_qobject::desktopsChanged, plasma_win, [plasma_win, win] {
         if (on_all_desktops(win)) {
             plasma_win->setOnAllDesktops(true);
             return;

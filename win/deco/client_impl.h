@@ -54,7 +54,7 @@ public:
                          qobject.get(),
                          [this] { update_size(); });
         QObject::connect(window->qobject.get(),
-                         &window_qobject::desktopChanged,
+                         &window_qobject::desktopsChanged,
                          qobject.get(),
                          [decoratedClient, window]() {
                              Q_EMIT decoratedClient->onAllDesktopsChanged(on_all_desktops(window));

@@ -69,8 +69,9 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(bool fullScreen READ isFullScreen WRITE setFullScreen NOTIFY fullScreenChanged)
 
     Q_PROPERTY(QVector<KWin::win::virtual_desktop*> desktops READ desktops WRITE setDesktops NOTIFY
-                   desktopChanged)
-    Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops WRITE setOnAllDesktops NOTIFY desktopChanged)
+                   desktopsChanged)
+    Q_PROPERTY(
+        bool onAllDesktops READ isOnAllDesktops WRITE setOnAllDesktops NOTIFY desktopsChanged)
 
     Q_PROPERTY(QString windowRole READ windowRole NOTIFY windowRoleChanged)
 
@@ -290,7 +291,7 @@ Q_SIGNALS:
     void opacityChanged(KWin::win::property_window* window, qreal old_opacity);
     void fullScreenChanged();
 
-    void desktopChanged();
+    void desktopsChanged();
     void windowRoleChanged();
 
     void closeableChanged(bool);

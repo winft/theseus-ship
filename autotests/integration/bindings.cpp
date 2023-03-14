@@ -172,8 +172,8 @@ TEST_CASE("bindings", "[input],[win]")
 
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
-        QSignalSpy desktopChangedSpy(c->qobject.get(), &win::window_qobject::desktopChanged);
-        QVERIFY(desktopChangedSpy.isValid());
+        QSignalSpy desktopsChangedSpy(c->qobject.get(), &win::window_qobject::desktopsChanged);
+        QVERIFY(desktopsChangedSpy.isValid());
 
         QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
 
@@ -191,18 +191,18 @@ TEST_CASE("bindings", "[input],[win]")
         };
 
         invokeShortcut(desktop);
-        QVERIFY(desktopChangedSpy.wait());
+        QVERIFY(desktopsChangedSpy.wait());
         QCOMPARE(win::get_desktop(*c), desktop);
 
         // back to desktop 1
         invokeShortcut(1);
-        QVERIFY(desktopChangedSpy.wait());
+        QVERIFY(desktopsChangedSpy.wait());
         QCOMPARE(win::get_desktop(*c), 1);
 
         // invoke with one desktop too many
         invokeShortcut(desktop + 1);
         // that should fail
-        QVERIFY(!desktopChangedSpy.wait(100));
+        QVERIFY(!desktopsChangedSpy.wait(100));
     }
 }
 
