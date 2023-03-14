@@ -96,7 +96,6 @@ Q_SIGNALS:
     // to be forwarded by Workspace
     void desktopPresenceChanged(int);
     void desktopChanged();
-    void x11DesktopIdsChanged();
 
     void minimizedChanged();
     void clientMinimized(bool animate);

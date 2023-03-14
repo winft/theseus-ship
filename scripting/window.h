@@ -408,11 +408,6 @@ public:
         std::visit(overload{[=](auto&& win) { win::set_desktops(win, desktops); }}, ref_win);
     }
 
-    QVector<uint> x11DesktopIds() const override
-    {
-        return std::visit(overload{[](auto&& win) { return win::x11_desktop_ids(win); }}, ref_win);
-    }
-
     bool isOnAllDesktops() const override
     {
         return std::visit(overload{[](auto&& win) { return win::on_all_desktops(win); }}, ref_win);

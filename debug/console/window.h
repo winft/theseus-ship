@@ -242,11 +242,6 @@ public:
         }
     }
 
-    QVector<uint> x11DesktopIds() const override
-    {
-        return win::x11_desktop_ids(ref_win);
-    }
-
     bool isOnAllDesktops() const override
     {
         return win::on_all_desktops(ref_win);

@@ -30,10 +30,6 @@ void property_window::setup_connections()
                      &property_window::demandsAttentionChanged);
     QObject::connect(
         &qtwin, &win::window_qobject::desktopChanged, this, &property_window::desktopChanged);
-    QObject::connect(&qtwin,
-                     &win::window_qobject::x11DesktopIdsChanged,
-                     this,
-                     &property_window::x11DesktopIdsChanged);
 
     QObject::connect(
         &qtwin, &win::window_qobject::minimizedChanged, this, &property_window::minimizedChanged);

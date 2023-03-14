@@ -70,12 +70,8 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     if (wasOnCurrentDesktop != on_current_desktop(win)) {
         Q_EMIT win->qobject->desktopPresenceChanged(was_desk);
     }
-    Q_EMIT win->qobject->x11DesktopIdsChanged();
 }
 
-/**
- * Deprecated, use x11_desktop_ids.
- */
 template<typename Win>
 void set_desktop(Win* win, int desktop)
 {
