@@ -88,6 +88,7 @@ private:
 
     bool wmclassWarning() const;
     bool geometryWarning() const;
+    bool opacityWarning() const;
 
     static const QHash<QString, QString> x11PropertyHash();
     void updateVirtualDesktops();

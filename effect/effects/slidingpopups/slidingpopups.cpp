@@ -109,10 +109,7 @@ SlidingPopupsEffect::SlidingPopupsEffect()
         effects, &EffectsHandler::windowDeleted, this, &SlidingPopupsEffect::handle_window_deleted);
     connect(effects, &EffectsHandler::windowShown, this, &SlidingPopupsEffect::slide_in);
     connect(effects, &EffectsHandler::windowHidden, this, &SlidingPopupsEffect::slide_out);
-    connect(effects,
-            qOverload<int, int, EffectWindow*>(&EffectsHandler::desktopChanged),
-            this,
-            &SlidingPopupsEffect::stopAnimations);
+    connect(effects, &EffectsHandler::desktopChanged, this, &SlidingPopupsEffect::stopAnimations);
     connect(effects,
             &EffectsHandler::activeFullScreenEffectChanged,
             this,

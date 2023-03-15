@@ -24,13 +24,6 @@ void setup_space_window_connections(Space* space, Win* win)
                      &window_qobject::needsRepaint,
                      space->base.render->compositor->qobject.get(),
                      [win] { win->space.base.render->compositor->schedule_repaint(win); });
-    QObject::connect(win->qobject.get(),
-                     &window_qobject::desktopPresenceChanged,
-                     space->qobject.get(),
-                     [space, win](auto desktop) {
-                         Q_EMIT space->qobject->desktopPresenceChanged(win->meta.signal_id,
-                                                                       desktop);
-                     });
     QObject::connect(
         win->qobject.get(), &window_qobject::minimizedChanged, space->qobject.get(), [space, win] {
             Q_EMIT space->qobject->clientMinimizedChanged(win->meta.signal_id);

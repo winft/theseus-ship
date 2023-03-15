@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "touch.h"
 #include <kwin_effects_interface.h>
 
-#include <KAboutData>
 #include <KConfigGroup>
 #include <KLocalizedString>
 #include <KPluginFactory>

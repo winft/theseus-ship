@@ -187,24 +187,16 @@ public:
      * @param action The action which gets triggered when the gesture triggers
      * @since 5.10
      */
-    virtual void
-    registerTouchpadSwipeShortcut(SwipeDirection direction, uint fingerCount, QAction* action)
+    virtual void registerTouchpadSwipeShortcut(SwipeDirection direction,
+                                               uint fingerCount,
+                                               QAction* action,
+                                               std::function<void(qreal)> progressCallback)
         = 0;
 
-    virtual void registerRealtimeTouchpadSwipeShortcut(SwipeDirection dir,
-                                                       uint fingerCount,
-                                                       QAction* onUp,
-                                                       std::function<void(qreal)> progressCallback)
-        = 0;
-
-    virtual void registerRealtimeTouchpadPinchShortcut(PinchDirection dir,
-                                                       uint fingerCount,
-                                                       QAction* onUp,
-                                                       std::function<void(qreal)> progressCallback)
-        = 0;
-
-    virtual void
-    registerTouchpadPinchShortcut(PinchDirection direction, uint fingerCount, QAction* action)
+    virtual void registerTouchpadPinchShortcut(PinchDirection direction,
+                                               uint fingerCount,
+                                               QAction* action,
+                                               std::function<void(qreal)> progressCallback)
         = 0;
 
     /**
@@ -219,12 +211,6 @@ public:
                                                   QAction* action,
                                                   std::function<void(qreal)> progressCallback)
         = 0;
-
-    /**
-     * Retrieve the proxy class for an effect if it has one. Will return NULL if
-     * the effect isn't loaded or doesn't have a proxy class.
-     */
-    virtual void* getProxy(QString name) = 0;
 
     // Mouse polling
     virtual void startMousePolling() = 0;
@@ -786,24 +772,9 @@ Q_SIGNALS:
     void desktopChanging(uint currentDesktop, QPointF offset, KWin::EffectWindow* with);
     void desktopChangingCancelled();
 
-    /**
-     * @since 4.7
-     * @deprecated
-     */
-    void KWIN_DEPRECATED desktopChanged(int oldDesktop, int newDesktop);
-    /**
-     * @internal
-     */
-    void desktopChangedLegacy(int oldDesktop, int newDesktop);
-    /**
-     * Signal emitted when a window moved to another desktop
-     * NOTICE that this does NOT imply that the desktop has changed
-     * The @param window which is moved to the new desktop
-     * @param oldDesktop The previous desktop of the window
-     * @param newDesktop The new desktop of the window
-     * @since 4.11.4
-     */
-    void desktopPresenceChanged(KWin::EffectWindow* window, int oldDesktop, int newDesktop);
+    /// This signal is emitted when a window enters or leaves a virtual desktop.
+    void windowDesktopsChanged(KWin::EffectWindow* window);
+
     /**
      * Emitted when the virtual desktop grid layout changes
      * @param size new size

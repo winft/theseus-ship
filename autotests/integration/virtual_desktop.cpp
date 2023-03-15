@@ -777,18 +777,14 @@ TEST_CASE("virtual desktop", "[win]")
 
         QVERIFY(client);
         QCOMPARE(win::get_desktop(*client), 2);
-        QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
-                                             &win::window_qobject::desktopPresenceChanged);
-        QVERIFY(desktopPresenceChangedSpy.isValid());
-
         QCOMPARE(client->topo.desktops.count(), 1u);
         QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
 
         // and remove last desktop
         vd_manager->setCount(1);
         QCOMPARE(vd_manager->count(), 1u);
+
         // now the client should be moved as well
-        QTRY_COMPARE(desktopPresenceChangedSpy.count(), 1);
         QCOMPARE(win::get_desktop(*client), 1);
 
         QCOMPARE(client->topo.desktops.count(), 1u);
@@ -816,10 +812,6 @@ TEST_CASE("virtual desktop", "[win]")
 
         QVERIFY(client);
         QCOMPARE(win::get_desktop(*client), 3u);
-        QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
-                                             &win::window_qobject::desktopPresenceChanged);
-        QVERIFY(desktopPresenceChangedSpy.isValid());
-
         QCOMPARE(client->topo.desktops.count(), 1u);
         QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
 
@@ -899,10 +891,6 @@ TEST_CASE("virtual desktop", "[win]")
 
         QVERIFY(client);
         QCOMPARE(win::get_desktop(*client), 3u);
-        QSignalSpy desktopPresenceChangedSpy(client->qobject.get(),
-                                             &win::window_qobject::desktopPresenceChanged);
-        QVERIFY(desktopPresenceChangedSpy.isValid());
-
         QCOMPARE(client->topo.desktops.count(), 1u);
         QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
 

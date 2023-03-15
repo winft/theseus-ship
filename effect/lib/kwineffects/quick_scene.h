@@ -9,6 +9,8 @@
 #include "kwineffects/effect_screen.h"
 #include "kwineffects/paint_data.h"
 
+#include <QQmlEngine>
+
 namespace KWin
 {
 
@@ -26,6 +28,8 @@ class QuickSceneEffectPrivate;
 class KWINEFFECTS_EXPORT QuickSceneView : public EffectQuickView
 {
     Q_OBJECT
+    Q_PROPERTY(QuickSceneEffect* effect READ effect CONSTANT)
+    Q_PROPERTY(EffectScreen* screen READ screen CONSTANT)
 
 public:
     explicit QuickSceneView(QuickSceneEffect* effect, EffectScreen* screen);
@@ -40,6 +44,9 @@ public:
     bool isDirty() const;
     void markDirty();
     void resetDirty();
+
+    static QuickSceneView* findView(QQuickItem* item);
+    static QuickSceneView* qmlAttachedProperties(QObject* object);
 
 public Q_SLOTS:
     void scheduleRepaint();
@@ -167,3 +174,5 @@ private:
 };
 
 } // namespace KWin
+
+QML_DECLARE_TYPEINFO(KWin::QuickSceneView, QML_HAS_ATTACHED_PROPERTIES)

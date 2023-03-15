@@ -1,6 +1,7 @@
 /*
 SPDX-FileCopyrightText: 2009 Martin Gräßlin <mgraesslin@kde.org>
 SPDX-FileCopyrightText: 2020 Cyril Rossi <cyril.rossi@enioka.com>
+SPDX-FileCopyrightText: 2023 Ismael Asensio <isma.af@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -13,9 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "win/tabbox/tabbox_config.h"
 
-class KShortcutsEditor;
-class KActionCollection;
-
 namespace Ui
 {
 class KWinTabBoxConfigForm;
@@ -23,6 +21,12 @@ class KWinTabBoxConfigForm;
 
 namespace KWin
 {
+
+namespace win
+{
+class TabBoxSettings;
+class ShortcutSettings;
+}
 
 class KWinTabBoxConfigForm : public QWidget
 {
@@ -42,65 +46,22 @@ public:
         AddonEffect, // i.e not builtin effects
     };
 
-    explicit KWinTabBoxConfigForm(TabboxType type, QWidget *parent = nullptr);
+    explicit KWinTabBoxConfigForm(TabboxType type, win::TabBoxSettings *config, win::ShortcutSettings *shortcutsConfig, QWidget *parent = nullptr);
     ~KWinTabBoxConfigForm() override;
 
+    win::TabBoxSettings *config() const;
     bool highlightWindows() const;
-    bool showTabBox() const;
-    int filterScreen() const;
-    int filterDesktop() const;
-    int filterMinimization() const;
-    int applicationMode() const;
-    int showDesktopMode() const;
-    int switchingMode() const;
-    QString layoutName() const;
 
-    void setFilterScreen(win::tabbox_config::ClientMultiScreenMode mode);
-    void setFilterDesktop(win::tabbox_config::ClientDesktopMode mode);
-    void setFilterMinimization(win::tabbox_config::ClientMinimizedMode mode);
-    void setApplicationMode(win::tabbox_config::ClientApplicationsMode mode);
-    void setShowDesktopMode(win::tabbox_config::ShowDesktopMode mode);
-    void setSwitchingModeChanged(win::tabbox_config::ClientSwitchingMode mode);
-    void setLayoutName(const QString &layoutName);
+    void updateUiFromConfig();
+    void setDefaultIndicatorVisible(bool visible);
 
     // EffectCombo Data Model
     void setEffectComboModel(QStandardItemModel *model);
     QVariant effectComboCurrentData(int role = Qt::UserRole) const;
 
-    void loadShortcuts();
-    void resetShortcuts();
-    void saveShortcuts();
-    bool isShortcutsChanged() const;
-    bool isShortcutsDefault() const;
-
-    void setHighlightWindowsEnabled(bool enabled);
-    void setFilterScreenEnabled(bool enabled);
-    void setFilterDesktopEnabled(bool enabled);
-    void setFilterMinimizationEnabled(bool enabled);
-    void setApplicationModeEnabled(bool enabled);
-    void setShowDesktopModeEnabled(bool enabled);
-    void setSwitchingModeEnabled(bool enabled);
-    void setLayoutNameEnabled(bool enabled);
-
-    void setFilterScreenDefaultIndicatorVisible(bool visible);
-    void setFilterDesktopDefaultIndicatorVisible(bool visible);
-    void setFilterMinimizationDefaultIndicatorVisible(bool visible);
-    void setApplicationModeDefaultIndicatorVisible(bool visible);
-    void setShowDesktopModeDefaultIndicatorVisible(bool visible);
-    void setSwitchingModeDefaultIndicatorVisible(bool visible);
-    void setLayoutNameDefaultIndicatorVisible(bool visible);
-    void setShortcutsDefaultIndicatorVisible(bool visible);
-
 Q_SIGNALS:
-    void filterScreenChanged(int value);
-    void filterDesktopChanged(int value);
-    void filterMinimizationChanged(int value);
-    void applicationModeChanged(int value);
-    void showDesktopModeChanged(int value);
-    void switchingModeChanged(int value);
-    void layoutNameChanged(const QString &layoutName);
+    void configChanged();
     void effectConfigButtonClicked();
-    void shortcutChanged();
 
 private Q_SLOTS:
     void tabBoxToggled(bool on);
@@ -112,14 +73,38 @@ private Q_SLOTS:
     void onSwitchingMode();
     void onEffectCombo();
     void onShortcutChanged(const QKeySequence &seq);
+    void updateDefaultIndicators();
 
 private:
-    void setDefaultIndicatorVisible(QWidget *widget, bool visible);
+    void setEnabledUi();
+    void applyDefaultIndicator(QList<QWidget *> widgets, bool visible);
 
-    KActionCollection *m_actionCollection = nullptr;
+    // UI property getters
+    bool showTabBox() const;
+    int filterScreen() const;
+    int filterDesktop() const;
+    int filterActivities() const;
+    int filterMinimization() const;
+    int applicationMode() const;
+    int showDesktopMode() const;
+    int switchingMode() const;
+    QString layoutName() const;
+
+    // UI property setters
+    void setFilterScreen(win::tabbox_config::ClientMultiScreenMode mode);
+    void setFilterDesktop(win::tabbox_config::ClientDesktopMode mode);
+    void setFilterMinimization(win::tabbox_config::ClientMinimizedMode mode);
+    void setApplicationMode(win::tabbox_config::ClientApplicationsMode mode);
+    void setShowDesktopMode(win::tabbox_config::ShowDesktopMode mode);
+    void setSwitchingModeChanged(win::tabbox_config::ClientSwitchingMode mode);
+    void setLayoutName(const QString &layoutName);
+
+private:
+    win::TabBoxSettings *m_config = nullptr;
+    win::ShortcutSettings *m_shortcuts = nullptr;
+    bool m_showDefaultIndicator = false;
 
     bool m_isHighlightWindowsEnabled = true;
-    TabboxType m_type;
     Ui::KWinTabBoxConfigForm *ui;
 };
 

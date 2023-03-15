@@ -6,9 +6,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "base/output.h"
+#include "output.h"
 #include "window.h"
 
+#include "base/output.h"
 #include "base/output_helpers.h"
 #include "base/platform.h"
 #include "debug/support_info.h"
@@ -21,6 +22,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/virtual_desktops.h"
 
 #include <QObject>
+#include <QQmlEngine>
 #include <QQmlListProperty>
 #include <QRect>
 #include <QSize>
@@ -37,13 +39,9 @@ namespace KWin::scripting
 class KWIN_EXPORT space : public QObject
 {
     Q_OBJECT
-    /**
-     * @deprecated use the currentVirtualDesktop property instead
-     */
-    Q_PROPERTY(
-        int currentDesktop READ currentDesktop WRITE setCurrentDesktop NOTIFY currentDesktopChanged)
-    Q_PROPERTY(KWin::win::virtual_desktop* currentVirtualDesktop READ currentVirtualDesktop WRITE
-                   setCurrentVirtualDesktop NOTIFY currentVirtualDesktopChanged)
+    Q_PROPERTY(QVector<KWin::win::virtual_desktop*> desktops READ desktops NOTIFY desktopsChanged)
+    Q_PROPERTY(KWin::win::virtual_desktop* currentDesktop READ currentDesktop WRITE
+                   setCurrentDesktop NOTIFY currentDesktopChanged)
     Q_PROPERTY(KWin::scripting::window* activeClient READ activeClient WRITE setActiveClient NOTIFY
                    clientActivated)
     // TODO: write and notify?
@@ -53,28 +51,10 @@ class KWIN_EXPORT space : public QObject
     Q_PROPERTY(int workspaceWidth READ workspaceWidth)
     Q_PROPERTY(int workspaceHeight READ workspaceHeight)
     Q_PROPERTY(QSize workspaceSize READ workspaceSize)
-    /**
-     * The number of desktops currently used. Minimum number of desktops is 1, maximum 20.
-     */
-    Q_PROPERTY(
-        int desktops READ numberOfDesktops WRITE setNumberOfDesktops NOTIFY numberDesktopsChanged)
-    /**
-     * The same of the display, that is all screens.
-     * @deprecated since 5.0 use virtualScreenSize
-     */
-    Q_PROPERTY(QSize displaySize READ displaySize)
-    /**
-     * The width of the display, that is width of all combined screens.
-     * @deprecated since 5.0 use virtualScreenSize
-     */
-    Q_PROPERTY(int displayWidth READ displayWidth)
-    /**
-     * The height of the display, that is height of all combined screens.
-     * @deprecated since 5.0 use virtualScreenSize
-     */
-    Q_PROPERTY(int displayHeight READ displayHeight)
-    Q_PROPERTY(int activeScreen READ activeScreen)
-    Q_PROPERTY(int numScreens READ numScreens NOTIFY numberScreensChanged)
+
+    Q_PROPERTY(KWin::scripting::output* activeScreen READ activeScreen)
+    Q_PROPERTY(QList<KWin::scripting::output*> screens READ screens NOTIFY screensChanged)
+
     Q_PROPERTY(QString currentActivity READ currentActivity WRITE setCurrentActivity NOTIFY
                    currentActivityChanged)
     Q_PROPERTY(QStringList activities READ activityList NOTIFY activitiesChanged)
@@ -130,14 +110,14 @@ public:
     };
     Q_ENUM(ElectricBorder)
 
-    virtual int currentDesktop() const = 0;
-    virtual win::virtual_desktop* currentVirtualDesktop() const = 0;
-    virtual void setCurrentDesktop(int desktop) = 0;
-    virtual void setCurrentVirtualDesktop(win::virtual_desktop* desktop) = 0;
-    virtual int numberOfDesktops() const = 0;
-    virtual void setNumberOfDesktops(int count) = 0;
+    virtual win::virtual_desktop* currentDesktop() const = 0;
+    virtual void setCurrentDesktop(win::virtual_desktop* desktop) = 0;
+    virtual QVector<KWin::win::virtual_desktop*> desktops() const = 0;
 
-    Q_INVOKABLE int screenAt(const QPointF& pos) const;
+    Q_INVOKABLE output* screenAt(QPointF const& pos) const
+    {
+        return screen_at_impl(pos);
+    }
 
     /// Deprecated
     QString currentActivity() const
@@ -161,8 +141,8 @@ public:
     int displayWidth() const;
     int displayHeight() const;
     virtual QSize displaySize() const = 0;
-    virtual int activeScreen() const = 0;
-    virtual int numScreens() const = 0;
+    virtual output* activeScreen() const = 0;
+    virtual QList<output*> screens() const = 0;
     QStringList activityList() const;
     QSize virtualScreenSize() const;
     QRect virtualScreenGeometry() const;
@@ -179,40 +159,12 @@ public:
      * @param desktop The desktop for which the area should be considered, in general there should
      * not be a difference
      * @returns The specified screen geometry
-     * @deprecated use clientArea(ClientAreaOption option, KWin::base::output* output,
-     * KWin::win::virtual_desktop* desktop)
      */
-    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, int screen, int desktop) const
-    {
-        return client_area_impl(static_cast<clientAreaOption>(option), screen, desktop);
-    }
     Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
-                                  base::output* output,
+                                  scripting::output* output,
                                   win::virtual_desktop* desktop) const
     {
         return client_area_impl(static_cast<clientAreaOption>(option), output, desktop);
-    }
-
-    /**
-     * Overloaded method for convenience.
-     * @param option The type of area which should be considered
-     * @param point The coordinates which have to be included in the area
-     * @param desktop The desktop for which the area should be considered, in general there should
-     * not be a difference
-     * @returns The specified screen geometry
-     * @deprecated use clientArea(ClientAreaOption option, QPoint const& point,
-     * KWin::win::virtual_desktop* desktop)
-     */
-    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, QPoint const& point, int desktop) const
-    {
-        return client_area_impl(static_cast<clientAreaOption>(option), point, desktop);
-    }
-    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
-                                  QPoint const& point,
-                                  win::virtual_desktop* desktop) const
-    {
-        return client_area_impl(
-            static_cast<clientAreaOption>(option), point, desktop->x11DesktopNumber());
     }
 
     /**
@@ -314,13 +266,13 @@ public Q_SLOTS:
     virtual void slotWindowRaiseOrLower() = 0;
     virtual void slotActivateAttentionWindow() = 0;
 
-    virtual void slotWindowPackLeft() = 0;
-    virtual void slotWindowPackRight() = 0;
-    virtual void slotWindowPackUp() = 0;
-    virtual void slotWindowPackDown() = 0;
+    virtual void slotWindowMoveLeft() = 0;
+    virtual void slotWindowMoveRight() = 0;
+    virtual void slotWindowMoveUp() = 0;
+    virtual void slotWindowMoveDown() = 0;
 
-    virtual void slotWindowGrowHorizontal() = 0;
-    virtual void slotWindowGrowVertical() = 0;
+    virtual void slotWindowExpandHorizontal() = 0;
+    virtual void slotWindowExpandVertical() = 0;
     virtual void slotWindowShrinkHorizontal() = 0;
     virtual void slotWindowShrinkVertical() = 0;
 
@@ -364,7 +316,7 @@ public Q_SLOTS:
     /**
      * Sends the window to the given @p screen.
      */
-    virtual void sendClientToScreen(KWin::scripting::window* client, int screen) = 0;
+    virtual void sendClientToScreen(KWin::scripting::window* client, scripting::output* output) = 0;
 
     /**
      * Shows an outline at the specified @p geometry.
@@ -382,28 +334,12 @@ public Q_SLOTS:
     virtual void hideOutline() = 0;
 
 Q_SIGNALS:
-    void desktopPresenceChanged(KWin::scripting::window* client, int desktop);
-    void currentDesktopChanged(int desktop, KWin::scripting::window* client);
     void clientAdded(KWin::scripting::window* client);
     void clientRemoved(KWin::scripting::window* client);
-
-    /// Deprecated
-    void clientManaging(KWin::scripting::window* client);
-
-    void clientMinimized(KWin::scripting::window* client);
-    void clientUnminimized(KWin::scripting::window* client);
-    void clientRestored(KWin::scripting::window* client);
-    void clientMaximizeSet(KWin::scripting::window* client, bool h, bool v);
-    void killWindowCalled(KWin::scripting::window* client);
     void clientActivated(KWin::scripting::window* client);
-    void clientFullScreenSet(KWin::scripting::window* client, bool fullScreen, bool user);
-    void clientSetKeepAbove(KWin::scripting::window* client, bool keepAbove);
-    /**
-     * Signal emitted whenever the number of desktops changed.
-     * To get the current number of desktops use the property desktops.
-     * @param oldNumberOfDesktops The previous number of desktops.
-     */
-    void numberDesktopsChanged(uint oldNumberOfDesktops);
+
+    /// This signal is emitted when a virtual desktop is added or removed.
+    void desktopsChanged();
     /**
      * Signal emitted whenever the layout of virtual desktops changed.
      * That is desktopGrid(Size/Width/Height) will have new values.
@@ -416,18 +352,7 @@ Q_SIGNALS:
      * @param set New value of demands attention
      */
     void clientDemandsAttentionChanged(KWin::scripting::window* window, bool set);
-    /**
-     * Signal emitted when the number of screens changes.
-     * @param count The new number of screens
-     */
-    void numberScreensChanged(int count);
-    /**
-     * This signal is emitted when the size of @p screen changes.
-     * Don't forget to fetch an updated client area.
-     *
-     * @deprecated Use QScreen::geometryChanged signal instead.
-     */
-    void screenResized(int screen);
+    void screensChanged();
     /**
      * Signal emitted whenever the current activity changed.
      * @param id id of the new activity
@@ -461,23 +386,15 @@ Q_SIGNALS:
      * @since 5.0
      */
     void virtualScreenGeometryChanged();
-
-    /**
-     * This signal is emitted when the current virtual desktop changes.
-     *
-     * @since 5.23
-     */
-    void currentVirtualDesktopChanged();
+    void currentDesktopChanged();
 
 protected:
     space() = default;
+    virtual output* screen_at_impl(QPointF const& pos) const = 0;
 
-    virtual QRect client_area_impl(clientAreaOption option, int screen, int desktop) const = 0;
     virtual QRect client_area_impl(clientAreaOption option,
-                                   base::output* output,
+                                   scripting::output* output,
                                    win::virtual_desktop* desktop) const
-        = 0;
-    virtual QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const
         = 0;
     virtual QRect client_area_impl(clientAreaOption option, window* window) const = 0;
     virtual QRect client_area_impl(clientAreaOption option, window const* window) const = 0;
@@ -498,10 +415,6 @@ protected:
     // TODO: make this private. Remove dynamic inheritance?
     std::vector<std::unique_ptr<window>> m_windows;
     int windows_count{0};
-
-protected:
-    void setupAbstractClientConnections(window* window);
-    void setupClientConnections(window* window);
 
 private:
     Q_DISABLE_COPY(space)
@@ -534,9 +447,6 @@ public:
     static window* atClientList(QQmlListProperty<KWin::scripting::window>* clients, int index);
 };
 
-// TODO Plasma 6: Remove it.
-KWIN_EXPORT void connect_legacy_screen_resize(space* receiver);
-
 template<typename Space, typename RefSpace>
 class template_space : public Space
 {
@@ -548,26 +458,6 @@ public:
         : ref_space{ref_space}
     {
         using space_qobject = typename RefSpace::qobject_t;
-
-        QObject::connect(ref_space->qobject.get(),
-                         &space_qobject::desktopPresenceChanged,
-                         this,
-                         [this](auto win_id, auto desktop) {
-                             auto ref_win = this->ref_space->windows_map.at(win_id);
-                             auto window = get_window(ref_win);
-                             Q_EMIT Space::desktopPresenceChanged(window, desktop);
-                         });
-
-        QObject::connect(ref_space->qobject.get(),
-                         &space_qobject::currentDesktopChanged,
-                         this,
-                         [this](auto desktop) {
-                             window* win{nullptr};
-                             if (auto& mrw = this->ref_space->move_resize_window) {
-                                 win = get_window(*mrw);
-                             }
-                             Q_EMIT Space::currentDesktopChanged(desktop, win);
-                         });
 
         QObject::connect(
             ref_space->qobject.get(), &space_qobject::clientAdded, this, [this](auto win_id) {
@@ -607,7 +497,7 @@ public:
         QObject::connect(vds->qobject.get(),
                          &win::virtual_desktop_manager_qobject::countChanged,
                          this,
-                         &space::numberDesktopsChanged);
+                         &space::desktopsChanged);
         QObject::connect(vds->qobject.get(),
                          &win::virtual_desktop_manager_qobject::layoutChanged,
                          this,
@@ -615,7 +505,7 @@ public:
         QObject::connect(vds->qobject.get(),
                          &win::virtual_desktop_manager_qobject::currentChanged,
                          this,
-                         &space::currentVirtualDesktopChanged);
+                         &space::currentDesktopChanged);
 
         auto& base = ref_space->base;
         QObject::connect(
@@ -625,48 +515,35 @@ public:
                     Q_EMIT this->virtualScreenGeometryChanged();
                 }
             });
-        QObject::connect(&base, &base::platform::output_added, this, [this] {
-            Q_EMIT Space::numberScreensChanged(this->ref_space->base.outputs.size());
+        QObject::connect(&base, &base::platform::output_added, this, [this](auto output) {
+            using out_t = typename RefSpace::base_t::output_t;
+            auto& out = static_cast<out_t&>(*output);
+            outputs.emplace_back(std::make_unique<output_impl<out_t>>(out));
+            Q_EMIT Space::screensChanged();
         });
-        QObject::connect(&base, &base::platform::output_removed, this, [this] {
-            Q_EMIT Space::numberScreensChanged(this->ref_space->base.outputs.size());
+        QObject::connect(&base, &base::platform::output_removed, this, [this](auto output) {
+            remove_all_if(outputs, [output](auto&& out) { return &out->ref_out == output; });
+            Q_EMIT Space::screensChanged();
         });
-
-        connect_legacy_screen_resize(this);
 
         for (auto win : ref_space->windows) {
             std::visit(overload{[&](auto&& win) { handle_client_added(win); }}, win);
         }
     }
 
-    int currentDesktop() const override
-    {
-        return ref_space->virtual_desktop_manager->current();
-    }
-
-    win::virtual_desktop* currentVirtualDesktop() const override
+    win::virtual_desktop* currentDesktop() const override
     {
         return ref_space->virtual_desktop_manager->currentDesktop();
     }
 
-    void setCurrentDesktop(int desktop) override
+    QVector<KWin::win::virtual_desktop*> desktops() const override
+    {
+        return ref_space->virtual_desktop_manager->desktops();
+    }
+
+    void setCurrentDesktop(win::virtual_desktop* desktop) override
     {
         ref_space->virtual_desktop_manager->setCurrent(desktop);
-    }
-
-    int numberOfDesktops() const override
-    {
-        return ref_space->virtual_desktop_manager->count();
-    }
-
-    void setCurrentVirtualDesktop(win::virtual_desktop* desktop) override
-    {
-        ref_space->virtual_desktop_manager->setCurrent(desktop);
-    }
-
-    void setNumberOfDesktops(int count) override
-    {
-        ref_space->virtual_desktop_manager->setCount(count);
     }
 
     std::vector<window*> windows() const override
@@ -708,28 +585,29 @@ public:
         return ref_space->base.topology.size;
     }
 
-    int activeScreen() const override
+    output* activeScreen() const override
     {
         auto output = win::get_current_output(*ref_space);
-        if (!output) {
-            return 0;
+        return get_output(output);
+    }
+
+    QList<output*> screens() const override
+    {
+        QList<output*> ret;
+        for (auto&& out : outputs) {
+            ret.push_back(out.get());
         }
-        return base::get_output_index(ref_space->base.outputs, *output);
+        return ret;
     }
 
-    int numScreens() const override
+    void sendClientToScreen(window* win, scripting::output* output) override
     {
-        return ref_space->base.outputs.size();
-    }
-
-    void sendClientToScreen(window* win, int screen) override
-    {
-        auto output = base::get_output(ref_space->base.outputs, screen);
         if (!output) {
             return;
         }
-        std::visit(overload{[output, this](auto&& ref_win) {
-                       win::send_to_screen(*ref_space, ref_win, *output);
+        auto out_impl = static_cast<output_impl<typename RefSpace::base_t::output_t>*>(output);
+        std::visit(overload{[out_impl, this](auto&& ref_win) {
+                       win::send_to_screen(*ref_space, ref_win, out_impl->ref_out);
                    }},
                    static_cast<window_t*>(win)->client());
     }
@@ -799,32 +677,32 @@ public:
         win::activate_attention_window(*ref_space);
     }
 
-    void slotWindowPackLeft() override
+    void slotWindowMoveLeft() override
     {
         win::active_window_pack_left(*ref_space);
     }
 
-    void slotWindowPackRight() override
+    void slotWindowMoveRight() override
     {
         win::active_window_pack_right(*ref_space);
     }
 
-    void slotWindowPackUp() override
+    void slotWindowMoveUp() override
     {
         win::active_window_pack_up(*ref_space);
     }
 
-    void slotWindowPackDown() override
+    void slotWindowMoveDown() override
     {
         win::active_window_pack_down(*ref_space);
     }
 
-    void slotWindowGrowHorizontal() override
+    void slotWindowExpandHorizontal() override
     {
         win::active_window_grow_horizontal(*ref_space);
     }
 
-    void slotWindowGrowVertical() override
+    void slotWindowExpandVertical() override
     {
         win::active_window_grow_vertical(*ref_space);
     }
@@ -975,24 +853,21 @@ public:
     }
 
 protected:
-    QRect client_area_impl(clientAreaOption option, int screen, int desktop) const override
+    output* screen_at_impl(QPointF const& pos) const override
     {
-        auto output = base::get_output(ref_space->base.outputs, screen);
-        return win::space_window_area(*ref_space, option, output, desktop);
+        auto output = base::get_nearest_output(ref_space->base.outputs, pos.toPoint());
+        auto ret = get_output(output);
+        QQmlEngine::setObjectOwnership(ret, QQmlEngine::CppOwnership);
+        return ret;
     }
 
     QRect client_area_impl(clientAreaOption option,
-                           base::output* client_output,
+                           scripting::output* output,
                            win::virtual_desktop* desktop) const override
     {
-        typename base_t::output_t const* output
-            = static_cast<typename base_t::output_t*>(client_output);
-        return win::space_window_area(*ref_space, option, output, desktop->x11DesktopNumber());
-    }
-
-    QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const override
-    {
-        return win::space_window_area(*ref_space, option, point, desktop);
+        auto out_impl = static_cast<output_impl<typename RefSpace::base_t::output_t>*>(output);
+        return win::space_window_area(
+            *ref_space, option, &out_impl->ref_out, desktop->x11DesktopNumber());
     }
 
     QRect client_area_impl(clientAreaOption option, window* win) const override
@@ -1075,6 +950,7 @@ protected:
                                  return nullptr;
                              }},
                              win)) {
+                QQmlEngine::setObjectOwnership(scr_win, QQmlEngine::CppOwnership);
                 return scr_win;
             }
         }
@@ -1101,17 +977,9 @@ protected:
         }
 
         win->control->scripting = std::make_unique<window_t>(win);
-        auto scr_win = win->control->scripting.get();
-
-        Space::setupAbstractClientConnections(scr_win);
-        if constexpr (requires(RefWin win) { win.isClient(); }) {
-            if (win->isClient()) {
-                Space::setupClientConnections(scr_win);
-            }
-        }
 
         Space::windows_count++;
-        Q_EMIT Space::clientAdded(scr_win);
+        Q_EMIT Space::clientAdded(win->control->scripting.get());
     }
 
     template<typename RefWin>
@@ -1123,6 +991,18 @@ protected:
         }
     }
 
+    output_impl<typename RefSpace::base_t::output_t>* get_output(base::output const* output) const
+    {
+        auto it = std::find_if(outputs.begin(), outputs.end(), [output](auto&& out) {
+            return &out->ref_out == output;
+        });
+        if (it == outputs.end()) {
+            return nullptr;
+        }
+        return it->get();
+    }
+
+    std::vector<std::unique_ptr<output_impl<typename RefSpace::base_t::output_t>>> outputs;
     RefSpace* ref_space;
 };
 

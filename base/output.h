@@ -182,4 +182,4 @@ public:
 
 }
 
-// Q_DECLARE_METATYPE(KWin::base::output const*);
+Q_DECLARE_METATYPE(KWin::base::output*);

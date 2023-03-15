@@ -17,9 +17,8 @@ import org.kde.KWin.Effect.WindowView 1.0
 Item {
     id: container
 
-    required property QtObject effect
-    required property QtObject targetScreen
-    required property var selectedIds
+    readonly property QtObject effect: KWinComponents.SceneView.effect
+    readonly property QtObject targetScreen: KWinComponents.SceneView.screen
 
     property bool animationEnabled: false
     property bool organized: false
@@ -62,9 +61,9 @@ Item {
         }
     }
 
-    KWinComponents.DesktopBackgroundItem {
+    KWinComponents.DesktopBackground {
         activity: KWinComponents.Workspace.currentActivity
-        desktop: KWinComponents.Workspace.currentVirtualDesktop
+        desktop: KWinComponents.Workspace.currentDesktop
         outputName: targetScreen.name
 
         layer.enabled: true
@@ -176,40 +175,40 @@ Item {
                     case WindowView.ModeWindowClassCurrentDesktop:
                         return "activeClass";
                     default:
-                        return selectedIds;
+                        return container.effect.selectedIds;
                 }
             }
             layout.mode: effect.layout
-            onWindowClicked: {
-                if (eventPoint.event.button !== Qt.MiddleButton) {
-                    return;
-                }
-                window.closeWindow();
-            }
-            model: KWinComponents.ClientFilterModel {
+            model: KWinComponents.WindowFilterModel {
                 activity: KWinComponents.Workspace.currentActivity
                 desktop: {
                     switch (container.effect.mode) {
                         case WindowView.ModeCurrentDesktop:
                         case WindowView.ModeWindowClassCurrentDesktop:
-                            return KWinComponents.Workspace.currentVirtualDesktop;
+                            return KWinComponents.Workspace.currentDesktop;
                         default:
                             return undefined;
                     }
                 }
                 screenName: targetScreen.name
-                clientModel: stackModel
+                windowModel: stackModel
                 filter: effect.searchText
                 minimizedWindows: !effect.ignoreMinimized
-                windowType: ~KWinComponents.ClientFilterModel.Dock &
-                            ~KWinComponents.ClientFilterModel.Desktop &
-                            ~KWinComponents.ClientFilterModel.Notification &
-                            ~KWinComponents.ClientFilterModel.CriticalNotification
+                windowType: ~KWinComponents.WindowFilterModel.Dock &
+                            ~KWinComponents.WindowFilterModel.Desktop &
+                            ~KWinComponents.WindowFilterModel.Notification &
+                            ~KWinComponents.WindowFilterModel.CriticalNotification
             }
             delegate: WindowHeapDelegate {
                 windowHeap: heap
                 opacity: 1 - downGestureProgress
-                onDownGestureTriggered: client.closeWindow()
+                onDownGestureTriggered: window.closeWindow()
+
+                TapHandler {
+                    acceptedPointerTypes: PointerDevice.GenericPointer | PointerDevice.Pen
+                    acceptedButtons: Qt.MiddleButton
+                    onTapped: window.closeWindow();
+                }
             }
             onActivated: effect.deactivate(container.effect.animationDuration);
         }
@@ -218,21 +217,21 @@ Item {
     Instantiator {
         asynchronous: true
 
-        model: KWinComponents.ClientFilterModel {
-            desktop: KWinComponents.Workspace.currentVirtualDesktop
+        model: KWinComponents.WindowFilterModel {
+            desktop: KWinComponents.Workspace.currentDesktop
             screenName: targetScreen.name
-            clientModel: stackModel
-            windowType: KWinComponents.ClientFilterModel.Dock
+            windowModel: stackModel
+            windowType: KWinComponents.WindowFilterModel.Dock
         }
 
-        KWinComponents.WindowThumbnailItem {
+        KWinComponents.WindowThumbnail {
             id: windowThumbnail
-            wId: model.client.internalId
-            x: model.client.x - targetScreen.geometry.x
-            y: model.client.y - targetScreen.geometry.y
-            z: model.client.stackingOrder
+            wId: model.window.internalId
+            x: model.window.x - targetScreen.geometry.x
+            y: model.window.y - targetScreen.geometry.y
+            z: model.window.stackingOrder
             visible: opacity > 0
-            opacity: (model.client.hidden || container.organized) ? 0 : 1
+            opacity: (model.window.hidden || container.organized) ? 0 : 1
 
             Behavior on opacity {
                 NumberAnimation { duration: container.effect.animationDuration; easing.type: Easing.OutCubic }
@@ -244,7 +243,7 @@ Item {
         }
     }
 
-    KWinComponents.ClientModel {
+    KWinComponents.WindowModel {
         id: stackModel
     }
 

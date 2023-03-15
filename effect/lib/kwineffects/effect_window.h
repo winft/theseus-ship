@@ -48,7 +48,7 @@ public:
 class KWINEFFECTS_EXPORT EffectWindow : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QRect geometry READ geometry)
+    Q_PROPERTY(QRect geometry READ frameGeometry)
     Q_PROPERTY(QRect expandedGeometry READ expandedGeometry)
     Q_PROPERTY(int height READ height)
     Q_PROPERTY(qreal opacity READ opacity)
@@ -58,7 +58,7 @@ class KWINEFFECTS_EXPORT EffectWindow : public QObject
     Q_PROPERTY(int width READ width)
     Q_PROPERTY(int x READ x)
     Q_PROPERTY(int y READ y)
-    Q_PROPERTY(int desktop READ desktop)
+    Q_PROPERTY(QVector<uint> desktops READ desktops)
     Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops)
     Q_PROPERTY(bool onCurrentDesktop READ isOnCurrentDesktop)
     Q_PROPERTY(QRect rect READ rect)
@@ -355,11 +355,8 @@ public:
         PAINT_DISABLED_BY_DESKTOP = 1 << 2,
         /**  Window will not be painted because it is minimized  */
         PAINT_DISABLED_BY_MINIMIZE = 1 << 3,
-        /**  Deprecated, tab groups have been removed: Window will not be painted because it is not
-           the active window in a client group */
-        PAINT_DISABLED_BY_TAB_GROUP = 1 << 4,
         /**  Window will not be painted because it's not on the current activity  */
-        PAINT_DISABLED_BY_ACTIVITY = 1 << 5
+        PAINT_DISABLED_BY_ACTIVITY = 1 << 4,
     };
 
     explicit EffectWindow(QObject* parent = nullptr);
@@ -391,17 +388,6 @@ public:
     bool isOnCurrentDesktop() const;
     bool isOnAllDesktops() const;
     /**
-     * The desktop this window is in. This makes sense only on X11
-     * where desktops are mutually exclusive, on Wayland it's the last
-     * desktop the window has been added to.
-     * use desktops() instead.
-     * @see desktops()
-     * @deprecated
-     */
-#ifndef KWIN_NO_DEPRECATED
-    virtual int KWIN_DEPRECATED desktop() const = 0; // prefer isOnXXX()
-#endif
-    /**
      * All the desktops by number that the window is in. On X11 this list will always have
      * a length of 1, on Wayland can be any subset.
      * If the list is empty it means the window is on all desktops
@@ -417,10 +403,6 @@ public:
      * MAY BE DISOBEYED BY THE WM! It's only for information, do NOT rely on it at all.
      */
     virtual QSize basicUnit() const = 0;
-    /**
-     * @deprecated Use frameGeometry() instead.
-     */
-    virtual QRect KWIN_DEPRECATED geometry() const = 0;
     /**
      * Returns the geometry of the window excluding server-side and client-side
      * drop-shadows.
@@ -628,9 +610,6 @@ public:
     virtual void minimize() = 0;
     virtual void unminimize() = 0;
     Q_SCRIPTABLE virtual void closeWindow() = 0;
-
-    /// deprecated
-    virtual bool isCurrentTab() const = 0;
 
     /**
      * @since 4.11

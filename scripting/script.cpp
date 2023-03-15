@@ -9,7 +9,6 @@
 
 #include "js_engine_global_methods_wrapper.h"
 #include "platform.h"
-#include "screen_edge_item.h"
 #include "script_timer.h"
 #include "scripting_logging.h"
 #include "space.h"
@@ -111,8 +110,6 @@ script::script(int id,
     if (!QMetaType::hasRegisteredConverterFunction<QJSValue, QSize>()) {
         QMetaType::registerConverter<QJSValue, QSize>(scriptValueToSize);
     }
-
-    qRegisterMetaType<QList<window*>>();
 }
 
 script::~script()

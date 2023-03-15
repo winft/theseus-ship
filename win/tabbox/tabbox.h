@@ -1282,8 +1282,6 @@ private:
             tabbox_config::AllWindowsCurrentApplication);
 
         m_tabbox->set_config(m_default_config);
-
-        m_delay_show = config.readEntry<bool>("ShowDelay", true);
         m_delay_show_time = config.readEntry<int>("DelayTime", 90);
 
         const QString default_desktop_layout = QStringLiteral("org.kde.breeze.desktop");
@@ -1381,7 +1379,6 @@ private:
 
     TabBoxMode m_tabbox_mode;
     tabbox_handler_impl<tabbox<Space>>* m_tabbox;
-    bool m_delay_show;
     int m_delay_show_time;
 
     QTimer m_delayed_show_timer;

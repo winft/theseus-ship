@@ -38,18 +38,6 @@ int space::displayHeight() const
     return displaySize().height();
 }
 
-void space::setupAbstractClientConnections(window* window)
-{
-    connect(window, &window::clientMinimized, this, &space::clientMinimized);
-    connect(window, &window::clientUnminimized, this, &space::clientUnminimized);
-    connect(window, &window::clientMaximizedStateChanged, this, &space::clientMaximizeSet);
-}
-
-void space::setupClientConnections(window* window)
-{
-    connect(window, &window::clientFullScreenSet, this, &space::clientFullScreenSet);
-}
-
 void space::showOutline(int x, int y, int width, int height)
 {
     showOutline(QRect(x, y, width, height));
@@ -78,16 +66,6 @@ int space::workspaceHeight() const
 int space::workspaceWidth() const
 {
     return desktopGridWidth() * displayWidth();
-}
-
-int space::screenAt(const QPointF& pos) const
-{
-    auto const& outputs = base::singleton_interface::platform->get_outputs();
-    auto output = base::get_nearest_output(outputs, pos.toPoint());
-    if (!output) {
-        return 0;
-    }
-    return base::get_output_index(outputs, *output);
 }
 
 QRect space::virtualScreenGeometry() const
@@ -144,12 +122,6 @@ window* declarative_script_space::atClientList(QQmlListProperty<window>* clients
     } catch (std::out_of_range const& ex) {
         return nullptr;
     }
-}
-
-void connect_legacy_screen_resize(space* receiver)
-{
-    QObject::connect(
-        QApplication::desktop(), &QDesktopWidget::resized, receiver, &space::screenResized);
 }
 
 }

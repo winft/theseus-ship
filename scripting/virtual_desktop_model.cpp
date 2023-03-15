@@ -9,7 +9,7 @@
 #include "win/space.h"
 #include "win/virtual_desktops.h"
 
-namespace KWin::scripting::models::v3
+namespace KWin::scripting
 {
 
 virtual_desktop_model::virtual_desktop_model(QObject* parent)
@@ -28,9 +28,9 @@ virtual_desktop_model::virtual_desktop_model(QObject* parent)
     m_virtualDesktops = win::singleton_interface::virtual_desktops->get();
 }
 
-void virtual_desktop_model::create(uint position, const QString& name)
+win::virtual_desktop* virtual_desktop_model::create(uint position, const QString& name)
 {
-    win::singleton_interface::virtual_desktops->create(position, name);
+    return win::singleton_interface::virtual_desktops->create(position, name);
 }
 
 void virtual_desktop_model::remove(uint position)

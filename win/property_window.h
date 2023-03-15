@@ -31,8 +31,8 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(qulonglong frameId READ frameId)
     Q_PROPERTY(qulonglong windowId READ windowId CONSTANT)
 
-    Q_PROPERTY(QByteArray resourceName READ resourceName NOTIFY windowClassChanged)
-    Q_PROPERTY(QByteArray resourceClass READ resourceClass NOTIFY windowClassChanged)
+    Q_PROPERTY(QString resourceName READ resourceName NOTIFY windowClassChanged)
+    Q_PROPERTY(QString resourceClass READ resourceClass NOTIFY windowClassChanged)
 
     Q_PROPERTY(QString caption READ caption NOTIFY captionChanged)
     Q_PROPERTY(QIcon icon READ icon NOTIFY iconChanged)
@@ -68,15 +68,12 @@ class KWIN_EXPORT property_window : public QObject
 
     Q_PROPERTY(bool fullScreen READ isFullScreen WRITE setFullScreen NOTIFY fullScreenChanged)
 
-    Q_PROPERTY(int screen READ screen NOTIFY screenChanged)
-
-    Q_PROPERTY(int desktop READ desktop WRITE setDesktop NOTIFY desktopChanged)
     Q_PROPERTY(QVector<KWin::win::virtual_desktop*> desktops READ desktops WRITE setDesktops NOTIFY
-                   desktopChanged)
-    Q_PROPERTY(QVector<uint> x11DesktopIds READ x11DesktopIds NOTIFY x11DesktopIdsChanged)
-    Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops WRITE setOnAllDesktops NOTIFY desktopChanged)
+                   desktopsChanged)
+    Q_PROPERTY(
+        bool onAllDesktops READ isOnAllDesktops WRITE setOnAllDesktops NOTIFY desktopsChanged)
 
-    Q_PROPERTY(QByteArray windowRole READ windowRole NOTIFY windowRoleChanged)
+    Q_PROPERTY(QString windowRole READ windowRole NOTIFY windowRoleChanged)
 
     Q_PROPERTY(bool desktopWindow READ isDesktop CONSTANT)
     Q_PROPERTY(bool dock READ isDock CONSTANT)
@@ -156,8 +153,8 @@ public:
     virtual xcb_window_t frameId() const = 0;
     virtual quint32 windowId() const = 0;
 
-    virtual QByteArray resourceName() const = 0;
-    virtual QByteArray resourceClass() const = 0;
+    virtual QString resourceName() const = 0;
+    virtual QString resourceClass() const = 0;
 
     virtual QString caption() const = 0;
     virtual QIcon icon() const = 0;
@@ -196,17 +193,12 @@ public:
     virtual bool isFullScreen() const = 0;
     virtual void setFullScreen(bool set) = 0;
 
-    virtual int screen() const = 0;
-
-    virtual int desktop() const = 0;
-    virtual void setDesktop(int desktop) = 0;
     virtual QVector<win::virtual_desktop*> desktops() const = 0;
     virtual void setDesktops(QVector<win::virtual_desktop*> desktops) = 0;
-    virtual QVector<uint> x11DesktopIds() const = 0;
     virtual bool isOnAllDesktops() const = 0;
     virtual void setOnAllDesktops(bool set) = 0;
 
-    virtual QByteArray windowRole() const = 0;
+    virtual QString windowRole() const = 0;
 
     virtual bool isDesktop() const = 0;
     virtual bool isDock() const = 0;
@@ -299,9 +291,7 @@ Q_SIGNALS:
     void opacityChanged(KWin::win::property_window* window, qreal old_opacity);
     void fullScreenChanged();
 
-    void screenChanged();
-    void desktopChanged();
-    void x11DesktopIdsChanged();
+    void desktopsChanged();
     void windowRoleChanged();
 
     void closeableChanged(bool);

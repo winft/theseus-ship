@@ -123,7 +123,6 @@ public:
     void startMouseInterception(Effect* effect, Qt::CursorShape shape) override;
     void stopMouseInterception(Effect* effect) override;
     bool isMouseInterception() const;
-    void* getProxy(QString name) override;
 
     void setElevatedWindow(KWin::EffectWindow* w, bool set) override;
 
@@ -309,8 +308,6 @@ public:
                                    *mov_res);
                     }
                     Q_EMIT desktopChanged(old, newDesktop, eff_win);
-                    // TODO: remove in 4.10
-                    Q_EMIT desktopChanged(old, newDesktop);
                 });
         connect(ws->qobject.get(),
                 &win::space_qobject::currentDesktopChanging,
@@ -331,18 +328,6 @@ public:
                 &win::space_qobject::currentDesktopChangingCancelled,
                 this,
                 [this]() { Q_EMIT desktopChangingCancelled(); });
-        connect(ws->qobject.get(),
-                &win::space_qobject::desktopPresenceChanged,
-                this,
-                [this, space = ws](auto win_id, int old) {
-                    std::visit(overload{[&, this](auto&& win) {
-                                   assert(win->render);
-                                   assert(win->render->effect);
-                                   Q_EMIT desktopPresenceChanged(
-                                       win->render->effect.get(), old, win::get_desktop(*win));
-                               }},
-                               space->windows_map.at(win_id));
-                });
         connect(ws->qobject.get(),
                 &win::space_qobject::clientAdded,
                 this,
@@ -700,38 +685,22 @@ public:
             *compositor.platform.base.input, modifiers, axis, action);
     }
 
-    void registerRealtimeTouchpadSwipeShortcut(SwipeDirection dir,
-                                               uint fingerCount,
-                                               QAction* onUp,
-                                               std::function<void(qreal)> progressCallback) override
-    {
-        input::platform_register_realtime_touchpad_swipe_shortcut(
-            *compositor.platform.base.input, dir, fingerCount, onUp, progressCallback);
-    }
-
     void registerTouchpadSwipeShortcut(SwipeDirection direction,
                                        uint fingerCount,
-                                       QAction* action) override
+                                       QAction* action,
+                                       std::function<void(qreal)> progressCallback) override
     {
         input::platform_register_touchpad_swipe_shortcut(
-            *compositor.platform.base.input, direction, fingerCount, action);
-    }
-
-    void registerRealtimeTouchpadPinchShortcut(PinchDirection dir,
-                                               uint fingerCount,
-                                               QAction* onUp,
-                                               std::function<void(qreal)> progressCallback) override
-    {
-        input::platform_register_realtime_touchpad_pinch_shortcut(
-            *compositor.platform.base.input, dir, fingerCount, onUp, progressCallback);
+            *compositor.platform.base.input, direction, fingerCount, action, progressCallback);
     }
 
     void registerTouchpadPinchShortcut(PinchDirection direction,
                                        uint fingerCount,
-                                       QAction* action) override
+                                       QAction* action,
+                                       std::function<void(qreal)> progressCallback) override
     {
         input::platform_register_touchpad_pinch_shortcut(
-            *compositor.platform.base.input, direction, fingerCount, action);
+            *compositor.platform.base.input, direction, fingerCount, action, progressCallback);
     }
 
     void registerTouchscreenSwipeShortcut(SwipeDirection direction,
@@ -1405,6 +1374,9 @@ protected:
     {
         auto qtwin = window.qobject.get();
 
+        QObject::connect(qtwin, &win::window_qobject::desktopsChanged, this, [this, &window] {
+            Q_EMIT windowDesktopsChanged(window.render->effect.get());
+        });
         QObject::connect(qtwin,
                          &win::window_qobject::maximize_mode_changed,
                          this,

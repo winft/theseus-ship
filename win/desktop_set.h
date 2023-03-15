@@ -32,8 +32,6 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     }
 
     auto was_desk = get_desktop(*win);
-    auto const wasOnCurrentDesktop = on_current_desktop(win) && was_desk >= 0;
-
     win->topo.desktops = desktops;
     win->control->set_desktops(desktops);
 
@@ -66,16 +64,9 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
     focus_chain_update(win->space.stacking.focus_chain, win, focus_chain_change::make_first);
     win->updateWindowRules(rules::type::desktops);
 
-    Q_EMIT win->qobject->desktopChanged();
-    if (wasOnCurrentDesktop != on_current_desktop(win)) {
-        Q_EMIT win->qobject->desktopPresenceChanged(was_desk);
-    }
-    Q_EMIT win->qobject->x11DesktopIdsChanged();
+    Q_EMIT win->qobject->desktopsChanged();
 }
 
-/**
- * Deprecated, use x11_desktop_ids.
- */
 template<typename Win>
 void set_desktop(Win* win, int desktop)
 {

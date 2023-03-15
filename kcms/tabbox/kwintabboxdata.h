@@ -18,6 +18,7 @@ namespace win
 class TabBoxSettings;
 class SwitchEffectSettings;
 class PluginsSettings;
+class ShortcutSettings;
 
 class KWinTabboxData : public KCModuleData
 {
@@ -29,11 +30,13 @@ public:
     TabBoxSettings *tabBoxConfig() const;
     TabBoxSettings *tabBoxAlternativeConfig() const;
     PluginsSettings *pluginsConfig() const;
+    ShortcutSettings *shortcutConfig() const;
 
 private:
     TabBoxSettings *m_tabBoxConfig;
     TabBoxSettings *m_tabBoxAlternativeConfig;
     PluginsSettings *m_pluginsConfig;
+    ShortcutSettings *m_shortcutConfig;
 };
 
 }

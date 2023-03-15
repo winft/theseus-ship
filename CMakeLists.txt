@@ -416,18 +416,18 @@ set(kwin_SRCS
     scripting/dbus_call.cpp
     scripting/desktop_background_item.cpp
     scripting/js_engine_global_methods_wrapper.cpp
-    scripting/screen_edge_item.cpp
+    scripting/screen_edge_handler.cpp
     scripting/effect.cpp
+    scripting/output.cpp
     scripting/platform.cpp
     scripting/script.cpp
     scripting/script_timer.cpp
     scripting/scripting_logging.cpp
     scripting/singleton_interface.cpp
-    scripting/v2/client_model.cpp
-    scripting/v3/client_model.cpp
-    scripting/v3/virtual_desktop_model.cpp
     scripting/utils.cpp
+    scripting/virtual_desktop_model.cpp
     scripting/window.cpp
+    scripting/window_model.cpp
     scripting/space.cpp
     win/dbus/appmenu.cpp
     win/dbus/virtual_desktop_manager.cpp

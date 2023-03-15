@@ -43,7 +43,7 @@ FocusScope {
     property bool animationEnabled: false
     property bool absolutePositioning: true
     property real padding: 0
-    // Either a string "activeClass" or a list internalIds of clients
+    // Either a string "activeClass" or a list internalIds of windows
     property var showOnly: []
 
     required property bool organized
@@ -51,11 +51,9 @@ FocusScope {
     property bool dragActive: false
 
     signal activated()
-    //TODO: for 5.26 the delegate will be a separate component instead
-    signal windowClicked(QtObject window, EventPoint eventPoint)
 
     function activateIndex(index) {
-        KWinComponents.Workspace.activeClient = windowsInstantiator.objectAt(index).client;
+        KWinComponents.Workspace.activeClient = windowsInstantiator.objectAt(index).window;
         activated();
     }
 
@@ -74,10 +72,10 @@ FocusScope {
         delete dndManagerStore[key];
     }
 
-    KWinComponents.WindowThumbnailItem {
+    KWinComponents.WindowThumbnail {
         id: otherScreenThumbnail
         z: 2
-        property KWinComponents.WindowThumbnailItem cloneOf
+        property KWinComponents.WindowThumbnail cloneOf
         visible: false
         client: cloneOf ? cloneOf.client : null
         width: cloneOf ? cloneOf.width : 0
@@ -142,7 +140,7 @@ FocusScope {
 
             onObjectAdded: (index, object) => {
                 object.parent = expoLayout
-                var key = object.client.internalId;
+                var key = object.window.internalId;
                 if (heap.containsDND(key)) {
                     expoLayout.forceLayout();
                     var oldGlobalRect = heap.restoreDND(key);
@@ -161,7 +159,7 @@ FocusScope {
     function findFirstItem() {
         for (let candidateIndex = 0; candidateIndex < windowsInstantiator.count; ++candidateIndex) {
             const candidateItem = windowsInstantiator.objectAt(candidateIndex);
-            if (!candidateItem.hidden) {
+            if (!candidateItem.activeHidden) {
                 return candidateIndex;
             }
         }
@@ -180,7 +178,7 @@ FocusScope {
         case WindowHeap.Direction.Left:
             for (let candidateIndex = 0; candidateIndex < windowsInstantiator.count; ++candidateIndex) {
                 const candidateItem = windowsInstantiator.objectAt(candidateIndex);
-                if (candidateItem.hidden) {
+                if (candidateItem.activeHidden) {
                     continue;
                 }
 
@@ -205,7 +203,7 @@ FocusScope {
         case WindowHeap.Direction.Right:
             for (let candidateIndex = 0; candidateIndex < windowsInstantiator.count; ++candidateIndex) {
                 const candidateItem = windowsInstantiator.objectAt(candidateIndex);
-                if (candidateItem.hidden) {
+                if (candidateItem.activeHidden) {
                     continue;
                 }
 
@@ -230,7 +228,7 @@ FocusScope {
         case WindowHeap.Direction.Up:
             for (let candidateIndex = 0; candidateIndex < windowsInstantiator.count; ++candidateIndex) {
                 const candidateItem = windowsInstantiator.objectAt(candidateIndex);
-                if (candidateItem.hidden) {
+                if (candidateItem.activeHidden) {
                     continue;
                 }
 
@@ -255,7 +253,7 @@ FocusScope {
         case WindowHeap.Direction.Down:
             for (let candidateIndex = 0; candidateIndex < windowsInstantiator.count; ++candidateIndex) {
                 const candidateItem = windowsInstantiator.objectAt(candidateIndex);
-                if (candidateItem.hidden) {
+                if (candidateItem.activeHidden) {
                     continue;
                 }
 
@@ -361,7 +359,7 @@ FocusScope {
                 // If the window heap has only one visible window, activate it.
                 for (let i = 0; i < windowsInstantiator.count; ++i) {
                     const candidateItem = windowsInstantiator.objectAt(i);
-                    if (candidateItem.hidden) {
+                    if (candidateItem.activeHidden) {
                         continue;
                     } else if (selectedItem) {
                         selectedItem = null;
@@ -372,7 +370,7 @@ FocusScope {
             }
             if (selectedItem) {
                 handled = true;
-                KWinComponents.Workspace.activeClient = selectedItem.client;
+                KWinComponents.Workspace.activeClient = selectedItem.window;
                 activated();
             }
             break;

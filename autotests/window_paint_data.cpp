@@ -81,10 +81,6 @@ public:
     {
         return QStringList();
     }
-    int desktop() const override
-    {
-        return 0;
-    }
     QVector<uint> desktops() const override
     {
         return {};
@@ -108,10 +104,6 @@ public:
     QSize basicUnit() const override
     {
         return QSize();
-    }
-    QRect geometry() const override
-    {
-        return QRect();
     }
     QRect expandedGeometry() const override
     {
@@ -284,10 +276,6 @@ public:
     bool isSkipSwitcher() const override
     {
         return false;
-    }
-    bool isCurrentTab() const override
-    {
-        return true;
     }
     bool skipsCloseAnimation() const override
     {

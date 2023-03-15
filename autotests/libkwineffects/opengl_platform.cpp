@@ -94,6 +94,9 @@ TEST_CASE("opengl platform", "[render],[unit]")
                                   data{Driver_Qualcomm, "Qualcomm"},
                                   data{Driver_Virgl, "Virgl (virtio-gpu, Qemu/KVM guest)"},
                                   data{Driver_Panfrost, "Panfrost"},
+                                  data{Driver_Lima, "Mali (Lima)"},
+                                  data{Driver_VC4, "VideoCore IV"},
+                                  data{Driver_V3D, "VideoCore 3D"},
                                   data{Driver_Unknown, "Unknown"});
 
         REQUIRE(GLPlatform::driverToString(test_data.driver).toStdString() == test_data.expected);
@@ -144,7 +147,15 @@ TEST_CASE("opengl platform", "[render],[unit]")
                                   data{MaliT7XX, "Mali T7xx series"},
                                   data{MaliT8XX, "Mali T8xx series"},
                                   data{MaliGXX, "Mali Gxx series"},
-                                  data{UnknownAdreno, "Unknown"},
+                                  data{UnknownPanfrost, "Unknown"},
+                                  data{Mali400, "Mali 400 series"},
+                                  data{Mali450, "Mali 450 series"},
+                                  data{Mali470, "Mali 470 series"},
+                                  data{UnknownLima, "Unknown"},
+                                  data{VC4_2_1, "VideoCore IV"},
+                                  data{UnknownVideoCore4, "Unknown"},
+                                  data{V3D_4_2, "VideoCore 3D"},
+                                  data{UnknownVideoCore3D, "Unknown"},
                                   data{UnknownChipClass, "Unknown"});
 
         REQUIRE(GLPlatform::chipClassToString(test_data.chip_class).toStdString()
@@ -178,6 +189,10 @@ TEST_CASE("opengl platform", "[render],[unit]")
         QCOMPARE(gl->isNvidia(), false);
         QCOMPARE(gl->isIntel(), false);
         QCOMPARE(gl->isPanfrost(), false);
+        QCOMPARE(gl->isLima(), false);
+        QCOMPARE(gl->isVideoCore4(), false);
+        QCOMPARE(gl->isVideoCore3D(), false);
+
         QCOMPARE(gl->isVirtualBox(), false);
         QCOMPARE(gl->isVMware(), false);
 
@@ -255,6 +270,9 @@ TEST_CASE("opengl platform", "[render],[unit]")
             QCOMPARE(gl->isVMware(), settingsGroup.readEntry("VMware", false));
             QCOMPARE(gl->isAdreno(), settingsGroup.readEntry("Adreno", false));
             QCOMPARE(gl->isPanfrost(), settingsGroup.readEntry("Panfrost", false));
+            QCOMPARE(gl->isLima(), settingsGroup.readEntry("Lima", false));
+            QCOMPARE(gl->isVideoCore4(), settingsGroup.readEntry("VC4", false));
+            QCOMPARE(gl->isVideoCore3D(), settingsGroup.readEntry("V3D", false));
             QCOMPARE(gl->isVirgl(), settingsGroup.readEntry("Virgl", false));
 
             QCOMPARE(gl->isSoftwareEmulation(),

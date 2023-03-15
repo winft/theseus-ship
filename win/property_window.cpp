@@ -29,11 +29,7 @@ void property_window::setup_connections()
                      this,
                      &property_window::demandsAttentionChanged);
     QObject::connect(
-        &qtwin, &win::window_qobject::desktopChanged, this, &property_window::desktopChanged);
-    QObject::connect(&qtwin,
-                     &win::window_qobject::x11DesktopIdsChanged,
-                     this,
-                     &property_window::x11DesktopIdsChanged);
+        &qtwin, &win::window_qobject::desktopsChanged, this, &property_window::desktopsChanged);
 
     QObject::connect(
         &qtwin, &win::window_qobject::minimizedChanged, this, &property_window::minimizedChanged);
@@ -87,10 +83,6 @@ void property_window::setup_connections()
                      &property_window::geometryChanged);
     QObject::connect(
         &qtwin, &win::window_qobject::hasAlphaChanged, this, &property_window::hasAlphaChanged);
-    QObject::connect(&qtwin,
-                     &win::window_qobject::central_output_changed,
-                     this,
-                     &property_window::screenChanged);
     QObject::connect(
         &qtwin, &win::window_qobject::windowRoleChanged, this, &property_window::windowRoleChanged);
     QObject::connect(

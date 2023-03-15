@@ -176,46 +176,6 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(deletedUuid, uuid);
     }
 
-    SECTION("desktop precence changed")
-    {
-        // this test verifies that the desktop presence changed signals are properly emitted
-        std::unique_ptr<Surface> surface(create_surface());
-        std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
-        QVERIFY(surface);
-        QVERIFY(shellSurface);
-
-        auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
-        QVERIFY(c);
-        QCOMPARE(win::get_desktop(*c), 1);
-        effects->setNumberOfDesktops(4);
-        QSignalSpy desktopPresenceChangedClientSpy(c->qobject.get(),
-                                                   &win::window_qobject::desktopPresenceChanged);
-        QVERIFY(desktopPresenceChangedClientSpy.isValid());
-        QSignalSpy desktopPresenceChangedWorkspaceSpy(
-            setup.base->space->qobject.get(), &win::space::qobject_t::desktopPresenceChanged);
-        QVERIFY(desktopPresenceChangedWorkspaceSpy.isValid());
-        QSignalSpy desktopPresenceChangedEffectsSpy(effects,
-                                                    &EffectsHandler::desktopPresenceChanged);
-        QVERIFY(desktopPresenceChangedEffectsSpy.isValid());
-
-        // let's change the desktop
-        win::send_window_to_desktop(*setup.base->space, c, 2, false);
-        QCOMPARE(win::get_desktop(*c), 2);
-        QCOMPARE(desktopPresenceChangedClientSpy.count(), 1);
-        QCOMPARE(desktopPresenceChangedWorkspaceSpy.count(), 1);
-        QCOMPARE(desktopPresenceChangedEffectsSpy.count(), 1);
-
-        // verify the arguments
-        QCOMPARE(desktopPresenceChangedClientSpy.first().at(0).toInt(), 1);
-        QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(0).value<quint32>(),
-                 c->meta.signal_id);
-        QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(1).toInt(), 1);
-        QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(0).value<EffectWindow*>(),
-                 c->render->effect.get());
-        QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(1).toInt(), 1);
-        QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(2).toInt(), 2);
-    }
-
     SECTION("transient position afeter remap")
     {
         // this test simulates the situation that a transient window gets reused and the parent

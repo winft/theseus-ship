@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "output.h"
+
 #include "input/cursor.h"
 #include "kwin_export.h"
 #include "win/actions.h"
@@ -25,8 +27,7 @@ class KWIN_EXPORT window : public win::property_window
 {
     Q_OBJECT
 
-    /// @deprecated. Use frameGeometry instead.
-    Q_PROPERTY(QRect geometry READ frameGeometry WRITE setFrameGeometry NOTIFY geometryChanged)
+    Q_PROPERTY(KWin::scripting::output* output READ output NOTIFY outputChanged)
 
     /// @deprecated
     Q_PROPERTY(QStringList activities READ activities NOTIFY activitiesChanged)
@@ -49,6 +50,8 @@ class KWIN_EXPORT window : public win::property_window
 public:
     explicit window(win::window_qobject& qtwin);
 
+    virtual scripting::output* output() const = 0;
+    virtual int desktop() const = 0;
     virtual bool isOnDesktop(unsigned int desktop) const = 0;
     virtual bool isOnDesktop(win::virtual_desktop* desktop) const = 0;
     virtual bool isOnCurrentDesktop() const = 0;
@@ -66,6 +69,7 @@ public Q_SLOTS:
     virtual void closeWindow() = 0;
 
 Q_SIGNALS:
+    void outputChanged();
     void quickTileModeChanged();
 
     void moveResizeCursorChanged(input::cursor_shape);
@@ -81,8 +85,6 @@ Q_SIGNALS:
 
     void shadeChanged();
 
-    void desktopPresenceChanged(KWin::scripting::window* window, int);
-
     void paletteChanged(const QPalette& p);
 
     void blockingCompositingChanged(KWin::scripting::window* window);
@@ -95,12 +97,6 @@ Q_SIGNALS:
 
     void damaged(KWin::scripting::window* client, const QRegion& damage);
     void stackingOrderChanged();
-
-    /// Deprecated
-    void clientManaging(KWin::scripting::window* window);
-
-    /// Deprecated
-    void clientFullScreenSet(KWin::scripting::window* window, bool fullscreen, bool user);
 
     // TODO: this signal is never emitted - remove?
     void clientMaximizeSet(KWin::scripting::window* window, bool horizontal, bool vertical);
@@ -120,16 +116,10 @@ public:
                          &win::window_qobject::opacityChanged,
                          this,
                          [this](auto oldOpacity) { Q_EMIT opacityChanged(this, oldOpacity); });
-
         QObject::connect(
             qtwin, &win::window_qobject::frame_geometry_changed, this, [this](auto oldGeometry) {
                 Q_EMIT frameGeometryChanged(this, oldGeometry);
             });
-
-        QObject::connect(qtwin,
-                         &win::window_qobject::desktopPresenceChanged,
-                         this,
-                         [this](auto desktop) { Q_EMIT desktopPresenceChanged(this, desktop); });
 
         QObject::connect(qtwin, &win::window_qobject::clientMinimized, this, [this] {
             Q_EMIT clientMinimized(this);
@@ -182,13 +172,6 @@ public:
             Q_EMIT damaged(this, damage);
         });
 
-        // For backwards compatibility of scripts connecting to the old signal. We assume no script
-        // is actually differentiating its behavior on the user parameter (if fullscreen was
-        // triggered by the user or not) and always set it to being a user change.
-        QObject::connect(qtwin, &win::window_qobject::fullScreenChanged, this, [this, ref_win] {
-            Q_EMIT clientFullScreenSet(this, ref_win->control->fullscreen, true);
-        });
-
         if constexpr (requires(RefWin win) { win.isClient(); }) {
             if (ref_win->isClient()) {
                 QObject::connect(qtwin,
@@ -224,13 +207,13 @@ public:
                           ref_win);
     }
 
-    QByteArray resourceName() const override
+    QString resourceName() const override
     {
         return std::visit(overload{[](auto&& win) { return win->meta.wm_class.res_name; }},
                           ref_win);
     }
 
-    QByteArray resourceClass() const override
+    QString resourceClass() const override
     {
         return std::visit(overload{[](auto&& win) { return win->meta.wm_class.res_class; }},
                           ref_win);
@@ -376,26 +359,31 @@ public:
         std::visit(overload{[=](auto&& win) { win->setFullScreen(set); }}, ref_win);
     }
 
-    int screen() const override
+    scripting::output* output() const override
     {
-        return std::visit(overload{[](auto&& win) -> int {
-                              if (!win->topo.central_output) {
-                                  return 0;
-                              }
-                              return base::get_output_index(win->space.base.outputs,
-                                                            *win->topo.central_output);
-                          }},
-                          ref_win);
+        return std::visit(
+            overload{[](auto&& win) -> scripting::output* {
+                if (!win->topo.central_output) {
+                    return nullptr;
+                }
+                using space_t = std::remove_reference_t<decltype(win->space)>;
+                auto outputs = win->space.scripting->workspaceWrapper()->screens();
+                auto it = std::find_if(outputs.begin(), outputs.end(), [win](auto out) {
+                    auto out_impl
+                        = static_cast<output_impl<typename space_t::base_t::output_t>*>(out);
+                    return win->topo.central_output == &out_impl->ref_out;
+                });
+                if (it == outputs.end()) {
+                    return nullptr;
+                }
+                return *it;
+            }},
+            ref_win);
     }
 
     int desktop() const override
     {
         return std::visit(overload{[](auto&& win) { return win::get_desktop(*win); }}, ref_win);
-    }
-
-    void setDesktop(int desktop) override
-    {
-        std::visit(overload{[=](auto&& win) { win::set_desktop(win, desktop); }}, ref_win);
     }
 
     QVector<win::virtual_desktop*> desktops() const override
@@ -406,11 +394,6 @@ public:
     void setDesktops(QVector<win::virtual_desktop*> desktops) override
     {
         std::visit(overload{[=](auto&& win) { win::set_desktops(win, desktops); }}, ref_win);
-    }
-
-    QVector<uint> x11DesktopIds() const override
-    {
-        return std::visit(overload{[](auto&& win) { return win::x11_desktop_ids(win); }}, ref_win);
     }
 
     bool isOnAllDesktops() const override
@@ -447,7 +430,7 @@ public:
                           ref_win);
     }
 
-    QByteArray windowRole() const override
+    QString windowRole() const override
     {
         return std::visit(overload{[](auto&& win) { return win->windowRole(); }}, ref_win);
     }

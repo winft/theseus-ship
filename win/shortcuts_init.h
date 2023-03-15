@@ -190,7 +190,7 @@ void shortcuts_init_virtual_desktops(Space& space)
                                                      manager->m_current_desktop_offset());
         }
     };
-    input::platform_register_realtime_touchpad_swipe_shortcut(
+    input::platform_register_touchpad_swipe_shortcut(
         input, SwipeDirection::Left, 3, swipeGestureReleasedX, [manager](qreal cb) {
             if (manager->grid().width() > 1) {
                 manager->set_desktop_offset_x(cb);
@@ -198,7 +198,7 @@ void shortcuts_init_virtual_desktops(Space& space)
                                                          manager->m_current_desktop_offset());
             }
         });
-    input::platform_register_realtime_touchpad_swipe_shortcut(
+    input::platform_register_touchpad_swipe_shortcut(
         input, SwipeDirection::Right, 3, swipeGestureReleasedX, [manager](qreal cb) {
             if (manager->grid().width() > 1) {
                 manager->set_desktop_offset_x(-cb);
@@ -206,7 +206,7 @@ void shortcuts_init_virtual_desktops(Space& space)
                                                          manager->m_current_desktop_offset());
             }
         });
-    input::platform_register_realtime_touchpad_swipe_shortcut(
+    input::platform_register_touchpad_swipe_shortcut(
         input, SwipeDirection::Left, 4, swipeGestureReleasedX, [manager](qreal cb) {
             if (manager->grid().width() > 1) {
                 manager->set_desktop_offset_x(cb);
@@ -214,7 +214,7 @@ void shortcuts_init_virtual_desktops(Space& space)
                                                          manager->m_current_desktop_offset());
             }
         });
-    input::platform_register_realtime_touchpad_swipe_shortcut(
+    input::platform_register_touchpad_swipe_shortcut(
         input, SwipeDirection::Right, 4, swipeGestureReleasedX, [manager](qreal cb) {
             if (manager->grid().width() > 1) {
                 manager->set_desktop_offset_x(-cb);
@@ -222,7 +222,7 @@ void shortcuts_init_virtual_desktops(Space& space)
                                                          manager->m_current_desktop_offset());
             }
         });
-    input::platform_register_realtime_touchpad_swipe_shortcut(
+    input::platform_register_touchpad_swipe_shortcut(
         input, SwipeDirection::Down, 3, swipeGestureReleasedY, [manager](qreal cb) {
             if (manager->grid().height() > 1) {
                 manager->set_desktop_offset_y(-cb);
@@ -230,7 +230,7 @@ void shortcuts_init_virtual_desktops(Space& space)
                                                          manager->m_current_desktop_offset());
             }
         });
-    input::platform_register_realtime_touchpad_swipe_shortcut(
+    input::platform_register_touchpad_swipe_shortcut(
         input, SwipeDirection::Up, 3, swipeGestureReleasedY, [manager](qreal cb) {
             if (manager->grid().height() > 1) {
                 manager->set_desktop_offset_y(cb);
@@ -515,10 +515,10 @@ void init_shortcuts(Space& space)
     def(kli18n("Window One Desktop Down"), 0, active_window_to_below_desktop<Space>);
 
     for (int i = 0; i < 8; ++i) {
-        def3(kli18n("Window to Screen %1"), 0, active_window_to_output<Space>, i);
+        def3(kli18n("Move Window to Screen %1"), 0, active_window_to_output<Space>, i);
     }
-    def(kli18n("Window to Next Screen"), 0, active_window_to_next_output<Space>);
-    def(kli18n("Window to Previous Screen"), 0, active_window_to_prev_output<Space>);
+    def(kli18n("Move Window to Next Screen"), 0, active_window_to_next_output<Space>);
+    def(kli18n("Move Window to Previous Screen"), 0, active_window_to_prev_output<Space>);
     def(kli18n("Show Desktop"),
         static_cast<Qt::Key>(Qt::META) + Qt::Key_D,
         toggle_show_desktop<Space>);

@@ -344,16 +344,16 @@ public:
         this->border = border;
         switch (border) {
         case ElectricTop:
-            gesture->setDirection(input::swipe_gesture::Direction::Down);
+            gesture->setDirection(SwipeDirection::Down);
             break;
         case ElectricRight:
-            gesture->setDirection(input::swipe_gesture::Direction::Left);
+            gesture->setDirection(SwipeDirection::Left);
             break;
         case ElectricBottom:
-            gesture->setDirection(input::swipe_gesture::Direction::Up);
+            gesture->setDirection(SwipeDirection::Up);
             break;
         case ElectricLeft:
-            gesture->setDirection(input::swipe_gesture::Direction::Right);
+            gesture->setDirection(SwipeDirection::Right);
             break;
         default:
             break;

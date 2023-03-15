@@ -40,12 +40,12 @@ public:
         return XCB_WINDOW_NONE;
     }
 
-    QByteArray resourceName() const override
+    QString resourceName() const override
     {
         return ref_win->meta.wm_class.res_name;
     }
 
-    QByteArray resourceClass() const override
+    QString resourceClass() const override
     {
         return ref_win->meta.wm_class.res_class;
     }
@@ -218,26 +218,6 @@ public:
         }
     }
 
-    int screen() const override
-    {
-        if (!ref_win->topo.central_output) {
-            return 0;
-        }
-        return base::get_output_index(ref_win->space.base.outputs, *ref_win->topo.central_output);
-    }
-
-    int desktop() const override
-    {
-        return win::get_desktop(*ref_win);
-    }
-
-    void setDesktop(int desktop) override
-    {
-        if (ref_win->control) {
-            win::set_desktop(ref_win, desktop);
-        }
-    }
-
     QVector<win::virtual_desktop*> desktops() const override
     {
         return win::get_desktops(*ref_win);
@@ -248,11 +228,6 @@ public:
         if (ref_win->control) {
             win::set_desktops(ref_win, desktops);
         }
-    }
-
-    QVector<uint> x11DesktopIds() const override
-    {
-        return win::x11_desktop_ids(ref_win);
     }
 
     bool isOnAllDesktops() const override
@@ -267,7 +242,7 @@ public:
         }
     }
 
-    QByteArray windowRole() const override
+    QString windowRole() const override
     {
         return ref_win->windowRole();
     }

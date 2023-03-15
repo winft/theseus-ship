@@ -23,7 +23,6 @@ public Q_SLOTS:
     void reconfigure();
 
 Q_SIGNALS:
-    void desktopPresenceChanged(quint32, int);
     void currentDesktopChanged(int);
     void currentDesktopChanging(uint currentDesktop, QPointF delta); // for realtime animations
     void currentDesktopChangingCancelled();

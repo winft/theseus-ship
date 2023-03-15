@@ -248,6 +248,10 @@ QStringList RulesModel::warningMessages() const
                          m_rules["ignoregeometry"]->name());
     }
 
+    if (opacityWarning()) {
+        messages << i18n("Readability may be impaired with extremely low opacity values. At 0%, the window becomes invisible.");
+    }
+
     return messages;
 }
 
@@ -281,6 +285,23 @@ bool RulesModel::geometryWarning() const
                                     && m_rules["placement"]->policy() == enum_index(win::rules::action::force);
 
     return (!ignoregeometry && (initialPos || initialSize || initialPlacement));
+}
+
+bool RulesModel::opacityWarning() const
+{
+    auto opacityActive = m_rules["opacityactive"];
+    const bool lowOpacityActive = opacityActive->isEnabled()
+        && opacityActive->policy() != enum_index(win::rules::action::unused)
+        && opacityActive->policy() != enum_index(win::rules::action::dont_affect)
+        && opacityActive->value().toInt() < 25;
+
+    auto opacityInactive = m_rules["opacityinactive"];
+    const bool lowOpacityInactive = opacityInactive->isEnabled()
+        && opacityActive->policy() != enum_index(win::rules::action::unused)
+        && opacityActive->policy() != enum_index(win::rules::action::dont_affect)
+        && opacityInactive->value().toInt() < 25;
+
+    return lowOpacityActive || lowOpacityInactive;
 }
 
 win::rules::settings* RulesModel::settings() const
@@ -554,15 +575,16 @@ void RulesModel::populateRuleList()
                                           QIcon::fromTheme("preferences-desktop-theme")));
     decocolor->setOptionsData(colorSchemesModelData());
 
-    addRule(new RuleItem(QLatin1String("opacityactive"),
-                         RulePolicy::ForceRule, RuleItem::Percentage,
-                         i18n("Active opacity"), i18n("Appearance & Fixes"),
-                         QIcon::fromTheme("edit-opacity")));
-
-    addRule(new RuleItem(QLatin1String("opacityinactive"),
-                         RulePolicy::ForceRule, RuleItem::Percentage,
-                         i18n("Inactive opacity"), i18n("Appearance & Fixes"),
-                         QIcon::fromTheme("edit-opacity")));
+    auto opacityactive = addRule(new RuleItem(QLatin1String("opacityactive"),
+                                              RulePolicy::ForceRule, RuleItem::Percentage,
+                                              i18n("Active opacity"), i18n("Appearance & Fixes"),
+                                              QIcon::fromTheme("edit-opacity")));
+    opacityactive->setFlag(RuleItem::AffectsWarning);
+    auto opacityinactive = addRule(new RuleItem(QLatin1String("opacityinactive"),
+                                                RulePolicy::ForceRule, RuleItem::Percentage,
+                                                i18n("Inactive opacity"), i18n("Appearance & Fixes"),
+                                                QIcon::fromTheme("edit-opacity")));
+    opacityinactive->setFlag(RuleItem::AffectsWarning);
 
     auto fsplevel = addRule(new RuleItem(QLatin1String("fsplevel"),
                                          RulePolicy::ForceRule, RuleItem::Option,

@@ -191,12 +191,6 @@ public:
         return {};
     }
 
-    int desktop() const override
-    {
-        return std::visit(overload{[](auto&& ref_win) { return win::get_desktop(*ref_win); }},
-                          *window.ref_win);
-    }
-
     QVector<uint> desktops() const override
     {
         return std::visit(overload{[](auto&& ref_win) -> QVector<uint> {
@@ -241,11 +235,6 @@ public:
                               return QSize(1, 1);
                           }},
                           *window.ref_win);
-    }
-
-    QRect geometry() const override
-    {
-        return frameGeometry();
     }
 
     QRect frameGeometry() const override
@@ -644,12 +633,6 @@ public:
                               return ref_win->control ? ref_win->control->skip_switcher() : false;
                           }},
                           *window.ref_win);
-    }
-
-    // legacy from tab groups, can be removed when no effects use this any more.
-    bool isCurrentTab() const override
-    {
-        return true;
     }
 
     QString windowRole() const override

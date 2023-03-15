@@ -46,6 +46,5 @@ target_link_libraries(kcm_kwinoptions
   Qt::DBus
   KF5::I18n
   KF5::KCMUtils
-  KF5::Service
   KF5::WindowSystem
 )

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "kwin_export.h"
+#include "kwinglobals.h"
 
 #include <QMap>
 #include <QObject>
@@ -44,8 +45,6 @@ class KWIN_EXPORT swipe_gesture : public gesture
 {
     Q_OBJECT
 public:
-    enum class Direction { Down, Left, Up, Right };
-
     ~swipe_gesture() override;
 
     bool minimumFingerCountIsRelevant() const;
@@ -56,8 +55,8 @@ public:
     void setMaximumFingerCount(uint count);
     uint maximumFingerCount() const;
 
-    Direction direction() const;
-    void setDirection(Direction direction);
+    SwipeDirection direction() const;
+    void setDirection(SwipeDirection direction);
 
     void setMinimumX(int x);
     int minimumX() const;
@@ -98,7 +97,7 @@ private:
     uint m_minimumFingerCount = 0;
     bool m_maximumFingerCountRelevant = false;
     uint m_maximumFingerCount = 0;
-    Direction m_direction = Direction::Down;
+    SwipeDirection m_direction{SwipeDirection::Down};
     bool m_minimumXRelevant = false;
     int m_minimumX = 0;
     bool m_minimumYRelevant = false;
@@ -115,8 +114,6 @@ class KWIN_EXPORT pinch_gesture : public gesture
 {
     Q_OBJECT
 public:
-    enum class Direction { Expanding, Contracting };
-
     ~pinch_gesture() override;
 
     bool minimumFingerCountIsRelevant() const;
@@ -127,8 +124,8 @@ public:
     void setMaximumFingerCount(uint count);
     uint maximumFingerCount() const;
 
-    Direction direction() const;
-    void setDirection(Direction direction);
+    PinchDirection direction() const;
+    void setDirection(PinchDirection direction);
 
     qreal minimumScaleDelta() const;
 
@@ -154,7 +151,7 @@ private:
     uint m_minimumFingerCount = 0;
     bool m_maximumFingerCountRelevant = false;
     uint m_maximumFingerCount = 0;
-    Direction m_direction = Direction::Expanding;
+    PinchDirection m_direction{PinchDirection::Expanding};
     bool m_minimumScaleDeltaRelevant = false;
     qreal m_minimumScaleDelta = DEFAULT_MINIMUM_SCALE_DELTA;
 };
@@ -206,6 +203,3 @@ private:
 };
 
 }
-
-Q_DECLARE_METATYPE(KWin::input::swipe_gesture::Direction)
-Q_DECLARE_METATYPE(KWin::input::pinch_gesture::Direction)

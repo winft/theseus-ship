@@ -16,7 +16,7 @@ import org.kde.kwin.private.desktopgrid 1.0
 FocusScope {
     id: desktopView
 
-    required property QtObject clientModel
+    required property QtObject windowModel
     required property QtObject desktop
     required property var dndManagerStore
     readonly property bool dragActive: heap.dragActive || dragHandler.active || xAnim.running || yAnim.running
@@ -43,11 +43,11 @@ FocusScope {
                 effect.swapDesktops(drag.source.desktop.x11DesktopNumber, desktop.x11DesktopNumber);
             } else {
                 // dragging a KWin::Window
-                if (drag.source.desktop === desktopView.desktop.x11DesktopNumber) {
+                if (drag.source.desktops.length === 0 || drag.source.desktops.indexOf(desktopView.desktop) !== -1) {
                     drop.action = Qt.IgnoreAction;
                     return;
                 }
-                drag.source.desktop = desktopView.desktop.x11DesktopNumber;
+                drag.source.desktops = [desktopView.desktop];
             }
         }
     }
@@ -61,26 +61,26 @@ FocusScope {
             if (!desktopView.contains(desktopView.mapFromItem(null, pos.x, pos.y))) {
                 return;
             }
-            item.client.desktop = desktopView.desktop.x11DesktopNumber;
+            item.client.desktops = [desktopView.desktop];
         }
     }
     Repeater {
-        model: KWinComponents.ClientFilterModel {
+        model: KWinComponents.WindowFilterModel {
             activity: KWinComponents.Workspace.currentActivity
             desktop: desktopView.desktop
             screenName: targetScreen.name
-            clientModel: desktopView.clientModel
-            windowType: KWinComponents.ClientFilterModel.Dock | KWinComponents.ClientFilterModel.Desktop
+            windowModel: desktopView.windowModel
+            windowType: KWinComponents.WindowFilterModel.Dock | KWinComponents.WindowFilterModel.Desktop
         }
 
-        KWinComponents.WindowThumbnailItem {
-            wId: model.client.internalId
-            x: model.client.x - targetScreen.geometry.x
-            y: model.client.y - targetScreen.geometry.y
-            z: model.client.stackingOrder
-            width: model.client.width
-            height: model.client.height
-            opacity: model.client.dock ? desktopView.panelOpacity : 1
+        KWinComponents.WindowThumbnail {
+            wId: model.window.internalId
+            x: model.window.x - targetScreen.geometry.x
+            y: model.window.y - targetScreen.geometry.y
+            z: model.window.stackingOrder
+            width: model.window.width
+            height: model.window.height
+            opacity: model.window.dock ? desktopView.panelOpacity : 1
         }
     }
 
@@ -117,33 +117,38 @@ FocusScope {
         organized: container.organized
         layout.mode: effect.layout
         dndManagerStore: desktopView.dndManagerStore
-        model: KWinComponents.ClientFilterModel {
+        model: KWinComponents.WindowFilterModel {
             activity: KWinComponents.Workspace.currentActivity
             desktop: desktopView.desktop
             screenName: targetScreen.name
-            clientModel: desktopView.clientModel
-            windowType: ~KWinComponents.ClientFilterModel.Dock &
-                        ~KWinComponents.ClientFilterModel.Desktop &
-                        ~KWinComponents.ClientFilterModel.Notification &
-                        ~KWinComponents.ClientFilterModel.CriticalNotification
+            windowModel: desktopView.windowModel
+            windowType: ~KWinComponents.WindowFilterModel.Dock &
+                        ~KWinComponents.WindowFilterModel.Desktop &
+                        ~KWinComponents.WindowFilterModel.Notification &
+                        ~KWinComponents.WindowFilterModel.CriticalNotification
         }
         delegate: WindowHeapDelegate {
             windowHeap: heap
             closeButtonVisible: false
             windowTitleVisible: false
-        }
-        onActivated: effect.deactivate(effect.animationDuration);
-        onWindowClicked: {
-            if (eventPoint.event.button === Qt.MiddleButton) {
-                window.closeWindow();
-            } else if (eventPoint.event.button === Qt.RightButton) {
-                if (window.desktop > -1) {
-                    window.desktop = -1;
-                } else {
-                    window.desktop = desktopView.desktop.x11DesktopNumber;
+
+            TapHandler {
+                acceptedPointerTypes: PointerDevice.GenericPointer | PointerDevice.Pen
+                acceptedButtons: Qt.MiddleButton | Qt.RightButton
+                onTapped: {
+                    if (eventPoint.event.button === Qt.MiddleButton) {
+                        window.closeWindow();
+                    } else if (eventPoint.event.button === Qt.RightButton) {
+                        if (window.desktops.length > 0) {
+                            window.desktops = [];
+                        } else {
+                            window.desktops = [desktopView.desktop];
+                        }
+                    }
                 }
             }
         }
+        onActivated: effect.deactivate(effect.animationDuration);
         Behavior on x {
             enabled: !dragHandler.active
             NumberAnimation {

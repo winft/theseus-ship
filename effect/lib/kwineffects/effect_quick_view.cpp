@@ -284,9 +284,15 @@ void EffectQuickView::update()
     }
 
     d->m_renderControl->polishItems();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    d->m_renderControl->beginFrame();
+#endif
     d->m_renderControl->sync();
-
     d->m_renderControl->render();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    d->m_renderControl->endFrame();
+#endif
+
     if (usingGl) {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         d->m_view->resetOpenGLState();

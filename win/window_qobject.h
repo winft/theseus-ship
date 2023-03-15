@@ -92,11 +92,7 @@ Q_SIGNALS:
 
     void activeChanged();
     void demandsAttentionChanged();
-
-    // to be forwarded by Workspace
-    void desktopPresenceChanged(int);
-    void desktopChanged();
-    void x11DesktopIdsChanged();
+    void desktopsChanged();
 
     void minimizedChanged();
     void clientMinimized(bool animate);

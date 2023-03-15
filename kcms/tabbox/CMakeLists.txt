@@ -16,6 +16,7 @@ set(kcm_kwintabbox_PART_SRCS
     thumbnailitem.cpp
     kwintabboxconfigform.cpp
     kwintabboxdata.cpp
+    shortcutsettings.cpp
 )
 
 ki18n_wrap_ui(kcm_kwintabbox_PART_SRCS main.ui)
@@ -36,8 +37,6 @@ target_link_libraries(kcm_kwintabbox
     KF5::KCMUtils
     KF5::NewStuffWidgets
     KF5::Package
-    KF5::Service
-
     XCB::XCB
 )
 

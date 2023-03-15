@@ -137,12 +137,10 @@ public:
     enum Feature {
         Nothing = 0,
         Resize,
-        GeometryTip, /**< @deprecated */
-        Outline,     /**< @deprecated */
         ScreenInversion,
         Blur,
         Contrast,
-        HighlightWindows
+        HighlightWindows,
     };
 
     /**
@@ -176,11 +174,6 @@ public:
      * required to ensure that the context is current if the implementation does OpenGL calls.
      */
     virtual void reconfigure(ReconfigureFlags flags);
-
-    /**
-     * Called when another effect requests the proxy for this effect.
-     */
-    virtual void* proxy();
 
     /**
      * Called before starting to paint the screen.

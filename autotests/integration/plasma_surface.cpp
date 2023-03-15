@@ -72,7 +72,7 @@ TEST_CASE("plasma surface", "[win]")
         QCOMPARE(win::on_all_desktops(c), false);
 
         // now let's try to change that
-        QSignalSpy onAllDesktopsSpy(c->qobject.get(), &win::window_qobject::desktopChanged);
+        QSignalSpy onAllDesktopsSpy(c->qobject.get(), &win::window_qobject::desktopsChanged);
         QVERIFY(onAllDesktopsSpy.isValid());
         plasmaSurface->setRole(test_data.role);
         QCOMPARE(onAllDesktopsSpy.wait(500), test_data.expected_on_all_desktops);
