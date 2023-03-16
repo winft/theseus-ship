@@ -10,8 +10,8 @@
 #ifndef KKWMWINDOWS_H
 #define KKWMWINDOWS_H
 
+#include <KCModule>
 #include <QWidget>
-#include <kcmodule.h>
 
 #include "ui_advanced.h"
 #include "ui_focus.h"
@@ -70,7 +70,6 @@ public:
 
 protected:
     void initialize(KWinOptionsSettings *settings);
-    void showEvent(QShowEvent *ev) override;
 
 private Q_SLOTS:
     void focusPolicyChanged();
@@ -99,7 +98,6 @@ public:
 
 protected:
     void initialize(KWinOptionsSettings *settings);
-    void showEvent(QShowEvent *ev) override;
 
 private:
     KWinOptionsSettings *m_settings;
@@ -120,7 +118,6 @@ public:
 
 protected:
     void initialize(KWinOptionsSettings *settings, KWinOptionsKDEGlobalsSettings *globalSettings);
-    void showEvent(QShowEvent *ev) override;
 
 private:
 

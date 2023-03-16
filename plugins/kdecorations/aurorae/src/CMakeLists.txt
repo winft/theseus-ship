@@ -24,8 +24,8 @@ set_target_properties(kwin5_aurorae PROPERTIES
 
 target_link_libraries(kwin5_aurorae
   KDecoration2::KDecoration
-  KF6::ConfigWidgets
   KF6::I18n
+  KF6::KCMUtils
   KF6::Package
   kwineffects
   Qt::Quick
@@ -44,7 +44,7 @@ add_library(decorationplugin SHARED ${decoration_plugin_SRCS})
 set_target_properties(decorationplugin PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/org/kde/kwin/decoration/")
 target_link_libraries(decorationplugin
   KDecoration2::KDecoration
-  KF6::ConfigWidgets
+  KF6::KCMUtils
   Qt::Quick
 )
 install(TARGETS decorationplugin DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/kwin/decoration)

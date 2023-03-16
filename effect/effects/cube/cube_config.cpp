@@ -31,11 +31,13 @@ CubeEffectConfigForm::CubeEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-CubeEffectConfig::CubeEffectConfig(QWidget* parent, const QVariantList& args)
-    : KCModule(parent, args)
-    , m_ui(this)
+CubeEffectConfig::CubeEffectConfig(QObject* parent,
+                                   const KPluginMetaData& data,
+                                   const QVariantList& args)
+    : KCModule(parent, data, args)
+    , m_ui(widget())
 {
-    QVBoxLayout* layout = new QVBoxLayout(this);
+    QVBoxLayout* layout = new QVBoxLayout(widget());
 
     layout->addWidget(&m_ui);
 
@@ -43,7 +45,7 @@ CubeEffectConfig::CubeEffectConfig(QWidget* parent, const QVariantList& args)
     m_ui.tabWidget->setTabText(1, i18nc("@title:tab Advanced Settings", "Advanced"));
 
     // Shortcut config. The shortcut belongs to the component "kwin"!
-    m_actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
+    m_actionCollection = new KActionCollection(widget(), QStringLiteral("kwin"));
     m_actionCollection->setComponentDisplayName(i18n("KWin"));
 
     m_actionCollection->setConfigGroup(QStringLiteral("Cube"));

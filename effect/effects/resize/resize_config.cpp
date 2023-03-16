@@ -25,12 +25,14 @@ ResizeEffectConfigForm::ResizeEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-ResizeEffectConfig::ResizeEffectConfig(QWidget* parent, const QVariantList& args)
-    : KCModule(parent, args)
+ResizeEffectConfig::ResizeEffectConfig(QObject* parent,
+                                       const KPluginMetaData& data,
+                                       const QVariantList& args)
+    : KCModule(parent, data, args)
 {
-    m_ui = new ResizeEffectConfigForm(this);
+    m_ui = new ResizeEffectConfigForm(widget());
 
-    QVBoxLayout* layout = new QVBoxLayout(this);
+    QVBoxLayout* layout = new QVBoxLayout(widget());
 
     layout->addWidget(m_ui);
 

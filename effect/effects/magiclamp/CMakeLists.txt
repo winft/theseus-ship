@@ -30,9 +30,9 @@ if (KWIN_BUILD_KCMS)
     kwin_add_effect_config(kwin_magiclamp_config ${kwin_magiclamp_config_SRCS})
 
     target_link_libraries(kwin_magiclamp_config
-      KF6::ConfigWidgets
       KF6::CoreAddons
       KF6::I18n
+      KF6::KCMUtils
       KWinEffectsInterface
       Qt::DBus
     )

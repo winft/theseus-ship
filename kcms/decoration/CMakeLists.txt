@@ -29,10 +29,8 @@ kcmutils_generate_desktop_file(kcm_kwindecoration)
 
 target_link_libraries(kcm_kwindecoration
   KDecoration2::KDecoration
-  KF6::ConfigWidgets
   KF6::I18n
   KF6::KCMUtils
-  KF6::QuickAddons
   Qt::DBus
   Qt::Quick
 )

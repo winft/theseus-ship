@@ -33,7 +33,6 @@ kconfig_add_kcfg_files(kcm_kwinscreenedges_PART_SRCS kwinscreenedgesettings.kcfg
 kcoreaddons_add_plugin(kcm_kwinscreenedges SOURCES ${kcm_kwinscreenedges_PART_SRCS} INSTALL_NAMESPACE "plasma/kcms/systemsettings_qwidgets")
 set(kcm_screenedges_LIBS
   KF6::ConfigCore
-  KF6::ConfigWidgets
   KF6::KCMUtils
   KF6::I18n
   KF6::Package

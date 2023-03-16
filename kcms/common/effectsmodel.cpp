@@ -26,9 +26,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDirIterator>
+#include <QLayout>
 #include <QPushButton>
 #include <QStandardPaths>
-#include <QVBoxLayout>
 
 namespace KWin
 {
@@ -649,14 +649,13 @@ void EffectsModel::requestConfigure(const QModelIndex &index, QWindow *transient
     connect(buttons, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
     connect(buttons->button(QDialogButtonBox::RestoreDefaults), &QPushButton::clicked,
-        module, &KCModule::defaults);
-    connect(module, &KCModule::defaulted, this, [=](bool defaulted) {
-        buttons->button(QDialogButtonBox::RestoreDefaults)->setEnabled(!defaulted);
+            module, &KCModule::defaults);
+    connect(module, &KCModule::representsDefaultsChanged, this, [buttons, module]() {
+        buttons->button(QDialogButtonBox::RestoreDefaults)->setEnabled(!module->representsDefaults());
     });
 
-    auto layout = new QVBoxLayout(dialog);
-    layout->addWidget(module);
-    layout->addWidget(buttons);
+    // Our KCM has a QVBoxLayout, just add the buttons to it
+    module->widget()->layout()->addWidget(buttons);
 
     connect(dialog, &QDialog::accepted, module, &KCModule::save);
 

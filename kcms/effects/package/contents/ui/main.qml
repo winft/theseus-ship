@@ -17,8 +17,6 @@ import org.kde.newstuff 1.62 as NewStuff
 import org.kde.private.kcms.kwin.effects 1.0 as Private
 
 ScrollViewKCM {
-    ConfigModule.quickHelp: i18n("This module lets you configure desktop effects.")
-
     header: ColumnLayout {
         QQC2.Label {
             Layout.fillWidth: true

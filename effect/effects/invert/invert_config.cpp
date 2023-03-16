@@ -22,13 +22,15 @@ K_PLUGIN_CLASS(KWin::InvertEffectConfig)
 namespace KWin
 {
 
-InvertEffectConfig::InvertEffectConfig(QWidget* parent, const QVariantList& args)
-    : KCModule(parent, args)
+InvertEffectConfig::InvertEffectConfig(QObject* parent,
+                                       const KPluginMetaData& data,
+                                       const QVariantList& args)
+    : KCModule(parent, data, args)
 {
-    QVBoxLayout* layout = new QVBoxLayout(this);
+    QVBoxLayout* layout = new QVBoxLayout(widget());
 
     // Shortcut config. The shortcut belongs to the component "kwin"!
-    KActionCollection* actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
+    KActionCollection* actionCollection = new KActionCollection(widget(), QStringLiteral("kwin"));
     actionCollection->setComponentDisplayName(i18n("KWin"));
 
     QAction* a = actionCollection->addAction(QStringLiteral("Invert"));
@@ -48,11 +50,10 @@ InvertEffectConfig::InvertEffectConfig(QWidget* parent, const QVariantList& args
                                       QList<QKeySequence>() << (Qt::CTRL | Qt::META | Qt::Key_U));
 
     mShortcutEditor = new KShortcutsEditor(actionCollection,
-                                           this,
+                                           widget(),
                                            KShortcutsEditor::GlobalAction,
                                            KShortcutsEditor::LetterShortcutsDisallowed);
-    connect(
-        mShortcutEditor, &KShortcutsEditor::keyChange, this, &InvertEffectConfig::markAsChanged);
+    connect(mShortcutEditor, &KShortcutsEditor::keyChange, this, &KCModule::markAsChanged);
     layout->addWidget(mShortcutEditor);
 }
 
@@ -66,7 +67,7 @@ void InvertEffectConfig::load()
 {
     KCModule::load();
 
-    Q_EMIT changed(false);
+    setNeedsSave(false);
 }
 
 void InvertEffectConfig::save()
@@ -75,7 +76,7 @@ void InvertEffectConfig::save()
 
     mShortcutEditor->save(); // undo() will restore to this state from now on
 
-    Q_EMIT changed(false);
+    setNeedsSave(false);
     OrgKdeKwinEffectsInterface interface(
         QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("invert"));
@@ -85,7 +86,7 @@ void InvertEffectConfig::defaults()
 {
     mShortcutEditor->allDefault();
 
-    Q_EMIT changed(true);
+    setNeedsSave(true);
 }
 
 } // namespace

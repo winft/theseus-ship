@@ -23,8 +23,8 @@ kconfig_add_kcfg_files(zoom_SOURCES
 kwin4_add_effect_module(kwin4_effect_zoom ${zoom_SOURCES})
 target_link_libraries(kwin4_effect_zoom PRIVATE
   KF6::ConfigGui
-  KF6::ConfigWidgets
   KF6::I18n
+  KF6::KCMUtils
   kwineffects
   kwinglutils
 )
@@ -44,10 +44,10 @@ if (KWIN_BUILD_KCMS)
     kwin_add_effect_config(kwin_zoom_config ${kwin_zoom_config_SRCS})
 
     target_link_libraries(kwin_zoom_config
-      KF6::ConfigWidgets
       KF6::CoreAddons
       KF6::GlobalAccel
       KF6::I18n
+      KF6::KCMUtils
       KF6::XmlGui
       KWinEffectsInterface
     )

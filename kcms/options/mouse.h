@@ -12,7 +12,7 @@
 
 class KConfig;
 
-#include <kcmodule.h>
+#include <KCModule>
 #include <KLocalizedString>
 
 #include "ui_actions.h"
@@ -51,8 +51,6 @@ public:
 
 protected:
     void initialize(KWinOptionsSettings *settings);
-    void showEvent(QShowEvent *ev) override;
-    void changeEvent(QEvent *ev) override;
 
 private:
     bool standAlone;
@@ -76,7 +74,6 @@ public:
 
 protected:
     void initialize(KWinOptionsSettings *settings);
-    void showEvent(QShowEvent *ev) override;
 
 private:
     bool standAlone;

@@ -18,8 +18,9 @@ class InvertEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit InvertEffectConfig(QWidget* parent = nullptr,
-                                const QVariantList& args = QVariantList());
+    explicit InvertEffectConfig(QObject* parent,
+                                const KPluginMetaData& data,
+                                const QVariantList& args);
     ~InvertEffectConfig() override;
 
 public Q_SLOTS:

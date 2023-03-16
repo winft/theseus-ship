@@ -38,8 +38,6 @@ set(kwin_kcm_rules_XCB_LIBS
 
 set(kcm_libs
   KF6::KCMUtils
-  KF6::ConfigWidgets
-  KF6::QuickAddons
   KF6::WindowSystem
   kwin
   kwin_x11_lib

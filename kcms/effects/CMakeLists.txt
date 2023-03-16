@@ -20,7 +20,7 @@ target_link_libraries(kcm_kwin_effects
   kcmkwincommon
   KF6::I18n
   KF6::KCMUtils
-  KF6::QuickAddons
+  KF6::KCMUtilsQuick
   KF6::XmlGui
   Qt::DBus
   Qt::Quick

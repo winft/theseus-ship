@@ -50,9 +50,10 @@ KWinFocusConfigForm::KWinFocusConfigForm(QWidget* parent)
     setupUi(parent);
 }
 
-KFocusConfig::KFocusConfig(bool _standAlone, KWinOptionsSettings *settings, QWidget * parent)
-    : KCModule(parent), standAlone(_standAlone)
-    , m_ui(new KWinFocusConfigForm(this))
+KFocusConfig::KFocusConfig(bool _standAlone, KWinOptionsSettings *settings, QWidget *parent)
+    : KCModule(parent, KPluginMetaData(), QVariantList())
+    , standAlone(_standAlone)
+    , m_ui(new KWinFocusConfigForm(widget()))
 {
     if (settings) {
         initialize(settings);
@@ -62,7 +63,7 @@ KFocusConfig::KFocusConfig(bool _standAlone, KWinOptionsSettings *settings, QWid
 void KFocusConfig::initialize(KWinOptionsSettings *settings)
 {
     m_settings = settings;
-    addConfig(m_settings, this);
+    addConfig(m_settings, widget());
 
     connect(m_ui->windowFocusPolicy, qOverload<int>(&QComboBox::currentIndexChanged), this, &KFocusConfig::focusPolicyChanged);
     connect(m_ui->windowFocusPolicy, qOverload<int>(&QComboBox::currentIndexChanged), this, &KFocusConfig::updateDefaultIndicator);
@@ -142,15 +143,6 @@ void KFocusConfig::focusPolicyChanged()
     if (m_settings->activeMouseScreen() == m_settings->defaultActiveMouseScreenValue()) {
         m_ui->kcfg_ActiveMouseScreen->setChecked(focusPolicy != CLICK_TO_FOCUS && focusPolicy != CLICK_TO_FOCUS_MOUSE_PRECEDENT);
     }
-}
-
-void KFocusConfig::showEvent(QShowEvent *ev)
-{
-    if (!standAlone) {
-        QWidget::showEvent(ev);
-        return;
-    }
-    KCModule::showEvent(ev);
 }
 
 void KFocusConfig::load(void)
@@ -235,8 +227,9 @@ KWinAdvancedConfigForm::KWinAdvancedConfigForm(QWidget* parent)
 }
 
 KAdvancedConfig::KAdvancedConfig(bool _standAlone, KWinOptionsSettings *settings, KWinOptionsKDEGlobalsSettings *globalSettings, QWidget *parent)
-    : KCModule(parent), standAlone(_standAlone)
-    , m_ui(new KWinAdvancedConfigForm(this))
+    : KCModule(parent, KPluginMetaData(), QVariantList())
+    , standAlone(_standAlone)
+    , m_ui(new KWinAdvancedConfigForm(widget()))
 {
     if (settings && globalSettings) {
         initialize(settings, globalSettings);
@@ -246,8 +239,8 @@ KAdvancedConfig::KAdvancedConfig(bool _standAlone, KWinOptionsSettings *settings
 void KAdvancedConfig::initialize(KWinOptionsSettings *settings, KWinOptionsKDEGlobalsSettings *globalSettings)
 {
     m_settings = settings;
-    addConfig(m_settings, this);
-    addConfig(globalSettings, this);
+    addConfig(m_settings, widget());
+    addConfig(globalSettings, widget());
 
     m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::Smart, "Smart");
     m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::Maximizing, "Maximizing");
@@ -262,15 +255,6 @@ void KAdvancedConfig::initialize(KWinOptionsSettings *settings, KWinOptionsKDEGl
     // This option lives in the kdeglobals file because it is consumed by
     // kxmlgui.
     m_ui->kcfg_AllowKDEAppsToRememberWindowPositions->setVisible(KWindowSystem::isPlatformX11());
-}
-
-void KAdvancedConfig::showEvent(QShowEvent *ev)
-{
-    if (!standAlone) {
-        QWidget::showEvent(ev);
-        return;
-    }
-    KCModule::showEvent(ev);
 }
 
 void KAdvancedConfig::save(void)
@@ -303,8 +287,9 @@ KWinMovingConfigForm::KWinMovingConfigForm(QWidget* parent)
 }
 
 KMovingConfig::KMovingConfig(bool _standAlone, KWinOptionsSettings *settings, QWidget *parent)
-    : KCModule(parent), standAlone(_standAlone)
-    , m_ui(new KWinMovingConfigForm(this))
+    : KCModule(parent, KPluginMetaData(), QVariantList())
+    , standAlone(_standAlone)
+    , m_ui(new KWinMovingConfigForm(widget()))
 {
     if (settings) {
         initialize(settings);
@@ -314,16 +299,7 @@ KMovingConfig::KMovingConfig(bool _standAlone, KWinOptionsSettings *settings, QW
 void KMovingConfig::initialize(KWinOptionsSettings *settings)
 {
     m_settings = settings;
-    addConfig(m_settings, this);
-}
-
-void KMovingConfig::showEvent(QShowEvent *ev)
-{
-    if (!standAlone) {
-        QWidget::showEvent(ev);
-        return;
-    }
-    KCModule::showEvent(ev);
+    addConfig(m_settings, widget());
 }
 
 void KMovingConfig::save(void)
