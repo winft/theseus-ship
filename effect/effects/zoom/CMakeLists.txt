@@ -20,7 +20,7 @@ kconfig_add_kcfg_files(zoom_SOURCES
     zoomconfig.kcfgc
 )
 
-kwin4_add_effect_module(zoom ${zoom_SOURCES})
+kwin_add_builtin_effect(zoom ${zoom_SOURCES})
 target_link_libraries(zoom PRIVATE
   KF6::ConfigGui
   KF6::I18n

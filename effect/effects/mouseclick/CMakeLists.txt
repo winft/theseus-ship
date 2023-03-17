@@ -14,7 +14,7 @@ kconfig_add_kcfg_files(mouseclick_SOURCES
     mouseclickconfig.kcfgc
 )
 
-kwin4_add_effect_module(mouseclick ${mouseclick_SOURCES})
+kwin_add_builtin_effect(mouseclick ${mouseclick_SOURCES})
 target_link_libraries(mouseclick PRIVATE
   KF6::ConfigGui
   KF6::I18n

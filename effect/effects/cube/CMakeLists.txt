@@ -12,7 +12,7 @@ set(cube_SOURCES
 kconfig_add_kcfg_files(cube_SOURCES
     cubeconfig.kcfgc
 )
-kwin4_add_effect_module(cube ${cube_SOURCES})
+kwin_add_builtin_effect(cube ${cube_SOURCES})
 target_link_libraries(cube PRIVATE
   KF6::I18n
   KF6::KCMUtils

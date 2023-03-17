@@ -14,7 +14,7 @@ kconfig_add_kcfg_files(magiclamp_SOURCES
     magiclampconfig.kcfgc
 )
 
-kwin4_add_effect_module(magiclamp ${magiclamp_SOURCES})
+kwin_add_builtin_effect(magiclamp ${magiclamp_SOURCES})
 target_link_libraries(magiclamp PRIVATE
   KF6::ConfigGui
   kwineffects

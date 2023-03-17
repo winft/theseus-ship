@@ -15,7 +15,7 @@ kconfig_add_kcfg_files(slide_SOURCES
     slideconfig.kcfgc
 )
 
-kwin4_add_effect_module(slide ${slide_SOURCES})
+kwin_add_builtin_effect(slide ${slide_SOURCES})
 target_link_libraries(slide PRIVATE
   KF6::ConfigGui
   kwineffects

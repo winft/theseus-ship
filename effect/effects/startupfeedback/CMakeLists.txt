@@ -12,7 +12,7 @@ set(startupfeedback_SOURCES
     startupfeedback.qrc
 )
 
-kwin4_add_effect_module(startupfeedback ${startupfeedback_SOURCES})
+kwin_add_builtin_effect(startupfeedback ${startupfeedback_SOURCES})
 target_link_libraries(startupfeedback PRIVATE
   KF6::WindowSystem
   kwineffects

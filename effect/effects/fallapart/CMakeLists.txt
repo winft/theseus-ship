@@ -15,7 +15,7 @@ kconfig_add_kcfg_files(fallapart_SOURCES
     fallapartconfig.kcfgc
 )
 
-kwin4_add_effect_module(fallapart ${fallapart_SOURCES})
+kwin_add_builtin_effect(fallapart ${fallapart_SOURCES})
 target_link_libraries(fallapart PRIVATE
   KF6::ConfigGui
   kwineffects
