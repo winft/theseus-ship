@@ -23,28 +23,28 @@ namespace KWin::scripting
 
 QObject* generic_scripted_config_factory::create(const char* iface,
                                                  QWidget* parentWidget,
-                                                 QObject* parent,
+                                                 QObject* /*parent*/,
                                                  const QVariantList& args)
 {
-    Q_UNUSED(iface)
-    Q_UNUSED(parent)
+    if (qstrcmp(iface, "KCModule") == 0) {
+        if (args.count() < 2) {
+            qWarning() << Q_FUNC_INFO << "expects two arguments (plugin id, package type)";
+            return nullptr;
+        }
 
-    // the plugin id is in the args when created by desktop effects kcm or EffectsModel in general
-    auto pluginId = args.isEmpty() ? QString() : args.first().toString();
+        const QString pluginId = args.at(0).toString();
+        const QString packageType = args.at(1).toString();
 
-    // If we do not get the id of the effect we want to load from the args, we have to check our
-    // metadata. This can be the case if the factory gets loaded from a KPluginSelector the plugin
-    // id is in plugin factory metadata when created by scripts kcm (because it uses
-    // kpluginselector, which doesn't pass the plugin id as the first arg), can be dropped once the
-    // scripts kcm is ported to qtquick (because then we could pass the plugin id via the args)
-    if (pluginId.isEmpty()) {
-        pluginId = metaData().pluginId();
+        if (packageType == QLatin1StringView("KWin/Effect")) {
+            return new scripted_effect_config(pluginId, parentWidget, args);
+        } else if (packageType == QLatin1StringView("KWin/Script")) {
+            return new scripting_config(pluginId, parentWidget, args);
+        } else {
+            qWarning() << Q_FUNC_INFO << "got unknown package type:" << packageType;
+        }
     }
-    if (pluginId.startsWith(QLatin1String("kwin4_effect_"))) {
-        return new scripted_effect_config(pluginId, parentWidget, args);
-    } else {
-        return new scripting_config(pluginId, parentWidget, args);
-    }
+
+    return nullptr;
 }
 
 generic_scripted_config::generic_scripted_config(const QString& keyword,
