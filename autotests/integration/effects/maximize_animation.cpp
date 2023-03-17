@@ -87,7 +87,7 @@ TEST_CASE("maximize animation", "[effect]")
         QVERIFY(!cfgdata.states.testFlag(xdg_shell_state::maximized));
 
         // Load effect that will be tested.
-        const QString effectName = QStringLiteral("kwin4_effect_maximize");
+        const QString effectName = QStringLiteral("maximize");
         auto& effectsImpl = setup.base->render->compositor->effects;
         QVERIFY(effectsImpl);
         QVERIFY(effectsImpl->loadEffect(effectName));

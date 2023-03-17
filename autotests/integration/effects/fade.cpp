@@ -56,9 +56,9 @@ TEST_CASE("fade", "[effect]")
     QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());
 
-    QVERIFY(!e->isEffectLoaded(QStringLiteral("kwin4_effect_fade")));
-    QVERIFY(e->loadEffect(QStringLiteral("kwin4_effect_fade")));
-    QVERIFY(e->isEffectLoaded(QStringLiteral("kwin4_effect_fade")));
+    QVERIFY(!e->isEffectLoaded(QStringLiteral("fade")));
+    QVERIFY(e->loadEffect(QStringLiteral("fade")));
+    QVERIFY(e->isEffectLoaded(QStringLiteral("fade")));
 
     QCOMPARE(effectLoadedSpy.count(), 1);
 

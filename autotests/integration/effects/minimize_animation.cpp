@@ -58,7 +58,7 @@ TEST_CASE("minimize animation", "[effect]")
         // when it's minimized or unminimized.
         using namespace Wrapland::Client;
 
-        auto effectName = GENERATE(QString("magiclamp"), QString("kwin4_effect_squash"));
+        auto effectName = GENERATE(QString("magiclamp"), QString("squash"));
 
         QSignalSpy plasmaWindowCreatedSpy(get_client().interfaces.window_management.get(),
                                           &PlasmaWindowManagement::windowCreated);

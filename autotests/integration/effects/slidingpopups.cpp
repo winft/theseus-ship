@@ -85,11 +85,11 @@ TEST_CASE("slidingpopups", "[effect]")
         // this test verifies that slidingpopups effect grabs the window added role
         // independently of the sequence how the effects are loaded.
         // see BUG 336866
-        auto effectsToLoad = GENERATE(
-            QStringList{QStringLiteral("kwin4_effect_fade"), QStringLiteral("slidingpopups")},
-            QStringList{QStringLiteral("slidingpopups"), QStringLiteral("kwin4_effect_fade")},
-            QStringList{QStringLiteral("kwin4_effect_scale"), QStringLiteral("slidingpopups")},
-            QStringList{QStringLiteral("slidingpopups"), QStringLiteral("kwin4_effect_scale")});
+        auto effectsToLoad
+            = GENERATE(QStringList{QStringLiteral("fade"), QStringLiteral("slidingpopups")},
+                       QStringList{QStringLiteral("slidingpopups"), QStringLiteral("fade")},
+                       QStringList{QStringLiteral("scale"), QStringLiteral("slidingpopups")},
+                       QStringList{QStringLiteral("slidingpopups"), QStringLiteral("scale")});
 
         // find the effectsloader
         auto& e = setup.base->render->compositor->effects;
@@ -224,11 +224,11 @@ TEST_CASE("slidingpopups", "[effect]")
         // independently of the sequence how the effects are loaded.
         // see BUG 336866
         // the test is like "with other effect", but simulates using a Wayland window
-        auto effectsToLoad = GENERATE(
-            QStringList{QStringLiteral("kwin4_effect_fade"), QStringLiteral("slidingpopups")},
-            QStringList{QStringLiteral("slidingpopups"), QStringLiteral("kwin4_effect_fade")},
-            QStringList{QStringLiteral("kwin4_effect_scale"), QStringLiteral("slidingpopups")},
-            QStringList{QStringLiteral("slidingpopups"), QStringLiteral("kwin4_effect_scale")});
+        auto effectsToLoad
+            = GENERATE(QStringList{QStringLiteral("fade"), QStringLiteral("slidingpopups")},
+                       QStringList{QStringLiteral("slidingpopups"), QStringLiteral("fade")},
+                       QStringList{QStringLiteral("scale"), QStringLiteral("slidingpopups")},
+                       QStringList{QStringLiteral("slidingpopups"), QStringLiteral("scale")});
 
         // find the effectsloader
         auto& e = setup.base->render->compositor->effects;

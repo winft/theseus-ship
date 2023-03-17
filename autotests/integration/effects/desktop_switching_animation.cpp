@@ -27,8 +27,7 @@ TEST_CASE("desktop switching animation", "[effect]")
     // try to animate switching between desktops.
     using namespace Wrapland::Client;
 
-    auto effectName
-        = GENERATE(QString("cubeslide"), QString("kwin4_effect_fadedesktop"), QString("slide"));
+    auto effectName = GENERATE(QString("cubeslide"), QString("fadedesktop"), QString("slide"));
 
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
