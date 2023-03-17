@@ -11,6 +11,7 @@
 
 #include "screenshot2adaptor.h"
 
+#include <kwineffects/effect_window.h>
 #include <kwineffects/effects_handler.h>
 
 #include <KLocalizedString>
@@ -128,6 +129,8 @@ public:
     bool isCompleted() const;
     void marshal(ScreenShotSinkPipe2* sink);
 
+    virtual QVariantMap attributes() const;
+
 Q_SIGNALS:
     void cancelled();
     void completed();
@@ -143,6 +146,11 @@ class ScreenShotSourceScreen2 : public ScreenShotSource2
 
 public:
     ScreenShotSourceScreen2(ScreenShotEffect* effect, EffectScreen* screen, ScreenShotFlags flags);
+
+    QVariantMap attributes() const override;
+
+private:
+    EffectScreen* m_screen;
 };
 
 class ScreenShotSourceArea2 : public ScreenShotSource2
@@ -159,6 +167,11 @@ class ScreenShotSourceWindow2 : public ScreenShotSource2
 
 public:
     ScreenShotSourceWindow2(ScreenShotEffect* effect, EffectWindow* window, ScreenShotFlags flags);
+
+    QVariantMap attributes() const override;
+
+private:
+    EffectWindow* m_window;
 };
 
 class ScreenShotSinkPipe2 : public QObject
@@ -170,7 +183,7 @@ public:
     ~ScreenShotSinkPipe2();
 
     void cancel();
-    void flush(const QImage& image);
+    void flush(const QImage& image, const QVariantMap& attributes);
 
 private:
     QDBusMessage m_replyMessage;
@@ -196,16 +209,29 @@ bool ScreenShotSource2::isCompleted() const
     return m_future.isFinished();
 }
 
+QVariantMap ScreenShotSource2::attributes() const
+{
+    return QVariantMap();
+}
+
 void ScreenShotSource2::marshal(ScreenShotSinkPipe2* sink)
 {
-    sink->flush(m_future.result());
+    sink->flush(m_future.result(), attributes());
 }
 
 ScreenShotSourceScreen2::ScreenShotSourceScreen2(ScreenShotEffect* effect,
                                                  EffectScreen* screen,
                                                  ScreenShotFlags flags)
     : ScreenShotSource2(effect->scheduleScreenShot(screen, flags))
+    , m_screen(screen)
 {
+}
+
+QVariantMap ScreenShotSourceScreen2::attributes() const
+{
+    return QVariantMap{
+        {QStringLiteral("screen"), m_screen->name()},
+    };
 }
 
 ScreenShotSourceArea2::ScreenShotSourceArea2(ScreenShotEffect* effect,
@@ -219,7 +245,15 @@ ScreenShotSourceWindow2::ScreenShotSourceWindow2(ScreenShotEffect* effect,
                                                  EffectWindow* window,
                                                  ScreenShotFlags flags)
     : ScreenShotSource2(effect->scheduleScreenShot(window, flags))
+    , m_window(window)
 {
+}
+
+QVariantMap ScreenShotSourceWindow2::attributes() const
+{
+    return QVariantMap{
+        {QStringLiteral("windowId"), m_window->internalId().toString()},
+    };
 }
 
 ScreenShotSinkPipe2::ScreenShotSinkPipe2(int fileDescriptor, QDBusMessage replyMessage)
@@ -241,14 +275,14 @@ void ScreenShotSinkPipe2::cancel()
         m_replyMessage.createErrorReply(s_errorCancelled, s_errorCancelledMessage));
 }
 
-void ScreenShotSinkPipe2::flush(const QImage& image)
+void ScreenShotSinkPipe2::flush(const QImage& image, const QVariantMap& attributes)
 {
     if (m_fileDescriptor == -1) {
         return;
     }
 
     // Note that the type of the data stored in the vardict matters. Be careful.
-    QVariantMap results;
+    QVariantMap results = attributes;
     results.insert(QStringLiteral("type"), QStringLiteral("raw"));
     results.insert(QStringLiteral("format"), quint32(image.format()));
     results.insert(QStringLiteral("width"), quint32(image.width()));
@@ -287,7 +321,7 @@ ScreenShotDBusInterface2::~ScreenShotDBusInterface2()
 
 int ScreenShotDBusInterface2::version() const
 {
-    return 3;
+    return 4;
 }
 
 bool ScreenShotDBusInterface2::checkPermissions() const
