@@ -124,7 +124,7 @@ public:
     PreviewBridge *bridge() const;
     void setBridge(PreviewBridge *bridge);
 
-    QSharedPointer<DecorationSettings> settings() const;
+    std::shared_ptr<DecorationSettings> settings() const;
     DecorationSettings *settingsPointer() const;
     int borderSizesIndex() const {
         return m_borderSize;
@@ -139,7 +139,7 @@ Q_SIGNALS:
 private:
     void createSettings();
     QPointer<PreviewBridge> m_bridge;
-    QSharedPointer<KDecoration2::DecorationSettings> m_settings;
+    std::shared_ptr<KDecoration2::DecorationSettings> m_settings;
     PreviewSettings *m_previewSettings = nullptr;
     int m_borderSize = 3;
 };

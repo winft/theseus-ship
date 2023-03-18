@@ -97,7 +97,7 @@ public:
 
     bool hasDecorationShadow() const
     {
-        return !m_decorationShadow.isNull();
+        return m_decorationShadow != nullptr;
     }
 
     QImage decorationShadowImage() const
@@ -108,9 +108,9 @@ public:
         return m_decorationShadow->shadow();
     }
 
-    QWeakPointer<KDecoration2::DecorationShadow> decorationShadow() const
+    std::weak_ptr<KDecoration2::DecorationShadow> decorationShadow() const
     {
-        return m_decorationShadow.toWeakRef();
+        return m_decorationShadow;
     }
 
     QMargins margins() const
@@ -265,7 +265,7 @@ public:
     int m_leftOffset;
 
     // Decoration based shadows
-    QSharedPointer<KDecoration2::DecorationShadow> m_decorationShadow;
+    std::shared_ptr<KDecoration2::DecorationShadow> m_decorationShadow;
 
     Window* window;
 

@@ -24,15 +24,15 @@ bool update_deco_shadow(Shadow& impl, KDecoration2::Decoration* decoration)
                         if (impl.m_decorationShadow) {
                             // disconnect previous connections
                             QObject::disconnect(
-                                impl.m_decorationShadow.data(),
+                                impl.m_decorationShadow.get(),
                                 &KDecoration2::DecorationShadow::innerShadowRectChanged,
                                 ref_win->qobject.get(),
                                 nullptr);
-                            QObject::disconnect(impl.m_decorationShadow.data(),
+                            QObject::disconnect(impl.m_decorationShadow.get(),
                                                 &KDecoration2::DecorationShadow::shadowChanged,
                                                 ref_win->qobject.get(),
                                                 nullptr);
-                            QObject::disconnect(impl.m_decorationShadow.data(),
+                            QObject::disconnect(impl.m_decorationShadow.get(),
                                                 &KDecoration2::DecorationShadow::paddingChanged,
                                                 ref_win->qobject.get(),
                                                 nullptr);
@@ -46,15 +46,15 @@ bool update_deco_shadow(Shadow& impl, KDecoration2::Decoration* decoration)
                         // Setup connections - all just mapped to recreate.
                         auto update_shadow = [ref_win]() { win::update_shadow(ref_win); };
 
-                        QObject::connect(impl.m_decorationShadow.data(),
+                        QObject::connect(impl.m_decorationShadow.get(),
                                          &KDecoration2::DecorationShadow::innerShadowRectChanged,
                                          ref_win->qobject.get(),
                                          update_shadow);
-                        QObject::connect(impl.m_decorationShadow.data(),
+                        QObject::connect(impl.m_decorationShadow.get(),
                                          &KDecoration2::DecorationShadow::shadowChanged,
                                          ref_win->qobject.get(),
                                          update_shadow);
-                        QObject::connect(impl.m_decorationShadow.data(),
+                        QObject::connect(impl.m_decorationShadow.get(),
                                          &KDecoration2::DecorationShadow::paddingChanged,
                                          ref_win->qobject.get(),
                                          update_shadow);
