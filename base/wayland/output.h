@@ -34,7 +34,7 @@ public:
 
     QString name() const override
     {
-        return QString::fromStdString(m_output->name());
+        return QString::fromStdString(m_output->get_metadata().name);
     }
 
     /**
@@ -87,7 +87,7 @@ public:
 
     QSize physical_size() const override
     {
-        return orientate_size(m_output->physical_size());
+        return orientate_size(m_output->get_metadata().physical_size);
     }
 
     /**
@@ -123,7 +123,8 @@ public:
             return static_cast<base::wayland::output_transform>(transform);
         };
 
-        qCDebug(KWIN_CORE) << "Apply changes to Wayland output:" << m_output->name().c_str();
+        qCDebug(KWIN_CORE) << "Apply changes to Wayland output:"
+                           << m_output->get_metadata().name.c_str();
         bool emitModeChanged = false;
 
         if (changeset->enabledChanged() && changeset->enabled()) {
@@ -248,15 +249,18 @@ protected:
         assert(!m_output);
         m_output = std::make_unique<Wrapland::Server::output>(platform.server->display.get());
 
-        m_output->set_name(name);
-        m_output->set_make(make);
-        m_output->set_model(model);
-        m_output->set_serial_number(serial_number);
+        Wrapland::Server::output_metadata metadata{
+            .name = name,
+            .make = make,
+            .model = model,
+            .serial_number = serial_number,
+            .physical_size = physical_size,
+        };
+        m_output->set_metadata(metadata);
         m_output->generate_description();
 
-        m_output->set_physical_size(physical_size);
-
-        qCDebug(KWIN_CORE) << "Initializing output:" << m_output->description().c_str();
+        qCDebug(KWIN_CORE) << "Initializing output:"
+                           << m_output->get_metadata().description.c_str();
 
         int i = 0;
         for (auto mode : modes) {

@@ -43,7 +43,7 @@ void request_outputs_change(Base& base, Wrapland::Server::OutputConfigurationV1*
         auto output = find_output(base, it.key()->output());
         if (!output) {
             qCWarning(KWIN_WL) << "Could NOT find output:"
-                               << it.key()->output()->description().c_str();
+                               << it.key()->output()->get_metadata().description.c_str();
             continue;
         }
 
