@@ -888,7 +888,7 @@ void handle_maximize_request(Win& win, bool maximized)
 }
 
 template<typename Win>
-void handle_fullscreen_request(Win& win, bool fullscreen, Wrapland::Server::Output* /*output*/)
+void handle_fullscreen_request(Win& win, bool fullscreen, Wrapland::Server::output* /*output*/)
 {
     // TODO: Consider output.
     win.setFullScreen(fullscreen, false);

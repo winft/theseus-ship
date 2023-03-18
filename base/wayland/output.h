@@ -163,7 +163,7 @@ public:
         m_output->done();
     }
 
-    Wrapland::Server::Output* wrapland_output() const
+    Wrapland::Server::output* wrapland_output() const
     {
         return m_output.get();
     }
@@ -216,7 +216,7 @@ public:
 
     using render_t = render::wayland::output<output, typename Platform::render_t>;
     std::unique_ptr<render_t> render;
-    std::unique_ptr<Wrapland::Server::Output> m_output;
+    std::unique_ptr<Wrapland::Server::output> m_output;
     base::dpms_mode m_dpms{base::dpms_mode::on};
     Platform& platform;
 
@@ -246,7 +246,7 @@ protected:
         };
 
         assert(!m_output);
-        m_output = std::make_unique<Wrapland::Server::Output>(platform.server->display.get());
+        m_output = std::make_unique<Wrapland::Server::output>(platform.server->display.get());
 
         m_output->set_name(name);
         m_output->set_make(make);
@@ -276,7 +276,7 @@ protected:
         // set to last known mode
         m_output->set_dpms_mode(to_wayland_dpms_mode(m_dpms));
         QObject::connect(m_output.get(),
-                         &Wrapland::Server::Output::dpms_mode_requested,
+                         &Wrapland::Server::output::dpms_mode_requested,
                          qobject.get(),
                          [this, from_wayland_dpms_mode](auto mode) {
                              if (!is_enabled()) {

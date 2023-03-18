@@ -19,7 +19,7 @@ namespace KWin::base::wayland
 {
 
 template<typename Base>
-auto find_output(Base const& base, Wrapland::Server::Output const* output) ->
+auto find_output(Base const& base, Wrapland::Server::output const* output) ->
     typename Base::output_t*
 {
     auto const& outs = base.all_outputs;

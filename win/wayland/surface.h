@@ -19,7 +19,7 @@ namespace KWin::win::wayland
 template<typename Win>
 void update_surface_outputs(Win* win)
 {
-    std::vector<Wrapland::Server::Output*> surface_outputs;
+    std::vector<Wrapland::Server::output*> surface_outputs;
 
     auto const outputs = win->space.base.server->display->outputs();
     for (auto output : outputs) {
