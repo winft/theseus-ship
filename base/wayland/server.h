@@ -266,7 +266,7 @@ private:
         , base{base}
 
     {
-        qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
+        qRegisterMetaType<Wrapland::Server::output_dpms_mode>();
     }
 
     void create_globals()

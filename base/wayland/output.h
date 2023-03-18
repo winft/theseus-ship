@@ -119,7 +119,7 @@ public:
 
     void apply_changes(const Wrapland::Server::OutputChangesetV1* changeset)
     {
-        auto toTransform = [](Wrapland::Server::Output::Transform transform) {
+        auto toTransform = [](auto transform) {
             return static_cast<base::wayland::output_transform>(transform);
         };
 
@@ -205,10 +205,10 @@ public:
 
     QSize orientate_size(QSize const& size) const
     {
-        using Transform = Wrapland::Server::Output::Transform;
+        using Transform = Wrapland::Server::output_transform;
         auto const transform = m_output->transform();
-        if (transform == Transform::Rotated90 || transform == Transform::Rotated270
-            || transform == Transform::Flipped90 || transform == Transform::Flipped270) {
+        if (transform == Transform::rotated_90 || transform == Transform::rotated_270
+            || transform == Transform::flipped_90 || transform == Transform::flipped_270) {
             return size.transposed();
         }
         return size;
@@ -226,19 +226,19 @@ protected:
                          std::string const& model,
                          std::string const& serial_number,
                          QSize const& physical_size,
-                         QVector<Wrapland::Server::Output::Mode> const& modes,
-                         Wrapland::Server::Output::Mode* current_mode = nullptr)
+                         QVector<Wrapland::Server::output_mode> const& modes,
+                         Wrapland::Server::output_mode* current_mode = nullptr)
     {
 
-        auto from_wayland_dpms_mode = [](Wrapland::Server::Output::DpmsMode wlMode) {
+        auto from_wayland_dpms_mode = [](auto wlMode) {
             switch (wlMode) {
-            case Wrapland::Server::Output::DpmsMode::On:
+            case Wrapland::Server::output_dpms_mode::on:
                 return base::dpms_mode::on;
-            case Wrapland::Server::Output::DpmsMode::Standby:
+            case Wrapland::Server::output_dpms_mode::standby:
                 return base::dpms_mode::standby;
-            case Wrapland::Server::Output::DpmsMode::Suspend:
+            case Wrapland::Server::output_dpms_mode::suspend:
                 return base::dpms_mode::suspend;
-            case Wrapland::Server::Output::DpmsMode::Off:
+            case Wrapland::Server::output_dpms_mode::off:
                 return base::dpms_mode::off;
             default:
                 Q_UNREACHABLE();
@@ -278,7 +278,7 @@ protected:
         QObject::connect(m_output.get(),
                          &Wrapland::Server::Output::dpms_mode_requested,
                          qobject.get(),
-                         [this, from_wayland_dpms_mode](Wrapland::Server::Output::DpmsMode mode) {
+                         [this, from_wayland_dpms_mode](auto mode) {
                              if (!is_enabled()) {
                                  return;
                              }
@@ -336,7 +336,7 @@ protected:
     void set_transform(base::wayland::output_transform transform)
     {
         auto to_wayland_transform = [](base::wayland::output_transform transform) {
-            return static_cast<Wrapland::Server::Output::Transform>(transform);
+            return static_cast<Wrapland::Server::output_transform>(transform);
         };
 
         m_output->set_transform(to_wayland_transform(transform));

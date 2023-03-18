@@ -52,16 +52,16 @@ output::output(wlr_output* wlr_out, wlroots::platform* platform)
     destroy_rec.event.notify = handle_destroy;
     wl_signal_add(&wlr_out->events.destroy, &destroy_rec.event);
 
-    QVector<Wrapland::Server::Output::Mode> modes;
+    QVector<Wrapland::Server::output_mode> modes;
 
-    Wrapland::Server::Output::Mode current_mode;
+    Wrapland::Server::output_mode current_mode;
     if (auto wlr_mode = wlr_out->current_mode) {
         current_mode.size = QSize(wlr_mode->width, wlr_mode->height);
         current_mode.refresh_rate = wlr_mode->refresh;
     }
 
     auto add_mode = [&modes, &current_mode, &wlr_out](int id, int width, int height, int refresh) {
-        Wrapland::Server::Output::Mode mode;
+        Wrapland::Server::output_mode mode;
         mode.id = id;
         mode.size = QSize(width, height);
 

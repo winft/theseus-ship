@@ -79,17 +79,17 @@ void check_outputs_on(Base const& base)
     }
 }
 
-inline Wrapland::Server::Output::DpmsMode to_wayland_dpms_mode(base::dpms_mode mode)
+inline Wrapland::Server::output_dpms_mode to_wayland_dpms_mode(base::dpms_mode mode)
 {
     switch (mode) {
     case base::dpms_mode::on:
-        return Wrapland::Server::Output::DpmsMode::On;
+        return Wrapland::Server::output_dpms_mode::on;
     case base::dpms_mode::standby:
-        return Wrapland::Server::Output::DpmsMode::Standby;
+        return Wrapland::Server::output_dpms_mode::standby;
     case base::dpms_mode::suspend:
-        return Wrapland::Server::Output::DpmsMode::Suspend;
+        return Wrapland::Server::output_dpms_mode::suspend;
     case base::dpms_mode::off:
-        return Wrapland::Server::Output::DpmsMode::Off;
+        return Wrapland::Server::output_dpms_mode::off;
     default:
         Q_UNREACHABLE();
     }
@@ -102,7 +102,7 @@ void output_set_dpms_on(typename Base::output_t& output, Base& base)
     output.m_dpms = base::dpms_mode::on;
 
     if (output.is_enabled()) {
-        output.m_output->set_dpms_mode(Wrapland::Server::Output::DpmsMode::On);
+        output.m_output->set_dpms_mode(Wrapland::Server::output_dpms_mode::on);
     }
 
     check_outputs_on(base);
