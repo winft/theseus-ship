@@ -246,9 +246,6 @@ protected:
             }
         };
 
-        assert(!m_output);
-        m_output = std::make_unique<Wrapland::Server::output>(platform.server->display.get());
-
         Wrapland::Server::output_metadata metadata{
             .name = name,
             .make = make,
@@ -256,8 +253,10 @@ protected:
             .serial_number = serial_number,
             .physical_size = physical_size,
         };
-        m_output->set_metadata(metadata);
-        m_output->generate_description();
+
+        assert(!m_output);
+        m_output
+            = std::make_unique<Wrapland::Server::output>(metadata, platform.server->display.get());
 
         qCDebug(KWIN_CORE) << "Initializing output:"
                            << m_output->get_metadata().description.c_str();
