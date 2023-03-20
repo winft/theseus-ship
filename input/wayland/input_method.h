@@ -43,8 +43,10 @@ public:
         auto& server = redirect.platform.base.server;
         auto seat = server->seat();
 
-        text_input_manager_v3 = server->display->createTextInputManagerV3();
-        input_method_manager_v2 = server->display->createInputMethodManagerV2();
+        text_input_manager_v3
+            = std::make_unique<Wrapland::Server::text_input_manager_v3>(server->display.get());
+        input_method_manager_v2
+            = std::make_unique<Wrapland::Server::input_method_manager_v2>(server->display.get());
 
         QObject::connect(seat,
                          &Wrapland::Server::Seat::input_method_v2_changed,

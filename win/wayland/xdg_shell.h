@@ -23,13 +23,13 @@
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/appmenu.h>
 #include <Wrapland/Server/client.h>
-#include <Wrapland/Server/globals.h>
 #include <Wrapland/Server/plasma_shell.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/server_decoration_palette.h>
 #include <Wrapland/Server/surface.h>
 #include <Wrapland/Server/touch_pool.h>
 #include <Wrapland/Server/xdg_decoration.h>
+#include <Wrapland/Server/xdg_foreign.h>
 #include <Wrapland/Server/xdg_shell_popup.h>
 #include <Wrapland/Server/xdg_shell_toplevel.h>
 

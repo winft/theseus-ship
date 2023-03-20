@@ -42,7 +42,7 @@ public:
         registry.insert({&effect, update});
 
         if (!manager) {
-            manager = display.createBlurManager();
+            manager = std::make_unique<Wrapland::Server::BlurManager>(&display);
         }
 
         // For Xwayland

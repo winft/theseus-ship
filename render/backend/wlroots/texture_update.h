@@ -19,6 +19,7 @@
 #include <QImage>
 #include <QOpenGLFramebufferObject>
 #include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/linux_dmabuf_v1.h>
 #include <Wrapland/Server/surface.h>
 #include <cassert>
 #include <drm_fourcc.h>

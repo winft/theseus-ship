@@ -60,7 +60,7 @@ TEST_CASE("no crash cursor physical size empty", "[win]")
         QVERIFY(win::decoration(c));
 
         // destroy physical size
-        auto output = setup.base->server->display->outputs().front()->output();
+        auto output = setup.base->server->display->globals.outputs.front();
 
         auto metadata = output->get_metadata();
         metadata.physical_size = {0, 0};

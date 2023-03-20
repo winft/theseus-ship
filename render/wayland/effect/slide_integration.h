@@ -41,7 +41,7 @@ public:
         registry.insert({&effect, update});
 
         if (!manager) {
-            manager = display.createSlideManager();
+            manager = std::make_unique<Wrapland::Server::SlideManager>(&display);
         }
 
         // For Xwayland
