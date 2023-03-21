@@ -120,7 +120,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     auto find_internal_window = [&win]() -> QWindow* {
         auto const windows = qApp->topLevelWindows();
         for (auto xcb_win : windows) {
-            if (xcb_win->winId() == win->xcb_windows.client) {
+            if (xcb_win->handle() && xcb_win->winId() == win->xcb_windows.client) {
                 return xcb_win;
             }
         }

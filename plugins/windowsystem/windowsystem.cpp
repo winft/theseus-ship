@@ -200,7 +200,9 @@ void WindowSystem::setState(WId win, NET::States state)
 void WindowSystem::setType(WId win, NET::WindowType windowType)
 {
     const auto windows = qApp->allWindows();
-    auto it = std::find_if(windows.begin(), windows.end(), [win] (QWindow *w) { return w->winId() == win; });
+    auto it = std::find_if(windows.begin(), windows.end(), [win](QWindow *w) {
+        return w->handle() && w->winId() == win;
+    });
     if (it == windows.end()) {
         return;
     }
