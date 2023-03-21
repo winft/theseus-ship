@@ -17,7 +17,6 @@ target_link_libraries(kcm_kwin_scripts
   KF6::I18n
   KF6::KCMUtils
   KF6::KCMUtilsCore
-  KF6::NewStuffWidgets
   KF6::Package
   Qt::DBus
 )
