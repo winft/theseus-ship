@@ -86,7 +86,6 @@ find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
     NewStuff
     Service
     XmlGui
-    ItemViews
 )
 
 # Required frameworks by Wayland binary
