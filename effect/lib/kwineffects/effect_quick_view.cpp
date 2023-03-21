@@ -86,6 +86,7 @@ EffectQuickView::EffectQuickView(QObject* parent, ExportMode exportMode)
     d->m_renderControl = new QQuickRenderControl();
 
     d->m_view = new QQuickWindow(d->m_renderControl);
+    Q_ASSERT(d->m_view->setProperty("_KWIN_WINDOW_IS_OFFSCREEN", true) || true);
     d->m_view->setFlags(Qt::FramelessWindowHint);
     d->m_view->setColor(Qt::transparent);
 

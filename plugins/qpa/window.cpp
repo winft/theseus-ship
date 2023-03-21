@@ -26,6 +26,7 @@ Window::Window(QWindow *window)
     , m_windowId(++s_windowId)
     , m_scale(base::singleton_interface::platform->topology.max_scale)
 {
+    Q_ASSERT(!window->property("_KWIN_WINDOW_IS_OFFSCREEN").toBool());
 }
 
 Window::~Window()
