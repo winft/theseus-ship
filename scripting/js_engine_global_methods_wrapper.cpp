@@ -14,7 +14,6 @@
 #include <QAction>
 #include <QPointer>
 #include <QQmlEngine>
-#include <QQuickWindow>
 
 namespace KWin::scripting
 {
@@ -32,21 +31,6 @@ js_engine_global_methods_wrapper::~js_engine_global_methods_wrapper()
 QVariant js_engine_global_methods_wrapper::readConfig(const QString& key, QVariant defaultValue)
 {
     return m_script->config().readEntry(key, defaultValue);
-}
-
-void js_engine_global_methods_wrapper::registerWindow(QQuickWindow* window)
-{
-    QPointer<QQuickWindow> guard = window;
-    connect(
-        window,
-        &QWindow::visibilityChanged,
-        this,
-        [guard](QWindow::Visibility visibility) {
-            if (guard && visibility == QWindow::Hidden) {
-                guard->destroy();
-            }
-        },
-        Qt::QueuedConnection);
 }
 
 }

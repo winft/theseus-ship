@@ -287,8 +287,4 @@ PlasmaCore.Dialog {
             dialogItem.show();
         }
     }
-
-    Component.onCompleted: {
-        KWin.registerWindow(dialog);
-    }
 }

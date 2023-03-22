@@ -11,8 +11,6 @@
 #include <QObject>
 #include <QVariant>
 
-class QQuickWindow;
-
 namespace KWin::scripting
 {
 
@@ -50,7 +48,6 @@ public:
 
 public Q_SLOTS:
     QVariant readConfig(const QString& key, QVariant defaultValue = QVariant());
-    void registerWindow(QQuickWindow* window);
 
 private:
     declarative_script* m_script;
