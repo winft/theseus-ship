@@ -46,23 +46,20 @@ void edit_book(Book& book, RefWin& ref_win, bool whole_app)
     book.save();
 
     QStringList args;
-    args << QStringLiteral("--uuid") << ref_win.meta.internal_id.toString();
+    args << QStringLiteral("uuid=%1").arg(ref_win.meta.internal_id.toString());
 
     if (whole_app) {
-        args << QStringLiteral("--whole-app");
+        args << QStringLiteral("whole-app");
     }
 
     auto p = new QProcess(book.qobject.get());
-    p->setArguments(args);
+    p->setArguments({"kcm_kwinrules", "--args", args.join(QLatin1Char(' '))});
 
     if constexpr (requires(decltype(ref_win.space.base) base) { base.process_environment; }) {
         p->setProcessEnvironment(ref_win.space.base.process_environment);
     }
 
-    QFileInfo const buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
-                                   QStringLiteral("kwin_rules_dialog")};
-    p->setProgram(buildDirBinary.exists() ? buildDirBinary.absoluteFilePath()
-                                          : QStringLiteral(KWIN_RULES_DIALOG_BIN));
+    p->setProgram(QStandardPaths::findExecutable("kcmshell6"));
     p->setProcessChannelMode(QProcess::MergedChannels);
 
     QObject::connect(
