@@ -691,7 +691,7 @@ private:
                     p->setProcessEnvironment(space.base.process_environment);
                 }
 
-                p->setProgram(QStringLiteral("kcmshell5"));
+                p->setProgram(QStringLiteral("kcmshell6"));
                 QObject::connect(
                     p,
                     static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
@@ -700,7 +700,7 @@ private:
                 QObject::connect(
                     p, &QProcess::errorOccurred, qobject.get(), [](QProcess::ProcessError e) {
                         if (e == QProcess::FailedToStart) {
-                            qCDebug(KWIN_CORE) << "Failed to start kcmshell5";
+                            qCDebug(KWIN_CORE) << "Failed to start kcmshell6";
                         }
                     });
                 p->start();
