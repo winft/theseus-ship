@@ -20,6 +20,5 @@ target_link_libraries(screenshot PRIVATE
   KF6::I18n
   kwineffects
   kwinglutils
-  Qt::Concurrent
   Qt::DBus
 )

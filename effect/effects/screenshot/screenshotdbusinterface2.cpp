@@ -8,6 +8,7 @@
 #include "screenshotdbusinterface2.h"
 
 #include "desktop/kde/service_utils.h"
+#include "utils/file_descriptor.h"
 
 #include "screenshot2adaptor.h"
 
@@ -17,15 +18,91 @@
 #include <KLocalizedString>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
-#include <QtConcurrent>
+#include <QThreadPool>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <poll.h>
 #include <string.h>
 #include <unistd.h>
 
 namespace KWin
 {
+
+class ScreenShotWriter2 : public QRunnable
+{
+public:
+    ScreenShotWriter2(file_descriptor&& fileDescriptor, const QImage& image)
+        : m_fileDescriptor(std::move(fileDescriptor))
+        , m_image(image)
+    {
+    }
+
+    void run() override
+    {
+        const int flags = fcntl(m_fileDescriptor.fd, F_GETFL, 0);
+        if (flags == -1) {
+            qCWarning(KWIN_SCREENSHOT) << "failed to get screenshot fd flags:" << strerror(errno);
+            return;
+        }
+        if (!(flags & O_NONBLOCK)) {
+            if (fcntl(m_fileDescriptor.fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+                qCWarning(KWIN_SCREENSHOT)
+                    << "failed to make screenshot fd non blocking:" << strerror(errno);
+                return;
+            }
+        }
+
+        QFile file;
+        if (!file.open(m_fileDescriptor.fd, QIODevice::WriteOnly)) {
+            qCWarning(KWIN_SCREENSHOT)
+                << Q_FUNC_INFO << "failed to open pipe:" << file.errorString();
+            return;
+        }
+
+        const QByteArrayView buffer(m_image.constBits(), m_image.sizeInBytes());
+        qint64 remainingSize = buffer.size();
+
+        pollfd pfds[1];
+        pfds[0].fd = m_fileDescriptor.fd;
+        pfds[0].events = POLLOUT;
+
+        while (true) {
+            const int ready = poll(pfds, 1, 60000);
+            if (ready < 0) {
+                if (errno != EINTR) {
+                    qCWarning(KWIN_SCREENSHOT)
+                        << Q_FUNC_INFO << "poll() failed:" << strerror(errno);
+                    return;
+                }
+            } else if (ready == 0) {
+                qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "timed out writing to pipe";
+                return;
+            } else if (!(pfds[0].revents & POLLOUT)) {
+                qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "pipe is broken";
+                return;
+            } else {
+                const char* chunk = buffer.constData() + (buffer.size() - remainingSize);
+                const qint64 writtenCount = file.write(chunk, remainingSize);
+
+                if (writtenCount < 0) {
+                    qCWarning(KWIN_SCREENSHOT)
+                        << Q_FUNC_INFO << "write() failed:" << file.errorString();
+                    return;
+                }
+
+                remainingSize -= writtenCount;
+                if (writtenCount == 0 || remainingSize == 0) {
+                    return;
+                }
+            }
+        }
+    }
+
+protected:
+    file_descriptor m_fileDescriptor;
+    QImage m_image;
+};
 
 static ScreenShotFlags screenShotFlagsFromOptions(const QVariantMap& options)
 {
@@ -47,52 +124,6 @@ static ScreenShotFlags screenShotFlagsFromOptions(const QVariantMap& options)
     }
 
     return flags;
-}
-
-static void writeBufferToPipe(int fileDescriptor, const QByteArray& buffer)
-{
-    QFile file;
-    if (!file.open(fileDescriptor, QIODevice::WriteOnly, QFileDevice::AutoCloseHandle)) {
-        close(fileDescriptor);
-        qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "failed to open pipe:" << file.errorString();
-        return;
-    }
-
-    qint64 remainingSize = buffer.size();
-
-    pollfd pfds[1];
-    pfds[0].fd = fileDescriptor;
-    pfds[0].events = POLLOUT;
-
-    while (true) {
-        const int ready = poll(pfds, 1, 60000);
-        if (ready < 0) {
-            if (errno != EINTR) {
-                qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "poll() failed:" << strerror(errno);
-                return;
-            }
-        } else if (ready == 0) {
-            qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "timed out writing to pipe";
-            return;
-        } else if (!(pfds[0].revents & POLLOUT)) {
-            qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "pipe is broken";
-            return;
-        } else {
-            const char* chunk = buffer.constData() + (buffer.size() - remainingSize);
-            const qint64 writtenCount = file.write(chunk, remainingSize);
-
-            if (writtenCount < 0) {
-                qCWarning(KWIN_SCREENSHOT)
-                    << Q_FUNC_INFO << "write() failed:" << file.errorString();
-                return;
-            }
-
-            remainingSize -= writtenCount;
-            if (writtenCount == 0 || remainingSize == 0) {
-                return;
-            }
-        }
-    }
 }
 
 static const QString s_dbusServiceName = QStringLiteral("org.kde.KWin.ScreenShot2");
@@ -187,7 +218,7 @@ public:
 
 private:
     QDBusMessage m_replyMessage;
-    int m_fileDescriptor;
+    file_descriptor m_fileDescriptor;
 };
 
 ScreenShotSource2::ScreenShotSource2(const QFuture<QImage>& future)
@@ -262,12 +293,7 @@ ScreenShotSinkPipe2::ScreenShotSinkPipe2(int fileDescriptor, QDBusMessage replyM
 {
 }
 
-ScreenShotSinkPipe2::~ScreenShotSinkPipe2()
-{
-    if (m_fileDescriptor != -1) {
-        close(m_fileDescriptor);
-    }
-}
+ScreenShotSinkPipe2::~ScreenShotSinkPipe2() = default;
 
 void ScreenShotSinkPipe2::cancel()
 {
@@ -277,7 +303,7 @@ void ScreenShotSinkPipe2::cancel()
 
 void ScreenShotSinkPipe2::flush(const QImage& image, const QVariantMap& attributes)
 {
-    if (m_fileDescriptor == -1) {
+    if (!m_fileDescriptor.is_valid()) {
         return;
     }
 
@@ -291,17 +317,9 @@ void ScreenShotSinkPipe2::flush(const QImage& image, const QVariantMap& attribut
     results.insert(QStringLiteral("scale"), double(image.devicePixelRatio()));
     QDBusConnection::sessionBus().send(m_replyMessage.createReply(results));
 
-    QtConcurrent::run(
-        [](int fileDescriptor, const QImage& image) {
-            const QByteArray buffer(reinterpret_cast<const char*>(image.constBits()),
-                                    image.sizeInBytes());
-            writeBufferToPipe(fileDescriptor, buffer);
-        },
-        m_fileDescriptor,
-        image);
-
-    // The ownership of the pipe file descriptor has been moved to the worker thread.
-    m_fileDescriptor = -1;
+    auto writer = new ScreenShotWriter2(std::move(m_fileDescriptor), image);
+    writer->setAutoDelete(true);
+    QThreadPool::globalInstance()->start(writer);
 }
 
 ScreenShotDBusInterface2::ScreenShotDBusInterface2(ScreenShotEffect* effect)
