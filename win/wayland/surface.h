@@ -21,7 +21,7 @@ void update_surface_outputs(Win* win)
 {
     std::vector<Wrapland::Server::output*> surface_outputs;
 
-    for (auto output : win->space.base.server->display->globals.outputs) {
+    for (auto output : win->space.base.server->output_manager->outputs) {
         if (win->geo.frame.intersects(output->geometry().toRect())) {
             surface_outputs.push_back(output);
         }

@@ -255,8 +255,8 @@ protected:
         };
 
         assert(!m_output);
-        m_output
-            = std::make_unique<Wrapland::Server::output>(metadata, platform.server->display.get());
+        m_output = std::make_unique<Wrapland::Server::output>(metadata,
+                                                              *platform.server->output_manager);
 
         qCDebug(KWIN_CORE) << "Initializing output:"
                            << m_output->get_metadata().description.c_str();

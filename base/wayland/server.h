@@ -30,6 +30,7 @@
 #include <Wrapland/Server/linux_dmabuf_v1.h>
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/output_management_v1.h>
+#include <Wrapland/Server/output_manager.h>
 #include <Wrapland/Server/pointer_constraints_v1.h>
 #include <Wrapland/Server/pointer_gestures_v1.h>
 #include <Wrapland/Server/relative_pointer_v1.h>
@@ -234,8 +235,8 @@ public:
 
     std::unique_ptr<server_qobject> qobject;
     std::unique_ptr<Wrapland::Server::Display> display;
+    std::unique_ptr<Wrapland::Server::output_manager> output_manager;
 
-    std::unique_ptr<Wrapland::Server::XdgOutputManager> xdg_output_manager;
     std::unique_ptr<Wrapland::Server::linux_dmabuf_v1> linux_dmabuf;
     std::unique_ptr<Wrapland::Server::Viewporter> viewporter;
     std::vector<std::unique_ptr<Wrapland::Server::Seat>> seats;
@@ -248,7 +249,6 @@ public:
     std::unique_ptr<Wrapland::Server::data_control_manager_v1> data_control_manager_v1;
     std::unique_ptr<Wrapland::Server::ShadowManager> shadow_manager;
     std::unique_ptr<Wrapland::Server::DpmsManager> dpms_manager;
-    std::unique_ptr<Wrapland::Server::OutputManagementV1> output_management_v1;
     std::unique_ptr<Wrapland::Server::RelativePointerManagerV1> relative_pointer_manager_v1;
 
     struct {
@@ -269,6 +269,7 @@ private:
     explicit server(Base& base, start_options flags)
         : qobject{std::make_unique<server_qobject>()}
         , display(std::make_unique<filtered_display>())
+        , output_manager{std::make_unique<Wrapland::Server::output_manager>(*display)}
         , m_initFlags{flags}
         , base{base}
 
@@ -286,7 +287,7 @@ private:
         display->createShm();
         seats.emplace_back(std::make_unique<Wrapland::Server::Seat>(display.get()));
 
-        xdg_output_manager = std::make_unique<Wrapland::Server::XdgOutputManager>(display.get());
+        output_manager->create_xdg_manager();
         pointer_gestures_v1 = std::make_unique<Wrapland::Server::PointerGesturesV1>(display.get());
         pointer_constraints_v1
             = std::make_unique<Wrapland::Server::PointerConstraintsV1>(display.get());
@@ -300,9 +301,7 @@ private:
         shadow_manager = std::make_unique<Wrapland::Server::ShadowManager>(display.get());
         dpms_manager = std::make_unique<Wrapland::Server::DpmsManager>(display.get());
 
-        output_management_v1
-            = std::make_unique<Wrapland::Server::OutputManagementV1>(display.get());
-        QObject::connect(output_management_v1.get(),
+        QObject::connect(&output_manager->create_management_v1(),
                          &Wrapland::Server::OutputManagementV1::configurationChangeRequested,
                          qobject.get(),
                          [this](auto config) { request_outputs_change(base, config); });
