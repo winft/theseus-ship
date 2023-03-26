@@ -64,6 +64,7 @@ void add_new_output(wlroots::platform& platform, wlr_output* native)
 
     platform.all_outputs.push_back(output);
     platform.outputs.push_back(output);
+    platform.server->output_manager->commit_changes();
 
     Q_EMIT platform.output_added(output);
 }

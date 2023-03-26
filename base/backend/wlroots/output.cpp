@@ -114,6 +114,7 @@ output::~output()
     if (platform) {
         remove_all(platform->outputs, this);
         remove_all(platform->all_outputs, this);
+        platform->server->output_manager->commit_changes();
         Q_EMIT platform->output_removed(this);
     }
 }

@@ -29,13 +29,13 @@
 #include <Wrapland/Server/keystate.h>
 #include <Wrapland/Server/linux_dmabuf_v1.h>
 #include <Wrapland/Server/output.h>
-#include <Wrapland/Server/output_management_v1.h>
 #include <Wrapland/Server/output_manager.h>
 #include <Wrapland/Server/pointer_constraints_v1.h>
 #include <Wrapland/Server/pointer_gestures_v1.h>
 #include <Wrapland/Server/relative_pointer_v1.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/viewporter.h>
+#include <Wrapland/Server/wlr_output_manager_v1.h>
 #include <Wrapland/Server/xdg_output.h>
 #include <memory>
 #include <sys/socket.h>
@@ -301,10 +301,19 @@ private:
         shadow_manager = std::make_unique<Wrapland::Server::ShadowManager>(display.get());
         dpms_manager = std::make_unique<Wrapland::Server::DpmsManager>(display.get());
 
-        QObject::connect(&output_manager->create_management_v1(),
-                         &Wrapland::Server::OutputManagementV1::configurationChangeRequested,
+        auto& wlr_output_manager = output_manager->create_wlr_manager_v1();
+        QObject::connect(&wlr_output_manager,
+                         &Wrapland::Server::wlr_output_manager_v1::test_config,
                          qobject.get(),
-                         [this](auto config) { request_outputs_change(base, config); });
+                         [this](auto config) {
+                             // TODO(romangg): For now we simply say the config is fine. We should
+                             // test it though for real.
+                             config->send_succeeded();
+                         });
+        QObject::connect(&wlr_output_manager,
+                         &Wrapland::Server::wlr_output_manager_v1::apply_config,
+                         qobject.get(),
+                         [this](auto config) { request_outputs_change(base, *config); });
 
         key_state = std::make_unique<Wrapland::Server::KeyState>(display.get());
         viewporter = std::make_unique<Wrapland::Server::Viewporter>(display.get());

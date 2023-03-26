@@ -5,14 +5,17 @@
 */
 #pragma once
 
+#include "output_transform.h"
+
 #include "base/output.h"
 #include "base/output_helpers.h"
 #include "input/filters/dpms.h"
 #include "input/wayland/dpms.h"
 #include "wayland_logging.h"
 
-#include <Wrapland/Server/output_changeset_v1.h>
-#include <Wrapland/Server/output_configuration_v1.h>
+#include <Wrapland/Server/output.h>
+#include <Wrapland/Server/wlr_output_configuration_head_v1.h>
+#include <Wrapland/Server/wlr_output_configuration_v1.h>
 #include <algorithm>
 
 namespace KWin::base::wayland
@@ -33,24 +36,25 @@ auto find_output(Base const& base, Wrapland::Server::output const* output) ->
 }
 
 template<typename Base>
-void request_outputs_change(Base& base, Wrapland::Server::OutputConfigurationV1* config)
+void request_outputs_change(Base& base, Wrapland::Server::wlr_output_configuration_v1& config)
 {
-    auto const& changes = config->changes();
+    auto config_heads = config.enabled_heads();
 
-    for (auto it = changes.begin(); it != changes.end(); it++) {
-        auto const changeset = it.value();
-
-        auto output = find_output(base, it.key()->output());
-        if (!output) {
-            qCWarning(KWIN_WL) << "Could NOT find output:"
-                               << it.key()->output()->get_metadata().description.c_str();
+    for (auto&& output : base.all_outputs) {
+        auto it = std::find_if(config_heads.begin(), config_heads.end(), [&](auto head) {
+            return output->wrapland_output() == &head->get_output();
+        });
+        if (it == config_heads.end()) {
+            output->set_enabled(false);
+            Q_EMIT output->qobject->mode_changed();
             continue;
         }
 
-        output->apply_changes(changeset);
+        output->apply_changes((*it)->get_state());
     }
 
-    config->setApplied();
+    config.send_succeeded();
+    base.server->output_manager->commit_changes();
     update_output_topology(base);
 }
 

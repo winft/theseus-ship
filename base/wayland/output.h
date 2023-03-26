@@ -17,7 +17,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QSize>
 #include <QVector>
 #include <Wrapland/Server/output.h>
-#include <Wrapland/Server/output_changeset_v1.h>
 #include <memory>
 
 namespace KWin::base::wayland
@@ -117,7 +116,7 @@ public:
         return m_internal;
     }
 
-    void apply_changes(const Wrapland::Server::OutputChangesetV1* changeset)
+    void apply_changes(Wrapland::Server::output_state const& state)
     {
         auto toTransform = [](auto transform) {
             return static_cast<base::wayland::output_transform>(transform);
@@ -126,42 +125,35 @@ public:
         qCDebug(KWIN_CORE) << "Apply changes to Wayland output:"
                            << m_output->get_metadata().name.c_str();
         bool emitModeChanged = false;
+        assert(state.enabled);
 
-        if (changeset->enabledChanged() && changeset->enabled()) {
-            qCDebug(KWIN_CORE) << "Setting output enabled.";
+        if (!m_output->enabled()) {
             set_enabled(true);
         }
 
-        if (changeset->modeChanged()) {
-            qCDebug(KWIN_CORE) << "Setting new mode:" << changeset->mode();
-            m_output->set_mode(changeset->mode());
-            update_mode(changeset->mode());
+        // TODO(romangg): Handle custom modes.
+        if (m_output->mode_id() != state.mode.id) {
+            m_output->set_mode(state.mode);
+            update_mode(state.mode.id);
             emitModeChanged = true;
         }
-        if (changeset->transformChanged()) {
-            qCDebug(KWIN_CORE) << "Server setting transform: "
-                               << static_cast<int>(changeset->transform());
-            m_output->set_transform(changeset->transform());
-            update_transform(toTransform(changeset->transform()));
-            emitModeChanged = true;
-        }
-        if (changeset->geometryChanged()) {
-            qCDebug(KWIN_CORE) << "Server setting position: " << changeset->geometry();
-            m_output->set_geometry(changeset->geometry());
-            emitModeChanged = true;
-        }
-        update_view_geometry();
 
-        if (changeset->enabledChanged() && !changeset->enabled()) {
-            qCDebug(KWIN_CORE) << "Setting output disabled.";
-            set_enabled(false);
+        if (m_output->transform() != state.transform) {
+            m_output->set_transform(state.transform);
+            update_transform(toTransform(state.transform));
+            emitModeChanged = true;
         }
+
+        if (m_output->geometry() != state.geometry) {
+            m_output->set_geometry(state.geometry);
+            emitModeChanged = true;
+        }
+
+        update_view_geometry();
 
         if (emitModeChanged) {
             Q_EMIT qobject->mode_changed();
         }
-
-        m_output->done();
     }
 
     Wrapland::Server::output* wrapland_output() const
@@ -184,7 +176,6 @@ public:
     {
         m_output->set_enabled(enable);
         update_enablement(enable);
-        // TODO: it is unclear that the consumer has to call done() on the output still.
     }
 
     void force_geometry(QRectF const& geo)
