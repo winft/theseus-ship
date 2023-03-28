@@ -45,7 +45,10 @@ void request_outputs_change(Base& base, Wrapland::Server::wlr_output_configurati
             return output->wrapland_output() == &head->get_output();
         });
         if (it == config_heads.end()) {
-            output->set_enabled(false);
+            auto state = output->wrapland_output()->get_state();
+            state.enabled = false;
+            output->update_enablement(false);
+            output->wrapland_output()->set_state(state);
             Q_EMIT output->qobject->mode_changed();
             continue;
         }

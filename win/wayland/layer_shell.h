@@ -36,7 +36,7 @@ QRectF layer_surface_area(Win* win)
 
     // TODO(romangg): Instead of using the output geometry we should use some Workspace::clientArea
     //                depending on the layer the surface is on.
-    auto const output_geo = output->geometry();
+    auto const output_geo = output->get_state().geometry;
 
     if (layer_surf->exclusive_zone() == 0) {
         auto output_geo_rect = output_geo.toRect();

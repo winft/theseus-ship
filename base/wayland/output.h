@@ -46,13 +46,13 @@ public:
      */
     QSize mode_size() const
     {
-        return m_output->mode_size();
+        return m_output->get_state().mode.size;
     }
 
     // TODO: The name is ambiguous. Rename this function.
     QSize pixel_size() const override
     {
-        return orientate_size(m_output->mode_size());
+        return orientate_size(m_output->get_state().mode.size);
     }
 
     /**
@@ -71,7 +71,7 @@ public:
     {
         // We just return the client scale here for all internal calculations depending on it (for
         // example the scaling of internal windows).
-        return m_output->client_scale();
+        return m_output->get_state().client_scale;
     }
 
     /**
@@ -79,7 +79,7 @@ public:
      */
     QRect geometry() const override
     {
-        auto const& geo = m_output->geometry().toRect();
+        auto const& geo = m_output->get_state().geometry.toRect();
         // TODO: allow invalid size (disable output on the fly)
         return geo.isValid() ? geo : QRect(QPoint(0, 0), pixel_size());
     }
@@ -100,7 +100,7 @@ public:
      */
     base::wayland::output_transform transform() const
     {
-        return static_cast<base::wayland::output_transform>(m_output->transform());
+        return static_cast<base::wayland::output_transform>(m_output->get_state().transform);
     }
 
     /**
@@ -108,7 +108,7 @@ public:
      */
     int refresh_rate() const override
     {
-        return m_output->refresh_rate();
+        return m_output->get_state().mode.refresh_rate;
     }
 
     bool is_internal() const override
@@ -126,29 +126,28 @@ public:
                            << m_output->get_metadata().name.c_str();
         bool emitModeChanged = false;
         assert(state.enabled);
+        auto const old_state = m_output->get_state();
 
-        if (!m_output->enabled()) {
-            set_enabled(true);
+        if (!old_state.enabled) {
+            update_enablement(true);
         }
 
         // TODO(romangg): Handle custom modes.
-        if (m_output->mode_id() != state.mode.id) {
-            m_output->set_mode(state.mode);
+        if (old_state.mode != state.mode) {
             update_mode(state.mode.id);
             emitModeChanged = true;
         }
 
-        if (m_output->transform() != state.transform) {
-            m_output->set_transform(state.transform);
+        if (old_state.transform != state.transform) {
             update_transform(toTransform(state.transform));
             emitModeChanged = true;
         }
 
-        if (m_output->geometry() != state.geometry) {
-            m_output->set_geometry(state.geometry);
+        if (old_state.geometry != state.geometry) {
             emitModeChanged = true;
         }
 
+        m_output->set_state(state);
         update_view_geometry();
 
         if (emitModeChanged) {
@@ -163,24 +162,14 @@ public:
 
     bool is_enabled() const
     {
-        return m_output->enabled();
-    }
-
-    /**
-     * Enable or disable the output.
-     *
-     * This differs from update_dpms as it also removes the wl_output.
-     * The default is on.
-     */
-    void set_enabled(bool enable) override
-    {
-        m_output->set_enabled(enable);
-        update_enablement(enable);
+        return m_output->get_state().enabled;
     }
 
     void force_geometry(QRectF const& geo)
     {
-        m_output->set_geometry(geo);
+        auto state = m_output->get_state();
+        state.geometry = geo;
+        m_output->set_state(state);
         update_view_geometry();
         m_output->done();
     }
@@ -198,12 +187,16 @@ public:
     QSize orientate_size(QSize const& size) const
     {
         using Transform = Wrapland::Server::output_transform;
-        auto const transform = m_output->transform();
+        auto const transform = m_output->get_state().transform;
         if (transform == Transform::rotated_90 || transform == Transform::rotated_270
             || transform == Transform::flipped_90 || transform == Transform::flipped_270) {
             return size.transposed();
         }
         return size;
+    }
+
+    virtual void update_enablement(bool /*enable*/)
+    {
     }
 
     using render_t = render::wayland::output<output, typename Platform::render_t>;
@@ -259,14 +252,19 @@ protected:
             m_output->add_mode(mode);
         }
 
+        auto state = m_output->get_state();
         if (current_mode) {
-            m_output->set_mode(*current_mode);
+            state.mode = *current_mode;
         }
 
-        m_output->set_geometry(QRectF(QPointF(0, 0), m_output->mode_size()));
+        state.enabled = true;
+        state.geometry = QRectF(QPointF(0, 0), state.mode.size);
+
+        m_output->set_state(state);
         update_view_geometry();
 
         m_output->set_dpms_supported(m_supports_dpms);
+
         // set to last known mode
         m_output->set_dpms_mode(to_wayland_dpms_mode(m_dpms));
         QObject::connect(m_output.get(),
@@ -279,7 +277,6 @@ protected:
                              update_dpms(from_wayland_dpms_mode(mode));
                          });
 
-        m_output->set_enabled(true);
         m_output->done();
     }
 
@@ -303,38 +300,12 @@ protected:
         m_supports_dpms = set;
     }
 
-    virtual void update_enablement(bool /*enable*/)
-    {
-    }
-
     virtual void update_mode(int /*mode_index*/)
     {
     }
 
     virtual void update_transform(base::wayland::output_transform /*transform*/)
     {
-    }
-
-    // TODO(romangg): the force_update variable is only a temporary solution to a larger issue, that
-    // our data flow is not correctly handled between backend and this class. In general this class
-    // should request data from the backend and not the backend set it.
-    void set_wayland_mode(QSize const& size, int refresh_rate, bool force_update)
-    {
-        m_output->set_mode(size, refresh_rate);
-
-        if (force_update) {
-            m_output->done();
-        }
-    }
-
-    void set_transform(base::wayland::output_transform transform)
-    {
-        auto to_wayland_transform = [](base::wayland::output_transform transform) {
-            return static_cast<Wrapland::Server::output_transform>(transform);
-        };
-
-        m_output->set_transform(to_wayland_transform(transform));
-        Q_EMIT qobject->mode_changed();
     }
 
     base::dpms_mode dpms_mode() const
