@@ -59,6 +59,16 @@ public:
     {
     }
 
+    virtual void reset()
+    {
+        platform.compositor->addRepaint(base.geometry());
+    }
+
+    void disable()
+    {
+        delay_timer.stop();
+        frame_timer.stop();
+    }
     void add_repaint(QRegion const& region)
     {
         auto const capped_region = region.intersected(base.geometry());

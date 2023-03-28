@@ -119,89 +119,55 @@ output::~output()
     }
 }
 
-bool output::disable_native()
+void output::update_dpms(base::dpms_mode mode)
 {
-    wlr_output_enable(native, false);
+    auto set_on = mode == base::dpms_mode::on;
+    wlr_output_enable(native, set_on);
+
+    if (set_on) {
+        wlr_output_commit(native);
+        get_render(render)->reset();
+        base::wayland::output_set_dpms_on(*this, *platform);
+        return;
+    }
 
     if (!wlr_output_test(native)) {
-        qCWarning(KWIN_WL) << "Failed test commit on disabling output.";
-        // Failed test commit. Switch enabling back.
+        qCWarning(KWIN_WL) << "Failed test commit on disabling output for DPMS.";
         wlr_output_enable(native, true);
-        return false;
+        return;
     }
 
     get_render(render)->disable();
     wlr_output_commit(native);
-
-    return true;
+    base::wayland::output_set_dmps_off(mode, *this, *platform);
 }
 
-void output::update_enablement(bool enable)
-{
-    if (enable) {
-        platform->enable_output(this);
-        get_render(render)->reset();
-    } else {
-        disable_native();
-        platform->disable_output(this);
-    }
-}
-
-void output::update_dpms(base::dpms_mode mode)
-{
-    auto set_on = mode == base::dpms_mode::on;
-
-    if (set_on) {
-        wlr_output_enable(native, true);
-        wlr_output_commit(native);
-        get_render(render)->reset();
-        base::wayland::output_set_dpms_on(*this, *platform);
-    } else if (disable_native()) {
-        base::wayland::output_set_dmps_off(mode, *this, *platform);
-    }
-}
-
-void output::update_mode(int mode_index)
+void set_native_mode(wlr_output* output, int mode_index)
 {
     // TODO(romangg): Determine target mode more precisly with semantic properties instead of index.
     wlr_output_mode* wlr_mode;
     auto count = 0;
 
-    auto old_mode = native->current_mode;
-    wl_list_for_each(wlr_mode, &native->modes, link)
+    wl_list_for_each(wlr_mode, &output->modes, link)
     {
         if (count == mode_index) {
-            wlr_output_set_mode(native, wlr_mode);
-            if (wlr_output_test(native)) {
-                get_render(render)->reset();
-            } else {
-                qCWarning(KWIN_WL) << "Failed test commit on update mode call.";
-                // Set previous mode.
-                wlr_output_set_mode(native, old_mode);
-            }
+            wlr_output_set_mode(output, wlr_mode);
             return;
         }
         count++;
     }
 }
 
-wl_output_transform to_wl_transform(base::wayland::output_transform tr)
+bool output::change_backend_state(Wrapland::Server::output_state const& state)
 {
-    return static_cast<wl_output_transform>(tr);
-}
+    wlr_output_enable(native, state.enabled);
 
-void output::update_transform(base::wayland::output_transform transform)
-{
-    auto old_transform = native->transform;
-    wlr_output_set_transform(native, to_wl_transform(transform));
-
-    if (wlr_output_test(native)) {
-        get_render(render)->reset();
-    } else {
-        qCWarning(KWIN_WL) << "Failed test commit on update transform call.";
-        // Set previous transform.
-        wlr_output_set_transform(native, old_transform);
+    if (state.enabled) {
+        set_native_mode(native, state.mode.id);
+        wlr_output_set_transform(native, static_cast<wl_output_transform>(state.transform));
     }
+
+    return wlr_output_test(native);
 }
 
 int output::gamma_ramp_size() const

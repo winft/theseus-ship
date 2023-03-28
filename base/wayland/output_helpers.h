@@ -36,8 +36,23 @@ auto find_output(Base const& base, Wrapland::Server::output const* output) ->
 }
 
 template<typename Base>
-void request_outputs_change(Base& base, Wrapland::Server::wlr_output_configuration_v1& config)
+auto outputs_get_states(Base& base)
+    -> std::map<typename Base::output_t*, Wrapland::Server::output_state>
 {
+    std::map<typename Base::output_t*, Wrapland::Server::output_state> map;
+
+    for (auto&& output : base.all_outputs) {
+        map.insert({output, output->wrapland_output()->get_state()});
+    }
+
+    return map;
+}
+
+template<typename Base>
+auto outputs_get_states(Base& base, Wrapland::Server::wlr_output_configuration_v1 const& config)
+    -> std::map<typename Base::output_t*, Wrapland::Server::output_state>
+{
+    std::map<typename Base::output_t*, Wrapland::Server::output_state> map;
     auto config_heads = config.enabled_heads();
 
     for (auto&& output : base.all_outputs) {
@@ -47,18 +62,69 @@ void request_outputs_change(Base& base, Wrapland::Server::wlr_output_configurati
         if (it == config_heads.end()) {
             auto state = output->wrapland_output()->get_state();
             state.enabled = false;
-            output->update_enablement(false);
-            output->wrapland_output()->set_state(state);
-            Q_EMIT output->qobject->mode_changed();
-            continue;
+            map.insert({output, state});
+        } else {
+            map.insert({output, (*it)->get_state()});
         }
-
-        output->apply_changes((*it)->get_state());
     }
 
-    config.send_succeeded();
-    base.server->output_manager->commit_changes();
+    return map;
+}
+
+template<typename Output>
+bool outputs_apply_states(std::map<Output*, Wrapland::Server::output_state> const& states)
+{
+    // We try to apply as many states as possible even if some outputs are with errors.
+    bool has_error{false};
+
+    for (auto const& [output, state] : states) {
+        auto success = output->apply_state(state);
+        has_error |= !success;
+    }
+
+    return !has_error;
+}
+
+template<typename Base>
+bool outputs_test_config(Base& base, Wrapland::Server::wlr_output_configuration_v1 const& config)
+{
+    auto const current_states = outputs_get_states(base);
+    auto config_states = outputs_get_states(base, config);
+
+    auto success = outputs_apply_states(config_states);
+    outputs_apply_states(current_states);
+    return success;
+}
+
+template<typename Base>
+bool outputs_apply_config(Base& base, Wrapland::Server::wlr_output_configuration_v1 const& config)
+{
+    auto const old_states = outputs_get_states(base);
+    auto const config_states = outputs_get_states(base, config);
+
+    if (!outputs_apply_states(config_states)) {
+        outputs_apply_states(old_states);
+        return false;
+    }
+
+    for (auto const& [output, state] : config_states) {
+        if (old_states.at(output).enabled != state.enabled) {
+            if (state.enabled) {
+                base.enable_output(output);
+            } else {
+                base.disable_output(output);
+            }
+        }
+
+        if (state.enabled) {
+            output->render->reset();
+        } else {
+            output->render->disable();
+        }
+    }
+
     update_output_topology(base);
+    return true;
 }
 
 template<typename Base, typename Filter>

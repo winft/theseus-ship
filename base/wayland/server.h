@@ -306,14 +306,26 @@ private:
                          &Wrapland::Server::wlr_output_manager_v1::test_config,
                          qobject.get(),
                          [this](auto config) {
-                             // TODO(romangg): For now we simply say the config is fine. We should
-                             // test it though for real.
-                             config->send_succeeded();
+                             if (outputs_test_config(base, *config)) {
+                                 config->send_succeeded();
+                             } else {
+                                 config->send_failed();
+                             }
                          });
         QObject::connect(&wlr_output_manager,
                          &Wrapland::Server::wlr_output_manager_v1::apply_config,
                          qobject.get(),
-                         [this](auto config) { request_outputs_change(base, *config); });
+                         [this](auto config) {
+                             if (!outputs_apply_config(base, *config)) {
+                                 config->send_failed();
+                                 return;
+                             }
+
+                             // TODO(romangg): Should we wait until the render module has committed
+                             //                the first frame and only then report success?
+                             config->send_succeeded();
+                             output_manager->commit_changes();
+                         });
 
         key_state = std::make_unique<Wrapland::Server::KeyState>(display.get());
         viewporter = std::make_unique<Wrapland::Server::Viewporter>(display.get());

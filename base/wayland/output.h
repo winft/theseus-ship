@@ -116,43 +116,18 @@ public:
         return m_internal;
     }
 
-    void apply_changes(Wrapland::Server::output_state const& state)
+    bool apply_state(Wrapland::Server::output_state const& state)
     {
-        auto toTransform = [](auto transform) {
-            return static_cast<base::wayland::output_transform>(transform);
-        };
-
         qCDebug(KWIN_CORE) << "Apply changes to Wayland output:"
                            << m_output->get_metadata().name.c_str();
-        bool emitModeChanged = false;
-        assert(state.enabled);
-        auto const old_state = m_output->get_state();
 
-        if (!old_state.enabled) {
-            update_enablement(true);
-        }
-
-        // TODO(romangg): Handle custom modes.
-        if (old_state.mode != state.mode) {
-            update_mode(state.mode.id);
-            emitModeChanged = true;
-        }
-
-        if (old_state.transform != state.transform) {
-            update_transform(toTransform(state.transform));
-            emitModeChanged = true;
-        }
-
-        if (old_state.geometry != state.geometry) {
-            emitModeChanged = true;
+        if (!change_backend_state(state)) {
+            return false;
         }
 
         m_output->set_state(state);
         update_view_geometry();
-
-        if (emitModeChanged) {
-            Q_EMIT qobject->mode_changed();
-        }
+        return true;
     }
 
     Wrapland::Server::output* wrapland_output() const
@@ -195,9 +170,7 @@ public:
         return size;
     }
 
-    virtual void update_enablement(bool /*enable*/)
-    {
-    }
+    virtual bool change_backend_state(Wrapland::Server::output_state const& state) = 0;
 
     using render_t = render::wayland::output<output, typename Platform::render_t>;
     std::unique_ptr<render_t> render;
@@ -298,14 +271,6 @@ protected:
     void set_dpms_supported(bool set)
     {
         m_supports_dpms = set;
-    }
-
-    virtual void update_mode(int /*mode_index*/)
-    {
-    }
-
-    virtual void update_transform(base::wayland::output_transform /*transform*/)
-    {
     }
 
     base::dpms_mode dpms_mode() const

@@ -25,10 +25,9 @@ public:
     output(wlr_output* wlr_out, wlroots::platform* platform);
     ~output() override;
 
-    void update_enablement(bool enable) override;
     void update_dpms(base::dpms_mode mode) override;
-    void update_mode(int mode_index) override;
-    void update_transform(base::wayland::output_transform transform) override;
+
+    bool change_backend_state(Wrapland::Server::output_state const& state) override;
 
     int gamma_ramp_size() const override;
     bool set_gamma_ramp(gamma_ramp const& gamma) override;
@@ -37,7 +36,6 @@ public:
     wlroots::platform* platform;
 
 private:
-    bool disable_native();
     base::event_receiver<output> destroy_rec;
 };
 
