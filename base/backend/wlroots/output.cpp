@@ -165,6 +165,7 @@ bool output::change_backend_state(Wrapland::Server::output_state const& state)
     if (state.enabled) {
         set_native_mode(native, state.mode.id);
         wlr_output_set_transform(native, static_cast<wl_output_transform>(state.transform));
+        wlr_output_enable_adaptive_sync(native, state.adaptive_sync);
     }
 
     return wlr_output_test(native);
