@@ -36,7 +36,6 @@ class PreviewClient : public QObject, public ApplicationMenuEnabledDecoratedClie
     Q_PROPERTY(bool minimizable READ isMinimizeable WRITE setMinimizable NOTIFY minimizableChanged)
     Q_PROPERTY(bool modal READ isModal WRITE setModal NOTIFY modalChanged)
     Q_PROPERTY(bool movable READ isMoveable WRITE setMovable NOTIFY movableChanged)
-    Q_PROPERTY(int desktop READ desktop WRITE setDesktop NOTIFY desktopChanged)
     Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops NOTIFY onAllDesktopsChanged)
     Q_PROPERTY(bool resizable READ isResizeable WRITE setResizable NOTIFY resizableChanged)
     Q_PROPERTY(bool providesContextHelp READ providesContextHelp WRITE setProvidesContextHelp NOTIFY providesContextHelpChanged)
@@ -54,7 +53,6 @@ public:
     WId decorationId() const override;
     WId windowId() const override;
     QString windowClass() const override;
-    int desktop() const override;
     QIcon icon() const override;
     bool isActive() const override;
     bool isCloseable() const override;
@@ -117,7 +115,6 @@ public:
     void setMovable(bool movable);
     void setResizable(bool resizable);
     void setProvidesContextHelp(bool contextHelp);
-    void setDesktop(int desktop);
 
     void setWidth(int width);
     void setHeight(int height);
@@ -154,7 +151,6 @@ Q_SIGNALS:
     void onAllDesktopsChanged(bool);
     void resizableChanged(bool);
     void providesContextHelpChanged(bool);
-    void desktopChanged(int);
     void widthChanged(int);
     void heightChanged(int);
     void paletteChanged(const QPalette&);
@@ -185,7 +181,7 @@ private:
     bool m_movable;
     bool m_resizable;
     bool m_providesContextHelp;
-    int m_desktop;
+    bool m_onAllDesktops;
     int m_width;
     int m_height;
     bool m_bordersTopEdge;
