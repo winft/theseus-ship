@@ -104,9 +104,8 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
         QVERIFY(item);
         const QPointF scenePoint = item->mapToScene(QPoint(0, 0));
 
-        // mark the window as ready for painting, otherwise it doesn't get input events
-        win::set_ready_for_painting(*client);
-        QVERIFY(client->render_data.ready_for_painting);
+        // Wait until the window is ready for painting, otherwise it doesn't get input events.
+        TRY_REQUIRE(client->render_data.ready_for_painting);
 
         // simulate click on maximize button
         QSignalSpy maximizedStateChangedSpy(client->qobject.get(),

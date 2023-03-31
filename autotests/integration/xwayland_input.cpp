@@ -108,9 +108,6 @@ TEST_CASE("xwayland input", "[input],[xwl]")
         QVERIFY(enteredSpy.isValid());
         QSignalSpy leftSpy(&eventReader, &X11EventReaderHelper::left);
         QVERIFY(leftSpy.isValid());
-        // atom for the screenedge show hide functionality
-        base::x11::xcb::atom atom(
-            QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"), false, c.get());
 
         xcb_window_t w = xcb_generate_id(c.get());
         const QRect windowGeometry = QRect(0, 0, 100, 200);
@@ -155,17 +152,22 @@ TEST_CASE("xwayland input", "[input],[xwl]")
         QVERIFY(!client->isHiddenInternal());
         QVERIFY(!client->render_data.ready_for_painting);
 
-        win::set_ready_for_painting(*client);
-        QVERIFY(client->render_data.ready_for_painting);
         QVERIFY(!client->surface);
         QSignalSpy surfaceChangedSpy(client->qobject.get(), &win::window_qobject::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());
         QVERIFY(surfaceChangedSpy.wait());
         QVERIFY(client->surface);
 
+        // Wait until the window is ready for painting, otherwise it doesn't get input events.
+        TRY_REQUIRE(client->render_data.ready_for_painting);
+
         // move pointer into the window, should trigger an enter
         QVERIFY(!client->geo.frame.contains(cursor()->pos()));
         QVERIFY(enteredSpy.isEmpty());
+
+        REQUIRE(!setup.base->server->seat()->pointers().get_focus().surface);
+        REQUIRE(setup.base->server->seat()->pointers().get_focus().devices.empty());
+
         cursor()->set_pos(client->geo.frame.center());
         QCOMPARE(setup.base->server->seat()->pointers().get_focus().surface, client->surface);
         QVERIFY(!setup.base->server->seat()->pointers().get_focus().devices.empty());
