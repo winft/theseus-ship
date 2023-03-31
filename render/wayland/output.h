@@ -61,7 +61,9 @@ public:
 
     virtual void reset()
     {
-        platform.compositor->addRepaint(base.geometry());
+        if (platform.compositor) {
+            platform.compositor->addRepaint(base.geometry());
+        }
     }
 
     void disable()

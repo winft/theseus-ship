@@ -127,6 +127,7 @@ public:
 
         m_output->set_state(state);
         update_view_geometry();
+        Q_EMIT this->qobject->geometry_changed();
         return true;
     }
 
@@ -146,7 +147,9 @@ public:
         state.geometry = geo;
         m_output->set_state(state);
         update_view_geometry();
+        render->reset();
         m_output->done();
+        Q_EMIT this->qobject->geometry_changed();
     }
 
     bool is_dpms_on() const override
