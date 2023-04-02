@@ -89,8 +89,6 @@ TEST_CASE("xwayland input", "[input],[xwl]")
 {
     test::setup setup("xwayland-input", base::operation_mode::xwayland);
     setup.start();
-    setup.set_outputs(2);
-    test_outputs_default();
     cursor()->set_pos(QPoint(640, 512));
 
     SECTION("pointer enter leave")
