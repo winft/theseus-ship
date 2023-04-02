@@ -41,7 +41,7 @@ public:
     }
 };
 
-K_PLUGIN_CLASS_WITH_JSON(ScriptsPackage, "kwin-packagestructure-scripts.json")
+K_PLUGIN_CLASS_WITH_JSON(ScriptsPackage, "scripts.json")
 
 #include "scripts.moc"
 

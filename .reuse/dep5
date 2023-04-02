@@ -85,11 +85,11 @@ Files:
   plugins/kdecorations/aurorae/themes/plastik/code/qmldir
   plugins/kdecorations/aurorae/themes/plastik/package/metadata.json
   plugins/kglobalaccel/kwin.json
-  plugins/kpackage/aurorae/kwin-packagestructure-aurorae.json
-  plugins/kpackage/decoration/kwin-packagestructure-decoration.json
-  plugins/kpackage/effect/kwin-packagestructure-effect.json
-  plugins/kpackage/scripts/kwin-packagestructure-scripts.json
-  plugins/kpackage/windowswitcher/kwin-packagestructure-windowswitcher.json
+  plugins/kpackage/aurorae/aurorae.json
+  plugins/kpackage/decoration/decoration.json
+  plugins/kpackage/effect/effect.json
+  plugins/kpackage/scripts/scripts.json
+  plugins/kpackage/windowswitcher/windowswitcher.json
   plugins/qpa/kwin.json
   plugins/windowsystem/kwindowsystem.json
   render/dbus/org.kde.kwin.ColorCorrect.xml
