@@ -4,5 +4,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-$EXTRACTRC *.kcfg *.ui >> rc.cpp
-$XGETTEXT *.h *.cpp colorcorrection/*.cpp helpers/killer/*.cpp plugins/scenes/opengl/*.cpp tabbox/*.cpp scripting/*.cpp -o $podir/kwin.pot
+$EXTRACTRC `find . -not -path "./kcms/*" \( -name \*.kcfg -o -name \*.ui \)` >> rc.cpp || exit 11
+$XGETTEXT `find . -not -path "./kcms/*" \( -name \*.cpp -o -name \*.qml \)` -o $podir/kwin.pot
+rm -f rc.cpp

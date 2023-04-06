@@ -20,7 +20,7 @@ add_subdirectory(private)
 function(kwin_add_effect_config name)
     list(REMOVE_ITEM ARGV ${name})
     kcoreaddons_add_plugin(${name} INSTALL_NAMESPACE "kwin/effects/configs" SOURCES ${ARGV})
-    target_compile_definitions(${name} PRIVATE -DTRANSLATION_DOMAIN=\"kwin_effects\")
+    target_compile_definitions(${name} PRIVATE -DTRANSLATION_DOMAIN=\"kwin\")
     target_link_libraries(${name}
       effects-interface
       KF6::I18n
@@ -50,7 +50,7 @@ endfunction()
 
 macro(kwin_add_builtin_effect name)
     kcoreaddons_add_plugin(${name} STATIC SOURCES ${ARGN} INSTALL_NAMESPACE "kwin/effects/plugins")
-    target_compile_definitions(${name} PRIVATE -DTRANSLATION_DOMAIN=\"kwin_effects\")
+    target_compile_definitions(${name} PRIVATE -DTRANSLATION_DOMAIN=\"kwin\")
     set_property(TARGET ${name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     kwin_strip_builtin_effect_metadata(${name} metadata.json)
     install(FILES metadata.json DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/builtin-effects/ RENAME ${name}.json)
