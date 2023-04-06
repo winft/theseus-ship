@@ -28,7 +28,6 @@ class KWIN_EXPORT output_qobject : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
-    void mode_changed();
     /**
      * This signal is emitted when the geometry of this output has changed.
      */

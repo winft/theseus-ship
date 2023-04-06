@@ -43,9 +43,6 @@ public:
 
         if (platform.egl) {
             egl = std::make_unique<egl_output_t>(*this, platform.egl->data);
-            QObject::connect(base.qobject.get(), &base::output_qobject::mode_changed, this, [this] {
-                egl->reset();
-            });
         } else {
             assert(platform.qpainter);
             qpainter = std::make_unique<qpainter_output_t>(*this, platform.renderer);
@@ -60,15 +57,12 @@ public:
         wl_signal_add(&base.native->events.frame, &frame_rec.event);
     }
 
-    void reset()
+    void reset() override
     {
-        this->platform.compositor->addRepaint(this->base.geometry());
-    }
-
-    void disable()
-    {
-        this->delay_timer.stop();
-        this->frame_timer.stop();
+        if (egl) {
+            egl->reset();
+        }
+        abstract_type::reset();
     }
 
     std::unique_ptr<egl_output_t> egl;

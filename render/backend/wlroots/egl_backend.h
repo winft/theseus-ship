@@ -158,11 +158,7 @@ public:
         wlr_renderer_begin(
             platform.renderer, output->geometry().width(), output->geometry().height());
 
-        native_fbo = GLRenderTarget(wlr_gles2_renderer_get_current_fbo(platform.renderer),
-                                    get_viewport(*out));
-        GLRenderTarget::pushRenderTarget(&native_fbo);
-
-        prepareRenderFramebuffer(*out);
+        prepare_render_targets(*out);
 
         if (!this->supportsBufferAge()) {
             // If buffer age exenstion is not supported we always repaint the whole output as we
@@ -309,7 +305,7 @@ private:
         auto const height_ratio = view.height() / static_cast<double>(geo.height());
 
         return QRect(-geo.x() * width_ratio,
-                     -geo.y() * height_ratio,
+                     (geo.height() - overall.height() + geo.y()) * height_ratio,
                      overall.width() * width_ratio,
                      overall.height() * height_ratio);
     }
@@ -325,10 +321,23 @@ private:
         egl_out.render.vbo = vbo;
     }
 
-    void prepareRenderFramebuffer(egl_output_t& egl_out) const
+    void prepare_render_targets(egl_output_t& egl_out)
     {
+        auto wlr_fbo = wlr_gles2_renderer_get_current_fbo(platform.renderer);
+        auto const vp = get_viewport(egl_out);
+
         if (egl_out.render.fbo.valid()) {
+            auto geo = egl_out.out->base.geometry();
+            geo.moveTopLeft({});
+
+            native_fbo = GLRenderTarget(wlr_fbo, geo);
+            GLRenderTarget::pushRenderTarget(&native_fbo);
+
             GLRenderTarget::pushRenderTarget(&egl_out.render.fbo);
+            glViewport(vp.x(), vp.y(), vp.width(), vp.height());
+        } else {
+            native_fbo = GLRenderTarget(wlr_fbo, vp);
+            GLRenderTarget::pushRenderTarget(&native_fbo);
         }
     }
 

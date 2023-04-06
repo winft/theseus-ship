@@ -144,7 +144,9 @@ void setup::start()
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.
     auto out = base->outputs.at(0);
-    out->wrapland_output()->set_physical_size(QSize(1280, 1024));
+    auto metadata = out->wrapland_output()->get_metadata();
+    metadata.physical_size = {1280, 1024};
+    out->wrapland_output()->set_metadata(metadata);
 
     try {
         base->render->compositor = std::make_unique<base_t::render_t::compositor_t>(*base->render);

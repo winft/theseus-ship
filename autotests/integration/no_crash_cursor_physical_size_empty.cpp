@@ -60,8 +60,11 @@ TEST_CASE("no crash cursor physical size empty", "[win]")
         QVERIFY(win::decoration(c));
 
         // destroy physical size
-        auto output = setup.base->server->display->outputs().front()->output();
-        output->set_physical_size(QSize(0, 0));
+        auto output = setup.base->server->output_manager->outputs.front();
+
+        auto metadata = output->get_metadata();
+        metadata.physical_size = {0, 0};
+        output->set_metadata(metadata);
 
         // and fake a cursor theme change, so that the theme gets recreated
         Q_EMIT cursor()->theme_changed();

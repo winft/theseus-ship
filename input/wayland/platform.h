@@ -31,14 +31,16 @@ public:
         : qobject{std::make_unique<platform_qobject>()}
         , config{std::move(config)}
         , xkb{xkb::manager<type>(this)}
-        , kde_idle{base.server->display->create_kde_idle()}
-        , idle_notifier{base.server->display->create_idle_notifier_v1()}
+        , kde_idle{std::make_unique<Wrapland::Server::kde_idle>(base.server->display.get())}
+        , idle_notifier{std::make_unique<Wrapland::Server::idle_notifier_v1>(
+              base.server->display.get())}
         , base{base}
     {
         qRegisterMetaType<button_state>();
         qRegisterMetaType<key_state>();
 
-        virtual_keyboard = base.server->display->create_virtual_keyboard_manager_v1();
+        virtual_keyboard = std::make_unique<Wrapland::Server::virtual_keyboard_manager_v1>(
+            base.server->display.get());
 
         QObject::connect(kde_idle.get(),
                          &Wrapland::Server::kde_idle::timeout_created,

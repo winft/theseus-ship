@@ -259,7 +259,8 @@ private:
 
         setup_devices();
 
-        fake_input = platform.base.server->display->createFakeInput();
+        fake_input
+            = std::make_unique<Wrapland::Server::FakeInput>(platform.base.server->display.get());
         QObject::connect(fake_input.get(),
                          &Wrapland::Server::FakeInput::deviceCreated,
                          qobject.get(),

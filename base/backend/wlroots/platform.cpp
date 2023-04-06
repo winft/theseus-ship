@@ -64,6 +64,7 @@ void add_new_output(wlroots::platform& platform, wlr_output* native)
 
     platform.all_outputs.push_back(output);
     platform.outputs.push_back(output);
+    platform.server->output_manager->commit_changes();
 
     Q_EMIT platform.output_added(output);
 }
@@ -192,7 +193,7 @@ void process_drm_leased(wlroots::platform& platform, Wrapland::Server::drm_lease
 
 void platform::setup_drm_leasing(Wrapland::Server::Display* display, wlr_backend* drm_backend)
 {
-    drm_lease_device = display->createDrmLeaseDeviceV1();
+    drm_lease_device = std::make_unique<Wrapland::Server::drm_lease_device_v1>(display);
 
     connect(drm_lease_device.get(),
             &Wrapland::Server::drm_lease_device_v1::needs_new_client_fd,

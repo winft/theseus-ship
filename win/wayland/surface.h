@@ -19,12 +19,11 @@ namespace KWin::win::wayland
 template<typename Win>
 void update_surface_outputs(Win* win)
 {
-    std::vector<Wrapland::Server::Output*> surface_outputs;
+    std::vector<Wrapland::Server::output*> surface_outputs;
 
-    auto const outputs = win->space.base.server->display->outputs();
-    for (auto output : outputs) {
-        if (win->geo.frame.intersects(output->output()->geometry().toRect())) {
-            surface_outputs.push_back(output->output());
+    for (auto output : win->space.base.server->output_manager->outputs) {
+        if (win->geo.frame.intersects(output->get_state().geometry.toRect())) {
+            surface_outputs.push_back(output);
         }
     }
 

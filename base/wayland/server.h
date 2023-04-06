@@ -23,9 +23,23 @@
 #include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Server/client.h>
-#include <Wrapland/Server/globals.h>
+#include <Wrapland/Server/data_control_v1.h>
+#include <Wrapland/Server/data_device_manager.h>
+#include <Wrapland/Server/dpms.h>
+#include <Wrapland/Server/keystate.h>
+#include <Wrapland/Server/linux_dmabuf_v1.h>
+#include <Wrapland/Server/output.h>
+#include <Wrapland/Server/output_manager.h>
+#include <Wrapland/Server/pointer_constraints_v1.h>
+#include <Wrapland/Server/pointer_gestures_v1.h>
+#include <Wrapland/Server/relative_pointer_v1.h>
+#include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/viewporter.h>
+#include <Wrapland/Server/wlr_output_manager_v1.h>
+#include <Wrapland/Server/xdg_output.h>
 #include <memory>
 #include <sys/socket.h>
+#include <vector>
 
 namespace KWin::base::wayland
 {
@@ -82,32 +96,12 @@ public:
         }
     }
 
-    Wrapland::Server::linux_dmabuf_v1* linux_dmabuf()
-    {
-        return globals->linux_dmabuf_v1.get();
-    }
-
-    Wrapland::Server::Viewporter* viewporter() const
-    {
-        return globals->viewporter.get();
-    }
-
     Wrapland::Server::Seat* seat() const
     {
-        if (globals->seats.empty()) {
+        if (seats.empty()) {
             return nullptr;
         }
-        return globals->seats.front().get();
-    }
-
-    Wrapland::Server::data_device_manager* data_device_manager() const
-    {
-        return globals->data_device_manager.get();
-    }
-
-    Wrapland::Server::primary_selection_device_manager* primary_selection_device_manager() const
-    {
-        return globals->primary_selection_device_manager.get();
+        return seats.front().get();
     }
 
     /**
@@ -221,27 +215,41 @@ public:
 
     void update_key_state(input::keyboard_leds leds)
     {
-        if (!globals->key_state) {
+        if (!key_state) {
             return;
         }
 
         using key = Wrapland::Server::KeyState::Key;
         using state = Wrapland::Server::KeyState::State;
 
-        globals->key_state->setState(
-            key::CapsLock,
-            flags(leds & input::keyboard_leds::caps_lock) ? state::Locked : state::Unlocked);
-        globals->key_state->setState(
-            key::NumLock,
-            flags(leds & input::keyboard_leds::num_lock) ? state::Locked : state::Unlocked);
-        globals->key_state->setState(
-            key::ScrollLock,
-            flags(leds & input::keyboard_leds::scroll_lock) ? state::Locked : state::Unlocked);
+        key_state->setState(key::CapsLock,
+                            flags(leds & input::keyboard_leds::caps_lock) ? state::Locked
+                                                                          : state::Unlocked);
+        key_state->setState(key::NumLock,
+                            flags(leds & input::keyboard_leds::num_lock) ? state::Locked
+                                                                         : state::Unlocked);
+        key_state->setState(key::ScrollLock,
+                            flags(leds & input::keyboard_leds::scroll_lock) ? state::Locked
+                                                                            : state::Unlocked);
     }
 
     std::unique_ptr<server_qobject> qobject;
     std::unique_ptr<Wrapland::Server::Display> display;
-    std::unique_ptr<Wrapland::Server::globals> globals;
+    std::unique_ptr<Wrapland::Server::output_manager> output_manager;
+
+    std::unique_ptr<Wrapland::Server::linux_dmabuf_v1> linux_dmabuf;
+    std::unique_ptr<Wrapland::Server::Viewporter> viewporter;
+    std::vector<std::unique_ptr<Wrapland::Server::Seat>> seats;
+    std::unique_ptr<Wrapland::Server::data_device_manager> data_device_manager;
+    std::unique_ptr<Wrapland::Server::primary_selection_device_manager>
+        primary_selection_device_manager;
+    std::unique_ptr<Wrapland::Server::KeyState> key_state;
+    std::unique_ptr<Wrapland::Server::PointerGesturesV1> pointer_gestures_v1;
+    std::unique_ptr<Wrapland::Server::PointerConstraintsV1> pointer_constraints_v1;
+    std::unique_ptr<Wrapland::Server::data_control_manager_v1> data_control_manager_v1;
+    std::unique_ptr<Wrapland::Server::ShadowManager> shadow_manager;
+    std::unique_ptr<Wrapland::Server::DpmsManager> dpms_manager;
+    std::unique_ptr<Wrapland::Server::RelativePointerManagerV1> relative_pointer_manager_v1;
 
     struct {
         Wrapland::Server::Client* server{nullptr};
@@ -261,12 +269,12 @@ private:
     explicit server(Base& base, start_options flags)
         : qobject{std::make_unique<server_qobject>()}
         , display(std::make_unique<filtered_display>())
-        , globals{std::make_unique<Wrapland::Server::globals>()}
+        , output_manager{std::make_unique<Wrapland::Server::output_manager>(*display)}
         , m_initFlags{flags}
         , base{base}
 
     {
-        qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
+        qRegisterMetaType<Wrapland::Server::output_dpms_mode>();
     }
 
     void create_globals()
@@ -277,27 +285,53 @@ private:
         }
 
         display->createShm();
-        globals->seats.push_back(display->createSeat());
+        seats.emplace_back(std::make_unique<Wrapland::Server::Seat>(display.get()));
 
-        globals->pointer_gestures_v1 = display->createPointerGestures();
-        globals->pointer_constraints_v1 = display->createPointerConstraints();
-        globals->data_device_manager = display->createDataDeviceManager();
-        globals->primary_selection_device_manager = display->createPrimarySelectionDeviceManager();
-        globals->data_control_manager_v1 = display->create_data_control_manager_v1();
+        output_manager->create_xdg_manager();
+        pointer_gestures_v1 = std::make_unique<Wrapland::Server::PointerGesturesV1>(display.get());
+        pointer_constraints_v1
+            = std::make_unique<Wrapland::Server::PointerConstraintsV1>(display.get());
+        data_device_manager
+            = std::make_unique<Wrapland::Server::data_device_manager>(display.get());
+        primary_selection_device_manager
+            = std::make_unique<Wrapland::Server::primary_selection_device_manager>(display.get());
+        data_control_manager_v1
+            = std::make_unique<Wrapland::Server::data_control_manager_v1>(display.get());
 
-        globals->shadow_manager = display->createShadowManager();
-        globals->dpms_manager = display->createDpmsManager();
+        shadow_manager = std::make_unique<Wrapland::Server::ShadowManager>(display.get());
+        dpms_manager = std::make_unique<Wrapland::Server::DpmsManager>(display.get());
 
-        globals->output_management_v1 = display->createOutputManagementV1();
-        QObject::connect(globals->output_management_v1.get(),
-                         &Wrapland::Server::OutputManagementV1::configurationChangeRequested,
+        auto& wlr_output_manager = output_manager->create_wlr_manager_v1();
+        QObject::connect(&wlr_output_manager,
+                         &Wrapland::Server::wlr_output_manager_v1::test_config,
                          qobject.get(),
-                         [this](auto config) { request_outputs_change(base, config); });
+                         [this](auto config) {
+                             if (outputs_test_config(base, *config)) {
+                                 config->send_succeeded();
+                             } else {
+                                 config->send_failed();
+                             }
+                         });
+        QObject::connect(&wlr_output_manager,
+                         &Wrapland::Server::wlr_output_manager_v1::apply_config,
+                         qobject.get(),
+                         [this](auto config) {
+                             if (!outputs_apply_config(base, *config)) {
+                                 config->send_failed();
+                                 return;
+                             }
 
-        globals->key_state = display->createKeyState();
-        globals->viewporter = display->createViewporter();
+                             // TODO(romangg): Should we wait until the render module has committed
+                             //                the first frame and only then report success?
+                             config->send_succeeded();
+                             output_manager->commit_changes();
+                         });
 
-        globals->relative_pointer_manager_v1 = display->createRelativePointerManager();
+        key_state = std::make_unique<Wrapland::Server::KeyState>(display.get());
+        viewporter = std::make_unique<Wrapland::Server::Viewporter>(display.get());
+
+        relative_pointer_manager_v1
+            = std::make_unique<Wrapland::Server::RelativePointerManagerV1>(display.get());
     }
 
     void create_internal_connection(std::function<void(bool)> callback)
@@ -427,8 +461,8 @@ private:
                              }
                              ScreenLocker::KSldApp::self()->setWaylandFd(clientFd);
 
-                             for (auto* seat : display->seats()) {
-                                 QObject::connect(seat,
+                             for (auto& seat : seats) {
+                                 QObject::connect(seat.get(),
                                                   &Wrapland::Server::Seat::timestampChanged,
                                                   screenLockerApp,
                                                   &ScreenLocker::KSldApp::userActivity);
@@ -445,8 +479,8 @@ private:
                                  screen_locker_client_connection = nullptr;
                              }
 
-                             for (auto* seat : display->seats()) {
-                                 QObject::disconnect(seat,
+                             for (auto& seat : seats) {
+                                 QObject::disconnect(seat.get(),
                                                      &Wrapland::Server::Seat::timestampChanged,
                                                      screenLockerApp,
                                                      &ScreenLocker::KSldApp::userActivity);
