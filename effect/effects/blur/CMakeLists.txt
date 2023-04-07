@@ -18,10 +18,10 @@ kconfig_add_kcfg_files(blur_SOURCES
 
 kwin4_add_effect_module(kwin4_effect_blur ${blur_SOURCES})
 target_link_libraries(kwin4_effect_blur PRIVATE
-    kwineffects
-    kwinglutils
-    KF5::ConfigGui
-    KDecoration2::KDecoration
+  KDecoration2::KDecoration
+  KF6::ConfigGui
+  kwineffects
+  kwinglutils
 )
 
 #######################################
@@ -34,10 +34,10 @@ if (KWIN_BUILD_KCMS)
     kwin_add_effect_config(kwin_blur_config ${kwin_blur_config_SRCS})
 
     target_link_libraries(kwin_blur_config
-        KF5::ConfigWidgets
-        KF5::CoreAddons
-        KF5::I18n
-        Qt::DBus
-        KWinEffectsInterface
+      KF6::ConfigWidgets
+      KF6::CoreAddons
+      KF6::I18n
+      KWinEffectsInterface
+      Qt::DBus
     )
 endif()

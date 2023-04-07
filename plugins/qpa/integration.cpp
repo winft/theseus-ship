@@ -23,9 +23,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <qpa/qplatformwindow.h>
 #include <qpa/qwindowsysteminterface.h>
 
-#include <QtEventDispatcherSupport/private/qunixeventdispatcher_qpa_p.h>
-#include <QtFontDatabaseSupport/private/qgenericunixfontdatabase_p.h>
-#include <QtThemeSupport/private/qgenericunixthemes_p.h>
+#include <QtGui/private/qgenericunixfontdatabase_p.h>
+#include <QtGui/private/qgenericunixthemes_p.h>
+#include <QtGui/private/qunixeventdispatcher_qpa_p.h>
 
 namespace KWin
 {

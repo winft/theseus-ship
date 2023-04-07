@@ -178,9 +178,9 @@ TEST_CASE("no global shortcuts", "[input]")
         QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
         QVERIFY(triggeredSpy.isValid());
         KGlobalAccel::self()->setShortcut(action.get(),
-                                          QList<QKeySequence>{Qt::META + Qt::SHIFT + Qt::Key_W},
+                                          QList<QKeySequence>{Qt::META | Qt::SHIFT | Qt::Key_W},
                                           KGlobalAccel::NoAutoloading);
-        setup.base->input->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
+        setup.base->input->registerShortcut(Qt::META | Qt::SHIFT | Qt::Key_W, action.get());
 
         // press meta+shift+w
         quint32 timestamp = 0;

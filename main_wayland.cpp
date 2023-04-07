@@ -33,7 +33,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KPluginMetaData>
 #include <KShell>
 #include <KSignalHandler>
-#include <UpdateLaunchEnvironmentJob>
+#include <KUpdateLaunchEnvironmentJob>
 
 // Qt
 #include <qplatformdefs.h>
@@ -313,8 +313,8 @@ void ApplicationWayland::startSession()
     // This implies we're running in a full Plasma session i.e. when we use the wrapper (that's
     // there the service name comes from), but we can also do it in a plain setup without session.
     // Registering the service names indicates that we're live and all env vars are exported.
-    auto env_sync_job = new UpdateLaunchEnvironmentJob(process_environment);
-    QObject::connect(env_sync_job, &UpdateLaunchEnvironmentJob::finished, this, []() {
+    auto env_sync_job = new KUpdateLaunchEnvironmentJob(process_environment);
+    QObject::connect(env_sync_job, &KUpdateLaunchEnvironmentJob::finished, this, []() {
         QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWinWrapper"));
     });
 }

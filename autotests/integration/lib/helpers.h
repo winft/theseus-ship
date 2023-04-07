@@ -6,6 +6,9 @@
 */
 #pragma once
 
+// Must be included first because of collision with Xlib defines.
+#include <QtTest>
+
 #include "types.h"
 
 #include "base/output.h"
@@ -14,7 +17,6 @@
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
-#include <QtTest>
 #include <Wrapland/Client/xdg_shell.h>
 
 struct wl_signal;

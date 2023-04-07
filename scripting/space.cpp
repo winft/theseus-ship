@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/outline.h"
 
 #include <QApplication>
-#include <QDesktopWidget>
 
 namespace KWin::scripting
 {
@@ -100,19 +99,19 @@ QList<window*> qt_script_space::clientList() const
 QQmlListProperty<window> declarative_script_space::clients()
 {
     return QQmlListProperty<window>(this,
-                                    this,
+                                    nullptr,
                                     &declarative_script_space::countClientList,
                                     &declarative_script_space::atClientList);
 }
 
-int declarative_script_space::countClientList(QQmlListProperty<window>* clients)
+qsizetype declarative_script_space::countClientList(QQmlListProperty<window>* clients)
 {
     Q_UNUSED(clients)
     auto wsw = reinterpret_cast<declarative_script_space*>(clients->data);
     return wsw->windows_count;
 }
 
-window* declarative_script_space::atClientList(QQmlListProperty<window>* clients, int index)
+window* declarative_script_space::atClientList(QQmlListProperty<window>* clients, qsizetype index)
 {
     Q_UNUSED(clients)
     auto wsw = reinterpret_cast<declarative_script_space*>(clients->data);

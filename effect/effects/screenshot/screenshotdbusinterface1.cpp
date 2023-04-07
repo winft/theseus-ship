@@ -813,7 +813,7 @@ ScreenShotDBusInterface1::screenshotArea(int x, int y, int width, int height, bo
 
 bool ScreenShotDBusInterface1::isTakingScreenshot() const
 {
-    return m_source;
+    return m_source != nullptr;
 }
 
 void ScreenShotDBusInterface1::showInfoMessage(InfoMessageMode mode)

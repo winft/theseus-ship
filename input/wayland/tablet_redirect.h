@@ -54,7 +54,7 @@ public:
                          qreal rotation,
                          bool tip_down,
                          bool tip_near,
-                         quint64 serial_id,
+                         quint64 /*serial_id*/,
                          quint64 /*toolId*/,
                          void* /*device*/)
     {
@@ -75,10 +75,9 @@ public:
 
         auto const button = tip.down ? Qt::LeftButton : Qt::NoButton;
         QTabletEvent ev(t,
+                        QPointingDevice::primaryPointingDevice(),
                         pos,
                         pos,
-                        QTabletEvent::Stylus,
-                        QTabletEvent::Pen,
                         pressure,
                         x_tilt,
                         y_tilt,
@@ -86,7 +85,6 @@ public:
                         rotation,
                         0, // z
                         Qt::NoModifier,
-                        serial_id,
                         button,
                         button);
 

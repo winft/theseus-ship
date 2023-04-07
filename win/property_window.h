@@ -137,7 +137,6 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(bool providesContextHelp READ providesContextHelp CONSTANT)
 
     Q_PROPERTY(quint32 surfaceId READ surfaceId NOTIFY surfaceIdChanged)
-    Q_PROPERTY(Wrapland::Server::Surface* surface READ surface)
     Q_PROPERTY(bool deleted READ isDeleted CONSTANT)
 
     /**

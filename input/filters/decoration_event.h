@@ -116,14 +116,14 @@ public:
                 }
 
                 auto qt_event = axis_to_qt_event(*this->redirect.pointer, event);
-                auto adapted_qt_event = QWheelEvent(qt_event.pos() - window->geo.pos(),
-                                                    qt_event.pos(),
+                auto adapted_qt_event = QWheelEvent(qt_event.position() - window->geo.pos(),
+                                                    qt_event.position(),
                                                     QPoint(),
                                                     qt_event.angleDelta(),
-                                                    qt_event.delta(),
-                                                    qt_event.orientation(),
                                                     qt_event.buttons(),
-                                                    qt_event.modifiers());
+                                                    qt_event.modifiers(),
+                                                    Qt::NoScrollPhase,
+                                                    false);
 
                 adapted_qt_event.setAccepted(false);
                 QCoreApplication::sendEvent(decoration->decoration(), &adapted_qt_event);

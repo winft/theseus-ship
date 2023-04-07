@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KPackage/Package>
 #include <QFutureWatcher>
 #include <QMap>
+#include <QPluginLoader>
 #include <QStringList>
 #include <QtConcurrentRun>
 

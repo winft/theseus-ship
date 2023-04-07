@@ -442,9 +442,9 @@ class KWIN_EXPORT declarative_script_space : public space
 public:
     declarative_script_space() = default;
 
-    QQmlListProperty<KWin::scripting::window> clients();
-    static int countClientList(QQmlListProperty<KWin::scripting::window>* clients);
-    static window* atClientList(QQmlListProperty<KWin::scripting::window>* clients, int index);
+    QQmlListProperty<window> clients();
+    static qsizetype countClientList(QQmlListProperty<window>* clients);
+    static window* atClientList(QQmlListProperty<window>* clients, qsizetype index);
 };
 
 template<typename Space, typename RefSpace>

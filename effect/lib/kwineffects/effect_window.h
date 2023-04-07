@@ -13,6 +13,7 @@
 
 #include <QIcon>
 #include <QObject>
+#include <QWindow>
 
 namespace KDecoration2
 {

@@ -26,9 +26,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QCommandLineParser>
 #include <QQuickWindow>
 #include <QStandardPaths>
+#include <QtGui/private/qtx11extras_p.h>
 #include <QTranslator>
 #include <QLibraryInfo>
-#include <QX11Info>
 
 #include <cerrno>
 #include <unistd.h>

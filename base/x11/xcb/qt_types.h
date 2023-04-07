@@ -7,6 +7,7 @@
 
 #include "win/x11/key_server.h"
 
+#include <Qt>
 #include <xcb/xcb.h>
 
 namespace KWin::base::x11::xcb

@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
 #include "kwin_export.h"
+#include "scripting/window.h"
 
 #include <QQuickItem>
 #include <QUuid>
@@ -18,11 +19,6 @@ namespace KWin
 class EffectWindow;
 class GLRenderTarget;
 class GLTexture;
-
-namespace scripting
-{
-class window;
-}
 
 namespace render
 {

@@ -35,11 +35,12 @@ void shortcut_dialog::accept()
     QKeySequence seq = shortcut();
 
     if (!seq.isEmpty()) {
-        if (seq[0] == Qt::Key_Escape) {
+        if (seq[0] == QKeyCombination(Qt::Key_Escape)) {
             reject();
             return;
         }
-        if (seq[0] == Qt::Key_Space || (seq[0] & Qt::KeyboardModifierMask) == 0) {
+        if (seq[0] == QKeyCombination(Qt::Key_Space)
+            || seq[0].keyboardModifiers() == Qt::NoModifier) {
             // clear
             m_ui.keySequenceEdit->clear();
             QDialog::accept();

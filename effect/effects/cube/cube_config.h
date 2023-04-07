@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_CUBE_CONFIG_H
 #define KWIN_CUBE_CONFIG_H
 
-#include <kcmodule.h>
+#include <KCModule>
 
 #include "ui_cube_config.h"
 

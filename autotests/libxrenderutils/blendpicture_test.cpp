@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include <QLoggingCategory>
-#include <QX11Info>
+#include <QtGui/private/qtx11extras_p.h>
 #include <QtTest>
 
 #include "../../effect/lib/kwinxrender/utils.h"

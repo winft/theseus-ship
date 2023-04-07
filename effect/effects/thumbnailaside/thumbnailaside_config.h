@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_THUMBNAILASIDE_CONFIG_H
 #define KWIN_THUMBNAILASIDE_CONFIG_H
 
-#include <kcmodule.h>
+#include <KCModule>
 
 #include "ui_thumbnailaside_config.h"
 

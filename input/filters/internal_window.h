@@ -103,14 +103,14 @@ public:
         }
 
         auto qt_event = axis_to_qt_event(*this->redirect.pointer, event);
-        auto adapted_qt_event = QWheelEvent(qt_event.pos() - internal->position(),
-                                            qt_event.pos(),
+        auto adapted_qt_event = QWheelEvent(qt_event.position() - internal->position(),
+                                            qt_event.position(),
                                             QPoint(),
                                             qt_event.angleDelta() * -1,
-                                            qt_event.delta() * -1,
-                                            qt_event.orientation(),
                                             qt_event.buttons(),
-                                            qt_event.modifiers());
+                                            qt_event.modifiers(),
+                                            Qt::NoScrollPhase,
+                                            false);
 
         adapted_qt_event.setAccepted(false);
         QCoreApplication::sendEvent(internal, &adapted_qt_event);
@@ -159,6 +159,9 @@ public:
         return found;
     }
 
+    // TODO(romangg): This function is bad, because the consumer still has to set accepted. It's
+    //                not possible differnently, because QKeyEvent can't be moved/copied. Replace
+    //                the class somehow.
     QKeyEvent get_internal_key_event(key_event const& event)
     {
         auto const& xkb = event.base.dev->xkb;
@@ -166,17 +169,13 @@ public:
         auto qt_key = xkb->to_qt_key(
             keysym, event.keycode, Qt::KeyboardModifiers(), true /* workaround for QTBUG-62102 */);
 
-        QKeyEvent internalEvent(event.state == key_state::pressed ? QEvent::KeyPress
-                                                                  : QEvent::KeyRelease,
-                                qt_key,
-                                xkb->qt_modifiers,
-                                event.keycode,
-                                keysym,
-                                0,
-                                QString::fromStdString(xkb->to_string(keysym)));
-        internalEvent.setAccepted(false);
-
-        return internalEvent;
+        return {event.state == key_state::pressed ? QEvent::KeyPress : QEvent::KeyRelease,
+                qt_key,
+                xkb->qt_modifiers,
+                event.keycode,
+                keysym,
+                0,
+                QString::fromStdString(xkb->to_string(keysym))};
     }
 
     bool key(key_event const& event) override
@@ -187,6 +186,7 @@ public:
         }
 
         auto internal_event = get_internal_key_event(event);
+        internal_event.setAccepted(false);
         if (QCoreApplication::sendEvent(window, &internal_event)) {
             this->redirect.platform.base.server->seat()->setFocusedKeyboardSurface(nullptr);
             pass_to_wayland_server(this->redirect, event);
@@ -203,6 +203,7 @@ public:
         }
 
         auto internal_event = get_internal_key_event(event);
+        internal_event.setAccepted(false);
         return QCoreApplication::sendEvent(window, &internal_event);
     }
 

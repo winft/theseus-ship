@@ -16,8 +16,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <kwinconfig.h>
 
-#define KWIN_QT5_PORTING 0
-
 namespace KWin
 {
 KWIN_EXPORT Q_NAMESPACE

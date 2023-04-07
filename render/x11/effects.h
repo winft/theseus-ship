@@ -19,7 +19,6 @@
 
 #include <kwinxrender/utils.h>
 
-#include <QDesktopWidget>
 #include <memory.h>
 
 namespace KWin::render::x11
@@ -110,16 +109,7 @@ public:
 protected:
     bool doGrabKeyboard() override
     {
-        bool ret = base::x11::grab_keyboard(this->compositor.platform.base.x11_data);
-        if (!ret)
-            return false;
-        // Workaround for Qt 5.9 regression introduced with 2b34aefcf02f09253473b096eb4faffd3e62b5f4
-        // we no longer get any events for the root window, one needs to call winId() on the desktop
-        // window
-        // TODO: change effects event handling to create the appropriate QKeyEvent without relying
-        // on Qt as it's done already in the Wayland case.
-        qApp->desktop()->winId();
-        return ret;
+        return base::x11::grab_keyboard(this->compositor.platform.base.x11_data);
     }
 
     void doUngrabKeyboard() override

@@ -23,7 +23,7 @@ public:
     }
 
     bool
-    nativeEventFilter(QByteArray const& event_type, void* message, long int* /*result*/) override
+    nativeEventFilter(QByteArray const& event_type, void* message, qintptr* /*result*/) override
     {
         if (event_type != "xcb_generic_event_t") {
             return false;

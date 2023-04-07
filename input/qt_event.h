@@ -100,26 +100,18 @@ QMouseEvent button_to_qt_event(Ptr const& ptr, button_event const& event)
     return get_qt_mouse_button_event(ptr, event.key, event.state);
 }
 
+// TODO(romangg): This function is bad, because the consumer still has to set the timestamp. It's
+//                not possible differnently, because QMouseEvent can't be moved/copied. Replace the
+//                class somehow.
 template<typename Ptr>
-QMouseEvent motion_to_qt_event(Ptr const& ptr, motion_event const& event)
+QMouseEvent motion_to_qt_event(Ptr const& ptr, motion_event const& /*event*/)
 {
-    auto pos = ptr.pos();
-
-    auto qt_event = get_qt_mouse_event(ptr, QMouseEvent::MouseMove, pos, Qt::NoButton);
-    qt_event.setTimestamp(event.base.time_msec);
-
-    return qt_event;
+    return get_qt_mouse_event(ptr, QMouseEvent::MouseMove, ptr.pos(), Qt::NoButton);
 }
 
-template<typename Ptr>
-QMouseEvent motion_absolute_to_qt_event(Ptr const& ptr, motion_absolute_event const& event)
-{
-    auto qt_event = get_qt_mouse_motion_absolute_event(ptr, event.pos);
-    qt_event.setTimestamp(event.base.time_msec);
-
-    return qt_event;
-}
-
+// TODO(romangg): This function is bad, because the consumer still has to set the timestamp. It's
+//                not possible differnently, because QWheelEvent can't be moved/copied. Replace the
+//                class somehow.
 template<typename Ptr>
 QWheelEvent axis_to_qt_event(Ptr const& ptr, axis_event const& event)
 {
@@ -130,20 +122,11 @@ QWheelEvent axis_to_qt_event(Ptr const& ptr, axis_event const& event)
     //                the pointer the event originated from.
     auto mods = xkb::get_active_keyboard_modifiers(ptr.redirect->platform);
 
-    auto const delta_int = static_cast<int>(std::round(event.delta));
-    auto delta_point = QPoint(event.delta, 0);
-    auto orientation = Qt::Horizontal;
+    auto const delta_point = event.orientation == axis_orientation::horizontal
+        ? QPoint(event.delta, 0)
+        : QPoint(0, event.delta);
 
-    if (event.orientation == axis_orientation::vertical) {
-        delta_point = QPoint(0, event.delta);
-        orientation = Qt::Vertical;
-    }
-
-    auto qt_event
-        = QWheelEvent(pos, pos, QPoint(), delta_point, delta_int, orientation, buttons, mods);
-    qt_event.setTimestamp(event.base.time_msec);
-
-    return qt_event;
+    return {pos, pos, QPoint(), delta_point, buttons, mods, Qt::NoScrollPhase, false};
 }
 
 inline QKeyEvent key_to_qt_event(key_event const& event)

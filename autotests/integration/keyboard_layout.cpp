@@ -474,7 +474,7 @@ TEST_CASE("keyboard layout", "[input]")
         action->setObjectName(QStringLiteral("Switch keyboard layout to English (US)"));
         action->setProperty("componentName", componentName);
         KGlobalAccel::self()->setShortcut(action,
-                                          QList<QKeySequence>{Qt::CTRL + Qt::ALT + Qt::Key_1},
+                                          QList<QKeySequence>{Qt::CTRL | Qt::ALT | Qt::Key_1},
                                           KGlobalAccel::NoAutoloading);
         delete action;
 
@@ -482,7 +482,7 @@ TEST_CASE("keyboard layout", "[input]")
         action->setObjectName(QStringLiteral("Switch keyboard layout to German"));
         action->setProperty("componentName", componentName);
         KGlobalAccel::self()->setShortcut(action,
-                                          QList<QKeySequence>{Qt::CTRL + Qt::ALT + Qt::Key_2},
+                                          QList<QKeySequence>{Qt::CTRL | Qt::ALT | Qt::Key_2},
                                           KGlobalAccel::NoAutoloading);
         delete action;
 

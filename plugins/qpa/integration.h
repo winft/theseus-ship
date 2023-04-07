@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <epoxy/egl.h>
 
 #include <qpa/qplatformintegration.h>
-#include <QtServiceSupport/private/qgenericunixservices_p.h>
+#include <QtGui/private/qgenericunixservices_p.h>
 #include <QObject>
 
 namespace KWin

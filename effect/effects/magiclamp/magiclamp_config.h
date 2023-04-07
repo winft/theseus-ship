@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_MAGICLAMP_CONFIG_H
 #define KWIN_MAGICLAMP_CONFIG_H
 
-#include <kcmodule.h>
+#include <KCModule>
 
 #include "ui_magiclamp_config.h"
 

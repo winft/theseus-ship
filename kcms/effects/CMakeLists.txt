@@ -17,16 +17,13 @@ kcoreaddons_add_plugin(kcm_kwin_effects SOURCES ${kcm_kwin_effects_PART_SRCS} IN
 kcmutils_generate_desktop_file(kcm_kwin_effects)
 
 target_link_libraries(kcm_kwin_effects
-    Qt::DBus
-
-    KF5::KCMUtils
-    KF5::I18n
-    KF5::KCMUtils
-    KF5::NewStuff
-    KF5::QuickAddons
-    KF5::XmlGui
-
-    kcmkwincommon
+  kcmkwincommon
+  KF6::I18n
+  KF6::KCMUtils
+  KF6::QuickAddons
+  KF6::XmlGui
+  Qt::DBus
+  Qt::Quick
 )
 
 ########### install files ###############

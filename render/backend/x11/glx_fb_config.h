@@ -47,7 +47,7 @@ fb_config_info* fb_config_info_for_visual(xcb_visualid_t visual, Backend& backen
 
     if (!direct) {
         qCCritical(KWIN_X11).nospace()
-            << "Could not find a picture format for visual 0x" << hex << visual;
+            << "Could not find a picture format for visual 0x" << Qt::hex << visual;
         return info;
     }
 
@@ -110,7 +110,7 @@ fb_config_info* fb_config_info_for_visual(xcb_visualid_t visual, Backend& backen
 
     if (count < 1) {
         qCCritical(KWIN_X11).nospace()
-            << "Could not find a framebuffer configuration for visual 0x" << hex << visual;
+            << "Could not find a framebuffer configuration for visual 0x" << Qt::hex << visual;
         return info;
     }
 
@@ -195,7 +195,7 @@ fb_config_info* fb_config_info_for_visual(xcb_visualid_t visual, Backend& backen
         glXGetFBConfigAttrib(display, info->fbconfig, GLX_VISUAL_ID, &visual_id);
 
         qCDebug(KWIN_X11).nospace()
-            << "Using FBConfig 0x" << hex << fbc_id << " for visual 0x" << hex << visual_id;
+            << "Using FBConfig 0x" << Qt::hex << fbc_id << " for visual 0x" << Qt::hex << visual_id;
     }
 
     return info;

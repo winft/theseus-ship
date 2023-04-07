@@ -5,14 +5,14 @@
 SPDX-License-Identifier: MIT
 
 */
-#include <KAuth/KAuthAction>
+#include <KAuth/Action>
 #include <KLocalizedString>
 #include <KMessageBox>
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QProcess>
-#include <QtX11Extras/QX11Info>
+#include <QtGui/private/qtx11extras_p.h>
 #include <xcb/xcb.h>
 
 #include <cerrno>

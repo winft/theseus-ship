@@ -518,10 +518,10 @@ bool button_press_event(Win* win,
                               QPointF(x_root, y_root),
                               QPoint(),
                               angle,
-                              delta,
-                              hor ? Qt::Horizontal : Qt::Vertical,
                               base::x11::xcb::to_qt_mouse_buttons(state),
-                              modifiers);
+                              modifiers,
+                              Qt::NoScrollPhase,
+                              false);
             event.setAccepted(false);
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (!event.isAccepted() && !hor) {

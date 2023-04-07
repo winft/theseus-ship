@@ -151,16 +151,16 @@ bool GlobalShortcutsRegistry::isShortcutAvailable(const QKeySequence& shortcut,
 static void correctKeyEvent(int& keyQt)
 {
     switch (keyQt) {
-    case Qt::ShiftModifier | Qt::Key_Shift:
+    case (Qt::ShiftModifier | Qt::Key_Shift).toCombined():
         keyQt = Qt::Key_Shift;
         break;
-    case Qt::ControlModifier | Qt::Key_Control:
+    case (Qt::ControlModifier | Qt::Key_Control).toCombined():
         keyQt = Qt::Key_Control;
         break;
-    case Qt::AltModifier | Qt::Key_Alt:
+    case (Qt::AltModifier | Qt::Key_Alt).toCombined():
         keyQt = Qt::Key_Alt;
         break;
-    case Qt::MetaModifier | Qt::Key_Meta:
+    case (Qt::MetaModifier | Qt::Key_Meta).toCombined():
         keyQt = Qt::Key_Meta;
         break;
     }

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <KConfigWidgets/kcmodule.h>
+#include <KCModule>
 
 #include "ui_windowvieweffectkcm.h"
 

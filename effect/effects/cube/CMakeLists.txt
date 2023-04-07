@@ -14,10 +14,10 @@ kconfig_add_kcfg_files(cube_SOURCES
 )
 kwin4_add_effect_module(kwin4_effect_cube ${cube_SOURCES})
 target_link_libraries(kwin4_effect_cube PRIVATE
-    kwineffects
-    KF5::ConfigWidgets
-    KF5::I18n
-    Qt::Concurrent
+  KF6::ConfigWidgets
+  KF6::I18n
+  kwineffects
+  Qt::Concurrent
 )
 
 # Data files
@@ -33,12 +33,12 @@ if (KWIN_BUILD_KCMS)
   kwin_add_effect_config(kwin_cube_config ${kwin_cube_config_SRCS})
 
   target_link_libraries(kwin_cube_config
-    KF5::ConfigWidgets
-    KF5::CoreAddons
-    KF5::GlobalAccel
-    KF5::I18n
-    KF5::XmlGui
-    KF5::KIOWidgets
+    KF6::ConfigWidgets
+    KF6::CoreAddons
+    KF6::GlobalAccel
+    KF6::I18n
+    KF6::XmlGui
+    KF6::KIOWidgets
     KWinEffectsInterface
   )
 endif()

@@ -35,15 +35,17 @@ InvertEffectConfig::InvertEffectConfig(QWidget* parent, const QVariantList& args
     a->setText(i18n("Toggle Invert Effect"));
     a->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << Qt::CTRL + Qt::META + Qt::Key_I);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::CTRL + Qt::META + Qt::Key_I);
+        a, QList<QKeySequence>() << (Qt::CTRL | Qt::META | Qt::Key_I));
+    KGlobalAccel::self()->setShortcut(a,
+                                      QList<QKeySequence>() << (Qt::CTRL | Qt::META | Qt::Key_I));
 
     QAction* b = actionCollection->addAction(QStringLiteral("InvertWindow"));
     b->setText(i18n("Toggle Invert Effect on Window"));
     b->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(
-        b, QList<QKeySequence>() << Qt::CTRL + Qt::META + Qt::Key_U);
-    KGlobalAccel::self()->setShortcut(b, QList<QKeySequence>() << Qt::CTRL + Qt::META + Qt::Key_U);
+        b, QList<QKeySequence>() << (Qt::CTRL | Qt::META | Qt::Key_U));
+    KGlobalAccel::self()->setShortcut(b,
+                                      QList<QKeySequence>() << (Qt::CTRL | Qt::META | Qt::Key_U));
 
     mShortcutEditor = new KShortcutsEditor(actionCollection,
                                            this,

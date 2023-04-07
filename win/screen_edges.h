@@ -23,6 +23,7 @@
 #include <QAction>
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusPendingCall>
 #include <QDateTime>
 #include <QFontDatabase>
 #include <QFontMetrics>

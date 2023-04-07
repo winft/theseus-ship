@@ -16,7 +16,7 @@
 #include <QWindow>
 #include <QWidget>
 #include <QCheckBox>
-#include <QX11Info>
+#include <QtGui/private/qtx11extras_p.h>
 
 #include <KWindowSystem>
 

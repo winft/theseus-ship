@@ -24,12 +24,10 @@ namespace KWin::scripting
 QObject* generic_scripted_config_factory::create(const char* iface,
                                                  QWidget* parentWidget,
                                                  QObject* parent,
-                                                 const QVariantList& args,
-                                                 const QString& keyword)
+                                                 const QVariantList& args)
 {
     Q_UNUSED(iface)
     Q_UNUSED(parent)
-    Q_UNUSED(keyword)
 
     // the plugin id is in the args when created by desktop effects kcm or EffectsModel in general
     auto pluginId = args.isEmpty() ? QString() : args.first().toString();

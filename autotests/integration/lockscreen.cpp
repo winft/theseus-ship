@@ -662,10 +662,10 @@ TEST_CASE("lockscreen", "[base]")
         action->setObjectName("LockScreentestKeyboardShortcut");
 
         KGlobalAccel::self()->setDefaultShortcut(
-            action.get(), QList<QKeySequence>{Qt::CTRL + Qt::META + Qt::ALT + Qt::Key_Space});
+            action.get(), QList<QKeySequence>{Qt::CTRL | Qt::META | Qt::ALT | Qt::Key_Space});
         KGlobalAccel::self()->setShortcut(
             action.get(),
-            QList<QKeySequence>{Qt::CTRL + Qt::META + Qt::ALT + Qt::Key_Space},
+            QList<QKeySequence>{Qt::CTRL | Qt::META | Qt::ALT | Qt::Key_Space},
             KGlobalAccel::NoAutoloading);
 
         // Try to trigger the shortcut.

@@ -13,7 +13,7 @@
 #include "base/logging.h"
 
 #include <KConfigGroup>
-#include <QtXkbCommonSupport/private/qxkbcommon_p.h>
+#include <QtGui/private/qxkbcommon_p.h>
 
 #include <bitset>
 #include <cassert>

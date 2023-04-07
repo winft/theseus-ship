@@ -20,11 +20,11 @@ qt_add_dbus_adaptor(windowview_SOURCES org.kde.KWin.Effect.WindowView1.xml windo
 kwin4_add_effect_module(kwin4_effect_windowview ${windowview_SOURCES})
 
 target_link_libraries(kwin4_effect_windowview PRIVATE
-    kwineffects
-    KF5::ConfigGui
-    KF5::I18n
-    Qt::Quick
-    Qt::Widgets
-    )
+  KF6::ConfigGui
+  KF6::I18n
+  kwineffects
+  Qt::Quick
+  Qt::Widgets
+)
 
 install(DIRECTORY qml DESTINATION ${KDE_INSTALL_DATADIR}/kwin/effects/windowview)

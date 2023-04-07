@@ -8,6 +8,7 @@
 #include <kwineffects/export.h>
 #include <kwineffects/types.h>
 
+#include <QIcon>
 #include <QRegion>
 
 namespace KWin

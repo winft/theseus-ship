@@ -8,7 +8,7 @@
 #include "base/logging.h"
 #include "base/types.h"
 
-#include <QX11Info>
+#include <QtGui/private/qtx11extras_p.h>
 #include <cerrno>
 #include <unistd.h>
 #include <xcb/xcb.h>

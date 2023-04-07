@@ -59,8 +59,9 @@ ThumbnailAsideEffectConfig::ThumbnailAsideEffectConfig(QWidget* parent, const QV
     a->setText(i18n("Toggle Thumbnail for Current Window"));
     a->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_T);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_T);
+        a, QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_T));
+    KGlobalAccel::self()->setShortcut(a,
+                                      QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_T));
 
     m_ui.editor->addCollection(m_actionCollection);
 }

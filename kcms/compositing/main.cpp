@@ -14,6 +14,7 @@
 #include <QLayout>
 
 #include <kcmodule.h>
+#include <KPluginFactory>
 #include <kservice.h>
 
 #include <algorithm>

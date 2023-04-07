@@ -851,5 +851,4 @@ private:
 
 }
 
-Q_DECLARE_METATYPE(KWin::scripting::window*)
 Q_DECLARE_METATYPE(QList<KWin::scripting::window*>)

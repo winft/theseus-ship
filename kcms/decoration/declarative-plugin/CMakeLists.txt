@@ -16,14 +16,14 @@ set(plugin_SRCS
 
 add_library(kdecorationprivatedeclarative SHARED ${plugin_SRCS})
 target_link_libraries(kdecorationprivatedeclarative
-    KDecoration2::KDecoration
-    KDecoration2::KDecoration2Private
-    Qt::DBus
-    Qt::Quick
-    KF5::CoreAddons
-    KF5::ConfigWidgets
-    KF5::I18n
-    KF5::Service
+  KDecoration2::KDecoration
+  KDecoration2::KDecoration2Private
+  KF6::ConfigWidgets
+  KF6::CoreAddons
+  KF6::I18n
+  KF6::Service
+  Qt::DBus
+  Qt::Quick
 )
 
 install(TARGETS kdecorationprivatedeclarative DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/kwin/private/kdecoration )

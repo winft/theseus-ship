@@ -25,6 +25,7 @@
 #include <KLocalizedString>
 #include <KProcess>
 #include <QAction>
+#include <QActionGroup>
 #include <QMenu>
 #include <QRect>
 #include <QWindow>

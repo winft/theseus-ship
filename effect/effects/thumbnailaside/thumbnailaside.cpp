@@ -26,7 +26,7 @@ ThumbnailAsideEffect::ThumbnailAsideEffect()
     QAction* a = new QAction(this);
     a->setObjectName(QStringLiteral("ToggleCurrentThumbnail"));
     a->setText(i18n("Toggle Thumbnail for Current Window"));
-    effects->registerGlobalShortcutAndDefault({Qt::META + Qt::CTRL + Qt::Key_T}, a);
+    effects->registerGlobalShortcutAndDefault({Qt::META | Qt::CTRL | Qt::Key_T}, a);
     connect(a, &QAction::triggered, this, &ThumbnailAsideEffect::toggleCurrentThumbnail);
 
     connect(effects, &EffectsHandler::windowClosed, this, &ThumbnailAsideEffect::slotWindowClosed);

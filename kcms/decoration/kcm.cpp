@@ -13,7 +13,6 @@
 #include <KConfigGroup>
 #include <KLocalizedString>
 #include <KPluginFactory>
-#include <KNSCore/Engine>
 
 #include <QDBusConnection>
 #include <QDBusMessage>

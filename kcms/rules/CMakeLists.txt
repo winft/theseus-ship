@@ -26,6 +26,9 @@ kconfig_add_kcfg_files(kwinrules_SRCS ../../win/rules/kconfig/rules_settings.kcf
 kconfig_add_kcfg_files(kwinrules_SRCS ../../win/rules/kconfig/rules_book_settings_base.kcfgc)
 
 add_library(KWinRulesObjects STATIC ${kwinrules_SRCS})
+set_target_properties(KWinRulesObjects PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+)
 
 set(kwin_kcm_rules_XCB_LIBS
     XCB::CURSOR
@@ -34,11 +37,12 @@ set(kwin_kcm_rules_XCB_LIBS
 )
 
 set(kcm_libs
-    kwin
-    kwin_x11_lib
-    KF5::KCMUtils
-    KF5::QuickAddons
-    KF5::WindowSystem
+  KF6::KCMUtils
+  KF6::ConfigWidgets
+  KF6::QuickAddons
+  KF6::WindowSystem
+  kwin
+  kwin_x11_lib
 )
 
 target_link_libraries(KWinRulesObjects ${kcm_libs} ${kwin_kcm_rules_XCB_LIBS})

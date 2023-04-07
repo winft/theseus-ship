@@ -16,11 +16,11 @@ kconfig_add_kcfg_files(magnifier_SOURCES
 
 kwin4_add_effect_module(kwin4_effect_magnifier ${magnifier_SOURCES})
 target_link_libraries(kwin4_effect_magnifier PRIVATE
-    kwineffects
-    kwinglutils
-    KF5::ConfigGui
-    KF5::ConfigWidgets
-    KF5::I18n
+  KF6::ConfigGui
+  KF6::ConfigWidgets
+  KF6::I18n
+  kwineffects
+  kwinglutils
 )
 
 #######################################
@@ -33,11 +33,11 @@ if (KWIN_BUILD_KCMS)
     kwin_add_effect_config(kwin_magnifier_config ${kwin_magnifier_config_SRCS})
 
     target_link_libraries(kwin_magnifier_config
-        KF5::ConfigWidgets
-        KF5::CoreAddons
-        KF5::GlobalAccel
-        KF5::I18n
-        KF5::XmlGui
-        KWinEffectsInterface
+      KF6::ConfigWidgets
+      KF6::CoreAddons
+      KF6::GlobalAccel
+      KF6::I18n
+      KF6::XmlGui
+      KWinEffectsInterface
     )
 endif()
