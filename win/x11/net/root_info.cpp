@@ -9,13 +9,8 @@
 
 #include "win/x11/extras.h"
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <private/qtx11extras_p.h>
-#else
-#include <QX11Info>
-#endif
-
 #include <assert.h>
+#include <private/qtx11extras_p.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

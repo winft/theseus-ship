@@ -10,12 +10,7 @@
 #include <QDebug>
 #include <QGuiApplication>
 #include <QTimerEvent>
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <private/qtx11extras_p.h>
-#else
-#include <QX11Info>
-#endif
 
 namespace KWin::base::x11
 {
@@ -101,11 +96,7 @@ public:
     create(selection_owner* owner, char const* selection_P, xcb_connection_t* c, xcb_window_t root);
 
 protected:
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     bool nativeEventFilter(QByteArray const& eventType, void* message, qintptr*) override
-#else
-    bool nativeEventFilter(QByteArray const& eventType, void* message, long*) override
-#endif
     {
         if (eventType != "xcb_generic_event_t") {
             return false;

@@ -12,12 +12,7 @@
 
 #include <QKeySequence>
 #include <QStringList>
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <private/qtx11extras_p.h>
-#else
-#include <QX11Info>
-#endif
 
 static QList<QKeySequence> keysFromString(QString const& str)
 {
