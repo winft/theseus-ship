@@ -27,19 +27,6 @@ public:
     {
     }
 
-    xcb_window_t frameId() const override
-    {
-        return ref_win->frameId();
-    }
-
-    quint32 windowId() const override
-    {
-        if constexpr (requires(decltype(ref_win) win) { win->xcb_windows; }) {
-            return ref_win->xcb_windows.client;
-        }
-        return XCB_WINDOW_NONE;
-    }
-
     QString resourceName() const override
     {
         return ref_win->meta.wm_class.res_name;
@@ -636,39 +623,6 @@ public:
     bool isDeleted() const override
     {
         return static_cast<bool>(ref_win->remnant);
-    }
-
-    quint32 surfaceId() const override
-    {
-        if constexpr (requires(decltype(ref_win) win) { win->surface_id; }) {
-            return ref_win->surface_id;
-        }
-        return 0;
-    }
-
-    Wrapland::Server::Surface* surface() const override
-    {
-        if constexpr (requires(decltype(ref_win) win) { win->surface; }) {
-            return ref_win->surface;
-        }
-        return nullptr;
-    }
-
-    QSize basicUnit() const override
-    {
-        return ref_win->basicUnit();
-    }
-
-    bool isBlockingCompositing() override
-    {
-        return win::is_blocking_compositing(*ref_win);
-    }
-
-    void setBlockingCompositing(bool block) override
-    {
-        if (ref_win->control) {
-            win::set_blocking_compositing(*ref_win, block);
-        }
     }
 
     RefWin* ref_win;

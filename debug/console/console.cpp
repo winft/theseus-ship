@@ -383,7 +383,9 @@ QVariant console_model::get_client_data(QModelIndex const& index, int role) cons
         }
         auto& u = m_unmanageds.at(index.row());
         if (role == Qt::DisplayRole) {
-            return static_cast<xcb_window_t>(u->windowId());
+            auto id = u->internalId().toString(QUuid::StringFormat::Id128);
+            id.truncate(10);
+            return id;
         }
         return QVariant();
     }

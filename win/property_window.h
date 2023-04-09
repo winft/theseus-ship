@@ -10,12 +10,6 @@
 #include "win/virtual_desktops.h"
 
 #include <QObject>
-#include <xcb/xcb.h>
-
-namespace Wrapland::Server
-{
-class Surface;
-}
 
 namespace KWin::win
 {
@@ -28,9 +22,6 @@ class window_qobject;
 class KWIN_EXPORT property_window : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(qulonglong frameId READ frameId)
-    Q_PROPERTY(qulonglong windowId READ windowId CONSTANT)
-
     Q_PROPERTY(QString resourceName READ resourceName NOTIFY windowClassChanged)
     Q_PROPERTY(QString resourceClass READ resourceClass NOTIFY windowClassChanged)
 
@@ -136,21 +127,10 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(bool hasApplicationMenu READ hasApplicationMenu NOTIFY hasApplicationMenuChanged)
     Q_PROPERTY(bool providesContextHelp READ providesContextHelp CONSTANT)
 
-    Q_PROPERTY(quint32 surfaceId READ surfaceId NOTIFY surfaceIdChanged)
     Q_PROPERTY(bool deleted READ isDeleted CONSTANT)
-
-    /**
-     * X11 only properties
-     */
-    Q_PROPERTY(QSize basicUnit READ basicUnit)
-    Q_PROPERTY(bool blocksCompositing READ isBlockingCompositing WRITE setBlockingCompositing NOTIFY
-                   blockingCompositingChanged)
 
 public:
     property_window(window_qobject& qtwin);
-
-    virtual xcb_window_t frameId() const = 0;
-    virtual quint32 windowId() const = 0;
 
     virtual QString resourceName() const = 0;
     virtual QString resourceClass() const = 0;
@@ -267,12 +247,6 @@ public:
     virtual bool providesContextHelp() const = 0;
 
     virtual bool isDeleted() const = 0;
-    virtual quint32 surfaceId() const = 0;
-    virtual Wrapland::Server::Surface* surface() const = 0;
-
-    virtual QSize basicUnit() const = 0;
-    virtual bool isBlockingCompositing() = 0;
-    virtual void setBlockingCompositing(bool block) = 0;
 
     window_qobject* get_window_qobject();
 
@@ -315,9 +289,6 @@ Q_SIGNALS:
     void colorSchemeChanged();
     void desktopFileNameChanged();
     void hasApplicationMenuChanged();
-    void surfaceIdChanged(quint32);
-
-    void blockingCompositingChanged();
 
 private:
     void setup_connections();

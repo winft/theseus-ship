@@ -83,7 +83,7 @@ inline QVariant window_data(QModelIndex const& index,
 
     auto& window = windows.at(index.row());
     if (role == Qt::DisplayRole) {
-        return QStringLiteral("%1: %2").arg(window->windowId()).arg(window->caption());
+        return window->caption();
     } else if (role == Qt::DecorationRole) {
         return window->icon();
     }
