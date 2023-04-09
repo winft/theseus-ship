@@ -145,6 +145,10 @@ QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext*
 
 void Integration::initScreens()
 {
+    while (!m_screens.isEmpty()) {
+        QWindowSystemInterface::handleScreenRemoved(m_screens.takeLast());
+    }
+
     auto const outputs = base::singleton_interface::platform->get_outputs();
     QVector<Screen*> newScreens;
 
@@ -160,10 +164,6 @@ void Integration::initScreens()
         auto dummyScreen = new Screen(nullptr, this);
         QWindowSystemInterface::handleScreenAdded(dummyScreen);
         newScreens << dummyScreen;
-    }
-
-    while (!m_screens.isEmpty()) {
-        QWindowSystemInterface::handleScreenRemoved(m_screens.takeLast());
     }
 
     m_screens = newScreens;
