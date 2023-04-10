@@ -9,7 +9,6 @@ if (KWIN_BUILD_KCMS)
   target_link_libraries(kcm_kwin4_genericscripted
     KF6::I18n
     KF6::KCMUtils
-    kwineffects
     Qt::DBus
     Qt::UiTools
   )
