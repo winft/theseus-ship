@@ -7,7 +7,7 @@
 
 #include <win/singleton_interface.h>
 
-#include <KWindowSystem/KWindowSystem>
+#include <KWindowSystem>
 #include <QGuiApplication>
 #include <QTimer>
 #include <QWindow>

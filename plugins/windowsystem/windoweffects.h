@@ -4,7 +4,7 @@
     SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 */
 #pragma once
-#include <KWindowSystem/private/kwindoweffects_p.h>
+#include <private/kwindoweffects_p.h>
 #include <kwindowsystem_version.h>
 #include <QObject>
 
