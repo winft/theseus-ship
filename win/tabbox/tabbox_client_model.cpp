@@ -52,11 +52,7 @@ QVariant tabbox_client_model::data(const QModelIndex& index, int role) const
     switch (role) {
     case Qt::DisplayRole:
     case CaptionRole: {
-        QString caption = client->caption();
-        if (Qt::mightBeRichText(caption)) {
-            caption = caption.toHtmlEscaped();
-        }
-        return caption;
+        return client->caption();
     }
     case ClientRole:
         return QVariant::fromValue<void*>(client.get());
