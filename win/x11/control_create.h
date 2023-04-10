@@ -341,7 +341,6 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     auto wmClientLeaderCookie = fetch_wm_client_leader(*win);
     auto skipCloseAnimationCookie = fetch_skip_close_animation(*win);
     auto showOnScreenEdgeCookie = fetch_show_on_screen_edge(win);
-    auto firstInTabBoxCookie = fetch_first_in_tabbox(win);
     auto transientCookie = fetch_transient(win);
 
     win->geometry_hints.init(win->xcb_windows.client);
@@ -416,7 +415,6 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     set_original_skip_taskbar(win, (win->net_info->state() & net::SkipTaskbar) != 0);
     set_skip_pager(win, (win->net_info->state() & net::SkipPager) != 0);
     set_skip_switcher(win, (win->net_info->state() & net::SkipSwitcher) != 0);
-    read_first_in_tabbox(win, firstInTabBoxCookie);
 
     auto init_minimize = !isMapped && (win->net_info->initialMappingState() == net::Iconic);
     if (win->net_info->state() & net::Hidden) {

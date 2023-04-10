@@ -317,8 +317,6 @@ void property_notify_event(Win* win, xcb_property_notify_event_t* e)
             get_motif_hints(win);
         } else if (e->atom == atoms->net_wm_sync_request_counter) {
             get_sync_counter(win);
-        } else if (e->atom == atoms->kde_first_in_window_list) {
-            update_first_in_tabbox(win);
         } else if (e->atom == atoms->kde_color_sheme) {
             update_color_scheme(win);
         } else if (e->atom == atoms->kde_screen_edge_show) {

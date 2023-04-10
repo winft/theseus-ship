@@ -83,12 +83,6 @@ public:
         std::visit(overload{[](auto&& win) { win->closeWindow(); }}, window);
     }
 
-    bool is_first_in_tabbox() const override
-    {
-        return std::visit(overload{[](auto&& win) { return win->control->first_in_tabbox; }},
-                          window);
-    }
-
     QUuid internal_id() const override
     {
         return std::visit(overload{[](auto&& win) { return win->meta.internal_id; }}, window);

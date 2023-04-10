@@ -38,10 +38,6 @@ public:
     {
         return true;
     }
-    bool is_first_in_tabbox() const override
-    {
-        return false;
-    }
     int width() const override
     {
         return 100;

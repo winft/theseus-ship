@@ -68,8 +68,7 @@ QVariant tabbox_client_model::data(const QModelIndex& index, int role) const
     case MinimizedRole:
         return client->is_minimized();
     case CloseableRole:
-        // clients that claim to be first are not closeable
-        return client->is_closeable() && !client->is_first_in_tabbox();
+        return client->is_closeable();
     case IconRole:
         return client->icon();
     default:
@@ -168,7 +167,6 @@ void tabbox_client_model::create_client_list(int desktop, bool partial_reset)
 
     beginResetModel();
     m_client_list.clear();
-    tabbox_client_list sticky_clients;
 
     auto remove_clients = [this](auto const& target) {
         m_client_list.erase(std::remove_if(m_client_list.begin(),
@@ -193,9 +191,6 @@ void tabbox_client_model::create_client_list(int desktop, bool partial_reset)
             auto add = tabbox_handle->client_to_add_to_list(c, desktop).lock();
             if (add) {
                 m_client_list.push_back(add);
-                if (add.get()->is_first_in_tabbox()) {
-                    sticky_clients.push_back(add);
-                }
             }
             c = tabbox_handle->next_client_focus_chain(c).lock().get();
         } while (c && c != stop);
@@ -212,12 +207,8 @@ void tabbox_client_model::create_client_list(int desktop, bool partial_reset)
             if (auto add = add_weak.lock()) {
                 if (start == add.get()) {
                     remove_clients(add);
-                    m_client_list.push_back(add);
-                } else
-                    m_client_list.push_back(add);
-                if (add->is_first_in_tabbox()) {
-                    sticky_clients.push_back(add);
                 }
+                m_client_list.push_back(add);
             }
             if (index >= stacking.size() - 1) {
                 c = nullptr;
@@ -230,10 +221,6 @@ void tabbox_client_model::create_client_list(int desktop, bool partial_reset)
         }
         break;
     }
-    }
-    for (auto const& c : sticky_clients) {
-        remove_clients(c.lock());
-        m_client_list.push_back(c);
     }
     if (tabbox_handle->config().client_applications_mode()
             != tabbox_config::AllWindowsCurrentApplication

@@ -32,7 +32,6 @@ public:
     virtual int height() const = 0;
     virtual bool is_closeable() const = 0;
     virtual void close() = 0;
-    virtual bool is_first_in_tabbox() const = 0;
     virtual QUuid internal_id() const = 0;
 };
 
