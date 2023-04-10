@@ -393,14 +393,6 @@ public:
         return false;
     }
 
-    bool isShape() const override
-    {
-        if constexpr (requires(decltype(ref_win) win) { win->is_shape; }) {
-            return ref_win->is_shape;
-        }
-        return false;
-    }
-
     bool keepAbove() const override
     {
         if (!ref_win->control) {

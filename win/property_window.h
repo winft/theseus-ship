@@ -95,7 +95,6 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(bool fullScreenable READ isFullScreenable)
 
     Q_PROPERTY(bool outline READ isOutline)
-    Q_PROPERTY(bool shaped READ isShape NOTIFY shapedChanged)
 
     Q_PROPERTY(bool keepAbove READ keepAbove WRITE setKeepAbove NOTIFY keepAboveChanged)
     Q_PROPERTY(bool keepBelow READ keepBelow WRITE setKeepBelow NOTIFY keepBelowChanged)
@@ -208,7 +207,6 @@ public:
     virtual bool isFullScreenable() const = 0;
 
     virtual bool isOutline() const = 0;
-    virtual bool isShape() const = 0;
 
     virtual bool keepAbove() const = 0;
     virtual void setKeepAbove(bool set) = 0;
@@ -268,7 +266,6 @@ Q_SIGNALS:
     void windowRoleChanged();
 
     void closeableChanged(bool);
-    void shapedChanged();
 
     void keepAboveChanged();
     void keepBelowChanged();

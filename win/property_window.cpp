@@ -85,8 +85,6 @@ void property_window::setup_connections()
         &qtwin, &win::window_qobject::hasAlphaChanged, this, &property_window::hasAlphaChanged);
     QObject::connect(
         &qtwin, &win::window_qobject::windowRoleChanged, this, &property_window::windowRoleChanged);
-    QObject::connect(
-        &qtwin, &win::window_qobject::shapedChanged, this, &property_window::shapedChanged);
     QObject::connect(&qtwin,
                      &win::window_qobject::skipCloseAnimationChanged,
                      this,
