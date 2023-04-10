@@ -26,5 +26,3 @@ bool KWinCompositingData::isDefaults() const
     }
     return defaults;
 }
-
-#include "kwincompositingdata.moc"

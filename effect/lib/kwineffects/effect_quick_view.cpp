@@ -628,5 +628,3 @@ QQuickItem* EffectQuickScene::rootItem() const
 }
 
 }
-
-#include "effect_quick_view.moc"
