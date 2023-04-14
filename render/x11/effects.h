@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "keyboard_intercept_filter.h"
 #include "mouse_intercept_filter.h"
 
 #include "effect/blur_integration.h"
@@ -109,12 +110,22 @@ public:
 protected:
     bool doGrabKeyboard() override
     {
-        return base::x11::grab_keyboard(this->compositor.platform.base.x11_data);
+        auto is_grabbed = base::x11::grab_keyboard(this->compositor.platform.base.x11_data);
+        if (!is_grabbed) {
+            return false;
+        }
+
+        auto& keyboard = this->compositor.platform.base.space->input->xinput->fake_devices.keyboard;
+        keyboard_intercept.filter
+            = std::make_unique<keyboard_intercept_filter<type>>(*keyboard->xkb, *this);
+
+        return true;
     }
 
     void doUngrabKeyboard() override
     {
         base::x11::ungrab_keyboard(this->compositor.platform.base.x11_data.connection);
+        keyboard_intercept.filter.reset();
     }
 
     void doStartMouseInterception(Qt::CursorShape shape) override
@@ -180,6 +191,10 @@ private:
         base::x11::xcb::window window;
         std::unique_ptr<mouse_intercept_filter<type>> filter;
     } mouse_intercept;
+    struct {
+        base::x11::xcb::window window;
+        std::unique_ptr<keyboard_intercept_filter<type>> filter;
+    } keyboard_intercept;
 };
 
 }

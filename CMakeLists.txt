@@ -168,6 +168,10 @@ set_package_properties(XKB PROPERTIES
     PURPOSE "Required for building KWin with Wayland support"
 )
 
+# TODO(romangg): Only required for X11 session.
+pkg_check_modules(XKBX11 IMPORTED_TARGET xkbcommon-x11 REQUIRED)
+add_feature_info(XKBX11 XKBX11_FOUND "Required for handling keyboard events in X11")
+
 find_package(Threads)
 set_package_properties(Threads PROPERTIES
     TYPE REQUIRED
@@ -215,6 +219,7 @@ find_package(XCB 1.10 REQUIRED COMPONENTS
     SHM
     SYNC
     XFIXES
+    XKB
 )
 set_package_properties(XCB PROPERTIES TYPE REQUIRED)
 
@@ -553,6 +558,7 @@ set(kwin_XCB_LIBS
     XCB::SHM
     XCB::SYNC
     XCB::XFIXES
+    XCB::XKB
 )
 
 set(kwin_INPUT_LIBS
@@ -658,6 +664,7 @@ endif()
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
 target_link_libraries(kwin_x11
   kwin_x11_lib
+  ${XKBX11_LIBRARIES}
 )
 kcoreaddons_target_static_plugins(kwin_x11 "kwin/effects/plugins")
 

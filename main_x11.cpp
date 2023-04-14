@@ -281,14 +281,6 @@ void ApplicationX11::start()
     owner->claim(m_replace || crashes > 0, true);
 }
 
-bool ApplicationX11::notify(QObject* o, QEvent* e)
-{
-    if (e->spontaneous() && win::x11::space_qt_event(*base.space, e)) {
-        return true;
-    }
-    return QApplication::notify(o, e);
-}
-
 void ApplicationX11::setupCrashHandler()
 {
     KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);

@@ -19,6 +19,10 @@
 #include <xcb/sync.h>
 #include <xcb/xfixes.h>
 
+#define explicit cpp_explicit_compat
+#include <xcb/xkb.h>
+#undef explicit
+
 namespace KWin::base::x11::xcb
 {
 
@@ -393,6 +397,7 @@ void extensions::init()
     query_reply(xcb_get_extension_data(c, &xcb_render_id), &m_render);
     query_reply(xcb_get_extension_data(c, &xcb_sync_id), &m_sync);
     query_reply(xcb_get_extension_data(c, &xcb_glx_id), &m_glx);
+    query_reply(xcb_get_extension_data(c, &xcb_xkb_id), &m_xkb);
 
     // extension specific queries
     xcb_shape_query_version_cookie_t shapeVersion;

@@ -15,11 +15,6 @@
 #include <KConfigGroup>
 #include <QtGui/private/qxkbcommon_p.h>
 
-#include <bitset>
-#include <cassert>
-#include <sys/mman.h>
-#include <unistd.h>
-
 namespace KWin::input::xkb
 {
 

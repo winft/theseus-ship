@@ -76,9 +76,9 @@ public:
 
     Platform& platform;
     Space& space;
+    std::unique_ptr<xinput_integration<type>> xinput;
 
 private:
-    std::unique_ptr<xinput_integration<type>> xinput;
     std::unique_ptr<window_selector<type>> window_sel;
 };
 
