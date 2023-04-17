@@ -25,7 +25,6 @@ namespace KWin::detail::test
 
 TEST_CASE("xdg activation", "[win]")
 {
-    qRegisterMetaType<std::string>();
     qRegisterMetaType<Wrapland::Server::Surface*>();
 
     test::setup setup("xdg-activation");
@@ -86,7 +85,8 @@ TEST_CASE("xdg activation", "[win]")
         QVERIFY(done_spy.isValid());
         QVERIFY(done_spy.wait());
 
-        QCOMPARE(done_spy.front().front().value<std::string>(), token_string);
+        QCOMPARE(done_spy.front().front().value<QByteArray>(),
+                 QByteArray::fromStdString(token_string));
 
         activation->activate(token_string, surface1.get());
 
@@ -100,7 +100,8 @@ TEST_CASE("xdg activation", "[win]")
         QVERIFY(activated_spy.wait());
         QVERIFY(!xdg_activate_spy.empty());
 
-        QCOMPARE(xdg_activate_spy.front().front().value<std::string>(), token_string);
+        QCOMPARE(xdg_activate_spy.front().front().value<QByteArray>(),
+                 QByteArray::fromStdString(token_string));
         QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(),
                  window1->surface);
         QVERIFY(window1->control->active);
@@ -165,7 +166,8 @@ TEST_CASE("xdg activation", "[win]")
         QVERIFY(done_spy.isValid());
         QVERIFY(done_spy.wait());
 
-        QCOMPARE(done_spy.front().front().value<std::string>(), token_string);
+        QCOMPARE(done_spy.front().front().value<QByteArray>(),
+                 QByteArray::fromStdString(token_string));
 
         auto activation1 = get_client().interfaces.xdg_activation.get();
         activation1->activate(token_string, surface1.get());
@@ -180,7 +182,8 @@ TEST_CASE("xdg activation", "[win]")
         QVERIFY(activated_spy.wait());
         QVERIFY(!xdg_activate_spy.empty());
 
-        QCOMPARE(xdg_activate_spy.front().front().value<std::string>(), token_string);
+        QCOMPARE(xdg_activate_spy.front().front().value<QByteArray>(),
+                 QByteArray::fromStdString(token_string));
         QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(),
                  window1->surface);
         QVERIFY(window1->control->active);
@@ -249,7 +252,8 @@ TEST_CASE("xdg activation", "[win]")
         QVERIFY(plasma_activation_spy.wait());
         QCOMPARE(plasma_activation_spy.size(), 1);
         QVERIFY(!done_spy.empty());
-        QCOMPARE(done_spy.front().front().value<std::string>(), token_string);
+        QCOMPARE(done_spy.front().front().value<QByteArray>(),
+                 QByteArray::fromStdString(token_string));
 
         auto plasma_activation
             = plasma_activation_spy.front().front().value<Wrapland::Client::plasma_activation*>();
