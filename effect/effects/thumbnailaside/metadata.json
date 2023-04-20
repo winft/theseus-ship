@@ -3,7 +3,6 @@
         "Category": "Appearance",
         "Description": "Display window thumbnails on the edge of the screen",
         "EnabledByDefault": false,
-        "Id": "thumbnailaside",
         "License": "GPL",
         "Name": "Thumbnail Aside"
     },

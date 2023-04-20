@@ -3,7 +3,6 @@
         "Category": "Window Management",
         "Description": "Zoom out so all desktops are displayed side-by-side in a grid",
         "EnabledByDefault": true,
-        "Id": "desktopgrid",
         "License": "GPL",
         "Name": "Desktop Grid"
 

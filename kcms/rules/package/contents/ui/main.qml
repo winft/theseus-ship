@@ -4,22 +4,23 @@
     SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 */
 
-import QtQuick 2.15
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as QQC2
-import QtQml.Models 2.14
-import org.kde.kcm 1.2
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls as QQC2
+import QtQml.Models
+import org.kde.kcm as KCM
+import org.kde.kcmutils as KCMUtils
 import org.kde.kirigami 2.12 as Kirigami
 
-ScrollViewKCM {
+KCM.ScrollViewKCM {
     id: rulesListKCM
 
     // FIXME: ScrollViewKCM.qml:73:13: QML Control: Binding loop detected for property "implicitHeight"
     implicitWidth: Kirigami.Units.gridUnit * 35
     implicitHeight: Kirigami.Units.gridUnit * 25
 
-    ConfigModule.columnWidth: Kirigami.Units.gridUnit * 23
-    ConfigModule.buttons: ConfigModule.Help | ConfigModule.Apply
+    KCMUtils.ConfigModule.columnWidth: Kirigami.Units.gridUnit * 23
+    KCMUtils.ConfigModule.buttons: KCMUtils.ConfigModule.Help | KCMUtils.ConfigModule.Apply
 
     property var selectedIndexes: []
 

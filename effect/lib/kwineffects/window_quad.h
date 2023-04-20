@@ -11,6 +11,7 @@
 #include <QRegion>
 #include <QVector2D>
 #include <QVector3D>
+#include <QVector>
 
 namespace KWin
 {

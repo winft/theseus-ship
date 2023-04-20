@@ -42,9 +42,6 @@ public:
     void setReplace(bool replace);
     void notifyKSplash() override;
 
-protected:
-    bool notify(QObject *o, QEvent *e) override;
-
 private Q_SLOTS:
     void lostSelection();
 

@@ -23,9 +23,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <qpa/qplatformwindow.h>
 #include <qpa/qwindowsysteminterface.h>
 
-#include <QtEventDispatcherSupport/private/qunixeventdispatcher_qpa_p.h>
-#include <QtFontDatabaseSupport/private/qgenericunixfontdatabase_p.h>
-#include <QtThemeSupport/private/qgenericunixthemes_p.h>
+#include <QtGui/private/qgenericunixfontdatabase_p.h>
+#include <QtGui/private/qgenericunixthemes_p.h>
+#include <QtGui/private/qunixeventdispatcher_qpa_p.h>
 
 namespace KWin
 {
@@ -145,6 +145,10 @@ QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext*
 
 void Integration::initScreens()
 {
+    while (!m_screens.isEmpty()) {
+        QWindowSystemInterface::handleScreenRemoved(m_screens.takeLast());
+    }
+
     auto const outputs = base::singleton_interface::platform->get_outputs();
     QVector<Screen*> newScreens;
 
@@ -160,10 +164,6 @@ void Integration::initScreens()
         auto dummyScreen = new Screen(nullptr, this);
         QWindowSystemInterface::handleScreenAdded(dummyScreen);
         newScreens << dummyScreen;
-    }
-
-    while (!m_screens.isEmpty()) {
-        QWindowSystemInterface::handleScreenRemoved(m_screens.takeLast());
     }
 
     m_screens = newScreens;

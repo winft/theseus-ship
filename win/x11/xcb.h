@@ -41,34 +41,6 @@ base::x11::xcb::property fetch_skip_close_animation(Win&& win)
 }
 
 template<typename Win>
-base::x11::xcb::property fetch_first_in_tabbox(Win* win)
-{
-    auto& atoms = win->space.atoms;
-    return base::x11::xcb::property(win->space.base.x11_data.connection,
-                                    false,
-                                    win->xcb_windows.client,
-                                    atoms->kde_first_in_window_list,
-                                    atoms->kde_first_in_window_list,
-                                    0,
-                                    1);
-}
-
-template<typename Win>
-void read_first_in_tabbox(Win* win, base::x11::xcb::property& property)
-{
-    win->control->first_in_tabbox
-        = property.to_bool(32, win->space.atoms->kde_first_in_window_list);
-}
-
-template<typename Win>
-void update_first_in_tabbox(Win* win)
-{
-    // TODO: move into KWindowInfo
-    auto property = fetch_first_in_tabbox(win);
-    read_first_in_tabbox(win, property);
-}
-
-template<typename Win>
 base::x11::xcb::property fetch_show_on_screen_edge(Win* win)
 {
     return base::x11::xcb::property(win->space.base.x11_data.connection,

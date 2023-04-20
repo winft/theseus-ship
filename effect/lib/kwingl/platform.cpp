@@ -1074,8 +1074,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
 
     if (isLima()) {
         m_recommendedCompositor = OpenGLCompositing;
-        // GLSL works but causes dramatic FPS drop on this GPU
-        m_supportsGLSL = false;
+        m_supportsGLSL = true;
     }
 
     if (isVideoCore4()) {

@@ -8,23 +8,101 @@
 #include "screenshotdbusinterface2.h"
 
 #include "desktop/kde/service_utils.h"
+#include "utils/file_descriptor.h"
 
 #include "screenshot2adaptor.h"
 
+#include <kwineffects/effect_window.h>
 #include <kwineffects/effects_handler.h>
 
 #include <KLocalizedString>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
-#include <QtConcurrent>
+#include <QThreadPool>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <poll.h>
 #include <string.h>
 #include <unistd.h>
 
 namespace KWin
 {
+
+class ScreenShotWriter2 : public QRunnable
+{
+public:
+    ScreenShotWriter2(file_descriptor&& fileDescriptor, const QImage& image)
+        : m_fileDescriptor(std::move(fileDescriptor))
+        , m_image(image)
+    {
+    }
+
+    void run() override
+    {
+        const int flags = fcntl(m_fileDescriptor.fd, F_GETFL, 0);
+        if (flags == -1) {
+            qCWarning(KWIN_SCREENSHOT) << "failed to get screenshot fd flags:" << strerror(errno);
+            return;
+        }
+        if (!(flags & O_NONBLOCK)) {
+            if (fcntl(m_fileDescriptor.fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+                qCWarning(KWIN_SCREENSHOT)
+                    << "failed to make screenshot fd non blocking:" << strerror(errno);
+                return;
+            }
+        }
+
+        QFile file;
+        if (!file.open(m_fileDescriptor.fd, QIODevice::WriteOnly)) {
+            qCWarning(KWIN_SCREENSHOT)
+                << Q_FUNC_INFO << "failed to open pipe:" << file.errorString();
+            return;
+        }
+
+        const QByteArrayView buffer(m_image.constBits(), m_image.sizeInBytes());
+        qint64 remainingSize = buffer.size();
+
+        pollfd pfds[1];
+        pfds[0].fd = m_fileDescriptor.fd;
+        pfds[0].events = POLLOUT;
+
+        while (true) {
+            const int ready = poll(pfds, 1, 60000);
+            if (ready < 0) {
+                if (errno != EINTR) {
+                    qCWarning(KWIN_SCREENSHOT)
+                        << Q_FUNC_INFO << "poll() failed:" << strerror(errno);
+                    return;
+                }
+            } else if (ready == 0) {
+                qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "timed out writing to pipe";
+                return;
+            } else if (!(pfds[0].revents & POLLOUT)) {
+                qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "pipe is broken";
+                return;
+            } else {
+                const char* chunk = buffer.constData() + (buffer.size() - remainingSize);
+                const qint64 writtenCount = file.write(chunk, remainingSize);
+
+                if (writtenCount < 0) {
+                    qCWarning(KWIN_SCREENSHOT)
+                        << Q_FUNC_INFO << "write() failed:" << file.errorString();
+                    return;
+                }
+
+                remainingSize -= writtenCount;
+                if (writtenCount == 0 || remainingSize == 0) {
+                    return;
+                }
+            }
+        }
+    }
+
+protected:
+    file_descriptor m_fileDescriptor;
+    QImage m_image;
+};
 
 static ScreenShotFlags screenShotFlagsFromOptions(const QVariantMap& options)
 {
@@ -46,52 +124,6 @@ static ScreenShotFlags screenShotFlagsFromOptions(const QVariantMap& options)
     }
 
     return flags;
-}
-
-static void writeBufferToPipe(int fileDescriptor, const QByteArray& buffer)
-{
-    QFile file;
-    if (!file.open(fileDescriptor, QIODevice::WriteOnly, QFileDevice::AutoCloseHandle)) {
-        close(fileDescriptor);
-        qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "failed to open pipe:" << file.errorString();
-        return;
-    }
-
-    qint64 remainingSize = buffer.size();
-
-    pollfd pfds[1];
-    pfds[0].fd = fileDescriptor;
-    pfds[0].events = POLLOUT;
-
-    while (true) {
-        const int ready = poll(pfds, 1, 60000);
-        if (ready < 0) {
-            if (errno != EINTR) {
-                qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "poll() failed:" << strerror(errno);
-                return;
-            }
-        } else if (ready == 0) {
-            qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "timed out writing to pipe";
-            return;
-        } else if (!(pfds[0].revents & POLLOUT)) {
-            qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "pipe is broken";
-            return;
-        } else {
-            const char* chunk = buffer.constData() + (buffer.size() - remainingSize);
-            const qint64 writtenCount = file.write(chunk, remainingSize);
-
-            if (writtenCount < 0) {
-                qCWarning(KWIN_SCREENSHOT)
-                    << Q_FUNC_INFO << "write() failed:" << file.errorString();
-                return;
-            }
-
-            remainingSize -= writtenCount;
-            if (writtenCount == 0 || remainingSize == 0) {
-                return;
-            }
-        }
-    }
 }
 
 static const QString s_dbusServiceName = QStringLiteral("org.kde.KWin.ScreenShot2");
@@ -128,6 +160,8 @@ public:
     bool isCompleted() const;
     void marshal(ScreenShotSinkPipe2* sink);
 
+    virtual QVariantMap attributes() const;
+
 Q_SIGNALS:
     void cancelled();
     void completed();
@@ -143,6 +177,11 @@ class ScreenShotSourceScreen2 : public ScreenShotSource2
 
 public:
     ScreenShotSourceScreen2(ScreenShotEffect* effect, EffectScreen* screen, ScreenShotFlags flags);
+
+    QVariantMap attributes() const override;
+
+private:
+    EffectScreen* m_screen;
 };
 
 class ScreenShotSourceArea2 : public ScreenShotSource2
@@ -159,6 +198,11 @@ class ScreenShotSourceWindow2 : public ScreenShotSource2
 
 public:
     ScreenShotSourceWindow2(ScreenShotEffect* effect, EffectWindow* window, ScreenShotFlags flags);
+
+    QVariantMap attributes() const override;
+
+private:
+    EffectWindow* m_window;
 };
 
 class ScreenShotSinkPipe2 : public QObject
@@ -170,11 +214,11 @@ public:
     ~ScreenShotSinkPipe2();
 
     void cancel();
-    void flush(const QImage& image);
+    void flush(const QImage& image, const QVariantMap& attributes);
 
 private:
     QDBusMessage m_replyMessage;
-    int m_fileDescriptor;
+    file_descriptor m_fileDescriptor;
 };
 
 ScreenShotSource2::ScreenShotSource2(const QFuture<QImage>& future)
@@ -196,16 +240,29 @@ bool ScreenShotSource2::isCompleted() const
     return m_future.isFinished();
 }
 
+QVariantMap ScreenShotSource2::attributes() const
+{
+    return QVariantMap();
+}
+
 void ScreenShotSource2::marshal(ScreenShotSinkPipe2* sink)
 {
-    sink->flush(m_future.result());
+    sink->flush(m_future.result(), attributes());
 }
 
 ScreenShotSourceScreen2::ScreenShotSourceScreen2(ScreenShotEffect* effect,
                                                  EffectScreen* screen,
                                                  ScreenShotFlags flags)
     : ScreenShotSource2(effect->scheduleScreenShot(screen, flags))
+    , m_screen(screen)
 {
+}
+
+QVariantMap ScreenShotSourceScreen2::attributes() const
+{
+    return QVariantMap{
+        {QStringLiteral("screen"), m_screen->name()},
+    };
 }
 
 ScreenShotSourceArea2::ScreenShotSourceArea2(ScreenShotEffect* effect,
@@ -219,7 +276,15 @@ ScreenShotSourceWindow2::ScreenShotSourceWindow2(ScreenShotEffect* effect,
                                                  EffectWindow* window,
                                                  ScreenShotFlags flags)
     : ScreenShotSource2(effect->scheduleScreenShot(window, flags))
+    , m_window(window)
 {
+}
+
+QVariantMap ScreenShotSourceWindow2::attributes() const
+{
+    return QVariantMap{
+        {QStringLiteral("windowId"), m_window->internalId().toString()},
+    };
 }
 
 ScreenShotSinkPipe2::ScreenShotSinkPipe2(int fileDescriptor, QDBusMessage replyMessage)
@@ -228,12 +293,7 @@ ScreenShotSinkPipe2::ScreenShotSinkPipe2(int fileDescriptor, QDBusMessage replyM
 {
 }
 
-ScreenShotSinkPipe2::~ScreenShotSinkPipe2()
-{
-    if (m_fileDescriptor != -1) {
-        close(m_fileDescriptor);
-    }
-}
+ScreenShotSinkPipe2::~ScreenShotSinkPipe2() = default;
 
 void ScreenShotSinkPipe2::cancel()
 {
@@ -241,32 +301,25 @@ void ScreenShotSinkPipe2::cancel()
         m_replyMessage.createErrorReply(s_errorCancelled, s_errorCancelledMessage));
 }
 
-void ScreenShotSinkPipe2::flush(const QImage& image)
+void ScreenShotSinkPipe2::flush(const QImage& image, const QVariantMap& attributes)
 {
-    if (m_fileDescriptor == -1) {
+    if (!m_fileDescriptor.is_valid()) {
         return;
     }
 
     // Note that the type of the data stored in the vardict matters. Be careful.
-    QVariantMap results;
+    QVariantMap results = attributes;
     results.insert(QStringLiteral("type"), QStringLiteral("raw"));
     results.insert(QStringLiteral("format"), quint32(image.format()));
     results.insert(QStringLiteral("width"), quint32(image.width()));
     results.insert(QStringLiteral("height"), quint32(image.height()));
     results.insert(QStringLiteral("stride"), quint32(image.bytesPerLine()));
+    results.insert(QStringLiteral("scale"), double(image.devicePixelRatio()));
     QDBusConnection::sessionBus().send(m_replyMessage.createReply(results));
 
-    QtConcurrent::run(
-        [](int fileDescriptor, const QImage& image) {
-            const QByteArray buffer(reinterpret_cast<const char*>(image.constBits()),
-                                    image.sizeInBytes());
-            writeBufferToPipe(fileDescriptor, buffer);
-        },
-        m_fileDescriptor,
-        image);
-
-    // The ownership of the pipe file descriptor has been moved to the worker thread.
-    m_fileDescriptor = -1;
+    auto writer = new ScreenShotWriter2(std::move(m_fileDescriptor), image);
+    writer->setAutoDelete(true);
+    QThreadPool::globalInstance()->start(writer);
 }
 
 ScreenShotDBusInterface2::ScreenShotDBusInterface2(ScreenShotEffect* effect)
@@ -287,7 +340,7 @@ ScreenShotDBusInterface2::~ScreenShotDBusInterface2()
 
 int ScreenShotDBusInterface2::version() const
 {
-    return 2;
+    return 4;
 }
 
 bool ScreenShotDBusInterface2::checkPermissions() const
@@ -513,6 +566,27 @@ QVariantMap ScreenShotDBusInterface2::CaptureInteractive(uint kind,
                                           "Escape or right click to cancel."),
                                      QStringLiteral("spectacle"));
     }
+
+    setDelayedReply(true);
+    return QVariantMap();
+}
+
+QVariantMap ScreenShotDBusInterface2::CaptureWorkspace(const QVariantMap& options,
+                                                       QDBusUnixFileDescriptor pipe)
+{
+    if (!checkPermissions()) {
+        return QVariantMap();
+    }
+
+    const int fileDescriptor = dup(pipe.fileDescriptor());
+    if (fileDescriptor == -1) {
+        sendErrorReply(s_errorFileDescriptor, s_errorFileDescriptorMessage);
+        return QVariantMap();
+    }
+
+    takeScreenShot(effects->virtualScreenGeometry(),
+                   screenShotFlagsFromOptions(options),
+                   new ScreenShotSinkPipe2(fileDescriptor, message()));
 
     setDelayedReply(true);
     return QVariantMap();

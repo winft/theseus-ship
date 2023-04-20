@@ -41,7 +41,7 @@
 #include <QPushButton>
 #include <QSurfaceFormat>
 #include <QVBoxLayout>
-#include <QX11Info>
+#include <QtGui/private/qtx11extras_p.h>
 #include <QtDBus>
 
 // system
@@ -281,14 +281,6 @@ void ApplicationX11::start()
     owner->claim(m_replace || crashes > 0, true);
 }
 
-bool ApplicationX11::notify(QObject* o, QEvent* e)
-{
-    if (e->spontaneous() && win::x11::space_qt_event(*base.space, e)) {
-        return true;
-    }
-    return QApplication::notify(o, e);
-}
-
 void ApplicationX11::setupCrashHandler()
 {
     KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);
@@ -372,9 +364,13 @@ int main(int argc, char * argv[])
     // enforce xcb plugin, unfortunately command line switch has precedence
     setenv("QT_QPA_PLATFORM", "xcb", true);
 
+    // disable highdpi scaling
+    setenv("QT_ENABLE_HIGHDPI_SCALING", "0", true);
+
     qunsetenv("QT_DEVICE_PIXEL_RATIO");
     qunsetenv("QT_SCALE_FACTOR");
-    QCoreApplication::setAttribute(Qt::AA_DisableHighDpiScaling);
+    qunsetenv("QT_SCREEN_SCALE_FACTORS");
+
     // KSMServer talks to us directly on DBus.
     QCoreApplication::setAttribute(Qt::AA_DisableSessionManager);
     // For sharing thumbnails between our scene graph and qtquick.
@@ -388,9 +384,10 @@ int main(int argc, char * argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     KWin::ApplicationX11 a(argc, argv);
-    a.setupTranslator();
+
     // reset QT_QPA_PLATFORM so we don't propagate it to our children (e.g. apps launched from the overview effect)
     qunsetenv("QT_QPA_PLATFORM");
+    qunsetenv("QT_ENABLE_HIGHDPI_SCALING");
 
     KSignalHandler::self()->watchSignal(SIGTERM);
     KSignalHandler::self()->watchSignal(SIGINT);

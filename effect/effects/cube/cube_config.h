@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_CUBE_CONFIG_H
 #define KWIN_CUBE_CONFIG_H
 
-#include <kcmodule.h>
+#include <KCModule>
 
 #include "ui_cube_config.h"
 
@@ -25,7 +25,9 @@ class CubeEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit CubeEffectConfig(QWidget* parent = nullptr, const QVariantList& args = QVariantList());
+    explicit CubeEffectConfig(QObject* parent,
+                              const KPluginMetaData& data,
+                              const QVariantList& args);
 
 public Q_SLOTS:
     void save() override;

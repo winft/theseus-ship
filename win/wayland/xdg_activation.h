@@ -76,7 +76,8 @@ struct xdg_activation {
                          &Wrapland::Server::XdgActivationV1::activate,
                          space.qobject.get(),
                          [this](auto const& token, auto surface) {
-                             handle_xdg_activation_activate(&this->space, token, surface);
+                             handle_xdg_activation_activate(
+                                 &this->space, token.toStdString(), surface);
                          });
     }
 

@@ -48,7 +48,6 @@ public:
         , net_wm_sync_request_counter{QByteArrayLiteral("_NET_WM_SYNC_REQUEST_COUNTER"), con}
         , net_wm_sync_request{QByteArrayLiteral("_NET_WM_SYNC_REQUEST"), con}
         , kde_net_wm_shadow{QByteArrayLiteral("_KDE_NET_WM_SHADOW"), con}
-        , kde_first_in_window_list{QByteArrayLiteral("_KDE_FIRST_IN_WINDOWLIST"), con}
         , kde_color_sheme{QByteArrayLiteral("_KDE_NET_WM_COLOR_SCHEME"), con}
         , kde_skip_close_animation{QByteArrayLiteral("_KDE_NET_WM_SKIP_CLOSE_ANIMATION"), con}
         , kde_screen_edge_show{QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"), con}
@@ -108,7 +107,6 @@ public:
     xcb::atom net_wm_sync_request_counter;
     xcb::atom net_wm_sync_request;
     xcb::atom kde_net_wm_shadow;
-    xcb::atom kde_first_in_window_list;
     xcb::atom kde_color_sheme;
     xcb::atom kde_skip_close_animation;
     xcb::atom kde_screen_edge_show;

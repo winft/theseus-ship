@@ -13,6 +13,7 @@
 
 #include <QIcon>
 #include <QObject>
+#include <QWindow>
 
 namespace KDecoration2
 {
@@ -268,12 +269,6 @@ class KWINEFFECTS_EXPORT EffectWindow : public QObject
      * @since 5.0
      */
     Q_PROPERTY(bool skipsCloseAnimation READ skipsCloseAnimation)
-
-    /**
-     * Interface to the corresponding wayland surface.
-     * relevant only in Wayland, on X11 it will be nullptr
-     */
-    Q_PROPERTY(Wrapland::Server::Surface* surface READ surface)
 
     /**
      * Whether the window is fullscreen.

@@ -14,10 +14,10 @@ kconfig_add_kcfg_files(magiclamp_SOURCES
     magiclampconfig.kcfgc
 )
 
-kwin4_add_effect_module(kwin4_effect_magiclamp ${magiclamp_SOURCES})
-target_link_libraries(kwin4_effect_magiclamp PRIVATE
-    kwineffects
-    KF5::ConfigGui
+kwin_add_builtin_effect(magiclamp ${magiclamp_SOURCES})
+target_link_libraries(magiclamp PRIVATE
+  KF6::ConfigGui
+  kwineffects
 )
 
 #######################################
@@ -30,10 +30,10 @@ if (KWIN_BUILD_KCMS)
     kwin_add_effect_config(kwin_magiclamp_config ${kwin_magiclamp_config_SRCS})
 
     target_link_libraries(kwin_magiclamp_config
-        KF5::ConfigWidgets
-        KF5::CoreAddons
-        KF5::I18n
-        Qt::DBus
-        KWinEffectsInterface
+      KF6::CoreAddons
+      KF6::I18n
+      KF6::KCMUtils
+      KWinEffectsInterface
+      Qt::DBus
     )
 endif()

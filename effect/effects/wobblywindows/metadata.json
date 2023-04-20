@@ -3,7 +3,6 @@
         "Category": "Appearance",
         "Description": "Deform windows while they are moving",
         "EnabledByDefault": false,
-        "Id": "wobblywindows",
         "License": "GPL",
         "Name": "Wobbly Windows"
     },

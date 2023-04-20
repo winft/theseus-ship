@@ -119,12 +119,12 @@ PRIVATE
   kwin_wayland_lib
   Qt::Test
   Catch2::Catch2WithMain
-  KF5::Crash
-  KF5::WindowSystem
+  KF6::Crash
+  KF6::WindowSystem
   # Static plugins
   KWinQpaPlugin
-  KF5WindowSystemKWinPlugin
-  KF5IdleTimeKWinPlugin
+  KF6WindowSystemKWinPlugin
+  KF6IdleTimeKWinPlugin
 )
 
 include(Catch)

@@ -6,8 +6,8 @@ cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(KWinFT VERSION 5.27.80)
 
-set(QT_MIN_VERSION "5.15.0")
-set(KF5_MIN_VERSION "5.102")
+set(QT_MIN_VERSION "6.4.0")
+set(KF6_MIN_VERSION "5.240.0")
 set(KDE_COMPILERSETTINGS_LEVEL "5.84")
 
 set(CMAKE_C_STANDARD 99)
@@ -26,7 +26,7 @@ add_definitions(-DMESA_EGL_NO_X11_HEADERS)
 add_definitions(-DEGL_NO_X11)
 add_definitions(-DEGL_NO_PLATFORM_SPECIFIC_TYPES)
 
-find_package(ECM ${KF5_MIN_VERSION} REQUIRED NO_MODULE)
+find_package(ECM ${KF6_MIN_VERSION} REQUIRED NO_MODULE)
 
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${ECM_MODULE_PATH})
@@ -35,23 +35,22 @@ include(FeatureSummary)
 include(WriteBasicConfigVersionFile)
 include(GenerateExportHeader)
 
-find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
+find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Concurrent
     Core
     DBus
     Quick
     UiTools
     Widgets
-    X11Extras
 )
 
-find_package(Qt5Test ${QT_MIN_VERSION} CONFIG QUIET)
-set_package_properties(Qt5Test PROPERTIES
+find_package(Qt6Test ${QT_MIN_VERSION} CONFIG QUIET)
+set_package_properties(Qt6Test PROPERTIES
     PURPOSE "Required for tests"
     TYPE OPTIONAL
 )
-add_feature_info("Qt5Test" Qt5Test_FOUND "Required for building tests")
-if (NOT Qt5Test_FOUND)
+add_feature_info("Qt6Test" Qt6Test_FOUND "Required for building tests")
+if (NOT Qt6Test_FOUND)
     set(BUILD_TESTING OFF CACHE BOOL "Build the testing tree.")
 endif()
 
@@ -64,7 +63,7 @@ include(ECMOptionalAddSubdirectory)
 include(ECMConfiguredInstall)
 
 # required frameworks by Core
-find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
+find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
     Auth
     Config
     ConfigWidgets
@@ -80,31 +79,30 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     WindowSystem
 )
 # required frameworks by config modules
-find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
+find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
     Declarative
     KCMUtils
     KIO
     NewStuff
     Service
     XmlGui
-    ItemViews
 )
 
 # Required frameworks by Wayland binary
-find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
+find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
     DBusAddons
 )
 
 # optional frameworks
-find_package(KF5DocTools ${KF5_MIN_VERSION} CONFIG)
-set_package_properties(KF5DocTools PROPERTIES
+find_package(KF6DocTools ${KF6_MIN_VERSION} CONFIG)
+set_package_properties(KF6DocTools PROPERTIES
     PURPOSE "Enable building documentation"
     TYPE OPTIONAL
 )
-add_feature_info("KF5DocTools" KF5DocTools_FOUND "Enable building documentation")
+add_feature_info("KF6DocTools" KF6DocTools_FOUND "Enable building documentation")
 
-find_package(KF5Kirigami2 ${KF5_MIN_VERSION} CONFIG)
-set_package_properties(KF5Kirigami2 PROPERTIES
+find_package(KF6Kirigami2 ${KF6_MIN_VERSION} CONFIG)
+set_package_properties(KF6Kirigami2 PROPERTIES
     DESCRIPTION "A QtQuick based components set"
     PURPOSE "Required at runtime for Virtual desktop KCM and the virtual keyboard"
     TYPE RUNTIME
@@ -170,7 +168,9 @@ set_package_properties(XKB PROPERTIES
     PURPOSE "Required for building KWin with Wayland support"
 )
 
-find_package(Qt5XkbCommonSupport REQUIRED)
+# TODO(romangg): Only required for X11 session.
+pkg_check_modules(XKBX11 IMPORTED_TARGET xkbcommon-x11 REQUIRED)
+add_feature_info(XKBX11 XKBX11_FOUND "Required for handling keyboard events in X11")
 
 find_package(Threads)
 set_package_properties(Threads PROPERTIES
@@ -219,6 +219,7 @@ find_package(XCB 1.10 REQUIRED COMPONENTS
     SHM
     SYNC
     XFIXES
+    XKB
 )
 set_package_properties(XCB PROPERTIES TYPE REQUIRED)
 
@@ -227,12 +228,6 @@ if (XCB_ICCCM_VERSION VERSION_LESS "0.4")
     set(XCB_ICCCM_FOUND FALSE)
 endif()
 add_feature_info("XCB-ICCCM" XCB_ICCCM_FOUND "Required for building test applications for KWin")
-
-# dependencies for QPA plugin
-find_package(Qt5FontDatabaseSupport REQUIRED)
-find_package(Qt5ThemeSupport REQUIRED)
-find_package(Qt5ServiceSupport REQUIRED)
-find_package(Qt5EventDispatcherSupport REQUIRED)
 
 find_package(Freetype REQUIRED)
 set_package_properties(Freetype PROPERTIES
@@ -268,14 +263,14 @@ set_package_properties(Libcap PROPERTIES
 )
 set(HAVE_LIBCAP ${Libcap_FOUND})
 
-find_package(QAccessibilityClient CONFIG)
-set_package_properties(QAccessibilityClient PROPERTIES
+find_package(QAccessibilityClient6 CONFIG)
+set_package_properties(QAccessibilityClient6 PROPERTIES
     URL "https://www.kde.org"
     DESCRIPTION "KDE client-side accessibility library"
     TYPE OPTIONAL
     PURPOSE "Required to enable accessibility features"
 )
-set(HAVE_ACCESSIBILITY ${QAccessibilityClient_FOUND})
+set(HAVE_ACCESSIBILITY ${QAccessibilityClient6_FOUND})
 
 include(ECMFindQmlModule)
 ecm_find_qmlmodule(QtQuick 2.3)
@@ -321,9 +316,12 @@ configure_file(cmake/config-kwin.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kwin
 
 ########### global ###############
 set(kwin_effects_dbus_xml ${CMAKE_CURRENT_SOURCE_DIR}/render/dbus/org.kde.kwin.Effects.xml)
-qt5_add_dbus_interface(effects_interface_SRCS ${kwin_effects_dbus_xml} kwineffects_interface)
+qt6_add_dbus_interface(effects_interface_SRCS ${kwin_effects_dbus_xml} kwineffects_interface)
 add_library(KWinEffectsInterface STATIC ${effects_interface_SRCS})
 target_link_libraries(KWinEffectsInterface Qt::DBus)
+set_target_properties(KWinEffectsInterface PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+)
 
 include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}/effect/lib
@@ -346,7 +344,7 @@ ecm_setup_qtplugin_macro_names(
     JSON_ARG4
         "KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED"
     CONFIG_CODE_VARIABLE
-        PACKAGE_SETUP_AUTOMOC_VARIABLES
+        PACKAGE_SETUP_KWINEFFECTS_AUTOMOC_VARIABLES
 )
 
 add_subdirectory(data)
@@ -358,11 +356,11 @@ add_subdirectory(scripting)
 add_executable(kwin_killer_helper win/x11/helpers/killer.cpp)
 
 target_link_libraries(kwin_killer_helper
-  KF5::AuthCore
-  KF5::I18n
-  KF5::WidgetsAddons
+  KF6::AuthCore
+  KF6::I18n
+  KF6::WidgetsAddons
+  Qt::GuiPrivate
   Qt::Widgets
-  Qt::X11Extras
 )
 ########### next target ###############
 
@@ -393,6 +391,7 @@ set(kwin_SRCS
     input/redirect_qobject.cpp
     input/singleton_interface.cpp
     input/spies/modifier_only_shortcuts.cpp
+    input/switch.cpp
     input/cursor.cpp
     input/cursor_shape.cpp
     input/gestures.cpp
@@ -423,6 +422,7 @@ set(kwin_SRCS
     scripting/script.cpp
     scripting/script_timer.cpp
     scripting/scripting_logging.cpp
+    scripting/shortcut_handler.cpp
     scripting/singleton_interface.cpp
     scripting/utils.cpp
     scripting/virtual_desktop_model.cpp
@@ -470,9 +470,9 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     )
 endif()
 
-qt5_add_resources(kwin_SRCS render/gl/resources.qrc)
+qt6_add_resources(kwin_SRCS render/gl/resources.qrc)
 
-qt5_add_dbus_adaptor(kwin_SRCS
+qt6_add_dbus_adaptor(kwin_SRCS
   scripting/org.kde.kwin.Script.xml
   scripting/script.h
   KWin::scripting::abstract_script
@@ -483,32 +483,32 @@ kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfg
 kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_book_settings_base.kcfgc)
 
-qt5_add_dbus_adaptor(kwin_SRCS base/dbus/org.kde.KWin.xml base/dbus/kwin.h KWin::base::dbus::kwin)
-qt5_add_dbus_adaptor(kwin_SRCS
+qt6_add_dbus_adaptor(kwin_SRCS base/dbus/org.kde.KWin.xml base/dbus/kwin.h KWin::base::dbus::kwin)
+qt6_add_dbus_adaptor(kwin_SRCS
   render/dbus/org.kde.kwin.Compositing.xml
   render/dbus/compositing.h
   KWin::render::dbus::compositing_qobject
 )
-qt5_add_dbus_adaptor(kwin_SRCS
+qt6_add_dbus_adaptor(kwin_SRCS
   render/dbus/org.kde.kwin.ColorCorrect.xml
   render/post/color_correct_dbus_interface.h
   KWin::render::post::color_correct_dbus_interface
 )
-qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_wrap)
-qt5_add_dbus_adaptor(kwin_SRCS
+qt6_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_wrap)
+qt6_add_dbus_adaptor(kwin_SRCS
     win/dbus/org.kde.KWin.VirtualDesktopManager.xml
     win/dbus/virtual_desktop_manager.h
     KWin::win::dbus::virtual_desktop_manager
 )
-qt5_add_dbus_adaptor(kwin_SRCS
+qt6_add_dbus_adaptor(kwin_SRCS
   win/dbus/org.kde.KWin.Session.xml
   win/session_manager.h
   KWin::win::session_manager
 )
 
-qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf5_org.freedesktop.ScreenSaver.xml screenlocker_interface)
-qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.screensaver.xml kscreenlocker_interface)
-qt5_add_dbus_interface(kwin_SRCS win/dbus/org.kde.kappmenu.xml appmenu_interface)
+qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf6_org.freedesktop.ScreenSaver.xml screenlocker_interface)
+qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.screensaver.xml kscreenlocker_interface)
+qt6_add_dbus_interface(kwin_SRCS win/dbus/org.kde.kappmenu.xml appmenu_interface)
 
 ki18n_wrap_ui(kwin_SRCS
     debug/console/debug_console.ui
@@ -525,20 +525,20 @@ set(kwin_QT_LIBS
     Qt::Concurrent
     Qt::DBus
     Qt::Quick
-    Qt::X11Extras
 )
 
 set(kwin_KDE_LIBS
-    KF5::ConfigCore
-    KF5::ConfigWidgets
-    KF5::CoreAddons
-    KF5::I18n
-    KF5::Notifications
-    KF5::Package
-    KF5::Service
+  KF6::ConfigCore
+  KF6::ConfigWidgets
+  KF6::CoreAddons
+  KF6::I18n
+  KF6::Notifications
+  KF6::Package
+  KF6::Plasma
+  KF6::Service
 
-    KDecoration2::KDecoration
-    KDecoration2::KDecoration2Private
+  KDecoration2::KDecoration
+  KDecoration2::KDecoration2Private
 )
 
 set(kwin_X11_LIBS
@@ -558,11 +558,11 @@ set(kwin_XCB_LIBS
     XCB::SHM
     XCB::SYNC
     XCB::XFIXES
+    XCB::XKB
 )
 
 set(kwin_INPUT_LIBS
-    XKB::XKB
-    Qt5::XkbCommonSupportPrivate
+  XKB::XKB
 )
 
 set(kwinLibs
@@ -649,12 +649,12 @@ add_library(kwin_x11_lib STATIC
 
 target_link_libraries(kwin_x11_lib
 PUBLIC
-    kwin
-    KF5::Crash
-    KF5::GlobalAccel
+  kwin
+  KF6::Crash
+  KF6::GlobalAccel
 PRIVATE
-    Qt::X11Extras
-    X11::Xi
+  Qt::GuiPrivate
+  X11::Xi
 )
 
 if (HAVE_DL_LIBRARY)
@@ -664,6 +664,7 @@ endif()
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
 target_link_libraries(kwin_x11
   kwin_x11_lib
+  ${XKBX11_LIBRARIES}
 )
 kcoreaddons_target_static_plugins(kwin_x11 "kwin/effects/plugins")
 
@@ -714,7 +715,6 @@ set(kwin_WAYLAND_SRCS
    input/spies/keyboard_repeat.cpp
    input/wayland/global_shortcuts_manager.cpp
    input/logging.cpp
-   input/switch.cpp
    input/wayland/kglobalaccel/runtime/component.cpp
    input/wayland/kglobalaccel/runtime/global_accel_d.cpp
    input/wayland/kglobalaccel/runtime/global_shortcut.cpp
@@ -757,7 +757,7 @@ add_library(kwin_wayland_lib SHARED
 target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
-  KF5::GlobalAccel
+  KF6::GlobalAccel
   WraplandClient
   WraplandServer
   Wayland::Server
@@ -783,12 +783,12 @@ target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)
 
 add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
-    kwin_wayland_lib
-    KF5IdleTimeKWinPlugin
-    KF5WindowSystemKWinPlugin
-    KWinQpaPlugin
-    KF5::Crash
-    KF5::DBusAddons
+  kwin_wayland_lib
+  KF6IdleTimeKWinPlugin
+  KF6WindowSystemKWinPlugin
+  KWinQpaPlugin
+  KF6::Crash
+  KF6::DBusAddons
 )
 
 install(TARGETS kwin_wayland_lib ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
@@ -838,13 +838,6 @@ install(
 )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
-# Install the KWin/Script service type
-install(FILES scripting/kwinscript.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPESDIR})
-
-# Install the KWin/WindowSwitcher service type
-install(FILES win/tabbox/kwinwindowswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPESDIR})
-install(FILES win/tabbox/kwindesktopswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPESDIR})
-
 # Install QML files
 install(DIRECTORY render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
 install(DIRECTORY render/qml/frames/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/frames)
@@ -858,11 +851,9 @@ if (BUILD_TESTING)
     add_subdirectory(tests)
 endif()
 
-if (KF5DocTools_FOUND)
+if (KF6DocTools_FOUND)
     add_subdirectory(docs)
 endif()
-
-add_subdirectory(kconf_update)
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
@@ -891,7 +882,7 @@ install(
     DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
 )
 
-qt5_generate_dbus_interface(input/dbus/device.h org.kde.kwin.InputDevice.xml OPTIONS -A)
+qt6_generate_dbus_interface(input/dbus/device.h org.kde.kwin.InputDevice.xml OPTIONS -A)
 
 add_custom_target(KWinInputDBusInterfaces ALL
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/org.kde.kwin.InputDevice.xml

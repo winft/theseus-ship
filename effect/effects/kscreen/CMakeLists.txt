@@ -12,8 +12,8 @@ set(kscreen_SOURCES
 )
 
 kconfig_add_kcfg_files(kscreen_SOURCES kscreenconfig.kcfgc)
-kwin4_add_effect_module(kwin4_effect_kscreen ${kscreen_SOURCES})
-target_link_libraries(kwin4_effect_kscreen PRIVATE
-    kwineffects
-    KF5::ConfigGui
+kwin_add_builtin_effect(kscreen ${kscreen_SOURCES})
+target_link_libraries(kscreen PRIVATE
+  KF6::ConfigGui
+  kwineffects
 )

@@ -159,11 +159,6 @@ public:
         return m_client->frameId();
     }
 
-    int desktop() const override
-    {
-        return get_desktop(*m_client);
-    }
-
     int height() const override
     {
         return m_clientSize.height();

@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef POLLER_H
 #define POLLER_H
 
-#include <KIdleTime/private/abstractsystempoller.h>
+#include <private/kabstractidletimepoller_p.h>
 
 #include <QHash>
 
@@ -15,11 +15,11 @@ namespace KWin::input
 struct idle_listener;
 }
 
-class KWinIdleTimePoller : public AbstractSystemPoller
+class KWinIdleTimePoller : public KAbstractIdleTimePoller
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID AbstractSystemPoller_iid FILE "kwin.json")
-    Q_INTERFACES(AbstractSystemPoller)
+    Q_PLUGIN_METADATA(IID KAbstractIdleTimePoller_iid FILE "kwin.json")
+    Q_INTERFACES(KAbstractIdleTimePoller)
 
 public:
     KWinIdleTimePoller(QObject *parent = nullptr);

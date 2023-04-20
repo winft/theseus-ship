@@ -105,7 +105,9 @@ public:
             QStringLiteral("/org/kde/KWin"),
             QStringLiteral("org.kde.KWin.TabletModeManager"),
             qobject.get(),
-            QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals);
+            // NOTE: slots must be exported for properties to work correctly
+            QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals
+                | QDBusConnection::ExportAllSlots);
 
         QObject::connect(redirect.qobject.get(),
                          &input::redirect_qobject::has_tablet_mode_switch_changed,

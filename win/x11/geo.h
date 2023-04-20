@@ -291,7 +291,7 @@ void do_set_maximize_mode(Win& win, win::maximize_mode mode)
     if (auto deco = decoration(&win); deco && deco->client()
         && !(win.space.base.options->qobject->borderlessMaximizedWindows()
              && mode == maximize_mode::full)) {
-        auto const deco_client = decoration(&win)->client().toStrongRef().data();
+        auto const deco_client = decoration(&win)->client();
 
         if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
             Q_EMIT deco_client->maximizedVerticallyChanged(flags(mode & maximize_mode::vertical));

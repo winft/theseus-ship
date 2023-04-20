@@ -3458,7 +3458,7 @@ TEST_CASE("xdg-shell rules", "[win]")
                                         &win::window_qobject::clientUnminimized);
         QVERIFY(clientUnminimizedSpy.isValid());
         quint32 timestamp = 1;
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_1}));
         win::set_minimized(client, true);
         QVERIFY(client->control->minimized);
         keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
@@ -3472,7 +3472,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         // One can also change the shortcut.
         win::set_shortcut(client, QStringLiteral("Ctrl+Alt+2"));
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_2}));
         win::set_minimized(client, true);
         QVERIFY(client->control->minimized);
         keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
@@ -3504,7 +3504,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(client);
 
         // The window shortcut should be set back to Ctrl+Alt+1.
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_1}));
 
         // Destroy the client.
         shellSurface.reset();
@@ -3539,7 +3539,7 @@ TEST_CASE("xdg-shell rules", "[win]")
                                         &win::window_qobject::clientUnminimized);
         QVERIFY(clientUnminimizedSpy.isValid());
         quint32 timestamp = 1;
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_1}));
         win::set_minimized(client, true);
         QVERIFY(client->control->minimized);
         keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
@@ -3553,7 +3553,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         // Change the window shortcut to Ctrl+Alt+2.
         win::set_shortcut(client, QStringLiteral("Ctrl+Alt+2"));
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_2}));
         win::set_minimized(client, true);
         QVERIFY(client->control->minimized);
         keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
@@ -3573,7 +3573,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(client);
 
         // The window shortcut should be set to the last known value.
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_2}));
 
         // Destroy the client.
         shellSurface.reset();
@@ -3608,7 +3608,7 @@ TEST_CASE("xdg-shell rules", "[win]")
                                         &win::window_qobject::clientUnminimized);
         QVERIFY(clientUnminimizedSpy.isValid());
         quint32 timestamp = 1;
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_1}));
         win::set_minimized(client, true);
         QVERIFY(client->control->minimized);
         keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
@@ -3622,7 +3622,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         // Any attempt to change the window shortcut should not succeed.
         win::set_shortcut(client, QStringLiteral("Ctrl+Alt+2"));
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_1}));
         win::set_minimized(client, true);
         QVERIFY(client->control->minimized);
         keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
@@ -3642,7 +3642,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(client);
 
         // The window shortcut should still be forced.
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_1}));
 
         // Destroy the client.
         shellSurface.reset();
@@ -3672,7 +3672,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         win::space_reconfigure(*setup.base->space);
 
         // The client should now have a window shortcut assigned.
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_1}));
         QSignalSpy clientUnminimizedSpy(client->qobject.get(),
                                         &win::window_qobject::clientUnminimized);
         QVERIFY(clientUnminimizedSpy.isValid());
@@ -3690,7 +3690,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         // Assign a different shortcut.
         win::set_shortcut(client, QStringLiteral("Ctrl+Alt+2"));
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_2}));
         win::set_minimized(client, true);
         QVERIFY(client->control->minimized);
         keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
@@ -3704,7 +3704,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         // The rule should not be applied again.
         win::rules::evaluate_rules(client);
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_2}));
 
         // Destroy the client.
         shellSurface.reset();
@@ -3739,7 +3739,7 @@ TEST_CASE("xdg-shell rules", "[win]")
                                         &win::window_qobject::clientUnminimized);
         QVERIFY(clientUnminimizedSpy.isValid());
         quint32 timestamp = 1;
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_1}));
         win::set_minimized(client, true);
         QVERIFY(client->control->minimized);
         keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
@@ -3753,7 +3753,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         // Any attempt to change the window shortcut should not succeed.
         win::set_shortcut(client, QStringLiteral("Ctrl+Alt+2"));
-        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+        QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_1}));
         win::set_minimized(client, true);
         QVERIFY(client->control->minimized);
         keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);

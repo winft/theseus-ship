@@ -89,6 +89,10 @@ public:
     {
         return m_glx.majorOpcode;
     }
+    int xkb_event_base() const
+    {
+        return m_xkb.eventBase;
+    }
 
     static extensions* create(x11::data const& data);
     static extensions* self();
@@ -113,6 +117,7 @@ private:
     extension_data m_fixes;
     extension_data m_sync;
     extension_data m_glx;
+    extension_data m_xkb;
 
     x11::data const& data;
 

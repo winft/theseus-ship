@@ -60,9 +60,9 @@ public:
     {
         Q_ASSERT(shadow->hasDecorationShadow());
         unregister(shadow);
-        auto const decoShadow = shadow->decorationShadow().toStrongRef();
-        Q_ASSERT(!decoShadow.isNull());
-        auto it = m_cache.find(decoShadow.data());
+        auto const decoShadow = shadow->decorationShadow().lock();
+        Q_ASSERT(decoShadow);
+        auto it = m_cache.find(decoShadow.get());
         if (it != m_cache.end()) {
             Q_ASSERT(!it.value().shadows.contains(shadow));
             it.value().shadows << shadow;
@@ -71,7 +71,7 @@ public:
         Data d;
         d.shadows << shadow;
         d.texture = QSharedPointer<GLTexture>::create(shadow->decorationShadowImage());
-        m_cache.insert(decoShadow.data(), d);
+        m_cache.insert(decoShadow.get(), d);
         return d.texture;
     }
 

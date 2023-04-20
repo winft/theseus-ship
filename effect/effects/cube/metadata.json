@@ -3,7 +3,6 @@
         "Category": "Window Management",
         "Description": "Display each virtual desktop on a side of a cube",
         "EnabledByDefault": false,
-        "Id": "cube",
         "License": "GPL",
         "Name": "Desktop Cube"
     },

@@ -3,7 +3,6 @@
         "Category": "Accessibility",
         "Description": "Display a mouse cursor locating effect when activated",
         "EnabledByDefault": false,
-        "Id": "trackmouse",
         "License": "GPL",
         "Name": "Track Mouse"
     },

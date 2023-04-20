@@ -85,8 +85,6 @@ void property_window::setup_connections()
         &qtwin, &win::window_qobject::hasAlphaChanged, this, &property_window::hasAlphaChanged);
     QObject::connect(
         &qtwin, &win::window_qobject::windowRoleChanged, this, &property_window::windowRoleChanged);
-    QObject::connect(
-        &qtwin, &win::window_qobject::shapedChanged, this, &property_window::shapedChanged);
     QObject::connect(&qtwin,
                      &win::window_qobject::skipCloseAnimationChanged,
                      this,
@@ -103,20 +101,11 @@ void property_window::setup_connections()
                      &win::window_qobject::hasApplicationMenuChanged,
                      this,
                      &property_window::hasApplicationMenuChanged);
-    QObject::connect(
-        &qtwin, &win::window_qobject::surfaceIdChanged, this, &property_window::surfaceIdChanged);
 
     QObject::connect(&qtwin,
                      &win::window_qobject::desktopFileNameChanged,
                      this,
                      &property_window::desktopFileNameChanged);
-
-    // TODO(romangg): Is this problematic for scripts that connect to the overriding
-    // blockingCompositingChanged signal?
-    QObject::connect(&qtwin,
-                     &win::window_qobject::blockingCompositingChanged,
-                     this,
-                     &property_window::blockingCompositingChanged);
 }
 
 window_qobject* property_window::get_window_qobject()

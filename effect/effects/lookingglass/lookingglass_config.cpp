@@ -34,12 +34,13 @@ LookingGlassEffectConfigForm::LookingGlassEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-LookingGlassEffectConfig::LookingGlassEffectConfig(QWidget* parent, const QVariantList& args)
-    : KCModule(parent, args)
-    , m_ui(this)
+LookingGlassEffectConfig::LookingGlassEffectConfig(QObject* parent,
+                                                   const KPluginMetaData& data,
+                                                   const QVariantList& args)
+    : KCModule(parent, data, args)
+    , m_ui(widget())
 {
-    QVBoxLayout* layout = new QVBoxLayout(this);
-
+    QVBoxLayout* layout = new QVBoxLayout(widget());
     layout->addWidget(&m_ui);
 
     LookingGlassConfig::instance(KWIN_CONFIG);
@@ -48,7 +49,7 @@ LookingGlassEffectConfig::LookingGlassEffectConfig(QWidget* parent, const QVaria
         m_ui.editor, &KShortcutsEditor::keyChange, this, &LookingGlassEffectConfig::markAsChanged);
 
     // Shortcut config. The shortcut belongs to the component "kwin"!
-    m_actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
+    m_actionCollection = new KActionCollection(widget(), QStringLiteral("kwin"));
 
     m_actionCollection->setComponentDisplayName(i18n("KWin"));
     m_actionCollection->setConfigGroup(QStringLiteral("LookingGlass"));

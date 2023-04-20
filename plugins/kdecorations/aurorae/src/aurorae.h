@@ -16,16 +16,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define AURORAE_H
 
 #include <KCModule>
+#include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationThemeProvider>
 #include <KPluginMetaData>
 #include <QElapsedTimer>
+#include <QQuickItem>
 #include <QVariant>
 
 class QQmlComponent;
 class QQmlContext;
 class QQmlEngine;
-class QQuickItem;
 
 class KConfigLoader;
 
@@ -41,7 +42,8 @@ namespace Aurorae
 class Decoration : public KDecoration2::Decoration
 {
     Q_OBJECT
-    Q_PROPERTY(KDecoration2::DecoratedClient* client READ clientPointer CONSTANT)
+    Q_PROPERTY(KDecoration2::DecoratedClient *client READ client CONSTANT)
+    Q_PROPERTY(QQuickItem *item READ item)
 public:
     explicit Decoration(QObject *parent = nullptr, const QVariantList &args = QVariantList());
     ~Decoration() override;
@@ -50,7 +52,7 @@ public:
 
     Q_INVOKABLE QVariant readConfig(const QString &key, const QVariant &defaultValue = QVariant());
 
-    KDecoration2::DecoratedClient *clientPointer() const;
+    QQuickItem *item() const;
 
 public Q_SLOTS:
     void init() override;
@@ -87,7 +89,6 @@ private:
     KWin::Borders *m_padding;
     QString m_themeName;
 
-    std::unique_ptr<QWindow> m_dummyWindow;
     std::unique_ptr<KWin::EffectQuickView> m_view;
 };
 
@@ -115,7 +116,7 @@ class ConfigurationModule : public KCModule
 {
     Q_OBJECT
 public:
-    ConfigurationModule(QWidget *parent, const QVariantList &args);
+    ConfigurationModule(QObject *parent, const KPluginMetaData &data, const QVariantList &args);
 
 private:
     void init();

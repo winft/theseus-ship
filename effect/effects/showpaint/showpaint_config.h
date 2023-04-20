@@ -18,7 +18,9 @@ class ShowPaintEffectConfig : public KCModule
     Q_OBJECT
 
 public:
-    explicit ShowPaintEffectConfig(QWidget* parent = nullptr, const QVariantList& args = {});
+    explicit ShowPaintEffectConfig(QObject* parent,
+                                   const KPluginMetaData& data,
+                                   const QVariantList& args);
     ~ShowPaintEffectConfig() override;
 
 public Q_SLOTS:

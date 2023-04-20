@@ -62,7 +62,7 @@ int main(int argc, char **argv)
                     if (!path.isEmpty() && path == QStringLiteral("%1/metadata.desktop").arg(requestedTheme)) {
                         requestedTheme = QString("__aurorae__svg__").append(splitTheme.last());
                         themeResolved = true;
-                        ts << i18n("Resolved %1 to the KWin Aurorae theme \"%2\", and will attempt to set that as your current theme.").arg(parser->positionalArguments().constFirst()).arg(requestedTheme) << endl;
+                        ts << i18n("Resolved %1 to the KWin Aurorae theme \"%2\", and will attempt to set that as your current theme.").arg(parser->positionalArguments().constFirst()).arg(requestedTheme) << Qt::endl;
                     }
                 }
             } else {
@@ -111,9 +111,9 @@ int main(int argc, char **argv)
             const QString displayName = model->data(model->index(i), Qt::DisplayRole).toString();
             const QString themeName = model->data(model->index(i), KDecoration2::Configuration::DecorationsModel::ThemeNameRole).toString();
             if (settings->theme() == themeName) {
-                ts << QStringLiteral(" * %1 (theme name: %2 - current theme for this Plasma session)").arg(displayName).arg(themeName) << endl;
+                ts << QStringLiteral(" * %1 (theme name: %2 - current theme for this Plasma session)").arg(displayName).arg(themeName) << Qt::endl;
             } else {
-                ts << QStringLiteral(" * %1 (theme name: %2)").arg(displayName).arg(themeName) << endl;
+                ts << QStringLiteral(" * %1 (theme name: %2)").arg(displayName).arg(themeName) << Qt::endl;
             }
         }
     } else {

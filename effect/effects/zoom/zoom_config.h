@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_ZOOM_CONFIG_H
 #define KWIN_ZOOM_CONFIG_H
 
-#include <kcmodule.h>
+#include <KCModule>
 
 #include "ui_zoom_config.h"
 
@@ -26,7 +26,9 @@ class ZoomEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit ZoomEffectConfig(QWidget* parent = nullptr, const QVariantList& args = QVariantList());
+    explicit ZoomEffectConfig(QObject* parent,
+                              const KPluginMetaData& data,
+                              const QVariantList& args);
     ~ZoomEffectConfig() override;
 
 public Q_SLOTS:

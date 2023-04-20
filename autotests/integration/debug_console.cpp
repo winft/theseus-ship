@@ -230,6 +230,10 @@ TEST_CASE("debug console", "[debug]")
                                       values);
         window.map();
 
+        QSignalSpy unmanaged_server_spy(setup.base->space->qobject.get(),
+                                        &win::space::qobject_t::unmanagedAdded);
+        QVERIFY(unmanaged_server_spy.isValid());
+
         QVERIFY(rowsInsertedSpy.wait());
         QCOMPARE(rowsInsertedSpy.count(), 1);
         QVERIFY(model->hasChildren(unmanagedTopLevelIndex));
@@ -237,6 +241,10 @@ TEST_CASE("debug console", "[debug]")
         QCOMPARE(rowsInsertedSpy.first().at(0).value<QModelIndex>(), unmanagedTopLevelIndex);
         QCOMPARE(rowsInsertedSpy.first().at(1).value<int>(), 0);
         QCOMPARE(rowsInsertedSpy.first().at(2).value<int>(), 0);
+
+        QTRY_COMPARE(unmanaged_server_spy.count(), 1);
+        auto win_id = unmanaged_server_spy.first().first().value<quint32>();
+        auto server_unmanaged = get_x11_window(setup.base->space->windows_map.at(win_id));
 
         QModelIndex clientIndex = model->index(0, 0, unmanagedTopLevelIndex);
         QVERIFY(clientIndex.isValid());
@@ -249,7 +257,9 @@ TEST_CASE("debug console", "[debug]")
         QVERIFY(!model->index(0, 2, unmanagedTopLevelIndex).isValid());
         QVERIFY(!model->index(1, 0, unmanagedTopLevelIndex).isValid());
 
-        QCOMPARE(model->data(clientIndex, Qt::DisplayRole).toString(), QString::number(window));
+        auto server_uuid = server_unmanaged->meta.internal_id.toString(QUuid::StringFormat::Id128);
+        server_uuid.truncate(10);
+        QCOMPARE(model->data(clientIndex, Qt::DisplayRole).toString(), server_uuid);
 
         // the clientIndex has children and those are properties
         for (int i = 0; i < model->rowCount(clientIndex); i++) {

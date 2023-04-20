@@ -24,8 +24,7 @@ protected:
     QObject* create(const char* iface,
                     QWidget* parentWidget,
                     QObject* parent,
-                    const QVariantList& args,
-                    const QString& keyword) override;
+                    const QVariantList& args) override;
 };
 
 class generic_scripted_config : public KCModule

@@ -14,10 +14,10 @@ kconfig_add_kcfg_files(resize_SOURCES
     resizeconfig.kcfgc
 )
 
-kwin4_add_effect_module(kwin4_effect_resize ${resize_SOURCES})
-target_link_libraries(kwin4_effect_resize PRIVATE
-    kwineffects
-    KF5::ConfigWidgets
+kwin_add_builtin_effect(resize ${resize_SOURCES})
+target_link_libraries(resize PRIVATE
+  KF6::KCMUtils
+  kwineffects
 )
 
 #######################################
@@ -29,8 +29,8 @@ kconfig_add_kcfg_files(kwin_resize_config_SRCS resizeconfig.kcfgc)
 kwin_add_effect_config(kwin_resize_config ${kwin_resize_config_SRCS})
 
 target_link_libraries(kwin_resize_config
-    KF5::ConfigWidgets
-    KF5::I18n
-    Qt::DBus
-    KWinEffectsInterface
+  KF6::I18n
+  KF6::KCMUtils
+  KWinEffectsInterface
+  Qt::DBus
 )

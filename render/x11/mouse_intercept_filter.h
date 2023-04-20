@@ -9,6 +9,7 @@
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/qt_types.h"
 
+#include <QCursor>
 #include <QMouseEvent>
 
 namespace KWin::render::x11
@@ -67,22 +68,17 @@ public:
                         // angleDelta = angleDelta.transposed();
                     }
 
-                    if (angleDelta.y()) {
-                        QWheelEvent ev(QPoint(me->event_x, me->event_y),
-                                       angleDelta.y(),
-                                       buttons,
-                                       modifiers,
-                                       Qt::Vertical);
-                        return m_effects->checkInputWindowEvent(&ev);
-                    } else if (angleDelta.x()) {
-                        QWheelEvent ev(QPoint(me->event_x, me->event_y),
-                                       angleDelta.x(),
-                                       buttons,
-                                       modifiers,
-                                       Qt::Horizontal);
-                        return m_effects->checkInputWindowEvent(&ev);
-                    }
+                    QWheelEvent ev(QPoint(me->event_x, me->event_y),
+                                   QCursor::pos(),
+                                   QPoint(),
+                                   angleDelta,
+                                   buttons,
+                                   modifiers,
+                                   Qt::NoScrollPhase,
+                                   false);
+                    return m_effects->checkInputWindowEvent(&ev);
                 }
+
                 auto const button = base::x11::xcb::to_qt_mouse_button(me->detail);
                 auto buttons = base::x11::xcb::to_qt_mouse_buttons(me->state);
                 const QEvent::Type type = (eventType == XCB_BUTTON_PRESS)

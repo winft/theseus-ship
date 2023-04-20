@@ -3,7 +3,6 @@
         "Category": "Virtual Desktop Switching Animation",
         "Description": "Animate desktop switching with a cube",
         "EnabledByDefault": false,
-        "Id": "cubeslide",
         "License": "GPL",
         "Name": "Desktop Cube Animation"
     },

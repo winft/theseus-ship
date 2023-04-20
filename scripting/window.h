@@ -37,16 +37,6 @@ class KWIN_EXPORT window : public win::property_window
 
     Q_PROPERTY(int stackingOrder READ stackingOrder NOTIFY stackingOrderChanged)
 
-    // TODO: Should this not also hold true for Wayland windows? The name is misleading.
-    //       Wayland windows (with xdg-toplevel role) are also "managed" by the compositor.
-    Q_PROPERTY(bool managed READ isClient CONSTANT)
-
-    /**
-     * X11 only properties
-     */
-    Q_PROPERTY(bool blocksCompositing READ isBlockingCompositing WRITE setBlockingCompositing NOTIFY
-                   blockingCompositingChanged)
-
 public:
     explicit window(win::window_qobject& qtwin);
 
@@ -62,8 +52,6 @@ public:
     bool isShadeable() const;
     bool isShade() const;
     void setShade(bool set);
-
-    virtual bool isClient() const = 0;
 
 public Q_SLOTS:
     virtual void closeWindow() = 0;
@@ -86,8 +74,6 @@ Q_SIGNALS:
     void shadeChanged();
 
     void paletteChanged(const QPalette& p);
-
-    void blockingCompositingChanged(KWin::scripting::window* window);
 
     void clientMinimized(KWin::scripting::window* window);
     void clientUnminimized(KWin::scripting::window* window);
@@ -171,40 +157,6 @@ public:
         QObject::connect(qtwin, &win::window_qobject::damaged, this, [this](auto damage) {
             Q_EMIT damaged(this, damage);
         });
-
-        if constexpr (requires(RefWin win) { win.isClient(); }) {
-            if (ref_win->isClient()) {
-                QObject::connect(qtwin,
-                                 &win::window_qobject::blockingCompositingChanged,
-                                 this,
-                                 [this](auto /*block*/) {
-                                     // TODO(romangg): Should we emit null if block is false?
-                                     Q_EMIT blockingCompositingChanged(this);
-                                 });
-            }
-        }
-    }
-
-    xcb_window_t frameId() const override
-    {
-        return std::visit(overload{[](auto&& win) -> xcb_window_t {
-                              if constexpr (requires(decltype(win) win) { win->frameId(); }) {
-                                  return win->frameId();
-                              }
-                              return XCB_WINDOW_NONE;
-                          }},
-                          ref_win);
-    }
-
-    quint32 windowId() const override
-    {
-        return std::visit(overload{[](auto&& win) -> quint32 {
-                              if constexpr (requires(decltype(win) win) { win->xcb_window; }) {
-                                  return win->xcb_window;
-                              }
-                              return XCB_WINDOW_NONE;
-                          }},
-                          ref_win);
     }
 
     QString resourceName() const override
@@ -581,17 +533,6 @@ public:
                           ref_win);
     }
 
-    bool isShape() const override
-    {
-        return std::visit(overload{[](auto&& win) {
-                              if constexpr (requires(decltype(win) win) { win->is_shape; }) {
-                                  return win->is_shape;
-                              }
-                              return false;
-                          }},
-                          ref_win);
-    }
-
     bool keepAbove() const override
     {
         return std::visit(overload{[](auto&& win) { return win->control->keep_above; }}, ref_win);
@@ -772,60 +713,10 @@ public:
         return std::visit(overload{[](auto&& win) { return win->providesContextHelp(); }}, ref_win);
     }
 
-    bool isClient() const override
-    {
-        using x11_window_t = typename std::remove_pointer_t<
-            std::variant_alternative_t<0, RefWin>>::space_t::x11_window;
-        return std::visit(overload{
-                              [](x11_window_t* win) { return static_cast<bool>(win->control); },
-                              [](auto&&) { return false; },
-                          },
-                          ref_win);
-    }
-
     bool isDeleted() const override
     {
         return std::visit(overload{[](auto&& win) { return static_cast<bool>(win->remnant); }},
                           ref_win);
-    }
-
-    quint32 surfaceId() const override
-    {
-        return std::visit(overload{[](auto&& win) -> quint32 {
-                              if constexpr (requires(decltype(win) win) { win->surface_id; }) {
-                                  return win->surface_id;
-                              }
-                              return 0;
-                          }},
-                          ref_win);
-    }
-
-    Wrapland::Server::Surface* surface() const override
-    {
-        return std::visit(overload{[](auto&& win) -> Wrapland::Server::Surface* {
-                              if constexpr (requires(decltype(win) win) { win->surface; }) {
-                                  return win->surface;
-                              }
-                              return nullptr;
-                          }},
-                          ref_win);
-    }
-
-    QSize basicUnit() const override
-    {
-        return std::visit(overload{[](auto&& win) { return win->basicUnit(); }}, ref_win);
-    }
-
-    bool isBlockingCompositing() override
-    {
-        return std::visit(overload{[](auto&& win) { return win::is_blocking_compositing(*win); }},
-                          ref_win);
-    }
-
-    void setBlockingCompositing(bool block) override
-    {
-        std::visit(overload{[=](auto&& win) { win::set_blocking_compositing(*win, block); }},
-                   ref_win);
     }
 
     int stackingOrder() const override
@@ -851,5 +742,4 @@ private:
 
 }
 
-Q_DECLARE_METATYPE(KWin::scripting::window*)
 Q_DECLARE_METATYPE(QList<KWin::scripting::window*>)

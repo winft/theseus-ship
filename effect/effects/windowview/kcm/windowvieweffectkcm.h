@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <KConfigWidgets/kcmodule.h>
+#include <KCModule>
 
 #include "ui_windowvieweffectkcm.h"
 
@@ -18,8 +18,9 @@ class WindowViewEffectConfig : public KCModule
     Q_OBJECT
 
 public:
-    explicit WindowViewEffectConfig(QWidget* parent = nullptr,
-                                    const QVariantList& args = QVariantList());
+    explicit WindowViewEffectConfig(QObject* parent,
+                                    const KPluginMetaData& data,
+                                    const QVariantList& args);
     ~WindowViewEffectConfig() override;
 
 public Q_SLOTS:

@@ -229,7 +229,7 @@ private:
                     free(event);
                     continue;
                 }
-                long result = 0;
+                qintptr result = 0;
                 QThread::currentThread()->eventDispatcher()->filterNativeEvent(
                     QByteArrayLiteral("xcb_generic_event_t"), event, &result);
                 free(event);

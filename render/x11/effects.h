@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "keyboard_intercept_filter.h"
 #include "mouse_intercept_filter.h"
 
 #include "effect/blur_integration.h"
@@ -19,7 +20,6 @@
 
 #include <kwinxrender/utils.h>
 
-#include <QDesktopWidget>
 #include <memory.h>
 
 namespace KWin::render::x11
@@ -110,21 +110,22 @@ public:
 protected:
     bool doGrabKeyboard() override
     {
-        bool ret = base::x11::grab_keyboard(this->compositor.platform.base.x11_data);
-        if (!ret)
+        auto is_grabbed = base::x11::grab_keyboard(this->compositor.platform.base.x11_data);
+        if (!is_grabbed) {
             return false;
-        // Workaround for Qt 5.9 regression introduced with 2b34aefcf02f09253473b096eb4faffd3e62b5f4
-        // we no longer get any events for the root window, one needs to call winId() on the desktop
-        // window
-        // TODO: change effects event handling to create the appropriate QKeyEvent without relying
-        // on Qt as it's done already in the Wayland case.
-        qApp->desktop()->winId();
-        return ret;
+        }
+
+        auto& keyboard = this->compositor.platform.base.space->input->xinput->fake_devices.keyboard;
+        keyboard_intercept.filter
+            = std::make_unique<keyboard_intercept_filter<type>>(*keyboard->xkb, *this);
+
+        return true;
     }
 
     void doUngrabKeyboard() override
     {
         base::x11::ungrab_keyboard(this->compositor.platform.base.x11_data.connection);
+        keyboard_intercept.filter.reset();
     }
 
     void doStartMouseInterception(Qt::CursorShape shape) override
@@ -190,6 +191,10 @@ private:
         base::x11::xcb::window window;
         std::unique_ptr<mouse_intercept_filter<type>> filter;
     } mouse_intercept;
+    struct {
+        base::x11::xcb::window window;
+        std::unique_ptr<keyboard_intercept_filter<type>> filter;
+    } keyboard_intercept;
 };
 
 }

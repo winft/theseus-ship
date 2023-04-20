@@ -25,10 +25,10 @@
 #include <KLocalizedString>
 #include <KProcess>
 #include <QAction>
+#include <QActionGroup>
 #include <QMenu>
 #include <QRect>
 #include <QWindow>
-#include <QtConcurrentRun>
 
 namespace KWin::win
 {
@@ -850,7 +850,7 @@ private:
             }
         }
 
-        QtConcurrent::run([args]() { KProcess::startDetached(QStringLiteral("kdialog"), args); });
+        KProcess::startDetached(QStringLiteral("kdialog"), args);
     }
 
     /// The actual main context menu which is show when the user_actions_menu is invoked.

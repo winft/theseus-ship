@@ -25,7 +25,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KDecoration2/Private/DecorationBridge>
 #include <KPluginMetaData>
 #include <QMetaProperty>
-#include <QSharedPointer>
 
 namespace KDecoration2
 {
@@ -72,7 +71,7 @@ public:
             return;
         }
         m_plugin = readPlugin();
-        m_settings = QSharedPointer<KDecoration2::DecorationSettings>::create(this);
+        m_settings = std::make_shared<KDecoration2::DecorationSettings>(this);
         initPlugin();
         if (!m_factory) {
             if (m_plugin != s_defaultPlugin) {
@@ -150,7 +149,7 @@ public:
                 m_plugin = QString();
                 delete m_factory;
                 m_factory = nullptr;
-                m_settings.clear();
+                m_settings.reset();
             } else {
                 // decorations enabled now
                 init();
@@ -184,7 +183,7 @@ public:
         }
     }
 
-    const QSharedPointer<KDecoration2::DecorationSettings>& settings() const
+    std::shared_ptr<KDecoration2::DecorationSettings> const& settings() const
     {
         return m_settings;
     }
@@ -328,7 +327,7 @@ private:
     QString m_plugin;
     QString m_defaultTheme;
     QString m_theme;
-    QSharedPointer<KDecoration2::DecorationSettings> m_settings;
+    std::shared_ptr<KDecoration2::DecorationSettings> m_settings;
     bool m_noPlugin{false};
     Space& space;
 };

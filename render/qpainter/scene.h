@@ -36,7 +36,7 @@ public:
         , m_backend{platform.get_qpainter_backend(*platform.compositor)}
         , m_painter(new QPainter())
     {
-        QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
+        QQuickWindow::setSceneGraphBackend("software");
     }
 
     int64_t paint_output(output_t* output,

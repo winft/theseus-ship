@@ -29,6 +29,7 @@ public:
     bool motion(motion_event const& event) override
     {
         auto qt_event = motion_to_qt_event(*this->redirect.pointer, event);
+        qt_event.setTimestamp(event.base.time_msec);
         this->redirect.space.edges->isEntered(&qt_event);
 
         // always forward

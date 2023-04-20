@@ -31,12 +31,13 @@ MouseMarkEffectConfigForm::MouseMarkEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-MouseMarkEffectConfig::MouseMarkEffectConfig(QWidget* parent, const QVariantList& args)
-    : KCModule(parent, args)
-    , m_ui(this)
+MouseMarkEffectConfig::MouseMarkEffectConfig(QObject* parent,
+                                             const KPluginMetaData& data,
+                                             const QVariantList& args)
+    : KCModule(parent, data, args)
+    , m_ui(widget())
 {
-    QVBoxLayout* layout = new QVBoxLayout(this);
-
+    QVBoxLayout* layout = new QVBoxLayout(widget());
     layout->addWidget(&m_ui);
 
     MouseMarkConfig::instance(KWIN_CONFIG);
@@ -50,17 +51,17 @@ MouseMarkEffectConfig::MouseMarkEffectConfig(QWidget* parent, const QVariantList
     a->setText(i18n("Clear Mouse Marks"));
     a->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F11);
-    KGlobalAccel::self()->setShortcut(a,
-                                      QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F11);
+        a, QList<QKeySequence>() << (Qt::SHIFT | Qt::META | Qt::Key_F11));
+    KGlobalAccel::self()->setShortcut(
+        a, QList<QKeySequence>() << (Qt::SHIFT | Qt::META | Qt::Key_F11));
 
     a = m_actionCollection->addAction(QStringLiteral("ClearLastMouseMark"));
     a->setText(i18n("Clear Last Mouse Mark"));
     a->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F12);
-    KGlobalAccel::self()->setShortcut(a,
-                                      QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F12);
+        a, QList<QKeySequence>() << (Qt::SHIFT | Qt::META | Qt::Key_F12));
+    KGlobalAccel::self()->setShortcut(
+        a, QList<QKeySequence>() << (Qt::SHIFT | Qt::META | Qt::Key_F12));
 
     m_ui.editor->addCollection(m_actionCollection);
 

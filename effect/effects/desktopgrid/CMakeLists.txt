@@ -12,17 +12,15 @@ kconfig_add_kcfg_files(desktopgrid_SOURCES
 )
 
 
-kwin4_add_effect_module(kwin4_effect_desktopgrid ${desktopgrid_SOURCES})
+kwin_add_builtin_effect(desktopgrid ${desktopgrid_SOURCES})
 
-target_link_libraries(kwin4_effect_desktopgrid PRIVATE
-    kwineffects
-
-    KF5::ConfigGui
-    KF5::I18n
-
-    Qt::Quick
-    Qt::Widgets
-    )
+target_link_libraries(desktopgrid PRIVATE
+  KF6::ConfigGui
+  KF6::I18n
+  kwineffects
+  Qt::Quick
+  Qt::Widgets
+)
 
 #######################################
 # Config
@@ -34,14 +32,14 @@ if (KWIN_BUILD_KCMS)
     kwin_add_effect_config(kwin_desktopgrid_config ${kwin_desktopgrid_config_SRCS})
 
     target_link_libraries(kwin_desktopgrid_config
-        KF5::ConfigWidgets
-        KF5::CoreAddons
-        KF5::GlobalAccel
-        KF5::I18n
-        KF5::XmlGui
-        Qt::Quick
-        kwineffects
-        KWinEffectsInterface
+      KF6::CoreAddons
+      KF6::GlobalAccel
+      KF6::I18n
+      KF6::KCMUtils
+      KF6::XmlGui
+      kwineffects
+      KWinEffectsInterface
+      Qt::Quick
     )
 endif()
 

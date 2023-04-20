@@ -14,6 +14,7 @@
 
 class QAction;
 class QKeyEvent;
+class QQmlEngine;
 
 namespace Wrapland::Server
 {
@@ -744,6 +745,8 @@ public:
      */
     QRegion mapToRenderTarget(QRegion const& region) const;
 
+    virtual QQmlEngine* qmlEngine() const = 0;
+
 Q_SIGNALS:
     /**
      * This signal is emitted whenever a new @a screen is added to the system.
@@ -1001,9 +1004,6 @@ Q_SIGNALS:
      * @since 4.7
      */
     void tabBoxKeyEvent(QKeyEvent* event);
-    void currentTabAboutToChange(KWin::EffectWindow* from, KWin::EffectWindow* to);
-    void tabAdded(KWin::EffectWindow* from, KWin::EffectWindow* to);   // from merged with to
-    void tabRemoved(KWin::EffectWindow* c, KWin::EffectWindow* group); // c removed from group
     /**
      * Signal emitted when mouse changed.
      * If an effect needs to get updated mouse positions, it needs to first call startMousePolling.

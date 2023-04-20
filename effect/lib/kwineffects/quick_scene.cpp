@@ -7,13 +7,11 @@
 
 #include "kwineffects/effects_handler.h"
 #include "logging_p.h"
-#include "shared_qml_engine.h"
 
 #include <QQmlEngine>
 #include <QQmlIncubator>
 #include <QQuickItem>
 #include <QQuickWindow>
-#include <QWindow>
 
 namespace KWin
 {
@@ -67,14 +65,12 @@ public:
     }
     bool isItemOnScreen(QQuickItem* item, EffectScreen* screen) const;
 
-    SharedQmlEngine::Ptr qmlEngine;
     std::unique_ptr<QQmlComponent> qmlComponent;
     QUrl source;
     std::map<EffectScreen*, std::unique_ptr<QQmlIncubator>> incubators;
     std::map<EffectScreen*, std::unique_ptr<QuickSceneView>> views;
     QPointer<QuickSceneView> mouseImplicitGrab;
     bool running = false;
-    std::unique_ptr<QWindow> dummyWindow;
     EffectScreen* paintedScreen = nullptr;
 };
 
@@ -89,7 +85,7 @@ bool QuickSceneEffectPrivate::isItemOnScreen(QQuickItem* item, EffectScreen* scr
 }
 
 QuickSceneView::QuickSceneView(QuickSceneEffect* effect, EffectScreen* screen)
-    : EffectQuickView(effect, QuickSceneEffectPrivate::get(effect)->dummyWindow.get())
+    : EffectQuickView(effect)
     , m_effect(effect)
     , m_screen(screen)
 {
@@ -466,12 +462,8 @@ void QuickSceneEffect::startInternal()
         return;
     }
 
-    if (!d->qmlEngine) {
-        d->qmlEngine = SharedQmlEngine::engine();
-    }
-
     if (!d->qmlComponent) {
-        d->qmlComponent.reset(new QQmlComponent(d->qmlEngine.get()));
+        d->qmlComponent.reset(new QQmlComponent(effects->qmlEngine()));
         d->qmlComponent->loadUrl(d->source);
         if (d->qmlComponent->isError()) {
             qWarning().nospace() << "Failed to load " << d->source << ": "
@@ -486,17 +478,6 @@ void QuickSceneEffect::startInternal()
 
     // Install an event filter to monitor cursor shape changes.
     qApp->installEventFilter(this);
-
-    // This is an ugly hack to make hidpi rendering work as expected on wayland until we switch
-    // to Qt 6.3 or newer. See https://codereview.qt-project.org/c/qt/qtdeclarative/+/361506
-    if (effects->waylandDisplay()) {
-        d->dummyWindow.reset(new QWindow());
-        d->dummyWindow->setOpacity(0);
-        d->dummyWindow->resize(1, 1);
-        d->dummyWindow->setFlag(Qt::FramelessWindowHint);
-        d->dummyWindow->setVisible(true);
-        d->dummyWindow->requestActivate();
-    }
 
     const QList<EffectScreen*> screens = effects->screens();
     for (EffectScreen* screen : screens) {
@@ -521,7 +502,6 @@ void QuickSceneEffect::stopInternal()
 
     d->incubators.clear();
     d->views.clear();
-    d->dummyWindow.reset();
     d->running = false;
     qApp->removeEventFilter(this);
     effects->ungrabKeyboard();

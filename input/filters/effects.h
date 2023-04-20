@@ -40,6 +40,7 @@ public:
             return false;
         }
         auto qt_event = motion_to_qt_event(*this->redirect.pointer, event);
+        qt_event.setTimestamp(event.base.time_msec);
         return get_effects()->checkInputWindowEvent(&qt_event);
     }
 
@@ -49,6 +50,7 @@ public:
             return false;
         }
         auto qt_event = axis_to_qt_event(*this->redirect.pointer, event);
+        qt_event.setTimestamp(event.base.time_msec);
         return get_effects()->checkInputWindowEvent(&qt_event);
     }
 

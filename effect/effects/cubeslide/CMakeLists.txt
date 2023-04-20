@@ -11,10 +11,10 @@ set(cubeslide_SOURCES
 kconfig_add_kcfg_files(cubeslide_SOURCES
     cubeslideconfig.kcfgc
 )
-kwin4_add_effect_module(kwin4_effect_cubeslide ${cubeslide_SOURCES})
-target_link_libraries(kwin4_effect_cubeslide PRIVATE
-    kwineffects
-    KF5::ConfigWidgets
+kwin_add_builtin_effect(cubeslide ${cubeslide_SOURCES})
+target_link_libraries(cubeslide PRIVATE
+  KF6::KCMUtils
+  kwineffects
 )
 
 #######################################
@@ -27,9 +27,9 @@ if (KWIN_BUILD_KCMS)
   kwin_add_effect_config(kwin_cubeslide_config ${kwin_cubeslide_config_SRCS})
 
   target_link_libraries(kwin_cubeslide_config
-    KF5::ConfigWidgets
-    KF5::CoreAddons
-    KF5::I18n
+    KF6::CoreAddons
+    KF6::I18n
+    KF6::KCMUtils
     kwineffects
     KWinEffectsInterface
   )

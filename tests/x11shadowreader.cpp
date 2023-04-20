@@ -14,7 +14,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <QX11Info>
+#include <QtGui/private/qtx11extras_p.h>
 
 static QVector<uint32_t> readShadow(quint32 windowId)
 {

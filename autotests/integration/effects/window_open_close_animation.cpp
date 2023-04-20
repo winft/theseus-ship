@@ -53,8 +53,7 @@ TEST_CASE("window open close animation", "[effect]")
     {
         // This test verifies that window open/close animation effects try to
         // animate the appearing and the disappearing of toplevel windows.
-        auto effectName = GENERATE(
-            QString("kwin4_effect_fade"), QString("glide"), QString("kwin4_effect_scale"));
+        auto effectName = GENERATE(QString("fade"), QString("glide"), QString("scale"));
 
         // Make sure that we have the right effects ptr.
         auto& effectsImpl = setup.base->render->compositor->effects;
@@ -98,8 +97,7 @@ TEST_CASE("window open close animation", "[effect]")
     {
         // This test verifies that window open/close animation effects don't try
         // to animate popups(e.g. popup menus, tooltips, etc).
-        auto effectName = GENERATE(
-            QString("kwin4_effect_fade"), QString("glide"), QString("kwin4_effect_scale"));
+        auto effectName = GENERATE(QString("fade"), QString("glide"), QString("scale"));
 
         // Make sure that we have the right effects ptr.
         auto& effectsImpl = setup.base->render->compositor->effects;

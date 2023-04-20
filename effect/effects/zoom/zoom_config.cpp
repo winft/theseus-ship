@@ -31,18 +31,20 @@ ZoomEffectConfigForm::ZoomEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-ZoomEffectConfig::ZoomEffectConfig(QWidget* parent, const QVariantList& args)
-    : KCModule(parent, args)
+ZoomEffectConfig::ZoomEffectConfig(QObject* parent,
+                                   const KPluginMetaData& data,
+                                   const QVariantList& args)
+    : KCModule(parent, data, args)
 {
     ZoomConfig::instance(KWIN_CONFIG);
-    m_ui = new ZoomEffectConfigForm(this);
+    m_ui = new ZoomEffectConfigForm(widget());
 
-    QVBoxLayout* layout = new QVBoxLayout(this);
+    QVBoxLayout* layout = new QVBoxLayout(widget());
     layout->addWidget(m_ui);
 
     addConfig(ZoomConfig::self(), m_ui);
 
-    connect(m_ui->editor, &KShortcutsEditor::keyChange, this, &ZoomEffectConfig::markAsChanged);
+    connect(m_ui->editor, &KShortcutsEditor::keyChange, this, &KCModule::markAsChanged);
 
 #if !HAVE_ACCESSIBILITY
     m_ui->kcfg_EnableFocusTracking->setVisible(false);
@@ -81,36 +83,36 @@ ZoomEffectConfig::ZoomEffectConfig(QWidget* parent, const QVariantList& args)
     a->setText(i18n("Move Left"));
     a->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META + Qt::CTRL) + Qt::Key_Left);
+        a, QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_Left));
     KGlobalAccel::self()->setShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META + Qt::CTRL) + Qt::Key_Left);
+        a, QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_Left));
 
     a = actionCollection->addAction(QStringLiteral("MoveZoomRight"));
     a->setIcon(QIcon::fromTheme(QStringLiteral("go-next")));
     a->setText(i18n("Move Right"));
     a->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META + Qt::CTRL) + Qt::Key_Right);
+        a, QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_Right));
     KGlobalAccel::self()->setShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META + Qt::CTRL) + Qt::Key_Right);
+        a, QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_Right));
 
     a = actionCollection->addAction(QStringLiteral("MoveZoomUp"));
     a->setIcon(QIcon::fromTheme(QStringLiteral("go-up")));
     a->setText(i18n("Move Up"));
     a->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META + Qt::CTRL) + Qt::Key_Up);
-    KGlobalAccel::self()->setShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META + Qt::CTRL) + Qt::Key_Up);
+        a, QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_Up));
+    KGlobalAccel::self()->setShortcut(a,
+                                      QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_Up));
 
     a = actionCollection->addAction(QStringLiteral("MoveZoomDown"));
     a->setIcon(QIcon::fromTheme(QStringLiteral("go-down")));
     a->setText(i18n("Move Down"));
     a->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META + Qt::CTRL) + Qt::Key_Down);
+        a, QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_Down));
     KGlobalAccel::self()->setShortcut(
-        a, QList<QKeySequence>() << static_cast<Qt::Key>(Qt::META + Qt::CTRL) + Qt::Key_Down);
+        a, QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_Down));
 
     a = actionCollection->addAction(QStringLiteral("MoveMouseToFocus"));
     a->setIcon(QIcon::fromTheme(QStringLiteral("view-restore")));

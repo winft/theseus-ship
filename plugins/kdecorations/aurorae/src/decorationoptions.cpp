@@ -166,25 +166,23 @@ void DecorationOptions::setDecoration(KDecoration2::Decoration *decoration)
     }
     if (m_decoration) {
         // disconnect from existing decoration
-        disconnect(m_decoration->client().toStrongRef().data(), &KDecoration2::DecoratedClient::activeChanged, this, &DecorationOptions::slotActiveChanged);
+        disconnect(m_decoration->client(), &KDecoration2::DecoratedClient::activeChanged, this, &DecorationOptions::slotActiveChanged);
         auto s = m_decoration->settings();
-        disconnect(s.data(), &KDecoration2::DecorationSettings::fontChanged, this, &DecorationOptions::fontChanged);
-        disconnect(s.data(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, &DecorationOptions::titleButtonsChanged);
-        disconnect(s.data(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, &DecorationOptions::titleButtonsChanged);
+        disconnect(s.get(), &KDecoration2::DecorationSettings::fontChanged, this, &DecorationOptions::fontChanged);
+        disconnect(s.get(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, &DecorationOptions::titleButtonsChanged);
+        disconnect(s.get(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, &DecorationOptions::titleButtonsChanged);
         disconnect(m_paletteConnection);
     }
     m_decoration = decoration;
-    connect(m_decoration->client().toStrongRef().data(), &KDecoration2::DecoratedClient::activeChanged, this, &DecorationOptions::slotActiveChanged);
-    m_paletteConnection = connect(m_decoration->client().toStrongRef().data(), &KDecoration2::DecoratedClient::paletteChanged, this,
-        [this] (const QPalette &pal) {
-            m_colors.update(pal);
-            Q_EMIT colorsChanged();
-        }
-    );
+    connect(m_decoration->client(), &KDecoration2::DecoratedClient::activeChanged, this, &DecorationOptions::slotActiveChanged);
+    m_paletteConnection = connect(m_decoration->client(), &KDecoration2::DecoratedClient::paletteChanged, this, [this](const QPalette &pal) {
+        m_colors.update(pal);
+        Q_EMIT colorsChanged();
+    });
     auto s = m_decoration->settings();
-    connect(s.data(), &KDecoration2::DecorationSettings::fontChanged, this, &DecorationOptions::fontChanged);
-    connect(s.data(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, &DecorationOptions::titleButtonsChanged);
-    connect(s.data(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, &DecorationOptions::titleButtonsChanged);
+    connect(s.get(), &KDecoration2::DecorationSettings::fontChanged, this, &DecorationOptions::fontChanged);
+    connect(s.get(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, &DecorationOptions::titleButtonsChanged);
+    connect(s.get(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, &DecorationOptions::titleButtonsChanged);
     Q_EMIT decorationChanged();
 }
 
@@ -193,10 +191,10 @@ void DecorationOptions::slotActiveChanged()
     if (!m_decoration) {
         return;
     }
-    if (m_active == m_decoration->client().toStrongRef().data()->isActive()) {
+    if (m_active == m_decoration->client()->isActive()) {
         return;
     }
-    m_active = m_decoration->client().toStrongRef().data()->isActive();
+    m_active = m_decoration->client()->isActive();
     Q_EMIT colorsChanged();
     Q_EMIT fontChanged();
 }

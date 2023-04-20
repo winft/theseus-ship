@@ -183,21 +183,6 @@ void effects_handler_wrap::startPaint()
     m_currentPaintScreenIterator = m_activeEffects.constBegin();
 }
 
-void effects_handler_wrap::slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to)
-{
-    Q_EMIT currentTabAboutToChange(from, to);
-}
-
-void effects_handler_wrap::slotTabAdded(EffectWindow* w, EffectWindow* to)
-{
-    Q_EMIT tabAdded(w, to);
-}
-
-void effects_handler_wrap::slotTabRemoved(EffectWindow* w, EffectWindow* leaderOfFormerGroup)
-{
-    Q_EMIT tabRemoved(w, leaderOfFormerGroup);
-}
-
 void effects_handler_wrap::setActiveFullScreenEffect(Effect* e)
 {
     if (fullscreen_effect == e) {

@@ -13,7 +13,7 @@
 
 #include "input/redirect_qobject.h"
 
-#include <QX11Info>
+#include <QtGui/private/qtx11extras_p.h>
 
 namespace KWin::input::x11
 {
@@ -76,9 +76,9 @@ public:
 
     Platform& platform;
     Space& space;
+    std::unique_ptr<xinput_integration<type>> xinput;
 
 private:
-    std::unique_ptr<xinput_integration<type>> xinput;
     std::unique_ptr<window_selector<type>> window_sel;
 };
 

@@ -237,7 +237,6 @@ public:
 
     bool have_resize_effect{false};
 
-    bool first_in_tabbox{false};
     QByteArray desktop_file_name;
 
     bool fullscreen{false};

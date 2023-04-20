@@ -45,7 +45,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QPainter>
-#include <QQuickItem>
 #include <QQuickRenderControl>
 #include <QQuickWindow>
 #include <QQmlComponent>
@@ -276,10 +275,10 @@ Decoration::~Decoration()
 
 void Decoration::init()
 {
-    Helper::instance().rootContext()->setContextProperty(QStringLiteral("decorationSettings"), settings().data());
+    Helper::instance().rootContext()->setContextProperty(QStringLiteral("decorationSettings"), settings().get());
     KDecoration2::Decoration::init();
     auto s = settings();
-    connect(s.data(), &KDecoration2::DecorationSettings::reconfigured, this, &Decoration::configChanged);
+    connect(s.get(), &KDecoration2::DecorationSettings::reconfigured, this, &Decoration::configChanged);
 
     m_qmlContext = new QQmlContext(Helper::instance().rootContext(), this);
     m_qmlContext->setContextProperty(QStringLiteral("decoration"), this);
@@ -295,7 +294,7 @@ void Decoration::init()
         AuroraeTheme *theme = new AuroraeTheme(this);
         theme->loadTheme(themeName, config);
         theme->setBorderSize(s->borderSize());
-        connect(s.data(), &KDecoration2::DecorationSettings::borderSizeChanged, theme, &AuroraeTheme::setBorderSize);
+        connect(s.get(), &KDecoration2::DecorationSettings::borderSizeChanged, theme, &AuroraeTheme::setBorderSize);
         auto readButtonSize = [this, theme] {
             const KSharedConfigPtr conf = KSharedConfig::openConfig(QStringLiteral("auroraerc"));
             const KConfigGroup themeGroup(conf, m_themeName.mid(16));
@@ -325,17 +324,7 @@ void Decoration::init()
         m_item->setParentItem(visualParent.value<QQuickItem*>());
         visualParent.value<QQuickItem*>()->setProperty("drawBackground", false);
     } else {
-        // This is an ugly hack to make hidpi rendering work as expected on wayland until we switch
-        // to Qt 6.3 or newer. See https://codereview.qt-project.org/c/qt/qtdeclarative/+/361506
-        if (KWin::effects && KWin::effects->waylandDisplay()) {
-            m_dummyWindow.reset(new QWindow());
-            m_dummyWindow->setOpacity(0);
-            m_dummyWindow->resize(1, 1);
-            m_dummyWindow->setFlag(Qt::FramelessWindowHint);
-            m_dummyWindow->setVisible(true);
-        }
-
-        m_view = std::make_unique<KWin::EffectQuickView>(this, m_dummyWindow.get(), KWin::EffectQuickView::ExportMode::Image);
+        m_view = std::make_unique<KWin::EffectQuickView>(this, KWin::EffectQuickView::ExportMode::Image);
         m_item->setParentItem(m_view->contentItem());
         auto updateSize = [this]() { m_item->setSize(m_view->contentItem()->size()); };
         updateSize();
@@ -368,29 +357,31 @@ void Decoration::init()
         connect(m_extendedBorders, &KWin::Borders::topChanged, this, &Decoration::updateExtendedBorders);
         connect(m_extendedBorders, &KWin::Borders::bottomChanged, this, &Decoration::updateExtendedBorders);
     }
-    connect(client().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, &Decoration::updateBorders);
-    connect(client().data(), &KDecoration2::DecoratedClient::shadedChanged, this, &Decoration::updateBorders);
+
+    auto decorationClient = client();
+    connect(decorationClient, &KDecoration2::DecoratedClient::maximizedChanged, this, &Decoration::updateBorders);
+    connect(decorationClient, &KDecoration2::DecoratedClient::shadedChanged, this, &Decoration::updateBorders);
     updateBorders();
     if (m_view) {
         auto resizeWindow = [this] {
             QRect rect(QPoint(0, 0), size());
-            if (m_padding && !client().data()->isMaximized()) {
+            if (m_padding && !client()->isMaximized()) {
                 rect = rect.adjusted(-m_padding->left(), -m_padding->top(), m_padding->right(), m_padding->bottom());
             }
             m_view->setGeometry(rect);
             updateBlur();
         };
         connect(this, &Decoration::bordersChanged, this, resizeWindow);
-        connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, resizeWindow);
-        connect(client().data(), &KDecoration2::DecoratedClient::heightChanged, this, resizeWindow);
-        connect(client().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, resizeWindow);
-        connect(client().data(), &KDecoration2::DecoratedClient::shadedChanged, this, resizeWindow);
+        connect(client(), &KDecoration2::DecoratedClient::widthChanged, this, resizeWindow);
+        connect(client(), &KDecoration2::DecoratedClient::heightChanged, this, resizeWindow);
+        connect(client(), &KDecoration2::DecoratedClient::maximizedChanged, this, resizeWindow);
+        connect(client(), &KDecoration2::DecoratedClient::shadedChanged, this, resizeWindow);
         resizeWindow();
         updateBuffer();
     } else {
         // create a dummy shadow for the configuration interface
         if (m_padding) {
-            auto s = QSharedPointer<KDecoration2::DecorationShadow>::create();
+            auto s = std::make_shared<KDecoration2::DecorationShadow>();
             s->setPadding(*m_padding);
             s->setInnerShadowRect(QRect(m_padding->left(), m_padding->top(), 1, 1));
             setShadow(s);
@@ -415,7 +406,7 @@ void Decoration::setupBorders(QQuickItem *item)
 void Decoration::updateBorders()
 {
     KWin::Borders *b = m_borders;
-    if (client().data()->isMaximized() && m_maximizedBorders) {
+    if (client()->isMaximized() && m_maximizedBorders) {
         b = m_maximizedBorders;
     }
     if (!b) {
@@ -449,10 +440,8 @@ void Decoration::updateShadow()
     }
     bool updateShadow = false;
     const auto oldShadow = shadow();
-    if (m_padding &&
-            (m_padding->left() > 0 || m_padding->top() > 0 || m_padding->right() > 0 || m_padding->bottom() > 0) &&
-            !client().data()->isMaximized()) {
-        if (oldShadow.isNull()) {
+    if (m_padding && (m_padding->left() > 0 || m_padding->top() > 0 || m_padding->right() > 0 || m_padding->bottom() > 0) && !client()->isMaximized()) {
+        if (!oldShadow) {
             updateShadow = true;
         } else {
             // compare padding
@@ -483,7 +472,7 @@ void Decoration::updateShadow()
             updateShadow = (oldShadow->shadow() != img);
         }
         if (updateShadow) {
-            auto s = QSharedPointer<KDecoration2::DecorationShadow>::create();
+            auto s = std::make_shared<KDecoration2::DecorationShadow>();
             s->setShadow(img);
             s->setPadding(*m_padding);
             s->setInnerShadowRect(QRect(m_padding->left(),
@@ -493,8 +482,8 @@ void Decoration::updateShadow()
             setShadow(s);
         }
     } else {
-        if (!oldShadow.isNull()) {
-            setShadow(QSharedPointer<KDecoration2::DecorationShadow>());
+        if (oldShadow) {
+            setShadow(nullptr);
         }
     }
 }
@@ -577,17 +566,17 @@ void Decoration::updateExtendedBorders()
     int extBottom = m_extendedBorders->bottom();
 
     if (settings()->borderSize() == KDecoration2::BorderSize::None) {
-        if (!client().data()->isMaximizedHorizontally()) {
-            extLeft = qMax(m_extendedBorders->left(), extSize);
-            extRight = qMax(m_extendedBorders->right(), extSize);
+        if (!client()->isMaximizedHorizontally()) {
+            extLeft = std::max(m_extendedBorders->left(), extSize);
+            extRight = std::max(m_extendedBorders->right(), extSize);
         }
-        if (!client().data()->isMaximizedVertically()) {
-            extBottom = qMax(m_extendedBorders->bottom(), extSize);
+        if (!client()->isMaximizedVertically()) {
+            extBottom = std::max(m_extendedBorders->bottom(), extSize);
         }
 
-    } else if (settings()->borderSize() == KDecoration2::BorderSize::NoSides && !client().data()->isMaximizedHorizontally() ) {
-        extLeft = qMax(m_extendedBorders->left(), extSize);
-        extRight = qMax(m_extendedBorders->right(), extSize);
+    } else if (settings()->borderSize() == KDecoration2::BorderSize::NoSides && !client()->isMaximizedHorizontally()) {
+        extLeft = std::max(m_extendedBorders->left(), extSize);
+        extRight = std::max(m_extendedBorders->right(), extSize);
     }
 
     setResizeOnlyBorders(QMargins(extLeft, 0, extRight, extBottom));
@@ -601,7 +590,7 @@ void Decoration::updateBlur()
 
     QRegion mask;
 
-    if (clientPointer() && clientPointer()->isMaximized()) {
+    if (client() && client()->isMaximized()) {
         mask = QRect(0, 0, m_item->width(), m_item->height());
     } else {
         const QVariant maskProperty = m_item->property("decorationMask");
@@ -628,9 +617,7 @@ void Decoration::updateBuffer()
         return;
     }
     m_contentRect = QRect(QPoint(0, 0), m_view->contentItem()->size().toSize());
-    if (m_padding &&
-            (m_padding->left() > 0 || m_padding->top() > 0 || m_padding->right() > 0 || m_padding->bottom() > 0) &&
-            !client().data()->isMaximized()) {
+    if (m_padding && (m_padding->left() > 0 || m_padding->top() > 0 || m_padding->right() > 0 || m_padding->bottom() > 0) && !client()->isMaximized()) {
         m_contentRect = m_contentRect.adjusted(m_padding->left(), m_padding->top(), -m_padding->right(), -m_padding->bottom());
     }
     updateShadow();
@@ -638,9 +625,9 @@ void Decoration::updateBuffer()
     update();
 }
 
-KDecoration2::DecoratedClient *Decoration::clientPointer() const
+QQuickItem *Decoration::item() const
 {
-    return client().data();
+    return m_item;
 }
 
 ThemeProvider::ThemeProvider(QObject *parent, const KPluginMetaData &data, const QVariantList &args)
@@ -719,12 +706,11 @@ bool ThemeProvider::hasConfiguration(const QString &theme)
     return !(ui.isEmpty() || xml.isEmpty());
 }
 
-ConfigurationModule::ConfigurationModule(QWidget *parent, const QVariantList &args)
-    : KCModule(parent, args)
+ConfigurationModule::ConfigurationModule(QObject *parent, const KPluginMetaData &data, const QVariantList &args)
+    : KCModule(parent, data, args)
     , m_theme(findTheme(args))
     , m_buttonSize(int(KDecoration2::BorderSize::Normal) - s_indexMapper)
 {
-    setLayout(new QVBoxLayout(this));
     init();
 }
 
@@ -740,7 +726,7 @@ void ConfigurationModule::init()
 
 void ConfigurationModule::initSvg()
 {
-    QWidget *form = new QWidget(this);
+    QWidget *form = new QWidget(widget());
     form->setLayout(new QHBoxLayout(form));
     QComboBox *sizes = new QComboBox(form);
     sizes->addItem(i18nc("@item:inlistbox Button size:", "Tiny"));
@@ -757,7 +743,7 @@ void ConfigurationModule::initSvg()
     form->layout()->addWidget(label);
     form->layout()->addWidget(sizes);
 
-    layout()->addWidget(form);
+    widget()->layout()->addWidget(form);
 
     KCoreConfigSkeleton *skel = new KCoreConfigSkeleton(KSharedConfig::openConfig(QStringLiteral("auroraerc")), this);
     skel->setCurrentGroup(m_theme.mid(16));
@@ -777,15 +763,7 @@ void ConfigurationModule::initQml()
         return;
     }
 
-    KPluginMetaData metaData(packageRoot + QLatin1String("/metadata.json"));
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    if (!metaData.isValid()) {
-        metaData = KPluginMetaData::fromDesktopFile(packageRoot + QLatin1String("/metadata.desktop"));
-        if (metaData.isValid()) {
-            qWarning("metadata.desktop format is obsolete. Please convert %s to JSON metadata", qPrintable(metaData.fileName()));
-        }
-    }
-#endif
+    const KPluginMetaData metaData = KPluginMetaData::fromJsonFile(packageRoot + QLatin1String("/metadata.json"));
     if (!metaData.isValid()) {
         return;
     }
@@ -813,10 +791,10 @@ void ConfigurationModule::initQml()
     loader->setLanguageChangeEnabled(true);
     QFile uiFile(ui);
     uiFile.open(QFile::ReadOnly);
-    QWidget *customConfigForm = loader->load(&uiFile, this);
+    QWidget *customConfigForm = loader->load(&uiFile, widget());
     translator->addContextToMonitor(customConfigForm->objectName());
     uiFile.close();
-    layout()->addWidget(customConfigForm);
+    widget()->layout()->addWidget(customConfigForm);
     // connect the ui file with the skeleton
     addConfig(m_skeleton, customConfigForm);
 

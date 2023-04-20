@@ -10,7 +10,6 @@
 #include <kwineffects/effect_screen.h>
 
 #include <QFuture>
-#include <QFutureInterface>
 #include <QImage>
 #include <QLoggingCategory>
 #include <QObject>
@@ -30,7 +29,6 @@ enum ScreenShotFlag {
 };
 Q_DECLARE_FLAGS(ScreenShotFlags, ScreenShotFlag)
 
-class ScreenShotDBusInterface1;
 class ScreenShotDBusInterface2;
 struct ScreenShotWindowData;
 struct ScreenShotAreaData;
@@ -95,11 +93,10 @@ private:
     void grabPointerImage(QImage& snapshot, int xOffset, int yOffset) const;
     QImage blitScreenshot(const QRect& geometry, qreal devicePixelRatio = 1.0) const;
 
-    QVector<ScreenShotWindowData> m_windowScreenShots;
-    QVector<ScreenShotAreaData> m_areaScreenShots;
-    QVector<ScreenShotScreenData> m_screenScreenShots;
+    std::vector<ScreenShotWindowData> m_windowScreenShots;
+    std::vector<ScreenShotAreaData> m_areaScreenShots;
+    std::vector<ScreenShotScreenData> m_screenScreenShots;
 
-    QScopedPointer<ScreenShotDBusInterface1> m_dbusInterface1;
     QScopedPointer<ScreenShotDBusInterface2> m_dbusInterface2;
     EffectScreen* m_paintedScreen = nullptr;
 };

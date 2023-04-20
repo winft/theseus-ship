@@ -5,14 +5,14 @@
 SPDX-License-Identifier: MIT
 
 */
-#include <KAuth/KAuthAction>
+#include <KAuth/Action>
 #include <KLocalizedString>
 #include <KMessageBox>
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QProcess>
-#include <QtX11Extras/QX11Info>
+#include <QtGui/private/qtx11extras_p.h>
 #include <xcb/xcb.h>
 
 #include <cerrno>
@@ -23,7 +23,6 @@ int main(int argc, char* argv[])
     KLocalizedString::setApplicationDomain("kwin");
     qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("xcb"));
     QApplication app(argc, argv);
-    app.setAttribute(Qt::AA_UseHighDpiPixmaps, true);
     QApplication::setWindowIcon(QIcon::fromTheme(QStringLiteral("dialog-warning")));
     QCoreApplication::setApplicationName(QStringLiteral("kwin_killer_helper"));
     QCoreApplication::setOrganizationDomain(QStringLiteral("kde.org"));

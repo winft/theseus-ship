@@ -13,12 +13,7 @@
 #include "base/logging.h"
 
 #include <KConfigGroup>
-#include <QtXkbCommonSupport/private/qxkbcommon_p.h>
-
-#include <bitset>
-#include <cassert>
-#include <sys/mman.h>
-#include <unistd.h>
+#include <QtGui/private/qxkbcommon_p.h>
 
 namespace KWin::input::xkb
 {
@@ -323,11 +318,6 @@ Qt::Key keyboard::to_qt_key(xkb_keysym_t keysym,
     } else if (qtKey > 0xff && keysym <= 0xff) {
         // XKB_KEY_mu, XKB_KEY_ydiaeresis go here
         qtKey = Qt::Key(keysym);
-#if QT_VERSION_MAJOR < 6 // since Qt 5 LTS is frozen
-    } else if (keysym == XKB_KEY_Sys_Req) {
-        // fixed in QTBUG-92087
-        qtKey = Qt::Key_SysReq;
-#endif
     }
 
     return qtKey;

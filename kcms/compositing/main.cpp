@@ -14,6 +14,7 @@
 #include <QLayout>
 
 #include <kcmodule.h>
+#include <KPluginFactory>
 #include <kservice.h>
 
 #include <algorithm>
@@ -35,7 +36,7 @@ public:
         OPENGL_INDEX = 0,
     };
 
-    explicit KWinCompositingKCM(QWidget *parent = nullptr, const QVariantList &args = QVariantList());
+    explicit KWinCompositingKCM(QObject *parent, const KPluginMetaData &data, const QVariantList &args);
 
 public Q_SLOTS:
     void load() override;
@@ -64,17 +65,17 @@ bool KWinCompositingKCM::compositingRequired() const
     return m_compositingInterface->platformRequiresCompositing();
 }
 
-KWinCompositingKCM::KWinCompositingKCM(QWidget *parent, const QVariantList &args)
-    : KCModule(parent, args)
+KWinCompositingKCM::KWinCompositingKCM(QObject *parent, const KPluginMetaData &data, const QVariantList &args)
+    : KCModule(parent, data, args)
     , m_compositingInterface(new OrgKdeKwinCompositingInterface(QStringLiteral("org.kde.KWin"), QStringLiteral("/Compositor"), QDBusConnection::sessionBus(), this))
     , m_settings(new KWinCompositingSetting(this))
 {
-    m_form.setupUi(this);
+    m_form.setupUi(widget());
 
     // AnimationDurationFactor should be written to the same place as the lnf to avoid conflicts
     m_settings->findItem("AnimationDurationFactor")->setWriteFlags(KConfigBase::Global | KConfigBase::Notify);
 
-    addConfig(m_settings, this);
+    addConfig(m_settings, widget());
 
     m_form.glCrashedWarning->setIcon(QIcon::fromTheme(QStringLiteral("dialog-warning")));
     QAction *reenableGlAction = new QAction(i18n("Re-enable OpenGL detection"), this);

@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_INVERT_CONFIG_H
 #define KWIN_INVERT_CONFIG_H
 
-#include <kcmodule.h>
+#include <KCModule>
 
 class KShortcutsEditor;
 
@@ -18,8 +18,9 @@ class InvertEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit InvertEffectConfig(QWidget* parent = nullptr,
-                                const QVariantList& args = QVariantList());
+    explicit InvertEffectConfig(QObject* parent,
+                                const KPluginMetaData& data,
+                                const QVariantList& args);
     ~InvertEffectConfig() override;
 
 public Q_SLOTS:

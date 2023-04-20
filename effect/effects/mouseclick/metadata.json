@@ -3,7 +3,6 @@
         "Category": "Accessibility",
         "Description": "Creates an animation whenever a mouse button is clicked. This is useful for screenrecordings/presentations",
         "EnabledByDefault": false,
-        "Id": "mouseclick",
         "License": "GPL",
         "Name": "Mouse Click Animation"
     },

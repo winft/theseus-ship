@@ -6,7 +6,6 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "screenshot.h"
-#include "screenshotdbusinterface1.h"
 #include "screenshotdbusinterface2.h"
 
 #include <kwineffects/effect_window.h>
@@ -23,13 +22,13 @@ namespace KWin
 {
 
 struct ScreenShotWindowData {
-    QFutureInterface<QImage> promise;
+    QPromise<QImage> promise;
     ScreenShotFlags flags;
     EffectWindow* window = nullptr;
 };
 
 struct ScreenShotAreaData {
-    QFutureInterface<QImage> promise;
+    QPromise<QImage> promise;
     ScreenShotFlags flags;
     QRect area;
     QImage result;
@@ -37,7 +36,7 @@ struct ScreenShotAreaData {
 };
 
 struct ScreenShotScreenData {
-    QFutureInterface<QImage> promise;
+    QPromise<QImage> promise;
     ScreenShotFlags flags;
     EffectScreen* screen = nullptr;
 };
@@ -76,8 +75,7 @@ bool ScreenShotEffect::supported()
 }
 
 ScreenShotEffect::ScreenShotEffect()
-    : m_dbusInterface1(new ScreenShotDBusInterface1(this))
-    , m_dbusInterface2(new ScreenShotDBusInterface2(this))
+    : m_dbusInterface2(new ScreenShotDBusInterface2(this))
 {
     connect(effects, &EffectsHandler::screenAdded, this, &ScreenShotEffect::handleScreenAdded);
     connect(effects, &EffectsHandler::screenRemoved, this, &ScreenShotEffect::handleScreenRemoved);
@@ -93,7 +91,7 @@ ScreenShotEffect::~ScreenShotEffect()
 
 QFuture<QImage> ScreenShotEffect::scheduleScreenShot(EffectScreen* screen, ScreenShotFlags flags)
 {
-    for (ScreenShotScreenData& data : m_screenScreenShots) {
+    for (const ScreenShotScreenData& data : m_screenScreenShots) {
         if (data.screen == screen && data.flags == flags) {
             return data.promise.future();
         }
@@ -103,16 +101,18 @@ QFuture<QImage> ScreenShotEffect::scheduleScreenShot(EffectScreen* screen, Scree
     data.screen = screen;
     data.flags = flags;
 
-    m_screenScreenShots.append(data);
+    data.promise.start();
+    QFuture<QImage> future = data.promise.future();
+
+    m_screenScreenShots.push_back(std::move(data));
     effects->addRepaint(screen->geometry());
 
-    data.promise.reportStarted();
-    return data.promise.future();
+    return future;
 }
 
 QFuture<QImage> ScreenShotEffect::scheduleScreenShot(const QRect& area, ScreenShotFlags flags)
 {
-    for (ScreenShotAreaData& data : m_areaScreenShots) {
+    for (const ScreenShotAreaData& data : m_areaScreenShots) {
         if (data.area == area && data.flags == flags) {
             return data.promise.future();
         }
@@ -142,16 +142,18 @@ QFuture<QImage> ScreenShotEffect::scheduleScreenShot(const QRect& area, ScreenSh
     data.result.fill(Qt::transparent);
     data.result.setDevicePixelRatio(devicePixelRatio);
 
-    m_areaScreenShots.append(data);
+    data.promise.start();
+    QFuture<QImage> future = data.promise.future();
+
+    m_areaScreenShots.push_back(std::move(data));
     effects->addRepaint(area);
 
-    data.promise.reportStarted();
-    return data.promise.future();
+    return future;
 }
 
 QFuture<QImage> ScreenShotEffect::scheduleScreenShot(EffectWindow* window, ScreenShotFlags flags)
 {
-    for (ScreenShotWindowData& data : m_windowScreenShots) {
+    for (const ScreenShotWindowData& data : m_windowScreenShots) {
         if (data.window == window && data.flags == flags) {
             return data.promise.future();
         }
@@ -161,35 +163,28 @@ QFuture<QImage> ScreenShotEffect::scheduleScreenShot(EffectWindow* window, Scree
     data.window = window;
     data.flags = flags;
 
-    m_windowScreenShots.append(data);
+    data.promise.start();
+    QFuture<QImage> future = data.promise.future();
+
+    m_windowScreenShots.push_back(std::move(data));
     window->addRepaintFull();
 
-    data.promise.reportStarted();
-    return data.promise.future();
+    return future;
 }
 
 void ScreenShotEffect::cancelWindowScreenShots()
 {
-    while (!m_windowScreenShots.isEmpty()) {
-        ScreenShotWindowData screenshot = m_windowScreenShots.takeLast();
-        screenshot.promise.reportCanceled();
-    }
+    m_windowScreenShots.clear();
 }
 
 void ScreenShotEffect::cancelAreaScreenShots()
 {
-    while (!m_areaScreenShots.isEmpty()) {
-        ScreenShotAreaData screenshot = m_areaScreenShots.takeLast();
-        screenshot.promise.reportCanceled();
-    }
+    m_areaScreenShots.clear();
 }
 
 void ScreenShotEffect::cancelScreenScreenShots()
 {
-    while (!m_screenScreenShots.isEmpty()) {
-        ScreenShotScreenData screenshot = m_screenScreenShots.takeLast();
-        screenshot.promise.reportCanceled();
-    }
+    m_screenScreenShots.clear();
 }
 
 void ScreenShotEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
@@ -197,20 +192,20 @@ void ScreenShotEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
     m_paintedScreen = data.screen();
     effects->paintScreen(mask, region, data);
 
-    while (!m_windowScreenShots.isEmpty()) {
-        ScreenShotWindowData screenshot = m_windowScreenShots.takeLast();
-        takeScreenShot(&screenshot);
+    for (ScreenShotWindowData& data : m_windowScreenShots) {
+        takeScreenShot(&data);
     }
+    m_windowScreenShots.clear();
 
-    for (int i = m_areaScreenShots.count() - 1; i >= 0; --i) {
+    for (int i = m_areaScreenShots.size() - 1; i >= 0; --i) {
         if (takeScreenShot(&m_areaScreenShots[i])) {
-            m_areaScreenShots.removeAt(i);
+            m_areaScreenShots.erase(m_areaScreenShots.begin() + i);
         }
     }
 
-    for (int i = m_screenScreenShots.count() - 1; i >= 0; --i) {
+    for (int i = m_screenScreenShots.size() - 1; i >= 0; --i) {
         if (takeScreenShot(&m_screenScreenShots[i])) {
-            m_screenScreenShots.removeAt(i);
+            m_screenScreenShots.erase(m_screenScreenShots.begin() + i);
         }
     }
 }
@@ -279,10 +274,8 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
             grabPointerImage(img, geometry.x(), geometry.y());
         }
 
-        screenshot->promise.reportResult(img);
-        screenshot->promise.reportFinished();
-    } else {
-        screenshot->promise.reportCanceled();
+        screenshot->promise.addResult(img);
+        screenshot->promise.finish();
     }
 }
 
@@ -294,8 +287,9 @@ bool ScreenShotEffect::takeScreenShot(ScreenShotAreaData* screenshot)
         if (screenshot->flags & ScreenShotIncludeCursor) {
             grabPointerImage(snapshot, screenshot->area.x(), screenshot->area.y());
         }
-        screenshot->promise.reportResult(snapshot);
-        screenshot->promise.reportFinished();
+        screenshot->promise.addResult(snapshot);
+        screenshot->promise.finish();
+        return true;
     } else {
         if (!screenshot->screens.contains(m_paintedScreen)) {
             return false;
@@ -321,34 +315,37 @@ bool ScreenShotEffect::takeScreenShot(ScreenShotAreaData* screenshot)
             if (screenshot->flags & ScreenShotIncludeCursor) {
                 grabPointerImage(screenshot->result, screenshot->area.x(), screenshot->area.y());
             }
-            screenshot->promise.reportResult(screenshot->result);
-            screenshot->promise.reportFinished();
+            screenshot->promise.addResult(screenshot->result);
+            screenshot->promise.finish();
+            return true;
         }
     }
 
-    return screenshot->promise.isFinished();
+    return false;
 }
 
 bool ScreenShotEffect::takeScreenShot(ScreenShotScreenData* screenshot)
 {
-    if (!m_paintedScreen || screenshot->screen == m_paintedScreen) {
-        qreal devicePixelRatio = 1.0;
-        if (screenshot->flags & ScreenShotNativeResolution) {
-            devicePixelRatio = screenshot->screen->devicePixelRatio();
-        }
-
-        QImage snapshot = blitScreenshot(screenshot->screen->geometry(), devicePixelRatio);
-        if (screenshot->flags & ScreenShotIncludeCursor) {
-            const int xOffset = screenshot->screen->geometry().x();
-            const int yOffset = screenshot->screen->geometry().y();
-            grabPointerImage(snapshot, xOffset, yOffset);
-        }
-
-        screenshot->promise.reportResult(snapshot);
-        screenshot->promise.reportFinished();
+    if (m_paintedScreen && screenshot->screen != m_paintedScreen) {
+        return false;
     }
 
-    return screenshot->promise.isFinished();
+    qreal devicePixelRatio = 1.0;
+    if (screenshot->flags & ScreenShotNativeResolution) {
+        devicePixelRatio = screenshot->screen->devicePixelRatio();
+    }
+
+    QImage snapshot = blitScreenshot(screenshot->screen->geometry(), devicePixelRatio);
+    if (screenshot->flags & ScreenShotIncludeCursor) {
+        const int xOffset = screenshot->screen->geometry().x();
+        const int yOffset = screenshot->screen->geometry().y();
+        grabPointerImage(snapshot, xOffset, yOffset);
+    }
+
+    screenshot->promise.addResult(snapshot);
+    screenshot->promise.finish();
+
+    return true;
 }
 
 QImage ScreenShotEffect::blitScreenshot(const QRect& geometry, qreal devicePixelRatio) const
@@ -375,8 +372,8 @@ void ScreenShotEffect::grabPointerImage(QImage& snapshot, int xOffset, int yOffs
 
 bool ScreenShotEffect::isActive() const
 {
-    return (!m_windowScreenShots.isEmpty() || !m_areaScreenShots.isEmpty()
-            || !m_screenScreenShots.isEmpty())
+    return (!m_windowScreenShots.empty() || !m_areaScreenShots.empty()
+            || !m_screenScreenShots.empty())
         && !effects->isScreenLocked();
 }
 
@@ -394,22 +391,14 @@ void ScreenShotEffect::handleScreenRemoved(EffectScreen* screen)
 {
     cancelAreaScreenShots();
 
-    for (int i = m_screenScreenShots.count() - 1; i >= 0; --i) {
-        if (m_screenScreenShots[i].screen == screen) {
-            m_screenScreenShots[i].promise.reportCanceled();
-            m_screenScreenShots.removeAt(i);
-        }
-    }
+    std::erase_if(m_screenScreenShots,
+                  [screen](const auto& screenshot) { return screenshot.screen == screen; });
 }
 
 void ScreenShotEffect::handleWindowClosed(EffectWindow* window)
 {
-    for (int i = m_windowScreenShots.count() - 1; i >= 0; --i) {
-        if (m_windowScreenShots[i].window == window) {
-            m_windowScreenShots[i].promise.reportCanceled();
-            m_windowScreenShots.removeAt(i);
-        }
-    }
+    std::erase_if(m_windowScreenShots,
+                  [window](const auto& screenshot) { return screenshot.window == window; });
 }
 
 } // namespace KWin

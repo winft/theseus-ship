@@ -26,6 +26,18 @@
 namespace KWin::win::x11
 {
 
+template<typename Win>
+QWindow* find_internal_window(Win const& win)
+{
+    auto const windows = qApp->topLevelWindows();
+    for (auto xcb_win : windows) {
+        if (xcb_win->handle() && xcb_win->winId() == win.xcb_windows.client) {
+            return xcb_win;
+        }
+    }
+    return nullptr;
+}
+
 // before being deleted, remove references to everything that's now owner by the remnant
 template<typename Win>
 void disown_data_passed_to_remnant(Win& win)
@@ -171,7 +183,7 @@ void release_unmanaged(Win* win, bool on_shutdown)
     Q_EMIT win->qobject->closed();
 
     // Don't affect our own windows.
-    if (!QWidget::find(win->xcb_windows.client)) {
+    if (!find_internal_window(*win)) {
         if (base::x11::xcb::extensions::self()->is_shape_available()) {
             xcb_shape_select_input(
                 win->space.base.x11_data.connection, win->xcb_windows.client, false);

@@ -32,21 +32,19 @@ ThumbnailAsideEffectConfigForm::ThumbnailAsideEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-ThumbnailAsideEffectConfig::ThumbnailAsideEffectConfig(QWidget* parent, const QVariantList& args)
-    : KCModule(parent, args)
-    , m_ui(this)
+ThumbnailAsideEffectConfig::ThumbnailAsideEffectConfig(QObject* parent,
+                                                       const KPluginMetaData& data,
+                                                       const QVariantList& args)
+    : KCModule(parent, data, args)
+    , m_ui(widget())
 {
-    QVBoxLayout* layout = new QVBoxLayout(this);
-
+    QVBoxLayout* layout = new QVBoxLayout(widget());
     layout->addWidget(&m_ui);
 
-    connect(m_ui.editor,
-            &KShortcutsEditor::keyChange,
-            this,
-            &ThumbnailAsideEffectConfig::markAsChanged);
+    connect(m_ui.editor, &KShortcutsEditor::keyChange, this, &KCModule::markAsChanged);
 
     ThumbnailAsideConfig::instance(KWIN_CONFIG);
-    addConfig(ThumbnailAsideConfig::self(), this);
+    addConfig(ThumbnailAsideConfig::self(), widget());
 
     // Shortcut config. The shortcut belongs to the component "kwin"!
     m_actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
@@ -59,8 +57,9 @@ ThumbnailAsideEffectConfig::ThumbnailAsideEffectConfig(QWidget* parent, const QV
     a->setText(i18n("Toggle Thumbnail for Current Window"));
     a->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(
-        a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_T);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_T);
+        a, QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_T));
+    KGlobalAccel::self()->setShortcut(a,
+                                      QList<QKeySequence>() << (Qt::META | Qt::CTRL | Qt::Key_T));
 
     m_ui.editor->addCollection(m_actionCollection);
 }

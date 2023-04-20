@@ -3,7 +3,6 @@
         "Category": "Window Open/Close Animation",
         "Description": "Glide windows as they appear or disappear",
         "EnabledByDefault": false,
-        "Id": "glide",
         "License": "GPL",
         "Name": "Glide"
     },

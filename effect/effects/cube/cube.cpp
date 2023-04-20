@@ -1491,15 +1491,15 @@ void CubeEffect::grabbedKeyboardEvent(QKeyEvent* e)
         // check for global shortcuts
         // HACK: keyboard grab disables the global shortcuts so we have to check for global shortcut
         // (bug 156155)
-        if (mode == Cube && cubeShortcut.contains(e->key() + e->modifiers())) {
+        if (mode == Cube && cubeShortcut.contains(e->key() | e->modifiers())) {
             toggleCube();
             return;
         }
-        if (mode == Cylinder && cylinderShortcut.contains(e->key() + e->modifiers())) {
+        if (mode == Cylinder && cylinderShortcut.contains(e->key() | e->modifiers())) {
             toggleCylinder();
             return;
         }
-        if (mode == Sphere && sphereShortcut.contains(e->key() + e->modifiers())) {
+        if (mode == Sphere && sphereShortcut.contains(e->key() | e->modifiers())) {
             toggleSphere();
             return;
         }
@@ -1633,14 +1633,15 @@ void CubeEffect::setActive(bool active)
             QFutureWatcher<QImage>* watcher = new QFutureWatcher<QImage>(this);
             connect(
                 watcher, &QFutureWatcher<QImage>::finished, this, &CubeEffect::slotCubeCapLoaded);
-            watcher->setFuture(QtConcurrent::run(this, &CubeEffect::loadCubeCap, capPath));
+            watcher->setFuture(QtConcurrent::run([this, capPath] { return loadCubeCap(capPath); }));
         }
         QString wallpaperPath = CubeConfig::wallpaper().toLocalFile();
         if (!wallpaper && !wallpaperPath.isEmpty()) {
             QFutureWatcher<QImage>* watcher = new QFutureWatcher<QImage>(this);
             connect(
                 watcher, &QFutureWatcher<QImage>::finished, this, &CubeEffect::slotWallPaperLoaded);
-            watcher->setFuture(QtConcurrent::run(this, &CubeEffect::loadWallPaper, wallpaperPath));
+            watcher->setFuture(
+                QtConcurrent::run([this, wallpaperPath] { return loadWallPaper(wallpaperPath); }));
         }
         activated = true;
         activeScreen = effects->activeScreen();

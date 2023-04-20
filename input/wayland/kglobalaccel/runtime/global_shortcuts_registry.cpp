@@ -151,16 +151,16 @@ bool GlobalShortcutsRegistry::isShortcutAvailable(const QKeySequence& shortcut,
 static void correctKeyEvent(int& keyQt)
 {
     switch (keyQt) {
-    case Qt::ShiftModifier | Qt::Key_Shift:
+    case (Qt::ShiftModifier | Qt::Key_Shift).toCombined():
         keyQt = Qt::Key_Shift;
         break;
-    case Qt::ControlModifier | Qt::Key_Control:
+    case (Qt::ControlModifier | Qt::Key_Control).toCombined():
         keyQt = Qt::Key_Control;
         break;
-    case Qt::AltModifier | Qt::Key_Alt:
+    case (Qt::AltModifier | Qt::Key_Alt).toCombined():
         keyQt = Qt::Key_Alt;
         break;
-    case Qt::MetaModifier | Qt::Key_Meta:
+    case (Qt::MetaModifier | Qt::Key_Meta).toCombined():
         keyQt = Qt::Key_Meta;
         break;
     }
@@ -174,21 +174,13 @@ bool GlobalShortcutsRegistry::keyPressed(int keyQt)
     if (count == maxSequenceLength) {
         // buffer is full, rotate it
         for (int i = 1; i < count; i++) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             keys[i - 1] = _active_sequence[i].toCombined();
-#else
-            keys[i - 1] = _active_sequence[i];
-#endif
         }
         keys[maxSequenceLength - 1] = keyQt;
     } else {
         // just append the new key
         for (int i = 0; i < count; i++) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             keys[i] = _active_sequence[i].toCombined();
-#else
-            keys[i] = _active_sequence[i];
-#endif
         }
         keys[count] = keyQt;
     }
@@ -202,12 +194,8 @@ bool GlobalShortcutsRegistry::keyPressed(int keyQt)
         // instead of cleaning it when it's full
         int sequenceToCheck[maxSequenceLength] = {0, 0, 0, 0};
         for (int i = 0; i < length; i++) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             sequenceToCheck[i]
                 = _active_sequence[_active_sequence.count() - length + i].toCombined();
-#else
-            sequenceToCheck[i] = _active_sequence[_active_sequence.count() - length + i];
-#endif
         }
         tempSequence = QKeySequence(
             sequenceToCheck[0], sequenceToCheck[1], sequenceToCheck[2], sequenceToCheck[3]);
@@ -406,22 +394,14 @@ bool GlobalShortcutsRegistry::registerKey(const QKeySequence& key, GlobalShortcu
     bool error = false;
     int i;
     for (i = 0; i < key.count(); i++) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         const int combined = key[i].toCombined();
-#else
-        const int combined(key[i]);
-#endif
         ++_keys_count[combined];
     }
 
     if (error) {
         // Last key was not registered, rewind index by 1
         for (--i; i >= 0; i--) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             const int combined = key[i].toCombined();
-#else
-            const int combined(key[i]);
-#endif
             auto it = _keys_count.find(combined);
             if (it == _keys_count.end()) {
                 continue;
@@ -454,12 +434,7 @@ bool GlobalShortcutsRegistry::unregisterKey(const QKeySequence& key, GlobalShort
     }
 
     for (int i = 0; i < key.count(); i++) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         auto iter = _keys_count.find(key[i].toCombined());
-
-#else
-        auto iter = _keys_count.find(key[i]);
-#endif
         if ((iter == _keys_count.end()) || (iter.value() <= 0)) {
             continue;
         }

@@ -52,7 +52,7 @@ TEST_CASE("no crash reinit compositor", "[render]")
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 
-    auto effect_name = GENERATE(as<QString>{}, "kwin4_effect_fade", "glide", "kwin4_effect_scale");
+    auto effect_name = GENERATE(as<QString>{}, "fade", "glide", "scale");
 
     // Make sure that we have the right effects ptr.
     auto& effectsImpl = setup.base->render->compositor->effects;

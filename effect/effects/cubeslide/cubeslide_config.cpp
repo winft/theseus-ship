@@ -24,13 +24,14 @@ CubeSlideEffectConfigForm::CubeSlideEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-CubeSlideEffectConfig::CubeSlideEffectConfig(QWidget* parent, const QVariantList& args)
-    : KCModule(parent, args)
+CubeSlideEffectConfig::CubeSlideEffectConfig(QObject* parent,
+                                             const KPluginMetaData& data,
+                                             const QVariantList& args)
+    : KCModule(parent, data, args)
 {
-    m_ui = new CubeSlideEffectConfigForm(this);
+    m_ui = new CubeSlideEffectConfigForm(widget());
 
-    QVBoxLayout* layout = new QVBoxLayout(this);
-
+    QVBoxLayout* layout = new QVBoxLayout(widget());
     layout->addWidget(m_ui);
 
     CubeSlideConfig::instance(KWIN_CONFIG);

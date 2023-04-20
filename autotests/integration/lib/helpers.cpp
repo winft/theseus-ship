@@ -407,7 +407,6 @@ void prepare_app_env(std::string const& qpa_plugin_path)
     unsetenv("KDE_SESSION_VERSION");
     unsetenv("XDG_SESSION_DESKTOP");
 
-    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     QCoreApplication::setAttribute(Qt::AA_Use96Dpi, true);
 }
 

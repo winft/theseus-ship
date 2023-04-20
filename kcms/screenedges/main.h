@@ -13,8 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "kwinglobals.h"
 
-class QShowEvent;
-
 namespace KWin
 {
 class KWinScreenEdgeData;
@@ -27,16 +25,13 @@ class KWinScreenEdgesConfig : public KCModule
     Q_OBJECT
 
 public:
-    explicit KWinScreenEdgesConfig(QWidget *parent, const QVariantList &args);
+    explicit KWinScreenEdgesConfig(QObject *parent, const KPluginMetaData &data, const QVariantList &args);
     ~KWinScreenEdgesConfig() override;
 
 public Q_SLOTS:
     void save() override;
     void load() override;
     void defaults() override;
-
-protected:
-    void showEvent(QShowEvent *e) override;
 
 private:
     KWinScreenEdgesConfigForm *m_form;

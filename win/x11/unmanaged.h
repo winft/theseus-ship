@@ -117,17 +117,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     set_skip_close_animation(*win, fetch_skip_close_animation(*win).to_bool());
     win->setupCompositing();
 
-    auto find_internal_window = [&win]() -> QWindow* {
-        auto const windows = qApp->topLevelWindows();
-        for (auto xcb_win : windows) {
-            if (xcb_win->winId() == win->xcb_windows.client) {
-                return xcb_win;
-            }
-        }
-        return nullptr;
-    };
-
-    if (auto internalWindow = find_internal_window()) {
+    if (auto internalWindow = find_internal_window(*win)) {
         win->is_outline = internalWindow->property("__kwin_outline").toBool();
     }
     if (auto& effects = space.base.render->compositor->effects) {

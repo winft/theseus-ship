@@ -27,11 +27,11 @@ kcoreaddons_add_plugin(kwincompositing SOURCES ${kwincompositing_SRC} INSTALL_NA
 kcmutils_generate_desktop_file(kwincompositing)
 
 target_link_libraries(kwincompositing
-    Qt::DBus
-    Qt::Widgets
-
-    KF5::ConfigCore
-    KF5::CoreAddons
-    KF5::I18n
-    KF5::KCMUtils
+  KF6::ConfigCore
+  KF6::CoreAddons
+  KF6::I18n
+  KF6::KCMUtils
+  KF6::Service
+  Qt::DBus
+  Qt::Widgets
 )

@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define TESTUTILS_H
 #include <kwinglobals.h>
 
-#include <QX11Info>
+#include <QtGui/private/qtx11extras_p.h>
 #include <xcb/xcb.h>
 
 namespace

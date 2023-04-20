@@ -32,14 +32,12 @@ ki18n_wrap_ui(kcm_kwinscreenedges_PART_SRCS main.ui)
 kconfig_add_kcfg_files(kcm_kwinscreenedges_PART_SRCS kwinscreenedgesettings.kcfgc kwinscreenedgescriptsettings.kcfgc kwinscreenedgeeffectsettings.kcfgc)
 kcoreaddons_add_plugin(kcm_kwinscreenedges SOURCES ${kcm_kwinscreenedges_PART_SRCS} INSTALL_NAMESPACE "plasma/kcms/systemsettings_qwidgets")
 set(kcm_screenedges_LIBS
-    Qt::DBus
-
-    KF5::ConfigCore
-    KF5::ConfigWidgets
-    KF5::KCMUtils
-    KF5::I18n
-    KF5::Package
-    KF5::Plasma
+  KF6::ConfigCore
+  KF6::KCMUtils
+  KF6::I18n
+  KF6::Package
+  KF6::Plasma
+  Qt::DBus
 )
 target_link_libraries(kcm_kwinscreenedges ${X11_LIBRARIES} ${kcm_screenedges_LIBS})
 

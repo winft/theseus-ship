@@ -27,8 +27,9 @@ class MouseClickEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit MouseClickEffectConfig(QWidget* parent = nullptr,
-                                    const QVariantList& args = QVariantList());
+    explicit MouseClickEffectConfig(QObject* parent,
+                                    const KPluginMetaData& data,
+                                    const QVariantList& args);
     ~MouseClickEffectConfig() override;
 
     void save() override;

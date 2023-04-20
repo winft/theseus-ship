@@ -95,10 +95,6 @@ public:
          */
         ConfigurableRole,
         /**
-         * Whether this is a scripted effect.
-         */
-        ScriptedRole,
-        /**
          * Whether the effect is enabled by default.
          */
         EnabledByDefaultRole,
@@ -214,13 +210,8 @@ Q_SIGNALS:
     void loaded();
 
 protected:
-    enum class Kind {
-        BuiltIn,
-        Binary,
-        Scripted
-    };
-
-    struct EffectData {
+    struct EffectData
+    {
         QString name;
         QString description;
         QString authorName;
@@ -240,10 +231,9 @@ protected:
         bool supported;
         QString exclusiveGroup;
         bool internal;
-        bool configurable;
-        Kind kind;
         bool changed = false;
         QString configModule;
+        QVariantList configArgs;
     };
 
     /**

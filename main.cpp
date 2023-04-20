@@ -25,10 +25,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <qplatformdefs.h>
 #include <QCommandLineParser>
 #include <QQuickWindow>
-#include <QStandardPaths>
-#include <QTranslator>
-#include <QLibraryInfo>
-#include <QX11Info>
+#include <QtGui/private/qtx11extras_p.h>
 
 #include <cerrno>
 #include <unistd.h>
@@ -114,14 +111,6 @@ void Application::processCommandLine(QCommandLineParser *parser)
     KAboutData aboutData = KAboutData::applicationData();
     aboutData.processCommandLine(parser);
     crashes = parser->value(s_crashesOption).toInt();
-}
-
-void Application::setupTranslator()
-{
-    QTranslator *qtTranslator = new QTranslator(qApp);
-    qtTranslator->load("qt_" + QLocale::system().name(),
-                       QLibraryInfo::location(QLibraryInfo::TranslationsPath));
-    installTranslator(qtTranslator);
 }
 
 void Application::setupMalloc()

@@ -48,6 +48,7 @@ public:
         }
 
         auto qt_event = motion_to_qt_event(*this->redirect.pointer, event);
+        qt_event.setTimestamp(event.base.time_msec);
         return tabbox->handle_mouse_event(&qt_event);
     }
 
@@ -101,6 +102,8 @@ public:
         }
 
         auto qt_event = axis_to_qt_event(*this->redirect.pointer, event);
+        qt_event.setTimestamp(event.base.time_msec);
+
         return tabbox->handle_wheel_event(&qt_event);
     }
 };

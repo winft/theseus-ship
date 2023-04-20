@@ -4,47 +4,45 @@
     SPDX-License-Identifier: LGPL-2.0-or-later
 */
 
-#include "effect.h"
+#include <KPackage/PackageStructure>
 
-#include <KLocalizedString>
-
-EffectPackageStructure::EffectPackageStructure(QObject *parent, const QVariantList &args)
-    : KPackage::PackageStructure(parent, args)
+class EffectPackageStructure : public KPackage::PackageStructure
 {
-}
+    Q_OBJECT
+public:
+    using KPackage::PackageStructure::PackageStructure;
+    void initPackage(KPackage::Package *package) override
+    {
+        package->setDefaultPackageRoot(QStringLiteral("kwin/effects/"));
 
-void EffectPackageStructure::initPackage(KPackage::Package *package)
-{
-    package->setDefaultPackageRoot(QStringLiteral("kwin/effects/"));
+        package->addDirectoryDefinition("code", QStringLiteral("code"));
+        package->setMimeTypes("code", QStringList{QStringLiteral("text/plain")});
 
-    package->addDirectoryDefinition("code", QStringLiteral("code"), i18n("Executable Scripts"));
-    package->setMimeTypes("code", {QStringLiteral("text/plain")});
+        package->addFileDefinition("mainscript", QStringLiteral("code/main.js"));
+        package->setRequired("mainscript", true);
 
-    package->addFileDefinition("mainscript", QStringLiteral("code/main.js"), i18n("Main Script File"));
-    package->setRequired("mainscript", true);
+        package->addFileDefinition("config", QStringLiteral("config/main.xml"));
+        package->setMimeTypes("config", QStringList{QStringLiteral("text/xml")});
 
-    package->addFileDefinition("config", QStringLiteral("config/main.xml"), i18n("Configuration Definition File"));
-    package->setMimeTypes("config", {QStringLiteral("text/xml")});
-
-    package->addFileDefinition("configui", QStringLiteral("ui/config.ui"), i18n("KCM User Interface File"));
-    package->setMimeTypes("configui", {QStringLiteral("text/xml")});
-}
-
-void EffectPackageStructure::pathChanged(KPackage::Package *package)
-{
-    if (package->path().isEmpty()) {
-        return;
+        package->addFileDefinition("configui", QStringLiteral("ui/config.ui"));
+        package->setMimeTypes("configui", QStringList{QStringLiteral("text/xml")});
     }
 
-    const KPluginMetaData md(package->metadata().fileName());
-    const QString mainScript = md.value("X-Plasma-MainScript");
-    if (mainScript.isEmpty()) {
-        return;
+    void pathChanged(KPackage::Package *package) override
+    {
+        if (package->path().isEmpty()) {
+            return;
+        }
+
+        const QString mainScript = package->metadata().value("X-Plasma-MainScript");
+        if (mainScript.isEmpty()) {
+            return;
+        }
+
+        package->addFileDefinition("mainscript", mainScript);
     }
+};
 
-    package->addFileDefinition("mainscript", mainScript, i18n("Main Script File"));
-}
-
-K_PLUGIN_CLASS_WITH_JSON(EffectPackageStructure, "kwin-packagestructure-effect.json")
+K_PLUGIN_CLASS_WITH_JSON(EffectPackageStructure, "effect.json")
 
 #include "effect.moc"

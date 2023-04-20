@@ -7,9 +7,9 @@
 #pragma once
 
 #include "ge_event_mem_mover.h"
+#include "keyboard.h"
 #include "xinput_helpers.h"
 
-#include "input/keyboard.h"
 #include "input/pointer.h"
 #include "input/spies/modifier_only_shortcuts.h"
 #include "input/xkb/helpers.h"
@@ -216,8 +216,9 @@ public:
 template<typename Platform>
 struct xinput_devices {
     xinput_devices(Platform& platform)
-        : keyboard{std::make_unique<input::keyboard>(platform.xkb.context,
-                                                     platform.xkb.compose_table)}
+        : keyboard{std::make_unique<x11::keyboard>(platform.base,
+                                                   platform.xkb.context,
+                                                   platform.xkb.compose_table)}
         , pointer{std::make_unique<input::pointer>()}
         , platform{platform}
     {
@@ -231,7 +232,7 @@ struct xinput_devices {
         platform_remove_keyboard(keyboard.get(), platform);
     }
 
-    std::unique_ptr<input::keyboard> keyboard;
+    std::unique_ptr<x11::keyboard> keyboard;
     std::unique_ptr<input::pointer> pointer;
     Platform& platform;
 };

@@ -3,7 +3,6 @@
         "Category": "Appearance",
         "Description": "Blurs the background behind semi-transparent windows",
         "EnabledByDefault": true,
-        "Id": "blur",
         "License": "GPL",
         "Name": "Blur"
     },

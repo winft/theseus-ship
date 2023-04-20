@@ -23,8 +23,7 @@
 
 #include <QOpenGLContext>
 #include <QVariant>
-#include <QX11Info>
-#include <QtPlatformHeaders/QGLXNativeContext>
+#include <QtGui/private/qtx11extras_p.h>
 #include <cassert>
 #include <deque>
 #include <epoxy/glx.h>
@@ -261,14 +260,13 @@ GLXContext create_glx_context(Backend const& backend)
     GLXContext globalShareContext = nullptr;
     if (qtGlobalShareContext) {
         qDebug(KWIN_X11) << "Global share context format:" << qtGlobalShareContext->format();
-        auto const nativeHandle = qtGlobalShareContext->nativeHandle();
-        if (!nativeHandle.canConvert<QGLXNativeContext>()) {
+        auto const nativeHandle
+            = qtGlobalShareContext->nativeInterface<QNativeInterface::QGLXContext>();
+        if (!nativeHandle) {
             qCDebug(KWIN_X11) << "Invalid QOpenGLContext::globalShareContext()";
             return nullptr;
-        } else {
-            QGLXNativeContext handle = qvariant_cast<QGLXNativeContext>(nativeHandle);
-            globalShareContext = handle.context();
         }
+        globalShareContext = nativeHandle->nativeContext();
     }
     if (!globalShareContext) {
         qCWarning(KWIN_X11) << "QOpenGLContext::globalShareContext() is required";

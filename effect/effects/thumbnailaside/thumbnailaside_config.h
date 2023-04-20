@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_THUMBNAILASIDE_CONFIG_H
 #define KWIN_THUMBNAILASIDE_CONFIG_H
 
-#include <kcmodule.h>
+#include <KCModule>
 
 #include "ui_thumbnailaside_config.h"
 
@@ -27,8 +27,9 @@ class ThumbnailAsideEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit ThumbnailAsideEffectConfig(QWidget* parent = nullptr,
-                                        const QVariantList& args = QVariantList());
+    explicit ThumbnailAsideEffectConfig(QObject* parent,
+                                        const KPluginMetaData& data,
+                                        const QVariantList& args);
     ~ThumbnailAsideEffectConfig() override;
 
     void save() override;

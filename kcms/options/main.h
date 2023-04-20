@@ -13,8 +13,8 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include <KCModule>
 #include <QTabWidget>
-#include <kcmodule.h>
 
 class KWinOptionsSettings;
 class KWinOptionsKDEGlobalsSettings;
@@ -29,13 +29,11 @@ class KWinOptions : public KCModule
     Q_OBJECT
 
 public:
-
-    KWinOptions(QWidget *parent, const QVariantList &args);
+    explicit KWinOptions(QObject *parent, const KPluginMetaData &data, const QVariantList &args);
 
     void load() override;
     void save() override;
     void defaults() override;
-    QString quickHelp() const override;
 
 protected Q_SLOTS:
     void updateUnmanagedState();
@@ -58,8 +56,7 @@ class KActionsOptions : public KCModule
     Q_OBJECT
 
 public:
-
-    KActionsOptions(QWidget *parent, const QVariantList &args);
+    KActionsOptions(QObject *parent, const KPluginMetaData &data, const QVariantList &args);
 
     void load() override;
     void save() override;

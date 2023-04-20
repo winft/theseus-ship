@@ -133,11 +133,7 @@ void script::run()
     m_starting = true;
     QFutureWatcher<QByteArray>* watcher = new QFutureWatcher<QByteArray>(this);
     connect(watcher, &QFutureWatcherBase::finished, this, &script::slotScriptLoadedFromFile);
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    watcher->setFuture(QtConcurrent::run(this, &script::loadScriptFromFile, fileName()));
-#else
     watcher->setFuture(QtConcurrent::run(&script::loadScriptFromFile, this, fileName()));
-#endif
 }
 
 QByteArray script::loadScriptFromFile(const QString& fileName)
@@ -551,7 +547,7 @@ declarative_script::declarative_script(int id,
     , m_component(new QQmlComponent(platform.qml_engine, this))
 {
     m_context->setContextProperty(QStringLiteral("KWin"),
-                                  new js_engine_global_methods_wrapper(platform, this));
+                                  new js_engine_global_methods_wrapper(this));
 }
 
 declarative_script::~declarative_script()

@@ -120,11 +120,6 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         }
     }
 
-    if (auto& effects = space.base.render->compositor->effects; effects
-        && effects->hasKeyboardGrab()
-        && (event_type == XCB_KEY_PRESS || event_type == XCB_KEY_RELEASE))
-        return false; // let Qt process it, it'll be intercepted again in eventFilter()
-
     // events that should be handled before Clients can get them
     switch (event_type) {
     case XCB_CONFIGURE_NOTIFY:
@@ -331,23 +326,6 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         break;
     }
 
-    return false;
-}
-
-// Used only to filter events that need to be processed by Qt first
-// (e.g. keyboard input to be composed), otherwise events are
-// handle by the XEvent filter above.
-template<typename Space>
-bool space_qt_event(Space& space, QEvent* event)
-{
-    auto& effects = space.base.render->compositor->effects;
-
-    auto is_key_event = event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease
-        || event->type() == QEvent::ShortcutOverride;
-    if (is_key_event && effects && effects->hasKeyboardGrab()) {
-        effects->grabbedKeyboardEvent(static_cast<QKeyEvent*>(event));
-        return true;
-    }
     return false;
 }
 
