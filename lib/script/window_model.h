@@ -6,7 +6,7 @@
 #pragma once
 
 #include "kwin_export.h"
-#include "scripting/window.h"
+#include "script/window.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>

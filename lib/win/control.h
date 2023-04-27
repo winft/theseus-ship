@@ -15,7 +15,7 @@
 #include "virtual_desktops.h"
 
 #include "rules/window.h"
-#include "scripting/window.h"
+#include "script/window.h"
 
 #include <kwineffects/effect.h>
 

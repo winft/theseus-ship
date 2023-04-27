@@ -7,9 +7,9 @@
 #include "desktop_background_item.h"
 #include "base/platform.h"
 #include "base/singleton_interface.h"
-#include "scripting/scripting_logging.h"
-#include "scripting/singleton_interface.h"
-#include "scripting/space.h"
+#include "script/scripting_logging.h"
+#include "script/singleton_interface.h"
+#include "script/space.h"
 
 namespace KWin
 {

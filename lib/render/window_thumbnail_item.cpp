@@ -7,9 +7,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "window_thumbnail_item.h"
 
 #include "render/compositor_qobject.h"
-#include "scripting/scripting_logging.h"
-#include "scripting/singleton_interface.h"
-#include "scripting/space.h"
+#include "script/scripting_logging.h"
+#include "script/singleton_interface.h"
+#include "script/space.h"
 #include "win/singleton_interface.h"
 
 #include <kwineffects/effects_handler.h>

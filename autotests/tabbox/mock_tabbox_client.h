@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_MOCK_TABBOX_CLIENT_H
 #define KWIN_MOCK_TABBOX_CLIENT_H
 
-#include "../../win/tabbox/tabbox_client.h"
+#include "win/tabbox/tabbox_client.h"
 
 #include <QIcon>
 #include <QUuid>

@@ -8,22 +8,22 @@ add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwinrules\")
 include_directories(../../)
 
 set(kwinrules_SRCS
-    ../../base/logging.cpp
-    ../../win/rules/book_settings.cpp
-    ../../input/cursor.cpp
-    ../../input/cursor_shape.cpp
-    ../../input/singleton_interface.cpp
-    ../../input/x11/cursor.cpp
-    ../../win/rules/ruling.cpp
-    ../../win/dbus/virtual_desktop_types.cpp
+    ../../lib/base/logging.cpp
+    ../../lib/win/rules/book_settings.cpp
+    ../../lib/input/cursor.cpp
+    ../../lib/input/cursor_shape.cpp
+    ../../lib/input/singleton_interface.cpp
+    ../../lib/input/x11/cursor.cpp
+    ../../lib/win/rules/ruling.cpp
+    ../../lib/win/dbus/virtual_desktop_types.cpp
     optionsmodel.cpp
     ruleitem.cpp
     rulesmodel.cpp
     rulebookmodel.cpp
 )
 
-kconfig_add_kcfg_files(kwinrules_SRCS ../../win/rules/kconfig/rules_settings.kcfgc)
-kconfig_add_kcfg_files(kwinrules_SRCS ../../win/rules/kconfig/rules_book_settings_base.kcfgc)
+kconfig_add_kcfg_files(kwinrules_SRCS ../../lib/win/rules/kconfig/rules_settings.kcfgc)
+kconfig_add_kcfg_files(kwinrules_SRCS ../../lib/win/rules/kconfig/rules_book_settings_base.kcfgc)
 
 add_library(KWinRulesObjects STATIC ${kwinrules_SRCS})
 set_target_properties(KWinRulesObjects PROPERTIES

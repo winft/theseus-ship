@@ -7,8 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "lib/setup.h"
 
 #include "base/wayland/server.h"
-#include "scripting/platform.h"
-#include "scripting/script.h"
+#include "script/platform.h"
+#include "script/script.h"
 #include "win/control.h"
 #include "win/space.h"
 #include "win/wayland/window.h"

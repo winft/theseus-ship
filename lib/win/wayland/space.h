@@ -25,7 +25,7 @@
 #include "debug/console/wayland/wayland_console.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
-#include "scripting/platform.h"
+#include "script/platform.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/placement.h"

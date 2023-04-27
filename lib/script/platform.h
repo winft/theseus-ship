@@ -11,7 +11,7 @@
 #include "output.h"
 #include "screen_edge_handler.h"
 #include "script.h"
-#include "scripting/desktop_background_item.h"
+#include "script/desktop_background_item.h"
 #include "shortcut_handler.h"
 #include "singleton_interface.h"
 #include "space.h"

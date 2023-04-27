@@ -18,7 +18,7 @@
 #include "debug/console/x11/x11_console.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
-#include "scripting/platform.h"
+#include "script/platform.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
 #include "win/internal_window.h"

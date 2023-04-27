@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/logging.h"
 #include "kwin_export.h"
-#include "scripting/effect.h"
+#include "script/effect.h"
 #include "utils/flags.h"
 
 #include <KPackage/PackageLoader>

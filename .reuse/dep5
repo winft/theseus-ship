@@ -7,10 +7,10 @@ Files:
   .versionrc.json
   autotests/integration/fakes/org.kde.kdecoration2/fakedecoration_with_shadows.json
   autotests/libkwineffects/data/glplatform/*
-  base/dbus/org.kde.KWin.xml
-  data/icons/*
-  data/org.kde.kwin.VirtualKeyboard.xml
-  data/org_kde_kwin.categories
+  lib/base/dbus/org.kde.KWin.xml
+  lib/data/icons/*
+  lib/data/org.kde.kwin.VirtualKeyboard.xml
+  lib/data/org_kde_kwin.categories
   docs/*
   plugins/effects/backgroundcontrast/metadata.json
   plugins/effects/blendchanges/metadata.json
@@ -92,17 +92,17 @@ Files:
   plugins/kpackage/windowswitcher/windowswitcher.json
   plugins/qpa/kwin.json
   plugins/windowsystem/kwindowsystem.json
-  render/dbus/org.kde.kwin.ColorCorrect.xml
-  render/dbus/org.kde.kwin.Compositing.xml
-  render/dbus/org.kde.kwin.Effects.xml
-  scripting/generic_scripted_config.json
-  scripting/org.kde.kwin.Script.xml
+  lib/render/dbus/org.kde.kwin.ColorCorrect.xml
+  lib/render/dbus/org.kde.kwin.Compositing.xml
+  lib/render/dbus/org.kde.kwin.Effects.xml
+  lib/script/generic_scripted_config.json
+  lib/script/org.kde.kwin.Script.xml
   plugins/scripts/desktopchangeosd/metadata.json
   plugins/scripts/minimizeall/metadata.json
   plugins/scripts/synchronizeskipswitcher/metadata.json
   plugins/scripts/videowall/metadata.json
-  win/dbus/org.kde.KWin.Session.xml
-  win/dbus/org.kde.KWin.VirtualDesktopManager.xml
-  win/dbus/org.kde.kappmenu.xml
+  lib/win/dbus/org.kde.KWin.Session.xml
+  lib/win/dbus/org.kde.KWin.VirtualDesktopManager.xml
+  lib/win/dbus/org.kde.kappmenu.xml
 Copyright: 2023 Roman Gilg <subdiff@gmail.com>
 License: GPL-2.0-or-later

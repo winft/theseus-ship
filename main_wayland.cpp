@@ -19,7 +19,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/wayland/cursor.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
-#include "scripting/platform.h"
+#include "script/platform.h"
 #include "win/shortcuts_init.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"

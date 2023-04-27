@@ -6,9 +6,9 @@
 #include "window_model.h"
 
 #include "base/singleton_interface.h"
-#include "scripting/platform.h"
-#include "scripting/singleton_interface.h"
-#include "scripting/space.h"
+#include "script/platform.h"
+#include "script/singleton_interface.h"
+#include "script/space.h"
 
 namespace KWin::scripting
 {

@@ -12,7 +12,7 @@ set(kcmkwincommon_SRC
 )
 
 qt_add_dbus_interface(kcmkwincommon_SRC
-    ${KWIN_SOURCE_DIR}/render/dbus/org.kde.kwin.Effects.xml kwin_effects_interface
+    ${KWIN_SOURCE_DIR}/lib/render/dbus/org.kde.kwin.Effects.xml kwin_effects_interface
 )
 
 add_library(kcmkwincommon SHARED ${kcmkwincommon_SRC})

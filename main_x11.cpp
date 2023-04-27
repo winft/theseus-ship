@@ -19,7 +19,7 @@
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
-#include "scripting/platform.h"
+#include "script/platform.h"
 #include "win/shortcuts_init.h"
 #include "win/space.h"
 #include "win/x11/space.h"

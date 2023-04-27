@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "scripting/effect.h"
+#include "script/effect.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
 

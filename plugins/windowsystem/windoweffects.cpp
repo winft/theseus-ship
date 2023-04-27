@@ -5,8 +5,8 @@
 */
 #include "windoweffects.h"
 
-#include "../../render/effects.h"
 #include "render/compositor.h"
+#include "render/effects.h"
 #include "render/platform.h"
 #include "render/singleton_interface.h"
 

@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "../integration/lib/setup.h"
 
-#include "../../win/tabbox/tabbox_desktop_chain.h"
+#include "win/tabbox/tabbox_desktop_chain.h"
 
 #include <catch2/generators/catch_generators.hpp>
 

@@ -8,8 +8,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
-#include "scripting/platform.h"
-#include "scripting/script.h"
+#include "script/platform.h"
+#include "script/script.h"
 #include "win/deco/bridge.h"
 #include "win/deco/settings.h"
 #include "win/move.h"

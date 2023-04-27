@@ -29,7 +29,7 @@ add_definitions(-DEGL_NO_PLATFORM_SPECIFIC_TYPES)
 find_package(ECM ${KF6_MIN_VERSION} REQUIRED NO_MODULE)
 
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${ECM_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib/cmake/modules ${ECM_MODULE_PATH})
 
 include(FeatureSummary)
 include(WriteBasicConfigVersionFile)
@@ -312,10 +312,10 @@ add_feature_info("SCHED_RESET_ON_FORK"
                  HAVE_SCHED_RESET_ON_FORK
                  "Required for running kwin_wayland with real-time scheduling")
 
-configure_file(cmake/config-kwin.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kwin.h)
+configure_file(lib/cmake/config-kwin.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kwin.h)
 
 ########### global ###############
-set(kwin_effects_dbus_xml ${CMAKE_CURRENT_SOURCE_DIR}/render/dbus/org.kde.kwin.Effects.xml)
+set(kwin_effects_dbus_xml ${CMAKE_CURRENT_SOURCE_DIR}/lib/render/dbus/org.kde.kwin.Effects.xml)
 qt6_add_dbus_interface(effects_interface_SRCS ${kwin_effects_dbus_xml} kwineffects_interface)
 add_library(KWinEffectsInterface STATIC ${effects_interface_SRCS})
 target_link_libraries(KWinEffectsInterface Qt::DBus)
@@ -326,6 +326,7 @@ set_target_properties(KWinEffectsInterface PROPERTIES
 include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}/lib/effect
     ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/effect
 )
 
@@ -347,11 +348,8 @@ ecm_setup_qtplugin_macro_names(
         PACKAGE_SETUP_KWINEFFECTS_AUTOMOC_VARIABLES
 )
 
-add_subdirectory(data)
-add_subdirectory(scripting)
-
 ########### next target ###############
-add_executable(kwin_killer_helper win/x11/helpers/killer.cpp)
+add_executable(kwin_killer_helper lib/win/x11/helpers/killer.cpp)
 
 target_link_libraries(kwin_killer_helper
   KF6::AuthCore
@@ -363,154 +361,154 @@ target_link_libraries(kwin_killer_helper
 ########### next target ###############
 
 set(kwin_SRCS
-    base/dbus/kwin.cpp
-    base/os/clock/skew_notifier.cpp
-    base/os/clock/skew_notifier_engine.cpp
-    base/seat/session.cpp
-    base/seat/backend/logind/session.cpp
-    base/singleton_interface.cpp
-    base/x11/event_filter.cpp
-    base/x11/event_filter_container.cpp
-    base/x11/event_filter_manager.cpp
-    base/x11/grabs.cpp
-    base/x11/selection_owner.cpp
-    base/x11/xcb/extensions.cpp
-    base/logging.cpp
-    base/options.cpp
-    base/platform.cpp
-    desktop/screen_locker_watcher.cpp
-    render/post/color_correct_dbus_interface.cpp
-    render/post/suncalc.cpp
-    debug/console/console.cpp
-    debug/perf/ftrace.cpp
-    input/keyboard.cpp
-    input/keyboard_redirect.cpp
-    input/platform_qobject.cpp
-    input/redirect_qobject.cpp
-    input/singleton_interface.cpp
-    input/spies/modifier_only_shortcuts.cpp
-    input/switch.cpp
-    input/cursor.cpp
-    input/cursor_shape.cpp
-    input/gestures.cpp
-    input/global_shortcut.cpp
-    input/logging.cpp
-    input/pointer.cpp
-    input/xkb/keyboard.cpp
-    input/xkb/keymap.cpp
+    lib/base/dbus/kwin.cpp
+    lib/base/os/clock/skew_notifier.cpp
+    lib/base/os/clock/skew_notifier_engine.cpp
+    lib/base/seat/session.cpp
+    lib/base/seat/backend/logind/session.cpp
+    lib/base/singleton_interface.cpp
+    lib/base/x11/event_filter.cpp
+    lib/base/x11/event_filter_container.cpp
+    lib/base/x11/event_filter_manager.cpp
+    lib/base/x11/grabs.cpp
+    lib/base/x11/selection_owner.cpp
+    lib/base/x11/xcb/extensions.cpp
+    lib/base/logging.cpp
+    lib/base/options.cpp
+    lib/base/platform.cpp
+    lib/desktop/screen_locker_watcher.cpp
+    lib/render/post/color_correct_dbus_interface.cpp
+    lib/render/post/suncalc.cpp
+    lib/debug/console/console.cpp
+    lib/debug/perf/ftrace.cpp
+    lib/input/keyboard.cpp
+    lib/input/keyboard_redirect.cpp
+    lib/input/platform_qobject.cpp
+    lib/input/redirect_qobject.cpp
+    lib/input/singleton_interface.cpp
+    lib/input/spies/modifier_only_shortcuts.cpp
+    lib/input/switch.cpp
+    lib/input/cursor.cpp
+    lib/input/cursor_shape.cpp
+    lib/input/gestures.cpp
+    lib/input/global_shortcut.cpp
+    lib/input/logging.cpp
+    lib/input/pointer.cpp
+    lib/input/xkb/keyboard.cpp
+    lib/input/xkb/keymap.cpp
     main.cpp
-    render/compositor_qobject.cpp
-    render/dbus/compositing.cpp
-    render/effect/frame.cpp
-    render/effect_loader.cpp
-    render/effects.cpp
-    render/gl/context_attribute_builder.cpp
-    render/gl/egl_context_attribute_builder.cpp
-    render/outline.cpp
-    render/singleton_interface.cpp
-    render/window_thumbnail_item.cpp
-    render/x11/compositor_selection_owner.cpp
-    scripting/dbus_call.cpp
-    scripting/desktop_background_item.cpp
-    scripting/js_engine_global_methods_wrapper.cpp
-    scripting/screen_edge_handler.cpp
-    scripting/effect.cpp
-    scripting/output.cpp
-    scripting/platform.cpp
-    scripting/script.cpp
-    scripting/script_timer.cpp
-    scripting/scripting_logging.cpp
-    scripting/shortcut_handler.cpp
-    scripting/singleton_interface.cpp
-    scripting/utils.cpp
-    scripting/virtual_desktop_model.cpp
-    scripting/window.cpp
-    scripting/window_model.cpp
-    scripting/space.cpp
-    win/dbus/appmenu.cpp
-    win/dbus/virtual_desktop_manager.cpp
-    win/dbus/virtual_desktop_types.cpp
-    win/deco/palette.cpp
-    win/deco/decorations_logging.cpp
-    win/osd_notification.cpp
-    win/property_window.cpp
-    win/rules/book.cpp
-    win/rules/book_settings.cpp
-    win/rules/ruling.cpp
-    win/rules/window.cpp
-    win/session_manager.cpp
-    win/screen_edges.cpp
-    win/shortcut_dialog.cpp
-    win/singleton_interface.cpp
-    win/space_qobject.cpp
-    win/virtual_desktops.cpp
-    win/x11/client_machine.cpp
-    win/x11/extras.cpp
-    win/x11/key_server.cpp
-    win/x11/net/atoms.cpp
-    win/x11/net/root_info.cpp
-    win/x11/net/win_info.cpp
+    lib/render/compositor_qobject.cpp
+    lib/render/dbus/compositing.cpp
+    lib/render/effect/frame.cpp
+    lib/render/effect_loader.cpp
+    lib/render/effects.cpp
+    lib/render/gl/context_attribute_builder.cpp
+    lib/render/gl/egl_context_attribute_builder.cpp
+    lib/render/outline.cpp
+    lib/render/singleton_interface.cpp
+    lib/render/window_thumbnail_item.cpp
+    lib/render/x11/compositor_selection_owner.cpp
+    lib/script/dbus_call.cpp
+    lib/script/desktop_background_item.cpp
+    lib/script/js_engine_global_methods_wrapper.cpp
+    lib/script/screen_edge_handler.cpp
+    lib/script/effect.cpp
+    lib/script/output.cpp
+    lib/script/platform.cpp
+    lib/script/script.cpp
+    lib/script/script_timer.cpp
+    lib/script/scripting_logging.cpp
+    lib/script/shortcut_handler.cpp
+    lib/script/singleton_interface.cpp
+    lib/script/utils.cpp
+    lib/script/virtual_desktop_model.cpp
+    lib/script/window.cpp
+    lib/script/window_model.cpp
+    lib/script/space.cpp
+    lib/win/dbus/appmenu.cpp
+    lib/win/dbus/virtual_desktop_manager.cpp
+    lib/win/dbus/virtual_desktop_types.cpp
+    lib/win/deco/palette.cpp
+    lib/win/deco/decorations_logging.cpp
+    lib/win/osd_notification.cpp
+    lib/win/property_window.cpp
+    lib/win/rules/book.cpp
+    lib/win/rules/book_settings.cpp
+    lib/win/rules/ruling.cpp
+    lib/win/rules/window.cpp
+    lib/win/session_manager.cpp
+    lib/win/screen_edges.cpp
+    lib/win/shortcut_dialog.cpp
+    lib/win/singleton_interface.cpp
+    lib/win/space_qobject.cpp
+    lib/win/virtual_desktops.cpp
+    lib/win/x11/client_machine.cpp
+    lib/win/x11/extras.cpp
+    lib/win/x11/key_server.cpp
+    lib/win/x11/net/atoms.cpp
+    lib/win/x11/net/root_info.cpp
+    lib/win/x11/net/win_info.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.
-    base/output.h
-    render/cursor.h
-    win/deco/bridge_qobject.h
-    win/deco/client_impl_qobject.h
-    win/deco/renderer.h
-    win/stacking_order.h
-    win/window_qobject.h
+    lib/base/output.h
+    lib/render/cursor.h
+    lib/win/deco/bridge_qobject.h
+    lib/win/deco/client_impl_qobject.h
+    lib/win/deco/renderer.h
+    lib/win/stacking_order.h
+    lib/win/window_qobject.h
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(kwin_SRCS
         ${kwin_SRCS}
-        base/os/clock/linux_skew_notifier_engine.cpp
+        lib/base/os/clock/linux_skew_notifier_engine.cpp
     )
 endif()
 
-qt6_add_resources(kwin_SRCS render/gl/resources.qrc)
+qt6_add_resources(kwin_SRCS lib/render/gl/resources.qrc)
 
 qt6_add_dbus_adaptor(kwin_SRCS
-  scripting/org.kde.kwin.Script.xml
-  scripting/script.h
+  lib/script/org.kde.kwin.Script.xml
+  lib/script/script.h
   KWin::scripting::abstract_script
 )
 
-kconfig_add_kcfg_files(kwin_SRCS base/kconfig/options_settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_book_settings_base.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS lib/base/kconfig/options_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS lib/render/post/kconfig/color_correct_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS lib/win/rules/kconfig/rules_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS lib/win/rules/kconfig/rules_book_settings_base.kcfgc)
 
-qt6_add_dbus_adaptor(kwin_SRCS base/dbus/org.kde.KWin.xml base/dbus/kwin.h KWin::base::dbus::kwin)
+qt6_add_dbus_adaptor(kwin_SRCS lib/base/dbus/org.kde.KWin.xml lib/base/dbus/kwin.h KWin::base::dbus::kwin)
 qt6_add_dbus_adaptor(kwin_SRCS
-  render/dbus/org.kde.kwin.Compositing.xml
-  render/dbus/compositing.h
+  lib/render/dbus/org.kde.kwin.Compositing.xml
+  lib/render/dbus/compositing.h
   KWin::render::dbus::compositing_qobject
 )
 qt6_add_dbus_adaptor(kwin_SRCS
-  render/dbus/org.kde.kwin.ColorCorrect.xml
-  render/post/color_correct_dbus_interface.h
+  lib/render/dbus/org.kde.kwin.ColorCorrect.xml
+  lib/render/post/color_correct_dbus_interface.h
   KWin::render::post::color_correct_dbus_interface
 )
-qt6_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_wrap)
+qt6_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} lib/render/effects.h KWin::render::effects_handler_wrap)
 qt6_add_dbus_adaptor(kwin_SRCS
-    win/dbus/org.kde.KWin.VirtualDesktopManager.xml
-    win/dbus/virtual_desktop_manager.h
+    lib/win/dbus/org.kde.KWin.VirtualDesktopManager.xml
+    lib/win/dbus/virtual_desktop_manager.h
     KWin::win::dbus::virtual_desktop_manager
 )
 qt6_add_dbus_adaptor(kwin_SRCS
-  win/dbus/org.kde.KWin.Session.xml
-  win/session_manager.h
+  lib/win/dbus/org.kde.KWin.Session.xml
+  lib/win/session_manager.h
   KWin::win::session_manager
 )
 
 qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf6_org.freedesktop.ScreenSaver.xml screenlocker_interface)
 qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.screensaver.xml kscreenlocker_interface)
-qt6_add_dbus_interface(kwin_SRCS win/dbus/org.kde.kappmenu.xml appmenu_interface)
+qt6_add_dbus_interface(kwin_SRCS lib/win/dbus/org.kde.kappmenu.xml appmenu_interface)
 
 ki18n_wrap_ui(kwin_SRCS
-    debug/console/debug_console.ui
-    win/shortcut_dialog.ui
+    lib/debug/console/debug_console.ui
+    lib/win/shortcut_dialog.ui
 )
 
 ########### target link libraries ###############
@@ -583,28 +581,28 @@ set_target_properties(kwin PROPERTIES
 )
 
 target_precompile_headers(kwin PRIVATE
-    cmake/precompiled/qt.h
-    cmake/precompiled/std.h
-    cmake/precompiled/xcb.h
+    lib/cmake/precompiled/qt.h
+    lib/cmake/precompiled/std.h
+    lib/cmake/precompiled/xcb.h
 )
 target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
 
 if(HAVE_PERF)
-    target_sources(kwin PRIVATE debug/perf/ftrace_impl.cpp)
+    target_sources(kwin PRIVATE lib/debug/perf/ftrace_impl.cpp)
 endif()
 
 if (KWIN_BUILD_TABBOX)
   target_sources(kwin PRIVATE
-    win/tabbox/tabbox_client_model.cpp
-    win/tabbox/tabbox_config.cpp
-    win/tabbox/tabbox_desktop_chain.cpp
-    win/tabbox/tabbox_desktop_model.cpp
-    win/tabbox/tabbox_handler.cpp
-    win/tabbox/tabbox_logging.cpp
-    win/tabbox/tabbox_switcher_item.cpp
+    lib/win/tabbox/tabbox_client_model.cpp
+    lib/win/tabbox/tabbox_config.cpp
+    lib/win/tabbox/tabbox_desktop_chain.cpp
+    lib/win/tabbox/tabbox_desktop_model.cpp
+    lib/win/tabbox/tabbox_handler.cpp
+    lib/win/tabbox/tabbox_logging.cpp
+    lib/win/tabbox/tabbox_switcher_item.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.
-    win/tabbox/tabbox.h
+    lib/win/tabbox/tabbox.h
   )
   target_link_libraries(kwin Qt::GuiPrivate)
 endif()
@@ -612,20 +610,20 @@ endif()
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 
 set(kwin_X11_SRCS
-   base/backend/x11/platform.cpp
-   base/backend/x11/randr_filter.cpp
-   base/x11/output.cpp
-   input/x11/cursor.cpp
-   input/x11/global_shortcuts_manager.cpp
-   input/x11/xfixes_cursor_event_filter.cpp
-   input/logging.cpp
-   render/backend/x11/non_composited_outline.cpp
+   lib/base/backend/x11/platform.cpp
+   lib/base/backend/x11/randr_filter.cpp
+   lib/base/x11/output.cpp
+   lib/input/x11/cursor.cpp
+   lib/input/x11/global_shortcuts_manager.cpp
+   lib/input/x11/xfixes_cursor_event_filter.cpp
+   lib/input/logging.cpp
+   lib/render/backend/x11/non_composited_outline.cpp
 )
 
 if (HAVE_EPOXY_GLX)
     set(kwin_X11_SRCS
         ${kwin_X11_SRCS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_context_attribute_builder.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/render/backend/x11/glx_context_attribute_builder.cpp
     )
 endif()
 
@@ -670,15 +668,15 @@ install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
 install(TARGETS kwin_killer_helper DESTINATION ${KDE_INSTALL_LIBEXECDIR})
 
 set(kwin_XWAYLAND_SRCS
-   xwl/sources_ext.cpp
-   xwl/transfer.cpp
+   lib/xwl/sources_ext.cpp
+   lib/xwl/transfer.cpp
 
    # These headers need to be compiled for the helper QObjects they contain.
-   xwl/drag.h
-   xwl/selection_data.h
-   xwl/sources.h
-   xwl/wl_visit.h
-   xwl/x11_visit.h
+   lib/xwl/drag.h
+   lib/xwl/selection_data.h
+   lib/xwl/sources.h
+   lib/xwl/wl_visit.h
+   lib/xwl/x11_visit.h
 )
 
 add_subdirectory(plugins)
@@ -686,49 +684,49 @@ add_subdirectory(plugins)
 kcoreaddons_target_static_plugins(kwin_x11 "kwin/effects/plugins")
 
 set(kwin_WAYLAND_SRCS
-   base/backend/wlroots/drm_lease.cpp
-   base/backend/wlroots/non_desktop_output.cpp
-   base/backend/wlroots/output.cpp
-   base/backend/wlroots/platform.cpp
-   base/seat/backend/wlroots/session.cpp
-   base/wayland/filtered_display.cpp
-   base/app_singleton.cpp
-   debug/console/wayland/input_device_model.cpp
-   debug/console/wayland/wayland_console.cpp
-   input/backend/wlroots/platform.cpp
-   input/backend/wlroots/control/headless/keyboard.cpp
-   input/backend/wlroots/control/keyboard.cpp
-   input/backend/wlroots/control/pointer.cpp
-   input/backend/wlroots/control/switch.cpp
-   input/backend/wlroots/control/touch.cpp
-   input/control/device.cpp
-   input/control/keyboard.cpp
-   input/control/pointer.cpp
-   input/control/switch.cpp
-   input/control/touch.cpp
-   input/dbus/device.cpp
-   input/dbus/device_manager.cpp
-   input/dbus/keyboard_layout.cpp
-   input/dbus/keyboard_layouts_v2.cpp
-   input/dbus/tablet_mode_manager.cpp
-   input/spies/keyboard_repeat.cpp
-   input/wayland/global_shortcuts_manager.cpp
-   input/logging.cpp
-   input/wayland/kglobalaccel/runtime/component.cpp
-   input/wayland/kglobalaccel/runtime/global_accel_d.cpp
-   input/wayland/kglobalaccel/runtime/global_shortcut.cpp
-   input/wayland/kglobalaccel/runtime/global_shortcut_context.cpp
-   input/wayland/kglobalaccel/runtime/global_shortcuts_registry.cpp
-   input/wayland/kglobalaccel/runtime/service_action_component.cpp
-   input/wayland/kglobalaccel/runtime/sequence_helpers.cpp
-   input/xkb/layout_manager.cpp
-   input/xkb/layout_policies.cpp
+   lib/base/backend/wlroots/drm_lease.cpp
+   lib/base/backend/wlroots/non_desktop_output.cpp
+   lib/base/backend/wlroots/output.cpp
+   lib/base/backend/wlroots/platform.cpp
+   lib/base/seat/backend/wlroots/session.cpp
+   lib/base/wayland/filtered_display.cpp
+   lib/base/app_singleton.cpp
+   lib/debug/console/wayland/input_device_model.cpp
+   lib/debug/console/wayland/wayland_console.cpp
+   lib/input/backend/wlroots/platform.cpp
+   lib/input/backend/wlroots/control/headless/keyboard.cpp
+   lib/input/backend/wlroots/control/keyboard.cpp
+   lib/input/backend/wlroots/control/pointer.cpp
+   lib/input/backend/wlroots/control/switch.cpp
+   lib/input/backend/wlroots/control/touch.cpp
+   lib/input/control/device.cpp
+   lib/input/control/keyboard.cpp
+   lib/input/control/pointer.cpp
+   lib/input/control/switch.cpp
+   lib/input/control/touch.cpp
+   lib/input/dbus/device.cpp
+   lib/input/dbus/device_manager.cpp
+   lib/input/dbus/keyboard_layout.cpp
+   lib/input/dbus/keyboard_layouts_v2.cpp
+   lib/input/dbus/tablet_mode_manager.cpp
+   lib/input/spies/keyboard_repeat.cpp
+   lib/input/wayland/global_shortcuts_manager.cpp
+   lib/input/logging.cpp
+   lib/input/wayland/kglobalaccel/runtime/component.cpp
+   lib/input/wayland/kglobalaccel/runtime/global_accel_d.cpp
+   lib/input/wayland/kglobalaccel/runtime/global_shortcut.cpp
+   lib/input/wayland/kglobalaccel/runtime/global_shortcut_context.cpp
+   lib/input/wayland/kglobalaccel/runtime/global_shortcuts_registry.cpp
+   lib/input/wayland/kglobalaccel/runtime/service_action_component.cpp
+   lib/input/wayland/kglobalaccel/runtime/sequence_helpers.cpp
+   lib/input/xkb/layout_manager.cpp
+   lib/input/xkb/layout_policies.cpp
 
    # These headers need to be compiled for the helper QObjects they contain.
-   base/wayland/server.h
-   input/touch.h
-   input/wayland/cursor_image.h
-   input/wayland/cursor_theme.h
+   lib/base/wayland/server.h
+   lib/input/touch.h
+   lib/input/wayland/cursor_image.h
+   lib/input/wayland/cursor_theme.h
 )
 
 if (KWIN_BUILD_TABBOX)
@@ -810,38 +808,38 @@ add_custom_target(kwin_wayland_wrapper ALL COMMAND
 
 ########### install files ###############
 
-install(FILES base/kconfig/options_settings.kcfg
+install(FILES lib/base/kconfig/options_settings.kcfg
   DESTINATION ${KDE_INSTALL_KCFGDIR}
   RENAME ${KWIN_NAME}.kcfg
 )
-install(FILES render/post/kconfig/color_correct_settings.kcfg
+install(FILES lib/render/post/kconfig/color_correct_settings.kcfg
     DESTINATION ${KDE_INSTALL_KCFGDIR}
     RENAME ${KWIN_NAME}_colorcorrect.kcfg
 )
-install(FILES desktop/kde/kwin.notifyrc
+install(FILES lib/desktop/kde/kwin.notifyrc
   DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR}
   RENAME ${KWIN_NAME}.notifyrc
 )
 install(
   FILES
-    win/dbus/org.kde.KWin.VirtualDesktopManager.xml
-    base/dbus/org.kde.KWin.xml
-    render/dbus/org.kde.kwin.ColorCorrect.xml
-    render/dbus/org.kde.kwin.Compositing.xml
-    render/dbus/org.kde.kwin.Effects.xml
+    lib/win/dbus/org.kde.KWin.VirtualDesktopManager.xml
+    lib/base/dbus/org.kde.KWin.xml
+    lib/render/dbus/org.kde.kwin.ColorCorrect.xml
+    lib/render/dbus/org.kde.kwin.Compositing.xml
+    lib/render/dbus/org.kde.kwin.Effects.xml
 
     # Still needs to be installed as plasma-workspace expects it at compile time.
-    data/org.kde.kwin.VirtualKeyboard.xml
+    lib/data/org.kde.kwin.VirtualKeyboard.xml
   DESTINATION
     ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 # Install QML files
-install(DIRECTORY render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
-install(DIRECTORY render/qml/frames/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/frames)
+install(DIRECTORY lib/render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
+install(DIRECTORY lib/render/qml/frames/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/frames)
 install(
-  DIRECTORY win/qml/onscreennotification/plasma
+  DIRECTORY lib/win/qml/onscreennotification/plasma
   DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/onscreennotification
 )
 
@@ -859,20 +857,20 @@ feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAG
 include(CMakePackageConfigHelpers)
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinDBusInterface")
 configure_package_config_file(
-  desktop/kde/KWinDBusInterfaceConfig.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/KWinDBusInterfaceConfig.cmake"
+  lib/desktop/kde/KWinDBusInterfaceConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/lib/desktop/kde/KWinDBusInterfaceConfig.cmake"
   PATH_VARS KDE_INSTALL_DBUSINTERFACEDIR
   INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR}
 )
 install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/KWinDBusInterfaceConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/lib/desktop/kde/KWinDBusInterfaceConfig.cmake
   DESTINATION ${CMAKECONFIG_INSTALL_DIR}
 )
 
 ecm_install_configured_files(
   INPUT
-    desktop/kde/plasma-kwin_x11.service.in
-    desktop/kde/plasma-kwin_wayland.service.in
+    lib/desktop/kde/plasma-kwin_x11.service.in
+    lib/desktop/kde/plasma-kwin_wayland.service.in
   @ONLY DESTINATION ${KDE_INSTALL_SYSTEMDUSERUNITDIR}
 )
 
@@ -881,7 +879,7 @@ install(
     DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
 )
 
-qt6_generate_dbus_interface(input/dbus/device.h org.kde.kwin.InputDevice.xml OPTIONS -A)
+qt6_generate_dbus_interface(lib/input/dbus/device.h org.kde.kwin.InputDevice.xml OPTIONS -A)
 
 add_custom_target(KWinInputDBusInterfaces ALL
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/org.kde.kwin.InputDevice.xml

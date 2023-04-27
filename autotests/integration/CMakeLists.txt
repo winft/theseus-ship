@@ -111,7 +111,7 @@ add_executable(tests
   ../libkwineffects/mock_gl.cpp
   ../tabbox/mock_tabbox_client.cpp
   ../tabbox/mock_tabbox_handler.cpp
-  ../../render/backend/x11/glx_context_attribute_builder.cpp
+  ../../lib/render/backend/x11/glx_context_attribute_builder.cpp
 )
 
 target_link_libraries(tests

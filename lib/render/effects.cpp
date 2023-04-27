@@ -19,7 +19,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/platform.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
-#include "scripting/effect.h"
+#include "script/effect.h"
 #include "win/control.h"
 #include "win/deco/bridge.h"
 #include "win/desktop_get.h"

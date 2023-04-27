@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "../integration/lib/catch_macros.h"
 
-#include "../../win/tabbox/tabbox_config.h"
+#include "win/tabbox/tabbox_config.h"
 
 namespace KWin::detail::test
 {
