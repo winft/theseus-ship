@@ -108,6 +108,8 @@ set_target_properties(kwinglutils PROPERTIES
 
 install(TARGETS kwinglutils EXPORT KWinEffectsTargets ${INSTALL_TARGETS_DEFAULT_ARGS})
 
+configure_file(kwinconfig.h.cmake kwinconfig.h)
+
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/kwinconfig.h
     kwineffects/legacy/kwinanimationeffect.h
