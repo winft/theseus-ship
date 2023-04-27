@@ -60,14 +60,16 @@ QSizeF Screen::physicalSize() const
     return output ? output->physical_size() : QPlatformScreen::physicalSize();
 }
 
-QPlatformCursor *Screen::cursor() const
+QPlatformCursor* Screen::cursor() const
 {
     return m_cursor.data();
 }
 
 QDpi Screen::logicalDpi() const
 {
-    static int forceDpi = qEnvironmentVariableIsSet("QT_WAYLAND_FORCE_DPI") ? qEnvironmentVariableIntValue("QT_WAYLAND_FORCE_DPI") : -1;
+    static int forceDpi = qEnvironmentVariableIsSet("QT_WAYLAND_FORCE_DPI")
+        ? qEnvironmentVariableIntValue("QT_WAYLAND_FORCE_DPI")
+        : -1;
     if (forceDpi > 0) {
         return QDpi(forceDpi, forceDpi);
     }

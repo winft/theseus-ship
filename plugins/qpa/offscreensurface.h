@@ -18,7 +18,7 @@ namespace QPA
 class OffscreenSurface : public QPlatformOffscreenSurface
 {
 public:
-    explicit OffscreenSurface(QOffscreenSurface *surface);
+    explicit OffscreenSurface(QOffscreenSurface* surface);
     ~OffscreenSurface() override;
 
     QSurfaceFormat format() const override;

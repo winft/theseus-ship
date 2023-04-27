@@ -11,7 +11,7 @@ class ScriptsPackage : public KPackage::PackageStructure
     Q_OBJECT
 public:
     using KPackage::PackageStructure::PackageStructure;
-    void initPackage(KPackage::Package *package) override
+    void initPackage(KPackage::Package* package) override
     {
         package->setDefaultPackageRoot(QStringLiteral("kwin/scripts/"));
 
@@ -28,7 +28,7 @@ public:
         package->setMimeTypes("scripts", QStringList{QStringLiteral("text/plain")});
     }
 
-    void pathChanged(KPackage::Package *package) override
+    void pathChanged(KPackage::Package* package) override
     {
         if (package->path().isEmpty()) {
             return;
@@ -44,4 +44,3 @@ public:
 K_PLUGIN_CLASS_WITH_JSON(ScriptsPackage, "scripts.json")
 
 #include "scripts.moc"
-

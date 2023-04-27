@@ -20,7 +20,9 @@ namespace KWin
 namespace QPA
 {
 
-AbstractPlatformContext::AbstractPlatformContext(QOpenGLContext *context, EGLDisplay display, EGLConfig config)
+AbstractPlatformContext::AbstractPlatformContext(QOpenGLContext* context,
+                                                 EGLDisplay display,
+                                                 EGLConfig config)
     : QPlatformOpenGLContext()
     , m_eglDisplay(display)
     , m_config(config ? config : configFromFormat(m_eglDisplay, context->format()))
@@ -45,7 +47,7 @@ QSurfaceFormat AbstractPlatformContext::format() const
     return m_format;
 }
 
-QFunctionPointer AbstractPlatformContext::getProcAddress(const char *procName)
+QFunctionPointer AbstractPlatformContext::getProcAddress(const char* procName)
 {
     return eglGetProcAddress(procName);
 }
@@ -68,14 +70,17 @@ void AbstractPlatformContext::createContext(EGLContext shareContext)
 {
     const QByteArray eglExtensions = eglQueryString(eglDisplay(), EGL_EXTENSIONS);
     const QList<QByteArray> extensions = eglExtensions.split(' ');
-    const bool haveRobustness = extensions.contains(QByteArrayLiteral("EGL_EXT_create_context_robustness"));
+    const bool haveRobustness
+        = extensions.contains(QByteArrayLiteral("EGL_EXT_create_context_robustness"));
     const bool haveCreateContext = extensions.contains(QByteArrayLiteral("EGL_KHR_create_context"));
-    const bool haveContextPriority = extensions.contains(QByteArrayLiteral("EGL_IMG_context_priority"));
+    const bool haveContextPriority
+        = extensions.contains(QByteArrayLiteral("EGL_IMG_context_priority"));
 
     std::vector<std::unique_ptr<render::gl::context_attribute_builder>> candidates;
     if (isOpenGLES()) {
         if (haveCreateContext && haveRobustness && haveContextPriority) {
-            auto glesRobustPriority = std::make_unique<render::gl::egl_gles_context_attribute_builder>();
+            auto glesRobustPriority
+                = std::make_unique<render::gl::egl_gles_context_attribute_builder>();
             glesRobustPriority->setVersion(2);
             glesRobustPriority->setRobust(true);
             glesRobustPriority->setHighPriority(true);
@@ -100,7 +105,8 @@ void AbstractPlatformContext::createContext(EGLContext shareContext)
         // Try to create a 3.1 core context
         if (m_format.majorVersion() >= 3 && haveCreateContext) {
             if (haveRobustness && haveContextPriority) {
-                auto robustCorePriority = std::make_unique<render::gl::egl_context_attribute_builder>();
+                auto robustCorePriority
+                    = std::make_unique<render::gl::egl_context_attribute_builder>();
                 robustCorePriority->setVersion(m_format.majorVersion(), m_format.minorVersion());
                 robustCorePriority->setRobust(true);
                 robustCorePriority->setForwardCompatible(true);

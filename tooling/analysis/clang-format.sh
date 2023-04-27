@@ -19,6 +19,7 @@ python <(curl -s $RUN_SCRIPT_URL) -r \
     ${SOURCE_DIR}/desktop \
     ${SOURCE_DIR}/effect \
     ${SOURCE_DIR}/input \
+    ${SOURCE_DIR}/plugins \
     ${SOURCE_DIR}/win \
     ${SOURCE_DIR}/render \
     ${SOURCE_DIR}/scripting \

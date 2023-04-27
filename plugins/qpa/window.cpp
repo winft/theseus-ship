@@ -21,7 +21,7 @@ namespace QPA
 {
 static quint32 s_windowId = 0;
 
-Window::Window(QWindow *window)
+Window::Window(QWindow* window)
     : QPlatformWindow(window)
     , m_windowId(++s_windowId)
     , m_scale(base::singleton_interface::platform->topology.max_scale)
@@ -50,9 +50,9 @@ void Window::requestActivateWindow()
     QWindowSystemInterface::handleWindowActivated(window());
 }
 
-void Window::setGeometry(const QRect &rect)
+void Window::setGeometry(const QRect& rect)
 {
-    const QRect &oldRect = geometry();
+    const QRect& oldRect = geometry();
     QPlatformWindow::setGeometry(rect);
     if (rect.x() != oldRect.x()) {
         Q_EMIT window()->xChanged(rect.x());
@@ -114,12 +114,13 @@ win::internal_window_singleton* Window::client() const
 
 void Window::createFBO()
 {
-    const QRect &r = geometry();
+    const QRect& r = geometry();
     if (m_contentFBO && r.size().isEmpty()) {
         return;
     }
     const QSize nativeSize = r.size() * m_scale;
-    m_contentFBO.reset(new QOpenGLFramebufferObject(nativeSize.width(), nativeSize.height(), QOpenGLFramebufferObject::CombinedDepthStencil));
+    m_contentFBO.reset(new QOpenGLFramebufferObject(
+        nativeSize.width(), nativeSize.height(), QOpenGLFramebufferObject::CombinedDepthStencil));
     if (!m_contentFBO->isValid()) {
         qCWarning(KWIN_QPA) << "Content FBO is not valid";
     }

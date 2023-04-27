@@ -22,17 +22,19 @@ namespace KWin
 namespace QPA
 {
 
-SharingPlatformContext::SharingPlatformContext(QOpenGLContext *context)
-    : AbstractPlatformContext(context, render::singleton_interface::get_egl_data()->display, nullptr)
+SharingPlatformContext::SharingPlatformContext(QOpenGLContext* context)
+    : AbstractPlatformContext(context,
+                              render::singleton_interface::get_egl_data()->display,
+                              nullptr)
 {
     create();
 }
 
-bool SharingPlatformContext::makeCurrent(QPlatformSurface *surface)
+bool SharingPlatformContext::makeCurrent(QPlatformSurface* surface)
 {
     EGLSurface eglSurface{EGL_NO_SURFACE};
     if (surface->surface()->surfaceClass() != QSurface::Window) {
-        eglSurface = static_cast<OffscreenSurface *>(surface)->nativeHandle();
+        eglSurface = static_cast<OffscreenSurface*>(surface)->nativeHandle();
     }
 
     const bool ok = eglMakeCurrent(eglDisplay(), eglSurface, eglSurface, eglContext());
@@ -47,7 +49,7 @@ bool SharingPlatformContext::makeCurrent(QPlatformSurface *surface)
         // order to bind the content framebuffer object.
         QOpenGLContextPrivate::setCurrentContext(context());
 
-        Window *window = static_cast<Window *>(surface);
+        Window* window = static_cast<Window*>(surface);
         window->bindContentFBO();
     }
 
@@ -59,11 +61,11 @@ bool SharingPlatformContext::isSharing() const
     return false;
 }
 
-void SharingPlatformContext::swapBuffers(QPlatformSurface *surface)
+void SharingPlatformContext::swapBuffers(QPlatformSurface* surface)
 {
     if (surface->surface()->surfaceClass() == QSurface::Window) {
-        Window *window = static_cast<Window *>(surface);
-        auto *client = window->client();
+        Window* window = static_cast<Window*>(surface);
+        auto* client = window->client();
         if (!client) {
             return;
         }
@@ -74,10 +76,10 @@ void SharingPlatformContext::swapBuffers(QPlatformSurface *surface)
     }
 }
 
-GLuint SharingPlatformContext::defaultFramebufferObject(QPlatformSurface *surface) const
+GLuint SharingPlatformContext::defaultFramebufferObject(QPlatformSurface* surface) const
 {
-    if (Window *window = dynamic_cast<Window*>(surface)) {
-        const auto &fbo = window->contentFBO();
+    if (Window* window = dynamic_cast<Window*>(surface)) {
+        const auto& fbo = window->contentFBO();
         if (fbo) {
             return fbo->handle();
         }

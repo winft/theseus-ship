@@ -5,10 +5,10 @@
 */
 #include "windoweffects.h"
 
+#include "../../render/effects.h"
 #include "render/compositor.h"
 #include "render/platform.h"
 #include "render/singleton_interface.h"
-#include "../../render/effects.h"
 
 #include <QGuiApplication>
 #include <QWidget>
@@ -20,20 +20,21 @@ namespace KWin
 {
 
 WindowEffects::WindowEffects()
-    : QObject(),
-      KWindowEffectsPrivate()
+    : QObject()
+    , KWindowEffectsPrivate()
 {
 }
 
 WindowEffects::~WindowEffects()
-{}
+{
+}
 
 namespace
 {
-QWindow *findWindow(WId win)
+QWindow* findWindow(WId win)
 {
     const auto windows = qApp->allWindows();
-    auto it = std::find_if(windows.begin(), windows.end(), [win](QWindow *w) {
+    auto it = std::find_if(windows.begin(), windows.end(), [win](QWindow* w) {
         return w->handle() && w->winId() == win;
     });
     if (it == windows.end()) {
@@ -72,7 +73,7 @@ void WindowEffects::slideWindow(WId id, KWindowEffects::SlideFromLocation locati
     w->setProperty("kwin_slide_offset", offset);
 }
 
-void WindowEffects::enableBlurBehind(WId window, bool enable, const QRegion &region)
+void WindowEffects::enableBlurBehind(WId window, bool enable, const QRegion& region)
 {
     auto w = findWindow(window);
     if (!w) {
@@ -85,7 +86,12 @@ void WindowEffects::enableBlurBehind(WId window, bool enable, const QRegion &reg
     }
 }
 
-void WindowEffects::enableBackgroundContrast(WId window, bool enable, qreal contrast, qreal intensity, qreal saturation, const QRegion &region)
+void WindowEffects::enableBackgroundContrast(WId window,
+                                             bool enable,
+                                             qreal contrast,
+                                             qreal intensity,
+                                             qreal saturation,
+                                             const QRegion& region)
 {
     auto w = findWindow(window);
     if (!w) {

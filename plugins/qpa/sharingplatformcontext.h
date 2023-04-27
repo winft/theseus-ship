@@ -16,14 +16,16 @@ namespace QPA
 class SharingPlatformContext : public AbstractPlatformContext
 {
 public:
-    explicit SharingPlatformContext(QOpenGLContext *context);
-    SharingPlatformContext(QOpenGLContext *context, const EGLSurface &surface, EGLConfig config = nullptr);
+    explicit SharingPlatformContext(QOpenGLContext* context);
+    SharingPlatformContext(QOpenGLContext* context,
+                           const EGLSurface& surface,
+                           EGLConfig config = nullptr);
 
-    void swapBuffers(QPlatformSurface *surface) override;
+    void swapBuffers(QPlatformSurface* surface) override;
 
-    GLuint defaultFramebufferObject(QPlatformSurface *surface) const override;
+    GLuint defaultFramebufferObject(QPlatformSurface* surface) const override;
 
-    bool makeCurrent(QPlatformSurface *surface) override;
+    bool makeCurrent(QPlatformSurface* surface) override;
 
     bool isSharing() const override;
 

@@ -17,23 +17,28 @@ namespace QPA
 class AbstractPlatformContext : public QPlatformOpenGLContext
 {
 public:
-    AbstractPlatformContext(QOpenGLContext *context, EGLDisplay display, EGLConfig config = nullptr);
+    AbstractPlatformContext(QOpenGLContext* context,
+                            EGLDisplay display,
+                            EGLConfig config = nullptr);
     ~AbstractPlatformContext() override;
 
     void doneCurrent() override;
     QSurfaceFormat format() const override;
     bool isValid() const override;
-    QFunctionPointer getProcAddress(const char *procName) override;
+    QFunctionPointer getProcAddress(const char* procName) override;
 
 protected:
-    EGLDisplay eglDisplay() const {
+    EGLDisplay eglDisplay() const
+    {
         return m_eglDisplay;
     }
-    EGLConfig config() const {
+    EGLConfig config() const
+    {
         return m_config;
     }
     bool bindApi();
-    EGLContext eglContext() const {
+    EGLContext eglContext() const
+    {
         return m_context;
     }
     void createContext(EGLContext shareContext);

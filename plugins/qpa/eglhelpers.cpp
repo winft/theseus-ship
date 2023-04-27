@@ -25,7 +25,8 @@ bool isOpenGLES()
     return QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES;
 }
 
-EGLConfig configFromFormat(EGLDisplay display, const QSurfaceFormat &surfaceFormat, EGLint surfaceType)
+EGLConfig
+configFromFormat(EGLDisplay display, const QSurfaceFormat& surfaceFormat, EGLint surfaceType)
 {
     // qMax as these values are initialized to -1 by default.
     const EGLint redSize = qMax(surfaceFormat.redBufferSize(), 0);
@@ -38,17 +39,23 @@ EGLConfig configFromFormat(EGLDisplay display, const QSurfaceFormat &surfaceForm
     const EGLint renderableType = isOpenGLES() ? EGL_OPENGL_ES2_BIT : EGL_OPENGL_BIT;
 
     // Not setting samples as QtQuick doesn't need it.
-    const QVector<EGLint> attributes {
-        EGL_SURFACE_TYPE, surfaceType,
-        EGL_RED_SIZE, redSize,
-        EGL_GREEN_SIZE, greenSize,
-        EGL_BLUE_SIZE, blueSize,
-        EGL_ALPHA_SIZE, alphaSize,
-        EGL_DEPTH_SIZE, depthSize,
-        EGL_STENCIL_SIZE, stencilSize,
-        EGL_RENDERABLE_TYPE, renderableType,
-        EGL_NONE
-    };
+    const QVector<EGLint> attributes{EGL_SURFACE_TYPE,
+                                     surfaceType,
+                                     EGL_RED_SIZE,
+                                     redSize,
+                                     EGL_GREEN_SIZE,
+                                     greenSize,
+                                     EGL_BLUE_SIZE,
+                                     blueSize,
+                                     EGL_ALPHA_SIZE,
+                                     alphaSize,
+                                     EGL_DEPTH_SIZE,
+                                     depthSize,
+                                     EGL_STENCIL_SIZE,
+                                     stencilSize,
+                                     EGL_RENDERABLE_TYPE,
+                                     renderableType,
+                                     EGL_NONE};
 
     EGLint configCount;
     if (!eglChooseConfig(display, attributes.data(), nullptr, 0, &configCount)) {
@@ -70,17 +77,16 @@ EGLConfig configFromFormat(EGLDisplay display, const QSurfaceFormat &surfaceForm
         return EGL_NO_CONFIG_KHR;
     }
 
-    for (const EGLConfig &config : qAsConst(configs)) {
+    for (const EGLConfig& config : qAsConst(configs)) {
         EGLint redConfig, greenConfig, blueConfig, alphaConfig;
         eglGetConfigAttrib(display, config, EGL_RED_SIZE, &redConfig);
         eglGetConfigAttrib(display, config, EGL_GREEN_SIZE, &greenConfig);
         eglGetConfigAttrib(display, config, EGL_BLUE_SIZE, &blueConfig);
         eglGetConfigAttrib(display, config, EGL_ALPHA_SIZE, &alphaConfig);
 
-        if ((redSize == 0 || redSize == redConfig) &&
-                (greenSize == 0 || greenSize == greenConfig) &&
-                (blueSize == 0 || blueSize == blueConfig) &&
-                (alphaSize == 0 || alphaSize == alphaConfig)) {
+        if ((redSize == 0 || redSize == redConfig) && (greenSize == 0 || greenSize == greenConfig)
+            && (blueSize == 0 || blueSize == blueConfig)
+            && (alphaSize == 0 || alphaSize == alphaConfig)) {
             return config;
         }
     }

@@ -19,8 +19,8 @@ public:
     PlatformCursor();
     ~PlatformCursor() override;
     QPoint pos() const override;
-    void setPos(const QPoint &pos) override;
-    void changeCursor(QCursor *windowCursor, QWindow *window) override;
+    void setPos(const QPoint& pos) override;
+    void changeCursor(QCursor* windowCursor, QWindow* window) override;
 };
 
 }

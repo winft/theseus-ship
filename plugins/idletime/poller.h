@@ -22,7 +22,7 @@ class KWinIdleTimePoller : public KAbstractIdleTimePoller
     Q_INTERFACES(KAbstractIdleTimePoller)
 
 public:
-    KWinIdleTimePoller(QObject *parent = nullptr);
+    KWinIdleTimePoller(QObject* parent = nullptr);
     ~KWinIdleTimePoller() override;
 
     bool isAvailable() override;

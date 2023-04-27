@@ -14,13 +14,15 @@ class KWinIntegrationPlugin : public QPlatformIntegrationPlugin
     Q_PLUGIN_METADATA(IID QPlatformIntegrationFactoryInterface_iid FILE "kwin.json")
 public:
     using QPlatformIntegrationPlugin::create;
-    QPlatformIntegration *create(const QString &system, const QStringList &paramList) override;
+    QPlatformIntegration* create(const QString& system, const QStringList& paramList) override;
 };
 
-QPlatformIntegration *KWinIntegrationPlugin::create(const QString &system, const QStringList &paramList)
+QPlatformIntegration* KWinIntegrationPlugin::create(const QString& system,
+                                                    const QStringList& paramList)
 {
     Q_UNUSED(paramList)
-    if (!QCoreApplication::applicationFilePath().endsWith(QLatin1String("kwin_wayland")) && !qEnvironmentVariableIsSet("KWIN_FORCE_OWN_QPA")) {
+    if (!QCoreApplication::applicationFilePath().endsWith(QLatin1String("kwin_wayland"))
+        && !qEnvironmentVariableIsSet("KWIN_FORCE_OWN_QPA")) {
         // Not KWin
         return nullptr;
     }

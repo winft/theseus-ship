@@ -11,7 +11,7 @@ class EffectPackageStructure : public KPackage::PackageStructure
     Q_OBJECT
 public:
     using KPackage::PackageStructure::PackageStructure;
-    void initPackage(KPackage::Package *package) override
+    void initPackage(KPackage::Package* package) override
     {
         package->setDefaultPackageRoot(QStringLiteral("kwin/effects/"));
 
@@ -28,7 +28,7 @@ public:
         package->setMimeTypes("configui", QStringList{QStringLiteral("text/xml")});
     }
 
-    void pathChanged(KPackage::Package *package) override
+    void pathChanged(KPackage::Package* package) override
     {
         if (package->path().isEmpty()) {
             return;

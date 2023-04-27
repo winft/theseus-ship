@@ -23,7 +23,7 @@ class PlastikButtonProvider : public QQuickImageProvider
 {
 public:
     explicit PlastikButtonProvider();
-    QPixmap requestPixmap(const QString &id, QSize *size, const QSize &requestedSize) override;
+    QPixmap requestPixmap(const QString& id, QSize* size, const QSize& requestedSize) override;
 
 private:
     enum ButtonIcon {
@@ -43,12 +43,7 @@ private:
         AppMenuIcon,
         NumButtonIcons
     };
-    enum Object {
-        HorizontalLine,
-        VerticalLine,
-        DiagonalLine,
-        CrossDiagonalLine
-    };
+    enum Object { HorizontalLine, VerticalLine, DiagonalLine, CrossDiagonalLine };
     enum DecorationButton {
         /**
          * Invalid button value. A decoration should not create a button for
@@ -73,7 +68,7 @@ private:
         DecorationButtonExplicitSpacer
     };
     QPixmap icon(ButtonIcon icon, int size, bool active, bool shadow);
-    void drawObject(QPainter &p, Object object, int x, int y, int length, int lineWidth);
+    void drawObject(QPainter& p, Object object, int x, int y, int length, int lineWidth);
 };
 
 } // namespace

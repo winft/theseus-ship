@@ -14,8 +14,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef COLOR_HELPER_H
 #define COLOR_HELPER_H
 
-#include <QObject>
 #include <QColor>
+#include <QObject>
 
 /**
  * @short Helper to manipulate colors.
@@ -30,7 +30,7 @@ class ColorHelper : public QObject
      */
     Q_PROPERTY(qreal contrast READ contrast CONSTANT)
 public:
-    explicit ColorHelper(QObject *parent = nullptr);
+    explicit ColorHelper(QObject* parent = nullptr);
     ~ColorHelper() override;
     /**
      * This enumeration describes the color shade being selected from the given

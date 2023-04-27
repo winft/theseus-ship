@@ -16,9 +16,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KDecoration2/Decoration>
 
-#include <QObject>
 #include <QColor>
 #include <QFont>
+#include <QObject>
 #include <QPalette>
 
 namespace KWin
@@ -28,60 +28,77 @@ namespace KWin
 class ColorSettings
 {
 public:
-    ColorSettings(const QPalette &pal);
+    ColorSettings(const QPalette& pal);
 
-    void update(const QPalette &pal);
+    void update(const QPalette& pal);
 
-    const QColor &titleBarColor(bool active) const {
+    const QColor& titleBarColor(bool active) const
+    {
         return active ? m_activeTitleBarColor : m_inactiveTitleBarColor;
     }
-    const QColor &activeTitleBarColor() const {
+    const QColor& activeTitleBarColor() const
+    {
         return m_activeTitleBarColor;
     }
-    const QColor &inactiveTitleBarColor() const {
+    const QColor& inactiveTitleBarColor() const
+    {
         return m_inactiveTitleBarColor;
     }
-    const QColor &activeTitleBarBlendColor() const {
+    const QColor& activeTitleBarBlendColor() const
+    {
         return m_activeTitleBarBlendColor;
     }
-    const QColor &inactiveTitleBarBlendColor() const {
+    const QColor& inactiveTitleBarBlendColor() const
+    {
         return m_inactiveTitleBarBlendColor;
     }
-    const QColor &frame(bool active) const {
+    const QColor& frame(bool active) const
+    {
         return active ? m_activeFrameColor : m_inactiveFrameColor;
     }
-    const QColor &activeFrame() const {
+    const QColor& activeFrame() const
+    {
         return m_activeFrameColor;
     }
-    const QColor &inactiveFrame() const {
+    const QColor& inactiveFrame() const
+    {
         return m_inactiveFrameColor;
     }
-    const QColor &font(bool active) const {
+    const QColor& font(bool active) const
+    {
         return active ? m_activeFontColor : m_inactiveFontColor;
     }
-    const QColor &activeFont() const {
+    const QColor& activeFont() const
+    {
         return m_activeFontColor;
     }
-    const QColor &inactiveFont() const {
+    const QColor& inactiveFont() const
+    {
         return m_inactiveFontColor;
     }
-    const QColor &activeButtonColor() const {
+    const QColor& activeButtonColor() const
+    {
         return m_activeButtonColor;
     }
-    const QColor &inactiveButtonColor() const {
+    const QColor& inactiveButtonColor() const
+    {
         return m_inactiveButtonColor;
     }
-    const QColor &activeHandle() const {
+    const QColor& activeHandle() const
+    {
         return m_activeHandle;
     }
-    const QColor &inactiveHandle() const {
+    const QColor& inactiveHandle() const
+    {
         return m_inactiveHandle;
     }
-    const QPalette &palette() const {
+    const QPalette& palette() const
+    {
         return m_palette;
     }
+
 private:
-    void init(const QPalette &pal);
+    void init(const QPalette& pal);
     QColor m_activeTitleBarColor;
     QColor m_inactiveTitleBarColor;
     QColor m_activeTitleBarBlendColor;
@@ -131,7 +148,8 @@ class DecorationOptions : public QObject
      *
      * Best pass the decoration object available as a context property to this property.
      */
-    Q_PROPERTY(KDecoration2::Decoration *deco READ decoration WRITE setDecoration NOTIFY decorationChanged)
+    Q_PROPERTY(
+        KDecoration2::Decoration* deco READ decoration WRITE setDecoration NOTIFY decorationChanged)
     /**
      * The color for the titlebar depending on the decoration's active state.
      */
@@ -211,7 +229,7 @@ public:
         DecorationButtonExplicitSpacer
     };
     Q_ENUM(DecorationButton)
-    explicit DecorationOptions(QObject *parent = nullptr);
+    explicit DecorationOptions(QObject* parent = nullptr);
     ~DecorationOptions() override;
 
     QColor titleBarColor() const;
@@ -223,8 +241,8 @@ public:
     QFont titleFont() const;
     QList<int> titleButtonsLeft() const;
     QList<int> titleButtonsRight() const;
-    KDecoration2::Decoration *decoration() const;
-    void setDecoration(KDecoration2::Decoration *decoration);
+    KDecoration2::Decoration* decoration() const;
+    void setDecoration(KDecoration2::Decoration* decoration);
 
     int mousePressAndHoldInterval() const;
 
@@ -239,7 +257,7 @@ private Q_SLOTS:
 
 private:
     bool m_active;
-    KDecoration2::Decoration *m_decoration;
+    KDecoration2::Decoration* m_decoration;
     ColorSettings m_colors;
     QMetaObject::Connection m_paletteConnection;
 };
@@ -252,7 +270,7 @@ class Borders : public QObject
     Q_PROPERTY(int top READ top WRITE setTop NOTIFY topChanged)
     Q_PROPERTY(int bottom READ bottom WRITE setBottom NOTIFY bottomChanged)
 public:
-    Borders(QObject *parent = nullptr);
+    Borders(QObject* parent = nullptr);
     ~Borders() override;
     int left() const;
     int right() const;
@@ -298,11 +316,11 @@ private:
     int m_bottom;
 };
 
-#define GETTER( name ) \
-inline int Borders::name() const \
-{ \
-    return m_##name;\
-}\
+#define GETTER(name)                                                                               \
+    inline int Borders::name() const                                                               \
+    {                                                                                              \
+        return m_##name;                                                                           \
+    }
 
 GETTER(left)
 GETTER(right)
