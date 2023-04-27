@@ -15,6 +15,7 @@ python <(curl -s $RUN_SCRIPT_URL) -r \
     ${SOURCE_DIR}/autotests \
     ${SOURCE_DIR}/base \
     ${SOURCE_DIR}/cmake \
+    ${SOURCE_DIR}/data \
     ${SOURCE_DIR}/debug \
     ${SOURCE_DIR}/desktop \
     ${SOURCE_DIR}/input \
