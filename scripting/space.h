@@ -865,6 +865,9 @@ protected:
                            scripting::output* output,
                            win::virtual_desktop* desktop) const override
     {
+        if (!output) {
+            return {};
+        }
         auto out_impl = static_cast<output_impl<typename RefSpace::base_t::output_t>*>(output);
         return win::space_window_area(
             *ref_space, option, &out_impl->ref_out, desktop->x11DesktopNumber());
