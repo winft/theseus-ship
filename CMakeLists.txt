@@ -394,7 +394,6 @@ set(kwin_SRCS
     lib/input/pointer.cpp
     lib/input/xkb/keyboard.cpp
     lib/input/xkb/keymap.cpp
-    main.cpp
     lib/render/compositor_qobject.cpp
     lib/render/dbus/compositing.cpp
     lib/render/effect/frame.cpp

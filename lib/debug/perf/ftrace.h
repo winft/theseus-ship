@@ -25,7 +25,7 @@ void KWIN_EXPORT mark(const QString& message);
 void KWIN_EXPORT begin(const QString& message, ulong ctx);
 void KWIN_EXPORT end(const QString& message, ulong ctx);
 
-bool setEnabled(bool enable);
+bool KWIN_EXPORT setEnabled(bool enable);
 
 }
 }

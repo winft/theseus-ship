@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "main_wayland.h"
 
 #include "config-kwin.h"
+#include "main.h"
 
 #include "base/app_singleton.h"
 #include "base/backend/wlroots/platform.h"
@@ -121,8 +122,9 @@ void gainRealTime()
 //************************************
 
 ApplicationWayland::ApplicationWayland(int &argc, char **argv)
-    : Application(argc, argv)
+    : QApplication(argc, argv)
 {
+    app_init();
 }
 
 ApplicationWayland::~ApplicationWayland()
@@ -164,7 +166,7 @@ void ApplicationWayland::start(base::operation_mode mode,
 {
     assert(mode != base::operation_mode::x11);
 
-    prepare_start();
+    setQuitOnLastWindowClosed(false);
 
     using base_t = base::backend::wlroots::platform;
     base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::FullConfig),
@@ -336,8 +338,9 @@ int main(int argc, char * argv[])
         std::cerr << "kwin_wayland does not support running as root." << std::endl;
         return 1;
     }
-    KWin::Application::setupMalloc();
-    KWin::Application::setupLocalizedString();
+
+    KWin::app_setup_malloc();
+    KWin::app_setup_localized_string();
     KWin::gainRealTime();
 
     signal(SIGPIPE, SIG_IGN);
@@ -377,7 +380,7 @@ int main(int argc, char * argv[])
     QObject::connect(KSignalHandler::self(), &KSignalHandler::signalReceived,
                      &a, &QCoreApplication::exit);
 
-    KWin::Application::createAboutData();
+    KWin::app_create_about_data();
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
                                       i18n("Start a rootless Xwayland server."));
     QCommandLineOption waylandSocketOption(QStringList{QStringLiteral("s"), QStringLiteral("socket")},
@@ -385,7 +388,7 @@ int main(int argc, char * argv[])
                                            QStringLiteral("socket"));
 
     QCommandLineParser parser;
-    a.setupCommandLine(&parser);
+    KWin::app_setup_command_line(&parser);
 
     parser.addOption(xwaylandOption);
     parser.addOption(waylandSocketOption);
@@ -416,7 +419,7 @@ int main(int argc, char * argv[])
                                  QStringLiteral("[/path/to/application...]"));
 
     parser.process(a);
-    a.processCommandLine(&parser);
+    KWin::app_process_command_line(a, &parser);
 
     if (parser.isSet(exitWithSessionOption)) {
         a.setSessionArgument(parser.value(exitWithSessionOption));

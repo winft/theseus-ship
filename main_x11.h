@@ -11,6 +11,7 @@
 #include "base/backend/x11/platform.h"
 #include "render/backend/x11/platform.h"
 
+#include <QApplication>
 #include <memory>
 
 namespace KWin
@@ -30,7 +31,7 @@ class space;
 
 class KWinSelectionOwner;
 
-class ApplicationX11 : public Application
+class ApplicationX11 : public QApplication
 {
     Q_OBJECT
 public:
@@ -40,7 +41,9 @@ public:
     void start();
 
     void setReplace(bool replace);
-    void notifyKSplash() override;
+    void notifyKSplash();
+
+    static int crashes;
 
 private Q_SLOTS:
     void lostSelection();

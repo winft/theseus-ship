@@ -9,6 +9,7 @@
 #include "main_x11.h"
 
 #include <config-kwin.h>
+#include "main.h"
 
 #include "base/options.h"
 #include "base/seat/backend/logind/session.h"
@@ -167,12 +168,16 @@ xcb_atom_t KWinSelectionOwner::xa_version = XCB_ATOM_NONE;
 // ApplicationX11
 //************************************
 
+int ApplicationX11::crashes = 0;
+
 ApplicationX11::ApplicationX11(int &argc, char **argv)
-    : Application(argc, argv)
+    : QApplication(argc, argv)
     , base{base::config(KConfig::OpenFlag::FullConfig)}
     , owner()
     , m_replace(false)
 {
+    app_init();
+
     base.x11_data.connection = QX11Info::connection();
     base.x11_data.root_window = QX11Info::appRootWindow();
 }
@@ -208,7 +213,7 @@ void ApplicationX11::lostSelection()
 
 void ApplicationX11::start()
 {
-    prepare_start();
+    setQuitOnLastWindowClosed(false);
     base.screen_locker_watcher->initialize();
 
     using base_t = base::x11::platform;
@@ -316,7 +321,7 @@ void ApplicationX11::crashChecking()
         compgroup.writeEntry("Enabled", false);
     }
     // Reset crashes count if we stay up for more that 15 seconds
-    QTimer::singleShot(15 * 1000, this, [this] { crashes = 0; });
+    QTimer::singleShot(15 * 1000, this, [] { crashes = 0; });
 }
 
 void ApplicationX11::notifyKSplash()
@@ -347,8 +352,8 @@ void ApplicationX11::crashHandler(int signal)
 
 int main(int argc, char * argv[])
 {
-    KWin::Application::setupMalloc();
-    KWin::Application::setupLocalizedString();
+    KWin::app_setup_malloc();
+    KWin::app_setup_localized_string();
 
     int primaryScreen = 0;
     xcb_connection_t *c = xcb_connect(nullptr, &primaryScreen);
@@ -397,16 +402,16 @@ int main(int argc, char * argv[])
     QObject::connect(KSignalHandler::self(), &KSignalHandler::signalReceived,
                      &a, &QCoreApplication::exit);
 
-    KWin::Application::createAboutData();
+    KWin::app_create_about_data();
 
     QCommandLineOption replaceOption(QStringLiteral("replace"), i18n("Replace already-running ICCCM2.0-compliant window manager"));
 
     QCommandLineParser parser;
-    a.setupCommandLine(&parser);
+    KWin::app_setup_command_line(&parser);
     parser.addOption(replaceOption);
 
     parser.process(a);
-    a.processCommandLine(&parser);
+    KWin::app_process_command_line(a, &parser);
     a.setReplace(parser.isSet(replaceOption));
 
     // perform sanity checks
