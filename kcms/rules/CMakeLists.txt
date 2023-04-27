@@ -5,8 +5,6 @@
 # KI18N Translation Domain for this library
 add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwinrules\")
 
-include_directories(../../)
-
 set(kwinrules_SRCS
     ../../lib/base/logging.cpp
     ../../lib/win/rules/book_settings.cpp
