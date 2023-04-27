@@ -50,6 +50,8 @@
 
 Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtWarningMsg)
 
+constexpr char kwin_internal_name[]{"kwin_x11"};
+
 namespace KWin
 {
 
@@ -73,7 +75,7 @@ public:
         addWM(QStringLiteral("metacity"));
         addWM(QStringLiteral("openbox"));
         addWM(QStringLiteral("fvwm2"));
-        addWM(QStringLiteral(KWIN_INTERNAL_NAME_X11));
+        addWM(kwin_internal_name);
 
         QVBoxLayout *mainLayout = new QVBoxLayout(this);
         mainLayout->addWidget(mainWidget);
@@ -292,7 +294,7 @@ void ApplicationX11::crashChecking()
     if (crashes >= 4) {
         // Something has gone seriously wrong
         AlternativeWMDialog dialog;
-        QString cmd = QStringLiteral(KWIN_INTERNAL_NAME_X11);
+        auto cmd = QString(kwin_internal_name);
         if (dialog.exec() == QDialog::Accepted)
             cmd = dialog.selectedWM();
         else

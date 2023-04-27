@@ -290,8 +290,6 @@ option(KWIN_BUILD_PERF "Build internal tools for performance analysis at runtime
 
 # Binary name of KWin
 set(KWIN_NAME "kwin")
-set(KWIN_INTERNAL_NAME_X11 "kwin_x11")
-set(KWIN_INTERNAL_NAME_WAYLAND "kwin_wayland")
 set(KWIN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(HAVE_PERF ${KWIN_BUILD_PERF})
