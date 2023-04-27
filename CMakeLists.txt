@@ -301,7 +301,7 @@ include_directories(${XKB_INCLUDE_DIR})
 set(HAVE_EPOXY_GLX ${epoxy_HAS_GLX})
 
 # for things that are also used by kwin libraries
-configure_file(effect/lib/kwinconfig.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/effect/lib/kwinconfig.h )
+configure_file(lib/effect/kwinconfig.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/lib/effect/kwinconfig.h )
 
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
@@ -324,12 +324,12 @@ set_target_properties(KWinEffectsInterface PROPERTIES
 )
 
 include_directories(BEFORE
-    ${CMAKE_CURRENT_BINARY_DIR}/effect/lib
+    ${CMAKE_CURRENT_BINARY_DIR}/lib/effect
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/effect/lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/effect
 )
 
-add_subdirectory(effect)
+add_subdirectory(lib)
 if (KWIN_BUILD_KCMS)
     add_subdirectory(kcms)
 endif()
