@@ -348,8 +348,6 @@ ecm_setup_qtplugin_macro_names(
 )
 
 add_subdirectory(data)
-
-add_subdirectory(scripts)
 add_subdirectory(scripting)
 
 ########### next target ###############
@@ -666,7 +664,6 @@ target_link_libraries(kwin_x11
   kwin_x11_lib
   ${XKBX11_LIBRARIES}
 )
-kcoreaddons_target_static_plugins(kwin_x11 "kwin/effects/plugins")
 
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
@@ -685,6 +682,8 @@ set(kwin_XWAYLAND_SRCS
 )
 
 add_subdirectory(plugins)
+
+kcoreaddons_target_static_plugins(kwin_x11 "kwin/effects/plugins")
 
 set(kwin_WAYLAND_SRCS
    base/backend/wlroots/drm_lease.cpp
