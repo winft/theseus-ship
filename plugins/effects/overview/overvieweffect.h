@@ -63,7 +63,6 @@ public Q_SLOTS:
     void partialDeactivate(qreal factor);
     void cancelPartialDeactivate();
     void deactivate();
-    void quickDeactivate();
     void toggle();
 
 private:
