@@ -223,7 +223,7 @@ QObject* tabbox_handler_private::create_switcher_item(bool desktopMode)
                 // load default
                 offers = KPackage::PackageLoader::self()->findPackages(
                     type, folder_name, [](const KPluginMetaData& data) {
-                        return data.pluginId().compare(QStringLiteral("informative"),
+                        return data.pluginId().compare(QStringLiteral("compact"),
                                                        Qt::CaseInsensitive)
                             == 0;
                     });
