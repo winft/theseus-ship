@@ -6,7 +6,6 @@
 */
 #pragma once
 
-#include "config-kwin.h"
 #include "kwinglobals.h"
 
 #include <KApplicationTrader>

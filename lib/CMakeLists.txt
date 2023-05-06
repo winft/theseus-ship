@@ -10,6 +10,7 @@ set_target_properties(KWinEffectsInterface PROPERTIES
   POSITION_INDEPENDENT_CODE ON
 )
 
+add_subdirectory(base)
 add_subdirectory(effect)
 add_subdirectory(data)
 add_subdirectory(script)
@@ -27,20 +28,6 @@ target_link_libraries(kwin_killer_helper
 
 ### Common library
 set(kwin_SRCS
-    base/os/clock/skew_notifier.cpp
-    base/os/clock/skew_notifier_engine.cpp
-    base/seat/session.cpp
-    base/seat/backend/logind/session.cpp
-    base/singleton_interface.cpp
-    base/x11/event_filter.cpp
-    base/x11/event_filter_container.cpp
-    base/x11/event_filter_manager.cpp
-    base/x11/grabs.cpp
-    base/x11/selection_owner.cpp
-    base/x11/xcb/extensions.cpp
-    base/logging.cpp
-    base/options.cpp
-    base/platform.cpp
     desktop/kde/dbus/kwin.cpp
     desktop/screen_locker_watcher.cpp
     render/post/color_correct_dbus_interface.cpp
@@ -118,7 +105,6 @@ set(kwin_SRCS
     win/x11/net/win_info.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.
-    base/output.h
     render/cursor.h
     win/deco/bridge_qobject.h
     win/deco/client_impl_qobject.h
@@ -126,13 +112,6 @@ set(kwin_SRCS
     win/stacking_order.h
     win/window_qobject.h
 )
-
-if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    set(kwin_SRCS
-        ${kwin_SRCS}
-        base/os/clock/linux_skew_notifier_engine.cpp
-    )
-endif()
 
 qt6_add_resources(kwin_SRCS render/gl/resources.qrc)
 
@@ -205,19 +184,12 @@ set(kwin_KDE_LIBS
 )
 
 set(kwin_XCB_LIBS
-    XCB::COMPOSITE
-    XCB::DAMAGE
-    XCB::GLX
     XCB::CURSOR
     XCB::ICCCM
     XCB::KEYSYMS
-    XCB::RANDR
     XCB::RENDER
-    XCB::SHAPE
     XCB::SHM
-    XCB::SYNC
     XCB::XFIXES
-    XCB::XKB
 )
 
 set(kwin_INPUT_LIBS
@@ -225,6 +197,7 @@ set(kwin_INPUT_LIBS
 )
 
 set(kwinLibs
+    base
     kwineffects
     ${kwin_QT_LIBS}
     ${kwin_KDE_LIBS}
@@ -429,7 +402,6 @@ set_target_properties(kwin_wayland_lib PROPERTIES
 )
 
 target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)
-configure_file(cmake/config-kwin.h.cmake config-kwin.h)
 
 
 ### Installs

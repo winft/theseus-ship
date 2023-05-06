@@ -27,6 +27,7 @@ target_link_libraries(zoom PRIVATE
   KF6::KCMUtils
   kwineffects
   kwinglutils
+  base
 )
 
 if (HAVE_ACCESSIBILITY)
@@ -47,5 +48,6 @@ if (KWIN_BUILD_KCMS)
       KF6::CoreAddons
       KF6::GlobalAccel
       KF6::XmlGui
+      base
     )
 endif()
