@@ -60,6 +60,7 @@ set(kwin_EFFECTSLIB_SRCS
     kwineffects/motions.cpp
     kwineffects/paint_clipper.cpp
     kwineffects/time_line.cpp
+    kwineffects/togglable_state.cpp
     kwineffects/window_quad.cpp
 )
 
@@ -148,6 +149,7 @@ install(FILES
     kwineffects/paint_clipper.h
     kwineffects/paint_data.h
     kwineffects/time_line.h
+    kwineffects/togglable_state.h
     kwineffects/types.h
     kwineffects/window_quad.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwineffects COMPONENT Devel)
