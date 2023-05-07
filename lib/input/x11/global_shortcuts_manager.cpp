@@ -78,14 +78,8 @@ void global_shortcuts_manager::objectDeleted(QObject* object)
     }
 }
 
-bool global_shortcuts_manager::addIfNotExists(global_shortcut sc)
+bool global_shortcuts_manager::add(global_shortcut sc)
 {
-    for (const auto& cs : qAsConst(m_shortcuts)) {
-        if (sc.shortcut() == cs.shortcut()) {
-            return false;
-        }
-    }
-
     QObject::connect(
         sc.action(), &QAction::destroyed, this, &global_shortcuts_manager::objectDeleted);
     m_shortcuts.push_back(std::move(sc));
@@ -96,14 +90,14 @@ void global_shortcuts_manager::registerPointerShortcut(QAction* action,
                                                        Qt::KeyboardModifiers modifiers,
                                                        Qt::MouseButtons pointerButtons)
 {
-    addIfNotExists(global_shortcut(win::PointerButtonShortcut{modifiers, pointerButtons}, action));
+    add(global_shortcut(win::PointerButtonShortcut{modifiers, pointerButtons}, action));
 }
 
 void global_shortcuts_manager::registerAxisShortcut(QAction* action,
                                                     Qt::KeyboardModifiers modifiers,
                                                     win::pointer_axis_direction axis)
 {
-    addIfNotExists(global_shortcut(win::PointerAxisShortcut{modifiers, axis}, action));
+    add(global_shortcut(win::PointerAxisShortcut{modifiers, axis}, action));
 }
 
 }
