@@ -7,10 +7,10 @@ Files:
   .versionrc.json
   autotests/integration/fakes/org.kde.kdecoration2/fakedecoration_with_shadows.json
   autotests/libkwineffects/data/glplatform/*
-  lib/base/dbus/org.kde.KWin.xml
   lib/data/icons/*
   lib/data/org.kde.kwin.VirtualKeyboard.xml
   lib/data/org_kde_kwin.categories
+  lib/desktop/kde/dbus/org.kde.KWin.xml
   docs/*
   plugins/effects/backgroundcontrast/metadata.json
   plugins/effects/blendchanges/metadata.json

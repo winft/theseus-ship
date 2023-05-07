@@ -32,7 +32,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "tabbox/tabbox.h"
 #endif
 
-#include "base/dbus/kwin.h"
 #include "base/output.h"
 #include "base/x11/atoms.h"
 #include "base/x11/event_filter.h"

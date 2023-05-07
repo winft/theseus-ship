@@ -16,6 +16,7 @@
 
 #include "base/x11/xcb/helpers.h"
 #include "debug/console/x11/x11_console.h"
+#include "desktop/kde/dbus/kwin.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "script/platform.h"
@@ -66,7 +67,7 @@ public:
 
         atoms = std::make_unique<base::x11::atoms>(base.x11_data.connection);
         edges = std::make_unique<edger_t>(*this);
-        dbus = std::make_unique<base::dbus::kwin_impl<type>>(*this);
+        dbus = std::make_unique<desktop::kde::kwin_impl<type>>(*this);
 
         QObject::connect(
             virtual_desktop_manager->qobject.get(),
@@ -184,7 +185,7 @@ public:
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-    std::unique_ptr<base::dbus::kwin_impl<type>> dbus;
+    std::unique_ptr<desktop::kde::kwin_impl<type>> dbus;
 
     std::vector<window_t> windows;
     std::unordered_map<uint32_t, window_t> windows_map;

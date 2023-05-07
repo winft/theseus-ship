@@ -27,7 +27,6 @@ target_link_libraries(kwin_killer_helper
 
 ### Common library
 set(kwin_SRCS
-    base/dbus/kwin.cpp
     base/os/clock/skew_notifier.cpp
     base/os/clock/skew_notifier_engine.cpp
     base/seat/session.cpp
@@ -42,6 +41,7 @@ set(kwin_SRCS
     base/logging.cpp
     base/options.cpp
     base/platform.cpp
+    desktop/kde/dbus/kwin.cpp
     desktop/screen_locker_watcher.cpp
     render/post/color_correct_dbus_interface.cpp
     render/post/suncalc.cpp
@@ -148,7 +148,11 @@ kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfg
 kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_book_settings_base.kcfgc)
 
-qt6_add_dbus_adaptor(kwin_SRCS base/dbus/org.kde.KWin.xml base/dbus/kwin.h KWin::base::dbus::kwin)
+qt6_add_dbus_adaptor(kwin_SRCS
+  desktop/kde/dbus/org.kde.KWin.xml
+  desktop/kde/dbus/kwin.h
+  KWin::desktop::kde::kwin
+)
 qt6_add_dbus_adaptor(kwin_SRCS
   render/dbus/org.kde.kwin.Compositing.xml
   render/dbus/compositing.h
@@ -444,7 +448,7 @@ install(FILES desktop/kde/kwin.notifyrc
 install(
   FILES
     win/dbus/org.kde.KWin.VirtualDesktopManager.xml
-    base/dbus/org.kde.KWin.xml
+    desktop/kde/dbus/org.kde.KWin.xml
     render/dbus/org.kde.kwin.ColorCorrect.xml
     render/dbus/org.kde.kwin.Compositing.xml
     render/dbus/org.kde.kwin.Effects.xml
@@ -468,14 +472,14 @@ include(CMakePackageConfigHelpers)
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinDBusInterface")
 
 configure_package_config_file(
-  desktop/kde/KWinDBusInterfaceConfig.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/KWinDBusInterfaceConfig.cmake"
+  desktop/kde/dbus/KWinDBusInterfaceConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/dbus/KWinDBusInterfaceConfig.cmake"
   PATH_VARS KDE_INSTALL_DBUSINTERFACEDIR
   INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR}
 )
 
 install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/KWinDBusInterfaceConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/dbus/KWinDBusInterfaceConfig.cmake
   DESTINATION ${CMAKECONFIG_INSTALL_DIR}
 )
 

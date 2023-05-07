@@ -23,6 +23,7 @@
 #include "xwl_window.h"
 
 #include "debug/console/wayland/wayland_console.h"
+#include "desktop/kde/dbus/kwin.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
 #include "script/platform.h"
@@ -117,7 +118,7 @@ public:
         };
 
         input = std::make_unique<input_t>(*base.input, *this);
-        this->dbus = std::make_unique<base::dbus::kwin_impl<type>>(*this);
+        this->dbus = std::make_unique<desktop::kde::kwin_impl<type>>(*this);
         edges = std::make_unique<edger_t>(*this);
 
         plasma_window_manager->setShowingDesktopState(
@@ -495,7 +496,7 @@ public:
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-    std::unique_ptr<base::dbus::kwin_impl<type>> dbus;
+    std::unique_ptr<desktop::kde::kwin_impl<type>> dbus;
 
     std::unique_ptr<Wrapland::Server::Compositor> compositor;
     std::unique_ptr<Wrapland::Server::Subcompositor> subcompositor;

@@ -7,7 +7,6 @@
 #pragma once
 
 #include "debug/support_info.h"
-#include "input/platform.h"
 #include "kwin_export.h"
 #include "win/kill_window.h"
 #include "win/placement.h"
@@ -23,7 +22,7 @@ namespace win
 class space_qobject;
 }
 
-namespace base::dbus
+namespace desktop::kde
 {
 
 /**
