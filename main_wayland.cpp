@@ -215,7 +215,6 @@ void ApplicationWayland::start(base::operation_mode mode,
 
     base->process_environment = environment;
     base->server->create_addons([this] { handle_server_addons_created(); });
-    base->screen_locker_watcher->initialize();
 }
 
 void ApplicationWayland::handle_server_addons_created()

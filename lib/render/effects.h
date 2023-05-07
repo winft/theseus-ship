@@ -440,11 +440,11 @@ public:
                 &win::screen_edger_qobject::approaching,
                 this,
                 &EffectsHandler::screenEdgeApproaching);
-        connect(ws->base.screen_locker_watcher.get(),
+        connect(ws->base.space->screen_locker_watcher.get(),
                 &desktop::screen_locker_watcher::locked,
                 this,
                 &EffectsHandler::screenLockingChanged);
-        connect(ws->base.screen_locker_watcher.get(),
+        connect(ws->base.space->screen_locker_watcher.get(),
                 &desktop::screen_locker_watcher::about_to_lock,
                 this,
                 &EffectsHandler::screenAboutToLock);
@@ -536,7 +536,7 @@ public:
 
     bool isScreenLocked() const override
     {
-        return compositor.platform.base.screen_locker_watcher->is_locked();
+        return compositor.space->screen_locker_watcher->is_locked();
     }
 
     xcb_connection_t* xcbConnection() const override

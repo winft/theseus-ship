@@ -24,7 +24,6 @@ class KWIN_EXPORT screen_locker_watcher : public QObject
 public:
     screen_locker_watcher();
 
-    void initialize();
     bool is_locked() const;
 
 Q_SIGNALS:

@@ -18,10 +18,6 @@ static QString const SCREEN_LOCKER_SERVICE_NAME = QStringLiteral("org.freedeskto
 screen_locker_watcher::screen_locker_watcher()
     : m_serviceWatcher{new QDBusServiceWatcher(this)}
 {
-}
-
-void screen_locker_watcher::initialize()
-{
     QObject::connect(m_serviceWatcher,
                      &QDBusServiceWatcher::serviceOwnerChanged,
                      this,

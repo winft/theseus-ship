@@ -163,7 +163,6 @@ void setup::start()
     base->render->compositor->start(*base->space);
 
     base->server->create_addons([this] { handle_server_addons_created(); });
-    base->screen_locker_watcher->initialize();
 
     TRY_REQUIRE_WITH_TIMEOUT(ready, 10000);
 }

@@ -14,7 +14,6 @@
 #include "x11/data.h"
 #include "x11/event_filter_manager.h"
 
-#include "desktop/screen_locker_watcher.h"
 #include "kwin_export.h"
 
 #include <QObject>
@@ -43,7 +42,6 @@ public:
 
     std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;
-    std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
     std::unique_ptr<x11::event_filter_manager> x11_event_filters;
 
 private:

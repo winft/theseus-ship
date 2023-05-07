@@ -17,6 +17,7 @@
 #include "base/x11/xcb/helpers.h"
 #include "debug/console/x11/x11_console.h"
 #include "desktop/kde/dbus/kwin.h"
+#include "desktop/screen_locker_watcher.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "script/platform.h"
@@ -53,6 +54,7 @@ public:
         , deco{std::make_unique<deco::bridge<type>>(*this)}
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
         , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
+        , screen_locker_watcher{std::make_unique<desktop::screen_locker_watcher>()}
     {
         win::init_space(*this);
 
@@ -185,6 +187,8 @@ public:
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
+
+    std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
     std::unique_ptr<desktop::kde::kwin_impl<type>> dbus;
 
     std::vector<window_t> windows;
