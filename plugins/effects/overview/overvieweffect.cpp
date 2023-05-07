@@ -31,19 +31,23 @@ OverviewEffect::OverviewEffect()
     m_toggleShortcut
         = effects->registerGlobalShortcutAndDefault({defaultToggleShortcut}, m_toggleAction);
 
-    m_realtimeToggleAction = new QAction(this);
-    connect(m_realtimeToggleAction, &QAction::triggered, this, [this]() {
+    m_activateAction = new QAction(this);
+    connect(m_activateAction, &QAction::triggered, this, [this]() {
+        if (m_status == Status::Activating) {
+            if (m_partialActivationFactor > 0.5) {
+                activate();
+            } else {
+                cancelPartialActivate();
+            }
+        }
+    });
+    m_deactivateAction = new QAction(this);
+    connect(m_deactivateAction, &QAction::triggered, this, [this]() {
         if (m_status == Status::Deactivating) {
             if (m_partialActivationFactor < 0.5) {
                 deactivate();
             } else {
                 cancelPartialDeactivate();
-            }
-        } else if (m_status == Status::Activating) {
-            if (m_partialActivationFactor > 0.5) {
-                activate();
-            } else {
-                cancelPartialActivate();
             }
         }
     });
@@ -55,6 +59,13 @@ OverviewEffect::OverviewEffect()
             case Status::Activating:
                 partialActivate(progress);
                 break;
+            }
+        }
+    };
+
+    auto progressCallbackInv = [this](qreal progress) {
+        if (!effects->hasActiveFullScreenEffect() || effects->activeFullScreenEffect() == this) {
+            switch (m_status) {
             case Status::Active:
             case Status::Deactivating:
                 partialDeactivate(progress);
@@ -64,9 +75,13 @@ OverviewEffect::OverviewEffect()
     };
 
     effects->registerTouchpadPinchShortcut(
-        PinchDirection::Contracting, 4, m_realtimeToggleAction, progressCallback);
+        PinchDirection::Contracting, 4, m_activateAction, progressCallback);
+    effects->registerTouchpadPinchShortcut(
+        PinchDirection::Expanding, 4, m_deactivateAction, progressCallbackInv);
     effects->registerTouchscreenSwipeShortcut(
-        SwipeDirection::Up, 3, m_realtimeToggleAction, progressCallback);
+        SwipeDirection::Up, 3, m_activateAction, progressCallback);
+    effects->registerTouchscreenSwipeShortcut(
+        SwipeDirection::Down, 3, m_deactivateAction, progressCallbackInv);
 
     connect(effects, &EffectsHandler::screenAboutToLock, this, &OverviewEffect::realDeactivate);
 
@@ -110,18 +125,19 @@ void OverviewEffect::reconfigure(ReconfigureFlags)
         m_touchBorderActivate.append(ElectricBorder(border));
         effects->registerRealtimeTouchBorder(
             ElectricBorder(border),
-            m_realtimeToggleAction,
-            [this](ElectricBorder border, const QSizeF& deltaProgress, const EffectScreen* screen) {
-                Q_UNUSED(screen)
+            m_deactivateAction,
+            [this](ElectricBorder border,
+                   QSizeF const& deltaProgress,
+                   EffectScreen const* /*screen*/) {
                 if (m_status == Status::Active) {
                     return;
                 }
-                const int maxDelta = 500; // Arbitrary logical pixels value seems to behave better
-                                          // than scaledScreenSize
+                // Arbitrary logical pixels value seems to behave better than scaledScreenSize.
+                int const maxDelta = 500;
                 if (border == ElectricTop || border == ElectricBottom) {
-                    partialActivate(std::min(1.0, qAbs(deltaProgress.height()) / maxDelta));
+                    partialActivate(std::min(1.0, std::abs(deltaProgress.height()) / maxDelta));
                 } else {
-                    partialActivate(std::min(1.0, qAbs(deltaProgress.width()) / maxDelta));
+                    partialActivate(std::min(1.0, std::abs(deltaProgress.width()) / maxDelta));
                 }
             });
     }
