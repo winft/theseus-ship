@@ -6,17 +6,20 @@
 #include "options.h"
 
 #include "base/options.h"
+#include "render/options.h"
 #include "win/options.h"
 
 namespace KWin::scripting
 {
 
-options::options(base::options& base, win::options& win)
+options::options(base::options& base, win::options& win, render::options& render)
     : base{base}
     , win{win}
+    , render{render}
 {
     auto qbase = base.qobject.get();
     auto qwin = win.qobject.get();
+    auto qrender = render.qobject.get();
 
     QObject::connect(
         qwin, &win::options_qobject::focusPolicyChanged, this, &options::focusPolicyChanged);
@@ -160,51 +163,53 @@ options::options(base::options& base, win::options& win)
                      &win::options_qobject::hideUtilityWindowsForInactiveChanged,
                      this,
                      &options::hideUtilityWindowsForInactiveChanged);
-    QObject::connect(qbase,
-                     &base::options_qobject::compositingModeChanged,
+    QObject::connect(qrender,
+                     &render::options_qobject::compositingModeChanged,
                      this,
                      &options::compositingModeChanged);
-    QObject::connect(qbase,
-                     &base::options_qobject::useCompositingChanged,
+    QObject::connect(qrender,
+                     &render::options_qobject::useCompositingChanged,
                      this,
                      &options::useCompositingChanged);
-    QObject::connect(qbase,
-                     &base::options_qobject::hiddenPreviewsChanged,
+    QObject::connect(qrender,
+                     &render::options_qobject::hiddenPreviewsChanged,
                      this,
                      &options::hiddenPreviewsChanged);
 
-    QObject::connect(qbase,
-                     &base::options_qobject::maxFpsIntervalChanged,
+    QObject::connect(qrender,
+                     &render::options_qobject::maxFpsIntervalChanged,
                      this,
                      &options::maxFpsIntervalChanged);
     QObject::connect(
-        qbase, &base::options_qobject::refreshRateChanged, this, &options::refreshRateChanged);
+        qrender, &render::options_qobject::refreshRateChanged, this, &options::refreshRateChanged);
     QObject::connect(
-        qbase, &base::options_qobject::vBlankTimeChanged, this, &options::vBlankTimeChanged);
-    QObject::connect(qbase,
-                     &base::options_qobject::glStrictBindingChanged,
+        qrender, &render::options_qobject::vBlankTimeChanged, this, &options::vBlankTimeChanged);
+    QObject::connect(qrender,
+                     &render::options_qobject::glStrictBindingChanged,
                      this,
                      &options::glStrictBindingChanged);
-    QObject::connect(qbase,
-                     &base::options_qobject::glStrictBindingFollowsDriverChanged,
+    QObject::connect(qrender,
+                     &render::options_qobject::glStrictBindingFollowsDriverChanged,
                      this,
                      &options::glStrictBindingFollowsDriverChanged);
-    QObject::connect(qbase,
-                     &base::options_qobject::windowsBlockCompositingChanged,
+    QObject::connect(qrender,
+                     &render::options_qobject::windowsBlockCompositingChanged,
                      this,
                      &options::windowsBlockCompositingChanged);
 
-    QObject::connect(qbase,
-                     &base::options_qobject::animationSpeedChanged,
+    QObject::connect(qrender,
+                     &render::options_qobject::animationSpeedChanged,
                      this,
                      &options::animationSpeedChanged);
-    QObject::connect(qbase,
-                     &base::options_qobject::animationCurveChanged,
+    QObject::connect(qrender,
+                     &render::options_qobject::animationCurveChanged,
                      this,
                      &options::animationCurveChanged);
 
     QObject::connect(qbase, &base::options_qobject::configChanged, this, &options::configChanged);
     QObject::connect(qwin, &win::options_qobject::configChanged, this, &options::configChanged);
+    QObject::connect(
+        qrender, &render::options_qobject::configChanged, this, &options::configChanged);
 }
 
 options::FocusPolicy options::focusPolicy() const
@@ -423,57 +428,57 @@ bool options::isHideUtilityWindowsForInactive() const
 
 int options::compositingMode() const
 {
-    return base.qobject->compositingMode();
+    return render.qobject->compositingMode();
 }
 
 void options::setCompositingMode(int mode)
 {
-    base.qobject->setCompositingMode(mode);
+    render.qobject->setCompositingMode(mode);
 }
 
 bool options::isUseCompositing() const
 {
-    return base.qobject->isUseCompositing();
+    return render.qobject->isUseCompositing();
 }
 
 int options::hiddenPreviews() const
 {
-    return static_cast<int>(base.qobject->hiddenPreviews());
+    return static_cast<int>(render.qobject->hiddenPreviews());
 }
 
 qint64 options::maxFpsInterval() const
 {
-    return base.qobject->maxFpsInterval();
+    return render.qobject->maxFpsInterval();
 }
 
 uint options::refreshRate() const
 {
-    return base.qobject->refreshRate();
+    return render.qobject->refreshRate();
 }
 
 qint64 options::vBlankTime() const
 {
-    return base.qobject->vBlankTime();
+    return render.qobject->vBlankTime();
 }
 
 bool options::isGlStrictBinding() const
 {
-    return base.qobject->isGlStrictBinding();
+    return render.qobject->isGlStrictBinding();
 }
 
 bool options::isGlStrictBindingFollowsDriver() const
 {
-    return base.qobject->isGlStrictBindingFollowsDriver();
+    return render.qobject->isGlStrictBindingFollowsDriver();
 }
 
 bool options::windowsBlockCompositing() const
 {
-    return base.qobject->windowsBlockCompositing();
+    return render.qobject->windowsBlockCompositing();
 }
 
 options::AnimationCurve options::animationCurve() const
 {
-    return static_cast<options::AnimationCurve>(base.qobject->animationCurve());
+    return static_cast<options::AnimationCurve>(render.qobject->animationCurve());
 }
 
 void options::setFocusPolicy(options::FocusPolicy focusPolicy)
@@ -673,47 +678,47 @@ void options::setHideUtilityWindowsForInactive(bool hideUtilityWindowsForInactiv
 
 void options::setUseCompositing(bool useCompositing)
 {
-    base.qobject->setUseCompositing(useCompositing);
+    render.qobject->setUseCompositing(useCompositing);
 }
 
 void options::setHiddenPreviews(int set)
 {
-    base.qobject->setHiddenPreviews(static_cast<render::x11::hidden_preview>(set));
+    render.qobject->setHiddenPreviews(static_cast<render::x11::hidden_preview>(set));
 }
 
 void options::setMaxFpsInterval(qint64 maxFpsInterval)
 {
-    base.qobject->setMaxFpsInterval(maxFpsInterval);
+    render.qobject->setMaxFpsInterval(maxFpsInterval);
 }
 
 void options::setRefreshRate(uint refreshRate)
 {
-    base.qobject->setRefreshRate(refreshRate);
+    render.qobject->setRefreshRate(refreshRate);
 }
 
 void options::setVBlankTime(qint64 vBlankTime)
 {
-    base.qobject->setVBlankTime(vBlankTime);
+    render.qobject->setVBlankTime(vBlankTime);
 }
 
 void options::setGlStrictBinding(bool glStrictBinding)
 {
-    base.qobject->setGlStrictBinding(glStrictBinding);
+    render.qobject->setGlStrictBinding(glStrictBinding);
 }
 
 void options::setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver)
 {
-    base.qobject->setGlStrictBindingFollowsDriver(glStrictBindingFollowsDriver);
+    render.qobject->setGlStrictBindingFollowsDriver(glStrictBindingFollowsDriver);
 }
 
 void options::setWindowsBlockCompositing(bool set)
 {
-    base.qobject->setWindowsBlockCompositing(set);
+    render.qobject->setWindowsBlockCompositing(set);
 }
 
 void options::setAnimationCurve(AnimationCurve curve)
 {
-    base.qobject->setAnimationCurve(static_cast<render::animation_curve>(curve));
+    render.qobject->setAnimationCurve(static_cast<render::animation_curve>(curve));
 }
 
 }

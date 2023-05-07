@@ -21,11 +21,14 @@
 namespace KWin::scripting
 {
 
-platform_wrap::platform_wrap(base::options& options, win::options& win_opts, base::config& config)
+platform_wrap::platform_wrap(base::options& options,
+                             win::options& win_opts,
+                             render::options& render_opts,
+                             base::config& config)
     : qml_engine(new QQmlEngine(this))
     , declarative_script_shared_context(new QQmlContext(qml_engine, this))
     , config{config}
-    , options{std::make_unique<scripting::options>(options, win_opts)}
+    , options{std::make_unique<scripting::options>(options, win_opts, render_opts)}
     , m_scriptsLock(new QRecursiveMutex)
 {
     qRegisterMetaType<KWin::SessionState>();

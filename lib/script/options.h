@@ -18,6 +18,11 @@ namespace base
 class options;
 }
 
+namespace render
+{
+class options;
+}
+
 namespace win
 {
 class options;
@@ -190,7 +195,7 @@ class KWIN_EXPORT options : public QObject
     Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE
                    setWindowsBlockCompositing NOTIFY windowsBlockCompositingChanged)
 public:
-    options(base::options& base, win::options& win);
+    options(base::options& base, win::options& win, render::options& render);
 
     /**
      * This enum type is used to specify the focus policy.
@@ -480,6 +485,7 @@ Q_SIGNALS:
 private:
     base::options& base;
     win::options& win;
+    render::options& render;
 };
 
 }

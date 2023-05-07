@@ -69,7 +69,7 @@ QList<QAction*> ScriptedEffectWithDebugSpy::actions()
 ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy(test::setup& setup)
     : scripting::effect(
         *KWin::effects,
-        [&]() -> base::options& { return *setup.base->options; },
+        [&]() -> render::options& { return *setup.base->render->options; },
         [&] { return setup.base->topology.size; })
     , setup{setup}
 {

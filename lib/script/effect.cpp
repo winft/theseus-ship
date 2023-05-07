@@ -165,7 +165,7 @@ bool effect::supported(EffectsHandler& effects)
 }
 
 effect::effect(EffectsHandler& effects,
-               std::function<base::options&()> get_options,
+               std::function<render::options&()> get_options,
                std::function<QSize()> get_screen_size)
     : AnimationEffect()
     , effects{effects}

@@ -69,6 +69,7 @@ set(kwin_SRCS
     render/effects.cpp
     render/gl/context_attribute_builder.cpp
     render/gl/egl_context_attribute_builder.cpp
+    render/options.cpp
     render/outline.cpp
     render/singleton_interface.cpp
     render/window_thumbnail_item.cpp
@@ -141,8 +142,8 @@ qt6_add_dbus_adaptor(kwin_SRCS
   KWin::scripting::abstract_script
 )
 
-kconfig_add_kcfg_files(kwin_SRCS base/kconfig/options_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS win/config/win_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS render/config/render_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_book_settings_base.kcfgc)
@@ -432,10 +433,6 @@ install(TARGETS kwin_killer_helper DESTINATION ${KDE_INSTALL_LIBEXECDIR})
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_wayland_lib ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 
-install(FILES base/kconfig/options_settings.kcfg
-  DESTINATION ${KDE_INSTALL_KCFGDIR}
-  RENAME ${KWIN_NAME}.kcfg
-)
 install(FILES render/post/kconfig/color_correct_settings.kcfg
     DESTINATION ${KDE_INSTALL_KCFGDIR}
     RENAME ${KWIN_NAME}_colorcorrect.kcfg

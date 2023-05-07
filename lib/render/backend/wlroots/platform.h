@@ -10,7 +10,6 @@
 #include "qpainter_backend.h"
 #include "wlr_helpers.h"
 
-#include "base/options.h"
 #include "render/wayland/platform.h"
 
 #include <wayland_logging.h>
@@ -39,7 +38,7 @@ public:
     {
         // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
         //                available in the ctor. Can we change that?
-        if (base.options->qobject->compositingMode() == QPainterCompositing) {
+        if (this->options->qobject->compositingMode() == QPainterCompositing) {
             qpainter = create_render_backend<qpainter_backend<platform>>(*this, "pixman");
         } else {
             egl = create_render_backend<egl_backend<platform>>(*this, "gles2");

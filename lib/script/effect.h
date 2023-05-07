@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "base/options.h"
+#include "render/options.h"
 #include "scripting_logging.h"
 
 #include <config-kwin.h>
@@ -94,7 +94,7 @@ public:
                           Compositor& compositor)
     {
         auto get_options
-            = [&compositor]() -> base::options& { return *compositor.platform.base.options; };
+            = [&compositor]() -> render::options& { return *compositor.platform.options; };
         auto get_screen_size = [&compositor] { return compositor.platform.base.topology.size; };
         auto effect = new scripting::effect(effects, get_options, get_screen_size);
         effect->m_exclusiveCategory = exclusiveCategory;
@@ -259,7 +259,7 @@ Q_SIGNALS:
 
 protected:
     effect(EffectsHandler& effects,
-           std::function<base::options&()> get_options,
+           std::function<render::options&()> get_options,
            std::function<QSize()> get_screen_size);
 
     QJSEngine* engine() const;
@@ -292,7 +292,7 @@ private:
 
     uint m_nextShaderId{1u};
 
-    std::function<base::options&()> get_options;
+    std::function<render::options&()> get_options;
     std::function<QSize()> get_screen_size;
 };
 

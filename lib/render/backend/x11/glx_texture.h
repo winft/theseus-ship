@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "base/options.h"
 #include "render/gl/backend.h"
 #include "render/gl/texture.h"
 #include "render/window.h"
@@ -40,7 +39,7 @@ public:
     ~GlxTexture() override
     {
         if (m_glxpixmap != None) {
-            if (!m_backend->platform.base.options->qobject->isGlStrictBinding()) {
+            if (!m_backend->platform.options->qobject->isGlStrictBinding()) {
                 glXReleaseTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT);
             }
             glXDestroyPixmap(display(), m_glxpixmap);
@@ -50,7 +49,7 @@ public:
 
     void onDamage() override
     {
-        if (m_backend->platform.base.options->qobject->isGlStrictBinding() && m_glxpixmap) {
+        if (m_backend->platform.options->qobject->isGlStrictBinding() && m_glxpixmap) {
             glXReleaseTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT);
             glXBindTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT, nullptr);
         }

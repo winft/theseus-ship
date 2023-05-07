@@ -7,6 +7,7 @@
 #pragma once
 
 #include "gl/egl_data.h"
+#include "options.h"
 #include "post/night_color_manager.h"
 #include "singleton_interface.h"
 
@@ -47,6 +48,7 @@ public:
 
     virtual CompositingType selected_compositor() const = 0;
 
+    std::unique_ptr<render::options> options;
     std::unique_ptr<render::post::night_color_manager<Base>> night_color;
     Base& base;
 
@@ -54,7 +56,8 @@ public:
 
 protected:
     platform(Base& base)
-        : night_color{std::make_unique<render::post::night_color_manager<Base>>(base)}
+        : options{std::make_unique<render::options>(base.operation_mode, base.config.main)}
+        , night_color{std::make_unique<render::post::night_color_manager<Base>>(base)}
         , base{base}
     {
         singleton_interface::get_egl_data = [this] { return egl_data; };

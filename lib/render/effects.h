@@ -67,7 +67,7 @@ public:
     effects_handler_wrap(Compositor& compositor)
         : EffectsHandler(compositor.scene->compositingType())
         , m_effectLoader(new effect_loader(*this, compositor, this))
-        , options{*compositor.platform.base.options}
+        , options{*compositor.platform.options}
     {
         qRegisterMetaType<QVector<KWin::EffectWindow*>>();
 
@@ -254,7 +254,7 @@ private:
     EffectsIterator m_currentBuildQuadsIterator;
     QList<Effect*> m_grabbedMouseEffects;
     effect_loader* m_effectLoader;
-    base::options& options;
+    render::options& options;
 };
 
 template<typename Compositor>

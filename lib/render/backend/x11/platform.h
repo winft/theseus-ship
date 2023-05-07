@@ -69,7 +69,7 @@ public:
             return gl_backend.get();
         }
 
-        if (this->base.options->qobject->glPlatformInterface() == EglPlatformInterface) {
+        if (this->options->qobject->glPlatformInterface() == EglPlatformInterface) {
             qCWarning(KWIN_CORE) << "Requested EGL on X11 backend, but support has been removed. "
                                     "Trying GLX instead.";
         }
