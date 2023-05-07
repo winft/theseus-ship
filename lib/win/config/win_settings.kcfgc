@@ -2,8 +2,8 @@
 ;
 ; SPDX-License-Identifier: GPL-2.0-or-later
 
-File=options_settings.kcfg
-NameSpace=KWin::base
-ClassName=Settings
-IncludeFiles=render/types.h
+File=win_settings.kcfg
+NameSpace=KWin::win
+ClassName=settings
+IncludeFiles=win/types.h
 UseEnumTypes=true

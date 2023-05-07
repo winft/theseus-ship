@@ -42,7 +42,8 @@ public:
     using input_t = input::x11::redirect<typename Base::input_t, type>;
 
     space(Base& base)
-        : base{base}
+        : win::space(base.config.main)
+        , base{base}
         , outline{render::outline::create(*base.render->compositor,
                                           [this] {
                                               return render::create_outline_visual(

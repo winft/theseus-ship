@@ -115,8 +115,6 @@ public:
     int desktopGridWidth() const override;
     int desktopGridHeight() const override;
 
-    bool optionRollOverDesktops() const override;
-
     bool grabKeyboard(Effect* effect) override;
     void ungrabKeyboard() override;
     // not performing XGrabPointer
@@ -1319,6 +1317,11 @@ public:
         default:
             return QVariant(); // an invalid one
         }
+    }
+
+    bool optionRollOverDesktops() const override
+    {
+        return compositor.space->options->qobject->isRollOverDesktops();
     }
 
     SessionState sessionState() const override

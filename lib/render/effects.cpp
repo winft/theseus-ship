@@ -320,11 +320,6 @@ int effects_handler_wrap::desktopGridHeight() const
     return desktopGridSize().height();
 }
 
-bool effects_handler_wrap::optionRollOverDesktops() const
-{
-    return options.qobject->isRollOverDesktops();
-}
-
 double effects_handler_wrap::animationTimeFactor() const
 {
     return options.animationTimeFactor();

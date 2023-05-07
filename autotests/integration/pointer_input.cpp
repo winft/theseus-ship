@@ -379,10 +379,13 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAll3", "Move");
         group.sync();
         win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->options->qobject->commandAllModifier(), qt_mod);
-        QCOMPARE(setup.base->options->qobject->commandAll1(), win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->options->qobject->commandAll2(), win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->options->qobject->commandAll3(), win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), qt_mod);
+        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+                 win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll2(),
+                 win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+                 win::mouse_cmd::unrestricted_move);
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
@@ -450,10 +453,13 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAll3", "Move");
         group.sync();
         win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->options->qobject->commandAll1(), win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->options->qobject->commandAll2(), win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->options->qobject->commandAll3(), win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), Qt::MetaModifier);
+        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+                 win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll2(),
+                 win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+                 win::mouse_cmd::unrestricted_move);
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
@@ -711,10 +717,11 @@ TEST_CASE("pointer input", "[input]")
         group.sync();
         win::space_reconfigure(*setup.base->space);
         // verify the settings
-        QCOMPARE(setup.base->options->qobject->focusPolicy(), win::focus_policy::follows_mouse);
-        QVERIFY(setup.base->options->qobject->isAutoRaise());
-        QCOMPARE(setup.base->options->qobject->autoRaiseInterval(), 20);
-        QCOMPARE(setup.base->options->qobject->delayFocusInterval(), 200);
+        QCOMPARE(setup.base->space->options->qobject->focusPolicy(),
+                 win::focus_policy::follows_mouse);
+        QVERIFY(setup.base->space->options->qobject->isAutoRaise());
+        QCOMPARE(setup.base->space->options->qobject->autoRaiseInterval(), 20);
+        QCOMPARE(setup.base->space->options->qobject->delayFocusInterval(), 200);
 
         // create two windows
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
@@ -897,7 +904,7 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("ClickRaise", click_raise);
         group.sync();
         win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->options->qobject->isClickRaise(), click_raise);
+        QCOMPARE(setup.base->space->options->qobject->isClickRaise(), click_raise);
 
         // Create two windows.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
@@ -1582,8 +1589,9 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAll3", "Resize");
         group.sync();
         win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->options->qobject->commandAll3(), win::mouse_cmd::unrestricted_resize);
+        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), Qt::MetaModifier);
+        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+                 win::mouse_cmd::unrestricted_resize);
 
         // create a test client
         using namespace Wrapland::Client;
@@ -1650,8 +1658,9 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAll1", "Move");
         group.sync();
         win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->options->qobject->commandAll1(), win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), Qt::MetaModifier);
+        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+                 win::mouse_cmd::unrestricted_move);
 
         // create a test client
         using namespace Wrapland::Client;

@@ -1040,7 +1040,7 @@ private:
         if (!m_ready || is_grabbed()) {
             return;
         }
-        if (!space.base.options->qobject->focusPolicyIsReasonable()) {
+        if (!space.options->qobject->focusPolicyIsReasonable()) {
             // ungrabXKeyboard(); // need that because of accelerator raw mode
             //  CDE style raise / lower
             cde_walk_through_windows(forward);
@@ -1135,7 +1135,7 @@ private:
         }
 
         std::visit(overload{[&](auto&& win) {
-                       if (space.base.options->qobject->focusPolicyIsReasonable()) {
+                       if (space.options->qobject->focusPolicyIsReasonable()) {
                            activate_window(space, *win);
                            return;
                        }
@@ -1246,7 +1246,7 @@ private:
 
     bool toggle_mode(TabBoxMode mode)
     {
-        if (!space.base.options->qobject->focusPolicyIsReasonable()) {
+        if (!space.options->qobject->focusPolicyIsReasonable()) {
             // not supported.
             return false;
         }

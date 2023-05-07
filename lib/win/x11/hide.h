@@ -9,12 +9,12 @@
 #include "hidden_preview.h"
 #include "types.h"
 
-#include "base/options.h"
 #include "base/x11/xcb/extensions.h"
 #include "render/x11/types.h"
 #include "win/activation.h"
 #include "win/controlling.h"
 #include "win/damage.h"
+#include "win/options.h"
 #include "win/scene.h"
 #include "win/stacking_order.h"
 

@@ -55,7 +55,7 @@ class KWIN_EXPORT platform_wrap : public QObject
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Scripting")
 
 public:
-    platform_wrap(base::options& options, base::config& config);
+    platform_wrap(base::options& options, win::options& win_opts, base::config& config);
     ~platform_wrap() override;
 
     Q_SCRIPTABLE Q_INVOKABLE int loadScript(const QString& filePath,
@@ -108,7 +108,7 @@ class platform : public platform_wrap
 {
 public:
     platform(Space& space)
-        : platform_wrap(*space.base.options, space.base.config)
+        : platform_wrap(*space.base.options, *space.options, space.base.config)
         , space{space}
     {
         singleton_interface::register_shortcut

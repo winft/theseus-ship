@@ -92,7 +92,7 @@ void set_caption(Win* win, QString const& _s, bool force = false)
     win->meta.caption.suffix.clear();
 
     QString machine_suffix;
-    if (!win->space.base.options->qobject->condensedTitle()) {
+    if (!win->space.options->qobject->condensedTitle()) {
         // machine doesn't qualify for "clean"
         if (win->client_machine->hostname() != client_machine::localhost()
             && !win->client_machine->is_local()) {

@@ -10,12 +10,20 @@
 
 #include <QObject>
 
-namespace KWin::base
+namespace KWin
+{
+
+namespace base
 {
 class options;
 }
 
-namespace KWin::scripting
+namespace win
+{
+class options;
+}
+
+namespace scripting
 {
 
 class KWIN_EXPORT options : public QObject
@@ -182,7 +190,7 @@ class KWIN_EXPORT options : public QObject
     Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE
                    setWindowsBlockCompositing NOTIFY windowsBlockCompositingChanged)
 public:
-    options(base::options& base);
+    options(base::options& base, win::options& win);
 
     /**
      * This enum type is used to specify the focus policy.
@@ -471,8 +479,10 @@ Q_SIGNALS:
 
 private:
     base::options& base;
+    win::options& win;
 };
 
+}
 }
 
 Q_DECLARE_METATYPE(KWin::win::fsp_level)

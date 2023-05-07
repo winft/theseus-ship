@@ -160,7 +160,7 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("Multi-Head: "));
     support.append(QStringLiteral("not supported anymore\n"));
     support.append(QStringLiteral("Active screen follows mouse: "));
-    support.append(space.base.options->get_current_output_follows_mouse() ? yes : no);
+    support.append(space.options->get_current_output_follows_mouse() ? yes : no);
 
     auto const& outputs = space.base.get_outputs();
     support.append(QStringLiteral("Number of Screens: %1\n\n").arg(outputs.size()));

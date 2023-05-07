@@ -365,8 +365,7 @@ public:
             qobject.get(),
             [this, buttons] {
                 perform_window_operation(
-                    m_client,
-                    m_client->space.base.options->qobject->operationMaxButtonClick(buttons));
+                    m_client, m_client->space.options->qobject->operationMaxButtonClick(buttons));
             },
             Qt::QueuedConnection);
     }

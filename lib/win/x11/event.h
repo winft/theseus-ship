@@ -338,9 +338,9 @@ void enter_notify_event(Win* win, xcb_enter_notify_event_t* e)
         return;
     }
 
-    auto is_mouse_driven_focus = !win->space.base.options->qobject->focusPolicyIsReasonable()
-        || (win->space.base.options->qobject->focusPolicy() == focus_policy::follows_mouse
-            && win->space.base.options->qobject->isNextFocusPrefersMouse());
+    auto is_mouse_driven_focus = !win->space.options->qobject->focusPolicyIsReasonable()
+        || (win->space.options->qobject->focusPolicy() == focus_policy::follows_mouse
+            && win->space.options->qobject->isNextFocusPrefersMouse());
 
     if (e->mode == XCB_NOTIFY_MODE_NORMAL
         || (e->mode == XCB_NOTIFY_MODE_UNGRAB && is_mouse_driven_focus)) {
@@ -388,7 +388,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
                 QCoreApplication::sendEvent(deco, &leaveEvent);
             }
         }
-        if (win->space.base.options->qobject->focusPolicy() == focus_policy::strictly_under_mouse
+        if (win->space.options->qobject->focusPolicy() == focus_policy::strictly_under_mouse
             && win->control->active && lostMouse) {
             win->space.stacking.delayfocus_window = {};
             reset_delay_focus_timer(win->space);
@@ -400,7 +400,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
 template<typename Win>
 static inline bool modKeyDown(Win& win, int state)
 {
-    uint const keyModX = (win.space.base.options->qobject->keyCmdAllModKey() == Qt::Key_Meta)
+    uint const keyModX = (win.space.options->qobject->keyCmdAllModKey() == Qt::Key_Meta)
         ? key_server::modXMeta()
         : key_server::modXAlt();
     return keyModX && (state & key_server::accelModMaskX()) == keyModX;
@@ -444,17 +444,17 @@ bool button_press_event(Win* win,
             was_action = true;
             switch (button) {
             case XCB_BUTTON_INDEX_1:
-                com = win->space.base.options->qobject->commandAll1();
+                com = win->space.options->qobject->commandAll1();
                 break;
             case XCB_BUTTON_INDEX_2:
-                com = win->space.base.options->qobject->commandAll2();
+                com = win->space.options->qobject->commandAll2();
                 break;
             case XCB_BUTTON_INDEX_3:
-                com = win->space.base.options->qobject->commandAll3();
+                com = win->space.options->qobject->commandAll3();
                 break;
             case XCB_BUTTON_INDEX_4:
             case XCB_BUTTON_INDEX_5:
-                com = win->space.base.options->operationWindowMouseWheel(
+                com = win->space.options->operationWindowMouseWheel(
                     button == XCB_BUTTON_INDEX_4 ? 120 : -120);
                 break;
             }
@@ -522,10 +522,9 @@ bool button_press_event(Win* win,
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (!event.isAccepted() && !hor) {
                 if (win::titlebar_positioned_under_mouse(win)) {
-                    perform_mouse_command(
-                        *win,
-                        win->space.base.options->operationTitlebarMouseWheel(delta),
-                        {x_root, y_root});
+                    perform_mouse_command(*win,
+                                          win->space.options->operationTitlebarMouseWheel(delta),
+                                          {x_root, y_root});
                 }
             }
         } else {

@@ -50,7 +50,7 @@ TEST_CASE("screens", "[base]")
                                   data{"FocusStrictlyUnderMouse", true});
 
         auto original_config = setup.base->config.main;
-        auto& options = setup.base->options;
+        auto& options = setup.base->space->options;
 
         QCOMPARE(options->get_current_output_follows_mouse(), false);
 
@@ -63,7 +63,7 @@ TEST_CASE("screens", "[base]")
         config->sync();
 
         setup.base->config.main = config;
-        options = std::make_unique<base::options>(setup.base->operation_mode, config);
+        options = std::make_unique<win::options>(config);
         options->loadConfig();
 
         QCOMPARE(options->get_current_output_follows_mouse(), test_data.expected_default);
@@ -74,7 +74,7 @@ TEST_CASE("screens", "[base]")
         QCOMPARE(options->get_current_output_follows_mouse(), !test_data.expected_default);
 
         setup.base->config.main = original_config;
-        options = std::make_unique<base::options>(setup.base->operation_mode, original_config);
+        options = std::make_unique<win::options>(original_config);
         options->loadConfig();
         QCOMPARE(options->get_current_output_follows_mouse(), false);
     }

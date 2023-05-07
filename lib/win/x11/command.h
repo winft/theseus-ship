@@ -15,7 +15,7 @@ namespace KWin::win::x11
 template<typename Win>
 static inline uint16_t x11CommandAllModifier(Win& win)
 {
-    switch (win.space.base.options->qobject->commandAllModifier()) {
+    switch (win.space.options->qobject->commandAllModifier()) {
     case Qt::MetaModifier:
         return key_server::modXMeta();
     case Qt::AltModifier:

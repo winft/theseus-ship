@@ -36,7 +36,7 @@ void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activ
     desk = get_desktop(*window);
 
     if (on_desktop(window, space.virtual_desktop_manager->current())) {
-        if (win::wants_tab_focus(window) && space.base.options->qobject->focusPolicyIsReasonable()
+        if (win::wants_tab_focus(window) && space.options->qobject->focusPolicyIsReasonable()
             && !was_on_desktop && // for stickyness changes
             !dont_activate) {
             request_focus(space, *window);
@@ -91,7 +91,7 @@ void window_to_desktop(Win& window)
     auto& vds = ws.virtual_desktop_manager;
     Direction functor(*vds);
 
-    // TODO: why is win.space.base.options->isRollOverDesktops() not honored?
+    // TODO: why is win.space.options->isRollOverDesktops() not honored?
     auto const desktop = functor(nullptr, true);
 
     if (!is_desktop(&window) && !is_dock(&window)) {

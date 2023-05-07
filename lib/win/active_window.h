@@ -147,12 +147,11 @@ void active_window_lower(Space& space)
 
             // As this most likely makes the window no longer visible change the
             // keyboard focus to the next available window.
-            if (!act_win->control->active
-                || !space.base.options->qobject->focusPolicyIsReasonable()) {
+            if (!act_win->control->active || !space.options->qobject->focusPolicyIsReasonable()) {
                 return;
             }
 
-            if (space.base.options->qobject->isNextFocusPrefersMouse()) {
+            if (space.options->qobject->isNextFocusPrefersMouse()) {
                 auto next = window_under_mouse(space, act_win->topo.central_output);
                 if (next && *next != var_win(act_win)) {
                     std::visit(overload{[&](auto&& next) { request_focus(space, *next); }}, *next);
@@ -310,7 +309,7 @@ void active_window_to_desktop(Space& space)
     int const current = vds->current();
     Direction functor(*vds);
 
-    int const d = functor(current, space.base.options->qobject->isRollOverDesktops());
+    int const d = functor(current, space.options->qobject->isRollOverDesktops());
     if (d == current) {
         return;
     }

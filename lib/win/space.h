@@ -72,8 +72,9 @@ class space
 public:
     using qobject_t = space_qobject;
 
-    space()
+    space(KSharedConfigPtr config)
         : qobject{std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); })}
+        , options{std::make_unique<win::options>(config)}
         , rule_book{std::make_unique<rules::book>()}
         , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
         , session_manager{std::make_unique<win::session_manager>()}
@@ -98,6 +99,7 @@ public:
     virtual void show_debug_console() = 0;
 
     std::unique_ptr<qobject_t> qobject;
+    std::unique_ptr<win::options> options;
 
     win::space_areas areas;
     std::unique_ptr<base::x11::atoms> atoms;

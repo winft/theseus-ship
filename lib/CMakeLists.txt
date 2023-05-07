@@ -96,6 +96,7 @@ set(kwin_SRCS
     win/dbus/virtual_desktop_types.cpp
     win/deco/palette.cpp
     win/deco/decorations_logging.cpp
+    win/options.cpp
     win/osd_notification.cpp
     win/property_window.cpp
     win/rules/book.cpp
@@ -141,6 +142,7 @@ qt6_add_dbus_adaptor(kwin_SRCS
 )
 
 kconfig_add_kcfg_files(kwin_SRCS base/kconfig/options_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS win/config/win_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_book_settings_base.kcfgc)

@@ -585,11 +585,14 @@ TEST_CASE("decoration input", "[input],[win]")
         group.sync();
         win::space_reconfigure(*setup.base->space);
         REQUIRE(
-            setup.base->options->qobject->commandAllModifier()
+            setup.base->space->options->qobject->commandAllModifier()
             == (modifier.key_name == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier));
-        QCOMPARE(setup.base->options->qobject->commandAll1(), win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->options->qobject->commandAll2(), win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->options->qobject->commandAll3(), win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+                 win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll2(),
+                 win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+                 win::mouse_cmd::unrestricted_move);
 
         // create a window
         auto c = showWindow();

@@ -95,12 +95,12 @@ void init_space(Space& space)
         space.qobject.get(),
         [&](auto /*prev*/, auto next) { space.stacking.focus_chain.current_desktop = next; });
     QObject::connect(
-        space.base.options->qobject.get(),
-        &base::options_qobject::separateScreenFocusChanged,
+        space.options->qobject.get(),
+        &options_qobject::separateScreenFocusChanged,
         space.qobject.get(),
         [&](auto enable) { space.stacking.focus_chain.has_separate_screen_focus = enable; });
     space.stacking.focus_chain.has_separate_screen_focus
-        = space.base.options->qobject->isSeparateScreenFocus();
+        = space.options->qobject->isSeparateScreenFocus();
 
     auto& vds = space.virtual_desktop_manager;
     QObject::connect(
@@ -139,9 +139,9 @@ void init_space(Space& space)
                      space.qobject.get(),
                      [&]() { Q_EMIT space.qobject->currentDesktopChangingCancelled(); });
 
-    vds->setNavigationWrappingAround(space.base.options->qobject->isRollOverDesktops());
-    QObject::connect(space.base.options->qobject.get(),
-                     &base::options_qobject::rollOverDesktopsChanged,
+    vds->setNavigationWrappingAround(space.options->qobject->isRollOverDesktops());
+    QObject::connect(space.options->qobject.get(),
+                     &options_qobject::rollOverDesktopsChanged,
                      vds->qobject.get(),
                      [&vds](auto enabled) { vds->setNavigationWrappingAround(enabled); });
 

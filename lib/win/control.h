@@ -149,7 +149,7 @@ public:
             auto_raise(*m_win);
         });
         m_auto_raise_timer->setSingleShot(true);
-        m_auto_raise_timer->start(m_win->space.base.options->qobject->autoRaiseInterval());
+        m_auto_raise_timer->start(m_win->space.options->qobject->autoRaiseInterval());
     }
 
     void cancel_auto_raise()

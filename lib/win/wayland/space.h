@@ -68,7 +68,7 @@ public:
     using input_t = input::wayland::redirect<typename Base::input_t, type>;
 
     space(Base& base)
-        : win::space()
+        : win::space(base.config.main)
         , base{base}
         , outline{render::outline::create(*base.render->compositor,
                                           [this] {

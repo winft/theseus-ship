@@ -23,9 +23,10 @@ void space_reconfigure(Space& space)
 {
     space.reconfigureTimer.stop();
 
-    bool borderlessMaximizedWindows = space.base.options->qobject->borderlessMaximizedWindows();
+    bool borderlessMaximizedWindows = space.options->qobject->borderlessMaximizedWindows();
 
     space.base.config.main->reparseConfiguration();
+    space.options->updateSettings();
     space.base.options->updateSettings();
     space.scripting->start();
 
@@ -45,8 +46,8 @@ void space_reconfigure(Space& space)
                    win);
     }
 
-    if (borderlessMaximizedWindows != space.base.options->qobject->borderlessMaximizedWindows()
-        && !space.base.options->qobject->borderlessMaximizedWindows()) {
+    if (borderlessMaximizedWindows != space.options->qobject->borderlessMaximizedWindows()
+        && !space.options->qobject->borderlessMaximizedWindows()) {
         // in case borderless maximized windows option changed and new option
         // is to have borders, we need to unset the borders for all maximized windows
         for (auto win : space.windows) {

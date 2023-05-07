@@ -23,7 +23,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
         active = true;
     }
 
-    auto const& qopts = win->space.base.options->qobject;
+    auto const& qopts = win->space.options->qobject;
 
     // check whether it is a double click
     if (event->button() == Qt::LeftButton && titlebar_positioned_under_mouse(win)) {

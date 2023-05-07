@@ -908,7 +908,7 @@ protected:
     void switch_desktop() const
     {
         ref_space->virtual_desktop_manager->template moveTo<Direction>(
-            ref_space->base.options->qobject->isRollOverDesktops());
+            ref_space->options->qobject->isRollOverDesktops());
     }
     void switch_desktop_next_impl() const override
     {

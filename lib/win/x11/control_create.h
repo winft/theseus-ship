@@ -22,6 +22,7 @@
 #include "base/logging.h"
 #include "win/input.h"
 #include "win/layers.h"
+#include "win/options.h"
 #include "win/rules/find.h"
 #include "win/session.h"
 
@@ -134,8 +135,8 @@ void prepare_decoration(Win* win)
 template<typename Win>
 bool created_window_may_activate(Win& win, Win& act_win)
 {
-    if (enum_index(win.control->rules.checkFSP(
-            win.space.base.options->qobject->focusStealingPreventionLevel()))
+    if (enum_index(
+            win.control->rules.checkFSP(win.space.options->qobject->focusStealingPreventionLevel()))
         <= 0) {
         // Always allowed if focus stealing prevention is turned off.
         return true;
@@ -290,12 +291,12 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      &client_machine::localhostChanged,
                      win->qobject.get(),
                      [win] { win->updateCaption(); });
-    QObject::connect(space.base.options->qobject.get(),
-                     &base::options_qobject::configChanged,
+    QObject::connect(space.options->qobject.get(),
+                     &win::options_qobject::configChanged,
                      win->qobject.get(),
                      [win] { win->control->update_mouse_grab(); });
-    QObject::connect(space.base.options->qobject.get(),
-                     &base::options_qobject::condensedTitleChanged,
+    QObject::connect(space.options->qobject.get(),
+                     &win::options_qobject::condensedTitleChanged,
                      win->qobject.get(),
                      [win] { win->updateCaption(); });
 
@@ -704,8 +705,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         if (!isMapped) {
             if (allow && on_current_desktop(win)) {
                 if (!is_special_window(win)) {
-                    if (space.base.options->qobject->focusPolicyIsReasonable()
-                        && wants_tab_focus(win)) {
+                    if (space.options->qobject->focusPolicyIsReasonable() && wants_tab_focus(win)) {
                         request_focus(space, *win);
                     }
                 }

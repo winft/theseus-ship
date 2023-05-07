@@ -25,7 +25,7 @@ void reset_update_tool_windows_timer(Space& space)
 template<typename Space>
 void update_tool_windows_visibility(Space* space, bool also_hide)
 {
-    if (!space->base.options->qobject->isHideUtilityWindowsForInactive()) {
+    if (!space->options->qobject->isHideUtilityWindowsForInactive()) {
         for (auto&& window : space->windows) {
             std::visit(overload{[](auto&& window) {
                            if (window->control) {

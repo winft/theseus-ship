@@ -348,8 +348,8 @@ QPoint adjust_window_position(Space const& space,
                               bool unrestricted,
                               double snapAdjust = 1.0)
 {
-    QSize borderSnapZone(space.base.options->qobject->borderSnapZone(),
-                         space.base.options->qobject->borderSnapZone());
+    QSize borderSnapZone(space.options->qobject->borderSnapZone(),
+                         space.options->qobject->borderSnapZone());
     QRect maxRect;
     auto guideMaximized = maximize_mode::restore;
 
@@ -369,10 +369,10 @@ QPoint adjust_window_position(Space const& space,
         }
     }
 
-    if (space.base.options->qobject->windowSnapZone() || !borderSnapZone.isNull()
-        || space.base.options->qobject->centerSnapZone()) {
+    if (space.options->qobject->windowSnapZone() || !borderSnapZone.isNull()
+        || space.options->qobject->centerSnapZone()) {
         auto const& outputs = space.base.outputs;
-        const bool sOWO = space.base.options->qobject->isSnapOnlyWhenOverlapping();
+        const bool sOWO = space.options->qobject->isSnapOnlyWhenOverlapping();
         auto output
             = base::get_nearest_output(outputs, pos + QRect({}, window.geo.size()).center());
 
@@ -459,7 +459,7 @@ QPoint adjust_window_position(Space const& space,
         }
 
         // windows snap
-        int snap = space.base.options->qobject->windowSnapZone() * snapAdjust;
+        int snap = space.options->qobject->windowSnapZone() * snapAdjust;
         if (snap) {
             for (auto win : space.windows) {
                 std::visit(overload{[&](auto&& win) {
@@ -555,7 +555,7 @@ QPoint adjust_window_position(Space const& space,
         }
 
         // center snap
-        snap = space.base.options->qobject->centerSnapZone() * snapAdjust; // snap trigger
+        snap = space.options->qobject->centerSnapZone() * snapAdjust; // snap trigger
         if (snap) {
             int diffX = qAbs((xmin + xmax) / 2 - (cx + cw / 2));
             int diffY = qAbs((ymin + ymax) / 2 - (cy + ch / 2));
@@ -563,7 +563,7 @@ QPoint adjust_window_position(Space const& space,
                 // Snap to center of screen
                 nx = (xmin + xmax) / 2 - cw / 2;
                 ny = (ymin + ymax) / 2 - ch / 2;
-            } else if (space.base.options->qobject->borderSnapZone()) {
+            } else if (space.options->qobject->borderSnapZone()) {
                 // Enhance border snap
                 if ((nx == xmin || nx == xmax - cw) && diffY < snap && diffY < deltaY) {
                     // Snap to vertical center on screen edge
@@ -587,10 +587,9 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
     // adapted from adjustClientPosition on 29May2004
     // this function is called when resizing a window and will modify
     // the new dimensions to snap to other windows/borders if appropriate
-    if (space.base.options->qobject->windowSnapZone()
-        || space.base.options->qobject->borderSnapZone()) {
-        // || space.base.options->centerSnapZone )
-        const bool sOWO = space.base.options->qobject->isSnapOnlyWhenOverlapping();
+    if (space.options->qobject->windowSnapZone() || space.options->qobject->borderSnapZone()) {
+        // || space.options->centerSnapZone )
+        const bool sOWO = space.options->qobject->isSnapOnlyWhenOverlapping();
 
         auto const maxRect = space_window_area(space,
                                                MovementArea,
@@ -615,7 +614,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
 
         // border snap
         // snap trigger
-        int snap = space.base.options->qobject->borderSnapZone();
+        int snap = space.options->qobject->borderSnapZone();
         if (snap) {
             deltaX = int(snap);
             deltaY = int(snap);
@@ -684,7 +683,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
         }
 
         // windows snap
-        snap = space.base.options->qobject->windowSnapZone();
+        snap = space.options->qobject->windowSnapZone();
         if (snap) {
             deltaX = int(snap);
             deltaY = int(snap);
@@ -824,7 +823,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
         }
 
         // center snap
-        // snap = space.base.options->centerSnapZone;
+        // snap = space.options->centerSnapZone;
         // if (snap)
         //    {
         //    // Don't resize snap to center as it interferes too much

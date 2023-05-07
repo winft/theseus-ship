@@ -28,7 +28,7 @@ bool allow_window_activation(Space& space,
 {
     using var_win = typename Space::window_t;
 
-    // space.base.options->focusStealingPreventionLevel :
+    // space.options->focusStealingPreventionLevel :
     // 0 - none    - old KWin behaviour, new windows always get focus
     // 1 - low     - focus stealing prevention is applied normally, when unsure, activation is
     // allowed 2 - normal  - focus stealing prevention is applied normally, when unsure, activation
@@ -41,8 +41,8 @@ bool allow_window_activation(Space& space,
         time = window->userTime();
     }
 
-    auto level = window->control->rules.checkFSP(
-        space.base.options->qobject->focusStealingPreventionLevel());
+    auto level
+        = window->control->rules.checkFSP(space.options->qobject->focusStealingPreventionLevel());
     if (space.session_manager->state() == SessionState::Saving
         && enum_index(level) <= enum_index(fsp_level::medium)) {
         // <= normal
@@ -151,8 +151,8 @@ bool allow_window_activation(Space& space,
 template<typename Space, typename Win>
 bool allow_full_window_raising(Space& space, Win const* window, xcb_timestamp_t time)
 {
-    auto level = window->control->rules.checkFSP(
-        space.base.options->qobject->focusStealingPreventionLevel());
+    auto level
+        = window->control->rules.checkFSP(space.options->qobject->focusStealingPreventionLevel());
     if (space.session_manager->state() == SessionState::Saving
         && enum_index(level) <= enum_index(fsp_level::medium)) {
         // <= normal

@@ -136,7 +136,7 @@ public:
                     && win::titlebar_positioned_under_mouse(window)) {
                     win::perform_mouse_command(
                         *window,
-                        this->redirect.platform.base.options->operationTitlebarMouseWheel(
+                        this->redirect.platform.base.space->options->operationTitlebarMouseWheel(
                             event.delta * -1),
                         this->redirect.pointer->pos().toPoint());
                 }

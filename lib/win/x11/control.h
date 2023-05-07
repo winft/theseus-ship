@@ -73,7 +73,7 @@ public:
         //
         // The passive grab below is established so the window can be raised or activated when it
         // is clicked.
-        auto const& qopts = m_window->space.base.options->qobject;
+        auto const& qopts = m_window->space.options->qobject;
 
         if ((qopts->focusPolicyIsReasonable() && !this->active)
             || (qopts->isClickRaise() && !is_most_recently_raised(m_window))) {

@@ -1351,7 +1351,7 @@ public:
 
         // Update decoration borders.
         if (auto deco = decoration(this); deco && deco->client()
-            && !(space.base.options->qobject->borderlessMaximizedWindows()
+            && !(space.options->qobject->borderlessMaximizedWindows()
                  && mode == maximize_mode::full)) {
             auto const deco_client = win::decoration(this)->client();
             if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {

@@ -289,7 +289,7 @@ void do_set_maximize_mode(Win& win, win::maximize_mode mode)
 
     // Update decoration borders.
     if (auto deco = decoration(&win); deco && deco->client()
-        && !(win.space.base.options->qobject->borderlessMaximizedWindows()
+        && !(win.space.options->qobject->borderlessMaximizedWindows()
              && mode == maximize_mode::full)) {
         auto const deco_client = decoration(&win)->client();
 

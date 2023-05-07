@@ -20,7 +20,7 @@ namespace KWin::win
 template<typename Space>
 inline bool is_output_switch_impossible(Space const& space)
 {
-    if (!space.base.options->get_current_output_follows_mouse()) {
+    if (!space.options->get_current_output_follows_mouse()) {
         return false;
     }
 
@@ -39,7 +39,7 @@ inline bool is_output_switch_impossible(Space const& space)
 template<typename Space>
 void set_current_output(Space& space, base::output const& output)
 {
-    if (!space.base.options->qobject->focusPolicyIsReasonable()) {
+    if (!space.options->qobject->focusPolicyIsReasonable()) {
         return;
     }
 
