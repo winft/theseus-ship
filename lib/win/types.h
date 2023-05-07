@@ -120,6 +120,13 @@ enum class focus_chain_change {
     update,
 };
 
+enum class focus_policy {
+    click,                /// Focus through click, the default.
+    follows_mouse,        /// Moving mouse activates normal windows, desktop and docks excludedd.
+    under_mouse,          /// Window under mouse always active, desktop and docks excludedd.
+    strictly_under_mouse, /// Window under mouse always active.
+};
+
 /// Focus Stealing Prevention Levels
 enum class fsp_level {
     none = 0,
@@ -176,6 +183,69 @@ enum class window_type_mask : unsigned int {
     critical_notification = 1u << 17,
     applet_popup = 1u << 18,
     all_types = 0xffffffff,
+};
+
+enum class win_op {
+    maximize = 5000,
+    restore,
+    minimize,
+    move,
+    unrestricted_move,
+    resize,
+    unrestricted_resize,
+    close,
+    on_all_desktops,
+    keep_above,
+    keep_below,
+    operations,
+    window_rules,
+    toggle_Store_settings = window_rules, ///< @obsolete
+    h_maximize,
+    v_maximize,
+    lower,
+    fullscreen,
+    no_border,
+    noop,
+    setup_window_shortcut,
+    application_rules,
+};
+
+enum class mouse_cmd {
+    raise,
+    lower,
+    operations_menu,
+    toggle_raise_and_lower,
+    activate_and_raise,
+    activate_and_lower,
+    activate,
+    activate_raise_and_pass_click,
+    activate_and_pass_click,
+    move,
+    unrestricted_move,
+    activate_raise_and_move,
+    activate_raise_and_unrestricted_move,
+    resize,
+    unrestricted_resize,
+    maximize,
+    restore,
+    minimize,
+    next_desktop,
+    previous_desktop,
+    above,
+    below,
+    opacity_more,
+    opacity_less,
+    close,
+    nothing,
+};
+
+enum class mouse_wheel_cmd {
+    raise_lower,
+    maximize_restore,
+    above_below,
+    previous_next_desktop,
+    change_opacity,
+    nothing,
 };
 
 }

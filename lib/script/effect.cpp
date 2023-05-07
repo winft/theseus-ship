@@ -53,7 +53,7 @@ struct AnimationSettings {
 };
 
 AnimationSettings animationSettingsFromObject(const QJSValue& object,
-                                              base::options_qobject::AnimationCurve anim_curve)
+                                              render::animation_curve anim_curve)
 {
     AnimationSettings settings;
     settings.set = 0;
@@ -83,15 +83,15 @@ AnimationSettings animationSettingsFromObject(const QJSValue& object,
         settings.curve = static_cast<QEasingCurve::Type>(curve.toInt());
         settings.set |= AnimationSettings::Curve;
     } else {
-        auto get_qt_curve = [](base::options_qobject::AnimationCurve curve) {
+        auto get_qt_curve = [](auto curve) {
             switch (curve) {
-            case base::options_qobject::AnimationCurve::Quadratic:
+            case render::animation_curve::quadratic:
                 return QEasingCurve::InOutQuart;
-            case base::options_qobject::AnimationCurve::Cubic:
+            case render::animation_curve::cubic:
                 return QEasingCurve::InOutCubic;
-            case base::options_qobject::AnimationCurve::Quartic:
+            case render::animation_curve::quartic:
                 return QEasingCurve::InOutQuad;
-            case base::options_qobject::AnimationCurve::Sine:
+            case render::animation_curve::sine:
                 return QEasingCurve::InOutSine;
             default:
                 return QEasingCurve::Linear;

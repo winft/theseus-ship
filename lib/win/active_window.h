@@ -92,9 +92,7 @@ template<typename Space>
 void active_window_maximize(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::MaximizeOp);
-                   }},
+        std::visit(overload{[&](auto&& win) { perform_window_operation(win, win_op::maximize); }},
                    *space.stacking.active);
     }
 }
@@ -103,9 +101,7 @@ template<typename Space>
 void active_window_maximize_vertical(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::VMaximizeOp);
-                   }},
+        std::visit(overload{[&](auto&& win) { perform_window_operation(win, win_op::v_maximize); }},
                    *space.stacking.active);
     }
 }
@@ -114,9 +110,7 @@ template<typename Space>
 void active_window_maximize_horizontal(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::HMaximizeOp);
-                   }},
+        std::visit(overload{[&](auto&& win) { perform_window_operation(win, win_op::h_maximize); }},
                    *space.stacking.active);
     }
 }
@@ -125,9 +119,7 @@ template<typename Space>
 void active_window_minimize(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::MinimizeOp);
-                   }},
+        std::visit(overload{[&](auto&& win) { perform_window_operation(win, win_op::minimize); }},
                    *space.stacking.active);
     }
 }
@@ -201,9 +193,7 @@ template<typename Space>
 void active_window_set_fullscreen(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::FullScreenOp);
-                   }},
+        std::visit(overload{[&](auto&& win) { perform_window_operation(win, win_op::fullscreen); }},
                    *space.stacking.active);
     }
 }
@@ -212,9 +202,7 @@ template<typename Space>
 void active_window_set_no_border(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::NoBorderOp);
-                   }},
+        std::visit(overload{[&](auto&& win) { perform_window_operation(win, win_op::no_border); }},
                    *space.stacking.active);
     }
 }
@@ -223,9 +211,7 @@ template<typename Space>
 void active_window_set_keep_above(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::KeepAboveOp);
-                   }},
+        std::visit(overload{[&](auto&& win) { perform_window_operation(win, win_op::keep_above); }},
                    *space.stacking.active);
     }
 }
@@ -234,9 +220,7 @@ template<typename Space>
 void active_window_set_keep_below(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::KeepBelowOp);
-                   }},
+        std::visit(overload{[&](auto&& win) { perform_window_operation(win, win_op::keep_below); }},
                    *space.stacking.active);
     }
 }
@@ -246,7 +230,7 @@ void active_window_setup_window_shortcut(Space& space)
 {
     if (has_usable_active_window(space)) {
         std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::SetupWindowShortcutOp);
+                       perform_window_operation(win, win_op::setup_window_shortcut);
                    }},
                    *space.stacking.active);
     }
@@ -256,9 +240,7 @@ template<typename Space>
 void active_window_close(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::CloseOp);
-                   }},
+        std::visit(overload{[&](auto&& win) { perform_window_operation(win, win_op::close); }},
                    *space.stacking.active);
     }
 }
@@ -267,10 +249,9 @@ template<typename Space>
 void active_window_move(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::UnrestrictedMoveOp);
-                   }},
-                   *space.stacking.active);
+        std::visit(
+            overload{[&](auto&& win) { perform_window_operation(win, win_op::unrestricted_move); }},
+            *space.stacking.active);
     }
 }
 
@@ -279,7 +260,7 @@ void active_window_resize(Space& space)
 {
     if (has_usable_active_window(space)) {
         std::visit(overload{[&](auto&& win) {
-                       perform_window_operation(win, base::options_qobject::UnrestrictedResizeOp);
+                       perform_window_operation(win, win_op::unrestricted_resize);
                    }},
                    *space.stacking.active);
     }

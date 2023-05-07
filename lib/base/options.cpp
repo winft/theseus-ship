@@ -35,14 +35,14 @@ options_qobject::options_qobject(operation_mode mode)
 {
 }
 
-void options_qobject::setFocusPolicy(FocusPolicy focusPolicy)
+void options_qobject::setFocusPolicy(win::focus_policy focusPolicy)
 {
     if (m_focusPolicy == focusPolicy) {
         return;
     }
     m_focusPolicy = focusPolicy;
     Q_EMIT focusPolicyChanged();
-    if (m_focusPolicy == ClickToFocus) {
+    if (m_focusPolicy == win::focus_policy::click) {
         setAutoRaise(false);
         setAutoRaiseInterval(0);
         setDelayFocusInterval(0);
@@ -78,7 +78,7 @@ void options_qobject::setClickRaise(bool clickRaise)
 
 void options_qobject::setAutoRaise(bool autoRaise)
 {
-    if (m_focusPolicy == ClickToFocus) {
+    if (m_focusPolicy == win::focus_policy::click) {
         autoRaise = false;
     }
     if (m_autoRaise == autoRaise) {
@@ -94,7 +94,7 @@ void options_qobject::setAutoRaise(bool autoRaise)
 
 void options_qobject::setAutoRaiseInterval(int autoRaiseInterval)
 {
-    if (m_focusPolicy == ClickToFocus) {
+    if (m_focusPolicy == win::focus_policy::click) {
         autoRaiseInterval = 0;
     }
     if (m_autoRaiseInterval == autoRaiseInterval) {
@@ -106,7 +106,7 @@ void options_qobject::setAutoRaiseInterval(int autoRaiseInterval)
 
 void options_qobject::setDelayFocusInterval(int delayFocusInterval)
 {
-    if (m_focusPolicy == ClickToFocus) {
+    if (m_focusPolicy == win::focus_policy::click) {
         delayFocusInterval = 0;
     }
     if (m_delayFocusInterval == delayFocusInterval) {
@@ -199,16 +199,16 @@ void options_qobject::setFocusStealingPreventionLevel(win::fsp_level focusSteali
     Q_EMIT focusStealingPreventionLevelChanged();
 }
 
-void options_qobject::setOperationTitlebarDblClick(WindowOperation operationTitlebarDblClick)
+void options_qobject::setOperationTitlebarDblClick(win::win_op op)
 {
-    if (OpTitlebarDblClick == operationTitlebarDblClick) {
+    if (OpTitlebarDblClick == op) {
         return;
     }
-    OpTitlebarDblClick = operationTitlebarDblClick;
+    OpTitlebarDblClick = op;
     Q_EMIT operationTitlebarDblClickChanged();
 }
 
-void options_qobject::setOperationMaxButtonLeftClick(WindowOperation op)
+void options_qobject::setOperationMaxButtonLeftClick(win::win_op op)
 {
     if (opMaxButtonLeftClick == op) {
         return;
@@ -217,7 +217,7 @@ void options_qobject::setOperationMaxButtonLeftClick(WindowOperation op)
     Q_EMIT operationMaxButtonLeftClickChanged();
 }
 
-void options_qobject::setOperationMaxButtonRightClick(WindowOperation op)
+void options_qobject::setOperationMaxButtonRightClick(win::win_op op)
 {
     if (opMaxButtonRightClick == op) {
         return;
@@ -226,7 +226,7 @@ void options_qobject::setOperationMaxButtonRightClick(WindowOperation op)
     Q_EMIT operationMaxButtonRightClickChanged();
 }
 
-void options_qobject::setOperationMaxButtonMiddleClick(WindowOperation op)
+void options_qobject::setOperationMaxButtonMiddleClick(win::win_op op)
 {
     if (opMaxButtonMiddleClick == op) {
         return;
@@ -235,120 +235,120 @@ void options_qobject::setOperationMaxButtonMiddleClick(WindowOperation op)
     Q_EMIT operationMaxButtonMiddleClickChanged();
 }
 
-void options_qobject::setCommandActiveTitlebar1(MouseCommand commandActiveTitlebar1)
+void options_qobject::setCommandActiveTitlebar1(win::mouse_cmd cmd)
 {
-    if (CmdActiveTitlebar1 == commandActiveTitlebar1) {
+    if (CmdActiveTitlebar1 == cmd) {
         return;
     }
-    CmdActiveTitlebar1 = commandActiveTitlebar1;
+    CmdActiveTitlebar1 = cmd;
     Q_EMIT commandActiveTitlebar1Changed();
 }
 
-void options_qobject::setCommandActiveTitlebar2(MouseCommand commandActiveTitlebar2)
+void options_qobject::setCommandActiveTitlebar2(win::mouse_cmd cmd)
 {
-    if (CmdActiveTitlebar2 == commandActiveTitlebar2) {
+    if (CmdActiveTitlebar2 == cmd) {
         return;
     }
-    CmdActiveTitlebar2 = commandActiveTitlebar2;
+    CmdActiveTitlebar2 = cmd;
     Q_EMIT commandActiveTitlebar2Changed();
 }
 
-void options_qobject::setCommandActiveTitlebar3(MouseCommand commandActiveTitlebar3)
+void options_qobject::setCommandActiveTitlebar3(win::mouse_cmd cmd)
 {
-    if (CmdActiveTitlebar3 == commandActiveTitlebar3) {
+    if (CmdActiveTitlebar3 == cmd) {
         return;
     }
-    CmdActiveTitlebar3 = commandActiveTitlebar3;
+    CmdActiveTitlebar3 = cmd;
     Q_EMIT commandActiveTitlebar3Changed();
 }
 
-void options_qobject::setCommandInactiveTitlebar1(MouseCommand commandInactiveTitlebar1)
+void options_qobject::setCommandInactiveTitlebar1(win::mouse_cmd cmd)
 {
-    if (CmdInactiveTitlebar1 == commandInactiveTitlebar1) {
+    if (CmdInactiveTitlebar1 == cmd) {
         return;
     }
-    CmdInactiveTitlebar1 = commandInactiveTitlebar1;
+    CmdInactiveTitlebar1 = cmd;
     Q_EMIT commandInactiveTitlebar1Changed();
 }
 
-void options_qobject::setCommandInactiveTitlebar2(MouseCommand commandInactiveTitlebar2)
+void options_qobject::setCommandInactiveTitlebar2(win::mouse_cmd cmd)
 {
-    if (CmdInactiveTitlebar2 == commandInactiveTitlebar2) {
+    if (CmdInactiveTitlebar2 == cmd) {
         return;
     }
-    CmdInactiveTitlebar2 = commandInactiveTitlebar2;
+    CmdInactiveTitlebar2 = cmd;
     Q_EMIT commandInactiveTitlebar2Changed();
 }
 
-void options_qobject::setCommandInactiveTitlebar3(MouseCommand commandInactiveTitlebar3)
+void options_qobject::setCommandInactiveTitlebar3(win::mouse_cmd cmd)
 {
-    if (CmdInactiveTitlebar3 == commandInactiveTitlebar3) {
+    if (CmdInactiveTitlebar3 == cmd) {
         return;
     }
-    CmdInactiveTitlebar3 = commandInactiveTitlebar3;
+    CmdInactiveTitlebar3 = cmd;
     Q_EMIT commandInactiveTitlebar3Changed();
 }
 
-void options_qobject::setCommandWindow1(MouseCommand commandWindow1)
+void options_qobject::setCommandWindow1(win::mouse_cmd cmd)
 {
-    if (CmdWindow1 == commandWindow1) {
+    if (CmdWindow1 == cmd) {
         return;
     }
-    CmdWindow1 = commandWindow1;
+    CmdWindow1 = cmd;
     Q_EMIT commandWindow1Changed();
 }
 
-void options_qobject::setCommandWindow2(MouseCommand commandWindow2)
+void options_qobject::setCommandWindow2(win::mouse_cmd cmd)
 {
-    if (CmdWindow2 == commandWindow2) {
+    if (CmdWindow2 == cmd) {
         return;
     }
-    CmdWindow2 = commandWindow2;
+    CmdWindow2 = cmd;
     Q_EMIT commandWindow2Changed();
 }
 
-void options_qobject::setCommandWindow3(MouseCommand commandWindow3)
+void options_qobject::setCommandWindow3(win::mouse_cmd cmd)
 {
-    if (CmdWindow3 == commandWindow3) {
+    if (CmdWindow3 == cmd) {
         return;
     }
-    CmdWindow3 = commandWindow3;
+    CmdWindow3 = cmd;
     Q_EMIT commandWindow3Changed();
 }
 
-void options_qobject::setCommandWindowWheel(MouseCommand commandWindowWheel)
+void options_qobject::setCommandWindowWheel(win::mouse_cmd cmd)
 {
-    if (CmdWindowWheel == commandWindowWheel) {
+    if (CmdWindowWheel == cmd) {
         return;
     }
-    CmdWindowWheel = commandWindowWheel;
+    CmdWindowWheel = cmd;
     Q_EMIT commandWindowWheelChanged();
 }
 
-void options_qobject::setCommandAll1(MouseCommand commandAll1)
+void options_qobject::setCommandAll1(win::mouse_cmd cmd)
 {
-    if (CmdAll1 == commandAll1) {
+    if (CmdAll1 == cmd) {
         return;
     }
-    CmdAll1 = commandAll1;
+    CmdAll1 = cmd;
     Q_EMIT commandAll1Changed();
 }
 
-void options_qobject::setCommandAll2(MouseCommand commandAll2)
+void options_qobject::setCommandAll2(win::mouse_cmd cmd)
 {
-    if (CmdAll2 == commandAll2) {
+    if (CmdAll2 == cmd) {
         return;
     }
-    CmdAll2 = commandAll2;
+    CmdAll2 = cmd;
     Q_EMIT commandAll2Changed();
 }
 
-void options_qobject::setCommandAll3(MouseCommand commandAll3)
+void options_qobject::setCommandAll3(win::mouse_cmd cmd)
 {
-    if (CmdAll3 == commandAll3) {
+    if (CmdAll3 == cmd) {
         return;
     }
-    CmdAll3 = commandAll3;
+    CmdAll3 = cmd;
     Q_EMIT commandAll3Changed();
 }
 
@@ -442,12 +442,12 @@ void options_qobject::setUseCompositing(bool useCompositing)
     Q_EMIT useCompositingChanged();
 }
 
-void options_qobject::setHiddenPreviews(int hiddenPreviews)
+void options_qobject::setHiddenPreviews(render::x11::hidden_preview hiddenPreviews)
 {
-    if (m_hiddenPreviews == static_cast<HiddenPreviews>(hiddenPreviews)) {
+    if (m_hiddenPreviews == hiddenPreviews) {
         return;
     }
-    m_hiddenPreviews = static_cast<HiddenPreviews>(hiddenPreviews);
+    m_hiddenPreviews = hiddenPreviews;
     Q_EMIT hiddenPreviewsChanged();
 }
 
@@ -505,13 +505,13 @@ void options_qobject::setWindowsBlockCompositing(bool value)
     Q_EMIT windowsBlockCompositingChanged();
 }
 
-void options_qobject::setAnimationCurve(AnimationCurve curve)
+void options_qobject::setAnimationCurve(render::animation_curve curve)
 {
     if (m_animationCurve == curve) {
         return;
     }
 
-    qCDebug(KWIN_CORE) << "Setting animation curve: " << curve;
+    qCDebug(KWIN_CORE) << "Setting animation curve: " << static_cast<int>(curve);
     m_animationCurve = curve;
     Q_EMIT animationCurveChanged();
 }
@@ -723,15 +723,15 @@ void options::reloadCompositingSettings(bool force)
             config.readEntry("GLStrictBinding", options_qobject::defaultGlStrictBinding()));
     }
 
-    HiddenPreviews previews = options_qobject::defaultHiddenPreviews();
+    auto previews = options_qobject::defaultHiddenPreviews();
     // 4 - off, 5 - shown, 6 - always, other are old values
     int hps = config.readEntry("HiddenPreviews", 5);
     if (hps == 4)
-        previews = HiddenPreviewsNever;
+        previews = render::x11::hidden_preview::never;
     else if (hps == 5)
-        previews = HiddenPreviewsShown;
+        previews = render::x11::hidden_preview::shown;
     else if (hps == 6)
-        previews = HiddenPreviewsAlways;
+        previews = render::x11::hidden_preview::always;
     qobject->setHiddenPreviews(previews);
 }
 
@@ -739,94 +739,114 @@ void options::reloadCompositingSettings(bool force)
 // if the window is moved out of the workspace (e.g. if the user moves a window
 // by the titlebar, and moves it too high beneath Kicker at the top edge, they
 // may not be able to move it back, unless they know about Meta+LMB)
-options_qobject::WindowOperation options::windowOperation(const QString& name, bool restricted)
+win::win_op options::windowOperation(const QString& name, bool restricted)
 {
     if (name == QStringLiteral("Move"))
-        return restricted ? options_qobject::MoveOp : options_qobject::UnrestrictedMoveOp;
+        return restricted ? win::win_op::move : win::win_op::unrestricted_move;
     else if (name == QStringLiteral("Resize"))
-        return restricted ? options_qobject::ResizeOp : options_qobject::UnrestrictedResizeOp;
+        return restricted ? win::win_op::resize : win::win_op::unrestricted_resize;
     else if (name == QStringLiteral("Maximize"))
-        return options_qobject::MaximizeOp;
+        return win::win_op::maximize;
     else if (name == QStringLiteral("Minimize"))
-        return options_qobject::MinimizeOp;
+        return win::win_op::minimize;
     else if (name == QStringLiteral("Close"))
-        return options_qobject::CloseOp;
+        return win::win_op::close;
     else if (name == QStringLiteral("OnAllDesktops"))
-        return options_qobject::OnAllDesktopsOp;
+        return win::win_op::on_all_desktops;
     else if (name == QStringLiteral("Operations"))
-        return options_qobject::OperationsOp;
+        return win::win_op::operations;
     else if (name == QStringLiteral("Maximize (vertical only)"))
-        return options_qobject::VMaximizeOp;
+        return win::win_op::v_maximize;
     else if (name == QStringLiteral("Maximize (horizontal only)"))
-        return options_qobject::HMaximizeOp;
+        return win::win_op::h_maximize;
     else if (name == QStringLiteral("Lower"))
-        return options_qobject::LowerOp;
-    return options_qobject::NoOp;
+        return win::win_op::lower;
+    return win::win_op::noop;
 }
 
-options_qobject::MouseCommand options::mouseCommand(const QString& name, bool restricted)
+win::mouse_cmd options::mouseCommand(const QString& name, bool restricted)
 {
     QString lowerName = name.toLower();
-    if (lowerName == QStringLiteral("raise"))
-        return options_qobject::MouseRaise;
-    if (lowerName == QStringLiteral("lower"))
-        return options_qobject::MouseLower;
-    if (lowerName == QStringLiteral("operations menu"))
-        return options_qobject::MouseOperationsMenu;
-    if (lowerName == QStringLiteral("toggle raise and lower"))
-        return options_qobject::MouseToggleRaiseAndLower;
-    if (lowerName == QStringLiteral("activate and raise"))
-        return options_qobject::MouseActivateAndRaise;
-    if (lowerName == QStringLiteral("activate and lower"))
-        return options_qobject::MouseActivateAndLower;
-    if (lowerName == QStringLiteral("activate"))
-        return options_qobject::MouseActivate;
-    if (lowerName == QStringLiteral("activate, raise and pass click"))
-        return options_qobject::MouseActivateRaiseAndPassClick;
-    if (lowerName == QStringLiteral("activate and pass click"))
-        return options_qobject::MouseActivateAndPassClick;
-    if (lowerName == QStringLiteral("scroll"))
-        return options_qobject::MouseNothing;
-    if (lowerName == QStringLiteral("activate and scroll"))
-        return options_qobject::MouseActivateAndPassClick;
-    if (lowerName == QStringLiteral("activate, raise and scroll"))
-        return options_qobject::MouseActivateRaiseAndPassClick;
-    if (lowerName == QStringLiteral("activate, raise and move"))
-        return restricted ? options_qobject::MouseActivateRaiseAndMove
-                          : options_qobject::MouseActivateRaiseAndUnrestrictedMove;
-    if (lowerName == QStringLiteral("move"))
-        return restricted ? options_qobject::MouseMove : options_qobject::MouseUnrestrictedMove;
-    if (lowerName == QStringLiteral("resize"))
-        return restricted ? options_qobject::MouseResize : options_qobject::MouseUnrestrictedResize;
-    if (lowerName == QStringLiteral("minimize"))
-        return options_qobject::MouseMinimize;
-    if (lowerName == QStringLiteral("close"))
-        return options_qobject::MouseClose;
-    if (lowerName == QStringLiteral("increase opacity"))
-        return options_qobject::MouseOpacityMore;
-    if (lowerName == QStringLiteral("decrease opacity"))
-        return options_qobject::MouseOpacityLess;
-    if (lowerName == QStringLiteral("nothing"))
-        return options_qobject::MouseNothing;
-    return options_qobject::MouseNothing;
+    if (lowerName == QStringLiteral("raise")) {
+        return win::mouse_cmd::raise;
+    }
+    if (lowerName == QStringLiteral("lower")) {
+        return win::mouse_cmd::lower;
+    }
+    if (lowerName == QStringLiteral("operations menu")) {
+        return win::mouse_cmd::operations_menu;
+    }
+    if (lowerName == QStringLiteral("toggle raise and lower")) {
+        return win::mouse_cmd::toggle_raise_and_lower;
+    }
+    if (lowerName == QStringLiteral("activate and raise")) {
+        return win::mouse_cmd::activate_and_raise;
+    }
+    if (lowerName == QStringLiteral("activate and lower")) {
+        return win::mouse_cmd::activate_and_lower;
+    }
+    if (lowerName == QStringLiteral("activate")) {
+        return win::mouse_cmd::activate;
+    }
+    if (lowerName == QStringLiteral("activate, raise and pass click")) {
+        return win::mouse_cmd::activate_raise_and_pass_click;
+    }
+    if (lowerName == QStringLiteral("activate and pass click")) {
+        return win::mouse_cmd::activate_and_pass_click;
+    }
+    if (lowerName == QStringLiteral("scroll")) {
+        return win::mouse_cmd::nothing;
+    }
+    if (lowerName == QStringLiteral("activate and scroll")) {
+        return win::mouse_cmd::activate_and_pass_click;
+    }
+    if (lowerName == QStringLiteral("activate, raise and scroll")) {
+        return win::mouse_cmd::activate_raise_and_pass_click;
+    }
+    if (lowerName == QStringLiteral("activate, raise and move")) {
+        return restricted ? win::mouse_cmd::activate_raise_and_move
+                          : win::mouse_cmd::activate_raise_and_unrestricted_move;
+    }
+    if (lowerName == QStringLiteral("move")) {
+        return restricted ? win::mouse_cmd::move : win::mouse_cmd::unrestricted_move;
+    }
+    if (lowerName == QStringLiteral("resize")) {
+        return restricted ? win::mouse_cmd::resize : win::mouse_cmd::unrestricted_resize;
+    }
+    if (lowerName == QStringLiteral("minimize")) {
+        return win::mouse_cmd::minimize;
+    }
+    if (lowerName == QStringLiteral("close")) {
+        return win::mouse_cmd::close;
+    }
+    if (lowerName == QStringLiteral("increase opacity")) {
+        return win::mouse_cmd::opacity_more;
+    }
+    if (lowerName == QStringLiteral("decrease opacity")) {
+        return win::mouse_cmd::opacity_less;
+    }
+    if (lowerName == QStringLiteral("nothing")) {
+        return win::mouse_cmd::nothing;
+    }
+    return win::mouse_cmd::nothing;
 }
 
-options_qobject::MouseWheelCommand options::mouseWheelCommand(const QString& name)
+win::mouse_wheel_cmd options::mouseWheelCommand(const QString& name)
 {
     QString lowerName = name.toLower();
     if (lowerName == QStringLiteral("raise/lower"))
-        return options_qobject::MouseWheelRaiseLower;
+        return win::mouse_wheel_cmd::raise_lower;
     if (lowerName == QStringLiteral("maximize/restore"))
-        return options_qobject::MouseWheelMaximizeRestore;
+        return win::mouse_wheel_cmd::maximize_restore;
     if (lowerName == QStringLiteral("above/below"))
-        return options_qobject::MouseWheelAboveBelow;
+        return win::mouse_wheel_cmd::above_below;
     if (lowerName == QStringLiteral("previous/next desktop"))
-        return options_qobject::MouseWheelPreviousNextDesktop;
+        return win::mouse_wheel_cmd::previous_next_desktop;
     if (lowerName == QStringLiteral("change opacity"))
-        return options_qobject::MouseWheelChangeOpacity;
+        return win::mouse_wheel_cmd::change_opacity;
     if (lowerName == QStringLiteral("nothing"))
-        return options_qobject::MouseWheelNothing;
-    return options_qobject::MouseWheelNothing;
+        return win::mouse_wheel_cmd::nothing;
+    return win::mouse_wheel_cmd::nothing;
 }
 
 bool options_qobject::condensedTitle() const
@@ -834,23 +854,21 @@ bool options_qobject::condensedTitle() const
     return condensed_title;
 }
 
-options_qobject::MouseCommand options::wheelToMouseCommand(options_qobject::MouseWheelCommand com,
-                                                           int delta) const
+win::mouse_cmd options::wheelToMouseCommand(win::mouse_wheel_cmd com, int delta) const
 {
     switch (com) {
-    case options_qobject::MouseWheelRaiseLower:
-        return delta > 0 ? options_qobject::MouseRaise : options_qobject::MouseLower;
-    case options_qobject::MouseWheelMaximizeRestore:
-        return delta > 0 ? options_qobject::MouseMaximize : options_qobject::MouseRestore;
-    case options_qobject::MouseWheelAboveBelow:
-        return delta > 0 ? options_qobject::MouseAbove : options_qobject::MouseBelow;
-    case options_qobject::MouseWheelPreviousNextDesktop:
-        return delta > 0 ? options_qobject::MousePreviousDesktop
-                         : options_qobject::MouseNextDesktop;
-    case options_qobject::MouseWheelChangeOpacity:
-        return delta > 0 ? options_qobject::MouseOpacityMore : options_qobject::MouseOpacityLess;
+    case win::mouse_wheel_cmd::raise_lower:
+        return delta > 0 ? win::mouse_cmd::raise : win::mouse_cmd::lower;
+    case win::mouse_wheel_cmd::maximize_restore:
+        return delta > 0 ? win::mouse_cmd::maximize : win::mouse_cmd::restore;
+    case win::mouse_wheel_cmd::above_below:
+        return delta > 0 ? win::mouse_cmd::above : win::mouse_cmd::below;
+    case win::mouse_wheel_cmd::previous_next_desktop:
+        return delta > 0 ? win::mouse_cmd::previous_desktop : win::mouse_cmd::next_desktop;
+    case win::mouse_wheel_cmd::change_opacity:
+        return delta > 0 ? win::mouse_cmd::opacity_more : win::mouse_cmd::opacity_less;
     default:
-        return options_qobject::MouseNothing;
+        return win::mouse_cmd::nothing;
     }
 }
 
@@ -863,8 +881,7 @@ double options::animationTimeFactor() const
 #endif
 }
 
-options_qobject::WindowOperation
-options_qobject::operationMaxButtonClick(Qt::MouseButtons button) const
+win::win_op options_qobject::operationMaxButtonClick(Qt::MouseButtons button) const
 {
     return button == Qt::RightButton ? opMaxButtonRightClick
         : button == Qt::MiddleButton ? opMaxButtonMiddleClick

@@ -7,5 +7,4 @@ ClassName=KWinCompositingSetting
 Mutators=true
 DefaultValueGetters=true
 ParentInConstructor=true
-# Needed for AnimationCurve
-IncludeFiles=base/options.h
+IncludeFiles=render/types.h

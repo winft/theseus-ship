@@ -92,13 +92,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
             <default>false</default>
         </entry>
         <entry name="FocusPolicy" type="Enum">
-            <choices name="KWin::base::options_qobject::FocusPolicy">
+            <choices name="KWin::win::focus_policy">
                 <choice name="ClickToFocus"/>
                 <choice name="FocusFollowsMouse"/>
                 <choice name="FocusUnderMouse"/>
                 <choice name="FocusStrictlyUnderMouse"/>
             </choices>
-            <default>KWin::base::options_qobject::ClickToFocus</default>
+            <default>static_cast&lt;int&gt;(KWin::win::focus_policy::click)</default>
         </entry>
         <entry name="NextFocusPrefersMouse" type="Bool">
             <default>false</default>
@@ -107,7 +107,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
             <default>false</default>
         </entry>
         <entry name="ActiveMouseScreen" type="Bool">
-            <default code="true">focusPolicy() != KWin::base::options_qobject::ClickToFocus</default>
+            <default code="true">focusPolicy() != KWin::win::focus_policy::click</default>
         </entry>
         <entry name="RollOverDesktops" type="Bool">
             <default>true</default>
@@ -260,8 +260,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
             <default>true</default>
         </entry>
         <entry name="AnimationCurve" type="Enum">
-            <default>KWin::base::options_qobject::AnimationCurve::Linear</default>
-            <choices name="KWin::base::options_qobject::AnimationCurve">
+            <default>static_cast&lt;int&gt;(KWin::render::animation_curve::linear)</default>
+            <choices name="KWin::render::animation_curve">
                 <choice name="Linear"/>
                 <choice name="Quadratic"/>
                 <choice name="Cubic"/>

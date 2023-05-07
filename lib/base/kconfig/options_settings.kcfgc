@@ -5,6 +5,5 @@
 File=options_settings.kcfg
 NameSpace=KWin::base
 ClassName=Settings
-# options.h is needed for FocusPolicy
-IncludeFiles=base/options.h
+IncludeFiles=win/types.h,render/types.h
 UseEnumTypes=true

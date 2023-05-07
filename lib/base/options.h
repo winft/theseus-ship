@@ -12,26 +12,14 @@
 
 #include "kwin_export.h"
 #include "kwinglobals.h"
+#include "render/types.h"
+#include "render/x11/types.h"
 #include "win/types.h"
 
 #include <KConfigWatcher>
 
 namespace KWin::base
 {
-
-// Whether to keep all windows mapped when compositing (i.e. whether to have
-// actively updated window pixmaps).
-enum HiddenPreviews {
-    // The normal mode with regard to mapped windows. Hidden (minimized, etc.)
-    // and windows on inactive virtual desktops are not mapped, their pixmaps
-    // are only their icons.
-    HiddenPreviewsNever,
-    // Like normal mode, but shown windows (i.e. on inactive virtual desktops)
-    // are kept mapped, only hidden windows are unmapped.
-    HiddenPreviewsShown,
-    // All windows are kept mapped regardless of their state.
-    HiddenPreviewsAlways
-};
 
 KWIN_EXPORT OpenGLPlatformInterface defaultGlPlatformInterface(operation_mode mode);
 
@@ -40,216 +28,11 @@ class Settings;
 class KWIN_EXPORT options_qobject : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(FocusPolicy)
-    Q_ENUMS(MouseCommand)
-    Q_ENUMS(MouseWheelCommand)
-    Q_ENUMS(WindowOperation)
-    Q_ENUMS(AnimationCurve)
 
-    Q_PROPERTY(
-        FocusPolicy focusPolicy READ focusPolicy WRITE setFocusPolicy NOTIFY focusPolicyChanged)
-    Q_PROPERTY(AnimationCurve animationCurve READ animationCurve WRITE setAnimationCurve NOTIFY
-                   animationCurveChanged)
-    Q_PROPERTY(bool nextFocusPrefersMouse READ isNextFocusPrefersMouse WRITE
-                   setNextFocusPrefersMouse NOTIFY nextFocusPrefersMouseChanged)
-    /**
-     * Whether clicking on a window raises it in FocusFollowsMouse
-     * mode or not.
-     */
-    Q_PROPERTY(bool clickRaise READ isClickRaise WRITE setClickRaise NOTIFY clickRaiseChanged)
-    /**
-     * Whether autoraise is enabled FocusFollowsMouse mode or not.
-     */
-    Q_PROPERTY(bool autoRaise READ isAutoRaise WRITE setAutoRaise NOTIFY autoRaiseChanged)
-    /**
-     * Autoraise interval.
-     */
-    Q_PROPERTY(int autoRaiseInterval READ autoRaiseInterval WRITE setAutoRaiseInterval NOTIFY
-                   autoRaiseIntervalChanged)
-    /**
-     * Delayed focus interval.
-     */
-    Q_PROPERTY(int delayFocusInterval READ delayFocusInterval WRITE setDelayFocusInterval NOTIFY
-                   delayFocusIntervalChanged)
-    /**
-     * Whether to see Xinerama screens separately for focus (in Alt+Tab, when activating next
-     * client)
-     */
-    Q_PROPERTY(bool separateScreenFocus READ isSeparateScreenFocus WRITE setSeparateScreenFocus
-                   NOTIFY separateScreenFocusChanged)
-    Q_PROPERTY(
-        KWin::win::placement placement READ placement WRITE setPlacement NOTIFY placementChanged)
-    Q_PROPERTY(bool focusPolicyIsReasonable READ focusPolicyIsReasonable NOTIFY
-                   focusPolicyIsResonableChanged)
-    /**
-     * The size of the zone that triggers snapping on desktop borders.
-     */
-    Q_PROPERTY(
-        int borderSnapZone READ borderSnapZone WRITE setBorderSnapZone NOTIFY borderSnapZoneChanged)
-    /**
-     * The size of the zone that triggers snapping with other windows.
-     */
-    Q_PROPERTY(
-        int windowSnapZone READ windowSnapZone WRITE setWindowSnapZone NOTIFY windowSnapZoneChanged)
-    /**
-     * The size of the zone that triggers snapping on the screen center.
-     */
-    Q_PROPERTY(
-        int centerSnapZone READ centerSnapZone WRITE setCenterSnapZone NOTIFY centerSnapZoneChanged)
-    /**
-     * Snap only when windows will overlap.
-     */
-    Q_PROPERTY(bool snapOnlyWhenOverlapping READ isSnapOnlyWhenOverlapping WRITE
-                   setSnapOnlyWhenOverlapping NOTIFY snapOnlyWhenOverlappingChanged)
-    /**
-     * Whether or not we roll over to the other edge when switching desktops past the edge.
-     */
-    Q_PROPERTY(bool rollOverDesktops READ isRollOverDesktops WRITE setRollOverDesktops NOTIFY
-                   rollOverDesktopsChanged)
-    /**
-     * 0 - 4 , see Workspace::allowClientActivation()
-     */
-    Q_PROPERTY(win::fsp_level focusStealingPreventionLevel READ focusStealingPreventionLevel WRITE
-                   setFocusStealingPreventionLevel NOTIFY focusStealingPreventionLevelChanged)
-    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationTitlebarDblClick READ
-                   operationTitlebarDblClick WRITE setOperationTitlebarDblClick NOTIFY
-                       operationTitlebarDblClickChanged)
-    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationMaxButtonLeftClick READ
-                   operationMaxButtonLeftClick WRITE setOperationMaxButtonLeftClick NOTIFY
-                       operationMaxButtonLeftClickChanged)
-    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationMaxButtonMiddleClick READ
-                   operationMaxButtonMiddleClick WRITE setOperationMaxButtonMiddleClick NOTIFY
-                       operationMaxButtonMiddleClickChanged)
-    Q_PROPERTY(KWin::base::options_qobject::WindowOperation operationMaxButtonRightClick READ
-                   operationMaxButtonRightClick WRITE setOperationMaxButtonRightClick NOTIFY
-                       operationMaxButtonRightClickChanged)
-    Q_PROPERTY(MouseCommand commandActiveTitlebar1 READ commandActiveTitlebar1 WRITE
-                   setCommandActiveTitlebar1 NOTIFY commandActiveTitlebar1Changed)
-    Q_PROPERTY(MouseCommand commandActiveTitlebar2 READ commandActiveTitlebar2 WRITE
-                   setCommandActiveTitlebar2 NOTIFY commandActiveTitlebar2Changed)
-    Q_PROPERTY(MouseCommand commandActiveTitlebar3 READ commandActiveTitlebar3 WRITE
-                   setCommandActiveTitlebar3 NOTIFY commandActiveTitlebar3Changed)
-    Q_PROPERTY(MouseCommand commandInactiveTitlebar1 READ commandInactiveTitlebar1 WRITE
-                   setCommandInactiveTitlebar1 NOTIFY commandInactiveTitlebar1Changed)
-    Q_PROPERTY(MouseCommand commandInactiveTitlebar2 READ commandInactiveTitlebar2 WRITE
-                   setCommandInactiveTitlebar2 NOTIFY commandInactiveTitlebar2Changed)
-    Q_PROPERTY(MouseCommand commandInactiveTitlebar3 READ commandInactiveTitlebar3 WRITE
-                   setCommandInactiveTitlebar3 NOTIFY commandInactiveTitlebar3Changed)
-    Q_PROPERTY(MouseCommand commandWindow1 READ commandWindow1 WRITE setCommandWindow1 NOTIFY
-                   commandWindow1Changed)
-    Q_PROPERTY(MouseCommand commandWindow2 READ commandWindow2 WRITE setCommandWindow2 NOTIFY
-                   commandWindow2Changed)
-    Q_PROPERTY(MouseCommand commandWindow3 READ commandWindow3 WRITE setCommandWindow3 NOTIFY
-                   commandWindow3Changed)
-    Q_PROPERTY(MouseCommand commandWindowWheel READ commandWindowWheel WRITE setCommandWindowWheel
-                   NOTIFY commandWindowWheelChanged)
-    Q_PROPERTY(
-        MouseCommand commandAll1 READ commandAll1 WRITE setCommandAll1 NOTIFY commandAll1Changed)
-    Q_PROPERTY(
-        MouseCommand commandAll2 READ commandAll2 WRITE setCommandAll2 NOTIFY commandAll2Changed)
-    Q_PROPERTY(
-        MouseCommand commandAll3 READ commandAll3 WRITE setCommandAll3 NOTIFY commandAll3Changed)
-    Q_PROPERTY(uint keyCmdAllModKey READ keyCmdAllModKey WRITE setKeyCmdAllModKey NOTIFY
-                   keyCmdAllModKeyChanged)
-    /**
-     * Whether the visible name should be condensed.
-     */
-    Q_PROPERTY(bool condensedTitle READ condensedTitle WRITE setCondensedTitle NOTIFY
-                   condensedTitleChanged)
-    /**
-     * Whether a window gets maximized when it reaches top screen edge while being moved.
-     */
-    Q_PROPERTY(bool electricBorderMaximize READ electricBorderMaximize WRITE
-                   setElectricBorderMaximize NOTIFY electricBorderMaximizeChanged)
-    /**
-     * Whether a window is tiled to half screen when reaching left or right screen edge while been
-     * moved.
-     */
-    Q_PROPERTY(bool electricBorderTiling READ electricBorderTiling WRITE setElectricBorderTiling
-                   NOTIFY electricBorderTilingChanged)
-    /**
-     * Whether a window is tiled to half screen when reaching left or right screen edge while been
-     * moved.
-     */
-    Q_PROPERTY(float electricBorderCornerRatio READ electricBorderCornerRatio WRITE
-                   setElectricBorderCornerRatio NOTIFY electricBorderCornerRatioChanged)
-    Q_PROPERTY(bool borderlessMaximizedWindows READ borderlessMaximizedWindows WRITE
-                   setBorderlessMaximizedWindows NOTIFY borderlessMaximizedWindowsChanged)
-    /**
-     * timeout before non-responding application will be killed after attempt to close.
-     */
-    Q_PROPERTY(int killPingTimeout READ killPingTimeout WRITE setKillPingTimeout NOTIFY
-                   killPingTimeoutChanged)
-    /**
-     * Whether to hide utility windows for inactive applications.
-     */
-    Q_PROPERTY(bool hideUtilityWindowsForInactive READ isHideUtilityWindowsForInactive WRITE
-                   setHideUtilityWindowsForInactive NOTIFY hideUtilityWindowsForInactiveChanged)
-    Q_PROPERTY(int compositingMode READ compositingMode WRITE setCompositingMode NOTIFY
-                   compositingModeChanged)
-    Q_PROPERTY(bool useCompositing READ isUseCompositing WRITE setUseCompositing NOTIFY
-                   useCompositingChanged)
-    Q_PROPERTY(
-        int hiddenPreviews READ hiddenPreviews WRITE setHiddenPreviews NOTIFY hiddenPreviewsChanged)
-    Q_PROPERTY(qint64 maxFpsInterval READ maxFpsInterval WRITE setMaxFpsInterval NOTIFY
-                   maxFpsIntervalChanged)
-    Q_PROPERTY(uint refreshRate READ refreshRate WRITE setRefreshRate NOTIFY refreshRateChanged)
-    Q_PROPERTY(qint64 vBlankTime READ vBlankTime WRITE setVBlankTime NOTIFY vBlankTimeChanged)
-    Q_PROPERTY(bool glStrictBinding READ isGlStrictBinding WRITE setGlStrictBinding NOTIFY
-                   glStrictBindingChanged)
-    /**
-     * Whether strict binding follows the driver or has been overwritten by a user defined config
-     * value. If @c true glStrictBinding is set by the OpenGL Scene during initialization. If @c
-     * false glStrictBinding is set from a config value and not updated during scene initialization.
-     */
-    Q_PROPERTY(bool glStrictBindingFollowsDriver READ isGlStrictBindingFollowsDriver WRITE
-                   setGlStrictBindingFollowsDriver NOTIFY glStrictBindingFollowsDriverChanged)
-
-    /// Deprecated
-    Q_PROPERTY(KWin::OpenGLPlatformInterface glPlatformInterface READ glPlatformInterface WRITE
-                   setGlPlatformInterface NOTIFY glPlatformInterfaceChanged)
-    Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE
-                   setWindowsBlockCompositing NOTIFY windowsBlockCompositingChanged)
 public:
     options_qobject(base::operation_mode mode);
 
-    /**
-     * This enum type is used to specify the focus policy.
-     *
-     * Note that FocusUnderMouse and FocusStrictlyUnderMouse are not
-     * particulary useful. They are only provided for old-fashined
-     * die-hard UNIX people ;-)
-     */
-    enum FocusPolicy {
-        /**
-         * Clicking into a window activates it. This is also the default.
-         */
-        ClickToFocus,
-        /**
-         * Moving the mouse pointer actively onto a normal window activates it.
-         * For convenience, the desktop and windows on the dock are excluded.
-         * They require clicking.
-         */
-        FocusFollowsMouse,
-        /**
-         * The window that happens to be under the mouse pointer becomes active.
-         * The invariant is: no window can have focus that is not under the mouse.
-         * This also means that Alt-Tab won't work properly and popup dialogs are
-         * usually unsable with the keyboard. Note that the desktop and windows on
-         * the dock are excluded for convenience. They get focus only when clicking
-         * on it.
-         */
-        FocusUnderMouse,
-        /**
-         * This is even worse than FocusUnderMouse. Only the window under the mouse
-         * pointer is active. If the mouse points nowhere, nothing has the focus. If
-         * the mouse points onto the desktop, the desktop has focus. The same holds
-         * for windows on the dock.
-         */
-        FocusStrictlyUnderMouse
-    };
-
-    FocusPolicy focusPolicy() const
+    win::focus_policy focusPolicy() const
     {
         return m_focusPolicy;
     }
@@ -307,7 +90,8 @@ public:
 
     bool focusPolicyIsReasonable()
     {
-        return m_focusPolicy == ClickToFocus || m_focusPolicy == FocusFollowsMouse;
+        return m_focusPolicy == win::focus_policy::click
+            || m_focusPolicy == win::focus_policy::follows_mouse;
     }
 
     /**
@@ -360,148 +144,77 @@ public:
         return m_focusStealingPreventionLevel;
     }
 
-    enum WindowOperation {
-        MaximizeOp = 5000,
-        RestoreOp,
-        MinimizeOp,
-        MoveOp,
-        UnrestrictedMoveOp,
-        ResizeOp,
-        UnrestrictedResizeOp,
-        CloseOp,
-        OnAllDesktopsOp,
-        KeepAboveOp,
-        KeepBelowOp,
-        OperationsOp,
-        WindowRulesOp,
-        ToggleStoreSettingsOp = WindowRulesOp, ///< @obsolete
-        HMaximizeOp,
-        VMaximizeOp,
-        LowerOp,
-        FullScreenOp,
-        NoBorderOp,
-        NoOp,
-        SetupWindowShortcutOp,
-        ApplicationRulesOp,
-    };
-
-    enum AnimationCurve {
-        Linear,
-        Quadratic,
-        Cubic,
-        Quartic,
-        Sine,
-    };
-
-    WindowOperation operationTitlebarDblClick() const
+    win::win_op operationTitlebarDblClick() const
     {
         return OpTitlebarDblClick;
     }
-    WindowOperation operationMaxButtonLeftClick() const
+    win::win_op operationMaxButtonLeftClick() const
     {
         return opMaxButtonLeftClick;
     }
-    WindowOperation operationMaxButtonRightClick() const
+    win::win_op operationMaxButtonRightClick() const
     {
         return opMaxButtonRightClick;
     }
-    WindowOperation operationMaxButtonMiddleClick() const
+    win::win_op operationMaxButtonMiddleClick() const
     {
         return opMaxButtonMiddleClick;
     }
-    WindowOperation operationMaxButtonClick(Qt::MouseButtons button) const;
+    win::win_op operationMaxButtonClick(Qt::MouseButtons button) const;
 
-    enum MouseCommand {
-        MouseRaise,
-        MouseLower,
-        MouseOperationsMenu,
-        MouseToggleRaiseAndLower,
-        MouseActivateAndRaise,
-        MouseActivateAndLower,
-        MouseActivate,
-        MouseActivateRaiseAndPassClick,
-        MouseActivateAndPassClick,
-        MouseMove,
-        MouseUnrestrictedMove,
-        MouseActivateRaiseAndMove,
-        MouseActivateRaiseAndUnrestrictedMove,
-        MouseResize,
-        MouseUnrestrictedResize,
-        MouseMaximize,
-        MouseRestore,
-        MouseMinimize,
-        MouseNextDesktop,
-        MousePreviousDesktop,
-        MouseAbove,
-        MouseBelow,
-        MouseOpacityMore,
-        MouseOpacityLess,
-        MouseClose,
-        MouseNothing
-    };
-
-    enum MouseWheelCommand {
-        MouseWheelRaiseLower,
-        MouseWheelMaximizeRestore,
-        MouseWheelAboveBelow,
-        MouseWheelPreviousNextDesktop,
-        MouseWheelChangeOpacity,
-        MouseWheelNothing
-    };
-
-    MouseCommand commandActiveTitlebar1() const
+    win::mouse_cmd commandActiveTitlebar1() const
     {
         return CmdActiveTitlebar1;
     }
-    MouseCommand commandActiveTitlebar2() const
+    win::mouse_cmd commandActiveTitlebar2() const
     {
         return CmdActiveTitlebar2;
     }
-    MouseCommand commandActiveTitlebar3() const
+    win::mouse_cmd commandActiveTitlebar3() const
     {
         return CmdActiveTitlebar3;
     }
-    MouseCommand commandInactiveTitlebar1() const
+    win::mouse_cmd commandInactiveTitlebar1() const
     {
         return CmdInactiveTitlebar1;
     }
-    MouseCommand commandInactiveTitlebar2() const
+    win::mouse_cmd commandInactiveTitlebar2() const
     {
         return CmdInactiveTitlebar2;
     }
-    MouseCommand commandInactiveTitlebar3() const
+    win::mouse_cmd commandInactiveTitlebar3() const
     {
         return CmdInactiveTitlebar3;
     }
-    MouseCommand commandWindow1() const
+    win::mouse_cmd commandWindow1() const
     {
         return CmdWindow1;
     }
-    MouseCommand commandWindow2() const
+    win::mouse_cmd commandWindow2() const
     {
         return CmdWindow2;
     }
-    MouseCommand commandWindow3() const
+    win::mouse_cmd commandWindow3() const
     {
         return CmdWindow3;
     }
-    MouseCommand commandWindowWheel() const
+    win::mouse_cmd commandWindowWheel() const
     {
         return CmdWindowWheel;
     }
-    MouseCommand commandAll1() const
+    win::mouse_cmd commandAll1() const
     {
         return CmdAll1;
     }
-    MouseCommand commandAll2() const
+    win::mouse_cmd commandAll2() const
     {
         return CmdAll2;
     }
-    MouseCommand commandAll3() const
+    win::mouse_cmd commandAll3() const
     {
         return CmdAll3;
     }
-    MouseWheelCommand commandAllWheel() const
+    win::mouse_wheel_cmd commandAllWheel() const
     {
         return CmdAllWheel;
     }
@@ -585,7 +298,7 @@ public:
     bool isUseCompositing() const;
 
     // General preferences
-    HiddenPreviews hiddenPreviews() const
+    render::x11::hidden_preview hiddenPreviews() const
     {
         return m_hiddenPreviews;
     }
@@ -623,13 +336,13 @@ public:
         return m_windowsBlockCompositing;
     }
 
-    AnimationCurve animationCurve() const
+    render::animation_curve animationCurve() const
     {
         return m_animationCurve;
     }
 
     // setters
-    void setFocusPolicy(FocusPolicy focusPolicy);
+    void setFocusPolicy(win::focus_policy focusPolicy);
     void setNextFocusPrefersMouse(bool nextFocusPrefersMouse);
     void setClickRaise(bool clickRaise);
     void setAutoRaise(bool autoRaise);
@@ -643,23 +356,23 @@ public:
     void setSnapOnlyWhenOverlapping(bool snapOnlyWhenOverlapping);
     void setRollOverDesktops(bool rollOverDesktops);
     void setFocusStealingPreventionLevel(win::fsp_level focusStealingPreventionLevel);
-    void setOperationTitlebarDblClick(WindowOperation operationTitlebarDblClick);
-    void setOperationMaxButtonLeftClick(WindowOperation op);
-    void setOperationMaxButtonRightClick(WindowOperation op);
-    void setOperationMaxButtonMiddleClick(WindowOperation op);
-    void setCommandActiveTitlebar1(MouseCommand commandActiveTitlebar1);
-    void setCommandActiveTitlebar2(MouseCommand commandActiveTitlebar2);
-    void setCommandActiveTitlebar3(MouseCommand commandActiveTitlebar3);
-    void setCommandInactiveTitlebar1(MouseCommand commandInactiveTitlebar1);
-    void setCommandInactiveTitlebar2(MouseCommand commandInactiveTitlebar2);
-    void setCommandInactiveTitlebar3(MouseCommand commandInactiveTitlebar3);
-    void setCommandWindow1(MouseCommand commandWindow1);
-    void setCommandWindow2(MouseCommand commandWindow2);
-    void setCommandWindow3(MouseCommand commandWindow3);
-    void setCommandWindowWheel(MouseCommand commandWindowWheel);
-    void setCommandAll1(MouseCommand commandAll1);
-    void setCommandAll2(MouseCommand commandAll2);
-    void setCommandAll3(MouseCommand commandAll3);
+    void setOperationTitlebarDblClick(win::win_op op);
+    void setOperationMaxButtonLeftClick(win::win_op op);
+    void setOperationMaxButtonRightClick(win::win_op op);
+    void setOperationMaxButtonMiddleClick(win::win_op op);
+    void setCommandActiveTitlebar1(win::mouse_cmd cmd);
+    void setCommandActiveTitlebar2(win::mouse_cmd cmd);
+    void setCommandActiveTitlebar3(win::mouse_cmd cmd);
+    void setCommandInactiveTitlebar1(win::mouse_cmd cmd);
+    void setCommandInactiveTitlebar2(win::mouse_cmd cmd);
+    void setCommandInactiveTitlebar3(win::mouse_cmd cmd);
+    void setCommandWindow1(win::mouse_cmd cmd);
+    void setCommandWindow2(win::mouse_cmd cmd);
+    void setCommandWindow3(win::mouse_cmd cmd);
+    void setCommandWindowWheel(win::mouse_cmd cmd);
+    void setCommandAll1(win::mouse_cmd cmd);
+    void setCommandAll2(win::mouse_cmd cmd);
+    void setCommandAll3(win::mouse_cmd cmd);
     void setKeyCmdAllModKey(uint keyCmdAllModKey);
     void setCondensedTitle(bool condensedTitle);
     void setElectricBorderMaximize(bool electricBorderMaximize);
@@ -670,7 +383,7 @@ public:
     void setHideUtilityWindowsForInactive(bool hideUtilityWindowsForInactive);
     void setCompositingMode(int compositingMode);
     void setUseCompositing(bool useCompositing);
-    void setHiddenPreviews(int hiddenPreviews);
+    void setHiddenPreviews(render::x11::hidden_preview hiddenPreviews);
     void setMaxFpsInterval(qint64 maxFpsInterval);
     void setRefreshRate(uint refreshRate);
     void setVBlankTime(qint64 vBlankTime);
@@ -682,84 +395,84 @@ public:
     {
     }
     void setWindowsBlockCompositing(bool set);
-    void setAnimationCurve(AnimationCurve curve);
+    void setAnimationCurve(render::animation_curve curve);
 
     // default values
-    static WindowOperation defaultOperationTitlebarDblClick()
+    static win::win_op defaultOperationTitlebarDblClick()
     {
-        return MaximizeOp;
+        return win::win_op::maximize;
     }
-    static WindowOperation defaultOperationMaxButtonLeftClick()
+    static win::win_op defaultOperationMaxButtonLeftClick()
     {
-        return MaximizeOp;
+        return win::win_op::maximize;
     }
-    static WindowOperation defaultOperationMaxButtonRightClick()
+    static win::win_op defaultOperationMaxButtonRightClick()
     {
-        return HMaximizeOp;
+        return win::win_op::h_maximize;
     }
-    static WindowOperation defaultOperationMaxButtonMiddleClick()
+    static win::win_op defaultOperationMaxButtonMiddleClick()
     {
-        return VMaximizeOp;
+        return win::win_op::v_maximize;
     }
-    static MouseCommand defaultCommandActiveTitlebar1()
+    static win::mouse_cmd defaultCommandActiveTitlebar1()
     {
-        return MouseRaise;
+        return win::mouse_cmd::raise;
     }
-    static MouseCommand defaultCommandActiveTitlebar2()
+    static win::mouse_cmd defaultCommandActiveTitlebar2()
     {
-        return MouseNothing;
+        return win::mouse_cmd::nothing;
     }
-    static MouseCommand defaultCommandActiveTitlebar3()
+    static win::mouse_cmd defaultCommandActiveTitlebar3()
     {
-        return MouseOperationsMenu;
+        return win::mouse_cmd::operations_menu;
     }
-    static MouseCommand defaultCommandInactiveTitlebar1()
+    static win::mouse_cmd defaultCommandInactiveTitlebar1()
     {
-        return MouseActivateAndRaise;
+        return win::mouse_cmd::activate_and_raise;
     }
-    static MouseCommand defaultCommandInactiveTitlebar2()
+    static win::mouse_cmd defaultCommandInactiveTitlebar2()
     {
-        return MouseNothing;
+        return win::mouse_cmd::nothing;
     }
-    static MouseCommand defaultCommandInactiveTitlebar3()
+    static win::mouse_cmd defaultCommandInactiveTitlebar3()
     {
-        return MouseOperationsMenu;
+        return win::mouse_cmd::operations_menu;
     }
-    static MouseCommand defaultCommandWindow1()
+    static win::mouse_cmd defaultCommandWindow1()
     {
-        return MouseActivateRaiseAndPassClick;
+        return win::mouse_cmd::activate_raise_and_pass_click;
     }
-    static MouseCommand defaultCommandWindow2()
+    static win::mouse_cmd defaultCommandWindow2()
     {
-        return MouseActivateAndPassClick;
+        return win::mouse_cmd::activate_and_pass_click;
     }
-    static MouseCommand defaultCommandWindow3()
+    static win::mouse_cmd defaultCommandWindow3()
     {
-        return MouseActivateAndPassClick;
+        return win::mouse_cmd::activate_and_pass_click;
     }
-    static MouseCommand defaultCommandWindowWheel()
+    static win::mouse_cmd defaultCommandWindowWheel()
     {
-        return MouseNothing;
+        return win::mouse_cmd::nothing;
     }
-    static MouseCommand defaultCommandAll1()
+    static win::mouse_cmd defaultCommandAll1()
     {
-        return MouseUnrestrictedMove;
+        return win::mouse_cmd::unrestricted_move;
     }
-    static MouseCommand defaultCommandAll2()
+    static win::mouse_cmd defaultCommandAll2()
     {
-        return MouseToggleRaiseAndLower;
+        return win::mouse_cmd::toggle_raise_and_lower;
     }
-    static MouseCommand defaultCommandAll3()
+    static win::mouse_cmd defaultCommandAll3()
     {
-        return MouseUnrestrictedResize;
+        return win::mouse_cmd::unrestricted_resize;
     }
-    static MouseWheelCommand defaultCommandTitlebarWheel()
+    static win::mouse_wheel_cmd defaultCommandTitlebarWheel()
     {
-        return MouseWheelNothing;
+        return win::mouse_wheel_cmd::nothing;
     }
-    static MouseWheelCommand defaultCommandAllWheel()
+    static win::mouse_wheel_cmd defaultCommandAllWheel()
     {
-        return MouseWheelNothing;
+        return win::mouse_wheel_cmd::nothing;
     }
     static uint defaultKeyCmdAllModKey()
     {
@@ -773,9 +486,9 @@ public:
     {
         return true;
     }
-    static HiddenPreviews defaultHiddenPreviews()
+    static render::x11::hidden_preview defaultHiddenPreviews()
     {
-        return HiddenPreviewsShown;
+        return render::x11::hidden_preview::shown;
     }
     static qint64 defaultMaxFpsInterval()
     {
@@ -864,7 +577,7 @@ Q_SIGNALS:
     void configChanged();
 
 private:
-    FocusPolicy m_focusPolicy{ClickToFocus};
+    win::focus_policy m_focusPolicy{win::focus_policy::click};
     bool m_nextFocusPrefersMouse{false};
     bool m_clickRaise{false};
     bool m_autoRaise{false};
@@ -885,7 +598,7 @@ private:
 
     CompositingType m_compositingMode{defaultCompositingMode()};
     bool m_useCompositing{defaultUseCompositing()};
-    HiddenPreviews m_hiddenPreviews{defaultHiddenPreviews()};
+    render::x11::hidden_preview m_hiddenPreviews{defaultHiddenPreviews()};
     qint64 m_maxFpsInterval{defaultMaxFpsInterval()};
     // Settings that should be auto-detected
     uint m_refreshRate{defaultRefreshRate()};
@@ -893,29 +606,29 @@ private:
     bool m_glStrictBinding{defaultGlStrictBinding()};
     bool m_glStrictBindingFollowsDriver{defaultGlStrictBindingFollowsDriver()};
     bool m_windowsBlockCompositing{true};
-    AnimationCurve m_animationCurve{AnimationCurve::Linear};
+    render::animation_curve m_animationCurve{render::animation_curve::linear};
 
-    WindowOperation OpTitlebarDblClick{defaultOperationTitlebarDblClick()};
-    WindowOperation opMaxButtonRightClick{defaultOperationMaxButtonRightClick()};
-    WindowOperation opMaxButtonMiddleClick{defaultOperationMaxButtonMiddleClick()};
-    WindowOperation opMaxButtonLeftClick{defaultOperationMaxButtonRightClick()};
+    win::win_op OpTitlebarDblClick{defaultOperationTitlebarDblClick()};
+    win::win_op opMaxButtonRightClick{defaultOperationMaxButtonRightClick()};
+    win::win_op opMaxButtonMiddleClick{defaultOperationMaxButtonMiddleClick()};
+    win::win_op opMaxButtonLeftClick{defaultOperationMaxButtonRightClick()};
 
     // mouse bindings
-    MouseCommand CmdActiveTitlebar1{defaultCommandActiveTitlebar1()};
-    MouseCommand CmdActiveTitlebar2{defaultCommandActiveTitlebar2()};
-    MouseCommand CmdActiveTitlebar3{defaultCommandActiveTitlebar3()};
-    MouseCommand CmdInactiveTitlebar1{defaultCommandInactiveTitlebar1()};
-    MouseCommand CmdInactiveTitlebar2{defaultCommandInactiveTitlebar2()};
-    MouseCommand CmdInactiveTitlebar3{defaultCommandInactiveTitlebar3()};
-    MouseWheelCommand CmdTitlebarWheel{defaultCommandTitlebarWheel()};
-    MouseCommand CmdWindow1{defaultCommandWindow1()};
-    MouseCommand CmdWindow2{defaultCommandWindow2()};
-    MouseCommand CmdWindow3{defaultCommandWindow3()};
-    MouseCommand CmdWindowWheel{defaultCommandWindowWheel()};
-    MouseCommand CmdAll1{defaultCommandAll1()};
-    MouseCommand CmdAll2{defaultCommandAll2()};
-    MouseCommand CmdAll3{defaultCommandAll3()};
-    MouseWheelCommand CmdAllWheel{defaultCommandAllWheel()};
+    win::mouse_cmd CmdActiveTitlebar1{defaultCommandActiveTitlebar1()};
+    win::mouse_cmd CmdActiveTitlebar2{defaultCommandActiveTitlebar2()};
+    win::mouse_cmd CmdActiveTitlebar3{defaultCommandActiveTitlebar3()};
+    win::mouse_cmd CmdInactiveTitlebar1{defaultCommandInactiveTitlebar1()};
+    win::mouse_cmd CmdInactiveTitlebar2{defaultCommandInactiveTitlebar2()};
+    win::mouse_cmd CmdInactiveTitlebar3{defaultCommandInactiveTitlebar3()};
+    win::mouse_wheel_cmd CmdTitlebarWheel{defaultCommandTitlebarWheel()};
+    win::mouse_cmd CmdWindow1{defaultCommandWindow1()};
+    win::mouse_cmd CmdWindow2{defaultCommandWindow2()};
+    win::mouse_cmd CmdWindow3{defaultCommandWindow3()};
+    win::mouse_cmd CmdWindowWheel{defaultCommandWindowWheel()};
+    win::mouse_cmd CmdAll1{defaultCommandAll1()};
+    win::mouse_cmd CmdAll2{defaultCommandAll2()};
+    win::mouse_cmd CmdAll3{defaultCommandAll3()};
+    win::mouse_wheel_cmd CmdAllWheel{defaultCommandAllWheel()};
     uint CmdAllModKey{defaultKeyCmdAllModKey()};
 
     bool electric_border_maximize{false};
@@ -954,15 +667,15 @@ public:
     bool get_current_output_follows_mouse() const;
     QStringList modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const;
 
-    static options_qobject::WindowOperation windowOperation(const QString& name, bool restricted);
-    static options_qobject::MouseCommand mouseCommand(const QString& name, bool restricted);
-    static options_qobject::MouseWheelCommand mouseWheelCommand(const QString& name);
+    static win::win_op windowOperation(const QString& name, bool restricted);
+    static win::mouse_cmd mouseCommand(const QString& name, bool restricted);
+    static win::mouse_wheel_cmd mouseWheelCommand(const QString& name);
 
-    options_qobject::MouseCommand operationTitlebarMouseWheel(int delta) const
+    win::mouse_cmd operationTitlebarMouseWheel(int delta) const
     {
         return wheelToMouseCommand(qobject->CmdTitlebarWheel, delta);
     }
-    options_qobject::MouseCommand operationWindowMouseWheel(int delta) const
+    win::mouse_cmd operationWindowMouseWheel(int delta) const
     {
         return wheelToMouseCommand(qobject->CmdAllWheel, delta);
     }
@@ -972,8 +685,7 @@ public:
 private:
     void syncFromKcfgc();
 
-    options_qobject::MouseCommand wheelToMouseCommand(options_qobject::MouseWheelCommand com,
-                                                      int delta) const;
+    win::mouse_cmd wheelToMouseCommand(win::mouse_wheel_cmd cmd, int delta) const;
 
     QScopedPointer<Settings> m_settings;
     KConfigWatcher::Ptr m_configWatcher;
@@ -991,8 +703,3 @@ inline std::unique_ptr<options> create_options(operation_mode mode, KSharedConfi
 }
 
 }
-
-Q_DECLARE_METATYPE(KWin::base::options_qobject::WindowOperation)
-Q_DECLARE_METATYPE(KWin::OpenGLPlatformInterface)
-Q_DECLARE_METATYPE(KWin::win::fsp_level)
-Q_DECLARE_METATYPE(KWin::win::placement)

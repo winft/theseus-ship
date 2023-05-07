@@ -15,7 +15,7 @@ namespace KWin::win
 template<typename Win>
 bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMenu)
 {
-    auto com = base::options_qobject::MouseNothing;
+    auto com = mouse_cmd::nothing;
     bool active = win->control->active;
 
     if (!win->wantsInput()) {
@@ -54,8 +54,8 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
 
     // Operations menu is for actions where it's not possible to get the matching and
     // mouse minimize for mouse release event.
-    if (event->button() == Qt::LeftButton && com != base::options_qobject::MouseOperationsMenu
-        && com != base::options_qobject::MouseMinimize) {
+    if (event->button() == Qt::LeftButton && com != mouse_cmd::operations_menu
+        && com != mouse_cmd::minimize) {
         auto& mov_res = win->control->move_resize;
 
         mov_res.contact = win::mouse_position(win);
@@ -71,18 +71,15 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
     }
     // In the new API the decoration may process the menu action to display an inactive tab's menu.
     // If the event is unhandled then the core will create one for the active window in the group.
-    if (!ignoreMenu || com != base::options_qobject::MouseOperationsMenu) {
+    if (!ignoreMenu || com != mouse_cmd::operations_menu) {
         perform_mouse_command(*win, com, event->globalPos());
     }
 
     // Return events that should be passed to the decoration in the new API.
-    return !(com == base::options_qobject::MouseRaise
-             || com == base::options_qobject::MouseOperationsMenu
-             || com == base::options_qobject::MouseActivateAndRaise
-             || com == base::options_qobject::MouseActivate
-             || com == base::options_qobject::MouseActivateRaiseAndPassClick
-             || com == base::options_qobject::MouseActivateAndPassClick
-             || com == base::options_qobject::MouseNothing);
+    return !(com == mouse_cmd::raise || com == mouse_cmd::operations_menu
+             || com == mouse_cmd::activate_and_raise || com == mouse_cmd::activate
+             || com == mouse_cmd::activate_raise_and_pass_click
+             || com == mouse_cmd::activate_and_pass_click || com == mouse_cmd::nothing);
 }
 
 }

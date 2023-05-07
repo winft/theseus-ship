@@ -1256,7 +1256,7 @@ TEST_CASE("struts", "[win]")
 
         const QRect origGeo = client2->geo.frame;
         cursor()->set_pos(origGeo.center());
-        win::perform_window_operation(client2, base::options_qobject::MoveOp);
+        win::perform_window_operation(client2, win::win_op::move);
 
         QTRY_COMPARE(get_x11_window(setup.base->space->move_resize_window), client2);
         QVERIFY(win::is_move(client2));

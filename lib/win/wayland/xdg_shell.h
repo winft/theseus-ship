@@ -807,8 +807,7 @@ void handle_move_request(Win& win, Wrapland::Server::Seat* seat, uint32_t serial
         return;
     }
     if (win.isMovable()) {
-        perform_mouse_command(
-            win, base::options_qobject::MouseMove, win.space.input->cursor->pos());
+        perform_mouse_command(win, mouse_cmd::move, win.space.input->cursor->pos());
     }
 }
 
@@ -867,8 +866,7 @@ void handle_resize_request(Win& win, Wrapland::Server::Seat* seat, quint32 seria
 template<typename Win>
 void handle_minimize_request(Win& win)
 {
-    perform_mouse_command(
-        win, base::options_qobject::MouseMinimize, win.space.input->cursor->pos());
+    perform_mouse_command(win, mouse_cmd::minimize, win.space.input->cursor->pos());
 }
 
 template<typename Win>
@@ -900,8 +898,7 @@ void handle_window_menu_request(Win& win,
                                 quint32 /*serial*/,
                                 QPoint const& surfacePos)
 {
-    perform_mouse_command(
-        win, base::options_qobject::MouseOperationsMenu, win.geo.pos() + surfacePos);
+    perform_mouse_command(win, mouse_cmd::operations_menu, win.geo.pos() + surfacePos);
 }
 
 template<typename Win>

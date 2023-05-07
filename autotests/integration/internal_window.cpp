@@ -574,12 +574,9 @@ TEST_CASE("internal window", "[win]")
         group.sync();
         win::space_reconfigure(*setup.base->space);
         QCOMPARE(setup.base->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->options->qobject->commandAll1(),
-                 base::options_qobject::MouseUnrestrictedMove);
-        QCOMPARE(setup.base->options->qobject->commandAll2(),
-                 base::options_qobject::MouseUnrestrictedMove);
-        QCOMPARE(setup.base->options->qobject->commandAll3(),
-                 base::options_qobject::MouseUnrestrictedMove);
+        QCOMPARE(setup.base->options->qobject->commandAll1(), win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->options->qobject->commandAll2(), win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->options->qobject->commandAll3(), win::mouse_cmd::unrestricted_move);
 
         // move cursor on window
         cursor()->set_pos(internalClient->geo.frame.center());

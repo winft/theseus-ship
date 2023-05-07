@@ -529,7 +529,7 @@ private:
         if (!action->data().isValid())
             return;
 
-        auto op = static_cast<base::options_qobject::WindowOperation>(action->data().toInt());
+        auto op = static_cast<win_op>(action->data().toInt());
         auto c = m_client;
         if (!c) {
             if (!space.stacking.active) {
@@ -541,11 +541,11 @@ private:
         std::visit(overload{[&, this](auto&& win) {
                        QString type;
                        switch (op) {
-                       case base::options_qobject::FullScreenOp:
+                       case win_op::fullscreen:
                            if (!win->control->fullscreen && win->userCanSetFullScreen())
                                type = QStringLiteral("fullscreenaltf3");
                            break;
-                       case base::options_qobject::NoBorderOp:
+                       case win_op::no_border:
                            if (!win->noBorder() && win->userCanSetNoBorder())
                                type = QStringLiteral("noborderaltf3");
                            break;
@@ -557,7 +557,6 @@ private:
                        // need to delay performing the window operation as we need to have the
                        // user actions menu closed before we destroy the decoration. Otherwise Qt
                        // crashes
-                       qRegisterMetaType<base::options_qobject::WindowOperation>();
                        QMetaObject::invokeMethod(space.qobject.get(), [win, op] {
                            win::perform_window_operation(win, op);
                        });
@@ -619,52 +618,52 @@ private:
         m_moveOperation = advancedMenu->addAction(i18n("&Move"));
         m_moveOperation->setIcon(QIcon::fromTheme(QStringLiteral("transform-move")));
         setShortcut(m_moveOperation, QStringLiteral("Window Move"));
-        m_moveOperation->setData(base::options_qobject::UnrestrictedMoveOp);
+        m_moveOperation->setData(static_cast<int>(win_op::unrestricted_move));
 
         m_resizeOperation = advancedMenu->addAction(i18n("&Resize"));
         m_resizeOperation->setIcon(QIcon::fromTheme(QStringLiteral("transform-scale")));
         setShortcut(m_resizeOperation, QStringLiteral("Window Resize"));
-        m_resizeOperation->setData(base::options_qobject::ResizeOp);
+        m_resizeOperation->setData(static_cast<int>(win_op::resize));
 
         m_keepAboveOperation = advancedMenu->addAction(i18n("Keep &Above Others"));
         m_keepAboveOperation->setIcon(QIcon::fromTheme(QStringLiteral("window-keep-above")));
         setShortcut(m_keepAboveOperation, QStringLiteral("Window Above Other Windows"));
         m_keepAboveOperation->setCheckable(true);
-        m_keepAboveOperation->setData(base::options_qobject::KeepAboveOp);
+        m_keepAboveOperation->setData(static_cast<int>(win_op::keep_above));
 
         m_keepBelowOperation = advancedMenu->addAction(i18n("Keep &Below Others"));
         m_keepBelowOperation->setIcon(QIcon::fromTheme(QStringLiteral("window-keep-below")));
         setShortcut(m_keepBelowOperation, QStringLiteral("Window Below Other Windows"));
         m_keepBelowOperation->setCheckable(true);
-        m_keepBelowOperation->setData(base::options_qobject::KeepBelowOp);
+        m_keepBelowOperation->setData(static_cast<int>(win_op::keep_below));
 
         m_fullScreenOperation = advancedMenu->addAction(i18n("&Fullscreen"));
         m_fullScreenOperation->setIcon(QIcon::fromTheme(QStringLiteral("view-fullscreen")));
         setShortcut(m_fullScreenOperation, QStringLiteral("Window Fullscreen"));
         m_fullScreenOperation->setCheckable(true);
-        m_fullScreenOperation->setData(base::options_qobject::FullScreenOp);
+        m_fullScreenOperation->setData(static_cast<int>(win_op::fullscreen));
 
         m_noBorderOperation = advancedMenu->addAction(i18n("&No Border"));
         m_noBorderOperation->setIcon(QIcon::fromTheme(QStringLiteral("edit-none-border")));
         setShortcut(m_noBorderOperation, QStringLiteral("Window No Border"));
         m_noBorderOperation->setCheckable(true);
-        m_noBorderOperation->setData(base::options_qobject::NoBorderOp);
+        m_noBorderOperation->setData(static_cast<int>(win_op::no_border));
 
         advancedMenu->addSeparator();
 
         m_shortcutOperation = advancedMenu->addAction(i18n("Set Window Short&cut..."));
         m_shortcutOperation->setIcon(QIcon::fromTheme(QStringLiteral("configure-shortcuts")));
         setShortcut(m_shortcutOperation, QStringLiteral("Setup Window Shortcut"));
-        m_shortcutOperation->setData(base::options_qobject::SetupWindowShortcutOp);
+        m_shortcutOperation->setData(static_cast<int>(win_op::setup_window_shortcut));
 
         QAction* action = advancedMenu->addAction(i18n("Configure Special &Window Settings..."));
         action->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-actions")));
-        action->setData(base::options_qobject::WindowRulesOp);
+        action->setData(static_cast<int>(win_op::window_rules));
         m_rulesOperation = action;
 
         action = advancedMenu->addAction(i18n("Configure S&pecial Application Settings..."));
         action->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-actions")));
-        action->setData(base::options_qobject::ApplicationRulesOp);
+        action->setData(static_cast<int>(win_op::application_rules));
         m_applicationRulesOperation = action;
         if (!space.base.config.main->isImmutable()
             && !KAuthorized::authorizeControlModules(configModules(true)).isEmpty()) {
@@ -712,12 +711,12 @@ private:
         m_maximizeOperation->setIcon(QIcon::fromTheme(QStringLiteral("window-maximize")));
         setShortcut(m_maximizeOperation, QStringLiteral("Window Maximize"));
         m_maximizeOperation->setCheckable(true);
-        m_maximizeOperation->setData(base::options_qobject::MaximizeOp);
+        m_maximizeOperation->setData(static_cast<int>(win_op::maximize));
 
         m_minimizeOperation = m_menu->addAction(i18n("Mi&nimize"));
         m_minimizeOperation->setIcon(QIcon::fromTheme(QStringLiteral("window-minimize")));
         setShortcut(m_minimizeOperation, QStringLiteral("Window Minimize"));
-        m_minimizeOperation->setData(base::options_qobject::MinimizeOp);
+        m_minimizeOperation->setData(static_cast<int>(win_op::minimize));
 
         action = m_menu->addMenu(advancedMenu);
         action->setText(i18n("&More Actions"));
@@ -726,7 +725,7 @@ private:
         m_closeOperation = m_menu->addAction(i18n("&Close"));
         m_closeOperation->setIcon(QIcon::fromTheme(QStringLiteral("window-close")));
         setShortcut(m_closeOperation, QStringLiteral("Window Close"));
-        m_closeOperation->setData(base::options_qobject::CloseOp);
+        m_closeOperation->setData(static_cast<int>(win_op::close));
     }
 
     /// Creates the Move to Desktop sub-menu.

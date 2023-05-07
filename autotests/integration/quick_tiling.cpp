@@ -344,7 +344,7 @@ TEST_CASE("quick tiling", "[win]")
         QSignalSpy quickTileChangedSpy(c->qobject.get(), &win::window_qobject::quicktiling_changed);
         QVERIFY(quickTileChangedSpy.isValid());
 
-        win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
+        win::perform_window_operation(c, win::win_op::unrestricted_move);
         QCOMPARE(c, get_wayland_window(setup.base->space->move_resize_window));
         QCOMPARE(cursor()->pos(), QPoint(49, 24));
 
@@ -423,7 +423,7 @@ TEST_CASE("quick tiling", "[win]")
         QSignalSpy quickTileChangedSpy(c->qobject.get(), &win::window_qobject::quicktiling_changed);
         QVERIFY(quickTileChangedSpy.isValid());
 
-        win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
+        win::perform_window_operation(c, win::win_op::unrestricted_move);
         QCOMPARE(c, get_wayland_window(setup.base->space->move_resize_window));
         QCOMPARE(cursor()->pos(), QPoint(49, 24));
         QVERIFY(configureRequestedSpy.wait());

@@ -19,7 +19,7 @@ namespace KWin::win
 {
 
 template<typename Win>
-void perform_window_operation(Win* window, base::options_qobject::WindowOperation op)
+void perform_window_operation(Win* window, win_op op)
 {
     if (!window) {
         return;
@@ -28,59 +28,57 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
     auto& space = window->space;
     auto& cursor = space.input->cursor;
 
-    if (op == base::options_qobject::MoveOp || op == base::options_qobject::UnrestrictedMoveOp) {
+    if (op == win_op::move || op == win_op::unrestricted_move) {
         cursor->set_pos(window->geo.frame.center());
     }
-    if (op == base::options_qobject::ResizeOp
-        || op == base::options_qobject::UnrestrictedResizeOp) {
+    if (op == win_op::resize || op == win_op::unrestricted_resize) {
         cursor->set_pos(window->geo.frame.bottomRight());
     }
 
     switch (op) {
-    case base::options_qobject::MoveOp:
-        perform_mouse_command(*window, base::options_qobject::MouseMove, cursor->pos());
+    case win_op::move:
+        perform_mouse_command(*window, mouse_cmd::move, cursor->pos());
         break;
-    case base::options_qobject::UnrestrictedMoveOp:
-        perform_mouse_command(*window, base::options_qobject::MouseUnrestrictedMove, cursor->pos());
+    case win_op::unrestricted_move:
+        perform_mouse_command(*window, mouse_cmd::unrestricted_move, cursor->pos());
         break;
-    case base::options_qobject::ResizeOp:
-        perform_mouse_command(*window, base::options_qobject::MouseResize, cursor->pos());
+    case win_op::resize:
+        perform_mouse_command(*window, mouse_cmd::resize, cursor->pos());
         break;
-    case base::options_qobject::UnrestrictedResizeOp:
-        perform_mouse_command(
-            *window, base::options_qobject::MouseUnrestrictedResize, cursor->pos());
+    case win_op::unrestricted_resize:
+        perform_mouse_command(*window, mouse_cmd::unrestricted_resize, cursor->pos());
         break;
-    case base::options_qobject::CloseOp:
+    case win_op::close:
         QMetaObject::invokeMethod(
             window->qobject.get(), [window] { window->closeWindow(); }, Qt::QueuedConnection);
         break;
-    case base::options_qobject::MaximizeOp:
+    case win_op::maximize:
         maximize(window,
                  window->maximizeMode() == maximize_mode::full ? maximize_mode::restore
                                                                : maximize_mode::full);
         break;
-    case base::options_qobject::HMaximizeOp:
+    case win_op::h_maximize:
         maximize(window, window->maximizeMode() ^ maximize_mode::horizontal);
         break;
-    case base::options_qobject::VMaximizeOp:
+    case win_op::v_maximize:
         maximize(window, window->maximizeMode() ^ maximize_mode::vertical);
         break;
-    case base::options_qobject::RestoreOp:
+    case win_op::restore:
         maximize(window, maximize_mode::restore);
         break;
-    case base::options_qobject::MinimizeOp:
+    case win_op::minimize:
         set_minimized(window, true);
         break;
-    case base::options_qobject::OnAllDesktopsOp:
+    case win_op::on_all_desktops:
         set_on_all_desktops(window, !on_all_desktops(window));
         break;
-    case base::options_qobject::FullScreenOp:
+    case win_op::fullscreen:
         window->setFullScreen(!window->control->fullscreen, true);
         break;
-    case base::options_qobject::NoBorderOp:
+    case win_op::no_border:
         window->setNoBorder(!window->noBorder());
         break;
-    case base::options_qobject::KeepAboveOp: {
+    case win_op::keep_above: {
         blocker block(space.stacking.order);
         bool was = window->control->keep_above;
         set_keep_above(window, !window->control->keep_above);
@@ -89,7 +87,7 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         }
         break;
     }
-    case base::options_qobject::KeepBelowOp: {
+    case win_op::keep_below: {
         blocker block(space.stacking.order);
         bool was = window->control->keep_below;
         set_keep_below(window, !window->control->keep_below);
@@ -98,20 +96,20 @@ void perform_window_operation(Win* window, base::options_qobject::WindowOperatio
         }
         break;
     }
-    case base::options_qobject::WindowRulesOp:
+    case win_op::window_rules:
         rules::edit_book(*space.rule_book, *window, false);
         break;
-    case base::options_qobject::ApplicationRulesOp:
+    case win_op::application_rules:
         rules::edit_book(*space.rule_book, *window, true);
         break;
-    case base::options_qobject::SetupWindowShortcutOp:
+    case win_op::setup_window_shortcut:
         shortcut_dialog_create(space, window);
         break;
-    case base::options_qobject::LowerOp:
+    case win_op::lower:
         lower_window(space, window);
         break;
-    case base::options_qobject::OperationsOp:
-    case base::options_qobject::NoOp:
+    case win_op::operations:
+    case win_op::noop:
         break;
     }
 }

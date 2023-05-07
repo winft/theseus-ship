@@ -86,6 +86,14 @@ enum class state {
     stopping,
 };
 
+enum class animation_curve {
+    linear,
+    quadratic,
+    cubic,
+    quartic,
+    sine,
+};
+
 enum night_color_mode {
     /// Color temperature based on current sun position. Location computed by external means.
     automatic,

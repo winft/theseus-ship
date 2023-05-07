@@ -78,6 +78,7 @@ set(kwin_SRCS
     script/js_engine_global_methods_wrapper.cpp
     script/screen_edge_handler.cpp
     script/effect.cpp
+    script/options.cpp
     script/output.cpp
     script/platform.cpp
     script/script.cpp

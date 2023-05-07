@@ -394,17 +394,17 @@ public:
 
     void requestToggleKeepAbove() override
     {
-        perform_window_operation(m_client, base::options_qobject::KeepAboveOp);
+        perform_window_operation(m_client, win_op::keep_above);
     }
 
     void requestToggleKeepBelow() override
     {
-        perform_window_operation(m_client, base::options_qobject::KeepBelowOp);
+        perform_window_operation(m_client, win_op::keep_below);
     }
 
     void requestToggleOnAllDesktops() override
     {
-        perform_window_operation(m_client, base::options_qobject::OnAllDesktopsOp);
+        perform_window_operation(m_client, win_op::on_all_desktops);
     }
 
     // Deprecated.

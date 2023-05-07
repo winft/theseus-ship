@@ -28,12 +28,12 @@ namespace KWin
 namespace base
 {
 class config;
-class options;
 }
 
 namespace scripting
 {
 
+class options;
 class platform_wrap;
 class window;
 
@@ -100,7 +100,7 @@ public:
            QString scriptName,
            QString pluginName,
            scripting::platform_wrap& platform,
-           base::options& options,
+           scripting::options& options,
            base::config& config,
            QObject* parent = nullptr);
     virtual ~script();
@@ -252,7 +252,7 @@ private:
     QHash<int, QAction*> m_touchScreenEdgeCallbacks;
     QJSValueList m_userActionsMenuCallbacks;
     scripting::platform_wrap& platform;
-    base::options& options;
+    scripting::options& options;
 };
 
 class declarative_script : public abstract_script

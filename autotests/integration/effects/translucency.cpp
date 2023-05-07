@@ -128,7 +128,7 @@ TEST_CASE("translucency", "[effect]")
         effects->setCurrentDesktop(2);
         QVERIFY(!translucency_effect->isActive());
         cursor()->set_pos(client->geo.frame.center());
-        win::perform_window_operation(client, base::options_qobject::MoveOp);
+        win::perform_window_operation(client, win::win_op::move);
         QVERIFY(translucency_effect->isActive());
         QTest::qWait(200);
         QVERIFY(translucency_effect->isActive());

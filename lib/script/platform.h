@@ -8,6 +8,7 @@
 #pragma once
 
 #include "dbus_call.h"
+#include "options.h"
 #include "output.h"
 #include "screen_edge_handler.h"
 #include "script.h"
@@ -43,6 +44,7 @@ namespace KWin::scripting
 {
 
 class abstract_script;
+class options;
 
 /**
  * The heart of Scripting. Infinite power lies beyond
@@ -76,6 +78,7 @@ public:
     QQmlEngine* qml_engine;
     QQmlContext* declarative_script_shared_context;
     base::config& config;
+    std::unique_ptr<scripting::options> options;
 
 public Q_SLOTS:
     void scriptDestroyed(QObject* object);
@@ -98,7 +101,6 @@ private:
 
     QStringList scriptList;
     bool is_running{false};
-    base::options& options;
 };
 
 template<typename Space>
@@ -141,8 +143,7 @@ public:
                 Q_UNUSED(jsEngine)
                 return new template_space<qt_script_space, Space>(&this->space);
             });
-        qmlRegisterSingletonInstance(
-            "org.kde.kwin", 3, 0, "Options", space.base.options->qobject.get());
+        qmlRegisterSingletonInstance("org.kde.kwin", 3, 0, "Options", options.get());
 
         qmlRegisterAnonymousType<output>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<window>("org.kde.kwin", 3);

@@ -77,16 +77,16 @@ public:
 
         if ((qopts->focusPolicyIsReasonable() && !this->active)
             || (qopts->isClickRaise() && !is_most_recently_raised(m_window))) {
-            if (qopts->commandWindow1() != base::options_qobject::MouseNothing) {
+            if (qopts->commandWindow1() != mouse_cmd::nothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (qopts->commandWindow2() != base::options_qobject::MouseNothing) {
+            if (qopts->commandWindow2() != mouse_cmd::nothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (qopts->commandWindow3() != base::options_qobject::MouseNothing) {
+            if (qopts->commandWindow3() != mouse_cmd::nothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (qopts->commandWindowWheel() != base::options_qobject::MouseNothing) {
+            if (qopts->commandWindowWheel() != mouse_cmd::nothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_5);
             }
@@ -97,16 +97,16 @@ public:
         // we can do about it, unfortunately.
 
         if (!m_window->space.global_shortcuts_disabled) {
-            if (qopts->commandAll1() != base::options_qobject::MouseNothing) {
+            if (qopts->commandAll1() != mouse_cmd::nothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (qopts->commandAll2() != base::options_qobject::MouseNothing) {
+            if (qopts->commandAll2() != mouse_cmd::nothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (qopts->commandAll3() != base::options_qobject::MouseNothing) {
+            if (qopts->commandAll3() != mouse_cmd::nothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (qopts->commandAllWheel() != base::options_qobject::MouseWheelNothing) {
+            if (qopts->commandAllWheel() != mouse_wheel_cmd::nothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_5);
             }

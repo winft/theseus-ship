@@ -11,6 +11,7 @@
 
 #include "base/options.h"
 #include "base/x11/xcb/extensions.h"
+#include "render/x11/types.h"
 #include "win/activation.h"
 #include "win/controlling.h"
 #include "win/damage.h"
@@ -178,7 +179,8 @@ void update_visibility(Win* win)
         win->net_info->setState(net::Hidden, net::Hidden);
         win::set_skip_taskbar(win, true);
         if (win->space.base.render->compositor->scene
-            && win->space.base.options->qobject->hiddenPreviews() == base::HiddenPreviewsAlways) {
+            && win->space.base.options->qobject->hiddenPreviews()
+                == render::x11::hidden_preview::always) {
             internal_keep(win);
         } else {
             internal_hide(win);
@@ -191,7 +193,8 @@ void update_visibility(Win* win)
     if (win->control->minimized) {
         win->net_info->setState(net::Hidden, net::Hidden);
         if (win->space.base.render->compositor->scene
-            && win->space.base.options->qobject->hiddenPreviews() == base::HiddenPreviewsAlways) {
+            && win->space.base.options->qobject->hiddenPreviews()
+                == render::x11::hidden_preview::always) {
             internal_keep(win);
         } else {
             internal_hide(win);
@@ -202,7 +205,8 @@ void update_visibility(Win* win)
     win->net_info->setState(net::States(), net::Hidden);
     if (!on_current_desktop(win)) {
         if (win->space.base.render->compositor->scene
-            && win->space.base.options->qobject->hiddenPreviews() != base::HiddenPreviewsNever) {
+            && win->space.base.options->qobject->hiddenPreviews()
+                != render::x11::hidden_preview::never) {
             internal_keep(win);
         } else {
             internal_hide(win);

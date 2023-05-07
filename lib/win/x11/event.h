@@ -339,8 +339,7 @@ void enter_notify_event(Win* win, xcb_enter_notify_event_t* e)
     }
 
     auto is_mouse_driven_focus = !win->space.base.options->qobject->focusPolicyIsReasonable()
-        || (win->space.base.options->qobject->focusPolicy()
-                == base::options_qobject::FocusFollowsMouse
+        || (win->space.base.options->qobject->focusPolicy() == focus_policy::follows_mouse
             && win->space.base.options->qobject->isNextFocusPrefersMouse());
 
     if (e->mode == XCB_NOTIFY_MODE_NORMAL
@@ -389,8 +388,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
                 QCoreApplication::sendEvent(deco, &leaveEvent);
             }
         }
-        if (win->space.base.options->qobject->focusPolicy()
-                == base::options_qobject::FocusStrictlyUnderMouse
+        if (win->space.base.options->qobject->focusPolicy() == focus_policy::strictly_under_mouse
             && win->control->active && lostMouse) {
             win->space.stacking.delayfocus_window = {};
             reset_delay_focus_timer(win->space);
@@ -440,7 +438,7 @@ bool button_press_event(Win* win,
             return true;
         }
 
-        auto com = base::options_qobject::MouseNothing;
+        auto com = mouse_cmd::nothing;
         bool was_action = false;
         if (bModKeyHeld) {
             was_action = true;
@@ -761,7 +759,7 @@ void net_move_resize(Win* win, int x_root, int y_root, net::Direction direction)
         // movement the expectation is that the cursor is already at the provided position, thus
         // it's more a safety measurement
         cursor->set_pos(QPoint(x_root, y_root));
-        perform_mouse_command(*win, base::options_qobject::MouseMove, {x_root, y_root});
+        perform_mouse_command(*win, mouse_cmd::move, {x_root, y_root});
     } else if (mov_res.enabled && direction == net::MoveResizeCancel) {
         win::finish_move_resize(win, true);
         mov_res.button_down = false;
@@ -796,14 +794,12 @@ void net_move_resize(Win* win, int x_root, int y_root, net::Direction direction)
         // ignore mouse coordinates given in the message, mouse position is used by the moving
         // algorithm
         cursor->set_pos(win->geo.frame.center());
-        perform_mouse_command(
-            *win, base::options_qobject::MouseUnrestrictedMove, win->geo.frame.center());
+        perform_mouse_command(*win, mouse_cmd::unrestricted_move, win->geo.frame.center());
     } else if (direction == net::KeyboardSize) {
         // ignore mouse coordinates given in the message, mouse position is used by the resizing
         // algorithm
         cursor->set_pos(win->geo.frame.bottomRight());
-        perform_mouse_command(
-            *win, base::options_qobject::MouseUnrestrictedResize, win->geo.frame.bottomRight());
+        perform_mouse_command(*win, mouse_cmd::unrestricted_resize, win->geo.frame.bottomRight());
     }
 }
 

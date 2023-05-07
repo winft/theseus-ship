@@ -19,6 +19,19 @@ enum class suspend_reason {
     all = 0xff,
 };
 
+/// Whether to keep all windows mapped when compositing (i.e. whether to have actively updated
+/// window pixmaps).
+enum class hidden_preview {
+    /// The normal mode with regard to mapped windows. Hidden (minimized, etc.) and windows on
+    /// inactive virtual desktops are not mapped, their pixmaps are only their icons.
+    never,
+    /// Like normal mode, but shown windows (i.e. on inactive virtual desktops) are kept mapped,
+    /// only hidden windows are unmapped.
+    shown,
+    /// All windows are kept mapped regardless of their state.
+    always,
+};
+
 }
 
 ENUM_FLAGS(KWin::render::x11::suspend_reason)

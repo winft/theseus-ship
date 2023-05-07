@@ -31,9 +31,7 @@ enum class MouseAction {
 };
 
 template<typename Redirect>
-bool get_modifier_command(Redirect& redirect,
-                          uint32_t key,
-                          base::options_qobject::MouseCommand& command)
+bool get_modifier_command(Redirect& redirect, uint32_t key, win::mouse_cmd& command)
 {
     if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(redirect.platform)
         != redirect.platform.base.options->qobject->commandAllModifier()) {
@@ -64,9 +62,8 @@ bool get_modifier_command(Redirect& redirect,
 }
 
 template<typename Redirect, typename Window>
-std::pair<bool, bool> do_perform_mouse_action(Redirect& redirect,
-                                              base::options_qobject::MouseCommand command,
-                                              Window* window)
+std::pair<bool, bool>
+do_perform_mouse_action(Redirect& redirect, win::mouse_cmd command, Window* window)
 {
     return std::make_pair(
         true, !win::perform_mouse_command(*window, command, redirect.pointer->pos().toPoint()));
@@ -76,7 +73,7 @@ template<typename Redirect, typename Window>
 std::pair<bool, bool>
 perform_mouse_modifier_action(Redirect& redirect, button_event const& event, Window* window)
 {
-    auto command = base::options_qobject::MouseNothing;
+    auto command = win::mouse_cmd::nothing;
     auto was_action = get_modifier_command(redirect, event.key, command);
 
     return was_action ? do_perform_mouse_action(redirect, command, window)
@@ -88,7 +85,7 @@ std::pair<bool, bool> perform_mouse_modifier_and_window_action(Redirect& redirec
                                                                button_event const& event,
                                                                Window* window)
 {
-    auto command = base::options_qobject::MouseNothing;
+    auto command = win::mouse_cmd::nothing;
     auto was_action = get_modifier_command(redirect, event.key, command);
 
     if (!was_action) {
@@ -103,7 +100,7 @@ template<typename Redirect>
 bool get_wheel_modifier_command(Redirect& redirect,
                                 axis_orientation orientation,
                                 double delta,
-                                base::options_qobject::MouseCommand& command)
+                                win::mouse_cmd& command)
 {
     if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(redirect.platform)
         != redirect.platform.base.options->qobject->commandAllModifier()) {
@@ -126,7 +123,7 @@ template<typename Redirect, typename Window>
 std::pair<bool, bool>
 perform_wheel_action(Redirect& redirect, axis_event const& event, Window* window)
 {
-    auto command = base::options_qobject::MouseNothing;
+    auto command = win::mouse_cmd::nothing;
     auto was_action = get_wheel_modifier_command(redirect, event.orientation, event.delta, command);
 
     return was_action ? do_perform_mouse_action(redirect, command, window)
@@ -137,7 +134,7 @@ template<typename Redirect, typename Window>
 std::pair<bool, bool>
 perform_wheel_and_window_action(Redirect& redirect, axis_event const& event, Window* window)
 {
-    auto command = base::options_qobject::MouseNothing;
+    auto command = win::mouse_cmd::nothing;
     auto was_action = get_wheel_modifier_command(redirect, event.orientation, event.delta, command);
 
     if (!was_action) {

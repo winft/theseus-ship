@@ -117,18 +117,13 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("Options\n"));
     support.append(QStringLiteral("=======\n"));
 
-    auto const metaOptions = space.base.options->qobject->metaObject();
+    auto const metaOptions = space.scripting->options->metaObject();
     auto printProperty = [](const QVariant& variant) {
         if (variant.type() == QVariant::Size) {
             const QSize& s = variant.toSize();
             return QStringLiteral("%1x%2")
                 .arg(QString::number(s.width()))
                 .arg(QString::number(s.height()));
-        }
-        if (QLatin1String(variant.typeName()) == QLatin1String("KWin::OpenGLPlatformInterface")
-            || QLatin1String(variant.typeName())
-                == QLatin1String("KWin::base::options_qobject::WindowOperation")) {
-            return QString::number(variant.toInt());
         }
         return variant.toString();
     };
@@ -140,7 +135,7 @@ QString get_support_info(Space const& space)
         support.append(
             QStringLiteral("%1: %2\n")
                 .arg(property.name())
-                .arg(printProperty(space.base.options->qobject->property(property.name()))));
+                .arg(printProperty(space.scripting->options->property(property.name()))));
     }
 
     support.append(QStringLiteral("\nScreen Edges\n"));
