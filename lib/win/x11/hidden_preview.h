@@ -13,12 +13,6 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
-bool hidden_preview(Win* win)
-{
-    return win->mapping == mapping_state::kept;
-}
-
-template<typename Win>
 void update_input_shape(Win& win);
 
 /**
@@ -35,22 +29,24 @@ void update_input_shape(Win& win);
 template<typename Win>
 void update_hidden_preview(Win* win)
 {
-    if (hidden_preview(win)) {
-        win->space.stacking.order.force_restacking();
-        if (base::x11::xcb::extensions::self()->is_shape_input_available()) {
-            xcb_shape_rectangles(win->space.base.x11_data.connection,
-                                 XCB_SHAPE_SO_SET,
-                                 XCB_SHAPE_SK_INPUT,
-                                 XCB_CLIP_ORDERING_UNSORTED,
-                                 win->frameId(),
-                                 0,
-                                 0,
-                                 0,
-                                 nullptr);
-        }
-    } else {
+    if (win->mapping != mapping_state::kept) {
         win->space.stacking.order.force_restacking();
         update_input_shape(*win);
+        return;
+    }
+
+    win->space.stacking.order.force_restacking();
+
+    if (base::x11::xcb::extensions::self()->is_shape_input_available()) {
+        xcb_shape_rectangles(win->space.base.x11_data.connection,
+                             XCB_SHAPE_SO_SET,
+                             XCB_SHAPE_SK_INPUT,
+                             XCB_CLIP_ORDERING_UNSORTED,
+                             win->frameId(),
+                             0,
+                             0,
+                             0,
+                             nullptr);
     }
 }
 

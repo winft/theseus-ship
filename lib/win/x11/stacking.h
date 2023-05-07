@@ -112,7 +112,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
                                 // Hidden windows with preview are windows that should be unmapped
                                 // but is kept for compositing ensure they are stacked below
                                 // everything else (as far as pure X stacking order is concerned).
-                                if (hidden_preview(win)) {
+                                if (win->mapping == mapping_state::kept) {
                                     hidden_windows.push_back(win->frameId());
                                     return;
                                 }

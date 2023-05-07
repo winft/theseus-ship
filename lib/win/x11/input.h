@@ -116,7 +116,7 @@ void mark_as_user_interaction(Space& space)
 template<typename Win>
 void update_input_shape(Win& win)
 {
-    if (hidden_preview(&win)) {
+    if (win.mapping == mapping_state::kept) {
         // Sets it to none, don't change.
         return;
     }
