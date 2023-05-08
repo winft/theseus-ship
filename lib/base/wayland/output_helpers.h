@@ -9,8 +9,6 @@
 
 #include "base/output.h"
 #include "base/output_helpers.h"
-#include "input/filters/dpms.h"
-#include "input/wayland/dpms.h"
 #include "wayland_logging.h"
 
 #include <Wrapland/Server/output.h>
@@ -181,6 +179,20 @@ void output_set_dpms_on(typename Base::output_t& output, Base& base)
     check_outputs_on(base);
 }
 
+template<typename Redirect>
+void create_dpms_filter(Redirect& redirect)
+{
+    using Filter = typename Redirect::dpms_filter_t;
+
+    if (redirect.dpms_filter) {
+        // Already another output is off.
+        return;
+    }
+
+    redirect.dpms_filter = std::make_unique<Filter>(redirect);
+    redirect.prependInputEventFilter(redirect.dpms_filter.get());
+}
+
 template<typename Base>
 void output_set_dmps_off(base::dpms_mode mode, typename Base::output_t& output, Base& base)
 {
@@ -195,7 +207,7 @@ void output_set_dmps_off(base::dpms_mode mode, typename Base::output_t& output, 
 
     if (output.is_enabled()) {
         output.m_output->set_dpms_mode(to_wayland_dpms_mode(mode));
-        input::wayland::create_dpms_filter(*base.space->input);
+        create_dpms_filter(*base.space->input);
     }
 }
 

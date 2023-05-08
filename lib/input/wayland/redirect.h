@@ -19,6 +19,7 @@
 #include "base/wayland/output_helpers.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "input/filters/decoration_event.h"
+#include "input/filters/dpms.h"
 #include "input/filters/drag_and_drop.h"
 #include "input/filters/effects.h"
 #include "input/filters/fake_tablet.h"
@@ -58,6 +59,7 @@ public:
     using platform_t = Platform;
     using space_t = Space;
     using window_t = typename space_t::window_t;
+    using dpms_filter_t = input::dpms_filter<type>;
 
     redirect(Platform& platform, Space& space)
         : qobject{std::make_unique<redirect_qobject>()}
