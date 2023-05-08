@@ -20,7 +20,6 @@
 #include "desktop/screen_locker_watcher.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
-#include "script/platform.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
 #include "win/internal_window.h"
@@ -173,7 +172,6 @@ public:
 
     Base& base;
 
-    std::unique_ptr<scripting::platform<type>> scripting;
     std::unique_ptr<render::outline> outline;
     std::unique_ptr<edger_t> edges;
     std::unique_ptr<deco::bridge<type>> deco;

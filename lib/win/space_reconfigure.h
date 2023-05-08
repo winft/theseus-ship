@@ -28,7 +28,7 @@ void space_reconfigure(Space& space)
     space.base.config.main->reparseConfiguration();
     space.options->updateSettings();
     space.base.options->updateSettings();
-    space.scripting->start();
+    space.base.script->start();
 
     Q_EMIT space.qobject->configChanged();
 

@@ -11,6 +11,7 @@
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
 #include "render/wayland/platform.h"
+#include "script/platform.h"
 #include "utils/algorithm.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
@@ -87,6 +88,7 @@ public:
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
+    std::unique_ptr<scripting::platform<space_t>> script;
     std::unique_ptr<xwl::xwayland<win::wayland::space<platform>>> xwayland;
 };
 

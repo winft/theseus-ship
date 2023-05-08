@@ -205,7 +205,7 @@ void ApplicationWayland::start(base::operation_mode mode,
 
     base->space = std::make_unique<base_t::space_t>(*base);
     win::init_shortcuts(*base->space);
-    base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
+    base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->compositor->start(*base->space);
 

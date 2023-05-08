@@ -46,7 +46,7 @@ TEST_CASE("screen edge script", "[script]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->space->scripting);
+    QVERIFY(setup.base->script);
 
     setup.base->space->edges->time_threshold = 0;
     setup.base->space->edges->reactivate_threshold = 0;
@@ -78,11 +78,11 @@ TEST_CASE("screen edge script", "[script]")
             .writeEntry("Edge", int(test_data.edge));
         config->sync();
 
-        QVERIFY(!setup.base->space->scripting->isScriptLoaded(scriptToLoad));
-        const int id = setup.base->space->scripting->loadScript(scriptToLoad);
+        QVERIFY(!setup.base->script->isScriptLoaded(scriptToLoad));
+        const int id = setup.base->script->loadScript(scriptToLoad);
         QVERIFY(id != -1);
-        QVERIFY(setup.base->space->scripting->isScriptLoaded(scriptToLoad));
-        auto s = setup.base->space->scripting->findScript(scriptToLoad);
+        QVERIFY(setup.base->script->isScriptLoaded(scriptToLoad));
+        auto s = setup.base->script->findScript(scriptToLoad);
         QVERIFY(s);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         QVERIFY(runningChangedSpy.isValid());
@@ -124,11 +124,11 @@ TEST_CASE("screen edge script", "[script]")
             .writeEntry("Edge", int(test_data.edge));
         config->sync();
 
-        QVERIFY(!setup.base->space->scripting->isScriptLoaded(scriptToLoad));
-        auto const id = setup.base->space->scripting->loadScript(scriptToLoad);
+        QVERIFY(!setup.base->script->isScriptLoaded(scriptToLoad));
+        auto const id = setup.base->script->loadScript(scriptToLoad);
         QVERIFY(id != -1);
-        QVERIFY(setup.base->space->scripting->isScriptLoaded(scriptToLoad));
-        auto s = setup.base->space->scripting->findScript(scriptToLoad);
+        QVERIFY(setup.base->script->isScriptLoaded(scriptToLoad));
+        auto s = setup.base->script->findScript(scriptToLoad);
         QVERIFY(s);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         QVERIFY(runningChangedSpy.isValid());
@@ -156,8 +156,8 @@ TEST_CASE("screen edge script", "[script]")
         const QString scriptToLoad = QFINDTESTDATA("./scripts/screenedgeunregister.js");
         QVERIFY(!scriptToLoad.isEmpty());
 
-        setup.base->space->scripting->loadScript(scriptToLoad);
-        auto s = setup.base->space->scripting->findScript(scriptToLoad);
+        setup.base->script->loadScript(scriptToLoad);
+        auto s = setup.base->script->findScript(scriptToLoad);
         auto configGroup = s->config();
         configGroup.writeEntry("Edge", int(KWin::ElectricLeft));
         configGroup.sync();
@@ -209,10 +209,10 @@ TEST_CASE("screen edge script", "[script]")
     {
         const QString scriptToLoad = QFINDTESTDATA("./scripts/screenedgetouch.qml");
         QVERIFY(!scriptToLoad.isEmpty());
-        QVERIFY(setup.base->space->scripting->loadDeclarativeScript(scriptToLoad) != -1);
-        QVERIFY(setup.base->space->scripting->isScriptLoaded(scriptToLoad));
+        QVERIFY(setup.base->script->loadDeclarativeScript(scriptToLoad) != -1);
+        QVERIFY(setup.base->script->isScriptLoaded(scriptToLoad));
 
-        auto s = setup.base->space->scripting->findScript(scriptToLoad);
+        auto s = setup.base->script->findScript(scriptToLoad);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         s->run();
         QTRY_COMPARE(runningChangedSpy.count(), 1);
@@ -236,9 +236,9 @@ TEST_CASE("screen edge script", "[script]")
                                  QFINDTESTDATA("./scripts/touchScreenedge.js")};
     for (const QString& script : scripts) {
         if (!script.isEmpty()) {
-            if (setup.base->space->scripting->isScriptLoaded(script)) {
-                QVERIFY(setup.base->space->scripting->unloadScript(script));
-                QTRY_VERIFY(!setup.base->space->scripting->isScriptLoaded(script));
+            if (setup.base->script->isScriptLoaded(script)) {
+                QVERIFY(setup.base->script->unloadScript(script));
+                QTRY_VERIFY(!setup.base->script->isScriptLoaded(script));
             }
         }
     }

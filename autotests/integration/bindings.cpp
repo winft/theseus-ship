@@ -103,7 +103,7 @@ TEST_CASE("bindings", "[input],[win]")
 
     SECTION("switch window script")
     {
-        QVERIFY(setup.base->space->scripting);
+        QVERIFY(setup.base->script);
 
         // first create windows
         auto surface1 = create_surface();
@@ -137,10 +137,10 @@ TEST_CASE("bindings", "[input],[win]")
             out << "workspace." << slot << "()";
             out.flush();
 
-            auto const id = setup.base->space->scripting->loadScript(tmpFile.fileName());
+            auto const id = setup.base->script->loadScript(tmpFile.fileName());
             QVERIFY(id != -1);
-            QVERIFY(setup.base->space->scripting->isScriptLoaded(tmpFile.fileName()));
-            auto s = setup.base->space->scripting->findScript(tmpFile.fileName());
+            QVERIFY(setup.base->script->isScriptLoaded(tmpFile.fileName()));
+            auto s = setup.base->script->findScript(tmpFile.fileName());
             QVERIFY(s);
             QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
             QVERIFY(runningChangedSpy.isValid());

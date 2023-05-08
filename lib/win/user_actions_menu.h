@@ -223,7 +223,7 @@ private:
                        m_scriptsMenu = nullptr;
                        // ask scripts whether they want to add entries for the given Client
                        auto scriptActions
-                           = space.scripting->actionsForUserActionMenu(win, m_scriptsMenu);
+                           = space.base.script->actionsForUserActionMenu(win, m_scriptsMenu);
                        if (!scriptActions.isEmpty()) {
                            m_scriptsMenu = new QMenu(m_menu);
                            m_scriptsMenu->setPalette(win->control->palette.q_palette());

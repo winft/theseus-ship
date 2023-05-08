@@ -824,7 +824,8 @@ public:
 
     QQmlEngine* qmlEngine() const override
     {
-        return compositor.space->scripting ? compositor.space->scripting->qml_engine : nullptr;
+        auto& script = compositor.platform.base.script;
+        return script ? script->qml_engine : nullptr;
     }
 
     void renderEffectQuickView(EffectQuickView* effectQuickView) const override

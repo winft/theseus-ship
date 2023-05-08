@@ -23,7 +23,7 @@ class tabbox_handler_impl : public tabbox_handler
 {
 public:
     explicit tabbox_handler_impl(Tabbox* tabbox)
-        : tabbox_handler([tabbox] { return tabbox->space.scripting->qml_engine; },
+        : tabbox_handler([tabbox] { return tabbox->space.base.script->qml_engine; },
                          tabbox->space.base.x11_data.connection,
                          tabbox->qobject.get())
         , m_tabbox(tabbox)

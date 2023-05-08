@@ -196,7 +196,9 @@ std::unique_ptr<outline_visual> create_outline_visual(Compositor& compositor, Ou
 {
     if (compositor.state == state::on) {
         return std::make_unique<composited_outline_visual>(
-            &outline, *compositor.space->scripting->qml_engine, compositor.platform.base.config);
+            &outline,
+            *compositor.platform.base.script->qml_engine,
+            compositor.platform.base.config);
     } else {
         return std::unique_ptr<outline_visual>(
             compositor.platform.create_non_composited_outline(&outline));

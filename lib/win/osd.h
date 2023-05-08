@@ -34,7 +34,7 @@ static void create_osd(Space& space)
     space.osd = std::make_unique<osd_notification<typename Space::input_t>>(*space.input);
 
     space.osd->m_config = space.base.config.main;
-    space.osd->m_qmlEngine = space.scripting->qml_engine;
+    space.osd->m_qmlEngine = space.base.script->qml_engine;
 }
 
 template<typename Space>

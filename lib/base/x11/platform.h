@@ -11,6 +11,7 @@
 #include "base/singleton_interface.h"
 #include "input/x11/platform.h"
 #include "render/x11/platform.h"
+#include "script/platform.h"
 #include "win/x11/space.h"
 
 #include <memory>
@@ -54,6 +55,7 @@ public:
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
+    std::unique_ptr<scripting::platform<space_t>> script;
 
     bool is_crash_restart{false};
 };

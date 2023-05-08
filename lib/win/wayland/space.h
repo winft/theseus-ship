@@ -27,7 +27,6 @@
 #include "desktop/screen_locker_watcher.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
-#include "script/platform.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/placement.h"
@@ -483,7 +482,6 @@ public:
 
     Base& base;
 
-    std::unique_ptr<scripting::platform<type>> scripting;
     std::unique_ptr<render::outline> outline;
     std::unique_ptr<edger_t> edges;
     std::unique_ptr<deco::bridge<type>> deco;

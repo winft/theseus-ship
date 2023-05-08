@@ -158,10 +158,9 @@ void setup::start()
     base->space = std::make_unique<base_t::space_t>(*base);
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
-    base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
+    base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->compositor->start(*base->space);
-
     base->server->create_addons([this] { handle_server_addons_created(); });
 
     TRY_REQUIRE_WITH_TIMEOUT(ready, 10000);

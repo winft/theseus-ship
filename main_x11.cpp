@@ -274,7 +274,7 @@ void ApplicationX11::start()
         event_filter = std::make_unique<base::x11::xcb_event_filter<base_t::space_t>>(*base.space);
         installNativeEventFilter(event_filter.get());
 
-        base.space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
+        base.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
         render->compositor->start(*base.space);
 
         // Trigger possible errors, there's still a chance to abort.
