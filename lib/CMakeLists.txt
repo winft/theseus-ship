@@ -42,7 +42,6 @@ set(kwin_SRCS
     input/spies/modifier_only_shortcuts.cpp
     input/switch.cpp
     input/cursor.cpp
-    input/cursor_shape.cpp
     input/gestures.cpp
     input/global_shortcut.cpp
     input/logging.cpp
@@ -79,6 +78,7 @@ set(kwin_SRCS
     script/window.cpp
     script/window_model.cpp
     script/space.cpp
+    win/cursor_shape.cpp
     win/dbus/appmenu.cpp
     win/dbus/virtual_desktop_manager.cpp
     win/dbus/virtual_desktop_types.cpp

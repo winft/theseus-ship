@@ -6,7 +6,7 @@
 */
 #include "cursor_shape.h"
 
-namespace KWin::input
+namespace KWin::win
 {
 
 cursor_shape::cursor_shape(Qt::CursorShape qtShape)

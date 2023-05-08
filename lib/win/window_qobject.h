@@ -5,10 +5,11 @@
 */
 #pragma once
 
-#include "base/output.h"
-#include "input/cursor_shape.h"
-#include "kwin_export.h"
+#include "cursor_shape.h"
 #include "types.h"
+
+#include "base/output.h"
+#include "kwin_export.h"
 
 #include <QObject>
 #include <QPalette>
@@ -113,7 +114,7 @@ Q_SIGNALS:
     void transientChanged();
     void modalChanged();
     void moveResizedChanged();
-    void moveResizeCursorChanged(input::cursor_shape);
+    void moveResizeCursorChanged(cursor_shape);
     void clientStartUserMovedResized();
     void clientStepUserMovedResized(QRect const&);
     void clientFinishUserMovedResized();

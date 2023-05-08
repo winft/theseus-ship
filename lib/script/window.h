@@ -60,7 +60,7 @@ Q_SIGNALS:
     void outputChanged();
     void quickTileModeChanged();
 
-    void moveResizeCursorChanged(input::cursor_shape);
+    void moveResizeCursorChanged(win::cursor_shape);
     void clientStartUserMovedResized(KWin::scripting::window* window);
     void clientStepUserMovedResized(KWin::scripting::window* window, const QRect&);
     void clientFinishUserMovedResized(KWin::scripting::window* window);

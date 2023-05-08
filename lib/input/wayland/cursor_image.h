@@ -555,7 +555,7 @@ private:
         QPoint hotSpot;
     };
 
-    void loadThemeCursor(cursor_shape shape, Image* image)
+    void loadThemeCursor(win::cursor_shape shape, Image* image)
     {
         loadThemeCursor(shape, m_cursors, image);
     }
@@ -642,7 +642,7 @@ private:
     Image m_fallbackCursor;
     Image m_moveResizeCursor;
     Image m_windowSelectionCursor;
-    QHash<cursor_shape, Image> m_cursors;
+    QHash<win::cursor_shape, Image> m_cursors;
     QHash<QByteArray, Image> m_cursorsByName;
     QElapsedTimer m_surfaceRenderedTimer;
     struct {

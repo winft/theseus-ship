@@ -1570,18 +1570,18 @@ TEST_CASE("pointer input", "[input]")
 
         struct data {
             Qt::Edges edges;
-            input::cursor_shape cursor_shape;
+            win::cursor_shape cursor_shape;
         };
 
         auto test_data
-            = GENERATE(data{Qt::TopEdge | Qt::LeftEdge, input::extended_cursor::SizeNorthWest},
-                       data{Qt::TopEdge, input::extended_cursor::SizeNorth},
-                       data{Qt::TopEdge | Qt::RightEdge, input::extended_cursor::SizeNorthEast},
-                       data{Qt::RightEdge, input::extended_cursor::SizeEast},
-                       data{Qt::BottomEdge | Qt::RightEdge, input::extended_cursor::SizeSouthEast},
-                       data{Qt::BottomEdge, input::extended_cursor::SizeSouth},
-                       data{Qt::BottomEdge | Qt::LeftEdge, input::extended_cursor::SizeSouthWest},
-                       data{Qt::LeftEdge, input::extended_cursor::SizeWest});
+            = GENERATE(data{Qt::TopEdge | Qt::LeftEdge, win::extended_cursor::SizeNorthWest},
+                       data{Qt::TopEdge, win::extended_cursor::SizeNorth},
+                       data{Qt::TopEdge | Qt::RightEdge, win::extended_cursor::SizeNorthEast},
+                       data{Qt::RightEdge, win::extended_cursor::SizeEast},
+                       data{Qt::BottomEdge | Qt::RightEdge, win::extended_cursor::SizeSouthEast},
+                       data{Qt::BottomEdge, win::extended_cursor::SizeSouth},
+                       data{Qt::BottomEdge | Qt::LeftEdge, win::extended_cursor::SizeSouthWest},
+                       data{Qt::LeftEdge, win::extended_cursor::SizeWest});
 
         // first modify the config for this run
         auto group = setup.base->config.main->group("MouseBindings");

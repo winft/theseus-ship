@@ -8,7 +8,7 @@
 
 #include "kwinglobals.h"
 
-namespace KWin::input
+namespace KWin::win
 {
 
 namespace extended_cursor
@@ -52,4 +52,4 @@ private:
 
 }
 
-Q_DECLARE_METATYPE(KWin::input::cursor_shape)
+Q_DECLARE_METATYPE(KWin::win::cursor_shape)

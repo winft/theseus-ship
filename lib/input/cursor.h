@@ -7,7 +7,7 @@
 #pragma once
 
 #include "base/x11/data.h"
-#include "cursor_shape.h"
+#include "win/cursor_shape.h"
 
 #include "kwinglobals.h"
 
@@ -111,7 +111,7 @@ public:
     void show();
     void hide();
 
-    virtual xcb_cursor_t x11_cursor(cursor_shape shape);
+    virtual xcb_cursor_t x11_cursor(win::cursor_shape shape);
 
     /**
      * Notice: if available always use the cursor_shape variant to avoid cache duplicates for

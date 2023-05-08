@@ -7,8 +7,8 @@
 #pragma once
 
 #include "base/platform.h"
-#include "input/cursor_shape.h"
 #include "kwin_export.h"
+#include "win/cursor_shape.h"
 
 #include <QObject>
 #include <Wrapland/Client/shm_pool.h>
@@ -49,7 +49,7 @@ public:
         destroyTheme();
     }
 
-    wl_cursor_image* get(input::cursor_shape shape)
+    wl_cursor_image* get(win::cursor_shape shape)
     {
         return get(shape.name());
     }

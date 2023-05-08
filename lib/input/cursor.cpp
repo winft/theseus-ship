@@ -169,7 +169,7 @@ void cursor::set_pos(int x, int y)
     cursor::set_pos(QPoint(x, y));
 }
 
-xcb_cursor_t cursor::x11_cursor(cursor_shape shape)
+xcb_cursor_t cursor::x11_cursor(win::cursor_shape shape)
 {
     return x11_cursor(shape.name());
 }

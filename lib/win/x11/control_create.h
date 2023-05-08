@@ -303,7 +303,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     QObject::connect(win->qobject.get(),
                      &window_qobject::moveResizeCursorChanged,
                      win->qobject.get(),
-                     [win](input::cursor_shape cursor) {
+                     [win](auto cursor) {
                          auto nativeCursor = win->space.input->cursor->x11_cursor(cursor);
                          win->xcb_windows.outer.define_cursor(nativeCursor);
                          if (win->xcb_windows.input.is_valid()) {

@@ -9,9 +9,9 @@ set(kwinrules_SRCS
     ../../lib/base/logging.cpp
     ../../lib/win/rules/book_settings.cpp
     ../../lib/input/cursor.cpp
-    ../../lib/input/cursor_shape.cpp
     ../../lib/input/singleton_interface.cpp
     ../../lib/input/x11/cursor.cpp
+    ../../lib/win/cursor_shape.cpp
     ../../lib/win/rules/ruling.cpp
     ../../lib/win/dbus/virtual_desktop_types.cpp
     optionsmodel.cpp

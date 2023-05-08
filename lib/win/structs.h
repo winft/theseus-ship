@@ -5,11 +5,10 @@
 */
 #pragma once
 
+#include "cursor_shape.h"
 #include "deco/client_impl_qobject.h"
 #include "deco/palette.h"
 #include "types.h"
-
-#include "input/cursor.h"
 
 #include <KDecoration2/Decoration>
 
@@ -43,7 +42,7 @@ struct move_resize_op {
     QRect geometry;
     win::position contact{win::position::center};
     bool button_down{false};
-    input::cursor_shape cursor{Qt::ArrowCursor};
+    cursor_shape cursor{Qt::ArrowCursor};
     int start_screen{0};
     QTimer* delay_timer{nullptr};
 };

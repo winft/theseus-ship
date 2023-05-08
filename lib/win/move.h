@@ -92,31 +92,31 @@ void update_cursor(Win* win)
     if (!win->isResizable()) {
         contact = win::position::center;
     }
-    input::cursor_shape shape = Qt::ArrowCursor;
+    cursor_shape shape = Qt::ArrowCursor;
     switch (contact) {
     case win::position::top_left:
-        shape = KWin::input::extended_cursor::SizeNorthWest;
+        shape = extended_cursor::SizeNorthWest;
         break;
     case win::position::bottom_right:
-        shape = KWin::input::extended_cursor::SizeSouthEast;
+        shape = extended_cursor::SizeSouthEast;
         break;
     case win::position::bottom_left:
-        shape = KWin::input::extended_cursor::SizeSouthWest;
+        shape = extended_cursor::SizeSouthWest;
         break;
     case win::position::top_right:
-        shape = KWin::input::extended_cursor::SizeNorthEast;
+        shape = extended_cursor::SizeNorthEast;
         break;
     case win::position::top:
-        shape = KWin::input::extended_cursor::SizeNorth;
+        shape = extended_cursor::SizeNorth;
         break;
     case win::position::bottom:
-        shape = KWin::input::extended_cursor::SizeSouth;
+        shape = extended_cursor::SizeSouth;
         break;
     case win::position::left:
-        shape = KWin::input::extended_cursor::SizeWest;
+        shape = extended_cursor::SizeWest;
         break;
     case win::position::right:
-        shape = KWin::input::extended_cursor::SizeEast;
+        shape = extended_cursor::SizeEast;
         break;
     default:
         if (mov_res.enabled) {

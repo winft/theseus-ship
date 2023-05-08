@@ -315,7 +315,7 @@ TEST_CASE("decoration input", "[input],[win]")
 
         quint32 timestamp = 1;
         MOTION(QPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
-        QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(Qt::ArrowCursor));
+        QCOMPARE(c->control->move_resize.cursor, win::cursor_shape(Qt::ArrowCursor));
 
         // There is a mismatch of the cursor key positions between windows
         // with and without borders (with borders one can move inside a bit and still
@@ -329,36 +329,34 @@ TEST_CASE("decoration input", "[input],[win]")
 
         MOTION(QPoint(c->geo.frame.x(), 0));
         QCOMPARE(c->control->move_resize.cursor,
-                 input::cursor_shape(input::extended_cursor::SizeNorthWest));
+                 win::cursor_shape(win::extended_cursor::SizeNorthWest));
         MOTION(QPoint(c->geo.frame.x() + c->geo.frame.width() / 2, 0));
         QCOMPARE(c->control->move_resize.cursor,
-                 input::cursor_shape(input::extended_cursor::SizeNorth));
+                 win::cursor_shape(win::extended_cursor::SizeNorth));
         MOTION(QPoint(c->geo.frame.x() + c->geo.frame.width() - 1, 0));
         QCOMPARE(c->control->move_resize.cursor,
-                 input::cursor_shape(input::extended_cursor::SizeNorthEast));
+                 win::cursor_shape(win::extended_cursor::SizeNorthEast));
         MOTION(QPoint(c->geo.frame.x() + c->geo.frame.width() + deviation(),
                       c->geo.size().height() / 2));
-        QCOMPARE(c->control->move_resize.cursor,
-                 input::cursor_shape(input::extended_cursor::SizeEast));
+        QCOMPARE(c->control->move_resize.cursor, win::cursor_shape(win::extended_cursor::SizeEast));
         MOTION(QPoint(c->geo.frame.x() + c->geo.frame.width() + deviation(),
                       c->geo.size().height() - 1));
         QCOMPARE(c->control->move_resize.cursor,
-                 input::cursor_shape(input::extended_cursor::SizeSouthEast));
+                 win::cursor_shape(win::extended_cursor::SizeSouthEast));
         MOTION(QPoint(c->geo.frame.x() + c->geo.frame.width() / 2,
                       c->geo.size().height() + deviation()));
         QCOMPARE(c->control->move_resize.cursor,
-                 input::cursor_shape(input::extended_cursor::SizeSouth));
+                 win::cursor_shape(win::extended_cursor::SizeSouth));
         MOTION(QPoint(c->geo.frame.x(), c->geo.size().height() + deviation()));
         QCOMPARE(c->control->move_resize.cursor,
-                 input::cursor_shape(input::extended_cursor::SizeSouthWest));
+                 win::cursor_shape(win::extended_cursor::SizeSouthWest));
         MOTION(QPoint(c->geo.frame.x() - 1, c->geo.size().height() / 2));
-        QCOMPARE(c->control->move_resize.cursor,
-                 input::cursor_shape(input::extended_cursor::SizeWest));
+        QCOMPARE(c->control->move_resize.cursor, win::cursor_shape(win::extended_cursor::SizeWest));
 
         MOTION(c->geo.frame.center());
 
         // Cursor not set back on leave
-        REQUIRE_FALSE(c->control->move_resize.cursor == input::cursor_shape(Qt::ArrowCursor));
+        REQUIRE_FALSE(c->control->move_resize.cursor == win::cursor_shape(Qt::ArrowCursor));
     }
 
     SECTION("press to move")
@@ -391,7 +389,7 @@ TEST_CASE("decoration input", "[input],[win]")
         quint32 timestamp = 1;
         MOTION(QPoint(c->geo.frame.center().x(),
                       c->geo.pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
-        QCOMPARE(c->control->move_resize.cursor, input::cursor_shape(Qt::ArrowCursor));
+        QCOMPARE(c->control->move_resize.cursor, win::cursor_shape(Qt::ArrowCursor));
 
         PRESS;
         QVERIFY(!win::is_move(c));
