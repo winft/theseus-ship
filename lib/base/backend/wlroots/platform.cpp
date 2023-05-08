@@ -17,6 +17,10 @@
 #include <Wrapland/Server/display.h>
 #include <stdexcept>
 
+extern "C" {
+#include <wlr/util/log.h>
+}
+
 namespace KWin::base::backend::wlroots
 {
 
