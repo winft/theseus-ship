@@ -12,7 +12,6 @@
 
 #include "base/x11/atoms.h"
 #include "base/x11/xcb/window.h"
-#include "input/cursor.h"
 #include "win/screen_edges.h"
 
 namespace KWin::win::x11
@@ -72,8 +71,9 @@ protected:
         m_approachWindow.unmap();
 
         auto cursor = this->edger->space.input->cursor.get();
+        using cursor_t = std::remove_pointer_t<decltype(cursor)>;
         m_cursorPollingConnection = QObject::connect(
-            cursor, &input::cursor::pos_changed, this->qobject.get(), [this](auto const& pos) {
+            cursor, &cursor_t::pos_changed, this->qobject.get(), [this](auto const& pos) {
                 this->updateApproaching(pos);
             });
     }
