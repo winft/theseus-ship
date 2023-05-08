@@ -66,7 +66,7 @@ public:
     using internal_window_t = internal_window<type>;
     using window_t = std::variant<wayland_window*, internal_window_t*, x11_window*>;
 
-    using input_t = input::wayland::redirect<typename Base::input_t, type>;
+    using input_t = input::wayland::redirect<type>;
 
     space(Base& base)
         : win::space(base.config.main)
@@ -118,7 +118,7 @@ public:
             return iwin->singleton.get();
         };
 
-        input = std::make_unique<input_t>(*base.input, *this);
+        input = std::make_unique<input_t>(*this);
         this->dbus = std::make_unique<desktop::kde::kwin_impl<type>>(*this);
         edges = std::make_unique<edger_t>(*this);
 

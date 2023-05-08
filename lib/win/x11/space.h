@@ -40,7 +40,7 @@ public:
     using type = space<Base>;
     using x11_window = window<type>;
     using window_t = std::variant<x11_window*>;
-    using input_t = input::x11::redirect<typename Base::input_t, type>;
+    using input_t = input::x11::redirect<type>;
 
     space(Base& base)
         : win::space(base.config.main)
@@ -63,7 +63,7 @@ public:
         };
 
         if (base.input) {
-            this->input = std::make_unique<input_t>(*base.input, *this);
+            this->input = std::make_unique<input_t>(*this);
         }
 
         atoms = std::make_unique<base::x11::atoms>(base.x11_data.connection);

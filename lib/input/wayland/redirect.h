@@ -51,19 +51,19 @@
 namespace KWin::input::wayland
 {
 
-template<typename Platform, typename Space>
+template<typename Space>
 class redirect
 {
 public:
-    using type = redirect<Platform, Space>;
-    using platform_t = Platform;
+    using type = redirect<Space>;
+    using platform_t = typename Space::base_t::input_t;
     using space_t = Space;
     using window_t = typename space_t::window_t;
     using dpms_filter_t = input::dpms_filter<type>;
 
-    redirect(Platform& platform, Space& space)
+    redirect(Space& space)
         : qobject{std::make_unique<redirect_qobject>()}
-        , platform{platform}
+        , platform{*space.base.input}
         , space{space}
         , config_watcher{KConfigWatcher::create(platform.config.main)}
         , input_method{std::make_unique<wayland::input_method<type>>(*this)}
@@ -230,7 +230,7 @@ public:
     std::unique_ptr<input::dpms_filter<type>> dpms_filter;
 
     std::unique_ptr<redirect_qobject> qobject;
-    Platform& platform;
+    platform_t& platform;
     Space& space;
 
 private:

@@ -18,23 +18,23 @@
 namespace KWin::input::x11
 {
 
-template<typename Platform, typename Space>
+template<typename Space>
 class redirect
 {
 public:
-    using type = redirect<Platform, Space>;
-    using platform_t = Platform;
+    using type = redirect<Space>;
+    using platform_t = typename Space::base_t::input_t;
     using space_t = Space;
     using window_t = typename space_t::window_t;
 
-    redirect(Platform& platform, Space& space)
+    redirect(Space& space)
         : qobject{std::make_unique<redirect_qobject>()}
+        , platform{*space.base.input}
         , keyboard{std::make_unique<keyboard_redirect<type>>(this)}
         , pointer{std::make_unique<pointer_redirect<type>>(this)}
         , cursor{std::make_unique<x11::cursor>(platform.base.x11_data,
                                                *platform.base.x11_event_filters,
                                                platform.config.main)}
-        , platform{platform}
         , space{space}
         , xinput{std::make_unique<xinput_integration<type>>(QX11Info::display(), *this)}
     {
@@ -67,6 +67,7 @@ public:
     }
 
     std::unique_ptr<redirect_qobject> qobject;
+    platform_t& platform;
 
     std::unique_ptr<keyboard_redirect<type>> keyboard;
     std::unique_ptr<pointer_redirect<type>> pointer;
@@ -74,7 +75,6 @@ public:
 
     std::vector<event_spy<type>*> m_spies;
 
-    Platform& platform;
     Space& space;
     std::unique_ptr<xinput_integration<type>> xinput;
 
