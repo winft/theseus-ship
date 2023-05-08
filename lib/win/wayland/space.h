@@ -55,12 +55,12 @@
 namespace KWin::win::wayland
 {
 
-template<typename Base>
+template<typename Render, typename Input>
 class space : public win::space
 {
 public:
-    using base_t = Base;
-    using type = space<base_t>;
+    using type = space<Render, Input>;
+    using base_t = typename Input::base_t;
     using x11_window = xwl_window<type>;
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
@@ -68,10 +68,10 @@ public:
 
     using input_t = input::wayland::redirect<type>;
 
-    space(Base& base)
-        : win::space(base.config.main)
-        , base{base}
-        , outline{render::outline::create(*base.render->compositor,
+    space(Render& render, Input& input)
+        : win::space(input.base.config.main)
+        , base{input.base}
+        , outline{render::outline::create(*render.compositor,
                                           [this] {
                                               return render::create_outline_visual(
                                                   *this->base.render->compositor, *outline);
@@ -105,7 +105,7 @@ public:
                   base.server->display.get())}
     {
         namespace WS = Wrapland::Server;
-        using wayland_window = win::wayland::window<space<Base>>;
+        using wayland_window = win::wayland::window<type>;
 
         singleton_interface::get_current_output_geometry = [this] {
             auto output = get_current_output(*this);
@@ -118,7 +118,7 @@ public:
             return iwin->singleton.get();
         };
 
-        input = std::make_unique<input_t>(*this);
+        this->input = std::make_unique<input_t>(*this);
         this->dbus = std::make_unique<desktop::kde::kwin_impl<type>>(*this);
         edges = std::make_unique<edger_t>(*this);
 
@@ -480,7 +480,7 @@ public:
         console->show();
     }
 
-    Base& base;
+    base_t& base;
 
     std::unique_ptr<render::outline> outline;
     std::unique_ptr<edger_t> edges;

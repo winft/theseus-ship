@@ -26,7 +26,7 @@ public:
     using output_t = output<platform>;
     using render_t = render::x11::platform<platform>;
     using input_t = input::x11::platform<platform>;
-    using space_t = win::x11::space<platform>;
+    using space_t = win::x11::space<render_t, input_t>;
 
     platform(base::config config)
         : base::platform(std::move(config))

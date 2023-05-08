@@ -19,8 +19,6 @@ class ApplicationWayland : public QApplication
 {
     Q_OBJECT
 public:
-    using wayland_space = win::wayland::space<base::wayland::platform>;
-
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 

@@ -155,7 +155,7 @@ void setup::start()
         return;
     }
 
-    base->space = std::make_unique<base_t::space_t>(*base);
+    base->space = std::make_unique<base_t::space_t>(*base->render, *base->input);
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
@@ -234,7 +234,7 @@ void setup::create_xwayland()
 
     try {
         base->xwayland
-            = std::make_unique<xwl::xwayland<wayland_space>>(*base->space, status_callback);
+            = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "System error creating Xwayland: " << exc.what() << std::endl;
     } catch (std::exception const& exc) {

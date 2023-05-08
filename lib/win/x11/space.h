@@ -32,20 +32,20 @@
 namespace KWin::win::x11
 {
 
-template<typename Base>
+template<typename Render, typename Input>
 class space : public win::space
 {
 public:
-    using base_t = Base;
-    using type = space<Base>;
+    using type = space<Render, Input>;
+    using base_t = typename Input::base_t;
     using x11_window = window<type>;
     using window_t = std::variant<x11_window*>;
     using input_t = input::x11::redirect<type>;
 
-    space(Base& base)
-        : win::space(base.config.main)
-        , base{base}
-        , outline{render::outline::create(*base.render->compositor,
+    space(Render& render, Input& input)
+        : win::space(input.base.config.main)
+        , base{input.base}
+        , outline{render::outline::create(*render.compositor,
                                           [this] {
                                               return render::create_outline_visual(
                                                   *this->base.render->compositor, *outline);
@@ -62,9 +62,7 @@ public:
             return output ? output->geometry() : QRect();
         };
 
-        if (base.input) {
-            this->input = std::make_unique<input_t>(*this);
-        }
+        this->input = std::make_unique<input_t>(*this);
 
         atoms = std::make_unique<base::x11::atoms>(base.x11_data.connection);
         edges = std::make_unique<edger_t>(*this);
@@ -145,7 +143,7 @@ public:
     std::unique_ptr<win::screen_edge<edger_t>> create_screen_edge(edger_t& edger)
     {
         if (!edges_filter) {
-            edges_filter = std::make_unique<screen_edges_filter<space<Base>>>(*this);
+            edges_filter = std::make_unique<screen_edges_filter<type>>(*this);
         }
         return std::make_unique<x11::screen_edge<edger_t>>(&edger, *atoms);
     }
@@ -170,7 +168,7 @@ public:
         console->show();
     }
 
-    Base& base;
+    base_t& base;
 
     std::unique_ptr<render::outline> outline;
     std::unique_ptr<edger_t> edges;

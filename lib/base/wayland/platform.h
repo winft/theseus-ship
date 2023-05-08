@@ -31,7 +31,7 @@ public:
     using output_t = output<platform>;
     using render_t = render::wayland::platform<platform>;
     using input_t = input::wayland::platform<platform>;
-    using space_t = win::wayland::space<platform>;
+    using space_t = win::wayland::space<render_t, input_t>;
 
     platform(base::config config)
         : base::platform(std::move(config))
@@ -89,7 +89,7 @@ public:
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
     std::unique_ptr<scripting::platform<space_t>> script;
-    std::unique_ptr<xwl::xwayland<win::wayland::space<platform>>> xwayland;
+    std::unique_ptr<xwl::xwayland<space_t>> xwayland;
 };
 
 }
