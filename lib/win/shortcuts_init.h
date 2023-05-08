@@ -188,71 +188,77 @@ void shortcuts_init_virtual_desktops(Space& space)
                                                      manager->m_current_desktop_offset());
         }
     };
-    input::platform_register_touchpad_swipe_shortcut(
-        input, SwipeDirection::Left, 3, swipeGestureReleasedX, [manager](qreal cb) {
-            if (manager->grid().width() > 1) {
-                manager->set_desktop_offset_x(cb);
-                Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                         manager->m_current_desktop_offset());
-            }
-        });
-    input::platform_register_touchpad_swipe_shortcut(
-        input, SwipeDirection::Right, 3, swipeGestureReleasedX, [manager](qreal cb) {
-            if (manager->grid().width() > 1) {
-                manager->set_desktop_offset_x(-cb);
-                Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                         manager->m_current_desktop_offset());
-            }
-        });
-    input::platform_register_touchpad_swipe_shortcut(
-        input, SwipeDirection::Left, 4, swipeGestureReleasedX, [manager](qreal cb) {
-            if (manager->grid().width() > 1) {
-                manager->set_desktop_offset_x(cb);
-                Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                         manager->m_current_desktop_offset());
-            }
-        });
-    input::platform_register_touchpad_swipe_shortcut(
-        input, SwipeDirection::Right, 4, swipeGestureReleasedX, [manager](qreal cb) {
-            if (manager->grid().width() > 1) {
-                manager->set_desktop_offset_x(-cb);
-                Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                         manager->m_current_desktop_offset());
-            }
-        });
-    input::platform_register_touchpad_swipe_shortcut(
-        input, SwipeDirection::Down, 3, swipeGestureReleasedY, [manager](qreal cb) {
-            if (manager->grid().height() > 1) {
-                manager->set_desktop_offset_y(-cb);
-                Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                         manager->m_current_desktop_offset());
-            }
-        });
-    input::platform_register_touchpad_swipe_shortcut(
-        input, SwipeDirection::Up, 3, swipeGestureReleasedY, [manager](qreal cb) {
-            if (manager->grid().height() > 1) {
-                manager->set_desktop_offset_y(cb);
-                Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                         manager->m_current_desktop_offset());
-            }
-        });
 
-    input::platform_register_touchscreen_swipe_shortcut(
-        input, SwipeDirection::Left, 3, swipeGestureReleasedX, left);
-    input::platform_register_touchscreen_swipe_shortcut(
-        input, SwipeDirection::Right, 3, swipeGestureReleasedX, right);
+    auto register_touchpad_swipe
+        = [&input](auto direction, auto fingerCount, auto action, auto const& progressCallback) {
+              input.shortcuts->registerTouchpadSwipe(
+                  direction, fingerCount, action, progressCallback);
+          };
+
+    register_touchpad_swipe(SwipeDirection::Left, 3, swipeGestureReleasedX, [manager](qreal cb) {
+        if (manager->grid().width() > 1) {
+            manager->set_desktop_offset_x(cb);
+            Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                     manager->m_current_desktop_offset());
+        }
+    });
+    register_touchpad_swipe(SwipeDirection::Right, 3, swipeGestureReleasedX, [manager](qreal cb) {
+        if (manager->grid().width() > 1) {
+            manager->set_desktop_offset_x(-cb);
+            Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                     manager->m_current_desktop_offset());
+        }
+    });
+    register_touchpad_swipe(SwipeDirection::Left, 4, swipeGestureReleasedX, [manager](qreal cb) {
+        if (manager->grid().width() > 1) {
+            manager->set_desktop_offset_x(cb);
+            Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                     manager->m_current_desktop_offset());
+        }
+    });
+    register_touchpad_swipe(SwipeDirection::Right, 4, swipeGestureReleasedX, [manager](qreal cb) {
+        if (manager->grid().width() > 1) {
+            manager->set_desktop_offset_x(-cb);
+            Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                     manager->m_current_desktop_offset());
+        }
+    });
+    register_touchpad_swipe(SwipeDirection::Down, 3, swipeGestureReleasedY, [manager](qreal cb) {
+        if (manager->grid().height() > 1) {
+            manager->set_desktop_offset_y(-cb);
+            Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                     manager->m_current_desktop_offset());
+        }
+    });
+    register_touchpad_swipe(SwipeDirection::Up, 3, swipeGestureReleasedY, [manager](qreal cb) {
+        if (manager->grid().height() > 1) {
+            manager->set_desktop_offset_y(cb);
+            Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                     manager->m_current_desktop_offset());
+        }
+    });
+
+    auto register_touchscreen_swipe_shortcut
+        = [&input](auto direction, auto fingerCount, auto action, auto const& progressCallback) {
+              input.shortcuts->registerTouchscreenSwipe(
+                  action, progressCallback, direction, fingerCount);
+          };
+
+    register_touchscreen_swipe_shortcut(SwipeDirection::Left, 3, swipeGestureReleasedX, left);
+    register_touchscreen_swipe_shortcut(SwipeDirection::Right, 3, swipeGestureReleasedX, right);
 
     // axis events
-    input::platform_register_axis_shortcut(
-        input,
+    auto register_axis_shortcut = [&input](auto modifiers, auto axis, auto action) {
+        input.shortcuts->registerAxisShortcut(action, modifiers, axis);
+    };
+    register_axis_shortcut(
         Qt::MetaModifier | Qt::AltModifier,
         PointerAxisDown,
         manager->qobject->template findChild<QAction*>(QStringLiteral("Switch to Next Desktop")));
-    input::platform_register_axis_shortcut(input,
-                                           Qt::MetaModifier | Qt::AltModifier,
-                                           PointerAxisUp,
-                                           manager->qobject->template findChild<QAction*>(
-                                               QStringLiteral("Switch to Previous Desktop")));
+    register_axis_shortcut(Qt::MetaModifier | Qt::AltModifier,
+                           PointerAxisUp,
+                           manager->qobject->template findChild<QAction*>(
+                               QStringLiteral("Switch to Previous Desktop")));
 }
 
 template<typename Space>
