@@ -5,13 +5,15 @@
 */
 #include "global_shortcuts_manager.h"
 
-#include "input/global_shortcut.h"
+#include "win/input/global_shortcut.h"
 
 #include <KGlobalAccel>
 #include <QAction>
 
 namespace KWin::input::x11
 {
+
+using global_shortcut = win::global_shortcut;
 
 global_shortcuts_manager::global_shortcuts_manager()
 {
@@ -23,10 +25,10 @@ global_shortcuts_manager::global_shortcuts_manager()
 
 global_shortcuts_manager::~global_shortcuts_manager() = default;
 
-std::vector<KeyboardShortcut>
+std::vector<win::KeyboardShortcut>
 global_shortcuts_manager::get_keyboard_shortcut(QKeySequence const& seq)
 {
-    return get_internal_shortcuts(KGlobalAccel::globalShortcutsByKey(seq));
+    return win::get_internal_shortcuts(KGlobalAccel::globalShortcutsByKey(seq));
 }
 
 QList<QKeySequence> global_shortcuts_manager::get_keyboard_shortcut(QAction* action)
@@ -94,14 +96,14 @@ void global_shortcuts_manager::registerPointerShortcut(QAction* action,
                                                        Qt::KeyboardModifiers modifiers,
                                                        Qt::MouseButtons pointerButtons)
 {
-    addIfNotExists(global_shortcut(PointerButtonShortcut{modifiers, pointerButtons}, action));
+    addIfNotExists(global_shortcut(win::PointerButtonShortcut{modifiers, pointerButtons}, action));
 }
 
 void global_shortcuts_manager::registerAxisShortcut(QAction* action,
                                                     Qt::KeyboardModifiers modifiers,
                                                     PointerAxisDirection axis)
 {
-    addIfNotExists(global_shortcut(PointerAxisShortcut{modifiers, axis}, action));
+    addIfNotExists(global_shortcut(win::PointerAxisShortcut{modifiers, axis}, action));
 }
 
 }

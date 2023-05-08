@@ -7,7 +7,6 @@
 
 #include "base/wayland/server.h"
 #include "input/event_filter.h"
-#include "input/gestures.h"
 #include "input/qt_event.h"
 #include "win/screen_edges.h"
 

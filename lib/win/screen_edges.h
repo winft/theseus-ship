@@ -94,14 +94,14 @@ public:
     explicit screen_edge(Edger* edger)
         : edger(edger)
         , qobject{std::make_unique<screen_edge_qobject>()}
-        , gesture{std::make_unique<input::swipe_gesture>()}
+        , gesture{std::make_unique<swipe_gesture>()}
     {
         gesture->setMinimumFingerCount(1);
         gesture->setMaximumFingerCount(1);
 
         QObject::connect(
             gesture.get(),
-            &input::gesture::triggered,
+            &gesture::triggered,
             qobject.get(),
             [this] {
                 stopApproaching();
@@ -115,19 +115,17 @@ public:
             },
             Qt::QueuedConnection);
 
-        QObject::connect(gesture.get(), &input::swipe_gesture::started, qobject.get(), [this] {
-            startApproaching();
-        });
-        QObject::connect(gesture.get(), &input::swipe_gesture::cancelled, qobject.get(), [this] {
-            stopApproaching();
-        });
-        QObject::connect(gesture.get(), &input::swipe_gesture::cancelled, qobject.get(), [this]() {
+        QObject::connect(
+            gesture.get(), &swipe_gesture::started, qobject.get(), [this] { startApproaching(); });
+        QObject::connect(
+            gesture.get(), &swipe_gesture::cancelled, qobject.get(), [this] { stopApproaching(); });
+        QObject::connect(gesture.get(), &swipe_gesture::cancelled, qobject.get(), [this]() {
             if (!touch_call_backs.empty() && touch_call_backs.front().hasProgressCallback()) {
                 handleTouchCallback();
             }
         });
         QObject::connect(
-            gesture.get(), &input::swipe_gesture::progress, qobject.get(), [this](qreal progress) {
+            gesture.get(), &swipe_gesture::progress, qobject.get(), [this](qreal progress) {
                 int factor = progress * 256.0f;
                 if (last_approaching_factor != factor) {
                     last_approaching_factor = factor;
@@ -136,7 +134,7 @@ public:
                 }
             });
         QObject::connect(gesture.get(),
-                         &input::swipe_gesture::deltaProgress,
+                         &swipe_gesture::deltaProgress,
                          qobject.get(),
                          [this](const QSizeF& progressDelta) {
                              if (!touch_call_backs.empty()) {
@@ -912,7 +910,7 @@ private:
     bool push_back_is_blocked{false};
 
     std::optional<window_t> window;
-    std::unique_ptr<input::swipe_gesture> gesture;
+    std::unique_ptr<swipe_gesture> gesture;
 };
 
 class KWIN_EXPORT screen_edger_qobject : public QObject
@@ -977,7 +975,7 @@ class screen_edger
 public:
     screen_edger(Space& space)
         : qobject{std::make_unique<screen_edger_qobject>()}
-        , gesture_recognizer{std::make_unique<input::gesture_recognizer>()}
+        , gesture_recognizer{std::make_unique<win::gesture_recognizer>()}
         , space{space}
         , singleton{
               [this](auto border, auto callback) { return reserve(border, callback); },
@@ -1508,7 +1506,7 @@ public:
 
     std::unique_ptr<screen_edger_qobject> qobject;
 
-    std::unique_ptr<input::gesture_recognizer> gesture_recognizer;
+    std::unique_ptr<win::gesture_recognizer> gesture_recognizer;
     KSharedConfig::Ptr config;
     Space& space;
 

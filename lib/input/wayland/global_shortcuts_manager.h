@@ -6,10 +6,10 @@
 */
 #pragma once
 
-#include "input/global_shortcut.h"
 #include "input/types.h"
-
 #include "kwinglobals.h"
+#include "win/input/gestures.h"
+#include "win/input/global_shortcut.h"
 
 #include <memory>
 
@@ -18,9 +18,6 @@ class KGlobalAccelD;
 
 namespace KWin::input
 {
-
-class gesture_recognizer;
-class global_shortcut;
 
 namespace wayland
 {
@@ -42,7 +39,7 @@ public:
     ~global_shortcuts_manager() override;
     void init();
 
-    std::vector<KeyboardShortcut> get_keyboard_shortcut(QKeySequence const& seq);
+    std::vector<win::KeyboardShortcut> get_keyboard_shortcut(QKeySequence const& seq);
     QList<QKeySequence> get_keyboard_shortcut(QAction* action);
     QList<QKeySequence> get_keyboard_shortcut(QString const& componentName,
                                               QString const& actionId);
@@ -130,15 +127,15 @@ Q_SIGNALS:
 private:
     void objectDeleted(QObject* object);
 
-    bool shortcut_exists(global_shortcut const& sc);
-    void add_shortcut(global_shortcut sc);
-    void add_gesture_shortcut(global_shortcut sc, DeviceType device);
+    bool shortcut_exists(win::global_shortcut const& sc);
+    void add_shortcut(win::global_shortcut sc);
+    void add_gesture_shortcut(win::global_shortcut sc, DeviceType device);
 
-    QVector<global_shortcut> m_shortcuts;
+    QVector<win::global_shortcut> m_shortcuts;
 
     std::unique_ptr<KGlobalAccelD> m_kglobalAccel;
-    std::unique_ptr<gesture_recognizer> m_touchpadGestureRecognizer;
-    std::unique_ptr<gesture_recognizer> m_touchscreenGestureRecognizer;
+    std::unique_ptr<win::gesture_recognizer> m_touchpadGestureRecognizer;
+    std::unique_ptr<win::gesture_recognizer> m_touchscreenGestureRecognizer;
 };
 
 }

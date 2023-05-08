@@ -13,7 +13,7 @@
 
 class QAction;
 
-namespace KWin::input
+namespace KWin::win
 {
 class swipe_gesture;
 class pinch_gesture;

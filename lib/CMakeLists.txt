@@ -42,8 +42,6 @@ set(kwin_SRCS
     input/spies/modifier_only_shortcuts.cpp
     input/switch.cpp
     input/cursor.cpp
-    input/gestures.cpp
-    input/global_shortcut.cpp
     input/logging.cpp
     input/pointer.cpp
     input/xkb/keyboard.cpp
@@ -84,6 +82,8 @@ set(kwin_SRCS
     win/dbus/virtual_desktop_types.cpp
     win/deco/palette.cpp
     win/deco/decorations_logging.cpp
+    win/input/gestures.cpp
+    win/input/global_shortcut.cpp
     win/options.cpp
     win/osd_notification.cpp
     win/property_window.cpp

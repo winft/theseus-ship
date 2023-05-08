@@ -11,7 +11,7 @@
 #include <QAction>
 #include <variant>
 
-namespace KWin::input
+namespace KWin::win
 {
 
 global_shortcut::global_shortcut(Shortcut&& sc, QAction* action)

@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/wayland/server.h"
 #include "base/x11/xcb/proto.h"
 #include "input/cursor.h"
-#include "input/gestures.h"
 #include "win/actions.h"
 #include "win/activation.h"
 #include "win/screen_edges.h"

@@ -15,7 +15,7 @@
 #include <QSizeF>
 #include <QVector>
 
-namespace KWin::input
+namespace KWin::win
 {
 static const qreal DEFAULT_MINIMUM_SCALE_DELTA = .2; // 20%
 class KWIN_EXPORT gesture : public QObject

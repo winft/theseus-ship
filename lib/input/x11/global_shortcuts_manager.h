@@ -5,9 +5,9 @@
 */
 #pragma once
 
-#include "input/global_shortcut.h"
 #include "input/types.h"
 #include "kwinglobals.h"
+#include "win/input/global_shortcut.h"
 
 #include <memory>
 
@@ -15,8 +15,6 @@ class QAction;
 
 namespace KWin::input
 {
-
-class global_shortcut;
 
 namespace x11
 {
@@ -28,7 +26,7 @@ public:
     global_shortcuts_manager();
     ~global_shortcuts_manager() override;
 
-    std::vector<KeyboardShortcut> get_keyboard_shortcut(QKeySequence const& seq);
+    std::vector<win::KeyboardShortcut> get_keyboard_shortcut(QKeySequence const& seq);
     QList<QKeySequence> get_keyboard_shortcut(QAction* action);
     QList<QKeySequence> get_keyboard_shortcut(QString const& componentName,
                                               QString const& actionId);
@@ -71,9 +69,9 @@ Q_SIGNALS:
 
 private:
     void objectDeleted(QObject* object);
-    bool addIfNotExists(global_shortcut sc);
+    bool addIfNotExists(win::global_shortcut sc);
 
-    QVector<global_shortcut> m_shortcuts;
+    QVector<win::global_shortcut> m_shortcuts;
 };
 
 }
