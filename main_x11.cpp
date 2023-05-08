@@ -19,6 +19,7 @@
 #include "desktop/screen_locker_watcher.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
+#include "render/shortcuts_init.h"
 #include "render/x11/compositor.h"
 #include "script/platform.h"
 #include "win/shortcuts_init.h"
@@ -270,6 +271,7 @@ void ApplicationX11::start()
         }
 
         win::init_shortcuts(*base.space);
+        render::init_shortcuts(*base.render);
 
         event_filter = std::make_unique<base::x11::xcb_event_filter<base_t::space_t>>(*base.space);
         installNativeEventFilter(event_filter.get());

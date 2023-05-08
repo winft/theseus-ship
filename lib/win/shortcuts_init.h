@@ -10,10 +10,6 @@
 #include "kill_window.h"
 #include "types.h"
 
-#include "render/platform.h"
-#include "render/post/night_color_manager.h"
-#include "render/post/night_color_setup.h"
-
 #include <KLazyLocalizedString>
 #include <KLocalizedString>
 #include <QAction>
@@ -543,7 +539,6 @@ void init_shortcuts(Space& space)
     space.tabbox->init_shortcuts();
 #endif
     shortcuts_init_virtual_desktops(space);
-    render::post::init_night_color_shortcuts(*space.base.input, *space.base.render->night_color);
 
     // so that it's recreated next time
     space.user_actions_menu->discard();

@@ -19,6 +19,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/wayland/redirect.h"
 #include "render/backend/wlroots/platform.h"
 #include "render/effects.h"
+#include "render/shortcuts_init.h"
 #include "render/wayland/compositor.h"
 #include "script/platform.h"
 #include "win/shortcuts_init.h"
@@ -202,6 +203,7 @@ void ApplicationWayland::start(base::operation_mode mode,
 
     base->space = std::make_unique<base_t::space_t>(*base->render, *base->input);
     win::init_shortcuts(*base->space);
+    render::init_shortcuts(*base->render);
     base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->compositor->start(*base->space);
