@@ -6,6 +6,7 @@
 #pragma once
 
 #include "global_shortcuts_manager.h"
+#include "redirect.h"
 
 #include "config-kwin.h"
 #include "input/platform.h"
@@ -23,6 +24,7 @@ public:
     using base_t = Base;
     using type = platform<Base>;
     using space_t = typename Base::space_t;
+    using redirect_t = redirect<space_t>;
 
     platform(Base& base)
         : qobject{std::make_unique<platform_qobject>()}
@@ -38,6 +40,11 @@ public:
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     virtual ~platform() = default;
+
+    std::unique_ptr<redirect<space_t>> integrate_space(space_t& space) const
+    {
+        return std::make_unique<redirect<space_t>>(space);
+    }
 
     /**
      * Platform specific preparation for an @p action which is used for KGlobalAccel.

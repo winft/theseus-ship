@@ -18,8 +18,6 @@
 #include "debug/console/x11/x11_console.h"
 #include "desktop/kde/dbus/kwin.h"
 #include "desktop/screen_locker_watcher.h"
-#include "input/x11/platform.h"
-#include "input/x11/redirect.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
 #include "win/internal_window.h"
@@ -38,9 +36,9 @@ class space : public win::space
 public:
     using type = space<Render, Input>;
     using base_t = typename Input::base_t;
+    using input_t = typename Input::redirect_t;
     using x11_window = window<type>;
     using window_t = std::variant<x11_window*>;
-    using input_t = input::x11::redirect<type>;
 
     space(Render& render, Input& input)
         : win::space(input.base.config.main)
@@ -62,7 +60,7 @@ public:
             return output ? output->geometry() : QRect();
         };
 
-        this->input = std::make_unique<input_t>(*this);
+        this->input = input.integrate_space(*this);
 
         atoms = std::make_unique<base::x11::atoms>(base.x11_data.connection);
         edges = std::make_unique<edger_t>(*this);

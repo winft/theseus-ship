@@ -25,8 +25,6 @@
 #include "debug/console/wayland/wayland_console.h"
 #include "desktop/kde/dbus/kwin.h"
 #include "desktop/screen_locker_watcher.h"
-#include "input/wayland/platform.h"
-#include "input/wayland/redirect.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/placement.h"
@@ -61,12 +59,11 @@ class space : public win::space
 public:
     using type = space<Render, Input>;
     using base_t = typename Input::base_t;
+    using input_t = typename Input::redirect_t;
     using x11_window = xwl_window<type>;
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
     using window_t = std::variant<wayland_window*, internal_window_t*, x11_window*>;
-
-    using input_t = input::wayland::redirect<type>;
 
     space(Render& render, Input& input)
         : win::space(input.base.config.main)
@@ -118,7 +115,7 @@ public:
             return iwin->singleton.get();
         };
 
-        this->input = std::make_unique<input_t>(*this);
+        this->input = input.integrate_space(*this);
         this->dbus = std::make_unique<desktop::kde::kwin_impl<type>>(*this);
         edges = std::make_unique<edger_t>(*this);
 
