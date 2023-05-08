@@ -40,7 +40,7 @@ void platform::update_outputs_impl()
 
     // First check for removed outputs (we go backwards through the outputs, LIFO).
     for (auto old_it = this->outputs.rbegin(); old_it != this->outputs.rend();) {
-        auto x11_old_out = static_cast<base::x11::output*>(*old_it);
+        auto x11_old_out = static_cast<output_t*>(*old_it);
 
         auto is_in_new_outputs = [x11_old_out, &res_outs] {
             auto it
@@ -68,7 +68,7 @@ void platform::update_outputs_impl()
     for (auto& out : res_outs) {
         auto it
             = std::find_if(this->outputs.begin(), this->outputs.end(), [&out](auto const& old_out) {
-                  auto old_x11_out = static_cast<base::x11::output*>(old_out);
+                  auto old_x11_out = static_cast<output_t*>(old_out);
                   return old_x11_out->data.crtc == out->data.crtc
                       && old_x11_out->data.name == out->data.name;
               });

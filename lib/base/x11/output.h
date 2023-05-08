@@ -8,28 +8,70 @@
 #include "base/output.h"
 
 #include "render/backend/x11/output.h"
+#include "utils/gamma_ramp.h"
 
 #include <xcb/randr.h>
 
 namespace KWin::base::x11
 {
 
-class platform;
-
-class KWIN_EXPORT output : public base::output
+template<typename Platform>
+class output : public base::output
 {
 public:
-    output(x11::platform& platform);
-    QString name() const override;
+    using type = output<Platform>;
 
-    QRect geometry() const override;
+    output(Platform& platform)
+        : render{*this}
+        , platform{platform}
+    {
+    }
 
-    int refresh_rate() const override;
+    QString name() const override
+    {
+        return data.name;
+    }
 
-    int gamma_ramp_size() const override;
-    bool set_gamma_ramp(gamma_ramp const& gamma) override;
+    QRect geometry() const override
+    {
+        if (data.geometry.isValid()) {
+            return data.geometry;
+        }
 
-    QSize physical_size() const override;
+        // xinerama, lacks RandR
+        return QRect({}, platform.topology.size);
+    }
+
+    int refresh_rate() const override
+    {
+        return data.refresh_rate;
+    }
+
+    int gamma_ramp_size() const override
+    {
+        return data.gamma_ramp_size;
+    }
+
+    bool set_gamma_ramp(gamma_ramp const& gamma) override
+    {
+        if (data.crtc == XCB_NONE) {
+            return false;
+        }
+
+        xcb_randr_set_crtc_gamma(platform.x11_data.connection,
+                                 data.crtc,
+                                 gamma.size(),
+                                 gamma.red(),
+                                 gamma.green(),
+                                 gamma.blue());
+
+        return true;
+    }
+
+    QSize physical_size() const override
+    {
+        return data.physical_size;
+    }
 
     struct {
         QString name;
@@ -40,10 +82,10 @@ public:
         xcb_randr_crtc_t crtc{XCB_NONE};
     } data;
 
-    render::backend::x11::output render;
+    render::backend::x11::output<type> render;
 
 private:
-    x11::platform& platform;
+    Platform& platform;
 };
 
 }

@@ -16,13 +16,16 @@ namespace KWin::base::x11
 {
 
 template<typename Base, typename Resources>
-std::vector<std::unique_ptr<output>> get_outputs_from_resources(Base& base, Resources resources)
+auto get_outputs_from_resources(Base& base, Resources resources)
+    -> std::vector<std::unique_ptr<typename Base::output_t>>
 {
+    using output_t = typename Base::output_t;
+
     if (resources.is_null()) {
         return {};
     }
 
-    std::vector<std::unique_ptr<output>> outputs;
+    std::vector<std::unique_ptr<output_t>> outputs;
 
     xcb_randr_crtc_t* crtcs = resources.crtcs();
     xcb_randr_mode_info_t* modes = resources.modes();
@@ -74,7 +77,7 @@ std::vector<std::unique_ptr<output>> get_outputs_from_resources(Base& base, Reso
             // drm platform do this.
             xcb::randr::crtc_gamma gamma(base.x11_data.connection, crtc);
 
-            auto output = std::make_unique<x11::output>(base);
+            auto output = std::make_unique<output_t>(base);
             output->data.crtc = crtc;
             output->data.gamma_ramp_size = gamma.is_null() ? 0 : gamma->size;
             output->data.geometry = geo;

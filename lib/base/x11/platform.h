@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include "base/output.h"
+#include "output.h"
+
 #include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "input/x11/platform.h"
@@ -21,7 +22,7 @@ namespace KWin::base::x11
 class platform : public base::platform
 {
 public:
-    using output_t = output;
+    using output_t = output<platform>;
     using render_t = render::x11::platform<platform>;
     using input_t = input::x11::platform<platform>;
     using space_t = win::x11::space<platform>;
@@ -49,7 +50,7 @@ public:
         return vec;
     }
 
-    std::vector<output*> outputs;
+    std::vector<output_t*> outputs;
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
