@@ -197,7 +197,7 @@ set(kwin_INPUT_LIBS
 )
 
 set(kwinLibs
-    base
+    base-x11
     kwineffects
     ${kwin_QT_LIBS}
     ${kwin_KDE_LIBS}
