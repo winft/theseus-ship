@@ -13,8 +13,8 @@
 #include "win/activation.h"
 #include "win/controlling.h"
 #include "win/desktop_get.h"
+#include "win/lib_interface.h"
 #include "win/meta.h"
-#include "win/property_window.h"
 #include "win/screen.h"
 #include "win/transient.h"
 
@@ -23,7 +23,7 @@
 namespace KWin::scripting
 {
 
-class KWIN_EXPORT window : public win::property_window
+class KWIN_EXPORT window : public win::script_window
 {
     Q_OBJECT
 
@@ -664,7 +664,7 @@ public:
                               }
 
                               assert(parent->control);
-                              return parent->control->scripting.get();
+                              return static_cast<window*>(parent->control->script.get());
                           }},
                           ref_win);
     }

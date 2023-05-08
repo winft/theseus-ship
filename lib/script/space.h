@@ -551,8 +551,8 @@ public:
         std::vector<window*> ret;
         for (auto const& win : ref_space->windows) {
             std::visit(overload{[&](auto&& win) {
-                           if (win->control && win->control->scripting) {
-                               ret.push_back(win->control->scripting.get());
+                           if (win->control && win->control->script) {
+                               ret.push_back(static_cast<window*>(win->control->script.get()));
                            }
                        }},
                        win);
@@ -947,7 +947,7 @@ protected:
                 = std::visit(overload{[&](auto&& win) -> window* {
                                  if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
                                      if (win->control && win->xcb_windows.client == windowId) {
-                                         return win->control->scripting.get();
+                                         return static_cast<window*>(win->control->script.get());
                                      }
                                  }
                                  return nullptr;
@@ -966,7 +966,7 @@ protected:
                               if (!win->control) {
                                   return nullptr;
                               }
-                              return win->control->scripting.get();
+                              return static_cast<window*>(win->control->script.get());
                           }},
                           win);
     }
@@ -979,19 +979,20 @@ protected:
             return;
         }
 
-        win->control->scripting = std::make_unique<window_t>(win);
+        win->control->script = std::make_unique<window_t>(win);
 
         Space::windows_count++;
-        Q_EMIT Space::clientAdded(win->control->scripting.get());
+        Q_EMIT Space::clientAdded(static_cast<window*>(win->control->script.get()));
     }
 
     template<typename RefWin>
     void handle_client_removed(RefWin* client)
     {
-        if (client->control) {
-            Space::windows_count--;
-            Q_EMIT Space::clientRemoved(client->control->scripting.get());
+        if (!client->control) {
+            return;
         }
+        Space::windows_count--;
+        Q_EMIT Space::clientRemoved(static_cast<window*>(client->control->script.get()));
     }
 
     output_impl<typename RefSpace::base_t::output_t>* get_output(base::output const* output) const

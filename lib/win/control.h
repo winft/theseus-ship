@@ -8,6 +8,7 @@
 #include "appmenu.h"
 #include "config-kwin.h"
 #include "geo.h"
+#include "lib_interface.h"
 #include "stacking.h"
 #include "structs.h"
 #include "tabbox/tabbox_client_impl.h"
@@ -15,7 +16,6 @@
 #include "virtual_desktops.h"
 
 #include "rules/window.h"
-#include "script/window.h"
 
 #include <kwineffects/effect.h>
 
@@ -215,8 +215,7 @@ public:
         rules.remove(rule);
     }
 
-    using scripting_t = scripting::window_impl<var_win>;
-    std::unique_ptr<scripting_t> scripting;
+    std::unique_ptr<script_window> script;
     Wrapland::Server::PlasmaWindow* plasma_wayland_integration{nullptr};
 
     bool active{false};
