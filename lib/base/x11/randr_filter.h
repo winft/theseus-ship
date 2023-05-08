@@ -5,24 +5,23 @@
 */
 #pragma once
 
-#include "base/x11/event_filter.h"
-#include "base/x11/xcb/extensions.h"
-#include "base/x11/xcb/randr.h"
+#include "event_filter.h"
+#include "xcb/extensions.h"
+#include "xcb/randr.h"
 
 #include <QTimer>
 #include <memory>
 #include <xcb/xcb.h>
 
-namespace KWin::base::backend::x11
+namespace KWin::base::x11
 {
 
 template<typename Platform>
-class RandrFilter : public base::x11::event_filter
+class randr_filter : public event_filter
 {
 public:
-    explicit RandrFilter(Platform& platform)
-        : base::x11::event_filter(*platform.x11_event_filters,
-                                  base::x11::xcb::extensions::self()->randr_notify_event())
+    explicit randr_filter(Platform& platform)
+        : event_filter(*platform.x11_event_filters, xcb::extensions::self()->randr_notify_event())
         , platform(platform)
         , changed_timer(std::make_unique<QTimer>())
     {
@@ -34,12 +33,11 @@ public:
 
     bool event(xcb_generic_event_t* event) override
     {
-        Q_ASSERT((event->response_type & ~0x80)
-                 == base::x11::xcb::extensions::self()->randr_notify_event());
+        Q_ASSERT((event->response_type & ~0x80) == xcb::extensions::self()->randr_notify_event());
 
         // update default screen
         auto* xrrEvent = reinterpret_cast<xcb_randr_screen_change_notify_event_t*>(event);
-        auto screen = base::x11::get_default_screen(platform.x11_data);
+        auto screen = get_default_screen(platform.x11_data);
 
         if (xrrEvent->rotation & (XCB_RANDR_ROTATION_ROTATE_90 | XCB_RANDR_ROTATION_ROTATE_270)) {
             screen->width_in_pixels = xrrEvent->height;

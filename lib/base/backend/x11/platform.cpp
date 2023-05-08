@@ -6,10 +6,10 @@
 #include "platform.h"
 
 #include "output_helpers.h"
-#include "randr_filter.h"
 
 #include "base/logging.h"
 #include "base/output_helpers.h"
+#include "base/x11/randr_filter.h"
 #include "base/x11/xcb/randr.h"
 
 namespace KWin::base::backend::x11
@@ -24,7 +24,7 @@ platform::platform(base::config config)
 void platform::update_outputs()
 {
     if (!randr_filter) {
-        randr_filter = std::make_unique<RandrFilter<platform>>(*this);
+        randr_filter = std::make_unique<base::x11::randr_filter<platform>>(*this);
         update_outputs_impl<base::x11::xcb::randr::screen_resources>();
         return;
     }
