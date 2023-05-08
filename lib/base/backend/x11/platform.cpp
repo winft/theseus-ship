@@ -24,7 +24,7 @@ platform::platform(base::config config)
 void platform::update_outputs()
 {
     if (!randr_filter) {
-        randr_filter = std::make_unique<RandrFilter>(this);
+        randr_filter = std::make_unique<RandrFilter<platform>>(*this);
         update_outputs_impl<base::x11::xcb::randr::screen_resources>();
         return;
     }

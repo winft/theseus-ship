@@ -248,7 +248,6 @@ generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 ### X11 library
 set(kwin_X11_SRCS
    base/backend/x11/platform.cpp
-   base/backend/x11/randr_filter.cpp
    base/x11/output.cpp
    input/x11/cursor.cpp
    input/x11/global_shortcuts_manager.cpp
