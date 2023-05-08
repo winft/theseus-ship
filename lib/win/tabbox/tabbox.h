@@ -16,8 +16,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb/proto.h"
-#include "input/types.h"
-#include "input/xkb/helpers.h"
 #include "kwin_export.h"
 #include "kwinglobals.h"
 #include "win/activation.h"
@@ -28,9 +26,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QKeySequence>
 #include <QModelIndex>
 #include <QTimer>
-#include <X11/keysym.h>
 #include <memory>
-#include <xcb/xcb_keysyms.h>
 
 class KConfigGroup;
 class KLazyLocalizedString;
@@ -841,123 +837,14 @@ public:
     Space& space;
 
 private:
-    /**
-     * Handles alt-tab / control-tab
-     */
-    bool areKeySymXsDepressed(uint const keySyms[], int nKeySyms)
-    {
-        struct KeySymbolsDeleter {
-            static inline void cleanup(xcb_key_symbols_t* symbols)
-            {
-                xcb_key_symbols_free(symbols);
-            }
-        };
-
-        base::x11::xcb::query_keymap keys(space.base.x11_data.connection);
-
-        QScopedPointer<xcb_key_symbols_t, KeySymbolsDeleter> symbols(
-            xcb_key_symbols_alloc(space.base.x11_data.connection));
-        if (symbols.isNull() || !keys) {
-            return false;
-        }
-        const auto keymap = keys->keys;
-
-        bool depressed = false;
-        for (int iKeySym = 0; iKeySym < nKeySyms; iKeySym++) {
-            uint keySymX = keySyms[iKeySym];
-            xcb_keycode_t* keyCodes = xcb_key_symbols_get_keycode(symbols.data(), keySymX);
-            if (!keyCodes) {
-                continue;
-            }
-
-            int j = 0;
-            while (keyCodes[j] != XCB_NO_SYMBOL) {
-                const xcb_keycode_t keyCodeX = keyCodes[j++];
-                int i = keyCodeX / 8;
-                char mask = 1 << (keyCodeX - (i * 8));
-
-                if (i < 0 || i >= 32) {
-                    continue;
-                }
-
-                qCDebug(KWIN_TABBOX) << iKeySym << ": keySymX=0x" << QString::number(keySymX, 16)
-                                     << " i=" << i << " mask=0x" << QString::number(mask, 16)
-                                     << " keymap[i]=0x" << QString::number(keymap[i], 16);
-
-                if (keymap[i] & mask) {
-                    depressed = true;
-                    break;
-                }
-            }
-
-            free(keyCodes);
-        }
-
-        return depressed;
-    }
-
-    bool areModKeysDepressedX11(QKeySequence const& seq)
-    {
-        uint rgKeySyms[10];
-        int nKeySyms = 0;
-        int mod = seq[seq.count() - 1] & Qt::KeyboardModifierMask;
-
-        if (mod & Qt::SHIFT) {
-            rgKeySyms[nKeySyms++] = XK_Shift_L;
-            rgKeySyms[nKeySyms++] = XK_Shift_R;
-        }
-        if (mod & Qt::CTRL) {
-            rgKeySyms[nKeySyms++] = XK_Control_L;
-            rgKeySyms[nKeySyms++] = XK_Control_R;
-        }
-        if (mod & Qt::ALT) {
-            rgKeySyms[nKeySyms++] = XK_Alt_L;
-            rgKeySyms[nKeySyms++] = XK_Alt_R;
-        }
-        if (mod & Qt::META) {
-            // It would take some code to determine whether the Win key
-            // is associated with Super or Meta, so check for both.
-            // See bug #140023 for details.
-            rgKeySyms[nKeySyms++] = XK_Super_L;
-            rgKeySyms[nKeySyms++] = XK_Super_R;
-            rgKeySyms[nKeySyms++] = XK_Meta_L;
-            rgKeySyms[nKeySyms++] = XK_Meta_R;
-        }
-
-        return areKeySymXsDepressed(rgKeySyms, nKeySyms);
-    }
-
-    template<typename Input>
-    static bool areModKeysDepressedWayland(Input const& input, const QKeySequence& seq)
-    {
-        const int mod = seq[seq.count() - 1] & Qt::KeyboardModifierMask;
-        auto const mods
-            = input::xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(input);
-        if ((mod & Qt::SHIFT) && mods.testFlag(Qt::ShiftModifier)) {
-            return true;
-        }
-        if ((mod & Qt::CTRL) && mods.testFlag(Qt::ControlModifier)) {
-            return true;
-        }
-        if ((mod & Qt::ALT) && mods.testFlag(Qt::AltModifier)) {
-            return true;
-        }
-        if ((mod & Qt::META) && mods.testFlag(Qt::MetaModifier)) {
-            return true;
-        }
-        return false;
-    }
-
     template<typename Input>
     bool areModKeysDepressed(Input const& input, QKeySequence const& seq)
     {
-        if (seq.isEmpty())
+        if (seq.isEmpty()) {
             return false;
-        if (base::should_use_wayland_for_compositing(input.base)) {
-            return areModKeysDepressedWayland(input, seq);
-        } else {
-            return areModKeysDepressedX11(seq);
         }
+
+        return input.are_mod_keys_depressed(seq);
     }
 
     static std::vector<window_t> get_windows_with_control(std::vector<window_t>& windows)

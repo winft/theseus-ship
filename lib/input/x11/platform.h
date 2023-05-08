@@ -12,7 +12,9 @@
 #include "input/platform.h"
 
 #include <KGlobalAccel>
+#include <X11/keysym.h>
 #include <memory>
+#include <xcb/xcb_keysyms.h>
 
 namespace KWin::input::x11
 {
@@ -100,6 +102,37 @@ public:
         QObject::connect(action, &QAction::triggered, receiver, slot);
     }
 
+    bool are_mod_keys_depressed(QKeySequence const& seq) const
+    {
+        uint rgKeySyms[10];
+        int nKeySyms = 0;
+        int mod = seq[seq.count() - 1] & Qt::KeyboardModifierMask;
+
+        if (mod & Qt::SHIFT) {
+            rgKeySyms[nKeySyms++] = XK_Shift_L;
+            rgKeySyms[nKeySyms++] = XK_Shift_R;
+        }
+        if (mod & Qt::CTRL) {
+            rgKeySyms[nKeySyms++] = XK_Control_L;
+            rgKeySyms[nKeySyms++] = XK_Control_R;
+        }
+        if (mod & Qt::ALT) {
+            rgKeySyms[nKeySyms++] = XK_Alt_L;
+            rgKeySyms[nKeySyms++] = XK_Alt_R;
+        }
+        if (mod & Qt::META) {
+            // It would take some code to determine whether the Win key
+            // is associated with Super or Meta, so check for both.
+            // See bug #140023 for details.
+            rgKeySyms[nKeySyms++] = XK_Super_L;
+            rgKeySyms[nKeySyms++] = XK_Super_R;
+            rgKeySyms[nKeySyms++] = XK_Meta_L;
+            rgKeySyms[nKeySyms++] = XK_Meta_R;
+        }
+
+        return are_key_syms_depressed(rgKeySyms, nKeySyms);
+    }
+
     std::unique_ptr<platform_qobject> qobject;
     input::config config;
 
@@ -111,6 +144,59 @@ public:
     std::unique_ptr<dbus::device_manager<type>> dbus;
 
     Base& base;
+
+private:
+    bool are_key_syms_depressed(uint const keySyms[], int nKeySyms) const
+    {
+        struct KeySymbolsDeleter {
+            static inline void cleanup(xcb_key_symbols_t* symbols)
+            {
+                xcb_key_symbols_free(symbols);
+            }
+        };
+
+        base::x11::xcb::query_keymap keys(base.x11_data.connection);
+
+        QScopedPointer<xcb_key_symbols_t, KeySymbolsDeleter> symbols(
+            xcb_key_symbols_alloc(base.x11_data.connection));
+        if (symbols.isNull() || !keys) {
+            return false;
+        }
+        const auto keymap = keys->keys;
+
+        bool depressed = false;
+        for (int iKeySym = 0; iKeySym < nKeySyms; iKeySym++) {
+            uint keySymX = keySyms[iKeySym];
+            auto keyCodes = xcb_key_symbols_get_keycode(symbols.data(), keySymX);
+            if (!keyCodes) {
+                continue;
+            }
+
+            int j = 0;
+            while (keyCodes[j] != XCB_NO_SYMBOL) {
+                const xcb_keycode_t keyCodeX = keyCodes[j++];
+                int i = keyCodeX / 8;
+                char mask = 1 << (keyCodeX - (i * 8));
+
+                if (i < 0 || i >= 32) {
+                    continue;
+                }
+
+                qCDebug(KWIN_TABBOX) << iKeySym << ": keySymX=0x" << QString::number(keySymX, 16)
+                                     << " i=" << i << " mask=0x" << QString::number(mask, 16)
+                                     << " keymap[i]=0x" << QString::number(keymap[i], 16);
+
+                if (keymap[i] & mask) {
+                    depressed = true;
+                    break;
+                }
+            }
+
+            free(keyCodes);
+        }
+
+        return depressed;
+    }
 };
 
 }

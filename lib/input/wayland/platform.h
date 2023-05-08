@@ -145,6 +145,27 @@ public:
         toggle_touchpads();
     }
 
+    bool are_mod_keys_depressed(QKeySequence const& seq) const
+    {
+        const int mod = seq[seq.count() - 1] & Qt::KeyboardModifierMask;
+        auto const mods = xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(*this);
+
+        if ((mod & Qt::SHIFT) && mods.testFlag(Qt::ShiftModifier)) {
+            return true;
+        }
+        if ((mod & Qt::CTRL) && mods.testFlag(Qt::ControlModifier)) {
+            return true;
+        }
+        if ((mod & Qt::ALT) && mods.testFlag(Qt::AltModifier)) {
+            return true;
+        }
+        if ((mod & Qt::META) && mods.testFlag(Qt::MetaModifier)) {
+            return true;
+        }
+
+        return false;
+    }
+
     std::unique_ptr<platform_qobject> qobject;
     input::config config;
 
