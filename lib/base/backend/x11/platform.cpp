@@ -5,10 +5,8 @@
 */
 #include "platform.h"
 
-#include "output_helpers.h"
-
 #include "base/logging.h"
-#include "base/output_helpers.h"
+#include "base/x11/output_helpers.h"
 #include "base/x11/randr_filter.h"
 #include "base/x11/xcb/randr.h"
 

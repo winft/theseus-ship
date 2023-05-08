@@ -5,8 +5,8 @@
 */
 #pragma once
 
-#include "base/x11/output.h"
-#include "base/x11/xcb/randr.h"
+#include "output.h"
+#include "xcb/randr.h"
 
 #include <memory>
 #include <vector>
@@ -16,33 +16,32 @@ namespace KWin::base::x11
 {
 
 template<typename Base, typename Resources>
-std::vector<std::unique_ptr<base::x11::output>> get_outputs_from_resources(Base& base,
-                                                                           Resources resources)
+std::vector<std::unique_ptr<output>> get_outputs_from_resources(Base& base, Resources resources)
 {
     if (resources.is_null()) {
         return {};
     }
 
-    std::vector<std::unique_ptr<base::x11::output>> outputs;
+    std::vector<std::unique_ptr<output>> outputs;
 
     xcb_randr_crtc_t* crtcs = resources.crtcs();
     xcb_randr_mode_info_t* modes = resources.modes();
 
-    std::vector<base::x11::xcb::randr::crtc_info> crtc_infos;
+    std::vector<xcb::randr::crtc_info> crtc_infos;
     for (int i = 0; i < resources->num_crtcs; ++i) {
-        crtc_infos.push_back(base::x11::xcb::randr::crtc_info(
-            base.x11_data.connection, crtcs[i], resources->config_timestamp));
+        crtc_infos.push_back(
+            xcb::randr::crtc_info(base.x11_data.connection, crtcs[i], resources->config_timestamp));
     }
 
     for (int i = 0; i < resources->num_crtcs; ++i) {
-        base::x11::xcb::randr::crtc_info crtc_info(crtc_infos.at(i));
+        xcb::randr::crtc_info crtc_info(crtc_infos.at(i));
 
         auto randr_outputs = crtc_info.outputs();
-        std::vector<base::x11::xcb::randr::output_info> output_infos;
+        std::vector<xcb::randr::output_info> output_infos;
 
         if (randr_outputs) {
             for (int i = 0; i < resources->num_outputs; ++i) {
-                output_infos.push_back(base::x11::xcb::randr::output_info(
+                output_infos.push_back(xcb::randr::output_info(
                     base.x11_data.connection, randr_outputs[i], resources->config_timestamp));
             }
         }
@@ -73,16 +72,16 @@ std::vector<std::unique_ptr<base::x11::output>> get_outputs_from_resources(Base&
             // TODO: Perhaps the output has to save the inherited gamma ramp and
             // restore it during tear down. Currently neither standalone x11 nor
             // drm platform do this.
-            base::x11::xcb::randr::crtc_gamma gamma(base.x11_data.connection, crtc);
+            xcb::randr::crtc_gamma gamma(base.x11_data.connection, crtc);
 
-            auto output = std::make_unique<base::x11::output>(base);
+            auto output = std::make_unique<x11::output>(base);
             output->data.crtc = crtc;
             output->data.gamma_ramp_size = gamma.is_null() ? 0 : gamma->size;
             output->data.geometry = geo;
             output->data.refresh_rate = refresh_rate * 1000;
 
             for (int j = 0; j < crtc_info->num_outputs; ++j) {
-                base::x11::xcb::randr::output_info output_info(output_infos.at(j));
+                xcb::randr::output_info output_info(output_infos.at(j));
                 if (output_info->crtc != crtc) {
                     continue;
                 }
