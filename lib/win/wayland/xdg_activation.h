@@ -7,7 +7,6 @@
 
 #include "base/logging.h"
 #include "base/wayland/server.h"
-#include "wayland_logging.h"
 #include "win/activation.h"
 #include "win/stacking.h"
 

@@ -5,12 +5,12 @@
 */
 #pragma once
 
+#include "base/logging.h"
 #include "base/platform.h"
 #include "base/x11/xcb/helpers.h"
 #include "render/gl/gl.h"
 #include "render/x11/compositor.h"
 #include "win/space.h"
-#include "x11_logging.h"
 
 // Must be included late because of Qt.
 #include "glx_context_attribute_builder.h"
@@ -159,7 +159,7 @@ GLXFBConfig create_glx_fb_config(Backend const& backend)
         glXGetFBConfigAttrib(display, fbconfig, GLX_STENCIL_SIZE, &stencil);
         glXGetFBConfigAttrib(display, fbconfig, GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB, &srgb);
 
-        qCDebug(KWIN_X11,
+        qCDebug(KWIN_CORE,
                 "Choosing GLXFBConfig %#x X visual %#x depth %d RGBA %d:%d:%d:%d ZS %d:%d sRGB: %d",
                 fbconfig_id,
                 visual_id,
@@ -174,7 +174,7 @@ GLXFBConfig create_glx_fb_config(Backend const& backend)
     }
 
     if (!fbconfig) {
-        qCCritical(KWIN_X11) << "Failed to find a usable framebuffer configuration";
+        qCCritical(KWIN_CORE) << "Failed to find a usable framebuffer configuration";
     }
 
     return fbconfig;
@@ -199,7 +199,7 @@ bool init_glx_buffer(Backend& backend)
             backend.data.display, backend.data.fbconfig, GLX_VISUAL_ID, (int*)&visual);
 
         if (!visual) {
-            qCCritical(KWIN_X11) << "The GLXFBConfig does not have an associated X visual";
+            qCCritical(KWIN_CORE) << "The GLXFBConfig does not have an associated X visual";
             return false;
         }
 
@@ -226,7 +226,7 @@ bool init_glx_buffer(Backend& backend)
             = glXCreateWindow(backend.data.display, backend.data.fbconfig, backend.window, nullptr);
         backend.overlay_window->setup(backend.window);
     } else {
-        qCCritical(KWIN_X11) << "Failed to create overlay window";
+        qCCritical(KWIN_CORE) << "Failed to create overlay window";
         return false;
     }
 
@@ -259,17 +259,17 @@ GLXContext create_glx_context(Backend const& backend)
     auto qtGlobalShareContext = QOpenGLContext::globalShareContext();
     GLXContext globalShareContext = nullptr;
     if (qtGlobalShareContext) {
-        qDebug(KWIN_X11) << "Global share context format:" << qtGlobalShareContext->format();
+        qDebug(KWIN_CORE) << "Global share context format:" << qtGlobalShareContext->format();
         auto const nativeHandle
             = qtGlobalShareContext->nativeInterface<QNativeInterface::QGLXContext>();
         if (!nativeHandle) {
-            qCDebug(KWIN_X11) << "Invalid QOpenGLContext::globalShareContext()";
+            qCDebug(KWIN_CORE) << "Invalid QOpenGLContext::globalShareContext()";
             return nullptr;
         }
         globalShareContext = nativeHandle->nativeContext();
     }
     if (!globalShareContext) {
-        qCWarning(KWIN_X11) << "QOpenGLContext::globalShareContext() is required";
+        qCWarning(KWIN_CORE) << "QOpenGLContext::globalShareContext() is required";
         return nullptr;
     }
 
@@ -324,7 +324,7 @@ GLXContext create_glx_context(Backend const& backend)
                                              true,
                                              attribs.data());
             if (ctx) {
-                qCDebug(KWIN_X11) << "Created GLX context with attributes:" << &candidate;
+                qCDebug(KWIN_CORE) << "Created GLX context with attributes:" << &candidate;
                 break;
             }
         }
@@ -336,12 +336,12 @@ GLXContext create_glx_context(Backend const& backend)
     }
 
     if (!ctx) {
-        qCDebug(KWIN_X11) << "Failed to create an OpenGL context.";
+        qCDebug(KWIN_CORE) << "Failed to create an OpenGL context.";
         return nullptr;
     }
 
     if (!glXMakeCurrent(backend.data.display, backend.data.window, ctx)) {
-        qCDebug(KWIN_X11) << "Failed to make the OpenGL context current.";
+        qCDebug(KWIN_CORE) << "Failed to make the OpenGL context current.";
         glXDestroyContext(backend.data.display, ctx);
         return nullptr;
     }
@@ -438,7 +438,7 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
     } else if (backend.data.extensions.mesa_swap_control) {
         glXSwapIntervalMESA(1);
     } else {
-        qCWarning(KWIN_X11) << "NO VSYNC! glSwapInterval is not supported";
+        qCWarning(KWIN_CORE) << "NO VSYNC! glSwapInterval is not supported";
     }
 
     if (GLPlatform::instance()->isVirtualBox()) {
@@ -450,7 +450,7 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
     }
 
     backend.setIsDirectRendering(bool(glXIsDirect(display, backend.data.context)));
-    qCDebug(KWIN_X11) << "Direct rendering:" << backend.isDirectRendering();
+    qCDebug(KWIN_CORE) << "Direct rendering:" << backend.isDirectRendering();
 }
 
 template<typename Backend>

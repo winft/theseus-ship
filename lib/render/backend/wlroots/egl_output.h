@@ -11,7 +11,6 @@
 #include "base/backend/wlroots/output.h"
 #include "base/logging.h"
 #include "render/wayland/egl_data.h"
-#include "wayland_logging.h"
 
 #include <kwingl/texture.h>
 #include <kwingl/utils.h>

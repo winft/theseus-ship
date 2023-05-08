@@ -10,7 +10,6 @@
 
 #include "base/wayland/server.h"
 #include "utils/geo.h"
-#include "wayland_logging.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/meta.h"

@@ -7,9 +7,9 @@
 
 #include "output_transform.h"
 
+#include "base/logging.h"
 #include "base/output.h"
 #include "base/output_helpers.h"
-#include "wayland_logging.h"
 
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/wlr_output_configuration_head_v1.h>
@@ -169,7 +169,7 @@ inline Wrapland::Server::output_dpms_mode to_wayland_dpms_mode(base::dpms_mode m
 template<typename Base>
 void output_set_dpms_on(typename Base::output_t& output, Base& base)
 {
-    qCDebug(KWIN_WL) << "DPMS mode set for output" << output.name() << "to On.";
+    qCDebug(KWIN_CORE) << "DPMS mode set for output" << output.name() << "to On.";
     output.m_dpms = base::dpms_mode::on;
 
     if (output.is_enabled()) {
@@ -196,10 +196,10 @@ void create_dpms_filter(Redirect& redirect)
 template<typename Base>
 void output_set_dmps_off(base::dpms_mode mode, typename Base::output_t& output, Base& base)
 {
-    qCDebug(KWIN_WL) << "DPMS mode set for output" << output.name() << "to Off.";
+    qCDebug(KWIN_CORE) << "DPMS mode set for output" << output.name() << "to Off.";
 
     if (!base.space || !base.space->input) {
-        qCWarning(KWIN_WL) << "Abort setting DPMS. Can't create filter to set DPMS to on again.";
+        qCWarning(KWIN_CORE) << "Abort setting DPMS. Can't create filter to set DPMS to on again.";
         return;
     }
 

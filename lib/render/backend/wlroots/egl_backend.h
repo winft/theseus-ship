@@ -18,7 +18,6 @@
 #include "render/gl/gl.h"
 #include "render/wayland/egl.h"
 #include "render/wayland/egl_data.h"
-#include "wayland_logging.h"
 
 #include <kwingl/platform.h>
 #include <kwingl/utils.h>

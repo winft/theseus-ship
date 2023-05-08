@@ -5,8 +5,7 @@
 */
 #pragma once
 
-#include "x11_logging.h"
-
+#include "base/logging.h"
 #include <kwinxrender/utils.h>
 
 #include <deque>
@@ -46,7 +45,7 @@ fb_config_info* fb_config_info_for_visual(xcb_visualid_t visual, Backend& backen
     auto const direct = XRenderUtils::findPictFormatInfo(format);
 
     if (!direct) {
-        qCCritical(KWIN_X11).nospace()
+        qCCritical(KWIN_CORE).nospace()
             << "Could not find a picture format for visual 0x" << Qt::hex << visual;
         return info;
     }
@@ -109,7 +108,7 @@ fb_config_info* fb_config_info_for_visual(xcb_visualid_t visual, Backend& backen
     GLXFBConfig* configs = glXChooseFBConfig(display, DefaultScreen(display), attribs, &count);
 
     if (count < 1) {
-        qCCritical(KWIN_X11).nospace()
+        qCCritical(KWIN_CORE).nospace()
             << "Could not find a framebuffer configuration for visual 0x" << Qt::hex << visual;
         return info;
     }
@@ -194,7 +193,7 @@ fb_config_info* fb_config_info_for_visual(xcb_visualid_t visual, Backend& backen
         glXGetFBConfigAttrib(display, info->fbconfig, GLX_FBCONFIG_ID, &fbc_id);
         glXGetFBConfigAttrib(display, info->fbconfig, GLX_VISUAL_ID, &visual_id);
 
-        qCDebug(KWIN_X11).nospace()
+        qCDebug(KWIN_CORE).nospace()
             << "Using FBConfig 0x" << Qt::hex << fbc_id << " for visual 0x" << Qt::hex << visual_id;
     }
 

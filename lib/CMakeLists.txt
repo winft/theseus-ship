@@ -264,18 +264,6 @@ if (HAVE_EPOXY_GLX)
     )
 endif()
 
-include(ECMQtDeclareLoggingCategory)
-ecm_qt_declare_logging_category(kwin_X11_SRCS
-    HEADER
-        x11_logging.h
-    IDENTIFIER
-        KWIN_X11
-    CATEGORY_NAME
-        kwin_x11
-    DEFAULT_SEVERITY
-        Critical
-)
-
 add_library(kwin_x11_lib STATIC
   ${kwin_X11_SRCS}
 )
@@ -358,17 +346,6 @@ if (KWIN_BUILD_TABBOX)
     ${kwin_WAYLAND_SRCS}
   )
 endif()
-
-ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS
-    HEADER
-        wayland_logging.h
-    IDENTIFIER
-        KWIN_WL
-    CATEGORY_NAME
-        kwin_wl
-    DEFAULT_SEVERITY
-        Critical
-)
 
 add_library(kwin_wayland_lib SHARED
   ${kwin_XWAYLAND_SRCS}

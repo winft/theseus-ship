@@ -5,8 +5,8 @@
 */
 #include "filtered_display.h"
 
+#include "base/logging.h"
 #include "desktop/kde/service_utils.h"
-#include "wayland_logging.h"
 
 #include <QCryptographicHash>
 #include <QFile>
@@ -43,8 +43,8 @@ bool is_trusted_origin(Wrapland::Server::Client* client)
     auto trusted = !localSha.isEmpty() && fullPathSha == localSha;
 
     if (!trusted) {
-        qCWarning(KWIN_WL) << "Could not trust" << client->executablePath().c_str() << "sha"
-                           << localSha << fullPathSha;
+        qCWarning(KWIN_CORE) << "Could not trust" << client->executablePath().c_str() << "sha"
+                             << localSha << fullPathSha;
     }
 
     return trusted;
@@ -72,7 +72,7 @@ bool filtered_display::allowInterface(Wrapland::Server::Client* client,
     }
 
     if (client->executablePath().empty()) {
-        qCDebug(KWIN_WL) << "Could not identify process with pid" << client->processId();
+        qCDebug(KWIN_CORE) << "Could not identify process with pid" << client->processId();
         return false;
     }
 
@@ -83,14 +83,14 @@ bool filtered_display::allowInterface(Wrapland::Server::Client* client,
     }
 
     if (!requestedInterfaces.toStringList().contains(QString::fromUtf8(interfaceName))) {
-        if (KWIN_WL().isDebugEnabled()) {
+        if (KWIN_CORE().isDebugEnabled()) {
             QString const id = QString::fromStdString(client->executablePath()) + QLatin1Char('|')
                 + QString::fromUtf8(interfaceName);
             if (!reported.contains({id})) {
                 reported.insert(id);
-                qCDebug(KWIN_WL) << "Interface" << interfaceName
-                                 << "not in X-KDE-Wayland-Interfaces of"
-                                 << client->executablePath().c_str();
+                qCDebug(KWIN_CORE)
+                    << "Interface" << interfaceName << "not in X-KDE-Wayland-Interfaces of"
+                    << client->executablePath().c_str();
             }
         }
         return false;
@@ -106,7 +106,7 @@ bool filtered_display::allowInterface(Wrapland::Server::Client* client,
         return false;
     }
 
-    qCDebug(KWIN_WL) << "authorized" << client->executablePath().c_str() << interfaceName;
+    qCDebug(KWIN_CORE) << "authorized" << client->executablePath().c_str() << interfaceName;
     return true;
 }
 

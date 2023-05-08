@@ -17,8 +17,6 @@
 #include "render/wayland/output.h"
 #include "render/wayland/presentation.h"
 
-#include "wayland_logging.h"
-
 #include <chrono>
 #include <stdexcept>
 

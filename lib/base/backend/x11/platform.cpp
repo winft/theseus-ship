@@ -5,13 +5,12 @@
 */
 #include "platform.h"
 
+#include "output_helpers.h"
 #include "randr_filter.h"
 
-#include "base/x11/xcb/randr.h"
-#include "output_helpers.h"
-
+#include "base/logging.h"
 #include "base/output_helpers.h"
-#include "x11_logging.h"
+#include "base/x11/xcb/randr.h"
 
 namespace KWin::base::backend::x11
 {
@@ -39,7 +38,7 @@ void platform::update_outputs_impl()
     auto res_outs
         = get_outputs_from_resources(*this, Resources(x11_data.connection, x11_data.root_window));
 
-    qCDebug(KWIN_X11) << "Update outputs:" << this->outputs.size() << "-->" << res_outs.size();
+    qCDebug(KWIN_CORE) << "Update outputs:" << this->outputs.size() << "-->" << res_outs.size();
 
     // First check for removed outputs (we go backwards through the outputs, LIFO).
     for (auto old_it = this->outputs.rbegin(); old_it != this->outputs.rend();) {
@@ -60,7 +59,7 @@ void platform::update_outputs_impl()
             continue;
         }
 
-        qCDebug(KWIN_X11) << "  removed:" << x11_old_out->name();
+        qCDebug(KWIN_CORE) << "  removed:" << x11_old_out->name();
         auto old_out = *old_it;
         old_it = static_cast<decltype(old_it)>(this->outputs.erase(std::next(old_it).base()));
         Q_EMIT output_removed(old_out);
@@ -76,7 +75,7 @@ void platform::update_outputs_impl()
                       && old_x11_out->data.name == out->data.name;
               });
         if (it == this->outputs.end()) {
-            qCDebug(KWIN_X11) << "  added:" << out->name();
+            qCDebug(KWIN_CORE) << "  added:" << out->name();
             this->outputs.push_back(out.release());
             Q_EMIT output_added(this->outputs.back());
         }

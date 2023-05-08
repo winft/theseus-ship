@@ -16,7 +16,6 @@
 #include "render/effects.h"
 #include "render/gl/scene.h"
 #include "render/qpainter/scene.h"
-#include "wayland_logging.h"
 
 #include <deque>
 #include <map>

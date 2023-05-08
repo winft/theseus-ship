@@ -15,7 +15,6 @@
 #include "utils/gamma_ramp.h"
 
 #include <chrono>
-#include <wayland_logging.h>
 
 namespace KWin::base::backend::wlroots
 {
@@ -132,7 +131,7 @@ void output::update_dpms(base::dpms_mode mode)
     }
 
     if (!wlr_output_test(native)) {
-        qCWarning(KWIN_WL) << "Failed test commit on disabling output for DPMS.";
+        qCWarning(KWIN_CORE) << "Failed test commit on disabling output for DPMS.";
         wlr_output_enable(native, true);
         return;
     }
@@ -188,7 +187,7 @@ bool output::set_gamma_ramp(gamma_ramp const& gamma)
         }
         return true;
     } else {
-        qCWarning(KWIN_WL) << "Failed test commit on set gamma ramp call.";
+        qCWarning(KWIN_CORE) << "Failed test commit on set gamma ramp call.";
         // TODO(romangg): Set previous gamma.
         return false;
     }

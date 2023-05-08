@@ -8,7 +8,6 @@
 #include "wlr_includes.h"
 
 #include "base/logging.h"
-#include "wayland_logging.h"
 
 #include <QImage>
 #include <memory>

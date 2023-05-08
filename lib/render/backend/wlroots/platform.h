@@ -12,8 +12,6 @@
 
 #include "render/wayland/platform.h"
 
-#include <wayland_logging.h>
-
 #include <variant>
 
 namespace KWin::render::backend::wlroots

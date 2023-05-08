@@ -6,9 +6,8 @@
 #include "session.h"
 
 #include "base/backend/wlroots/platform.h"
+#include "base/logging.h"
 #include "base/wayland/server.h"
-
-#include "wayland_logging.h"
 
 #include <Wrapland/Server/display.h>
 
@@ -86,7 +85,7 @@ void session::take_control(wl_display* display)
         native = wlr_session_create(display);
         if (!native) {
             // TODO(romangg): error handling?
-            qCCritical(KWIN_WL) << "Could not take control.";
+            qCCritical(KWIN_CORE) << "Could not take control.";
             return;
         }
     }
@@ -104,7 +103,7 @@ int session::takeDevice(const char* path)
 {
     auto device = wlr_session_open_file(native, path);
     if (!device) {
-        qCDebug(KWIN_WL) << "Could not take device" << path;
+        qCDebug(KWIN_CORE) << "Could not take device" << path;
         return -1;
     }
     taken_devices.push_back(device);

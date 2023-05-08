@@ -9,10 +9,10 @@
 #include "output.h"
 
 #include "base/app_singleton.h"
+#include "base/logging.h"
 #include "config-kwin.h"
 #include "render/backend/wlroots/output.h"
 #include "render/backend/wlroots/platform.h"
-#include "wayland_logging.h"
 
 #include <Wrapland/Server/display.h>
 #include <stdexcept>
@@ -88,7 +88,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
     try {
         add_new_output(*platform, native);
     } catch (std::runtime_error const& e) {
-        qCWarning(KWIN_WL) << "Adding new output" << native->name << "failed:" << e.what();
+        qCWarning(KWIN_CORE) << "Adding new output" << native->name << "failed:" << e.what();
     }
 }
 
@@ -106,7 +106,7 @@ platform::platform(base::config config,
 
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 
-    // TODO(romangg): Make this dependent on KWIN_WL debug verbosity.
+    // TODO(romangg): Make this dependent on KWIN_CORE debug verbosity.
     wlr_log_init(WLR_DEBUG, nullptr);
 
     if (::flags(options & start_options::headless)) {
@@ -162,7 +162,7 @@ void process_drm_leased(wlroots::platform& platform, Wrapland::Server::drm_lease
 {
     std::vector<non_desktop_output*> outputs;
 
-    qCDebug(KWIN_WL) << "Client tries to lease DRM resources.";
+    qCDebug(KWIN_CORE) << "Client tries to lease DRM resources.";
 
     if (lease->connectors().empty()) {
         throw std::runtime_error("Lease request has no connectors specified");
@@ -174,7 +174,7 @@ void process_drm_leased(wlroots::platform& platform, Wrapland::Server::drm_lease
                 continue;
             }
             if (output->lease) {
-                qCDebug(KWIN_WL) << "Failed lease," << output->native->name << "already leased";
+                qCDebug(KWIN_CORE) << "Failed lease," << output->native->name << "already leased";
                 lease->finish();
                 return;
             }
@@ -192,7 +192,7 @@ void process_drm_leased(wlroots::platform& platform, Wrapland::Server::drm_lease
                       [drm_lease](auto& lease) { return lease.get() == drm_lease; });
     });
 
-    qCDebug(KWIN_WL) << "DRM resources have been leased to client";
+    qCDebug(KWIN_CORE) << "DRM resources have been leased to client";
 }
 
 void platform::setup_drm_leasing(Wrapland::Server::Display* display, wlr_backend* drm_backend)
@@ -214,11 +214,11 @@ void platform::setup_drm_leasing(Wrapland::Server::Display* display, wlr_backend
                 try {
                     process_drm_leased(*this, lease);
                 } catch (std::runtime_error const& e) {
-                    qCDebug(KWIN_WL) << "Creating lease failed:" << e.what();
+                    qCDebug(KWIN_CORE) << "Creating lease failed:" << e.what();
                     lease->finish();
 
                 } catch (...) {
-                    qCWarning(KWIN_WL) << "Creating lease failed for unknown reason.";
+                    qCWarning(KWIN_CORE) << "Creating lease failed for unknown reason.";
                     lease->finish();
                 }
             });
