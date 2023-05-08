@@ -6,7 +6,7 @@
 */
 #include "windowvieweffectkcm.h"
 
-#include <config-kwin.h>
+#include <kwinconfig.h>
 
 #include "windowviewconfig.h"
 

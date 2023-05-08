@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "resize_config.h"
 // KConfigSkeleton
 #include "resizeconfig.h"
-#include <config-kwin.h>
+#include <kwinconfig.h>
 #include <kwineffects_interface.h>
 
 #include <KPluginFactory>

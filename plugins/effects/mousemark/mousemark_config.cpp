@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 // KConfigSkeleton
 #include "mousemarkconfig.h"
-#include <config-kwin.h>
+#include <kwinconfig.h>
 #include <kwineffects_interface.h>
 
 #include <QAction>

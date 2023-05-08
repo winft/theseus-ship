@@ -16,6 +16,7 @@
 #define KWINCONFIG_H
 
 #define KWIN_PLUGIN_VERSION_STRING "${CMAKE_PROJECT_VERSION}"
+#define KWIN_CONFIG "kwinrc"
 
 /*
  

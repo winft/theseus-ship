@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "cube_config.h"
 // KConfigSkeleton
 #include "cubeconfig.h"
-#include <config-kwin.h>
+#include <kwinconfig.h>
 #include <kwineffects_interface.h>
 
 #include <KActionCollection>
