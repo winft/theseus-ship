@@ -253,7 +253,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
             <default>true</default>
         </entry>
         <entry name="LayoutName" type="String">
-            <default>thumbnails</default>
+            <default>thumbnail_grid</default>
         </entry>
     </group>
 </kcfg>

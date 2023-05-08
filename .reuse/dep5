@@ -11,6 +11,7 @@ Files:
   lib/data/org_kde_kwin.categories
   lib/desktop/kde/dbus/org.kde.KWin.xml
   lib/desktop/kde/org.kde.kwin.VirtualKeyboard.xml
+  lib/win/tabbox/switchers/thumbnail_grid/metadata.json
   docs/*
   plugins/effects/backgroundcontrast/metadata.json
   plugins/effects/blendchanges/metadata.json
