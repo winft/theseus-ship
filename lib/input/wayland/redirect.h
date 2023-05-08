@@ -509,13 +509,14 @@ private:
         xkb::keyboard_update_from_default(platform.xkb, *keyboard->xkb);
 
         platform.update_keyboard_leds(keyboard->xkb->leds);
-        platform.base.server->update_key_state(keyboard->xkb->leds);
+        update_key_state(*platform.base.server->key_state, keyboard->xkb->leds);
 
-        QObject::connect(
-            keyboard->xkb->qobject.get(),
-            &xkb::keyboard_qobject::leds_changed,
-            platform.base.server->qobject.get(),
-            [&server = platform.base.server](auto&& leds) { server->update_key_state(leds); });
+        QObject::connect(keyboard->xkb->qobject.get(),
+                         &xkb::keyboard_qobject::leds_changed,
+                         platform.base.server->qobject.get(),
+                         [&server = platform.base.server](auto&& leds) {
+                             update_key_state(*server->key_state, leds);
+                         });
         QObject::connect(keyboard->xkb->qobject.get(),
                          &xkb::keyboard_qobject::leds_changed,
                          platform.qobject.get(),
@@ -640,6 +641,23 @@ private:
     typename std::list<event_filter<type>*>::const_iterator m_filters_install_iterator;
 
     window_selector_filter<type>* window_selector{nullptr};
+
+private:
+    static void update_key_state(Wrapland::Server::KeyState& key_state, input::keyboard_leds leds)
+    {
+        using key = Wrapland::Server::KeyState::Key;
+        using state = Wrapland::Server::KeyState::State;
+
+        key_state.setState(key::CapsLock,
+                           flags(leds & input::keyboard_leds::caps_lock) ? state::Locked
+                                                                         : state::Unlocked);
+        key_state.setState(key::NumLock,
+                           flags(leds & input::keyboard_leds::num_lock) ? state::Locked
+                                                                        : state::Unlocked);
+        key_state.setState(key::ScrollLock,
+                           flags(leds & input::keyboard_leds::scroll_lock) ? state::Locked
+                                                                           : state::Unlocked);
+    }
 };
 
 }

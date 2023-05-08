@@ -10,7 +10,6 @@
 #include "output_helpers.h"
 
 #include "base/logging.h"
-#include "input/types.h"
 #include "kwinglobals.h"
 #include "utils/flags.h"
 
@@ -211,26 +210,6 @@ public:
         ret.connection = display->createClient(sx[0]);
         ret.fd = sx[1];
         return ret;
-    }
-
-    void update_key_state(input::keyboard_leds leds)
-    {
-        if (!key_state) {
-            return;
-        }
-
-        using key = Wrapland::Server::KeyState::Key;
-        using state = Wrapland::Server::KeyState::State;
-
-        key_state->setState(key::CapsLock,
-                            flags(leds & input::keyboard_leds::caps_lock) ? state::Locked
-                                                                          : state::Unlocked);
-        key_state->setState(key::NumLock,
-                            flags(leds & input::keyboard_leds::num_lock) ? state::Locked
-                                                                         : state::Unlocked);
-        key_state->setState(key::ScrollLock,
-                            flags(leds & input::keyboard_leds::scroll_lock) ? state::Locked
-                                                                            : state::Unlocked);
     }
 
     std::unique_ptr<server_qobject> qobject;
