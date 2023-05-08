@@ -22,8 +22,7 @@ void init_night_color_shortcuts(Input& input, NightColor& manager)
     toggleAction->setText(i18n("Toggle Night Color"));
 
     input.shortcuts->register_keyboard_default_shortcut(toggleAction, {});
-    input.shortcuts->register_keyboard_shortcut(
-        toggleAction, {}, input::shortcut_loading::global_lookup);
+    input.shortcuts->register_keyboard_shortcut(toggleAction, {});
     input.registerShortcut(
         QKeySequence(), toggleAction, manager.qobject.get(), [&manager] { manager.toggle(); });
 }

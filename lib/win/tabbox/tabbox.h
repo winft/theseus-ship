@@ -1236,8 +1236,8 @@ private:
         a->setObjectName(QString::fromUtf8(action_name.untranslatedText()));
         a->setText(action_name.toString());
 
-        space.base.input->shortcuts->register_keyboard_shortcut(
-            a, QList<QKeySequence>() << shortcut, input::shortcut_loading::global_lookup);
+        space.base.input->shortcuts->register_keyboard_shortcut(a,
+                                                                QList<QKeySequence>() << shortcut);
         space.base.input->registerShortcut(shortcut, a, qobject.get(), slot);
 
         auto cuts = space.base.input->shortcuts->get_keyboard_shortcut(a);

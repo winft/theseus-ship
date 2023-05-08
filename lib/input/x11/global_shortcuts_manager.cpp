@@ -48,14 +48,15 @@ bool global_shortcuts_manager::register_keyboard_default_shortcut(
 }
 
 bool global_shortcuts_manager::register_keyboard_shortcut(QAction* action,
-                                                          QList<QKeySequence> const& shortcut,
-                                                          shortcut_loading load)
+                                                          QList<QKeySequence> const& shortcut)
 {
-    return KGlobalAccel::self()->setShortcut(action,
-                                             shortcut,
-                                             load == shortcut_loading::global_lookup
-                                                 ? KGlobalAccel::Autoloading
-                                                 : KGlobalAccel::NoAutoloading);
+    return KGlobalAccel::self()->setShortcut(action, shortcut, KGlobalAccel::Autoloading);
+}
+
+bool global_shortcuts_manager::override_keyboard_shortcut(QAction* action,
+                                                          QList<QKeySequence> const& shortcut)
+{
+    return KGlobalAccel::self()->setShortcut(action, shortcut, KGlobalAccel::NoAutoloading);
 }
 
 void global_shortcuts_manager::remove_keyboard_shortcut(QAction* action)

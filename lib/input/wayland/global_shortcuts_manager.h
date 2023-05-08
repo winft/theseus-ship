@@ -48,9 +48,8 @@ public:
                                               QString const& actionId);
 
     bool register_keyboard_default_shortcut(QAction* action, QList<QKeySequence> const& shortcut);
-    bool register_keyboard_shortcut(QAction* action,
-                                    QList<QKeySequence> const& shortcut,
-                                    shortcut_loading load);
+    bool register_keyboard_shortcut(QAction* action, QList<QKeySequence> const& shortcut);
+    bool override_keyboard_shortcut(QAction* action, QList<QKeySequence> const& shortcut);
     void remove_keyboard_shortcut(QAction* action);
     /**
      * @brief Registers an internal global pointer shortcut

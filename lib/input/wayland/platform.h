@@ -182,16 +182,14 @@ private:
 
         shortcuts->register_keyboard_default_shortcut(toggle_action,
                                                       {QKeySequence{Qt::Key_TouchpadToggle}});
-        shortcuts->register_keyboard_shortcut(
-            toggle_action, {QKeySequence{Qt::Key_TouchpadToggle}}, shortcut_loading::global_lookup);
+        shortcuts->register_keyboard_shortcut(toggle_action,
+                                              {QKeySequence{Qt::Key_TouchpadToggle}});
         shortcuts->register_keyboard_default_shortcut(on_action,
                                                       {QKeySequence{Qt::Key_TouchpadOn}});
-        shortcuts->register_keyboard_shortcut(
-            on_action, {QKeySequence{Qt::Key_TouchpadOn}}, shortcut_loading::global_lookup);
+        shortcuts->register_keyboard_shortcut(on_action, {QKeySequence{Qt::Key_TouchpadOn}});
         shortcuts->register_keyboard_default_shortcut(off_action,
                                                       {QKeySequence{Qt::Key_TouchpadOff}});
-        shortcuts->register_keyboard_shortcut(
-            off_action, {QKeySequence{Qt::Key_TouchpadOff}}, shortcut_loading::global_lookup);
+        shortcuts->register_keyboard_shortcut(off_action, {QKeySequence{Qt::Key_TouchpadOff}});
 
         registerShortcut(Qt::Key_TouchpadToggle, toggle_action);
         registerShortcut(Qt::Key_TouchpadOn, on_action);

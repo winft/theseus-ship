@@ -70,8 +70,7 @@ public:
         QKeySequence sequence{Qt::META | Qt::ALT | Qt::Key_K};
         redirect.platform.shortcuts->register_keyboard_default_shortcut(switchKeyboardAction,
                                                                         {sequence});
-        redirect.platform.shortcuts->register_keyboard_shortcut(
-            switchKeyboardAction, {sequence}, input::shortcut_loading::global_lookup);
+        redirect.platform.shortcuts->register_keyboard_shortcut(switchKeyboardAction, {sequence});
         redirect.platform.setup_action_for_global_accel(switchKeyboardAction);
         QObject::connect(switchKeyboardAction, &QAction::triggered, qobject.get(), [this] {
             switchToNextLayout();
@@ -220,8 +219,7 @@ private:
             a->setProperty("componentName", componentName);
             QObject::connect(
                 a, &QAction::triggered, qobject.get(), [this, i] { switchToLayout(i); });
-            redirect.platform.shortcuts->register_keyboard_shortcut(
-                a, shortcuts, shortcut_loading::global_lookup);
+            redirect.platform.shortcuts->register_keyboard_shortcut(a, shortcuts);
             m_layoutShortcuts << a;
         }
     }

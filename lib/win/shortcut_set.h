@@ -216,10 +216,8 @@ void window_shortcut_updated(Space& space, Win* window)
 
         // no autoloading, since it's configured explicitly here and is not meant to be reused
         // (the key is the window id anyway, which is kind of random)
-        space.base.input->shortcuts->register_keyboard_shortcut(action,
-                                                                QList<QKeySequence>()
-                                                                    << window->control->shortcut,
-                                                                input::shortcut_loading::none);
+        space.base.input->shortcuts->override_keyboard_shortcut(
+            action, QList<QKeySequence>() << window->control->shortcut);
         action->setEnabled(true);
     } else {
         space.base.input->shortcuts->remove_keyboard_shortcut(action);

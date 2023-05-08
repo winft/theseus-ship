@@ -25,11 +25,6 @@ enum class TabletEventType {
     Tip,
 };
 
-enum class shortcut_loading {
-    global_lookup = 0x0,
-    none = 0x4,
-};
-
 }
 
 ENUM_FLAGS(KWin::input::keyboard_leds)

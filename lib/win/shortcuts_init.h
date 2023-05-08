@@ -10,7 +10,6 @@
 #include "kill_window.h"
 #include "types.h"
 
-#include "input/types.h"
 #include "render/platform.h"
 #include "render/post/night_color_manager.h"
 #include "render/post/night_color_setup.h"
@@ -29,8 +28,7 @@ template<typename Input>
 void set_global_shortcut_with_default(Input& input, QAction& action, QKeySequence const& shortcut)
 {
     input.shortcuts->register_keyboard_default_shortcut(&action, {shortcut});
-    input.shortcuts->register_keyboard_shortcut(
-        &action, {shortcut}, input::shortcut_loading::global_lookup);
+    input.shortcuts->register_keyboard_shortcut(&action, {shortcut});
 }
 
 template<typename Manager, typename Input, typename Slot>

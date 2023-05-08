@@ -648,8 +648,7 @@ public:
     QList<QKeySequence> registerGlobalShortcut(QList<QKeySequence> const& shortcut,
                                                QAction* action) override
     {
-        compositor.platform.base.input->shortcuts->register_keyboard_shortcut(
-            action, shortcut, input::shortcut_loading::global_lookup);
+        compositor.platform.base.input->shortcuts->register_keyboard_shortcut(action, shortcut);
         compositor.platform.base.input->registerShortcut(
             shortcut.empty() ? QKeySequence() : shortcut.front(), action);
         return compositor.platform.base.input->shortcuts->get_keyboard_shortcut(action);
