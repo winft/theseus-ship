@@ -21,6 +21,12 @@ function(kwin_add_effect_config name)
     list(REMOVE_ITEM ARGV ${name})
     kcoreaddons_add_plugin(${name} INSTALL_NAMESPACE "kwin/effects/configs" SOURCES ${ARGV})
     target_compile_definitions(${name} PRIVATE -DTRANSLATION_DOMAIN=\"kwin_effects\")
+    target_link_libraries(${name}
+      KF6::I18n
+      KF6::KCMUtils
+      KWinEffectsInterface
+      Qt::DBus
+    )
 endfunction()
 
 # Add a CMake-time check for python3 to avoid failures during build.

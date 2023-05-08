@@ -27,10 +27,3 @@ ki18n_wrap_ui(kwin_resize_config_SRCS resize_config.ui)
 kconfig_add_kcfg_files(kwin_resize_config_SRCS resizeconfig.kcfgc)
 
 kwin_add_effect_config(kwin_resize_config ${kwin_resize_config_SRCS})
-
-target_link_libraries(kwin_resize_config
-  KF6::I18n
-  KF6::KCMUtils
-  KWinEffectsInterface
-  Qt::DBus
-)

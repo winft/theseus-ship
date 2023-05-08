@@ -10,8 +10,5 @@ kwin_add_effect_config(kwin_overview_config ${kwin_overview_config_SOURCES})
 target_link_libraries(kwin_overview_config
   KF6::CoreAddons
   KF6::GlobalAccel
-  KF6::I18n
-  KF6::KCMUtils
   KF6::XmlGui
-  KWinEffectsInterface
 )

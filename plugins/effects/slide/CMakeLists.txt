@@ -32,9 +32,5 @@ if (KWIN_BUILD_KCMS)
 
     target_link_libraries(kwin_slide_config
       KF6::CoreAddons
-      KF6::I18n
-      KF6::KCMUtils
-      KWinEffectsInterface
-      Qt::DBus
     )
 endif()
