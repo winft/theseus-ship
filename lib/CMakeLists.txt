@@ -301,8 +301,6 @@ set(kwin_WAYLAND_SRCS
    base/backend/wlroots/output.cpp
    base/backend/wlroots/platform.cpp
    base/seat/backend/wlroots/session.cpp
-   base/wayland/filtered_display.cpp
-   base/app_singleton.cpp
    debug/console/wayland/input_device_model.cpp
    debug/console/wayland/wayland_console.cpp
    input/backend/wlroots/platform.cpp
@@ -335,7 +333,6 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_policies.cpp
 
    # These headers need to be compiled for the helper QObjects they contain.
-   base/wayland/server.h
    input/touch.h
    input/wayland/cursor_image.h
    input/wayland/cursor_theme.h
@@ -357,14 +354,13 @@ PUBLIC
   kwin
   KF6::GlobalAccel
   WraplandClient
-  WraplandServer
   Wayland::Server
   Wayland::Cursor
   wlroots::wlroots
   Pixman::Pixman
   Libinput::Libinput
   Threads::Threads
-  PW::KScreenLocker
+  base-wl
 )
 
 kcoreaddons_target_static_plugins(

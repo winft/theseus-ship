@@ -57,4 +57,30 @@ set_target_properties(base PROPERTIES
    OUTPUT_NAME "kwin-base"
 )
 
+add_library(base-wl SHARED)
+
+target_link_libraries(base-wl
+  PUBLIC
+    KF6::Service
+    PW::KScreenLocker
+    WraplandServer
+    base
+)
+
+target_sources(base-wl
+  PRIVATE
+    app_singleton.cpp
+    wayland/filtered_display.cpp
+
+    # These headers need to be compiled for the helper QObjects they contain.
+    wayland/server.h
+)
+
+set_target_properties(base-wl PROPERTIES
+   VERSION ${CMAKE_PROJECT_VERSION}
+   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
+   OUTPUT_NAME "kwin-base-wl"
+)
+
 install(TARGETS base ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
+install(TARGETS base-wl ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
