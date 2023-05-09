@@ -3,7 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "togglable_state.h"
+#include "effect_togglable_state.h"
 
 #include <kwineffects/effect.h>
 #include <kwineffects/effects_handler.h>
@@ -11,7 +11,7 @@
 namespace KWin
 {
 
-TogglableState::TogglableState(Effect* effect)
+EffectTogglableState::EffectTogglableState(Effect* effect)
     : QObject(effect)
     , m_deactivateAction(std::make_unique<QAction>())
     , m_activateAction(std::make_unique<QAction>())
@@ -39,17 +39,17 @@ TogglableState::TogglableState(Effect* effect)
             }
         }
     });
-    connect(m_toggleAction.get(), &QAction::triggered, this, &TogglableState::toggle);
+    connect(m_toggleAction.get(), &QAction::triggered, this, &EffectTogglableState::toggle);
 }
 
-void TogglableState::activate()
+void EffectTogglableState::activate()
 {
     setStatus(Status::Active);
     setInProgress(false);
     setPartialActivationFactor(0.0);
 }
 
-void TogglableState::setPartialActivationFactor(qreal factor)
+void EffectTogglableState::setPartialActivationFactor(qreal factor)
 {
     if (m_partialActivationFactor != factor) {
         m_partialActivationFactor = factor;
@@ -57,18 +57,18 @@ void TogglableState::setPartialActivationFactor(qreal factor)
     }
 }
 
-void TogglableState::deactivate()
+void EffectTogglableState::deactivate()
 {
     setInProgress(false);
     setPartialActivationFactor(0.0);
 }
 
-bool TogglableState::inProgress() const
+bool EffectTogglableState::inProgress() const
 {
     return m_inProgress;
 }
 
-void TogglableState::setInProgress(bool gesture)
+void EffectTogglableState::setInProgress(bool gesture)
 {
     if (m_inProgress != gesture) {
         m_inProgress = gesture;
@@ -76,7 +76,7 @@ void TogglableState::setInProgress(bool gesture)
     }
 }
 
-void TogglableState::setStatus(Status status)
+void EffectTogglableState::setStatus(Status status)
 {
     if (m_status != status) {
         m_status = status;
@@ -84,7 +84,7 @@ void TogglableState::setStatus(Status status)
     }
 }
 
-void TogglableState::partialActivate(qreal factor)
+void EffectTogglableState::partialActivate(qreal factor)
 {
     if (effects->isScreenLocked()) {
         return;
@@ -95,14 +95,14 @@ void TogglableState::partialActivate(qreal factor)
     setInProgress(true);
 }
 
-void TogglableState::partialDeactivate(qreal factor)
+void EffectTogglableState::partialDeactivate(qreal factor)
 {
     setStatus(Status::Deactivating);
     setPartialActivationFactor(1.0 - factor);
     setInProgress(true);
 }
 
-void TogglableState::toggle()
+void EffectTogglableState::toggle()
 {
     if (m_status == Status::Inactive || m_partialActivationFactor > 0.5) {
         activate();
@@ -113,7 +113,7 @@ void TogglableState::toggle()
     }
 }
 
-void TogglableState::setProgress(qreal progress)
+void EffectTogglableState::setProgress(qreal progress)
 {
     if (!effects->hasActiveFullScreenEffect() || effects->activeFullScreenEffect() == parent()) {
         switch (m_status) {
@@ -127,7 +127,7 @@ void TogglableState::setProgress(qreal progress)
     }
 }
 
-void TogglableState::setRegress(qreal regress)
+void EffectTogglableState::setRegress(qreal regress)
 {
     if (!effects->hasActiveFullScreenEffect() || effects->activeFullScreenEffect() == parent()) {
         switch (m_status) {
@@ -141,7 +141,7 @@ void TogglableState::setRegress(qreal regress)
     }
 }
 
-TogglableGesture::TogglableGesture(TogglableState* state)
+EffectTogglableGesture::EffectTogglableGesture(EffectTogglableState* state)
     : QObject(state)
     , m_state(state)
 {
@@ -173,17 +173,17 @@ static SwipeDirection opposite(SwipeDirection direction)
     }
 }
 
-std::function<void(qreal progress)> TogglableState::progressCallback()
+std::function<void(qreal progress)> EffectTogglableState::progressCallback()
 {
     return [this](qreal progress) { setProgress(progress); };
 }
 
-std::function<void(qreal progress)> TogglableState::regressCallback()
+std::function<void(qreal progress)> EffectTogglableState::regressCallback()
 {
     return [this](qreal progress) { setRegress(progress); };
 }
 
-void TogglableGesture::addTouchpadPinchGesture(PinchDirection direction, uint fingerCount)
+void EffectTogglableGesture::addTouchpadPinchGesture(PinchDirection direction, uint fingerCount)
 {
     effects->registerTouchpadPinchShortcut(
         direction, fingerCount, m_state->activateAction(), m_state->progressCallback());
@@ -191,7 +191,7 @@ void TogglableGesture::addTouchpadPinchGesture(PinchDirection direction, uint fi
         opposite(direction), fingerCount, m_state->deactivateAction(), m_state->regressCallback());
 }
 
-void TogglableGesture::addTouchpadSwipeGesture(SwipeDirection direction, uint fingerCount)
+void EffectTogglableGesture::addTouchpadSwipeGesture(SwipeDirection direction, uint fingerCount)
 {
     effects->registerTouchpadSwipeShortcut(
         direction, fingerCount, m_state->activateAction(), m_state->progressCallback());
@@ -199,7 +199,7 @@ void TogglableGesture::addTouchpadSwipeGesture(SwipeDirection direction, uint fi
         opposite(direction), fingerCount, m_state->deactivateAction(), m_state->regressCallback());
 }
 
-void TogglableGesture::addTouchscreenSwipeGesture(SwipeDirection direction, uint fingerCount)
+void EffectTogglableGesture::addTouchscreenSwipeGesture(SwipeDirection direction, uint fingerCount)
 {
     effects->registerTouchscreenSwipeShortcut(
         direction, fingerCount, m_state->activateAction(), m_state->progressCallback());
@@ -207,20 +207,20 @@ void TogglableGesture::addTouchscreenSwipeGesture(SwipeDirection direction, uint
         opposite(direction), fingerCount, m_state->deactivateAction(), m_state->regressCallback());
 }
 
-TogglableTouchBorder::TogglableTouchBorder(TogglableState* state)
+EffectTogglableTouchBorder::EffectTogglableTouchBorder(EffectTogglableState* state)
     : QObject(state)
     , m_state(state)
 {
 }
 
-TogglableTouchBorder::~TogglableTouchBorder()
+EffectTogglableTouchBorder::~EffectTogglableTouchBorder()
 {
     for (const ElectricBorder& border : std::as_const(m_touchBorderActivate)) {
         effects->unregisterTouchBorder(border, m_state->toggleAction());
     }
 }
 
-void TogglableTouchBorder::setBorders(const QList<int>& touchActivateBorders)
+void EffectTogglableTouchBorder::setBorders(const QList<int>& touchActivateBorders)
 {
     for (const ElectricBorder& border : std::as_const(m_touchBorderActivate)) {
         effects->unregisterTouchBorder(border, m_state->toggleAction());
@@ -235,7 +235,7 @@ void TogglableTouchBorder::setBorders(const QList<int>& touchActivateBorders)
             [this](ElectricBorder border,
                    QSizeF const& deltaProgress,
                    EffectScreen const* /*screen*/) {
-                if (m_state->status() == TogglableState::Status::Active) {
+                if (m_state->status() == EffectTogglableState::Status::Active) {
                     return;
                 }
                 // Arbitrary logical pixels value seems to behave better than scaledScreenSize

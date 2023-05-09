@@ -54,13 +54,13 @@ set(kwin_EFFECTSLIB_SRCS
     kwineffects/effect_plugin_factory.cpp
     kwineffects/effect_quick_view.cpp
     kwineffects/effect_screen.cpp
+    kwineffects/effect_togglable_state.cpp
     kwineffects/effect_window.cpp
     kwineffects/effects_handler.cpp
     kwineffects/quick_scene.cpp
     kwineffects/motions.cpp
     kwineffects/paint_clipper.cpp
     kwineffects/time_line.cpp
-    kwineffects/togglable_state.cpp
     kwineffects/window_quad.cpp
 )
 
@@ -143,13 +143,13 @@ install(FILES
     kwineffects/effect_plugin_factory.h
     kwineffects/effect_quick_view.h
     kwineffects/effect_screen.h
+    kwineffects/effect_togglable_state.h
     kwineffects/effect_window.h
     kwineffects/effects_handler.h
     kwineffects/motions.h
     kwineffects/paint_clipper.h
     kwineffects/paint_data.h
     kwineffects/time_line.h
-    kwineffects/togglable_state.h
     kwineffects/types.h
     kwineffects/window_quad.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwineffects COMPONENT Devel)

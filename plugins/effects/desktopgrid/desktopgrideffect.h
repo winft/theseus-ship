@@ -6,8 +6,8 @@
 
 #pragma once
 
+#include <kwineffects/effect_togglable_state.h>
 #include <kwineffects/quick_scene.h>
-#include <kwineffects/togglable_state.h>
 
 namespace KWin
 {
@@ -89,8 +89,8 @@ private:
     QTimer* m_shutdownTimer;
     QList<QKeySequence> m_toggleShortcut;
     QList<ElectricBorder> m_borderActivate;
-    TogglableState* const m_state;
-    TogglableTouchBorder* const m_border;
+    EffectTogglableState* const m_state;
+    EffectTogglableTouchBorder* const m_border;
     int m_animationDuration = 400;
     int m_layout = 1;
 };
