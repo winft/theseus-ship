@@ -7,9 +7,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/platform.h"
 #include "base/singleton_interface.h"
-#include "render/compositor.h"
-#include "render/platform.h"
-#include "render/singleton_interface.h"
 #include "tabbox_handler.h"
 #include "win/screen.h"
 #include "win/singleton_interface.h"
@@ -40,10 +37,6 @@ tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
             &base::platform::topology_changed,
             this,
             &tabbox_switcher_item::screen_geometry_changed);
-    connect(render::singleton_interface::compositor,
-            &render::compositor_qobject::compositingToggled,
-            this,
-            &tabbox_switcher_item::compositing_changed);
 }
 
 tabbox_switcher_item::~tabbox_switcher_item()
@@ -110,11 +103,6 @@ void tabbox_switcher_item::set_no_modifier_grab(bool set)
     }
     m_no_modifier_grab = set;
     Q_EMIT no_modifier_grab_changed();
-}
-
-bool tabbox_switcher_item::compositing()
-{
-    return render::singleton_interface::effects;
 }
 
 }

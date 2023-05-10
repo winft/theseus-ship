@@ -26,7 +26,6 @@ class tabbox_switcher_item : public QObject
     Q_PROPERTY(
         int currentIndex READ current_index WRITE set_current_index NOTIFY current_index_changed)
     Q_PROPERTY(bool noModifierGrab READ no_modifier_grab NOTIFY no_modifier_grab_changed)
-    Q_PROPERTY(bool compositing READ compositing NOTIFY compositing_changed)
 
     /**
      * The main QML item that will be displayed in the Dialog
@@ -50,7 +49,6 @@ public:
     {
         return m_no_modifier_grab;
     }
-    bool compositing();
 
     // for usage from outside
     void set_model(QAbstractItemModel* model);
@@ -66,7 +64,6 @@ Q_SIGNALS:
     void screen_geometry_changed();
     void item_changed();
     void no_modifier_grab_changed();
-    void compositing_changed();
 
 private:
     QAbstractItemModel* m_model;
