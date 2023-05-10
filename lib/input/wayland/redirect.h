@@ -60,6 +60,7 @@ public:
     using space_t = Space;
     using window_t = typename space_t::window_t;
     using dpms_filter_t = input::dpms_filter<type>;
+    using event_spy_t = input::event_spy<type>;
 
     redirect(Space& space)
         : qobject{std::make_unique<redirect_qobject>()}
@@ -225,7 +226,7 @@ public:
     std::unique_ptr<wayland::cursor<type>> cursor;
 
     std::list<event_filter<type>*> m_filters;
-    std::vector<event_spy<type>*> m_spies;
+    std::vector<event_spy_t*> m_spies;
 
     std::unique_ptr<input::dpms_filter<type>> dpms_filter;
 

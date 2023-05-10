@@ -31,6 +31,9 @@ public:
 class mock_redirect
 {
 public:
+    using type = mock_redirect;
+    using event_spy_t = input::event_spy<type>;
+
     mock_redirect()
         : pointer{std::make_unique<mock_pointer>()}
     {

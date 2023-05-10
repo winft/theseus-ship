@@ -7,8 +7,6 @@
 #pragma once
 
 #include "config-kwin.h"
-#include "input/event.h"
-#include "input/event_spy.h"
 #include "kwin_export.h"
 
 #include <epoxy/gl.h>
@@ -30,17 +28,19 @@
 namespace KWin::win
 {
 
-template<typename Osd>
-class osd_notification_input_spy : public input::event_spy<typename Osd::input_t>
+template<typename Osd, typename Input>
+class osd_notification_input_spy : public Input::event_spy_t
 {
 public:
+    using abstract_type = typename Input::event_spy_t;
+
     explicit osd_notification_input_spy(Osd& osd)
-        : input::event_spy<typename Osd::input_t>(osd.input)
+        : abstract_type(osd.input)
         , osd{osd}
     {
     }
 
-    void motion(input::motion_event const& /*event*/) override
+    void motion(typename abstract_type::motion_event_t const& /*event*/) override
     {
         auto const pos = this->redirect.pointer->pos();
         osd.setContainsPointer(osd.geometry().contains(pos.toPoint()));
@@ -157,7 +157,7 @@ public:
     QQmlEngine* m_qmlEngine{nullptr};
 
 private:
-    using input_spy = osd_notification_input_spy<type>;
+    using input_spy = osd_notification_input_spy<type, Input>;
 
     void show()
     {

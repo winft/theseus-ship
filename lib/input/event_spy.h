@@ -50,6 +50,8 @@ template<typename Redirect>
 class event_spy
 {
 public:
+    using motion_event_t = input::motion_event;
+
     event_spy(Redirect& redirect)
         : redirect{redirect}
     {

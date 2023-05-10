@@ -26,6 +26,7 @@ public:
     using platform_t = typename Space::base_t::input_t;
     using space_t = Space;
     using window_t = typename space_t::window_t;
+    using event_spy_t = input::event_spy<type>;
 
     redirect(Space& space)
         : qobject{std::make_unique<redirect_qobject>()}
@@ -73,7 +74,7 @@ public:
     std::unique_ptr<pointer_redirect<type>> pointer;
     std::unique_ptr<x11::cursor> cursor;
 
-    std::vector<event_spy<type>*> m_spies;
+    std::vector<event_spy_t*> m_spies;
 
     Space& space;
     std::unique_ptr<xinput_integration<type>> xinput;
