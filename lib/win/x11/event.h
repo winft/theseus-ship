@@ -12,6 +12,7 @@
 #include "damage.h"
 #include "focus_stealing.h"
 #include "geo.h"
+#include "key_server.h"
 #include "meta.h"
 #include "stacking.h"
 #include "transient.h"
@@ -502,7 +503,7 @@ bool button_press_event(Win* win,
     }
     if (w == win->frameId() && win::decoration(win)) {
         if (button >= 4 && button <= 7) {
-            auto const modifiers = base::x11::xcb::to_qt_keyboard_modifiers(state);
+            auto const modifiers = key_server::to_qt_keyboard_modifiers(state);
             // Logic borrowed from qapplication_x11.cpp
             const int delta = 120 * ((button == 4 || button == 6) ? 1 : -1);
             const bool hor = (((button == 4 || button == 5) && (modifiers & Qt::AltModifier))
@@ -532,7 +533,7 @@ bool button_press_event(Win* win,
                               QPointF(x_root, y_root),
                               base::x11::xcb::to_qt_mouse_button(button),
                               base::x11::xcb::to_qt_mouse_buttons(state),
-                              base::x11::xcb::to_qt_keyboard_modifiers(state));
+                              key_server::to_qt_keyboard_modifiers(state));
             event.setAccepted(false);
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (!event.isAccepted()) {
@@ -566,7 +567,7 @@ bool button_release_event(Win* win,
                               QPointF(x_root, y_root),
                               to_qt_button(button),
                               to_qt_buttons(state) & ~to_qt_button(button),
-                              base::x11::xcb::to_qt_keyboard_modifiers(state));
+                              key_server::to_qt_keyboard_modifiers(state));
             event.setAccepted(false);
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (event.isAccepted() || !win::titlebar_positioned_under_mouse(win)) {

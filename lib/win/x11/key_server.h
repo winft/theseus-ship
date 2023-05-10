@@ -11,6 +11,7 @@
 
 #include "base/x11/fixx11h.h"
 
+#include <Qt>
 #include <xcb/xcb.h>
 
 namespace KWin::win::x11::key_server
@@ -86,5 +87,25 @@ KWIN_EXPORT bool xEventToQt(XEvent* e, int* keyModQt);
 /// Converts an XCB keypress event into a Qt key + modifier code
 KWIN_EXPORT bool xcbKeyPressEventToQt(xcb_generic_event_t* e, int* keyModQt);
 KWIN_EXPORT bool xcbKeyPressEventToQt(xcb_key_press_event_t* e, int* keyModQt);
+
+inline Qt::KeyboardModifiers to_qt_keyboard_modifiers(int state)
+{
+    Qt::KeyboardModifiers ret = {};
+
+    if (state & XCB_KEY_BUT_MASK_SHIFT) {
+        ret |= Qt::ShiftModifier;
+    }
+    if (state & XCB_KEY_BUT_MASK_CONTROL) {
+        ret |= Qt::ControlModifier;
+    }
+    if (state & modXAlt()) {
+        ret |= Qt::AltModifier;
+    }
+    if (state & modXMeta()) {
+        ret |= Qt::MetaModifier;
+    }
+
+    return ret;
+}
 
 }

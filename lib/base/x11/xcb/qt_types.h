@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "win/x11/key_server.h"
-
 #include <Qt>
 #include <xcb/xcb.h>
 
@@ -51,26 +49,6 @@ inline Qt::MouseButtons to_qt_mouse_buttons(int state)
     }
     if (state & XCB_KEY_BUT_MASK_BUTTON_5) {
         ret |= Qt::XButton2;
-    }
-
-    return ret;
-}
-
-inline Qt::KeyboardModifiers to_qt_keyboard_modifiers(int state)
-{
-    Qt::KeyboardModifiers ret = {};
-
-    if (state & XCB_KEY_BUT_MASK_SHIFT) {
-        ret |= Qt::ShiftModifier;
-    }
-    if (state & XCB_KEY_BUT_MASK_CONTROL) {
-        ret |= Qt::ControlModifier;
-    }
-    if (state & win::x11::key_server::modXAlt()) {
-        ret |= Qt::AltModifier;
-    }
-    if (state & win::x11::key_server::modXMeta()) {
-        ret |= Qt::MetaModifier;
     }
 
     return ret;

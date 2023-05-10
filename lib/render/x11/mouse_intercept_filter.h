@@ -8,6 +8,7 @@
 
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/qt_types.h"
+#include "win/x11/key_server.h"
 
 #include <QCursor>
 #include <QMouseEvent>
@@ -56,7 +57,8 @@ public:
                     }
 
                     auto const buttons = base::x11::xcb::to_qt_mouse_buttons(me->state);
-                    auto const modifiers = base::x11::xcb::to_qt_keyboard_modifiers(me->state);
+                    auto const modifiers
+                        = win::x11::key_server::to_qt_keyboard_modifiers(me->state);
 
                     if (modifiers & Qt::AltModifier) {
                         int x = angleDelta.x();
@@ -94,7 +96,7 @@ public:
                                QPoint(me->root_x, me->root_y),
                                button,
                                buttons,
-                               base::x11::xcb::to_qt_keyboard_modifiers(me->state));
+                               win::x11::key_server::to_qt_keyboard_modifiers(me->state));
                 return m_effects->checkInputWindowEvent(&ev);
             }
         } else if (eventType == XCB_MOTION_NOTIFY) {
@@ -105,7 +107,7 @@ public:
                                QPoint(me->root_x, me->root_y),
                                Qt::NoButton,
                                base::x11::xcb::to_qt_mouse_buttons(me->state),
-                               base::x11::xcb::to_qt_keyboard_modifiers(me->state));
+                               win::x11::key_server::to_qt_keyboard_modifiers(me->state));
                 return m_effects->checkInputWindowEvent(&ev);
             }
         }

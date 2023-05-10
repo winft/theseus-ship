@@ -9,6 +9,7 @@
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/proto.h"
 #include "base/x11/xcb/qt_types.h"
+#include "win/x11/key_server.h"
 #include "xfixes_cursor_event_filter.h"
 
 #include <QAbstractEventDispatcher>
@@ -132,8 +133,8 @@ void cursor::mouse_polled()
                              lastPos,
                              base::x11::xcb::to_qt_mouse_buttons(m_buttonMask),
                              base::x11::xcb::to_qt_mouse_buttons(lastMask),
-                             base::x11::xcb::to_qt_keyboard_modifiers(m_buttonMask),
-                             base::x11::xcb::to_qt_keyboard_modifiers(lastMask));
+                             win::x11::key_server::to_qt_keyboard_modifiers(m_buttonMask),
+                             win::x11::key_server::to_qt_keyboard_modifiers(lastMask));
         lastPos = current_pos();
         lastMask = m_buttonMask;
     }
