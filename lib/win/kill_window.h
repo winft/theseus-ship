@@ -10,8 +10,6 @@
 
 #include "osd.h"
 
-#include "input/platform.h"
-
 #include <KLocalizedString>
 
 namespace KWin::win

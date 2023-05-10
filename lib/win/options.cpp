@@ -8,8 +8,6 @@
 #include "base/logging.h"
 
 #include "config-kwin.h"
-#include "render/platform.h"
-
 #include "utils/algorithm.h"
 #include "win_settings.h"
 

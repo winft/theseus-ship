@@ -15,6 +15,8 @@
 #include "win/stacking.h"
 #include "win/util.h"
 
+#include <kwineffects/effect_window.h>
+
 namespace KWin::win
 {
 

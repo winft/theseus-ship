@@ -19,8 +19,6 @@
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
-#include "input/cursor.h"
-#include "render/outline.h"
 
 #include <QApplication>
 #include <QWidget>

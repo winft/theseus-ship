@@ -11,7 +11,6 @@
 #include "shortcut_set.h"
 
 #include "config-kwin.h"
-#include "input/types.h"
 
 #include <QRegularExpression>
 

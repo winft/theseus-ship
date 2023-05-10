@@ -7,20 +7,18 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "types.h"
-
-#include "base/options.h"
-#include "input/cursor.h"
-#include "kwinglobals.h"
-#include "rules/ruling.h"
-
 #include "geo_change.h"
 #include "meta.h"
 #include "move.h"
 #include "net.h"
 #include "stacking_order.h"
 #include "transient.h"
+#include "types.h"
 #include "window_area.h"
+
+#include "base/options.h"
+#include "kwinglobals.h"
+#include "rules/ruling.h"
 
 #include <QList>
 #include <QPoint>

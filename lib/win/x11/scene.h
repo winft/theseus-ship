@@ -10,8 +10,6 @@
 
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
-#include "render/x11/buffer.h"
-#include "render/x11/shadow.h"
 #include "win/geo.h"
 #include "win/scene.h"
 

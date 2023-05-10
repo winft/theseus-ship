@@ -7,8 +7,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "bridge_qobject.h"
 
-#include "render/compositor_qobject.h"
-#include "render/types.h"
 #include "win/space_qobject.h"
 #include "win/virtual_desktops.h"
 

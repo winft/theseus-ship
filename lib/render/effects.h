@@ -17,6 +17,7 @@
 #include "x11/property_notify_filter.h"
 
 #include "desktop/screen_locker_watcher.h"
+#include "input/cursor.h"
 #include "input/platform.h"
 #include "win/activation.h"
 #include "win/osd.h"

@@ -13,8 +13,6 @@
 #include "shortcut_set.h"
 #include "stacking.h"
 
-#include "input/cursor.h"
-
 namespace KWin::win
 {
 

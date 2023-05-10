@@ -5,9 +5,8 @@
 */
 #pragma once
 
-#include "input/cursor.h"
 #include "kwin_export.h"
-#include "win/virtual_desktops.h"
+#include "virtual_desktops.h"
 
 #include <QObject>
 

@@ -9,6 +9,7 @@
 
 #include "compositor_selection_owner.h"
 #include "overlay_window.h"
+#include "shadow.h"
 #include "types.h"
 
 #include "debug/perf/ftrace.h"

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "buffer.h"
 #include "compositor.h"
 #include "effects.h"
 
@@ -29,7 +30,7 @@ public:
     using scene_t = typename compositor_t::scene_t;
 
     using window_t = typename scene_t::window_t;
-    using buffer_t = buffer_win_integration<typename scene_t::buffer_t>;
+    using buffer_t = x11::buffer_win_integration<typename scene_t::buffer_t>;
 
     platform(Base& base)
         : render::platform<Base>(base)

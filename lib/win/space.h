@@ -36,7 +36,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/x11/atoms.h"
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/window.h"
-#include "render/outline.h"
 #include "rules/book.h"
 
 #include <QTimer>

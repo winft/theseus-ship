@@ -24,9 +24,6 @@
 #include "window_render_data.h"
 #include "window_topology.h"
 
-#include "render/wayland/buffer.h"
-#include "render/window.h"
-
 namespace KWin::win
 {
 

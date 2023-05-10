@@ -18,7 +18,6 @@
 #include "base/wayland/output.h"
 #include "base/wayland/output_helpers.h"
 #include "base/wayland/server.h"
-#include "input/keyboard_redirect.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/layer_shell_v1.h>
