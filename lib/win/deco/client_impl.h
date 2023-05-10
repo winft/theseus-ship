@@ -9,8 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "renderer.h"
 
 #include "base/options.h"
-#include "render/compositor_qobject.h"
-#include "render/platform.h"
 #include "win/geo.h"
 #include "win/meta.h"
 #include "win/window_operation.h"
@@ -81,22 +79,21 @@ public:
                          decoratedClient,
                          &KDecoration2::DecoratedClient::keepBelowChanged);
 
-        QObject::connect(m_client->space.base.render->compositor->qobject.get(),
-                         &render::compositor_qobject::aboutToToggleCompositing,
+        auto comp_qobject = m_client->space.base.render->compositor->qobject.get();
+        using comp_qobject_t = std::remove_pointer_t<decltype(comp_qobject)>;
+
+        QObject::connect(comp_qobject,
+                         &comp_qobject_t::aboutToToggleCompositing,
                          qobject.get(),
                          [this] { m_renderer.reset(); });
-        m_compositorToggledConnection
-            = QObject::connect(m_client->space.base.render->compositor->qobject.get(),
-                               &render::compositor_qobject::compositingToggled,
-                               qobject.get(),
-                               [this](auto active) { handle_compositing_toggled(active); });
-        QObject::connect(m_client->space.base.render->compositor->qobject.get(),
-                         &render::compositor_qobject::aboutToDestroy,
-                         qobject.get(),
-                         [this] {
-                             QObject::disconnect(m_compositorToggledConnection);
-                             m_compositorToggledConnection = QMetaObject::Connection();
-                         });
+        m_compositorToggledConnection = QObject::connect(
+            comp_qobject, &comp_qobject_t::compositingToggled, qobject.get(), [this](auto active) {
+                handle_compositing_toggled(active);
+            });
+        QObject::connect(comp_qobject, &comp_qobject_t::aboutToDestroy, qobject.get(), [this] {
+            QObject::disconnect(m_compositorToggledConnection);
+            m_compositorToggledConnection = QMetaObject::Connection();
+        });
         QObject::connect(window->qobject.get(),
                          &window_qobject::quicktiling_changed,
                          decoratedClient,

@@ -72,6 +72,8 @@ public:
     using x11_ref_window_t = typename space_t::x11_window;
     using window_t = render::window<typename space_t::window_t, type>;
     using effect_window_t = typename window_t::effect_window_t;
+    using state_t = render::state;
+    using shadow_t = render::shadow<window_t>;
 
     compositor(Platform& platform)
         : qobject{std::make_unique<compositor_qobject>(
@@ -389,6 +391,20 @@ public:
         }
     }
 
+    template<typename RefWin>
+    void integrate_shadow(RefWin& ref_win)
+    {
+        auto& atoms = ref_win.space.atoms;
+
+        ref_win.render->shadow_windowing.create = [&](auto&& render_win) {
+            return create_shadow<shadow_t, window_t>(render_win, atoms->kde_net_wm_shadow);
+        };
+        ref_win.render->shadow_windowing.update = [&](auto&& shadow) {
+            return read_and_update_shadow<shadow_t>(
+                shadow, ref_win.space.base.x11_data.connection, atoms->kde_net_wm_shadow);
+        };
+    }
+
     void performCompositing()
     {
         QRegion repaints;
@@ -428,7 +444,7 @@ public:
     std::unique_ptr<scene_t> scene;
     std::unique_ptr<effects_t> effects;
 
-    render::state state{state::off};
+    state_t state{state::off};
     x11::compositor_selection_owner* m_selectionOwner{nullptr};
     QRegion repaints_region;
     QBasicTimer compositeTimer;

@@ -27,7 +27,9 @@ public:
     using space_t = typename base_t::space_t;
     using compositor_t = typename x11::compositor<type>;
     using scene_t = typename compositor_t::scene_t;
+
     using window_t = typename scene_t::window_t;
+    using buffer_t = buffer_win_integration<typename scene_t::buffer_t>;
 
     platform(Base& base)
         : render::platform<Base>(base)

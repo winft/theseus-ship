@@ -749,23 +749,23 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     read_show_on_screen_edge(win, showOnScreenEdgeCookie);
 
     // Forward all opacity values to the frame in case there'll be other CM running.
-    QObject::connect(win->space.base.render->compositor->qobject.get(),
-                     &render::compositor_qobject::compositingToggled,
-                     win->qobject.get(),
-                     [win](bool active) {
-                         if (active) {
-                             return;
-                         }
-                         if (win->opacity() == 1.0) {
-                             return;
-                         }
-                         net::win_info info(win->space.base.x11_data.connection,
-                                            win->frameId(),
-                                            win->space.base.x11_data.root_window,
-                                            net::Properties(),
-                                            net::Properties2());
-                         info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
-                     });
+    auto comp_qobject = win->space.base.render->compositor->qobject.get();
+    using comp_qobject_t = std::remove_pointer_t<decltype(comp_qobject)>;
+    QObject::connect(
+        comp_qobject, &comp_qobject_t::compositingToggled, win->qobject.get(), [win](bool active) {
+            if (active) {
+                return;
+            }
+            if (win->opacity() == 1.0) {
+                return;
+            }
+            net::win_info info(win->space.base.x11_data.connection,
+                               win->frameId(),
+                               win->space.base.x11_data.root_window,
+                               net::Properties(),
+                               net::Properties2());
+            info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
+        });
 
     add_controlled_window_to_space(space, win);
     return win;

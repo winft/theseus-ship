@@ -82,7 +82,7 @@ fb_config_info* fb_config_info_for_visual(xcb_visualid_t visual, Backend& backen
            GLX_X_VISUAL_TYPE,
            GLX_TRUE_COLOR,
            GLX_X_RENDERABLE,
-           True,
+           true,
            GLX_CONFIG_CAVEAT,
            int(GLX_DONT_CARE), // The ARGB32 visual is marked non-conformant in Catalyst
            GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT,

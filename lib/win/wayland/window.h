@@ -12,9 +12,6 @@
 #include "xdg_shell.h"
 #include "xdg_shell_control.h"
 
-#include "render/platform.h"
-#include "render/wayland/buffer.h"
-#include "render/wayland/shadow.h"
 #include "utils/geo.h"
 #include "win/fullscreen.h"
 #include "win/geo_block.h"
@@ -58,8 +55,7 @@ public:
     using qobject_t = win::window_qobject;
     using xdg_shell_control_t = xdg_shell_control<window<Space>>;
     using layer_control_t = wayland::control<window<Space>>;
-    using render_t
-        = render::window<typename Space::window_t, typename Space::base_t::render_t::compositor_t>;
+    using render_t = typename space_t::base_t::render_t::window_t;
     using output_t = typename Space::base_t::output_t;
 
     constexpr static bool is_toplevel{false};
@@ -135,18 +131,16 @@ public:
     void add_scene_window_addon()
     {
         assert(surface);
-        using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
-        using shadow_t = render::shadow<typename scene_t::window_t>;
 
         auto setup_buffer = [](auto& buffer) {
-            using buffer_integration_t
-                = render::wayland::buffer_win_integration<typename scene_t::buffer_t>;
-
+            using buffer_integration_t = typename Space::base_t::render_t::buffer_t;
             auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
+
             auto update_helper = [&buffer]() {
                 auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
                 update_buffer(*std::get<type*>(*buffer.window->ref_win), win_integrate.external);
             };
+
             win_integrate->update = update_helper;
             buffer.win_integration = std::move(win_integrate);
         };
@@ -175,9 +169,7 @@ public:
 
         this->render->win_integration.setup_buffer = setup_buffer;
         this->render->win_integration.get_viewport = get_viewport;
-        this->render->shadow_windowing.create
-            = render::wayland::create_shadow<shadow_t, typename scene_t::window_t, type>;
-        this->render->shadow_windowing.update = render::wayland::update_shadow<shadow_t, type>;
+        space.base.render->compositor->integrate_shadow(*this);
 
         setup_scale_scene_notify(*this);
     }

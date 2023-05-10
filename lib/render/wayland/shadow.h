@@ -71,8 +71,8 @@ bool update_shadow(Shadow& impl)
     return true;
 }
 
-template<typename Shadow, typename Win, typename RefWin>
-std::unique_ptr<Shadow> create_shadow(Win& win)
+template<typename Shadow, typename RefWin>
+std::unique_ptr<Shadow> create_shadow(typename Shadow::window_t& win)
 {
     auto ref_win = std::get<RefWin*>(*win.ref_win);
     auto surface = ref_win->surface;

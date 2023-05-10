@@ -10,7 +10,6 @@
 #include "types.h"
 
 #include "base/x11/xcb/extensions.h"
-#include "render/x11/types.h"
 #include "win/activation.h"
 #include "win/controlling.h"
 #include "win/damage.h"
@@ -175,12 +174,15 @@ void update_visibility(Win* win)
         return;
     }
 
+    auto render_options = win->space.base.render->options.get();
+    using hidden_preview_t =
+        typename std::remove_pointer_t<decltype(render_options)>::hidden_preview_t;
+
     if (win->hidden) {
         win->net_info->setState(net::Hidden, net::Hidden);
         win::set_skip_taskbar(win, true);
         if (win->space.base.render->compositor->scene
-            && win->space.base.render->options->qobject->hiddenPreviews()
-                == render::x11::hidden_preview::always) {
+            && render_options->qobject->hiddenPreviews() == hidden_preview_t::always) {
             internal_keep(win);
         } else {
             internal_hide(win);
@@ -193,8 +195,7 @@ void update_visibility(Win* win)
     if (win->control->minimized) {
         win->net_info->setState(net::Hidden, net::Hidden);
         if (win->space.base.render->compositor->scene
-            && win->space.base.render->options->qobject->hiddenPreviews()
-                == render::x11::hidden_preview::always) {
+            && render_options->qobject->hiddenPreviews() == hidden_preview_t::always) {
             internal_keep(win);
         } else {
             internal_hide(win);
@@ -205,8 +206,7 @@ void update_visibility(Win* win)
     win->net_info->setState(net::States(), net::Hidden);
     if (!on_current_desktop(win)) {
         if (win->space.base.render->compositor->scene
-            && win->space.base.render->options->qobject->hiddenPreviews()
-                != render::x11::hidden_preview::never) {
+            && render_options->qobject->hiddenPreviews() != hidden_preview_t::never) {
             internal_keep(win);
         } else {
             internal_hide(win);

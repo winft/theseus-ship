@@ -103,8 +103,7 @@ public:
     using space_t = Space;
     using type = internal_window<Space>;
     using qobject_t = win::window_qobject;
-    using render_t
-        = render::window<typename Space::window_t, typename Space::base_t::render_t::compositor_t>;
+    using render_t = typename space_t::base_t::render_t::window_t;
     using output_t = typename Space::base_t::output_t;
 
     constexpr static bool is_toplevel{false};
@@ -203,11 +202,9 @@ public:
     void add_scene_window_addon()
     {
         auto setup_buffer = [](auto& buffer) {
-            using scene_t = typename Space::base_t::render_t::compositor_t::scene_t;
-            using buffer_integration_t
-                = render::wayland::buffer_win_integration<typename scene_t::buffer_t>;
-
+            using buffer_integration_t = typename Space::base_t::render_t::buffer_t;
             auto win_integrate = std::make_unique<buffer_integration_t>(buffer);
+
             auto update_helper = [&buffer]() {
                 auto win = std::get<type*>(*buffer.window->ref_win);
                 auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
@@ -219,6 +216,7 @@ public:
                     win_integrate.internal.image = win->buffers.image;
                 }
             };
+
             win_integrate->update = update_helper;
             buffer.win_integration = std::move(win_integrate);
         };

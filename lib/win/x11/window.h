@@ -30,7 +30,6 @@
 
 #include "base/x11/xcb/geometry_hints.h"
 #include "base/x11/xcb/motif_hints.h"
-#include "render/window.h"
 #include "utils/geo.h"
 #include "win/fullscreen.h"
 #include "win/meta.h"
@@ -57,8 +56,7 @@ public:
     using type = window<Space>;
     using qobject_t = win::window_qobject;
     using control_t = x11::control<window>;
-    using render_t
-        = render::window<typename Space::window_t, typename Space::base_t::render_t::compositor_t>;
+    using render_t = typename space_t::base_t::render_t::window_t;
     using output_t = typename Space::base_t::output_t;
 
     constexpr static bool is_toplevel{false};

@@ -21,7 +21,6 @@
 
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/qt_types.h"
-#include "render/types.h"
 #include "win/activation.h"
 #include "win/deco_input.h"
 #include "win/desktop_space.h"
@@ -1013,8 +1012,9 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         break;
     case XCB_EXPOSE: {
         auto event = reinterpret_cast<xcb_expose_event_t*>(e);
-        if (event->window == win->frameId()
-            && win->space.base.render->compositor->state != render::state::on) {
+        auto comp = win->space.base.render->compositor.get();
+        using comp_t = std::remove_pointer_t<decltype(comp)>;
+        if (event->window == win->frameId() && comp->state != comp_t::state_t::on) {
             // TODO: only repaint required areas
             win::trigger_decoration_repaint(win);
         }

@@ -203,31 +203,21 @@ void set_blocking_compositing(Win& win, bool block)
 template<typename Win>
 void add_scene_window_addon(Win& win)
 {
-    using scene_t = typename Win::space_t::base_t::render_t::compositor_t::scene_t;
-    using shadow_t = render::shadow<typename scene_t::window_t>;
-
-    auto& atoms = win.space.atoms;
-    win.render->shadow_windowing.create = [&](auto&& render_win) {
-        return render::x11::create_shadow<shadow_t, typename scene_t::window_t>(
-            render_win, atoms->kde_net_wm_shadow);
-    };
-    win.render->shadow_windowing.update = [&](auto&& shadow) {
-        return render::x11::read_and_update_shadow<shadow_t>(
-            shadow, win.space.base.x11_data.connection, atoms->kde_net_wm_shadow);
-    };
+    win.space.base.render->compositor->integrate_shadow(win);
 
     auto setup_buffer = [con = win.space.base.x11_data.connection](auto& buffer) {
-        using buffer_integration_t
-            = render::x11::buffer_win_integration<typename scene_t::buffer_t>;
-
+        using buffer_integration_t = typename Win::space_t::base_t::render_t::buffer_t;
         auto win_integrate = std::make_unique<buffer_integration_t>(buffer, con);
+
         auto update_helper = [&buffer]() {
             auto& win_integrate = static_cast<buffer_integration_t&>(*buffer.win_integration);
             create_window_buffer(std::get<Win*>(*buffer.window->ref_win), win_integrate);
         };
+
         win_integrate->update = update_helper;
         buffer.win_integration = std::move(win_integrate);
     };
+
     win.render->win_integration.setup_buffer = setup_buffer;
 }
 

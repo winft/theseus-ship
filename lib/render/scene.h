@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
 #include "buffer.h"
+#include "effect/window_group_impl.h"
 #include "shadow.h"
 #include "singleton_interface.h"
 #include "types.h"
@@ -84,6 +85,7 @@ public:
     using space_t = typename Platform::base_t::space_t;
     using window_t = typename Platform::compositor_t::window_t;
     using effect_window_t = typename window_t::effect_window_t;
+    using effect_window_group_t = effect_window_group_impl<typename space_t::window_group_t>;
     using buffer_t = buffer<window_t>;
     using output_t = typename Platform::base_t::output_t;
 

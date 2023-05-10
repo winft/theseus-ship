@@ -22,6 +22,7 @@ class QQmlEngine;
 namespace KWin::render
 {
 
+class composited_outline_visual;
 class outline_visual;
 using outline_visual_factory = std::function<std::unique_ptr<outline_visual>()>;
 
@@ -56,6 +57,20 @@ public:
                 outline.get(),
                 &outline::compositingChanged);
         return outline;
+    }
+
+    template<typename Compositor>
+    std::unique_ptr<outline_visual> create_visual(Compositor& compositor)
+    {
+        if (compositor.state == state::on) {
+            return std::make_unique<composited_outline_visual>(
+                this,
+                *compositor.platform.base.script->qml_engine,
+                compositor.platform.base.config);
+        } else {
+            return std::unique_ptr<outline_visual>(
+                compositor.platform.create_non_composited_outline(this));
+        }
     }
 
     outline(outline_visual_factory visual_factory);
@@ -189,20 +204,6 @@ inline outline* outline_visual::get_outline()
 inline const outline* outline_visual::get_outline() const
 {
     return m_outline;
-}
-
-template<typename Compositor, typename Outline>
-std::unique_ptr<outline_visual> create_outline_visual(Compositor& compositor, Outline& outline)
-{
-    if (compositor.state == state::on) {
-        return std::make_unique<composited_outline_visual>(
-            &outline,
-            *compositor.platform.base.script->qml_engine,
-            compositor.platform.base.config);
-    } else {
-        return std::unique_ptr<outline_visual>(
-            compositor.platform.create_non_composited_outline(&outline));
-    }
 }
 
 }

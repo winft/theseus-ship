@@ -33,8 +33,11 @@ public:
         initButtons();
         readSettings();
 
-        auto c = connect(space.base.render->compositor->qobject.get(),
-                         &render::compositor_qobject::compositingToggled,
+        auto comp_qobject = space.base.render->compositor->qobject.get();
+        using comp_qobject_t = std::remove_pointer_t<decltype(comp_qobject)>;
+
+        auto c = connect(comp_qobject,
+                         &comp_qobject_t::compositingToggled,
                          parent,
                          &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
         connect(space.virtual_desktop_manager->qobject.get(),
@@ -47,10 +50,7 @@ public:
                     Q_EMIT parent->onAllDesktopsAvailableChanged(current > 1);
                 });
         // prevent changes in Decoration due to compositor being destroyed
-        connect(space.base.render->compositor->qobject.get(),
-                &render::compositor_qobject::aboutToDestroy,
-                this,
-                [c] { disconnect(c); });
+        connect(comp_qobject, &comp_qobject_t::aboutToDestroy, this, [c] { disconnect(c); });
         connect(
             space.qobject.get(), &win::space_qobject::configChanged, this, &settings::readSettings);
         connect(space.deco->qobject.get(),
@@ -61,7 +61,9 @@ public:
 
     bool isAlphaChannelSupported() const override
     {
-        return space.base.render->compositor->state == render::state::on;
+        auto comp = space.base.render->compositor.get();
+        using comp_t = std::remove_pointer_t<decltype(comp)>;
+        return comp->state == comp_t::state_t::on;
     }
 
     bool isOnAllDesktopsAvailable() const override

@@ -7,6 +7,7 @@
 
 #include "output.h"
 #include "presentation.h"
+#include "shadow.h"
 #include "utils.h"
 
 #include "render/compositor.h"
@@ -34,6 +35,8 @@ public:
     using effects_t = effects_handler_impl<type>;
     using space_t = typename Platform::base_t::space_t;
     using window_t = render::window<typename space_t::window_t, type>;
+    using state_t = render::state;
+    using shadow_t = render::shadow<window_t>;
 
     compositor(Platform& platform)
         : qobject{std::make_unique<compositor_qobject>([this](auto /*te*/) { return false; })}
@@ -196,6 +199,13 @@ public:
         return gl::create_scene(this->platform);
     }
 
+    template<typename RefWin>
+    void integrate_shadow(RefWin& ref_win)
+    {
+        ref_win.render->shadow_windowing.create = create_shadow<shadow_t, RefWin>;
+        ref_win.render->shadow_windowing.update = update_shadow<shadow_t, RefWin>;
+    }
+
     void performCompositing()
     {
         for (auto& output : this->platform.base.outputs) {
@@ -210,7 +220,7 @@ public:
     std::unique_ptr<wayland::presentation> presentation;
     std::unique_ptr<cursor<Platform>> software_cursor;
 
-    render::state state{state::off};
+    state_t state{state::off};
     x11::compositor_selection_owner* m_selectionOwner{nullptr};
 
     QList<xcb_atom_t> unused_support_properties;

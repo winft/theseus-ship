@@ -25,6 +25,9 @@ public:
     using scene_t = typename compositor_t::scene_t;
     using space_t = typename Base::space_t;
 
+    using window_t = typename scene_t::window_t;
+    using buffer_t = buffer_win_integration<typename scene_t::buffer_t>;
+
     platform(Base& base)
         : render::platform<Base>(base)
     {

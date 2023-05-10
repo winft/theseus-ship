@@ -64,15 +64,15 @@ public:
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
     using window_t = std::variant<wayland_window*, internal_window_t*, x11_window*>;
+    using window_group_t = x11::group<type>;
+    using render_outline_t = typename base_t::render_t::outline_t;
 
     space(Render& render, Input& input)
         : win::space(input.base.config.main)
         , base{input.base}
-        , outline{render::outline::create(*render.compositor,
-                                          [this] {
-                                              return render::create_outline_visual(
-                                                  *this->base.render->compositor, *outline);
-                                          })}
+        , outline{render_outline_t::create(
+              *render.compositor,
+              [this] { return outline->create_visual(*this->base.render->compositor); })}
         , deco{std::make_unique<deco::bridge<type>>(*this)}
         , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
         , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
@@ -479,7 +479,7 @@ public:
 
     base_t& base;
 
-    std::unique_ptr<render::outline> outline;
+    std::unique_ptr<render_outline_t> outline;
     std::unique_ptr<edger_t> edges;
     std::unique_ptr<deco::bridge<type>> deco;
     std::unique_ptr<dbus::appmenu> appmenu;

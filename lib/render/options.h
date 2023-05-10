@@ -179,6 +179,8 @@ private:
 class KWIN_EXPORT options
 {
 public:
+    using hidden_preview_t = x11::hidden_preview;
+
     options(base::operation_mode mode, KSharedConfigPtr config);
     ~options();
 

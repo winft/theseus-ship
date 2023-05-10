@@ -42,6 +42,8 @@ template<typename Window>
 class shadow : public QObject
 {
 public:
+    using window_t = Window;
+
     /**
      * @return Region of the shadow.
      */

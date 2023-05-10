@@ -9,8 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "extras.h"
 #include "window_find.h"
 
-#include "render/effect/window_group_impl.h"
-
 #include <QIcon>
 #include <vector>
 
@@ -23,6 +21,7 @@ class group
 public:
     using group_t = group<Space>;
     using x11_window_t = typename Space::x11_window;
+    using effect_window_group_t = typename Space::base_t::render_t::scene_t::effect_window_group_t;
 
     group(xcb_window_t xcb_leader, Space& space)
         : xcb_leader{xcb_leader}
@@ -37,7 +36,7 @@ public:
                                             net::Properties(),
                                             net::Properties2());
         }
-        effect_group = new render::effect_window_group_impl<group_t>(this);
+        effect_group = new effect_window_group_t(this);
         space.groups.push_back(this);
     }
 
@@ -139,7 +138,7 @@ public:
     xcb_window_t xcb_leader;
     net::win_info* leader_info{nullptr};
     xcb_timestamp_t user_time{-1U};
-    render::effect_window_group_impl<group_t>* effect_group;
+    effect_window_group_t* effect_group;
 
 private:
     int refcount{0};

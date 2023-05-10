@@ -8,6 +8,7 @@
 
 #include "gl/egl_data.h"
 #include "options.h"
+#include "outline.h"
 #include "post/night_color_manager.h"
 #include "singleton_interface.h"
 
@@ -25,6 +26,7 @@ public:
     using base_t = Base;
     using platform_t = platform<base_t>;
     using space_t = typename base_t::space_t;
+    using outline_t = render::outline;
 
     virtual ~platform()
     {
