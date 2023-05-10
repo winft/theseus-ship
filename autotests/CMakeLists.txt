@@ -10,7 +10,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-add_definitions(-DKWIN_UNIT_TEST)
 remove_definitions(-DQT_USE_QSTRINGBUILDER)
 add_subdirectory(libxrenderutils)
 add_subdirectory(integration)

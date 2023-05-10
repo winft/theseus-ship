@@ -5,8 +5,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "tabbox_handler.h"
 
-#include "config-kwin.h"
-
 #include "tabbox_client_model.h"
 #include "tabbox_config.h"
 #include "tabbox_desktop_model.h"
@@ -119,7 +117,6 @@ QQuickWindow* tabbox_handler_private::window() const
     return m_main_item->findChild<QQuickWindow*>();
 }
 
-#ifndef KWIN_UNIT_TEST
 win::tabbox_switcher_item* tabbox_handler_private::switcher_item() const
 {
     if (!m_main_item) {
@@ -132,7 +129,6 @@ win::tabbox_switcher_item* tabbox_handler_private::switcher_item() const
     }
     return m_main_item->findChild<win::tabbox_switcher_item*>();
 }
-#endif
 
 win::tabbox_client_model* tabbox_handler_private::client_model() const
 {
@@ -205,7 +201,6 @@ void tabbox_handler_private::end_highlight_windows(bool abort)
     q->highlight_windows();
 }
 
-#ifndef KWIN_UNIT_TEST
 QObject* tabbox_handler_private::create_switcher_item(bool desktopMode)
 {
     // first try look'n'feel package
@@ -284,11 +279,9 @@ QObject* tabbox_handler_private::create_switcher_item(bool desktopMode)
     }
     return nullptr;
 }
-#endif
 
 void tabbox_handler_private::show()
 {
-#ifndef KWIN_UNIT_TEST
     if (m_qml_context.isNull()) {
         qmlRegisterType<win::tabbox_switcher_item>("org.kde.kwin", 3, 0, "TabBoxSwitcher");
         m_qml_context.reset(new QQmlContext(q->qml_engine()));
@@ -338,7 +331,6 @@ void tabbox_handler_private::show()
         // pretend to activate the window to enable accessibility notifications
         QWindowSystemInterface::handleWindowActivated(w, Qt::TabFocusReason);
     }
-#endif
 }
 
 /***********************************************
@@ -404,11 +396,9 @@ void tabbox_handler::hide(bool abort)
     if (d->config.is_highlight_windows()) {
         d->end_highlight_windows(abort);
     }
-#ifndef KWIN_UNIT_TEST
     if (win::tabbox_switcher_item* item = d->switcher_item()) {
         item->set_visible(false);
     }
-#endif
     if (QQuickWindow* w = d->window()) {
         w->hide();
         w->destroy();
