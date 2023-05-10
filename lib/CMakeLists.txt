@@ -12,19 +12,9 @@ set_target_properties(KWinEffectsInterface PROPERTIES
 
 add_subdirectory(base)
 add_subdirectory(effect)
+add_subdirectory(win)
 add_subdirectory(data)
 add_subdirectory(script)
-
-# Target killer helper
-add_executable(kwin_killer_helper win/x11/helpers/killer.cpp)
-
-target_link_libraries(kwin_killer_helper
-  KF6::AuthCore
-  KF6::I18n
-  KF6::WidgetsAddons
-  Qt::GuiPrivate
-  Qt::Widgets
-)
 
 ### Common library
 set(kwin_SRCS
@@ -76,41 +66,9 @@ set(kwin_SRCS
     script/window.cpp
     script/window_model.cpp
     script/space.cpp
-    win/cursor_shape.cpp
-    win/dbus/appmenu.cpp
-    win/dbus/virtual_desktop_manager.cpp
-    win/dbus/virtual_desktop_types.cpp
-    win/deco/palette.cpp
-    win/deco/decorations_logging.cpp
-    win/input/gestures.cpp
-    win/input/global_shortcut.cpp
-    win/options.cpp
-    win/osd_notification.cpp
-    win/property_window.cpp
-    win/rules/book.cpp
-    win/rules/book_settings.cpp
-    win/rules/ruling.cpp
-    win/rules/window.cpp
-    win/session_manager.cpp
-    win/screen_edges.cpp
-    win/shortcut_dialog.cpp
-    win/singleton_interface.cpp
-    win/space_qobject.cpp
-    win/virtual_desktops.cpp
-    win/x11/client_machine.cpp
-    win/x11/extras.cpp
-    win/x11/key_server.cpp
-    win/x11/net/atoms.cpp
-    win/x11/net/root_info.cpp
-    win/x11/net/win_info.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.
     render/cursor.h
-    win/deco/bridge_qobject.h
-    win/deco/client_impl_qobject.h
-    win/deco/renderer.h
-    win/stacking_order.h
-    win/window_qobject.h
 )
 
 qt6_add_resources(kwin_SRCS render/gl/resources.qrc)
@@ -121,11 +79,8 @@ qt6_add_dbus_adaptor(kwin_SRCS
   KWin::scripting::abstract_script
 )
 
-kconfig_add_kcfg_files(kwin_SRCS win/config/win_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS render/config/render_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS win/rules/kconfig/rules_book_settings_base.kcfgc)
 
 qt6_add_dbus_adaptor(kwin_SRCS
   desktop/kde/dbus/org.kde.KWin.xml
@@ -143,50 +98,24 @@ qt6_add_dbus_adaptor(kwin_SRCS
   KWin::render::post::color_correct_dbus_interface
 )
 qt6_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_wrap)
-qt6_add_dbus_adaptor(kwin_SRCS
-    win/dbus/org.kde.KWin.VirtualDesktopManager.xml
-    win/dbus/virtual_desktop_manager.h
-    KWin::win::dbus::virtual_desktop_manager
-)
-qt6_add_dbus_adaptor(kwin_SRCS
-  win/dbus/org.kde.KWin.Session.xml
-  win/session_manager.h
-  KWin::win::session_manager
-)
 
 qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf6_org.freedesktop.ScreenSaver.xml screenlocker_interface)
 qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.screensaver.xml kscreenlocker_interface)
-qt6_add_dbus_interface(kwin_SRCS win/dbus/org.kde.kappmenu.xml appmenu_interface)
 
 ki18n_wrap_ui(kwin_SRCS
     debug/console/debug_console.ui
-    win/shortcut_dialog.ui
-)
-
-set(kwin_QT_LIBS
-    Qt::Concurrent
-    Qt::DBus
-    Qt::Quick
 )
 
 set(kwin_KDE_LIBS
   KF6::ConfigCore
-  KF6::ConfigWidgets
-  KF6::CoreAddons
-  KF6::I18n
   KF6::Notifications
-  KF6::Package
   KF6::Plasma
   KF6::Service
-
-  KDecoration2::KDecoration
-  KDecoration2::KDecoration2Private
 )
 
 set(kwin_XCB_LIBS
     XCB::CURSOR
     XCB::ICCCM
-    XCB::KEYSYMS
     XCB::RENDER
     XCB::SHM
     XCB::XFIXES
@@ -198,10 +127,8 @@ set(kwin_INPUT_LIBS
 
 set(kwinLibs
     base-x11
-    kwineffects
-    ${kwin_QT_LIBS}
+    win
     ${kwin_KDE_LIBS}
-    ${X11_LIBRARIES}
     ${kwin_XCB_LIBS}
     ${kwin_INPUT_LIBS}
 
@@ -225,22 +152,6 @@ target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
 
 if(HAVE_PERF)
     target_sources(kwin PRIVATE debug/perf/ftrace_impl.cpp)
-endif()
-
-if (KWIN_BUILD_TABBOX)
-  target_sources(kwin PRIVATE
-    win/tabbox/tabbox_client_model.cpp
-    win/tabbox/tabbox_config.cpp
-    win/tabbox/tabbox_desktop_chain.cpp
-    win/tabbox/tabbox_desktop_model.cpp
-    win/tabbox/tabbox_handler.cpp
-    win/tabbox/tabbox_logging.cpp
-    win/tabbox/tabbox_switcher_item.cpp
-
-    # These headers need to be compiled for the helper QObjects they contain.
-    win/tabbox/tabbox.h
-  )
-  target_link_libraries(kwin Qt::GuiPrivate)
 endif()
 
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
@@ -376,7 +287,6 @@ target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)
 
 
 ### Installs
-install(TARGETS kwin_killer_helper DESTINATION ${KDE_INSTALL_LIBEXECDIR})
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_wayland_lib ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 
@@ -390,7 +300,6 @@ install(FILES desktop/kde/kwin.notifyrc
 )
 install(
   FILES
-    win/dbus/org.kde.KWin.VirtualDesktopManager.xml
     desktop/kde/dbus/org.kde.KWin.xml
     render/dbus/org.kde.kwin.ColorCorrect.xml
     render/dbus/org.kde.kwin.Compositing.xml
@@ -406,10 +315,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTAL
 # Install QML files
 install(DIRECTORY render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
 install(DIRECTORY render/qml/frames/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/frames)
-install(
-  DIRECTORY win/qml/onscreennotification/plasma
-  DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/onscreennotification
-)
 
 include(CMakePackageConfigHelpers)
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinDBusInterface")
