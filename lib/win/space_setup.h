@@ -8,7 +8,6 @@
 #include <config-kwin.h>
 
 #include "dbus/virtual_desktop_manager.h"
-#include "render/compositor.h"
 #include "rules.h"
 #include "tabbox/tabbox.h"
 #include "x11/space_setup.h"
@@ -36,11 +35,6 @@ void init_space(Space& space)
     // need to create the tabbox before compositing scene is setup
     space.tabbox = std::make_unique<win::tabbox<Space>>(space);
 #endif
-
-    QObject::connect(space.qobject.get(),
-                     &Space::qobject_t::currentDesktopChanged,
-                     space.base.render->compositor->qobject.get(),
-                     [comp = space.base.render->compositor.get()] { render::full_repaint(*comp); });
 
     space.deco->init();
     QObject::connect(space.qobject.get(),

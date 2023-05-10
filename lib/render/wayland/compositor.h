@@ -73,6 +73,10 @@ public:
                              &win::stacking_order_qobject::changed,
                              this->qobject.get(),
                              [this] { full_repaint(*this); });
+            QObject::connect(space.qobject.get(),
+                             &space_t::qobject_t::currentDesktopChanged,
+                             this->qobject.get(),
+                             [this] { full_repaint(*this); });
             QObject::connect(&this->platform.base,
                              &base::platform::output_removed,
                              this->qobject.get(),
