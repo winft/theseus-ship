@@ -14,7 +14,6 @@
 #include <KLocalizedString>
 #include <QAction>
 #include <QUuid>
-#include <Wrapland/Server/plasma_virtual_desktop.h>
 #include <algorithm>
 
 namespace KWin::win
@@ -36,88 +35,6 @@ virtual_desktop::virtual_desktop(QObject* parent)
 virtual_desktop::~virtual_desktop()
 {
     Q_EMIT aboutToBeDestroyed();
-}
-
-void virtual_desktop_manager::setVirtualDesktopManagement(
-    Wrapland::Server::PlasmaVirtualDesktopManager* management)
-{
-    using namespace Wrapland::Server;
-    Q_ASSERT(!m_virtualDesktopManagement);
-    m_virtualDesktopManagement = management;
-
-    auto createPlasmaVirtualDesktop = [this](auto desktop) {
-        auto pvd = m_virtualDesktopManagement->createDesktop(desktop->id().toStdString(),
-                                                             desktop->x11DesktopNumber() - 1);
-        pvd->setName(desktop->name().toStdString());
-        pvd->sendDone();
-
-        QObject::connect(desktop, &virtual_desktop::nameChanged, pvd, [desktop, pvd] {
-            pvd->setName(desktop->name().toStdString());
-            pvd->sendDone();
-        });
-        QObject::connect(pvd,
-                         &PlasmaVirtualDesktop::activateRequested,
-                         qobject.get(),
-                         [this, desktop] { setCurrent(desktop); });
-    };
-
-    QObject::connect(qobject.get(),
-                     &virtual_desktop_manager_qobject::desktopCreated,
-                     m_virtualDesktopManagement,
-                     createPlasmaVirtualDesktop);
-
-    QObject::connect(qobject.get(),
-                     &virtual_desktop_manager_qobject::rowsChanged,
-                     m_virtualDesktopManagement,
-                     [this](uint rows) {
-                         m_virtualDesktopManagement->setRows(rows);
-                         m_virtualDesktopManagement->sendDone();
-                     });
-
-    // handle removed: from virtual_desktop_manager to the wayland interface
-    QObject::connect(qobject.get(),
-                     &virtual_desktop_manager_qobject::desktopRemoved,
-                     m_virtualDesktopManagement,
-                     [this](auto desktop) {
-                         m_virtualDesktopManagement->removeDesktop(desktop->id().toStdString());
-                     });
-
-    // create a new desktop when the client asks to
-    QObject::connect(m_virtualDesktopManagement,
-                     &PlasmaVirtualDesktopManager::desktopCreateRequested,
-                     qobject.get(),
-                     [this](auto const& name, quint32 position) {
-                         createVirtualDesktop(position, QString::fromStdString(name));
-                     });
-
-    // remove when the client asks to
-    QObject::connect(m_virtualDesktopManagement,
-                     &PlasmaVirtualDesktopManager::desktopRemoveRequested,
-                     qobject.get(),
-                     [this](auto const& id) {
-                         // here there can be some nice kauthorized check?
-                         // remove only from virtual_desktop_manager, the other connections will
-                         // remove it from m_virtualDesktopManagement as well
-                         removeVirtualDesktop(id.c_str());
-                     });
-
-    std::for_each(m_desktops.constBegin(), m_desktops.constEnd(), createPlasmaVirtualDesktop);
-
-    // Now we are sure all ids are there
-    save();
-
-    QObject::connect(qobject.get(),
-                     &virtual_desktop_manager_qobject::currentChanged,
-                     m_virtualDesktopManagement,
-                     [this]() {
-                         for (auto deskInt : m_virtualDesktopManagement->desktops()) {
-                             if (deskInt->id() == currentDesktop()->id().toStdString()) {
-                                 deskInt->setActive(true);
-                             } else {
-                                 deskInt->setActive(false);
-                             }
-                         }
-                     });
 }
 
 void virtual_desktop::setId(QString const& id)

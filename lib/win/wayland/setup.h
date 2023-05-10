@@ -13,6 +13,7 @@
 #include "win/types.h"
 #include "win/virtual_desktops.h"
 
+#include <Wrapland/Server/plasma_virtual_desktop.h>
 #include <Wrapland/Server/plasma_window.h>
 
 namespace KWin::win::wayland
@@ -256,6 +257,92 @@ void plasma_manage_update_stacking_order(Space& space)
 
     space.plasma_window_manager->set_stacking_order(ids);
     space.plasma_window_manager->set_stacking_order_uuids(uuids);
+}
+
+template<typename Manager>
+void setup_virtual_desktop_manager(Manager& manager,
+                                   Wrapland::Server::PlasmaVirtualDesktopManager& management)
+{
+    using namespace Wrapland::Server;
+
+    Q_ASSERT(!manager.m_virtualDesktopManagement);
+    manager.m_virtualDesktopManagement = &management;
+
+    auto createPlasmaVirtualDesktop = [&manager](auto desktop) {
+        auto pvd = manager.m_virtualDesktopManagement->createDesktop(
+            desktop->id().toStdString(), desktop->x11DesktopNumber() - 1);
+        pvd->setName(desktop->name().toStdString());
+        pvd->sendDone();
+
+        QObject::connect(desktop, &virtual_desktop::nameChanged, pvd, [desktop, pvd] {
+            pvd->setName(desktop->name().toStdString());
+            pvd->sendDone();
+        });
+        QObject::connect(pvd,
+                         &PlasmaVirtualDesktop::activateRequested,
+                         manager.qobject.get(),
+                         [&manager, desktop] { manager.setCurrent(desktop); });
+    };
+
+    QObject::connect(manager.qobject.get(),
+                     &virtual_desktop_manager_qobject::desktopCreated,
+                     manager.m_virtualDesktopManagement,
+                     createPlasmaVirtualDesktop);
+
+    QObject::connect(manager.qobject.get(),
+                     &virtual_desktop_manager_qobject::rowsChanged,
+                     manager.m_virtualDesktopManagement,
+                     [&manager](uint rows) {
+                         manager.m_virtualDesktopManagement->setRows(rows);
+                         manager.m_virtualDesktopManagement->sendDone();
+                     });
+
+    // handle removed: from virtual_desktop_manager to the wayland interface
+    QObject::connect(manager.qobject.get(),
+                     &virtual_desktop_manager_qobject::desktopRemoved,
+                     manager.m_virtualDesktopManagement,
+                     [&manager](auto desktop) {
+                         manager.m_virtualDesktopManagement->removeDesktop(
+                             desktop->id().toStdString());
+                     });
+
+    // create a new desktop when the client asks to
+    QObject::connect(manager.m_virtualDesktopManagement,
+                     &PlasmaVirtualDesktopManager::desktopCreateRequested,
+                     manager.qobject.get(),
+                     [&manager](auto const& name, quint32 position) {
+                         manager.createVirtualDesktop(position, QString::fromStdString(name));
+                     });
+
+    // remove when the client asks to
+    QObject::connect(manager.m_virtualDesktopManagement,
+                     &PlasmaVirtualDesktopManager::desktopRemoveRequested,
+                     manager.qobject.get(),
+                     [&manager](auto const& id) {
+                         // here there can be some nice kauthorized check?
+                         // remove only from virtual_desktop_manager, the other connections will
+                         // remove it from m_virtualDesktopManagement as well
+                         manager.removeVirtualDesktop(id.c_str());
+                     });
+
+    auto const& desktops = manager.desktops();
+    std::for_each(desktops.constBegin(), desktops.constEnd(), createPlasmaVirtualDesktop);
+
+    // Now we are sure all ids are there
+    manager.save();
+
+    QObject::connect(manager.qobject.get(),
+                     &virtual_desktop_manager_qobject::currentChanged,
+                     manager.m_virtualDesktopManagement,
+                     [&manager]() {
+                         for (auto deskInt : manager.m_virtualDesktopManagement->desktops()) {
+                             if (deskInt->id() == manager.currentDesktop()->id().toStdString()) {
+                                 deskInt->setActive(true);
+                             } else {
+                                 deskInt->setActive(false);
+                             }
+                         }
+                     });
 }
 
 }

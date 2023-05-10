@@ -213,10 +213,6 @@ public:
      */
     void setRootInfo(x11::net::root_info* info);
     /**
-     * @internal, for Wayland case
-     */
-    void setVirtualDesktopManagement(Wrapland::Server::PlasmaVirtualDesktopManager* management);
-    /**
      * @internal
      */
     void setConfig(KSharedConfig::Ptr config);
@@ -487,6 +483,8 @@ public:
     }
     void connect_gestures();
 
+    Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement{nullptr};
+
 private:
     /// Returns new desktops.
     QList<virtual_desktop*> update_count(uint count);
@@ -507,7 +505,6 @@ private:
     virtual_desktop_grid m_grid;
     // TODO: QPointer
     x11::net::root_info* m_rootInfo{nullptr};
-    Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement = nullptr;
     KSharedConfig::Ptr m_config;
 
     QScopedPointer<QAction> m_swipeGestureReleasedY;

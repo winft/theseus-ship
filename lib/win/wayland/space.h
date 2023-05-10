@@ -122,7 +122,7 @@ public:
         plasma_window_manager->setShowingDesktopState(
             Wrapland::Server::PlasmaWindowManager::ShowingDesktopState::Disabled);
         plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
-        virtual_desktop_manager->setVirtualDesktopManagement(plasma_virtual_desktop_manager.get());
+        setup_virtual_desktop_manager(*virtual_desktop_manager, *plasma_virtual_desktop_manager);
 
         QObject::connect(stacking.order.qobject.get(),
                          &stacking_order_qobject::render_restack,
