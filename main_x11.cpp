@@ -15,7 +15,6 @@
 #include "base/seat/backend/logind/session.h"
 #include "base/x11/selection_owner.h"
 #include "base/x11/xcb/helpers.h"
-#include "base/x11/xcb_event_filter.h"
 #include "desktop/screen_locker_watcher.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
@@ -26,6 +25,7 @@
 #include "win/space.h"
 #include "win/x11/space.h"
 #include "win/x11/space_event.h"
+#include "win/x11/xcb_event_filter.h"
 
 #include <KConfigGroup>
 #include <KCrash>
@@ -273,7 +273,7 @@ void ApplicationX11::start()
         win::init_shortcuts(*base.space);
         render::init_shortcuts(*base.render);
 
-        event_filter = std::make_unique<base::x11::xcb_event_filter<base_t::space_t>>(*base.space);
+        event_filter = std::make_unique<win::x11::xcb_event_filter<base_t::space_t>>(*base.space);
         installNativeEventFilter(event_filter.get());
 
         base.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);

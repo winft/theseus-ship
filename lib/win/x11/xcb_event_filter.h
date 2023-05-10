@@ -5,12 +5,12 @@
 */
 #pragma once
 
-#include "win/x11/space_event.h"
+#include "space_event.h"
 
 #include <QAbstractNativeEventFilter>
 #include <xcb/xcb.h>
 
-namespace KWin::base::x11
+namespace KWin::win::x11
 {
 
 template<typename Space>
@@ -30,9 +30,9 @@ public:
         }
 
         auto event = static_cast<xcb_generic_event_t*>(message);
-        win::x11::update_time_from_event(space.base, event);
+        update_time_from_event(space.base, event);
 
-        return win::x11::space_event(space, event);
+        return space_event(space, event);
     }
 
 private:

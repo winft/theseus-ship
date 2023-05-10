@@ -11,12 +11,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/wayland/server.h"
 #include "base/x11/selection_owner.h"
 #include "base/x11/xcb/helpers.h"
-#include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
 #include "render/compositor_start.h"
 #include "win/wayland/surface.h"
 #include "win/wayland/xwl_window.h"
 #include "win/x11/space_setup.h"
+#include "win/x11/xcb_event_filter.h"
 
 #include <KLocalizedString>
 #include <QAbstractEventDispatcher>
@@ -255,7 +255,7 @@ private:
 
         space.atoms = std::make_unique<base::x11::atoms>(core.x11.connection);
         core.x11.atoms = space.atoms.get();
-        event_filter = std::make_unique<base::x11::xcb_event_filter<Space>>(space);
+        event_filter = std::make_unique<win::x11::xcb_event_filter<Space>>(space);
         qApp->installNativeEventFilter(event_filter.get());
 
         QObject::connect(
@@ -316,7 +316,7 @@ private:
     runtime<Space> core;
 
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
-    std::unique_ptr<base::x11::xcb_event_filter<Space>> event_filter;
+    std::unique_ptr<win::x11::xcb_event_filter<Space>> event_filter;
 
     Space& space;
     std::function<void(int code)> status_callback;
