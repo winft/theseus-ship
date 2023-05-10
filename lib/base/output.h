@@ -6,7 +6,6 @@
 #pragma once
 
 #include "kwin_export.h"
-#include "render/effect/screen_impl.h"
 #include "utils/gamma_ramp.h"
 
 #include <QObject>
@@ -176,7 +175,6 @@ public:
     }
 
     std::unique_ptr<output_qobject> qobject;
-    render::effect_screen_impl<output>* m_effectScreen{nullptr};
 };
 
 }

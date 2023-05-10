@@ -277,13 +277,12 @@ public:
 
     EffectScreen* screen() const override
     {
-        return std::visit(overload{[](auto&& ref_win) -> EffectScreen* {
+        return std::visit(overload{[this](auto&& ref_win) -> EffectScreen* {
                               auto output = ref_win->topo.central_output;
-                              if (!output) {
+                              if (!output || !window.compositor.effects) {
                                   return nullptr;
                               }
-                              return effect_screen_impl<base::output>::get(
-                                  const_cast<typename base_t::output_t*>(output));
+                              return get_effect_screen(*window.compositor.effects, *output);
                           }},
                           *window.ref_win);
     }

@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "win/types.h"
-
 #include <kwineffects/effect_screen.h>
 
 #include <QRect>
@@ -24,8 +22,6 @@ public:
     {
         using qout = typename decltype(output->qobject)::element_type;
 
-        m_platformOutput->m_effectScreen = this;
-
         QObject::connect(output->qobject.get(), &qout::wake_up, this, &EffectScreen::wakeUp);
         QObject::connect(
             output->qobject.get(), &qout::about_to_turn_off, this, &EffectScreen::aboutToTurnOff);
@@ -35,18 +31,6 @@ public:
                          &EffectScreen::devicePixelRatioChanged);
         QObject::connect(
             output->qobject.get(), &qout::geometry_changed, this, &EffectScreen::geometryChanged);
-    }
-
-    ~effect_screen_impl()
-    {
-        if (m_platformOutput) {
-            m_platformOutput->m_effectScreen = nullptr;
-        }
-    }
-
-    static effect_screen_impl* get(Output const* output)
-    {
-        return output->m_effectScreen;
     }
 
     Output* platformOutput() const
@@ -98,5 +82,18 @@ public:
 private:
     Output* m_platformOutput;
 };
+
+template<typename Effects, typename Output>
+effect_screen_impl<Output>* get_effect_screen(Effects const& effects, Output const& output)
+{
+    auto const& screens = effects.screens();
+    for (auto&& eff_screen : qAsConst(screens)) {
+        auto eff_screen_impl = static_cast<effect_screen_impl<Output>*>(eff_screen);
+        if (&output == eff_screen_impl->platformOutput()) {
+            return eff_screen_impl;
+        }
+    }
+    return nullptr;
+}
 
 }

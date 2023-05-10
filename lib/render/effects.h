@@ -1146,7 +1146,7 @@ public:
         if (!output) {
             return nullptr;
         }
-        return effect_screen_impl<base::output>::get(output);
+        return get_effect_screen(*this, *output);
     }
 
     QList<EffectScreen*> screens() const override
@@ -1161,7 +1161,7 @@ public:
         if (!output) {
             return nullptr;
         }
-        return effect_screen_impl<base::output>::get(output);
+        return get_effect_screen(*this, *output);
     }
 
     EffectScreen* findScreen(const QString& name) const override
@@ -1270,10 +1270,9 @@ public:
         compositor.space->edges->reserveTouch(
             border,
             action,
-            [progressCallback](
-                ElectricBorder border, const QSizeF& deltaProgress, base::output* output) {
-                progressCallback(
-                    border, deltaProgress, effect_screen_impl<base::output>::get(output));
+            [progressCallback,
+             this](ElectricBorder border, const QSizeF& deltaProgress, base::output* output) {
+                progressCallback(border, deltaProgress, get_effect_screen(*this, *output));
             });
     }
 
@@ -1626,7 +1625,7 @@ protected:
 
     void slotOutputDisabled(base::output* output)
     {
-        EffectScreen* screen = effect_screen_impl<base::output>::get(output);
+        auto screen = get_effect_screen(*this, *output);
         m_effectScreens.removeOne(screen);
         Q_EMIT screenRemoved(screen);
         delete screen;
