@@ -5,57 +5,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "effect_loader.h"
 
-#include "render/compositor.h"
-
-#include "config-kwin.h"
 #include "kwineffects/effect_plugin_factory.h"
 #include "kwineffects/effects_handler.h"
 
-#include <KConfigGroup>
-#include <KPackage/Package>
-#include <QFutureWatcher>
-#include <QMap>
 #include <QPluginLoader>
 #include <QStringList>
-#include <QtConcurrentRun>
 
 namespace KWin::render
 {
-
-basic_effect_loader::basic_effect_loader(QObject* parent)
-    : QObject(parent)
-{
-}
-
-basic_effect_loader::~basic_effect_loader()
-{
-}
-
-void basic_effect_loader::setConfig(KSharedConfig::Ptr config)
-{
-    m_config = config;
-}
-
-load_effect_flags basic_effect_loader::readConfig(const QString& effectName,
-                                                  bool defaultValue) const
-{
-    Q_ASSERT(m_config);
-    KConfigGroup plugins(m_config, QStringLiteral("Plugins"));
-
-    const QString key = effectName + QStringLiteral("Enabled");
-
-    // do we have a key for the effect?
-    if (plugins.hasKey(key)) {
-        // we have a key in the config, so read the enabled state
-        const bool load = plugins.readEntry(key, defaultValue);
-        return load ? load_effect_flags::load : load_effect_flags();
-    }
-    // we don't have a key, so we just use the enabled by default value
-    if (defaultValue) {
-        return load_effect_flags::load | load_effect_flags::check_default_function;
-    }
-    return load_effect_flags();
-}
 
 plugin_effect_loader::plugin_effect_loader(QObject* parent)
     : basic_effect_loader(parent)

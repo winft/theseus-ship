@@ -27,6 +27,7 @@ set(kwin_SRCS
     debug/perf/ftrace.cpp
     render/compositor_qobject.cpp
     render/dbus/compositing.cpp
+    render/effect/basic_effect_loader.cpp
     render/effect/frame.cpp
     render/effect_loader.cpp
     render/effects.cpp
