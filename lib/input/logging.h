@@ -5,7 +5,9 @@
 */
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QDebug>
 #include <QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(KWIN_INPUT)
+KWIN_EXPORT Q_DECLARE_LOGGING_CATEGORY(KWIN_INPUT)

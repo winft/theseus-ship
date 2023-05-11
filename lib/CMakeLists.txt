@@ -13,6 +13,7 @@ set_target_properties(KWinEffectsInterface PROPERTIES
 add_subdirectory(base)
 add_subdirectory(effect)
 add_subdirectory(win)
+add_subdirectory(input)
 add_subdirectory(data)
 add_subdirectory(script)
 
@@ -24,18 +25,6 @@ set(kwin_SRCS
     render/post/suncalc.cpp
     debug/console/console.cpp
     debug/perf/ftrace.cpp
-    input/keyboard.cpp
-    input/keyboard_redirect.cpp
-    input/platform_qobject.cpp
-    input/redirect_qobject.cpp
-    input/singleton_interface.cpp
-    input/spies/modifier_only_shortcuts.cpp
-    input/switch.cpp
-    input/cursor.cpp
-    input/logging.cpp
-    input/pointer.cpp
-    input/xkb/keyboard.cpp
-    input/xkb/keymap.cpp
     render/compositor_qobject.cpp
     render/dbus/compositing.cpp
     render/effect/frame.cpp
@@ -114,7 +103,6 @@ set(kwin_KDE_LIBS
 )
 
 set(kwin_XCB_LIBS
-    XCB::CURSOR
     XCB::ICCCM
     XCB::RENDER
     XCB::SHM
@@ -127,6 +115,7 @@ set(kwin_INPUT_LIBS
 
 set(kwinLibs
     base-x11
+    input
     win
     ${kwin_KDE_LIBS}
     ${kwin_XCB_LIBS}
@@ -159,10 +148,6 @@ generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 ### X11 library
 set(kwin_X11_SRCS
    base/backend/x11/platform.cpp
-   input/x11/cursor.cpp
-   input/x11/global_shortcuts_manager.cpp
-   input/x11/xfixes_cursor_event_filter.cpp
-   input/logging.cpp
    render/backend/x11/non_composited_outline.cpp
 )
 
@@ -180,8 +165,8 @@ add_library(kwin_x11_lib STATIC
 target_link_libraries(kwin_x11_lib
 PUBLIC
   kwin
+  input-x11
   KF6::Crash
-  KF6::GlobalAccel
 PRIVATE
   Qt::GuiPrivate
   X11::Xi
@@ -218,33 +203,6 @@ set(kwin_WAYLAND_SRCS
    input/backend/wlroots/control/pointer.cpp
    input/backend/wlroots/control/switch.cpp
    input/backend/wlroots/control/touch.cpp
-   input/control/device.cpp
-   input/control/keyboard.cpp
-   input/control/pointer.cpp
-   input/control/switch.cpp
-   input/control/touch.cpp
-   input/dbus/device.cpp
-   input/dbus/device_manager.cpp
-   input/dbus/keyboard_layout.cpp
-   input/dbus/keyboard_layouts_v2.cpp
-   input/dbus/tablet_mode_manager.cpp
-   input/spies/keyboard_repeat.cpp
-   input/wayland/global_shortcuts_manager.cpp
-   input/logging.cpp
-   input/wayland/kglobalaccel/runtime/component.cpp
-   input/wayland/kglobalaccel/runtime/global_accel_d.cpp
-   input/wayland/kglobalaccel/runtime/global_shortcut.cpp
-   input/wayland/kglobalaccel/runtime/global_shortcut_context.cpp
-   input/wayland/kglobalaccel/runtime/global_shortcuts_registry.cpp
-   input/wayland/kglobalaccel/runtime/service_action_component.cpp
-   input/wayland/kglobalaccel/runtime/sequence_helpers.cpp
-   input/xkb/layout_manager.cpp
-   input/xkb/layout_policies.cpp
-
-   # These headers need to be compiled for the helper QObjects they contain.
-   input/touch.h
-   input/wayland/cursor_image.h
-   input/wayland/cursor_theme.h
 )
 
 if (KWIN_BUILD_TABBOX)
@@ -261,15 +219,13 @@ add_library(kwin_wayland_lib SHARED
 target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
-  KF6::GlobalAccel
+  input-wl
   WraplandClient
   Wayland::Server
-  Wayland::Cursor
   wlroots::wlroots
   Pixman::Pixman
   Libinput::Libinput
   Threads::Threads
-  base-wl
 )
 
 kcoreaddons_target_static_plugins(
@@ -336,15 +292,4 @@ ecm_install_configured_files(
     desktop/kde/plasma-kwin_x11.service.in
     desktop/kde/plasma-kwin_wayland.service.in
   @ONLY DESTINATION ${KDE_INSTALL_SYSTEMDUSERUNITDIR}
-)
-
-qt6_generate_dbus_interface(input/dbus/device.h org.kde.kwin.InputDevice.xml OPTIONS -A)
-
-add_custom_target(KWinInputDBusInterfaces ALL
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/org.kde.kwin.InputDevice.xml
-)
-
-install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/org.kde.kwin.InputDevice.xml
-  DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
