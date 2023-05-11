@@ -7,13 +7,6 @@
 */
 #include "layout_manager.h"
 
-#include "input/event.h"
-#include "input/keyboard.h"
-#include "render/platform.h"
-
-#include <QDBusMetaType>
-#include <cassert>
-
 namespace KWin::input::xkb
 {
 
