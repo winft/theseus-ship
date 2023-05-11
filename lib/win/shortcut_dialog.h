@@ -8,9 +8,13 @@
 
 #include "kwin_export.h"
 
-#include "ui_shortcut_dialog.h"
-
 #include <QDialog>
+#include <memory>
+
+namespace Ui
+{
+class ShortcutDialog;
+}
 
 namespace KWin::win
 {
@@ -20,6 +24,8 @@ class KWIN_EXPORT shortcut_dialog : public QDialog
     Q_OBJECT
 public:
     explicit shortcut_dialog(const QKeySequence& cut);
+    ~shortcut_dialog() override;
+
     void accept() override;
     QKeySequence shortcut() const;
 
@@ -38,8 +44,8 @@ protected:
     void done(int r) override;
 
 private:
-    Ui::ShortcutDialog m_ui;
     QKeySequence _shortcut;
+    std::unique_ptr<Ui::ShortcutDialog> m_ui;
 };
 
 }
