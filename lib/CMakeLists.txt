@@ -14,6 +14,7 @@ add_subdirectory(base)
 add_subdirectory(effect)
 add_subdirectory(win)
 add_subdirectory(input)
+add_subdirectory(render)
 add_subdirectory(data)
 add_subdirectory(script)
 
@@ -21,21 +22,8 @@ add_subdirectory(script)
 set(kwin_SRCS
     desktop/kde/dbus/kwin.cpp
     desktop/screen_locker_watcher.cpp
-    render/post/color_correct_dbus_interface.cpp
-    render/post/suncalc.cpp
     debug/console/console.cpp
     debug/perf/ftrace.cpp
-    render/compositor_qobject.cpp
-    render/dbus/compositing.cpp
-    render/effect/basic_effect_loader.cpp
-    render/effect/frame.cpp
-    render/effect_loader.cpp
-    render/effects.cpp
-    render/gl/context_attribute_builder.cpp
-    render/gl/egl_context_attribute_builder.cpp
-    render/options.cpp
-    render/outline.cpp
-    render/singleton_interface.cpp
     render/x11/compositor_selection_owner.cpp
     script/dbus_call.cpp
     script/desktop_background_item.cpp
@@ -56,12 +44,7 @@ set(kwin_SRCS
     script/window_model.cpp
     script/window_thumbnail_item.cpp
     script/space.cpp
-
-    # These headers need to be compiled for the helper QObjects they contain.
-    render/cursor.h
 )
-
-qt6_add_resources(kwin_SRCS render/gl/resources.qrc)
 
 qt6_add_dbus_adaptor(kwin_SRCS
   script/org.kde.kwin.Script.xml
@@ -69,25 +52,11 @@ qt6_add_dbus_adaptor(kwin_SRCS
   KWin::scripting::abstract_script
 )
 
-kconfig_add_kcfg_files(kwin_SRCS render/config/render_settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfgc)
-
 qt6_add_dbus_adaptor(kwin_SRCS
   desktop/kde/dbus/org.kde.KWin.xml
   desktop/kde/dbus/kwin.h
   KWin::desktop::kde::kwin
 )
-qt6_add_dbus_adaptor(kwin_SRCS
-  render/dbus/org.kde.kwin.Compositing.xml
-  render/dbus/compositing.h
-  KWin::render::dbus::compositing_qobject
-)
-qt6_add_dbus_adaptor(kwin_SRCS
-  render/dbus/org.kde.kwin.ColorCorrect.xml
-  render/post/color_correct_dbus_interface.h
-  KWin::render::post::color_correct_dbus_interface
-)
-qt6_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_wrap)
 
 qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf6_org.freedesktop.ScreenSaver.xml screenlocker_interface)
 qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.screensaver.xml kscreenlocker_interface)
@@ -98,8 +67,6 @@ ki18n_wrap_ui(kwin_SRCS
 
 set(kwin_KDE_LIBS
   KF6::ConfigCore
-  KF6::Notifications
-  KF6::Plasma
   KF6::Service
 )
 
@@ -117,6 +84,7 @@ set(kwin_INPUT_LIBS
 set(kwinLibs
     base-x11
     input
+    render
     win
     ${kwin_KDE_LIBS}
     ${kwin_XCB_LIBS}
@@ -138,7 +106,7 @@ target_precompile_headers(kwin PRIVATE
     cmake/precompiled/std.h
     cmake/precompiled/xcb.h
 )
-target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
+target_link_libraries(kwin ${kwinLibs} epoxy::epoxy)
 
 if(HAVE_PERF)
     target_sources(kwin PRIVATE debug/perf/ftrace_impl.cpp)
@@ -247,10 +215,6 @@ target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_wayland_lib ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 
-install(FILES render/post/kconfig/color_correct_settings.kcfg
-    DESTINATION ${KDE_INSTALL_KCFGDIR}
-    RENAME ${KWIN_NAME}_colorcorrect.kcfg
-)
 install(FILES desktop/kde/kwin.notifyrc
   DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR}
   RENAME ${KWIN_NAME}.notifyrc
@@ -258,9 +222,6 @@ install(FILES desktop/kde/kwin.notifyrc
 install(
   FILES
     desktop/kde/dbus/org.kde.KWin.xml
-    render/dbus/org.kde.kwin.ColorCorrect.xml
-    render/dbus/org.kde.kwin.Compositing.xml
-    render/dbus/org.kde.kwin.Effects.xml
 
     # Still needs to be installed as plasma-workspace expects it at compile time.
     data/org.kde.kwin.VirtualKeyboard.xml
@@ -268,10 +229,6 @@ install(
     ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
-
-# Install QML files
-install(DIRECTORY render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
-install(DIRECTORY render/qml/frames/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/frames)
 
 include(CMakePackageConfigHelpers)
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinDBusInterface")
