@@ -67,7 +67,7 @@ public:
     template<typename Compositor>
     effects_handler_wrap(Compositor& compositor)
         : EffectsHandler(compositor.scene->compositingType())
-        , m_effectLoader(new effect_loader(*this, compositor, this))
+        , m_effectLoader(new effect_loader(*this, compositor.platform, this))
         , options{*compositor.platform.options}
     {
         qRegisterMetaType<QVector<KWin::EffectWindow*>>();

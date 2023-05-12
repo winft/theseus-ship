@@ -49,13 +49,11 @@ private:
 class KWIN_EXPORT effect_loader : public basic_effect_loader
 {
 public:
-    template<typename Compositor>
-    explicit effect_loader(EffectsHandler& effects,
-                           Compositor& compositor,
-                           QObject* parent = nullptr)
+    template<typename Platform>
+    explicit effect_loader(EffectsHandler& effects, Platform& platform, QObject* parent = nullptr)
         : basic_effect_loader(parent)
     {
-        m_loaders << new scripting::effect_loader(effects, compositor, this)
+        m_loaders << new scripting::effect_loader(effects, platform, this)
                   << new plugin_effect_loader(this);
         for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
             connect(

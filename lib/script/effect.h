@@ -85,20 +85,19 @@ public:
     QString activeConfig() const;
     void setActiveConfig(const QString& name);
 
-    template<typename Compositor>
+    template<typename Render>
     static effect* create(const QString& effectName,
                           const QString& pathToScript,
                           int chainPosition,
                           const QString& exclusiveCategory,
                           EffectsHandler& effects,
-                          Compositor& compositor)
+                          Render& render)
     {
-        auto get_options
-            = [&compositor]() -> render::options& { return *compositor.platform.options; };
-        auto get_screen_size = [&compositor] { return compositor.platform.base.topology.size; };
+        auto get_options = [&render]() -> render::options& { return *render.options; };
+        auto get_screen_size = [&render] { return render.base.topology.size; };
         auto effect = new scripting::effect(effects, get_options, get_screen_size);
         effect->m_exclusiveCategory = exclusiveCategory;
-        if (!effect->init(effectName, pathToScript, compositor.platform.base.config.main)) {
+        if (!effect->init(effectName, pathToScript, render.base.config.main)) {
             delete effect;
             return nullptr;
         }
@@ -107,9 +106,8 @@ public:
         return effect;
     }
 
-    template<typename Compositor>
-    static effect*
-    create(const KPluginMetaData& effect, EffectsHandler& effects, Compositor& compositor)
+    template<typename Render>
+    static effect* create(const KPluginMetaData& effect, EffectsHandler& effects, Render& render)
     {
         auto const name = effect.pluginId();
         auto const scriptName = effect.value(QStringLiteral("X-Plasma-MainScript"));
@@ -129,7 +127,7 @@ public:
                               effect.value(QStringLiteral("X-KDE-Ordering")).toInt(),
                               effect.value(QStringLiteral("X-KWin-Exclusive-Category")),
                               effects,
-                              compositor);
+                              render);
     }
 
     static bool supported(EffectsHandler& effects);

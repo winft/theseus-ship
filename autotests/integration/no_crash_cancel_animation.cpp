@@ -40,7 +40,7 @@ TEST_CASE("no crash cancel animation", "[render]")
                                             10,
                                             QString(),
                                             *effects,
-                                            *setup.base->render->compositor);
+                                            *setup.base->render);
     QVERIFY(effect);
 
     const auto children = effects->children();

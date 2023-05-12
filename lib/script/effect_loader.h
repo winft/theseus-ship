@@ -22,14 +22,14 @@ namespace KWin::scripting
 /**
  * @brief Can load scripted Effects
  */
-template<typename Compositor>
+template<typename Render>
 class effect_loader : public render::basic_effect_loader
 {
 public:
-    effect_loader(EffectsHandler& effects, Compositor& compositor, QObject* parent = nullptr)
+    effect_loader(EffectsHandler& effects, Render& render, QObject* parent = nullptr)
         : render::basic_effect_loader(parent)
         , effects{effects}
-        , compositor{compositor}
+        , render{render}
         , load_queue(new render::effect_load_queue<effect_loader, KPluginMetaData>(this))
     {
     }
@@ -119,7 +119,7 @@ public:
             return false;
         }
 
-        auto e = effect::create(effect, effects, compositor);
+        auto e = effect::create(effect, effects, render);
         if (!e) {
             qCDebug(KWIN_CORE) << "Could not initialize scripted effect: " << name;
             return false;
@@ -157,7 +157,7 @@ private:
 
     QStringList m_loadedEffects;
     EffectsHandler& effects;
-    Compositor& compositor;
+    Render& render;
     render::effect_load_queue<effect_loader, KPluginMetaData>* load_queue;
     QMetaObject::Connection query_connection;
 };
