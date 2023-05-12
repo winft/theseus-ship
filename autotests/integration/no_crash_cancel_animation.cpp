@@ -43,17 +43,7 @@ TEST_CASE("no crash cancel animation", "[render]")
                                             *setup.base->render);
     QVERIFY(effect);
 
-    const auto children = effects->children();
-    for (auto it = children.begin(); it != children.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::basic_effect_loader") != 0) {
-            continue;
-        }
-        QVERIFY(QMetaObject::invokeMethod(*it,
-                                          "effectLoaded",
-                                          Q_ARG(KWin::Effect*, effect),
-                                          Q_ARG(QString, QStringLiteral("crashy"))));
-        break;
-    }
+    setup.base->render->compositor->effects->loader->effectLoaded(effect, "crashy");
     QVERIFY(setup.base->render->compositor->effects->isEffectLoaded(QStringLiteral("crashy")));
 
     using namespace Wrapland::Client;

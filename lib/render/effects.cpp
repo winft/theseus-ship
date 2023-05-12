@@ -49,14 +49,14 @@ void effects_handler_wrap::unloadAllEffects()
     }
 
     effect_order.clear();
-    m_effectLoader->clear();
+    loader->clear();
 
     effectsChanged();
 }
 
 void effects_handler_wrap::reconfigure()
 {
-    m_effectLoader->queryAndLoadAll();
+    loader->queryAndLoadAll();
 }
 
 // the idea is that effects call this function again which calls the next one
@@ -392,7 +392,7 @@ QStringList effects_handler_wrap::loadedEffects() const
 
 QStringList effects_handler_wrap::listOfEffects() const
 {
-    return m_effectLoader->listOfKnownEffects();
+    return loader->listOfKnownEffects();
 }
 
 bool effects_handler_wrap::loadEffect(const QString& name)
@@ -400,7 +400,7 @@ bool effects_handler_wrap::loadEffect(const QString& name)
     makeOpenGLContextCurrent();
     addRepaintFull();
 
-    return m_effectLoader->loadEffect(name);
+    return loader->loadEffect(name);
 }
 
 void effects_handler_wrap::unloadEffect(const QString& name)
@@ -468,7 +468,7 @@ bool effects_handler_wrap::isEffectSupported(const QString& name)
     // next checks might require a context
     makeOpenGLContextCurrent();
 
-    return m_effectLoader->isEffectSupported(name);
+    return loader->isEffectSupported(name);
 }
 
 QList<bool> effects_handler_wrap::areEffectsSupported(const QStringList& names)
@@ -493,7 +493,7 @@ void effects_handler_wrap::reloadEffect(Effect* effect)
     }
     if (!effectName.isNull()) {
         unloadEffect(effectName);
-        m_effectLoader->loadEffect(effectName);
+        loader->loadEffect(effectName);
     }
 }
 

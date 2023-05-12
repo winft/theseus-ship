@@ -40,8 +40,6 @@ class KWIN_EXPORT basic_effect_loader : public QObject
 {
     Q_OBJECT
 public:
-    ~basic_effect_loader() override;
-
     /**
      * @brief The KSharedConfig this effect loader should operate on.
      *
@@ -150,7 +148,7 @@ Q_SIGNALS:
     void effectLoaded(KWin::Effect* effect, QString const& name);
 
 protected:
-    explicit basic_effect_loader(QObject* parent = nullptr);
+    basic_effect_loader();
     /**
      * @brief Checks the configuration for the Effect identified by @p effectName.
      *

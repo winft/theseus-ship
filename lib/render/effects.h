@@ -67,13 +67,13 @@ public:
     template<typename Scene>
     effects_handler_wrap(Scene& scene)
         : EffectsHandler(scene.compositingType())
-        , m_effectLoader(new effect_loader(*this, scene.platform, this))
+        , loader(std::make_unique<effect_loader>(*this, scene.platform))
         , options{*scene.platform.options}
     {
         qRegisterMetaType<QVector<KWin::EffectWindow*>>();
 
         singleton_interface::effects = this;
-        connect(m_effectLoader,
+        connect(loader.get(),
                 &basic_effect_loader::effectLoaded,
                 this,
                 [this](Effect* effect, const QString& name) {
@@ -82,7 +82,7 @@ public:
                     loaded_effects << EffectPair(name, effect);
                     effectsChanged();
                 });
-        m_effectLoader->setConfig(scene.platform.base.config.main);
+        loader->setConfig(scene.platform.base.config.main);
 
         create_adaptor();
         QDBusConnection dbus = QDBusConnection::sessionBus();
@@ -183,6 +183,7 @@ public:
     PropertyEffectMap m_propertiesForEffects;
     QHash<QByteArray, qulonglong> m_managedProperties;
     QHash<long, int> registered_atoms;
+    std::unique_ptr<effect_loader> loader;
 
 public Q_SLOTS:
     // slots for D-Bus interface
@@ -248,13 +249,13 @@ private:
 
     typedef QVector<Effect*> EffectsList;
     typedef EffectsList::const_iterator EffectsIterator;
+
     EffectsList m_activeEffects;
     EffectsIterator m_currentDrawWindowIterator;
     EffectsIterator m_currentPaintWindowIterator;
     EffectsIterator m_currentPaintScreenIterator;
     EffectsIterator m_currentBuildQuadsIterator;
     QList<Effect*> m_grabbedMouseEffects;
-    effect_loader* m_effectLoader;
     render::options& options;
 };
 

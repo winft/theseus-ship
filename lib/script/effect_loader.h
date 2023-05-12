@@ -26,9 +26,8 @@ template<typename Render>
 class effect_loader : public render::basic_effect_loader
 {
 public:
-    effect_loader(EffectsHandler& effects, Render& render, QObject* parent = nullptr)
-        : render::basic_effect_loader(parent)
-        , effects{effects}
+    effect_loader(EffectsHandler& effects, Render& render)
+        : effects{effects}
         , render{render}
         , load_queue(new render::effect_load_queue<effect_loader, KPluginMetaData>(this))
     {

@@ -10,12 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::render
 {
 
-basic_effect_loader::basic_effect_loader(QObject* parent)
-    : QObject(parent)
-{
-}
-
-basic_effect_loader::~basic_effect_loader()
+basic_effect_loader::basic_effect_loader()
 {
 }
 

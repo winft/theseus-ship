@@ -11,6 +11,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "script/effect_loader.h"
 
 #include <KPluginMetaData>
+#include <memory>
+#include <vector>
 
 namespace KWin
 {
@@ -24,7 +26,7 @@ namespace render
 class KWIN_EXPORT plugin_effect_loader : public basic_effect_loader
 {
 public:
-    explicit plugin_effect_loader(QObject* parent = nullptr);
+    plugin_effect_loader();
     ~plugin_effect_loader() override;
 
     bool hasEffect(const QString& name) const override;
@@ -50,14 +52,17 @@ class KWIN_EXPORT effect_loader : public basic_effect_loader
 {
 public:
     template<typename Platform>
-    explicit effect_loader(EffectsHandler& effects, Platform& platform, QObject* parent = nullptr)
-        : basic_effect_loader(parent)
+    effect_loader(EffectsHandler& effects, Platform& platform)
     {
-        m_loaders << new scripting::effect_loader(effects, platform, this)
-                  << new plugin_effect_loader(this);
-        for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
-            connect(
-                *it, &basic_effect_loader::effectLoaded, this, &basic_effect_loader::effectLoaded);
+        m_loaders.emplace_back(
+            std::make_unique<scripting::effect_loader<Platform>>(effects, platform));
+        m_loaders.emplace_back(std::make_unique<plugin_effect_loader>());
+
+        for (auto&& loader : m_loaders) {
+            connect(loader.get(),
+                    &basic_effect_loader::effectLoaded,
+                    this,
+                    &basic_effect_loader::effectLoaded);
         }
     }
 
@@ -71,7 +76,7 @@ public:
     void clear() override;
 
 private:
-    QList<basic_effect_loader*> m_loaders;
+    std::vector<std::unique_ptr<basic_effect_loader>> m_loaders;
 };
 
 }

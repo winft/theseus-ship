@@ -50,10 +50,7 @@ TEST_CASE("fade", "[effect]")
     // load the translucency effect
     auto& e = setup.base->render->compositor->effects;
 
-    // find the effectsloader
-    auto effectloader = e->findChild<render::basic_effect_loader*>();
-    QVERIFY(effectloader);
-    QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);
+    QSignalSpy effectLoadedSpy(e->loader.get(), &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());
 
     QVERIFY(!e->isEffectLoaded(QStringLiteral("fade")));

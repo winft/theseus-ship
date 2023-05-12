@@ -14,9 +14,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::render
 {
 
-plugin_effect_loader::plugin_effect_loader(QObject* parent)
-    : basic_effect_loader(parent)
-    , m_pluginSubDirectory(QStringLiteral("kwin/effects/plugins"))
+plugin_effect_loader::plugin_effect_loader()
+    : m_pluginSubDirectory(QStringLiteral("kwin/effects/plugins"))
 {
 }
 
@@ -191,16 +190,16 @@ bool effect_loader::isEffectSupported(QString const& name) const
 QStringList effect_loader::listOfKnownEffects() const
 {
     QStringList result;
-    for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
-        result << (*it)->listOfKnownEffects();
+    for (auto&& loader : m_loaders) {
+        result << loader->listOfKnownEffects();
     }
     return result;
 }
 
 bool effect_loader::loadEffect(const QString& name)
 {
-    for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
-        if ((*it)->loadEffect(name)) {
+    for (auto&& loader : m_loaders) {
+        if (loader->loadEffect(name)) {
             return true;
         }
     }
@@ -209,23 +208,23 @@ bool effect_loader::loadEffect(const QString& name)
 
 void effect_loader::queryAndLoadAll()
 {
-    for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
-        (*it)->queryAndLoadAll();
+    for (auto&& loader : m_loaders) {
+        loader->queryAndLoadAll();
     }
 }
 
 void effect_loader::setConfig(KSharedConfig::Ptr config)
 {
     basic_effect_loader::setConfig(config);
-    for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
-        (*it)->setConfig(config);
+    for (auto&& loader : m_loaders) {
+        loader->setConfig(config);
     }
 }
 
 void effect_loader::clear()
 {
-    for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
-        (*it)->clear();
+    for (auto&& loader : m_loaders) {
+        loader->clear();
     }
 }
 
