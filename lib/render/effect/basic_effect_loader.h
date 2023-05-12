@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
 #include "kwin_export.h"
+#include "render/types.h"
 #include "utils/flags.h"
 
 #include <KSharedConfig>
@@ -17,29 +18,6 @@ namespace KWin
 class Effect;
 
 namespace render
-{
-
-/**
- * @brief Flags defining how a Loader should load an Effect.
- *
- * These Flags are only used internally when querying the configuration on whether
- * an Effect should be loaded.
- *
- * @see basic_effect_loader::readConfig()
- */
-enum class load_effect_flags {
-    ///< Effect should be loaded
-    load = 1 << 0,
-    ///< The Check Default Function needs to be invoked if the Effect provides it
-    check_default_function = 1 << 2,
-};
-
-}
-}
-
-ENUM_FLAGS(KWin::render::load_effect_flags)
-
-namespace KWin::render
 {
 
 /**
@@ -191,4 +169,5 @@ private:
     KSharedConfig::Ptr m_config;
 };
 
+}
 }

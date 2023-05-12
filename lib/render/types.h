@@ -94,6 +94,12 @@ enum class animation_curve {
     sine,
 };
 
+/// Flags defining how a Loader should load an Effect.
+enum class load_effect_flags {
+    load = 1 << 0,                   /// Effect should be loaded
+    check_default_function = 1 << 2, /// Invoke check default function if the effect provides it
+};
+
 enum night_color_mode {
     /// Color temperature based on current sun position. Location computed by external means.
     automatic,
@@ -109,3 +115,4 @@ enum night_color_mode {
 
 ENUM_FLAGS(KWin::render::paint_type)
 ENUM_FLAGS(KWin::render::window_paint_disable_type)
+ENUM_FLAGS(KWin::render::load_effect_flags)
