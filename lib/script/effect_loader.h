@@ -9,8 +9,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/logging.h"
 #include "render/effect/basic_effect_loader.h"
+#include "render/effect/effect_load_queue.h"
 #include <KPackage/PackageLoader>
 #include <KPluginMetaData>
+#include <QFutureWatcher>
+#include <QtConcurrentRun>
 #include <string_view>
 
 namespace KWin::scripting
@@ -27,6 +30,7 @@ public:
         : render::basic_effect_loader(parent)
         , effects{effects}
         , compositor{compositor}
+        , load_queue(new render::effect_load_queue<effect_loader, KPluginMetaData>(this))
     {
     }
 
@@ -58,17 +62,35 @@ public:
 
     void clear() override
     {
+        disconnect(query_connection);
+        query_connection = QMetaObject::Connection();
+        load_queue->clear();
     }
 
     void queryAndLoadAll() override
     {
-        auto const effects = findAllEffects();
-        for (auto const& effect : effects) {
-            auto const load_flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
-            if (flags(load_flags & render::load_effect_flags::load)) {
-                loadEffect(effect, load_flags);
-            }
-        }
+        // perform querying for the services in a thread
+        auto watcher = new QFutureWatcher<QList<KPluginMetaData>>(this);
+
+        query_connection = connect(
+            watcher,
+            &QFutureWatcher<QList<KPluginMetaData>>::finished,
+            this,
+            [this, watcher]() {
+                auto const effects = watcher->result();
+                for (auto const& effect : effects) {
+                    auto const load_flags
+                        = readConfig(effect.pluginId(), effect.isEnabledByDefault());
+                    if (flags(load_flags & render::load_effect_flags::load)) {
+                        load_queue->enqueue(qMakePair(effect, load_flags));
+                    }
+                }
+                watcher->deleteLater();
+                query_connection = QMetaObject::Connection();
+            },
+            Qt::QueuedConnection);
+
+        watcher->setFuture(QtConcurrent::run(&effect_loader::findAllEffects, this));
     }
 
     bool loadEffect(QString const& name) override
@@ -136,6 +158,8 @@ private:
     QStringList m_loadedEffects;
     EffectsHandler& effects;
     Compositor& compositor;
+    render::effect_load_queue<effect_loader, KPluginMetaData>* load_queue;
+    QMetaObject::Connection query_connection;
 };
 
 }
