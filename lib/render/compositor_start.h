@@ -96,7 +96,7 @@ void compositor_start_scene(Compositor& comp)
     }
 
     // Sets also the 'effects' pointer.
-    comp.effects = comp.platform.createEffectsHandler();
+    comp.effects = std::make_unique<typename Compositor::effects_t>(*comp.scene);
     QObject::connect(comp.effects.get(),
                      &EffectsHandler::screenGeometryChanged,
                      comp.qobject.get(),

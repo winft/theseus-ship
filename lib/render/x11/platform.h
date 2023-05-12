@@ -57,11 +57,6 @@ public:
         return KConfigGroup(this->base.config.main, "Compositing").readEntry(unsafeKey, false);
     }
 
-    std::unique_ptr<render::effects_handler_impl<scene_t>> createEffectsHandler()
-    {
-        return std::make_unique<x11::effects_handler_impl<scene_t>>(*compositor->scene);
-    }
-
     std::unique_ptr<compositor_t> compositor;
 };
 

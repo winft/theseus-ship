@@ -73,11 +73,6 @@ public:
         compositor->effects->invert_screen();
     }
 
-    std::unique_ptr<render::effects_handler_impl<scene_t>> createEffectsHandler()
-    {
-        return std::make_unique<wayland::effects_handler_impl<scene_t>>(*compositor->scene);
-    }
-
     std::unique_ptr<compositor_t> compositor;
 
     int output_index{0};

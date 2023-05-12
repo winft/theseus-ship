@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "effects.h"
 #include "output.h"
 #include "presentation.h"
 #include "shadow.h"
@@ -14,7 +15,6 @@
 #include "render/compositor_start.h"
 #include "render/cursor.h"
 #include "render/dbus/compositing.h"
-#include "render/effects.h"
 #include "render/gl/scene.h"
 #include "render/qpainter/scene.h"
 
@@ -32,7 +32,7 @@ public:
     using platform_t = Platform;
     using type = compositor<Platform>;
     using scene_t = render::scene<Platform>;
-    using effects_t = effects_handler_impl<scene_t>;
+    using effects_t = wayland::effects_handler_impl<scene_t>;
     using space_t = typename Platform::base_t::space_t;
     using window_t = render::window<typename space_t::window_t, type>;
     using state_t = render::state;

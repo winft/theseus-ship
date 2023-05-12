@@ -8,6 +8,7 @@
 #pragma once
 
 #include "compositor_selection_owner.h"
+#include "effects.h"
 #include "overlay_window.h"
 #include "shadow.h"
 #include "types.h"
@@ -17,7 +18,6 @@
 #include "render/compositor_start.h"
 #include "render/dbus/compositing.h"
 #include "render/effect/window_impl.h"
-#include "render/effects.h"
 #include "render/gl/scene.h"
 #include "render/platform.h"
 #include "render/support_properties.h"
@@ -67,7 +67,7 @@ public:
     using platform_t = Platform;
     using type = compositor<Platform>;
     using scene_t = render::scene<Platform>;
-    using effects_t = effects_handler_impl<scene_t>;
+    using effects_t = x11::effects_handler_impl<scene_t>;
     using overlay_window_t = x11::overlay_window<type>;
     using space_t = typename Platform::base_t::space_t;
     using x11_ref_window_t = typename space_t::x11_window;
