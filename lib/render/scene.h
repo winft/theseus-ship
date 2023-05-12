@@ -82,6 +82,7 @@ template<typename Platform>
 class scene : public QObject
 {
 public:
+    using platform_t = Platform;
     using space_t = typename Platform::base_t::space_t;
     using window_t = typename Platform::compositor_t::window_t;
     using effect_window_t = typename window_t::effect_window_t;

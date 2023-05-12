@@ -29,21 +29,21 @@ class kscreen_integration : public effect::kscreen_integration
     }
 };
 
-template<typename Compositor>
-class effects_handler_impl : public render::effects_handler_impl<Compositor>
+template<typename Scene>
+class effects_handler_impl : public render::effects_handler_impl<Scene>
 {
 public:
-    using space_t = typename Compositor::platform_t::space_t;
+    using space_t = typename Scene::platform_t::space_t;
 
-    effects_handler_impl(Compositor& compositor)
-        : render::effects_handler_impl<Compositor>(compositor)
-        , blur{*this, *compositor.platform.base.server->display}
-        , contrast{*this, *compositor.platform.base.server->display}
-        , slide{*this, *compositor.platform.base.server->display}
+    effects_handler_impl(Scene& scene)
+        : render::effects_handler_impl<Scene>(scene)
+        , blur{*this, *scene.platform.base.server->display}
+        , contrast{*this, *scene.platform.base.server->display}
+        , slide{*this, *scene.platform.base.server->display}
     {
         this->reconfigure();
 
-        auto space = compositor.platform.base.space.get();
+        auto space = scene.platform.base.space.get();
 
         // TODO(romangg): We do this for every window here, even for windows that are not an
         // xdg-shell
@@ -65,7 +65,7 @@ public:
                                          this,
                                          [this, win] { this->slotXdgShellClientShown(*win); });
                                  }},
-                                 this->compositor.platform.base.space->windows_map.at(win_id));
+                                 this->scene.platform.base.space->windows_map.at(win_id));
                          });
 
         // TODO(romangg): We do this here too for every window.
@@ -101,7 +101,7 @@ public:
 
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* surface) const override
     {
-        if (auto win = this->compositor.platform.base.space->find_window(surface)) {
+        if (auto win = this->scene.platform.base.space->find_window(surface)) {
             return win->render->effect.get();
         }
         return nullptr;
@@ -109,7 +109,7 @@ public:
 
     Wrapland::Server::Display* waylandDisplay() const override
     {
-        return this->compositor.platform.base.server->display.get();
+        return this->scene.platform.base.server->display.get();
     }
 
     effect::region_integration& get_blur_integration() override
@@ -139,7 +139,7 @@ public:
 protected:
     void doStartMouseInterception(Qt::CursorShape shape) override
     {
-        auto& space = this->compositor.platform.base.space;
+        auto& space = this->scene.platform.base.space;
         space->input->pointer->setEffectsOverrideCursor(shape);
         if (auto& mov_res = space->move_resize_window) {
             std::visit(overload{[&](auto&& win) { win::end_move_resize(win); }}, *mov_res);
@@ -148,7 +148,7 @@ protected:
 
     void doStopMouseInterception() override
     {
-        this->compositor.platform.base.space->input->pointer->removeEffectsOverrideCursor();
+        this->scene.platform.base.space->input->pointer->removeEffectsOverrideCursor();
     }
 
     void handle_effect_destroy(Effect& effect) override

@@ -67,7 +67,7 @@ public:
     using platform_t = Platform;
     using type = compositor<Platform>;
     using scene_t = render::scene<Platform>;
-    using effects_t = effects_handler_impl<type>;
+    using effects_t = effects_handler_impl<scene_t>;
     using overlay_window_t = x11::overlay_window<type>;
     using space_t = typename Platform::base_t::space_t;
     using x11_ref_window_t = typename space_t::x11_window;

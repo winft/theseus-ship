@@ -25,14 +25,14 @@
 namespace KWin::render::x11
 {
 
-template<typename Compositor>
-class effects_handler_impl : public render::effects_handler_impl<Compositor>
+template<typename Scene>
+class effects_handler_impl : public render::effects_handler_impl<Scene>
 {
 public:
-    using type = effects_handler_impl<Compositor>;
+    using type = effects_handler_impl<Scene>;
 
-    effects_handler_impl(Compositor& compositor)
-        : render::effects_handler_impl<Compositor>(compositor)
+    effects_handler_impl(Scene& scene)
+        : render::effects_handler_impl<Scene>(scene)
         , blur{*this}
         , contrast{*this}
         , slide{*this}
@@ -70,7 +70,7 @@ public:
 
     void defineCursor(Qt::CursorShape shape) override
     {
-        auto const c = this->compositor.platform.base.space->input->cursor->x11_cursor(shape);
+        auto const c = this->scene.platform.base.space->input->cursor->x11_cursor(shape);
         if (c != XCB_CURSOR_NONE) {
             mouse_intercept.window.define_cursor(c);
         }
@@ -79,7 +79,7 @@ public:
     QImage blit_from_framebuffer(QRect const& geometry, double scale) const override
     {
         // Provides OpenGL blits.
-        return render::effects_handler_impl<Compositor>::blit_from_framebuffer(geometry, scale);
+        return render::effects_handler_impl<Scene>::blit_from_framebuffer(geometry, scale);
     }
 
     effect::region_integration& get_blur_integration() override
@@ -110,12 +110,12 @@ public:
 protected:
     bool doGrabKeyboard() override
     {
-        auto is_grabbed = base::x11::grab_keyboard(this->compositor.platform.base.x11_data);
+        auto is_grabbed = base::x11::grab_keyboard(this->scene.platform.base.x11_data);
         if (!is_grabbed) {
             return false;
         }
 
-        auto& keyboard = this->compositor.platform.base.space->input->xinput->fake_devices.keyboard;
+        auto& keyboard = this->scene.platform.base.space->input->xinput->fake_devices.keyboard;
         keyboard_intercept.filter
             = std::make_unique<keyboard_intercept_filter<type>>(*keyboard->xkb, *this);
 
@@ -124,7 +124,7 @@ protected:
 
     void doUngrabKeyboard() override
     {
-        base::x11::ungrab_keyboard(this->compositor.platform.base.x11_data.connection);
+        base::x11::ungrab_keyboard(this->scene.platform.base.x11_data.connection);
         keyboard_intercept.filter.reset();
     }
 
@@ -133,7 +133,7 @@ protected:
         // NOTE: it is intended to not perform an XPointerGrab on X11. See documentation in
         // kwineffects.h The mouse grab is implemented by using a full screen input only window
         if (!mouse_intercept.window.is_valid()) {
-            auto const& base = this->compositor.platform.base;
+            auto const& base = this->scene.platform.base;
             auto const& x11_data = base.x11_data;
             auto const& space_size = base.topology.size;
             const QRect geo(0, 0, space_size.width(), space_size.height());
@@ -156,15 +156,14 @@ protected:
 
         // Raise electric border windows above the input windows
         // so they can still be triggered.
-        this->compositor.space->edges->ensureOnTop();
+        this->scene.platform.base.space->edges->ensureOnTop();
     }
 
     void doStopMouseInterception() override
     {
         mouse_intercept.window.unmap();
         mouse_intercept.filter.reset();
-        win::x11::stack_screen_edges_under_override_redirect(
-            this->compositor.platform.base.space.get());
+        win::x11::stack_screen_edges_under_override_redirect(this->scene.platform.base.space.get());
     }
 
     void doCheckInputWindowStacking() override
@@ -173,7 +172,7 @@ protected:
 
         // Raise electric border windows above the input windows
         // so they can still be triggered. TODO: Do both at once.
-        this->compositor.platform.base.space->edges->ensureOnTop();
+        this->scene.platform.base.space->edges->ensureOnTop();
     }
 
     void handle_effect_destroy(Effect& effect) override
