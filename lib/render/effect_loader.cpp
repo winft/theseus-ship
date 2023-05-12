@@ -14,8 +14,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::render
 {
 
-plugin_effect_loader::plugin_effect_loader()
-    : m_pluginSubDirectory(QStringLiteral("kwin/effects/plugins"))
+plugin_effect_loader::plugin_effect_loader(KSharedConfig::Ptr config)
+    : basic_effect_loader(config)
+    , m_pluginSubDirectory(QStringLiteral("kwin/effects/plugins"))
 {
 }
 
@@ -210,14 +211,6 @@ void effect_loader::queryAndLoadAll()
 {
     for (auto&& loader : m_loaders) {
         loader->queryAndLoadAll();
-    }
-}
-
-void effect_loader::setConfig(KSharedConfig::Ptr config)
-{
-    basic_effect_loader::setConfig(config);
-    for (auto&& loader : m_loaders) {
-        loader->setConfig(config);
     }
 }
 

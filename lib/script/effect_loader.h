@@ -27,7 +27,8 @@ class effect_loader : public render::basic_effect_loader
 {
 public:
     effect_loader(EffectsHandler& effects, Render& render)
-        : effects{effects}
+        : basic_effect_loader(render.base.config.main)
+        , effects{effects}
         , render{render}
         , load_queue(new render::effect_load_queue<effect_loader, KPluginMetaData>(this))
     {

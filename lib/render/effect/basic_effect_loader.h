@@ -41,16 +41,6 @@ class KWIN_EXPORT basic_effect_loader : public QObject
     Q_OBJECT
 public:
     /**
-     * @brief The KSharedConfig this effect loader should operate on.
-     *
-     * Important: a valid KSharedConfig must be provided before trying to load any effects!
-     *
-     * @param config
-     * @internal
-     */
-    virtual void setConfig(KSharedConfig::Ptr config);
-
-    /**
      * @brief Whether this Effect Loader can load the Effect with the given @p name.
      *
      * The Effect Loader determines whether it knows or can find an Effect called @p name,
@@ -148,7 +138,7 @@ Q_SIGNALS:
     void effectLoaded(KWin::Effect* effect, QString const& name);
 
 protected:
-    basic_effect_loader();
+    explicit basic_effect_loader(KSharedConfig::Ptr config);
     /**
      * @brief Checks the configuration for the Effect identified by @p effectName.
      *

@@ -26,7 +26,7 @@ namespace render
 class KWIN_EXPORT plugin_effect_loader : public basic_effect_loader
 {
 public:
-    plugin_effect_loader();
+    explicit plugin_effect_loader(KSharedConfig::Ptr config);
     ~plugin_effect_loader() override;
 
     bool hasEffect(const QString& name) const override;
@@ -53,10 +53,11 @@ class KWIN_EXPORT effect_loader : public basic_effect_loader
 public:
     template<typename Platform>
     effect_loader(EffectsHandler& effects, Platform& platform)
+        : basic_effect_loader(platform.base.config.main)
     {
         m_loaders.emplace_back(
             std::make_unique<scripting::effect_loader<Platform>>(effects, platform));
-        m_loaders.emplace_back(std::make_unique<plugin_effect_loader>());
+        m_loaders.emplace_back(std::make_unique<plugin_effect_loader>(platform.base.config.main));
 
         for (auto&& loader : m_loaders) {
             connect(loader.get(),
@@ -72,7 +73,6 @@ public:
     QStringList listOfKnownEffects() const override;
     bool loadEffect(const QString& name) override;
     void queryAndLoadAll() override;
-    void setConfig(KSharedConfig::Ptr config) override;
     void clear() override;
 
 private:

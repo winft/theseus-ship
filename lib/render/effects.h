@@ -82,7 +82,6 @@ public:
                     loaded_effects << EffectPair(name, effect);
                     effectsChanged();
                 });
-        loader->setConfig(scene.platform.base.config.main);
 
         create_adaptor();
         QDBusConnection dbus = QDBusConnection::sessionBus();

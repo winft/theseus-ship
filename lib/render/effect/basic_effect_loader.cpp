@@ -10,13 +10,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::render
 {
 
-basic_effect_loader::basic_effect_loader()
+basic_effect_loader::basic_effect_loader(KSharedConfig::Ptr config)
+    : m_config{config}
 {
-}
-
-void basic_effect_loader::setConfig(KSharedConfig::Ptr config)
-{
-    m_config = config;
 }
 
 load_effect_flags basic_effect_loader::readConfig(QString const& effectName,
