@@ -286,13 +286,13 @@ private:
             return false;
         }
 
-        auto const grabbed = redirect.platform.grab_keyboard();
-        if (grabbed) {
-            base::x11::grab_server(redirect.platform.base.x11_data.connection);
-        } else {
+        if (!redirect.platform.grab_keyboard()) {
             xcb_ungrab_pointer(redirect.platform.base.x11_data.connection, XCB_TIME_CURRENT_TIME);
+            return false;
         }
-        return grabbed;
+
+        base::x11::grab_server(redirect.platform.base.x11_data.connection);
+        return true;
     }
 
     void cancelCallback()
