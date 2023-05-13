@@ -359,15 +359,15 @@ void ScreenShotEffect::grabPointerImage(QImage& snapshot, int xOffset, int yOffs
         return;
     }
 
-    const PlatformCursorImage cursor = effects->cursorImage();
-    if (cursor.image().isNull()) {
+    auto const cursor = effects->cursorImage();
+    if (cursor.image.isNull()) {
         return;
     }
 
     QPainter painter(&snapshot);
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
-    painter.drawImage(effects->cursorPos() - cursor.hotSpot() - QPoint(xOffset, yOffset),
-                      cursor.image());
+    painter.drawImage(effects->cursorPos() - cursor.hot_spot - QPoint(xOffset, yOffset),
+                      cursor.image);
 }
 
 bool ScreenShotEffect::isActive() const

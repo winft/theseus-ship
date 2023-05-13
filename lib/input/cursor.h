@@ -101,8 +101,6 @@ public:
     void set_pos(QPoint const& pos);
     void set_pos(int x, int y);
 
-    virtual PlatformCursorImage platform_image() const = 0;
-
     virtual QImage image() const;
     virtual QPoint hotspot() const;
     virtual void mark_as_rendered();

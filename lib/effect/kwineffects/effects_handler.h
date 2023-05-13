@@ -595,7 +595,7 @@ public:
      * @see cursorPos
      * @since 5.9
      */
-    virtual PlatformCursorImage cursorImage() const = 0;
+    virtual effect::cursor_image cursorImage() const = 0;
 
     /**
      * The cursor image should be hidden.

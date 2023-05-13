@@ -40,14 +40,14 @@ cursor::cursor(base::x11::data const& x11_data,
                      &cursor::about_to_block);
 }
 
-PlatformCursorImage cursor::platform_image() const
+std::pair<QImage, QPoint> cursor::platform_image() const
 {
     auto c = x11_data.connection;
 
     QScopedPointer<xcb_xfixes_get_cursor_image_reply_t, QScopedPointerPodDeleter> cursor(
         xcb_xfixes_get_cursor_image_reply(c, xcb_xfixes_get_cursor_image_unchecked(c), nullptr));
     if (cursor.isNull()) {
-        return PlatformCursorImage();
+        return {};
     }
 
     QImage qcursorimg(
@@ -57,7 +57,7 @@ PlatformCursorImage cursor::platform_image() const
         QImage::Format_ARGB32_Premultiplied);
 
     // deep copy of image as the data is going to be freed
-    return PlatformCursorImage(qcursorimg.copy(), QPoint(cursor->xhot, cursor->yhot));
+    return {qcursorimg.copy(), QPoint(cursor->xhot, cursor->yhot)};
 }
 
 cursor::~cursor()

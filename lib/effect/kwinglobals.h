@@ -116,37 +116,4 @@ enum class DeviceType { Touchpad, Touchscreen };
 enum class SessionState { Normal, Saving, Quitting };
 Q_ENUM_NS(SessionState)
 
-/**
- * Short wrapper for a cursor image provided by the Platform.
- * @since 5.9
- */
-class PlatformCursorImage
-{
-public:
-    explicit PlatformCursorImage()
-        : m_image()
-        , m_hotSpot()
-    {
-    }
-    explicit PlatformCursorImage(const QImage& image, const QPoint& hotSpot)
-        : m_image(image)
-        , m_hotSpot(hotSpot)
-    {
-    }
-    virtual ~PlatformCursorImage() = default;
-
-    QImage image() const
-    {
-        return m_image;
-    }
-    QPoint hotSpot() const
-    {
-        return m_hotSpot;
-    }
-
-private:
-    QImage m_image;
-    QPoint m_hotSpot;
-};
-
 }

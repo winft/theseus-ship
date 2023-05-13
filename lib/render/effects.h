@@ -745,9 +745,10 @@ public:
         EffectsHandler::disconnectNotify(signal);
     }
 
-    PlatformCursorImage cursorImage() const override
+    effect::cursor_image cursorImage() const override
     {
-        return scene.platform.base.space->input->cursor->platform_image();
+        auto img = scene.platform.base.space->input->cursor->platform_image();
+        return {img.first, img.second};
     }
 
     bool isCursorHidden() const override

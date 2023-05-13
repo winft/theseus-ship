@@ -150,8 +150,8 @@ GLTexture* ZoomEffect::ensureCursorTexture()
         m_cursorTexture.reset();
         m_cursorTextureDirty = false;
         const auto cursor = effects->cursorImage();
-        if (!cursor.image().isNull()) {
-            m_cursorTexture = std::make_unique<GLTexture>(cursor.image());
+        if (!cursor.image.isNull()) {
+            m_cursorTexture = std::make_unique<GLTexture>(cursor.image);
             m_cursorTexture->setWrapMode(GL_CLAMP_TO_EDGE);
         }
     }
@@ -396,12 +396,12 @@ void ZoomEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& d
         GLTexture* cursorTexture = ensureCursorTexture();
         if (cursorTexture) {
             const auto cursor = effects->cursorImage();
-            QSize cursorSize = cursor.image().size() / cursor.image().devicePixelRatio();
+            QSize cursorSize = cursor.image.size() / cursor.image.devicePixelRatio();
             if (mousePointer == MousePointerScale) {
                 cursorSize *= zoom;
             }
 
-            const QPoint p = effects->cursorPos() - cursor.hotSpot();
+            auto const p = effects->cursorPos() - cursor.hot_spot;
             QRect rect(p * zoom + QPoint(data.xTranslation(), data.yTranslation()), cursorSize);
 
             cursorTexture->bind();

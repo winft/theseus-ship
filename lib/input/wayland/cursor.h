@@ -15,6 +15,7 @@
 #include <QPointF>
 #include <Wrapland/Server/seat.h>
 #include <memory>
+#include <utility>
 
 namespace KWin::input::wayland
 {
@@ -60,9 +61,9 @@ public:
         cursor_image->markAsRendered();
     }
 
-    PlatformCursorImage platform_image() const override
+    std::pair<QImage, QPoint> platform_image() const
     {
-        return PlatformCursorImage(image(), hotspot());
+        return {image(), hotspot()};
     }
 
     std::unique_ptr<cursor_image_t> cursor_image;

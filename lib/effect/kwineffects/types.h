@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <QImage>
 #include <QPair>
 #include <QRect>
 #include <climits>
@@ -88,6 +89,11 @@ enum class position {
     top,
     right,
     bottom,
+};
+
+struct cursor_image {
+    QImage image;
+    QPoint hot_spot;
 };
 
 }

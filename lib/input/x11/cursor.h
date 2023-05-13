@@ -9,6 +9,7 @@
 #include "input/cursor.h"
 
 #include <memory>
+#include <utility>
 
 namespace KWin
 {
@@ -32,7 +33,7 @@ public:
            KSharedConfigPtr config);
     ~cursor() override;
 
-    PlatformCursorImage platform_image() const override;
+    std::pair<QImage, QPoint> platform_image() const;
 
     void schedule_poll()
     {
