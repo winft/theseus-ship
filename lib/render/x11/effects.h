@@ -114,9 +114,10 @@ protected:
             return false;
         }
 
-        auto& keyboard = this->scene.platform.base.space->input->xinput->fake_devices.keyboard;
+        auto xkb = this->scene.platform.base.space->input->xinput->fake_devices.keyboard->xkb.get();
+        using xkb_keyboard_t = std::remove_pointer_t<decltype(xkb)>;
         keyboard_intercept.filter
-            = std::make_unique<keyboard_intercept_filter<type>>(*keyboard->xkb, *this);
+            = std::make_unique<keyboard_intercept_filter<type, xkb_keyboard_t>>(*this, *xkb);
 
         return true;
     }
@@ -191,7 +192,7 @@ private:
     } mouse_intercept;
     struct {
         base::x11::xcb::window window;
-        std::unique_ptr<keyboard_intercept_filter<type>> filter;
+        std::unique_ptr<base::x11::event_filter> filter;
     } keyboard_intercept;
 };
 

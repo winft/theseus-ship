@@ -7,7 +7,6 @@
 
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/qt_types.h"
-#include "input/xkb/keyboard.h"
 
 #include <QKeyEvent>
 #include <QtGui/private/qxkbcommon_p.h>
@@ -16,11 +15,11 @@
 namespace KWin::render::x11
 {
 
-template<typename Effects>
+template<typename Effects, typename Xkb>
 class keyboard_intercept_filter : public base::x11::event_filter
 {
 public:
-    keyboard_intercept_filter(input::xkb::keyboard const& xkb, Effects& effects)
+    keyboard_intercept_filter(Effects& effects, Xkb const& xkb)
         : base::x11::event_filter(*effects.scene.platform.base.x11_event_filters,
                                   QVector<int>{XCB_KEY_PRESS, XCB_KEY_RELEASE})
         , xkb{xkb}
@@ -65,7 +64,7 @@ private:
         effects.grabbedKeyboardEvent(&event);
     }
 
-    input::xkb::keyboard const& xkb;
+    Xkb const& xkb;
     Effects& effects;
 };
 
