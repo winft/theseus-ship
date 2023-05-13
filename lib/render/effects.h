@@ -16,8 +16,6 @@
 #include "x11/effect.h"
 #include "x11/property_notify_filter.h"
 
-#include "desktop/screen_locker_watcher.h"
-#include "input/cursor.h"
 #include "win/activation.h"
 #include "win/osd.h"
 #include "win/screen_edges.h"
@@ -406,7 +404,7 @@ public:
                     Q_EMIT desktopGridHeightChanged(height);
                 });
         QObject::connect(ws->input->cursor.get(),
-                         &input::cursor::mouse_changed,
+                         &std::remove_pointer_t<decltype(ws->input->cursor.get())>::mouse_changed,
                          this,
                          &EffectsHandler::mouseChanged);
 
@@ -441,12 +439,15 @@ public:
                 &win::screen_edger_qobject::approaching,
                 this,
                 &EffectsHandler::screenEdgeApproaching);
-        connect(ws->base.space->screen_locker_watcher.get(),
-                &desktop::screen_locker_watcher::locked,
+
+        auto screen_locker_watcher = ws->base.space->screen_locker_watcher.get();
+        using screen_locker_watcher_t = std::remove_pointer_t<decltype(screen_locker_watcher)>;
+        connect(screen_locker_watcher,
+                &screen_locker_watcher_t::locked,
                 this,
                 &EffectsHandler::screenLockingChanged);
-        connect(ws->base.space->screen_locker_watcher.get(),
-                &desktop::screen_locker_watcher::about_to_lock,
+        connect(screen_locker_watcher,
+                &screen_locker_watcher_t::about_to_lock,
                 this,
                 &EffectsHandler::screenAboutToLock);
 
@@ -718,11 +719,11 @@ public:
     {
         if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
             if (!m_trackingCursorChanges) {
-                QObject::connect(scene.platform.base.space->input->cursor.get(),
-                                 &input::cursor::image_changed,
-                                 this,
-                                 &EffectsHandler::cursorShapeChanged);
-                scene.platform.base.space->input->cursor->start_image_tracking();
+                auto cursor = scene.platform.base.space->input->cursor.get();
+                using cursor_t = std::remove_pointer_t<decltype(cursor)>;
+                QObject::connect(
+                    cursor, &cursor_t::image_changed, this, &EffectsHandler::cursorShapeChanged);
+                cursor->start_image_tracking();
             }
             ++m_trackingCursorChanges;
         }
@@ -734,11 +735,11 @@ public:
         if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
             Q_ASSERT(m_trackingCursorChanges > 0);
             if (!--m_trackingCursorChanges) {
-                scene.platform.base.space->input->cursor->stop_image_tracking();
-                QObject::disconnect(scene.platform.base.space->input->cursor.get(),
-                                    &input::cursor::image_changed,
-                                    this,
-                                    &EffectsHandler::cursorShapeChanged);
+                auto cursor = scene.platform.base.space->input->cursor.get();
+                using cursor_t = std::remove_pointer_t<decltype(cursor)>;
+                cursor->stop_image_tracking();
+                QObject::disconnect(
+                    cursor, &cursor_t::image_changed, this, &EffectsHandler::cursorShapeChanged);
             }
         }
         EffectsHandler::disconnectNotify(signal);
