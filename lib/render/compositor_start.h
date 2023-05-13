@@ -103,12 +103,8 @@ void compositor_start_scene(Compositor& comp)
                      [&comp] { full_repaint(comp); });
     QObject::connect(comp.space->stacking.order.qobject.get(),
                      &win::stacking_order_qobject::unlocked,
-                     comp.qobject.get(),
-                     [&comp]() {
-                         if (comp.effects) {
-                             comp.effects->checkInputWindowStacking();
-                         }
-                     });
+                     comp.effects.get(),
+                     [effects = comp.effects.get()]() { effects->checkInputWindowStacking(); });
 
     comp.state = state::on;
     Q_EMIT comp.qobject->compositingToggled(true);
