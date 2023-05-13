@@ -19,21 +19,9 @@ add_subdirectory(data)
 add_subdirectory(script)
 add_subdirectory(xwl)
 add_subdirectory(debug)
+add_subdirectory(desktop)
 
 ### Common library
-set(kwin_SRCS
-    desktop/kde/dbus/kwin.cpp
-    desktop/screen_locker_watcher.cpp
-)
-
-qt6_add_dbus_adaptor(kwin_SRCS
-  desktop/kde/dbus/org.kde.KWin.xml
-  desktop/kde/dbus/kwin.h
-  KWin::desktop::kde::kwin
-)
-
-qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf6_org.freedesktop.ScreenSaver.xml screenlocker_interface)
-qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.screensaver.xml kscreenlocker_interface)
 
 set(kwin_KDE_LIBS
   KF6::ConfigCore
@@ -54,6 +42,7 @@ set(kwin_INPUT_LIBS
 set(kwinLibs
     base-x11
     debug-common
+    desktop-kde
     input
     render
     script
@@ -171,39 +160,4 @@ target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_wayland_lib ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 
-install(FILES desktop/kde/kwin.notifyrc
-  DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR}
-  RENAME ${KWIN_NAME}.notifyrc
-)
-install(
-  FILES
-    desktop/kde/dbus/org.kde.KWin.xml
-
-    # Still needs to be installed as plasma-workspace expects it at compile time.
-    data/org.kde.kwin.VirtualKeyboard.xml
-  DESTINATION
-    ${KDE_INSTALL_DBUSINTERFACEDIR}
-)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
-
-include(CMakePackageConfigHelpers)
-set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinDBusInterface")
-
-configure_package_config_file(
-  desktop/kde/dbus/KWinDBusInterfaceConfig.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/dbus/KWinDBusInterfaceConfig.cmake"
-  PATH_VARS KDE_INSTALL_DBUSINTERFACEDIR
-  INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR}
-)
-
-install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/dbus/KWinDBusInterfaceConfig.cmake
-  DESTINATION ${CMAKECONFIG_INSTALL_DIR}
-)
-
-ecm_install_configured_files(
-  INPUT
-    desktop/kde/plasma-kwin_x11.service.in
-    desktop/kde/plasma-kwin_wayland.service.in
-  @ONLY DESTINATION ${KDE_INSTALL_SYSTEMDUSERUNITDIR}
-)
