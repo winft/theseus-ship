@@ -18,7 +18,6 @@
 
 #include "desktop/screen_locker_watcher.h"
 #include "input/cursor.h"
-#include "input/platform.h"
 #include "win/activation.h"
 #include "win/osd.h"
 #include "win/screen_edges.h"
@@ -657,15 +656,15 @@ public:
                                  Qt::MouseButton pointerButtons,
                                  QAction* action) override
     {
-        input::platform_register_pointer_shortcut(
-            *scene.platform.base.input, modifiers, pointerButtons, action);
+        scene.platform.base.input->shortcuts->registerPointerShortcut(
+            action, modifiers, pointerButtons);
     }
 
     void registerAxisShortcut(Qt::KeyboardModifiers modifiers,
                               PointerAxisDirection axis,
                               QAction* action) override
     {
-        input::platform_register_axis_shortcut(*scene.platform.base.input, modifiers, axis, action);
+        scene.platform.base.input->shortcuts->registerAxisShortcut(action, modifiers, axis);
     }
 
     void registerTouchpadSwipeShortcut(SwipeDirection direction,
@@ -673,8 +672,8 @@ public:
                                        QAction* action,
                                        std::function<void(qreal)> progressCallback) override
     {
-        input::platform_register_touchpad_swipe_shortcut(
-            *scene.platform.base.input, direction, fingerCount, action, progressCallback);
+        scene.platform.base.input->shortcuts->registerTouchpadSwipe(
+            direction, fingerCount, action, progressCallback);
     }
 
     void registerTouchpadPinchShortcut(PinchDirection direction,
@@ -682,8 +681,8 @@ public:
                                        QAction* action,
                                        std::function<void(qreal)> progressCallback) override
     {
-        input::platform_register_touchpad_pinch_shortcut(
-            *scene.platform.base.input, direction, fingerCount, action, progressCallback);
+        scene.platform.base.input->shortcuts->registerTouchpadPinch(
+            direction, fingerCount, action, progressCallback);
     }
 
     void registerTouchscreenSwipeShortcut(SwipeDirection direction,
@@ -691,8 +690,8 @@ public:
                                           QAction* action,
                                           std::function<void(qreal)> progressCallback) override
     {
-        input::platform_register_touchscreen_swipe_shortcut(
-            *scene.platform.base.input, direction, fingerCount, action, progressCallback);
+        scene.platform.base.input->shortcuts->registerTouchscreenSwipe(
+            action, progressCallback, direction, fingerCount);
     }
 
     void startMousePolling() override

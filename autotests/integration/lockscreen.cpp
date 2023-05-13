@@ -576,8 +576,8 @@ TEST_CASE("lockscreen", "[base]")
         QSignalSpy actionSpy(action.get(), &QAction::triggered);
         QVERIFY(actionSpy.isValid());
 
-        input::platform_register_pointer_shortcut(
-            *setup.base->input, Qt::MetaModifier, Qt::LeftButton, action.get());
+        setup.base->input->shortcuts->registerPointerShortcut(
+            action.get(), Qt::MetaModifier, Qt::LeftButton);
 
         // Try to trigger the shortcut.
         quint32 timestamp = 1;
@@ -621,8 +621,8 @@ TEST_CASE("lockscreen", "[base]")
             axisDirection = sign > 0 ? PointerAxisLeft : PointerAxisRight;
         }
 
-        input::platform_register_axis_shortcut(
-            *setup.base->input, Qt::MetaModifier, axisDirection, action.get());
+        setup.base->input->shortcuts->registerAxisShortcut(
+            action.get(), Qt::MetaModifier, axisDirection);
 
         // Try to trigger the shortcut.
         quint32 timestamp = 1;
