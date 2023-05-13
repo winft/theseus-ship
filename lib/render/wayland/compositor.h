@@ -29,6 +29,7 @@ template<typename Platform>
 class compositor
 {
 public:
+    using qobject_t = compositor_qobject;
     using platform_t = Platform;
     using type = compositor<Platform>;
     using scene_t = render::scene<Platform>;

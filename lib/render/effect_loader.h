@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "effect/basic_effect_loader.h"
 
 #include "kwin_export.h"
-#include "script/effect_loader.h"
 
 #include <KPluginMetaData>
 #include <memory>
@@ -56,7 +55,6 @@ public:
         : basic_effect_loader(platform.base.config.main)
     {
         add_loader(std::make_unique<plugin_effect_loader>(platform.base.config.main));
-        add_loader(std::make_unique<scripting::effect_loader<Platform>>(effects, platform));
     }
 
     ~effect_loader() override;

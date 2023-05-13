@@ -10,6 +10,7 @@
 #include "effect/screen_impl.h"
 #include "effect/window_impl.h"
 #include "effect_loader.h"
+#include "options.h"
 #include "singleton_interface.h"
 #include "types.h"
 #include "x11/effect.h"

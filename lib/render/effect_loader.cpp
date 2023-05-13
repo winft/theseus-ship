@@ -5,6 +5,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "effect_loader.h"
 
+#include "base/logging.h"
+#include "kwineffects/effect.h"
 #include "kwineffects/effect_plugin_factory.h"
 #include "kwineffects/effects_handler.h"
 

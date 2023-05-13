@@ -8,6 +8,7 @@
 #pragma once
 
 #include "dbus_call.h"
+#include "effect_loader.h"
 #include "options.h"
 #include "output.h"
 #include "screen_edge_handler.h"
@@ -155,6 +156,19 @@ public:
         qmlRegisterAnonymousType<window>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<win::virtual_desktop>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
+
+        if (auto& render = space.base.render; render->compositor->effects) {
+            add_effect_loader(*render);
+        }
+
+        QObject::connect(space.base.render->compositor->qobject.get(),
+                         &Space::base_t::render_t::compositor_t::qobject_t::compositingToggled,
+                         this,
+                         [this](bool on) {
+                             if (on) {
+                                 add_effect_loader(*this->space.base.render);
+                             }
+                         });
 
         // TODO Plasma 6: Drop context properties.
         qt_space = std::make_unique<template_space<qt_script_space, Space>>(&space);

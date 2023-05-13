@@ -162,4 +162,13 @@ private:
     QMetaObject::Connection query_connection;
 };
 
+template<typename Render>
+void add_effect_loader(Render& render)
+{
+    assert(render.compositor->effects);
+
+    auto& effects = render.compositor->effects;
+    effects->loader->add_loader(std::make_unique<effect_loader<Render>>(*effects, render));
+}
+
 }
