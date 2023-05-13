@@ -5,8 +5,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
+#include "window.h"
+
 #include "kwin_export.h"
-#include "script/window.h"
 
 #include <QQuickItem>
 #include <QUuid>
@@ -20,7 +21,7 @@ class EffectWindow;
 class GLRenderTarget;
 class GLTexture;
 
-namespace render
+namespace scripting
 {
 class ThumbnailTextureProvider;
 

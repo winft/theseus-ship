@@ -6,20 +6,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "effects.h"
 
-#include "compositor.h"
 #include "effect/frame.h"
 #include "effectsadaptor.h"
-#include "gl/backend.h"
-#include "gl/scene.h"
-#include "platform.h"
 #include "singleton_interface.h"
 
 #include "base/logging.h"
-#include "base/output.h"
-#include "base/platform.h"
-#include "input/cursor.h"
-#include "input/pointer_redirect.h"
-#include "script/effect.h"
 #include "win/control.h"
 #include "win/deco/bridge.h"
 #include "win/desktop_get.h"

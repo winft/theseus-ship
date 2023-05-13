@@ -6,12 +6,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "window_thumbnail_item.h"
 
+#include "scripting_logging.h"
 #include "singleton_interface.h"
+#include "space.h"
 
 #include "render/compositor_qobject.h"
-#include "script/scripting_logging.h"
-#include "script/singleton_interface.h"
-#include "script/space.h"
+#include "render/singleton_interface.h"
 
 #include <kwineffects/effects_handler.h>
 #include <kwineffects/paint_data.h>
@@ -23,7 +23,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QSGImageNode>
 #include <QSGTextureProvider>
 
-namespace KWin::render
+namespace KWin::scripting
 {
 class ThumbnailTextureProvider : public QSGTextureProvider
 {
@@ -96,11 +96,11 @@ window_thumbnail_item::window_thumbnail_item(QQuickItem* parent)
     setFlag(ItemHasContents);
     update_render_notifier();
 
-    connect(singleton_interface::compositor,
+    connect(render::singleton_interface::compositor,
             &render::compositor_qobject::aboutToToggleCompositing,
             this,
             &window_thumbnail_item::destroyOffscreenTexture);
-    connect(singleton_interface::compositor,
+    connect(render::singleton_interface::compositor,
             &render::compositor_qobject::compositingToggled,
             this,
             &window_thumbnail_item::update_render_notifier);
@@ -256,7 +256,7 @@ QUuid window_thumbnail_item::wId() const
 
 scripting::window* find_controlled_window(QUuid const& wId)
 {
-    auto const windows = scripting::singleton_interface::qt_script_space->clientList();
+    auto const windows = singleton_interface::qt_script_space->clientList();
     for (auto win : windows) {
         if (win->internalId() == wId) {
             return win;

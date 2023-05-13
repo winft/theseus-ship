@@ -36,7 +36,6 @@ set(kwin_SRCS
     render/options.cpp
     render/outline.cpp
     render/singleton_interface.cpp
-    render/window_thumbnail_item.cpp
     render/x11/compositor_selection_owner.cpp
     script/dbus_call.cpp
     script/desktop_background_item.cpp
@@ -55,6 +54,7 @@ set(kwin_SRCS
     script/virtual_desktop_model.cpp
     script/window.cpp
     script/window_model.cpp
+    script/window_thumbnail_item.cpp
     script/space.cpp
 
     # These headers need to be compiled for the helper QObjects they contain.

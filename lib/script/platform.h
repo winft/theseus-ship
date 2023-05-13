@@ -20,10 +20,9 @@
 #include "virtual_desktop_model.h"
 #include "window.h"
 #include "window_model.h"
+#include "window_thumbnail_item.h"
 
 #include "kwinglobals.h"
-#include "render/window_thumbnail_item.h"
-
 #include <kwineffects/quick_scene.h>
 
 #include <QQmlContext>
@@ -126,7 +125,7 @@ public:
         qRegisterMetaType<QVector<KWin::win::virtual_desktop*>>();
 
         qmlRegisterType<desktop_background_item>("org.kde.kwin", 3, 0, "DesktopBackground");
-        qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 3, 0, "WindowThumbnail");
+        qmlRegisterType<window_thumbnail_item>("org.kde.kwin", 3, 0, "WindowThumbnail");
         qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");
         qmlRegisterType<screen_edge_handler>("org.kde.kwin", 3, 0, "ScreenEdgeHandler");
         qmlRegisterType<shortcut_handler>("org.kde.kwin", 3, 0, "ShortcutHandler");
