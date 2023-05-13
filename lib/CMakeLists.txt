@@ -18,13 +18,12 @@ add_subdirectory(render)
 add_subdirectory(data)
 add_subdirectory(script)
 add_subdirectory(xwl)
+add_subdirectory(debug)
 
 ### Common library
 set(kwin_SRCS
     desktop/kde/dbus/kwin.cpp
     desktop/screen_locker_watcher.cpp
-    debug/console/console.cpp
-    debug/perf/ftrace.cpp
 )
 
 qt6_add_dbus_adaptor(kwin_SRCS
@@ -35,10 +34,6 @@ qt6_add_dbus_adaptor(kwin_SRCS
 
 qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf6_org.freedesktop.ScreenSaver.xml screenlocker_interface)
 qt6_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.screensaver.xml kscreenlocker_interface)
-
-ki18n_wrap_ui(kwin_SRCS
-    debug/console/debug_console.ui
-)
 
 set(kwin_KDE_LIBS
   KF6::ConfigCore
@@ -58,6 +53,7 @@ set(kwin_INPUT_LIBS
 
 set(kwinLibs
     base-x11
+    debug-common
     input
     render
     script
@@ -83,10 +79,6 @@ target_precompile_headers(kwin PRIVATE
     cmake/precompiled/xcb.h
 )
 target_link_libraries(kwin ${kwinLibs} epoxy::epoxy)
-
-if(HAVE_PERF)
-    target_sources(kwin PRIVATE debug/perf/ftrace_impl.cpp)
-endif()
 
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 
@@ -129,8 +121,6 @@ set(kwin_WAYLAND_SRCS
    base/backend/wlroots/output.cpp
    base/backend/wlroots/platform.cpp
    base/seat/backend/wlroots/session.cpp
-   debug/console/wayland/input_device_model.cpp
-   debug/console/wayland/wayland_console.cpp
    input/backend/wlroots/platform.cpp
    input/backend/wlroots/control/headless/keyboard.cpp
    input/backend/wlroots/control/keyboard.cpp
@@ -152,6 +142,7 @@ add_library(kwin_wayland_lib SHARED
 target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
+  debug-wl
   input-wl
   xwl
   WraplandClient
