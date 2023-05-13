@@ -55,19 +55,13 @@ public:
     effect_loader(EffectsHandler& effects, Platform& platform)
         : basic_effect_loader(platform.base.config.main)
     {
-        m_loaders.emplace_back(
-            std::make_unique<scripting::effect_loader<Platform>>(effects, platform));
-        m_loaders.emplace_back(std::make_unique<plugin_effect_loader>(platform.base.config.main));
-
-        for (auto&& loader : m_loaders) {
-            connect(loader.get(),
-                    &basic_effect_loader::effectLoaded,
-                    this,
-                    &basic_effect_loader::effectLoaded);
-        }
+        add_loader(std::make_unique<plugin_effect_loader>(platform.base.config.main));
+        add_loader(std::make_unique<scripting::effect_loader<Platform>>(effects, platform));
     }
 
     ~effect_loader() override;
+
+    void add_loader(std::unique_ptr<basic_effect_loader> loader);
     bool hasEffect(const QString& name) const override;
     bool isEffectSupported(const QString& name) const override;
     QStringList listOfKnownEffects() const override;

@@ -174,6 +174,13 @@ effect_loader::~effect_loader()
 {
 }
 
+void effect_loader::add_loader(std::unique_ptr<basic_effect_loader> loader)
+{
+    connect(
+        loader.get(), &basic_effect_loader::effectLoaded, this, &basic_effect_loader::effectLoaded);
+    m_loaders.push_back(std::move(loader));
+}
+
 bool effect_loader::hasEffect(QString const& name) const
 {
     return std::any_of(m_loaders.cbegin(), m_loaders.cend(), [&name](auto const& loader) {
