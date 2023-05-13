@@ -2,7 +2,13 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-########### next target ###############
+qt6_add_dbus_interface(effects_interface_src org.kde.kwin.Effects.xml kwineffects_interface)
+add_library(effects-interface STATIC ${effects_interface_src})
+target_link_libraries(effects-interface Qt::DBus)
+set_target_properties(effects-interface PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+)
+
 include(ECMSetupVersion)
 
 ecm_setup_version(${CMAKE_PROJECT_VERSION}
@@ -163,6 +169,10 @@ install(FILES
 
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinEffects")
 
+install(
+  FILES org.kde.kwin.Effects.xml
+  DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR}
+)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/KWinEffectsConfig.cmake"
                "${CMAKE_CURRENT_BINARY_DIR}/KWinEffectsConfigVersion.cmake"

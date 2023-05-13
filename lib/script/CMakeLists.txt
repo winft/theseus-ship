@@ -51,7 +51,10 @@ install(TARGETS script ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 
 if (KWIN_BUILD_KCMS)
   set(kcm_kwin4_genericscripted_SRCS generic_scripted_config.cpp)
-  qt_add_dbus_interface(kcm_kwin4_genericscripted_SRCS ${kwin_effects_dbus_xml} kwineffects_interface)
+  qt_add_dbus_interface(kcm_kwin4_genericscripted_SRCS
+    ../effect/org.kde.kwin.Effects.xml
+    kwineffects_interface
+  )
   add_library(kcm_kwin4_genericscripted MODULE ${kcm_kwin4_genericscripted_SRCS})
   target_link_libraries(kcm_kwin4_genericscripted
     base

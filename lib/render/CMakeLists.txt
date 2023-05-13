@@ -47,7 +47,7 @@ qt6_add_dbus_adaptor(render_dbus_SRCS
   KWin::render::post::color_correct_dbus_interface
 )
 qt6_add_dbus_adaptor(render_dbus_SRCS
-  dbus/org.kde.kwin.Effects.xml
+  ../effect/org.kde.kwin.Effects.xml
   effects.h
   KWin::render::effects_handler_wrap
 )
@@ -91,7 +91,6 @@ install(
   FILES
     dbus/org.kde.kwin.ColorCorrect.xml
     dbus/org.kde.kwin.Compositing.xml
-    dbus/org.kde.kwin.Effects.xml
   DESTINATION
     ${KDE_INSTALL_DBUSINTERFACEDIR}
 )

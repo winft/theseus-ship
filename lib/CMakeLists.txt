@@ -2,14 +2,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-set(kwin_effects_dbus_xml ${CMAKE_CURRENT_SOURCE_DIR}/render/dbus/org.kde.kwin.Effects.xml)
-qt6_add_dbus_interface(effects_interface_SRCS ${kwin_effects_dbus_xml} kwineffects_interface)
-add_library(KWinEffectsInterface STATIC ${effects_interface_SRCS})
-target_link_libraries(KWinEffectsInterface Qt::DBus)
-set_target_properties(KWinEffectsInterface PROPERTIES
-  POSITION_INDEPENDENT_CODE ON
-)
-
 add_subdirectory(base)
 add_subdirectory(effect)
 add_subdirectory(win)
@@ -117,12 +109,6 @@ set(kwin_WAYLAND_SRCS
    input/backend/wlroots/control/switch.cpp
    input/backend/wlroots/control/touch.cpp
 )
-
-if (KWIN_BUILD_TABBOX)
-  set(kwin_WAYLAND_SRCS
-    ${kwin_WAYLAND_SRCS}
-  )
-endif()
 
 add_library(kwin_wayland_lib SHARED
   ${kwin_WAYLAND_SRCS}
