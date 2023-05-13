@@ -151,9 +151,11 @@ private:
     void release()
     {
         auto con = redirect.platform.base.x11_data.connection;
-        base::x11::ungrab_keyboard(con);
+
+        redirect.platform.ungrab_keyboard();
         xcb_ungrab_pointer(con, XCB_TIME_CURRENT_TIME);
         base::x11::ungrab_server(con);
+
         m_active = false;
         m_callback = {};
         m_pointSelectionFallback = std::function<void(const QPoint&)>();
@@ -284,7 +286,7 @@ private:
             return false;
         }
 
-        const bool grabbed = base::x11::grab_keyboard(redirect.platform.base.x11_data);
+        auto const grabbed = redirect.platform.grab_keyboard();
         if (grabbed) {
             base::x11::grab_server(redirect.platform.base.x11_data.connection);
         } else {

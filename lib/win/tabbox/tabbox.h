@@ -1074,13 +1074,22 @@ private:
 
     bool establish_tabbox_grab()
     {
-        if (base::should_use_wayland_for_compositing(space.base)) {
+        if constexpr (requires(decltype(space.base.input) input) { input->ungrab_keyboard(); }) {
+            return establish_tabbox_grab_x11();
+        } else {
             m_forced_global_mouse_grab = true;
             return true;
         }
+    }
+
+    bool establish_tabbox_grab_x11()
+    {
         base::x11::update_time_from_clock(space.base);
-        if (!base::x11::grab_keyboard(space.base.x11_data))
+
+        if (!space.base.input->grab_keyboard()) {
             return false;
+        }
+
         // Don't try to establish a global mouse grab using XGrabPointer, as that would prevent
         // using Alt+Tab while DND (#44972). However force passive grabs on all windows
         // in order to catch MouseRelease events and close the tabbox (#67416).
@@ -1098,12 +1107,18 @@ private:
 
     void remove_tabbox_grab()
     {
-        if (base::should_use_wayland_for_compositing(space.base)) {
+        if constexpr (requires(decltype(space.base.input) input) { input->ungrab_keyboard(); }) {
+            remove_tabbox_grab_x11();
+        } else {
             m_forced_global_mouse_grab = false;
-            return;
         }
+    }
+
+    void remove_tabbox_grab_x11()
+    {
         base::x11::update_time_from_clock(space.base);
-        base::x11::ungrab_keyboard(space.base.x11_data.connection);
+        space.base.input->ungrab_keyboard();
+
         Q_ASSERT(m_forced_global_mouse_grab);
         m_forced_global_mouse_grab = false;
         if (space.stacking.active) {

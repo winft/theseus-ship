@@ -125,8 +125,15 @@ bool do_start_move_resize(Win& win)
         has_grab = true;
     }
 
-    if (!has_grab && base::x11::grab_keyboard(win.space.base.x11_data, win.frameId()))
-        has_grab = win.move_resize_has_keyboard_grab = true;
+    if constexpr (requires(decltype(win.space.base.input) input) { input->ungrab_keyboard(); }) {
+        if (!has_grab && win.space.base.input->grab_keyboard(win.frameId())) {
+            has_grab = win.move_resize_has_keyboard_grab = true;
+        }
+    } else {
+        // Platforms without a grab implementation can move windows directly.
+        return true;
+    }
+
     if (!has_grab) {
         // at least one grab is necessary in order to be able to finish move/resize
         win.xcb_windows.grab.reset();
@@ -154,8 +161,10 @@ void leave_move_resize(Win& win)
         win.move_needs_server_update = false;
     }
 
-    if (win.move_resize_has_keyboard_grab) {
-        base::x11::ungrab_keyboard(win.space.base.x11_data.connection);
+    if constexpr (requires(decltype(win.space.base.input) input) { input->ungrab_keyboard(); }) {
+        if (win.move_resize_has_keyboard_grab) {
+            win.space.base.input->ungrab_keyboard();
+        }
     }
 
     win.move_resize_has_keyboard_grab = false;

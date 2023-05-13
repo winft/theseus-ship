@@ -110,8 +110,7 @@ public:
 protected:
     bool doGrabKeyboard() override
     {
-        auto is_grabbed = base::x11::grab_keyboard(this->scene.platform.base.x11_data);
-        if (!is_grabbed) {
+        if (!this->scene.platform.base.input->grab_keyboard()) {
             return false;
         }
 
@@ -124,7 +123,7 @@ protected:
 
     void doUngrabKeyboard() override
     {
-        base::x11::ungrab_keyboard(this->scene.platform.base.x11_data.connection);
+        this->scene.platform.base.input->ungrab_keyboard();
         keyboard_intercept.filter.reset();
     }
 

@@ -71,7 +71,6 @@ add_executable(tests
   window_rules.cpp
   window_selection.cpp
   x11_client.cpp
-  x11_timestamp_update.cpp
   xcb_size_hints.cpp
   xcb_wrapper.cpp
   xdg_activation.cpp

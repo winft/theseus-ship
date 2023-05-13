@@ -19,9 +19,6 @@ namespace KWin::base::x11
 void KWIN_EXPORT grab_server(xcb_connection_t* con);
 void KWIN_EXPORT ungrab_server(xcb_connection_t* con);
 
-bool KWIN_EXPORT grab_keyboard(x11::data const& data, xcb_window_t w = XCB_WINDOW_NONE);
-void KWIN_EXPORT ungrab_keyboard(xcb_connection_t* con);
-
 /**
  * Small helper class which performs grabXServer in the ctor and
  * ungrabXServer in the dtor. Use this class to ensure that grab and

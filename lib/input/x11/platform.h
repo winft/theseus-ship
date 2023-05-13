@@ -133,6 +133,62 @@ public:
         return are_key_syms_depressed(rgKeySyms, nKeySyms);
     }
 
+    bool grab_keyboard(xcb_window_t w)
+    {
+        if (QWidget::keyboardGrabber() != nullptr) {
+            return false;
+        }
+        if (keyboard_grabbed) {
+            qCDebug(KWIN_INPUT) << "Failed to grab X Keyboard: already grabbed by us";
+            return false;
+        }
+        if (qApp->activePopupWidget() != nullptr) {
+            qCDebug(KWIN_INPUT) << "Failed to grab X Keyboard: popup widget active";
+            return false;
+        }
+
+        auto const& data = base.x11_data;
+
+        if (w == XCB_WINDOW_NONE) {
+            w = data.root_window;
+        }
+
+        auto const cookie = xcb_grab_keyboard_unchecked(
+            data.connection, false, w, data.time, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
+        unique_cptr<xcb_grab_keyboard_reply_t> grab(
+            xcb_grab_keyboard_reply(data.connection, cookie, nullptr));
+
+        if (!grab) {
+            qCDebug(KWIN_INPUT) << "Failed to grab X Keyboard: grab null";
+            return false;
+        }
+
+        if (grab->status != XCB_GRAB_STATUS_SUCCESS) {
+            qCDebug(KWIN_INPUT) << "Failed to grab X Keyboard: grab failed with status"
+                                << grab->status;
+            return false;
+        }
+
+        keyboard_grabbed = true;
+        return true;
+    }
+
+    bool grab_keyboard()
+    {
+        return grab_keyboard(XCB_WINDOW_NONE);
+    }
+
+    void ungrab_keyboard()
+    {
+        if (!keyboard_grabbed) {
+            // grabXKeyboard() may fail sometimes, so don't fail, but at least warn anyway
+            qCDebug(KWIN_INPUT) << "ungrabXKeyboard() called but keyboard not grabbed!";
+        }
+
+        keyboard_grabbed = false;
+        xcb_ungrab_keyboard(base.x11_data.connection, XCB_TIME_CURRENT_TIME);
+    }
+
     std::unique_ptr<platform_qobject> qobject;
     input::config config;
 
@@ -144,6 +200,8 @@ public:
     std::unique_ptr<dbus::device_manager<type>> dbus;
 
     Base& base;
+
+    bool keyboard_grabbed{false};
 
 private:
     bool are_key_syms_depressed(uint const keySyms[], int nKeySyms) const
