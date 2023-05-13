@@ -7,6 +7,7 @@ add_library(xwl SHARED)
 target_link_libraries(xwl
   PUBLIC
     base-x11
+    render-x11
     WraplandServer
 )
 

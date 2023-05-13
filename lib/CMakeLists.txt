@@ -25,7 +25,6 @@ set(kwin_SRCS
     desktop/screen_locker_watcher.cpp
     debug/console/console.cpp
     debug/perf/ftrace.cpp
-    render/x11/compositor_selection_owner.cpp
 )
 
 qt6_add_dbus_adaptor(kwin_SRCS
@@ -112,6 +111,7 @@ target_link_libraries(kwin_x11_lib
 PUBLIC
   kwin
   input-x11
+  render-x11
   KF6::Crash
 PRIVATE
   Qt::GuiPrivate

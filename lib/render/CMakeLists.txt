@@ -63,6 +63,25 @@ set_target_properties(render PROPERTIES
   OUTPUT_NAME "kwin-render"
 )
 
+add_library(render-x11 SHARED)
+
+target_link_libraries(render-x11
+  PUBLIC
+    base-x11
+    render
+)
+
+target_sources(render-x11
+  PRIVATE
+    x11/compositor_selection_owner.cpp
+)
+
+set_target_properties(render-x11 PROPERTIES
+  VERSION ${CMAKE_PROJECT_VERSION}
+  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
+  OUTPUT_NAME "kwin-render-x11"
+)
+
 install(
   FILES post/kconfig/color_correct_settings.kcfg
   DESTINATION ${KDE_INSTALL_KCFGDIR}
@@ -81,3 +100,4 @@ install(DIRECTORY qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_N
 install(DIRECTORY qml/frames/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/frames)
 
 install(TARGETS render ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
+install(TARGETS render-x11 ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
