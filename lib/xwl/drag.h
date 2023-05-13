@@ -7,8 +7,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "types.h"
 
+#include <QObject>
 #include <QPoint>
 #include <Wrapland/Server/drag_pool.h>
+#include <kwin_export.h>
 #include <memory>
 #include <xcb/xcb.h>
 

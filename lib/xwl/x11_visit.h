@@ -9,9 +9,6 @@
 #include "mime.h"
 #include "sources.h"
 
-#include "base/wayland/server.h"
-#include "win/space.h"
-
 #include <QObject>
 #include <QPoint>
 #include <Wrapland/Server/data_source.h>

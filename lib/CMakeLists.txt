@@ -17,6 +17,7 @@ add_subdirectory(input)
 add_subdirectory(render)
 add_subdirectory(data)
 add_subdirectory(script)
+add_subdirectory(xwl)
 
 ### Common library
 set(kwin_SRCS
@@ -146,18 +147,6 @@ if (HAVE_DL_LIBRARY)
 endif()
 
 ### Wayland library
-set(kwin_XWAYLAND_SRCS
-   xwl/sources_ext.cpp
-   xwl/transfer.cpp
-
-   # These headers need to be compiled for the helper QObjects they contain.
-   xwl/drag.h
-   xwl/selection_data.h
-   xwl/sources.h
-   xwl/wl_visit.h
-   xwl/x11_visit.h
-)
-
 set(kwin_WAYLAND_SRCS
    base/backend/wlroots/drm_lease.cpp
    base/backend/wlroots/non_desktop_output.cpp
@@ -181,7 +170,6 @@ if (KWIN_BUILD_TABBOX)
 endif()
 
 add_library(kwin_wayland_lib SHARED
-  ${kwin_XWAYLAND_SRCS}
   ${kwin_WAYLAND_SRCS}
 )
 
@@ -189,6 +177,7 @@ target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
   input-wl
+  xwl
   WraplandClient
   Wayland::Server
   wlroots::wlroots
