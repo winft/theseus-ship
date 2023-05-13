@@ -26,31 +26,6 @@ set(kwin_SRCS
     debug/console/console.cpp
     debug/perf/ftrace.cpp
     render/x11/compositor_selection_owner.cpp
-    script/dbus_call.cpp
-    script/desktop_background_item.cpp
-    script/js_engine_global_methods_wrapper.cpp
-    script/screen_edge_handler.cpp
-    script/effect.cpp
-    script/options.cpp
-    script/output.cpp
-    script/platform.cpp
-    script/script.cpp
-    script/script_timer.cpp
-    script/scripting_logging.cpp
-    script/shortcut_handler.cpp
-    script/singleton_interface.cpp
-    script/utils.cpp
-    script/virtual_desktop_model.cpp
-    script/window.cpp
-    script/window_model.cpp
-    script/window_thumbnail_item.cpp
-    script/space.cpp
-)
-
-qt6_add_dbus_adaptor(kwin_SRCS
-  script/org.kde.kwin.Script.xml
-  script/script.h
-  KWin::scripting::abstract_script
 )
 
 qt6_add_dbus_adaptor(kwin_SRCS
@@ -86,6 +61,7 @@ set(kwinLibs
     base-x11
     input
     render
+    script
     win
     ${kwin_KDE_LIBS}
     ${kwin_XCB_LIBS}

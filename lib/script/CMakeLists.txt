@@ -2,6 +2,53 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+add_library(script SHARED)
+
+target_link_libraries(script
+  PUBLIC
+    base
+    render
+    win
+)
+
+qt6_add_dbus_adaptor(script_dbus_srcs
+  org.kde.kwin.Script.xml
+  script.h
+  KWin::scripting::abstract_script
+)
+
+target_sources(script
+  PRIVATE
+    dbus_call.cpp
+    desktop_background_item.cpp
+    js_engine_global_methods_wrapper.cpp
+    screen_edge_handler.cpp
+    effect.cpp
+    options.cpp
+    output.cpp
+    platform.cpp
+    script.cpp
+    script_timer.cpp
+    scripting_logging.cpp
+    shortcut_handler.cpp
+    singleton_interface.cpp
+    utils.cpp
+    virtual_desktop_model.cpp
+    window.cpp
+    window_model.cpp
+    window_thumbnail_item.cpp
+    space.cpp
+    ${script_dbus_srcs}
+)
+
+set_target_properties(script PROPERTIES
+  VERSION ${CMAKE_PROJECT_VERSION}
+  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
+  OUTPUT_NAME "kwin-script"
+)
+
+install(TARGETS script ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
+
 if (KWIN_BUILD_KCMS)
   set(kcm_kwin4_genericscripted_SRCS generic_scripted_config.cpp)
   qt_add_dbus_interface(kcm_kwin4_genericscripted_SRCS ${kwin_effects_dbus_xml} kwineffects_interface)
