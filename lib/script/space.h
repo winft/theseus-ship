@@ -70,6 +70,11 @@ class KWIN_EXPORT space : public QObject
      */
     Q_PROPERTY(
         QRect virtualScreenGeometry READ virtualScreenGeometry NOTIFY virtualScreenGeometryChanged)
+    /**
+     * List of Clients currently managed by KWin, orderd by
+     * their visibility (later ones cover earlier ones).
+     */
+    Q_PROPERTY(QList<KWin::scripting::window*> stackingOrder READ stackingOrder)
 
 public:
     //------------------------------------------------------------------
@@ -239,11 +244,37 @@ public:
     virtual Q_SCRIPTABLE QString supportInformation() const = 0;
 
     /**
+     * List of Clients managed by KWin, orderd by their visibility (later ones cover earlier ones).
+     */
+    virtual QList<KWin::scripting::window*> stackingOrder() const = 0;
+
+    /**
+     * Raises a Window  above all others on the screen.
+     * @param window The Window to raise
+     */
+    Q_INVOKABLE void raiseWindow(KWin::scripting::window* window)
+    {
+        raise_window_impl(window);
+    }
+
+    /**
      * Finds the Client with the given @p windowId.
      * @param windowId The window Id of the Client
      * @return The found Client or @c null
      */
     Q_SCRIPTABLE KWin::scripting::window* getClient(qulonglong windowId);
+
+    /**
+     * Finds up to count windows at a particular location, prioritizing the topmost one first.  A
+     * negative count returns all matching clients.
+     * @param pos The location to look for
+     * @param count The number of clients to return
+     * @return A list of Client objects
+     */
+    Q_INVOKABLE QList<KWin::scripting::window*> windowAt(QPointF const& pos, int count = 1) const
+    {
+        return window_at_impl(pos, count);
+    }
 
 public Q_SLOTS:
     virtual void slotSwitchToNextScreen() = 0;
@@ -409,7 +440,9 @@ protected:
     virtual void switch_desktop_up_impl() const = 0;
     virtual void switch_desktop_down_impl() const = 0;
 
+    virtual void raise_window_impl(scripting::window* window) = 0;
     virtual window* get_client_impl(qulonglong windowId) = 0;
+    virtual QList<scripting::window*> window_at_impl(QPointF const& pos, int count) const = 0;
 
     // TODO: make this private. Remove dynamic inheritance?
     std::vector<std::unique_ptr<window>> m_windows;
@@ -937,6 +970,62 @@ protected:
     QString supportInformation() const override
     {
         return debug::get_support_info(*ref_space);
+    }
+
+    QList<KWin::scripting::window*> stackingOrder() const override
+    {
+        QList<KWin::scripting::window*> ret;
+        for (auto&& win : ref_space->stacking.order.stack) {
+            if (auto swin = get_window(win)) {
+                ret << swin;
+            }
+        }
+        return ret;
+    }
+
+    void raise_window_impl(KWin::scripting::window* window) override
+    {
+        std::visit(overload{[this](auto&& win) { win::raise_window(*ref_space, win); }},
+                   static_cast<window_t*>(window)->client());
+    }
+
+    QList<KWin::scripting::window*> window_at_impl(QPointF const& pos, int count) const override
+    {
+        QList<KWin::scripting::window*> result;
+
+        int found = 0;
+        auto const& stacking = ref_space->stacking.order.stack;
+
+        if (stacking.empty()) {
+            return result;
+        }
+
+        auto it = stacking.end();
+
+        do {
+            if (found == count) {
+                return result;
+            }
+
+            --it;
+
+            std::visit(overload{[&](auto&& win) {
+                           if (!win->control) {
+                               return;
+                           }
+                           if (!win::on_current_desktop(win) || win->control->minimized
+                               || win->isHiddenInternal()) {
+                               return;
+                           }
+                           if (win->geo.frame.contains(pos.toPoint())) {
+                               result.append(get_window(win));
+                               found++;
+                           }
+                       }},
+                       *it);
+        } while (it != stacking.begin());
+
+        return result;
     }
 
     window* get_client_impl(qulonglong windowId) override
