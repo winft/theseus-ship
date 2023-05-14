@@ -69,11 +69,6 @@ public:
             return gl_backend.get();
         }
 
-        if (this->options->qobject->glPlatformInterface() == EglPlatformInterface) {
-            qCWarning(KWIN_CORE) << "Requested EGL on X11 backend, but support has been removed. "
-                                    "Trying GLX instead.";
-        }
-
 #if HAVE_EPOXY_GLX
         if (has_glx()) {
             gl_backend = std::make_unique<glx_backend<type>>(m_x11Display, *this);

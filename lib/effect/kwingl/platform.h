@@ -185,6 +185,12 @@ enum ChipClass {
     UnknownChipClass = 99999,
 };
 
+enum class gl_interface {
+    unknown,
+    egl,
+    glx,
+};
+
 class KWINGLUTILS_EXPORT GLPlatform
 {
 public:
@@ -193,7 +199,7 @@ public:
     /**
      * Runs the detection code using the current OpenGL context.
      */
-    void detect(OpenGLPlatformInterface platformInterface);
+    void detect(gl_interface platformInterface);
 
     /**
      * Prints the results of the detection code.
@@ -396,7 +402,7 @@ public:
      * @returns The OpenGLPlatformInterface currently used
      * @since 5.0
      */
-    OpenGLPlatformInterface platformInterface() const;
+    gl_interface platformInterface() const;
 
     xcb_connection_t* x11_connection() const
     {
@@ -484,7 +490,7 @@ private:
     bool m_supportsTimerQuery : 1;
     bool m_virtualMachine : 1;
     bool m_preferBufferSubData : 1;
-    OpenGLPlatformInterface m_platformInterface;
+    gl_interface m_platformInterface{gl_interface::unknown};
     bool m_gles : 1;
     xcb_connection_t* x11_con{nullptr};
 

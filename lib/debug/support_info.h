@@ -200,10 +200,10 @@ QString get_support_info(Space const& space)
                            + QString::fromUtf8(platform->glVersionString()) + QStringLiteral("\n"));
             support.append(QStringLiteral("OpenGL platform interface: "));
             switch (platform->platformInterface()) {
-            case GlxPlatformInterface:
+            case gl_interface::glx:
                 support.append(QStringLiteral("GLX"));
                 break;
-            case EglPlatformInterface:
+            case gl_interface::egl:
                 support.append(QStringLiteral("EGL"));
                 break;
             default:

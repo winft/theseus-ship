@@ -17,8 +17,6 @@
 namespace KWin::render
 {
 
-KWIN_EXPORT OpenGLPlatformInterface defaultGlPlatformInterface(base::operation_mode mode);
-
 class settings;
 
 class KWIN_EXPORT options_qobject : public QObject
@@ -67,12 +65,6 @@ public:
         return m_glStrictBindingFollowsDriver;
     }
 
-    /// Deprecated
-    OpenGLPlatformInterface glPlatformInterface() const
-    {
-        return defaultGlPlatformInterface(windowing_mode);
-    }
-
     bool windowsBlockCompositing() const
     {
         return m_windowsBlockCompositing;
@@ -92,11 +84,6 @@ public:
     void setVBlankTime(qint64 vBlankTime);
     void setGlStrictBinding(bool glStrictBinding);
     void setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver);
-
-    /// Deprecated
-    void setGlPlatformInterface(OpenGLPlatformInterface /*interface*/)
-    {
-    }
     void setWindowsBlockCompositing(bool set);
     void setAnimationCurve(render::animation_curve curve);
 
@@ -150,9 +137,6 @@ Q_SIGNALS:
     void glStrictBindingChanged();
     void glStrictBindingFollowsDriverChanged();
     void hiddenPreviewsChanged();
-
-    /// Deprecated
-    void glPlatformInterfaceChanged();
     void windowsBlockCompositingChanged();
     void animationSpeedChanged();
     void animationCurveChanged();

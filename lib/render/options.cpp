@@ -15,12 +15,6 @@
 namespace KWin::render
 {
 
-OpenGLPlatformInterface defaultGlPlatformInterface(base::operation_mode mode)
-{
-    return base::should_use_wayland_for_compositing(mode) ? EglPlatformInterface
-                                                          : GlxPlatformInterface;
-}
-
 options_qobject::options_qobject(base::operation_mode mode)
     : windowing_mode{mode}
 {

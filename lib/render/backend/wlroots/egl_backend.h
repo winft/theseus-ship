@@ -67,7 +67,7 @@ public:
 
         make_context_current(data);
 
-        gl::init_gl(EglPlatformInterface, get_proc_address, platform.base.x11_data.connection);
+        gl::init_gl(gl_interface::egl, get_proc_address, platform.base.x11_data.connection);
         gl::init_buffer_age(*this);
         wayland::init_egl(*this, data);
 

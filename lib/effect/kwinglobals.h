@@ -27,10 +27,4 @@ KWIN_EXPORT Q_NAMESPACE
         QPainterCompositing = 3,
     };
 
-enum OpenGLPlatformInterface {
-    NoOpenGLPlatformInterface = 0,
-    GlxPlatformInterface,
-    EglPlatformInterface
-};
-
 }

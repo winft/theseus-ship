@@ -706,7 +706,6 @@ GLPlatform::GLPlatform(xcb_connection_t* x11_connection)
     , m_supportsTimerQuery(false)
     , m_virtualMachine(false)
     , m_preferBufferSubData(false)
-    , m_platformInterface(NoOpenGLPlatformInterface)
     , m_gles(false)
     , x11_con{x11_connection}
 {
@@ -716,7 +715,7 @@ GLPlatform::~GLPlatform()
 {
 }
 
-void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
+void GLPlatform::detect(gl_interface platformInterface)
 {
     m_platformInterface = platformInterface;
 
@@ -729,7 +728,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
     if (versionTokens.count() > 0) {
         const QByteArray version = QByteArray(m_version);
         m_glVersion = parseVersionString(version);
-        if (platformInterface == EglPlatformInterface) {
+        if (platformInterface == gl_interface::egl) {
             // only EGL can have OpenGLES, GLX is OpenGL only
             if (version.startsWith("OpenGL ES")) {
                 // from GLES 2: "Returns a version or release number of the form
@@ -1087,7 +1086,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
         m_recommendedCompositor = QPainterCompositing;
     }
 
-    if (isMesaDriver() && platformInterface == EglPlatformInterface) {
+    if (isMesaDriver() && platformInterface == gl_interface::egl) {
         // According to the reference implementation in
         // mesa/demos/src/egl/opengles1/texture_from_pixmap
         // the mesa egl implementation does not require a strict binding (so far).
@@ -1379,7 +1378,7 @@ bool GLPlatform::preferBufferSubData() const
     return m_preferBufferSubData;
 }
 
-OpenGLPlatformInterface GLPlatform::platformInterface() const
+gl_interface GLPlatform::platformInterface() const
 {
     return m_platformInterface;
 }
