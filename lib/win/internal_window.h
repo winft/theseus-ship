@@ -764,8 +764,10 @@ public:
         update_layer(this);
 
         if (placeable()) {
-            auto const area = space_window_area(
-                this->space, PlacementArea, get_current_output(this->space), get_desktop(*this));
+            auto const area = space_window_area(this->space,
+                                                area_option::placement,
+                                                get_current_output(this->space),
+                                                get_desktop(*this));
             place_in_area(this, area);
         }
 

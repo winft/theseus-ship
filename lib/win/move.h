@@ -152,8 +152,8 @@ void check_unrestricted_move_resize(Win* win)
         return;
     }
 
-    auto desktopArea
-        = space_window_area(win->space, WorkArea, mov_res.geometry.center(), get_desktop(*win));
+    auto desktopArea = space_window_area(
+        win->space, area_option::work, mov_res.geometry.center(), get_desktop(*win));
     int left_marge, right_marge, top_marge, bottom_marge, titlebar_marge;
 
     // restricted move/resize - keep at least part of the titlebar always visible
@@ -433,7 +433,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             // point. We bruteforce this by slowly moving the window back to its previous position
 
             // On the screen
-            QRegion availableArea(space_window_area(win->space, FullArea, nullptr, 0));
+            QRegion availableArea(space_window_area(win->space, area_option::full, nullptr, 0));
 
             // Strut areas
             availableArea -= restricted_move_area(win->space, get_desktop(*win), strut_area::all);
@@ -551,9 +551,11 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             // Special moving of maximized windows on Xinerama screens
             auto output = base::get_nearest_output(win->space.base.outputs, globalPos);
             if (win->control->fullscreen)
-                mov_res.geometry = space_window_area(win->space, FullScreenArea, output, 0);
+                mov_res.geometry
+                    = space_window_area(win->space, area_option::fullscreen, output, 0);
             else {
-                auto moveResizeGeom = space_window_area(win->space, MaximizeArea, output, 0);
+                auto moveResizeGeom
+                    = space_window_area(win->space, area_option::maximize, output, 0);
                 auto adjSize = adjusted_frame_size(win, moveResizeGeom.size(), size_mode::max);
                 if (adjSize != moveResizeGeom.size()) {
                     QRect r(moveResizeGeom);
@@ -576,7 +578,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
                     = restricted_move_area(win->space, get_desktop(*win), strut_area::all);
 
                 // On the screen
-                QRegion availableArea(space_window_area(win->space, FullArea, nullptr, 0));
+                QRegion availableArea(space_window_area(win->space, area_option::full, nullptr, 0));
 
                 // Strut areas
                 availableArea -= strut;
@@ -969,8 +971,9 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
         set_quicktile_mode(win, quicktiles::none, true);
     }
 
-    auto oldScreenArea = space_window_area(space, MaximizeArea, win);
-    auto screenArea = space_window_area(space, MaximizeArea, checked_output, get_desktop(*win));
+    auto oldScreenArea = space_window_area(space, area_option::maximize, win);
+    auto screenArea
+        = space_window_area(space, area_option::maximize, checked_output, get_desktop(*win));
 
     // the window can have its center so that the position correction moves the new center onto
     // the old screen, what will tile it where it is. Ie. the screen is not changed

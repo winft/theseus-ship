@@ -80,7 +80,7 @@ void setup_window_control_connections(Win* win)
 
         geometry_updates_blocker blocker(win);
         auto const area = space_window_area(
-            win->space, PlacementArea, get_current_output(win->space), get_desktop(*win));
+            win->space, area_option::placement, get_current_output(win->space), get_desktop(*win));
         place_in_area(win, area);
     });
 

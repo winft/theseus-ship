@@ -349,7 +349,7 @@ void place_maximizing(Win* window, QRect const& area)
 
     if (window->isMaximizable() && window->maxSize().width() >= area.width()
         && window->maxSize().height() >= area.height()) {
-        if (space_window_area(window->space, MaximizeArea, window) == area) {
+        if (space_window_area(window->space, area_option::maximize, window) == area) {
             maximize(window, maximize_mode::full);
         } else {
             // If the geometry doesn't match default maximize area (xinerama case?), it's probably
@@ -414,7 +414,7 @@ void place_on_main_window(Win* window, QRect const& area)
     move(window, geo.topLeft());
 
     // get area again, because the mainwindow may be on different xinerama screen
-    auto const placementArea = space_window_area(window->space, PlacementArea, window);
+    auto const placementArea = space_window_area(window->space, area_option::placement, window);
     keep_in_area(window, placementArea, false);
 }
 
@@ -471,7 +471,7 @@ void place_with_policy(Win* window, QRect const& area, placement policy)
         auto const geo = window->geo.update.frame;
         auto corner = geo.topLeft();
         auto const margins = frame_margins(window);
-        auto const win_area = space_window_area(window->space, FullArea, window);
+        auto const win_area = space_window_area(window->space, area_option::full, window);
 
         if (!(window->maximizeMode() & maximize_mode::horizontal)) {
             if (geo.right() == win_area.right()) {
@@ -559,7 +559,8 @@ void unclutter_desktop(Space& space)
                            || on_all_desktops(win) || !win->isMovable()) {
                            return;
                        }
-                       auto const placementArea = space_window_area(space, PlacementArea, win);
+                       auto const placementArea
+                           = space_window_area(space, area_option::placement, win);
                        place_smart(win, placementArea);
                    }},
                    windows.at(i));

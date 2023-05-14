@@ -29,7 +29,7 @@ bool in_update_window_area(Space const& space)
  */
 template<typename Space>
 QRect space_window_area(Space const& space,
-                        clientAreaOption opt,
+                        area_option opt,
                         typename Space::base_t::output_t const* output,
                         int desktop)
 {
@@ -60,30 +60,30 @@ QRect space_window_area(Space const& space,
                                                : space.areas.work[desktop];
 
     switch (opt) {
-    case MaximizeArea:
-    case PlacementArea:
+    case area_option::maximize:
+    case area_option::placement:
         return sarea;
-    case MaximizeFullArea:
-    case FullScreenArea:
-    case MovementArea:
-    case ScreenArea:
+    case area_option::maximize_full:
+    case area_option::fullscreen:
+    case area_option::movement:
+    case area_option::screen:
         return output_geo;
-    case WorkArea:
+    case area_option::work:
         return warea;
-    case FullArea:
+    case area_option::full:
         return QRect({}, space.base.topology.size);
     }
     abort();
 }
 
 template<typename Space>
-QRect space_window_area(Space const& space, clientAreaOption opt, QPoint const& p, int desktop)
+QRect space_window_area(Space const& space, area_option opt, QPoint const& p, int desktop)
 {
     return space_window_area(space, opt, base::get_nearest_output(space.base.outputs, p), desktop);
 }
 
 template<typename Space, typename Win>
-QRect space_window_area(Space const& space, clientAreaOption opt, Win const* window)
+QRect space_window_area(Space const& space, area_option opt, Win const* window)
 {
     return space_window_area(
         space, opt, pending_frame_geometry(window).center(), get_desktop(*window));

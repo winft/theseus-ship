@@ -16,11 +16,11 @@ namespace KWin::win
 template<typename Space, typename Win>
 int get_pack_position_left(Space const& space, Win const* window, int oldX, bool leftEdge)
 {
-    int newX = space_window_area(space, MaximizeArea, window).left();
+    int newX = space_window_area(space, area_option::maximize, window).left();
     if (oldX <= newX) {
         // try another Xinerama screen
         newX = space_window_area(space,
-                                 MaximizeArea,
+                                 area_option::maximize,
                                  QPoint(window->geo.update.frame.left() - 1,
                                         window->geo.update.frame.center().y()),
                                  get_desktop(*window))
@@ -64,12 +64,12 @@ int get_pack_position_left(Space const& space, Win const* window, int oldX, bool
 template<typename Space, typename Win>
 int get_pack_position_right(Space const& space, Win const* window, int oldX, bool rightEdge)
 {
-    int newX = space_window_area(space, MaximizeArea, window).right();
+    int newX = space_window_area(space, area_option::maximize, window).right();
 
     if (oldX >= newX) {
         // try another Xinerama screen
         newX = space_window_area(space,
-                                 MaximizeArea,
+                                 area_option::maximize,
                                  QPoint(window->geo.update.frame.right() + 1,
                                         window->geo.update.frame.center().y()),
                                  get_desktop(*window))
@@ -113,11 +113,11 @@ int get_pack_position_right(Space const& space, Win const* window, int oldX, boo
 template<typename Space, typename Win>
 int get_pack_position_up(Space const& space, Win const* window, int oldY, bool topEdge)
 {
-    int newY = space_window_area(space, MaximizeArea, window).top();
+    int newY = space_window_area(space, area_option::maximize, window).top();
     if (oldY <= newY) {
         // try another Xinerama screen
         newY = space_window_area(space,
-                                 MaximizeArea,
+                                 area_option::maximize,
                                  QPoint(window->geo.update.frame.center().x(),
                                         window->geo.update.frame.top() - 1),
                                  get_desktop(*window))
@@ -155,10 +155,10 @@ int get_pack_position_up(Space const& space, Win const* window, int oldY, bool t
 template<typename Space, typename Win>
 int get_pack_position_down(Space const& space, Win const* window, int oldY, bool bottomEdge)
 {
-    int newY = space_window_area(space, MaximizeArea, window).bottom();
+    int newY = space_window_area(space, area_option::maximize, window).bottom();
     if (oldY >= newY) { // try another Xinerama screen
         newY = space_window_area(space,
-                                 MaximizeArea,
+                                 area_option::maximize,
                                  QPoint(window->geo.update.frame.center().x(),
                                         window->geo.update.frame.bottom() + 1),
                                  get_desktop(*window))
@@ -205,7 +205,7 @@ QSize constrain_and_adjust_size(Win* win, QSize const& size)
     auto width = size.width();
     auto height = size.height();
 
-    auto const area = space_window_area(win->space, WorkArea, win);
+    auto const area = space_window_area(win->space, area_option::work, win);
 
     width = std::min(width, area.width());
     height = std::min(height, area.height());
@@ -242,7 +242,7 @@ void grow_horizontal(Win* win)
         // TODO this may be wrong?
         auto const area = space_window_area(
             win->space,
-            MovementArea,
+            area_option::movement,
             QPoint((win->geo.pos().x() + grown_right) / 2, win->geo.frame.center().y()),
             get_desktop(*win));
         if (area.right() >= grown_right) {
@@ -302,7 +302,7 @@ void grow_vertical(Win* win)
         // check that it hasn't grown outside of the area, due to size increments
         auto const area = space_window_area(
             win->space,
-            MovementArea,
+            area_option::movement,
             QPoint(win->geo.frame.center().x(), (win->geo.pos().y() + newbottom) / 2),
             get_desktop(*win));
         if (area.bottom() >= newbottom) {

@@ -210,6 +210,17 @@ enum class win_op {
     application_rules,
 };
 
+enum class area_option {
+    placement,
+    movement,
+    maximize,
+    maximize_full,
+    fullscreen,
+    work,
+    full,
+    screen,
+};
+
 // DesktopMode and WindowsMode are based on the order in which the desktop
 //  or window were viewed. DesktopListMode lists them in the order created.
 enum class tabbox_mode {

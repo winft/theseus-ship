@@ -52,7 +52,7 @@ void check_workspace_position(Win* win,
     }
 
     if (win->geo.update.fullscreen) {
-        auto area = space_window_area(win->space, FullScreenArea, win);
+        auto area = space_window_area(win->space, area_option::fullscreen, win);
         win->setFrameGeometry(area);
         return;
     }
@@ -61,7 +61,7 @@ void check_workspace_position(Win* win,
         geometry_updates_blocker block(win);
 
         win->update_maximized(win->geo.update.max_mode);
-        auto const screenArea = space_window_area(win->space, ScreenArea, win);
+        auto const screenArea = space_window_area(win->space, area_option::screen, win);
 
         auto geo = pending_frame_geometry(win);
         check_offscreen_position(geo, screenArea);
@@ -119,8 +119,8 @@ void check_workspace_position(Win* win,
             }
         }
     } else {
-        old_screen_area
-            = space_window_area(win->space, ScreenArea, old_frame_geo.center(), oldDesktop);
+        old_screen_area = space_window_area(
+            win->space, area_option::screen, old_frame_geo.center(), oldDesktop);
     }
 
     // With full screen height.
@@ -137,7 +137,7 @@ void check_workspace_position(Win* win,
     auto old_left_max = old_screen_area.x();
 
     auto const screenArea = space_window_area(
-        win->space, ScreenArea, pending_frame_geometry(win).center(), get_desktop(*win));
+        win->space, area_option::screen, pending_frame_geometry(win).center(), get_desktop(*win));
 
     auto top_max = screenArea.y();
     auto right_max = screenArea.x() + screenArea.width();
@@ -354,8 +354,10 @@ QPoint adjust_window_position(Space const& space,
     auto guideMaximized = maximize_mode::restore;
 
     if (window.maximizeMode() != maximize_mode::restore) {
-        maxRect = space_window_area(
-            space, MaximizeArea, pos + QRect({}, window.geo.size()).center(), get_desktop(window));
+        maxRect = space_window_area(space,
+                                    area_option::maximize,
+                                    pos + QRect({}, window.geo.size()).center(),
+                                    get_desktop(window));
         auto geo = window.geo.frame;
         if (flags(window.maximizeMode() & maximize_mode::horizontal)
             && (geo.x() == maxRect.left() || geo.right() == maxRect.right())) {
@@ -377,7 +379,7 @@ QPoint adjust_window_position(Space const& space,
             = base::get_nearest_output(outputs, pos + QRect({}, window.geo.size()).center());
 
         if (maxRect.isNull()) {
-            maxRect = space_window_area(space, MovementArea, output, get_desktop(window));
+            maxRect = space_window_area(space, area_option::movement, output, get_desktop(window));
         }
 
         const int xmin = maxRect.left();
@@ -592,7 +594,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
         const bool sOWO = space.options->qobject->isSnapOnlyWhenOverlapping();
 
         auto const maxRect = space_window_area(space,
-                                               MovementArea,
+                                               area_option::movement,
                                                QRect(QPoint(0, 0), window.geo.size()).center(),
                                                get_desktop(window));
         const int xmin = maxRect.left();

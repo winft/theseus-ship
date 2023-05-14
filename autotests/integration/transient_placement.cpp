@@ -502,8 +502,8 @@ TEST_CASE("transient placement", "[win]")
         plasmaSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
 
         // Placement area still full screen.
-        QVERIFY(win::space_window_area(*setup.base->space, PlacementArea, 0, 1)
-                == win::space_window_area(*setup.base->space, FullScreenArea, 0, 1));
+        QVERIFY(win::space_window_area(*setup.base->space, win::area_option::placement, 0, 1)
+                == win::space_window_area(*setup.base->space, win::area_option::fullscreen, 0, 1));
 
         // Now map the panel and placement area is reduced.
         auto dock = render_and_wait_for_shown(surface, QSize(1280, 50), Qt::blue);
@@ -512,8 +512,8 @@ TEST_CASE("transient placement", "[win]")
         QVERIFY(win::is_dock(dock));
         QCOMPARE(dock->geo.frame, QRect(0, get_output(0)->geometry().height() - 50, 1280, 50));
         QCOMPARE(dock->hasStrut(), true);
-        QVERIFY(win::space_window_area(*setup.base->space, PlacementArea, 0, 1)
-                != win::space_window_area(*setup.base->space, FullScreenArea, 0, 1));
+        QVERIFY(win::space_window_area(*setup.base->space, win::area_option::placement, 0, 1)
+                != win::space_window_area(*setup.base->space, win::area_option::fullscreen, 0, 1));
 
         // Create parent
         auto parentSurface = create_surface();
@@ -527,7 +527,9 @@ TEST_CASE("transient placement", "[win]")
 
         win::move(parent, {0, get_output(0)->geometry().height() - 300});
         win::keep_in_area(
-            parent, win::space_window_area(*setup.base->space, PlacementArea, parent), false);
+            parent,
+            win::space_window_area(*setup.base->space, win::area_option::placement, parent),
+            false);
         QCOMPARE(parent->geo.frame,
                  QRect(0, get_output(0)->geometry().height() - 600 - 50, 800, 600));
 

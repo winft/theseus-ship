@@ -1183,20 +1183,22 @@ public:
             auto screenImpl = static_cast<effect_screen_impl<base::output> const*>(screen);
             output = static_cast<typename base_t::output_t*>(screenImpl->platformOutput());
         }
-        return win::space_window_area(*scene.platform.base.space, opt, output, desktop);
+        return win::space_window_area(
+            *scene.platform.base.space, static_cast<win::area_option>(opt), output, desktop);
     }
 
     QRect clientArea(clientAreaOption opt, const EffectWindow* eff_win) const override
     {
         return std::visit(overload{[&, this](auto&& win) {
                               if (win->control) {
-                                  return win::space_window_area(
-                                      *scene.platform.base.space, opt, win);
+                                  return win::space_window_area(*scene.platform.base.space,
+                                                                static_cast<win::area_option>(opt),
+                                                                win);
                               }
 
                               return win::space_window_area(
                                   *scene.platform.base.space,
-                                  opt,
+                                  static_cast<win::area_option>(opt),
                                   win->geo.frame.center(),
                                   scene.platform.base.space->virtual_desktop_manager->current());
                           }},
@@ -1205,7 +1207,8 @@ public:
 
     QRect clientArea(clientAreaOption opt, const QPoint& p, int desktop) const override
     {
-        return win::space_window_area(*scene.platform.base.space, opt, p, desktop);
+        return win::space_window_area(
+            *scene.platform.base.space, static_cast<win::area_option>(opt), p, desktop);
     }
 
     QSize virtualScreenSize() const override

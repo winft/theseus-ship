@@ -1817,7 +1817,7 @@ private:
 
         auto const& outputs = space.base.outputs;
         auto const geo = window->geo.frame;
-        auto const fullArea = space_window_area(space, FullArea, 0, 1);
+        auto const fullArea = space_window_area(space, area_option::full, 0, 1);
         base::output* foundOutput = nullptr;
 
         for (auto output : outputs) {

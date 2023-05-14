@@ -49,8 +49,8 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
             return false;
         };
 
-        auto area
-            = space_window_area(win->space, MaximizeArea, QPoint(xroot, yroot), get_desktop(*win));
+        auto area = space_window_area(
+            win->space, area_option::maximize, QPoint(xroot, yroot), get_desktop(*win));
         if (win->space.options->qobject->electricBorderTiling()) {
             if (xroot <= area.x() + 20) {
                 mode |= quicktiles::left;
@@ -126,7 +126,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         } else {
             win->control->quicktiling = quicktiles::maximize;
             set_maximize(win, true, true);
-            auto clientArea = space_window_area(win->space, MaximizeArea, win);
+            auto clientArea = space_window_area(win->space, area_option::maximize, win);
 
             if (auto frame_geo = pending_frame_geometry(win); frame_geo.top() != clientArea.top()) {
                 frame_geo.moveTop(clientArea.top());

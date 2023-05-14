@@ -164,7 +164,7 @@ public:
                                   scripting::output* output,
                                   win::virtual_desktop* desktop) const
     {
-        return client_area_impl(static_cast<clientAreaOption>(option), output, desktop);
+        return client_area_impl(static_cast<win::area_option>(option), output, desktop);
     }
 
     /**
@@ -174,13 +174,13 @@ public:
      */
     Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, KWin::scripting::window* window) const
     {
-        return client_area_impl(static_cast<clientAreaOption>(option), window);
+        return client_area_impl(static_cast<win::area_option>(option), window);
     }
 
     Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
                                   KWin::scripting::window const* window) const
     {
-        return client_area_impl(static_cast<clientAreaOption>(option), window);
+        return client_area_impl(static_cast<win::area_option>(option), window);
     }
 
     /**
@@ -392,12 +392,12 @@ protected:
     space() = default;
     virtual output* screen_at_impl(QPointF const& pos) const = 0;
 
-    virtual QRect client_area_impl(clientAreaOption option,
+    virtual QRect client_area_impl(win::area_option option,
                                    scripting::output* output,
                                    win::virtual_desktop* desktop) const
         = 0;
-    virtual QRect client_area_impl(clientAreaOption option, window* window) const = 0;
-    virtual QRect client_area_impl(clientAreaOption option, window const* window) const = 0;
+    virtual QRect client_area_impl(win::area_option option, window* window) const = 0;
+    virtual QRect client_area_impl(win::area_option option, window const* window) const = 0;
 
     virtual QString desktop_name_impl(int desktop) const = 0;
     virtual void create_desktop_impl(int position, QString const& name) const = 0;
@@ -861,7 +861,7 @@ protected:
         return ret;
     }
 
-    QRect client_area_impl(clientAreaOption option,
+    QRect client_area_impl(win::area_option option,
                            scripting::output* output,
                            win::virtual_desktop* desktop) const override
     {
@@ -873,7 +873,7 @@ protected:
             *ref_space, option, &out_impl->ref_out, desktop->x11DesktopNumber());
     }
 
-    QRect client_area_impl(clientAreaOption option, window* win) const override
+    QRect client_area_impl(win::area_option option, window* win) const override
     {
         return std::visit(overload{[&, this](auto&& ref_win) {
                               return win::space_window_area(*ref_space, option, ref_win);
@@ -881,7 +881,7 @@ protected:
                           static_cast<window_t*>(win)->client());
     }
 
-    QRect client_area_impl(clientAreaOption option, window const* win) const override
+    QRect client_area_impl(win::area_option option, window const* win) const override
     {
         return std::visit(overload{[&, this](auto&& ref_win) {
                               return win::space_window_area(*ref_space, option, ref_win);

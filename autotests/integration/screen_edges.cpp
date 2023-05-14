@@ -779,7 +779,7 @@ TEST_CASE("screen edges", "[input],[win]")
         client->setFrameGeometry(QRect(2, 2, 20, 20));
 
         // for none of the edges it should be able to be set
-        for (int i = 0; i < static_cast<int>(win::electric_border::_COUNT); ++i) {
+        for (size_t i = 0; i < static_cast<size_t>(win::electric_border::_COUNT); ++i) {
             client->hideClient(true);
             screenEdges->reserve(client, static_cast<win::electric_border>(i));
 

@@ -292,8 +292,10 @@ public:
         uint64_t serial = 0;
 
         if (toplevel) {
-            auto const bounds = space_window_area(
-                this->space, control->fullscreen ? FullScreenArea : PlacementArea, this);
+            auto const bounds = space_window_area(this->space,
+                                                  control->fullscreen ? area_option::fullscreen
+                                                                      : area_option::placement,
+                                                  this);
             toplevel->configure_bounds(bounds.size());
             serial = toplevel->configure(xdg_surface_states(*this), window_geo.size());
         }
@@ -301,10 +303,11 @@ public:
             auto parent = this->transient->lead();
             if (parent) {
                 auto const top_lead = lead_of_annexed_transient(this);
-                auto const bounds = space_window_area(this->space,
-                                                      top_lead->control->fullscreen ? FullScreenArea
-                                                                                    : PlacementArea,
-                                                      top_lead);
+                auto const bounds
+                    = space_window_area(this->space,
+                                        top_lead->control->fullscreen ? area_option::fullscreen
+                                                                      : area_option::placement,
+                                        top_lead);
 
                 serial = popup->configure(
                     xdg_shell_get_popup_placement(*this, bounds).translated(-top_lead->geo.pos()));
@@ -384,10 +387,10 @@ public:
                 return;
             }
 
-            auto const screen_bounds
-                = space_window_area(this->space,
-                                    toplevel->control->fullscreen ? FullScreenArea : PlacementArea,
-                                    toplevel);
+            auto const screen_bounds = space_window_area(
+                this->space,
+                toplevel->control->fullscreen ? area_option::fullscreen : area_option::placement,
+                toplevel);
 
             // Need to set that for get_xdg_shell_popup_placement(..) call.
             // TODO(romangg): make this less akward, i.e. if possible include it in the call.
@@ -1298,14 +1301,14 @@ public:
                 if (!isInitialPositionSet()) {
                     must_place = false;
                     auto const area = space_window_area(this->space,
-                                                        PlacementArea,
+                                                        area_option::placement,
                                                         get_current_output(this->space),
                                                         get_desktop(*this));
                     place_in_area(this, area);
                 } else if (plasma_shell_surface && plasma_shell_surface->open_under_cursor()) {
                     must_place = false;
                     auto const area = space_window_area(this->space,
-                                                        PlacementArea,
+                                                        area_option::placement,
                                                         this->space.input->cursor->pos(),
                                                         get_desktop(*this));
                     auto size = this->geo.size();

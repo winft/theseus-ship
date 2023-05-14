@@ -177,7 +177,7 @@ void shortcut_dialog_create(Space& space, Win* window)
                      space.qobject.get(),
                      [&space](auto&& ok) { shortcut_dialog_done(space, ok); });
 
-    auto area = space_window_area(space, ScreenArea, window);
+    auto area = space_window_area(space, area_option::screen, window);
     auto size = space.client_keys_dialog->sizeHint();
 
     auto pos = win::frame_to_client_pos(window, window->geo.pos());

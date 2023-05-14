@@ -349,8 +349,10 @@ public:
             window->updateDecoration(false);
             update_layer(window);
 
-            auto const area = space_window_area(
-                *this, PlacementArea, get_current_output(window->space), get_desktop(*window));
+            auto const area = space_window_area(*this,
+                                                area_option::placement,
+                                                get_current_output(window->space),
+                                                get_desktop(*window));
             auto placementDone = false;
 
             if (window->isInitialPositionSet()) {

@@ -95,7 +95,7 @@ bool do_start_move_resize(Win& win)
     // This reportedly improves smoothness of the moveresize operation,
     // something with Enter/LeaveNotify events, looks like XFree performance problem or
     // something *shrug* (https://lists.kde.org/?t=107302193400001&r=1&w=2)
-    auto r = space_window_area(win.space, FullArea, &win);
+    auto r = space_window_area(win.space, area_option::full, &win);
 
     win.xcb_windows.grab.create(win.space.base.x11_data.connection,
                                 win.space.base.x11_data.root_window,

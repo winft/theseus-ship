@@ -18,11 +18,11 @@ QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
         if (win->maximizeMode() == maximize_mode::full) {
             return win->geo.restore.max;
         } else {
-            return space_window_area(win->space, MaximizeArea, pos, desktop);
+            return space_window_area(win->space, area_option::maximize, pos, desktop);
         }
     }
 
-    auto ret = space_window_area(win->space, MaximizeArea, pos, desktop);
+    auto ret = space_window_area(win->space, area_option::maximize, pos, desktop);
 
     if (flags(win->control->electric & win::quicktiles::left)) {
         ret.setRight(ret.left() + ret.width() / 2 - 1);

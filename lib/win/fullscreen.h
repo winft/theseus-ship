@@ -27,7 +27,7 @@ QRect rectify_fullscreen_restore_geometry(Win* win)
         return win->geo.restore.max;
     }
 
-    auto const client_area = space_window_area(win->space, PlacementArea, win);
+    auto const client_area = space_window_area(win->space, area_option::placement, win);
     auto const frame_size = win->control->adjusted_frame_size(client_area.size() * 2 / 3.,
                                                               win::size_mode::fixed_height);
 
@@ -68,7 +68,7 @@ void update_fullscreen_enable(Win* win)
     if (!win->geo.restore.max.isValid()) {
         win->geo.restore.max = win->geo.update.frame;
     }
-    win->setFrameGeometry(space_window_area(win->space, FullScreenArea, win));
+    win->setFrameGeometry(space_window_area(win->space, area_option::fullscreen, win));
 }
 
 template<typename Win>

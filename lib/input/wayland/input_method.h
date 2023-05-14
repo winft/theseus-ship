@@ -92,7 +92,8 @@ private:
         auto const toplevel = win::lead_of_annexed_transient(parent_window);
         auto const& screen_bounds
             = win::space_window_area(redirect.space,
-                                     toplevel->control->fullscreen ? FullScreenArea : PlacementArea,
+                                     toplevel->control->fullscreen ? win::area_option::fullscreen
+                                                                   : win::area_option::placement,
                                      toplevel);
 
         auto const& text_area = cursor_rectangle.isValid() ? cursor_rectangle : QRect(0, 0, 0, 0);
