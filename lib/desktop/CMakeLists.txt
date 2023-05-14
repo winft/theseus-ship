@@ -21,6 +21,10 @@ qt6_add_dbus_interface(
 )
 
 target_sources(desktop
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      screen_locker_watcher.h
   PRIVATE
     screen_locker_watcher.cpp
     ${desktop_dbus_src}
@@ -49,6 +53,10 @@ target_link_libraries(desktop-kde
 )
 
 target_sources(desktop-kde
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      kde/service_utils.h
   PRIVATE
     kde/dbus/kwin.cpp
     ${desktop_kde_dbus_src}
@@ -96,5 +104,26 @@ ecm_install_configured_files(
   @ONLY DESTINATION ${KDE_INSTALL_SYSTEMDUSERUNITDIR}
 )
 
-install(TARGETS desktop ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
-install(TARGETS desktop-kde ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
+install(TARGETS desktop
+  EXPORT desktop-export
+  ${INSTALL_TARGETS_DEFAULT_ARGS}
+  LIBRARY NAMELINK_SKIP
+  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/desktop
+)
+install(TARGETS desktop-kde
+  EXPORT desktop-kde-export
+  ${INSTALL_TARGETS_DEFAULT_ARGS}
+  LIBRARY NAMELINK_SKIP
+  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/desktop
+)
+
+install(EXPORT desktop-export
+  NAMESPACE kwinft::
+  ${INSTALL_TARGETS_DEFAULT_ARGS}
+  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
+)
+install(EXPORT desktop-kde-export
+  NAMESPACE kwinft::
+  ${INSTALL_TARGETS_DEFAULT_ARGS}
+  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
+)

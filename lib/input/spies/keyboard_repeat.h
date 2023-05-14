@@ -7,7 +7,6 @@
 */
 #pragma once
 
-#include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/event_spy.h"
 #include "input/keyboard.h"
@@ -26,9 +25,6 @@ namespace KWin::input
 class KWIN_EXPORT keyboard_repeat_spy_qobject : public QObject
 {
     Q_OBJECT
-public:
-    ~keyboard_repeat_spy_qobject();
-
 Q_SIGNALS:
     void key_repeated(key_event const& event);
 };

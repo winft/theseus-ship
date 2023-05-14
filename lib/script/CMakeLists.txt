@@ -18,6 +18,28 @@ qt6_add_dbus_adaptor(script_dbus_srcs
 )
 
 target_sources(script
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      desktop_background_item.h
+      effect.h
+      effect_loader.h
+      js_engine_global_methods_wrapper.h
+      options.h
+      output.h
+      platform.h
+      screen_edge_handler.h
+      script.h
+      scripting_logging.h
+      script_timer.h
+      shortcut_handler.h
+      singleton_interface.h
+      space.h
+      utils.h
+      virtual_desktop_model.h
+      window.h
+      window_model.h
+      window_thumbnail_item.h
   PRIVATE
     dbus_call.cpp
     desktop_background_item.cpp
@@ -47,7 +69,17 @@ set_target_properties(script PROPERTIES
   OUTPUT_NAME "kwin-script"
 )
 
-install(TARGETS script ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
+install(TARGETS script
+  EXPORT script-export
+  ${INSTALL_TARGETS_DEFAULT_ARGS}
+  LIBRARY NAMELINK_SKIP
+  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/script
+)
+install(EXPORT script-export
+  NAMESPACE kwinft::
+  ${INSTALL_TARGETS_DEFAULT_ARGS}
+  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
+)
 
 if (KWIN_BUILD_KCMS)
   set(kcm_kwin4_genericscripted_SRCS generic_scripted_config.cpp)
