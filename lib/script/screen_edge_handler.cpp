@@ -57,10 +57,11 @@ void screen_edge_handler::enableEdge()
     switch (m_mode) {
     case Mode::Pointer:
         reserved_id = win::singleton_interface::edger->reserve(
-            static_cast<ElectricBorder>(m_edge), [this](auto eb) { return borderActivated(eb); });
+            static_cast<win::electric_border>(m_edge),
+            [this](win::electric_border eb) { return borderActivated(static_cast<Edge>(eb)); });
         break;
     case Mode::Touch:
-        win::singleton_interface::edger->reserve_touch(static_cast<ElectricBorder>(m_edge),
+        win::singleton_interface::edger->reserve_touch(static_cast<win::electric_border>(m_edge),
                                                        m_action);
         break;
     default:
@@ -82,20 +83,20 @@ void screen_edge_handler::disableEdge()
 
     switch (m_mode) {
     case Mode::Pointer:
-        edger->unreserve(static_cast<ElectricBorder>(m_edge), reserved_id);
+        edger->unreserve(static_cast<win::electric_border>(m_edge), reserved_id);
         reserved_id = 0;
         break;
     case Mode::Touch:
-        edger->unreserve_touch(static_cast<ElectricBorder>(m_edge), m_action);
+        edger->unreserve_touch(static_cast<win::electric_border>(m_edge), m_action);
         break;
     default:
         Q_UNREACHABLE();
     }
 }
 
-bool screen_edge_handler::borderActivated(ElectricBorder edge)
+bool screen_edge_handler::borderActivated(Edge edge)
 {
-    if (edge != static_cast<ElectricBorder>(m_edge) || !m_enabled) {
+    if (edge != m_edge || !m_enabled) {
         return false;
     }
     Q_EMIT activated();

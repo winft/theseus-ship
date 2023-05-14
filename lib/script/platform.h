@@ -72,10 +72,11 @@ public:
 
     abstract_script* findScript(const QString& pluginName) const;
 
-    virtual uint32_t reserve(ElectricBorder border, std::function<bool(ElectricBorder)> callback)
+    virtual uint32_t reserve(win::electric_border border,
+                             std::function<bool(win::electric_border)> callback)
         = 0;
-    virtual void unreserve(ElectricBorder border, uint32_t id) = 0;
-    virtual void reserve_touch(ElectricBorder border, QAction* action) = 0;
+    virtual void unreserve(win::electric_border border, uint32_t id) = 0;
+    virtual void reserve_touch(win::electric_border border, QAction* action) = 0;
     virtual void register_shortcut(QKeySequence const& shortcut, QAction* action) = 0;
 
     QQmlEngine* qml_engine;
@@ -188,17 +189,18 @@ public:
         return qt_space.get();
     }
 
-    uint32_t reserve(ElectricBorder border, std::function<bool(ElectricBorder)> callback) override
+    uint32_t reserve(win::electric_border border,
+                     std::function<bool(win::electric_border)> callback) override
     {
         return space.edges->reserve(border, callback);
     }
 
-    void unreserve(ElectricBorder border, uint32_t id) override
+    void unreserve(win::electric_border border, uint32_t id) override
     {
         space.edges->unreserve(border, id);
     }
 
-    void reserve_touch(ElectricBorder border, QAction* action) override
+    void reserve_touch(win::electric_border border, QAction* action) override
     {
         space.edges->reserveTouch(border, action);
     }

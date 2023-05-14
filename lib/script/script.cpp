@@ -375,7 +375,7 @@ bool script::registerScreenEdge(int edge, const QJSValue& callback)
 
     QJSValueList& callbacks = m_screenEdgeCallbacks[edge];
     if (callbacks.isEmpty()) {
-        auto border = static_cast<ElectricBorder>(edge);
+        auto border = static_cast<win::electric_border>(edge);
         auto id = platform.reserve(border, [this](auto eb) { return slotBorderActivated(eb); });
         reserved_borders.insert({border, id});
     }
@@ -392,7 +392,7 @@ bool script::unregisterScreenEdge(int edge)
         return false;
     }
 
-    auto border = static_cast<ElectricBorder>(edge);
+    auto border = static_cast<win::electric_border>(edge);
     if (auto it = reserved_borders.find(border); it != reserved_borders.end()) {
         platform.unreserve(border, it->second);
         reserved_borders.erase(it);
@@ -413,7 +413,7 @@ bool script::registerTouchScreenEdge(int edge, const QJSValue& callback)
     }
 
     QAction* action = new QAction(this);
-    platform.reserve_touch(ElectricBorder(edge), action);
+    platform.reserve_touch(static_cast<win::electric_border>(edge), action);
     m_touchScreenEdgeCallbacks.insert(edge, action);
 
     connect(action, &QAction::triggered, this, [callback]() { QJSValue(callback).call(); });
@@ -464,9 +464,9 @@ QList<QAction*> script::actionsForUserActionMenu(window* window, QMenu* parent)
     return actions;
 }
 
-bool script::slotBorderActivated(ElectricBorder border)
+bool script::slotBorderActivated(win::electric_border border)
 {
-    const QJSValueList callbacks = m_screenEdgeCallbacks.value(border);
+    const QJSValueList callbacks = m_screenEdgeCallbacks.value(static_cast<int>(border));
     if (callbacks.isEmpty()) {
         return false;
     }

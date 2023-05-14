@@ -42,7 +42,7 @@ class KWIN_EXPORT screen_edge_qobject : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
-    void approaching(ElectricBorder border, qreal factor, QRect const& geometry);
+    void approaching(electric_border border, qreal factor, QRect const& geometry);
     void activatesForTouchGestureChanged();
 };
 
@@ -50,7 +50,7 @@ class TouchCallback
 {
 public:
     using CallbackFunction
-        = std::function<void(ElectricBorder border, const QSizeF&, base::output* output)>;
+        = std::function<void(electric_border border, const QSizeF&, base::output* output)>;
     explicit TouchCallback(QAction* touchUpAction, TouchCallback::CallbackFunction progressCallback)
         : m_touchUpAction(touchUpAction)
         , m_progressCallback(progressCallback)
@@ -66,8 +66,9 @@ public:
         return m_touchUpAction;
     }
 
-    void
-    progressCallback(ElectricBorder border, const QSizeF& deltaProgress, base::output* output) const
+    void progressCallback(electric_border border,
+                          const QSizeF& deltaProgress,
+                          base::output* output) const
     {
         if (m_progressCallback) {
             m_progressCallback(border, deltaProgress, output);
@@ -161,36 +162,38 @@ public:
 
     bool isLeft() const
     {
-        return border == ElectricLeft || border == ElectricTopLeft || border == ElectricBottomLeft;
+        return border == electric_border::left || border == electric_border::top_left
+            || border == electric_border::bottom_left;
     }
 
     bool isTop() const
     {
-        return border == ElectricTop || border == ElectricTopLeft || border == ElectricTopRight;
+        return border == electric_border::top || border == electric_border::top_left
+            || border == electric_border::top_right;
     }
 
     bool isRight() const
     {
-        return border == ElectricRight || border == ElectricTopRight
-            || border == ElectricBottomRight;
+        return border == electric_border::right || border == electric_border::top_right
+            || border == electric_border::bottom_right;
     }
 
     bool isBottom() const
     {
-        return border == ElectricBottom || border == ElectricBottomLeft
-            || border == ElectricBottomRight;
+        return border == electric_border::bottom || border == electric_border::bottom_left
+            || border == electric_border::bottom_right;
     }
 
     bool isCorner() const
     {
-        return border == ElectricTopLeft || border == ElectricTopRight
-            || border == ElectricBottomRight || border == ElectricBottomLeft;
+        return border == electric_border::top_left || border == electric_border::top_right
+            || border == electric_border::bottom_right || border == electric_border::bottom_left;
     }
 
     bool isScreenEdge() const
     {
-        return border == ElectricLeft || border == ElectricRight || border == ElectricTop
-            || border == ElectricBottom;
+        return border == electric_border::left || border == electric_border::right
+            || border == electric_border::top || border == electric_border::bottom;
     }
 
     bool triggersFor(QPoint const& cursorPos) const
@@ -277,13 +280,13 @@ public:
         }
     }
 
-    uint32_t reserve_callback(std::function<bool(ElectricBorder)> slot)
+    uint32_t reserve_callback(std::function<bool(electric_border)> slot)
     {
         replace_callback(++edger->callback_id, std::move(slot));
         return edger->callback_id;
     }
 
-    void replace_callback(uint32_t id, std::function<bool(ElectricBorder)> slot)
+    void replace_callback(uint32_t id, std::function<bool(electric_border)> slot)
     {
         callbacks.insert(id, std::move(slot));
         reserve();
@@ -338,20 +341,20 @@ public:
         }
     }
 
-    void setBorder(ElectricBorder border)
+    void setBorder(electric_border border)
     {
         this->border = border;
         switch (border) {
-        case ElectricTop:
+        case electric_border::top:
             gesture->setDirection(swipe_direction::down);
             break;
-        case ElectricRight:
+        case electric_border::right:
             gesture->setDirection(swipe_direction::left);
             break;
-        case ElectricBottom:
+        case electric_border::bottom:
             gesture->setDirection(swipe_direction::up);
             break;
-        case ElectricLeft:
+        case electric_border::left:
             gesture->setDirection(swipe_direction::right);
             break;
         default:
@@ -425,28 +428,28 @@ public:
                 return qMax(qAbs(corner.x() - point.x()), qAbs(corner.y() - point.y()));
             };
             switch (border) {
-            case ElectricTopLeft:
+            case electric_border::top_left:
                 factor = (cornerDistance(approach_geometry.topLeft()) << 8) / edgeDistance;
                 break;
-            case ElectricTopRight:
+            case electric_border::top_right:
                 factor = (cornerDistance(approach_geometry.topRight()) << 8) / edgeDistance;
                 break;
-            case ElectricBottomRight:
+            case electric_border::bottom_right:
                 factor = (cornerDistance(approach_geometry.bottomRight()) << 8) / edgeDistance;
                 break;
-            case ElectricBottomLeft:
+            case electric_border::bottom_left:
                 factor = (cornerDistance(approach_geometry.bottomLeft()) << 8) / edgeDistance;
                 break;
-            case ElectricTop:
+            case electric_border::top:
                 factor = (qAbs(point.y() - approach_geometry.y()) << 8) / edgeDistance;
                 break;
-            case ElectricRight:
+            case electric_border::right:
                 factor = (qAbs(point.x() - approach_geometry.right()) << 8) / edgeDistance;
                 break;
-            case ElectricBottom:
+            case electric_border::bottom:
                 factor = (qAbs(point.y() - approach_geometry.bottom()) << 8) / edgeDistance;
                 break;
-            case ElectricLeft:
+            case electric_border::left:
                 factor = (qAbs(point.x() - approach_geometry.x()) << 8) / edgeDistance;
                 break;
             default:
@@ -541,12 +544,12 @@ public:
         return window;
     }
 
-    void set_pointer_action(ElectricBorderAction action)
+    void set_pointer_action(electric_border_action action)
     {
         pointer_action = action;
     }
 
-    void set_touch_action(ElectricBorderAction action)
+    void set_touch_action(electric_border_action action)
     {
         const bool wasTouch = activatesForTouchGesture();
         touch_action = action;
@@ -572,7 +575,7 @@ public:
         if (!callbacks.isEmpty()) {
             return true;
         }
-        if (pointer_action != ElectricActionNone) {
+        if (pointer_action != electric_border_action::none) {
             return true;
         }
         return false;
@@ -589,7 +592,7 @@ public:
         if (window) {
             return true;
         }
-        if (touch_action != ElectricActionNone) {
+        if (touch_action != electric_border_action::none) {
             return true;
         }
         if (!touch_call_backs.empty()) {
@@ -621,11 +624,11 @@ public:
     std::unique_ptr<screen_edge_qobject> qobject;
 
     QRect geometry;
-    ElectricBorder border{ElectricNone};
+    electric_border border{electric_border::none};
     base::output* m_output;
     std::vector<TouchCallback> touch_call_backs;
     int reserved_count{0};
-    QHash<uint32_t, std::function<bool(ElectricBorder)>> callbacks;
+    QHash<uint32_t, std::function<bool(electric_border)>> callbacks;
 
     bool is_blocked{false};
     bool is_approaching{false};
@@ -746,18 +749,18 @@ private:
         }
     }
 
-    bool handleAction(ElectricBorderAction action)
+    bool handleAction(electric_border_action action)
     {
         switch (action) {
-        case ElectricActionShowDesktop: {
+        case electric_border_action::show_desktop: {
             set_showing_desktop(edger->space, !edger->space.showing_desktop);
             return true;
         }
-        case ElectricActionLockScreen: { // Lock the screen
+        case electric_border_action::lockscreen: { // Lock the screen
             lock_screen_saver_via_dbus();
             return true;
         }
-        case ElectricActionKRunner: { // open krunner
+        case electric_border_action::krunner: { // open krunner
             QDBusConnection::sessionBus().asyncCall(
                 QDBusMessage::createMethodCall(QStringLiteral("org.kde.krunner"),
                                                QStringLiteral("/App"),
@@ -765,7 +768,7 @@ private:
                                                QStringLiteral("display")));
             return true;
         }
-        case ElectricActionApplicationLauncher: {
+        case electric_border_action::application_launcher: {
             QDBusConnection::sessionBus().asyncCall(
                 QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
                                                QStringLiteral("/PlasmaShell"),
@@ -899,8 +902,8 @@ private:
         edger->space.input->cursor->set_pos(x, y);
     }
 
-    ElectricBorderAction pointer_action{ElectricActionNone};
-    ElectricBorderAction touch_action{ElectricActionNone};
+    electric_border_action pointer_action{electric_border_action::none};
+    electric_border_action touch_action{electric_border_action::none};
 
     QDateTime last_trigger_time;
     QDateTime last_reset_time;
@@ -922,7 +925,7 @@ Q_SIGNALS:
      * far away the mouse is from the approaching area. The values are clamped into [0.0,1.0] with
      * @c 0.0 meaning far away from the border, @c 1.0 in trigger distance.
      */
-    void approaching(ElectricBorder border, qreal factor, QRect const& geometry);
+    void approaching(electric_border border, qreal factor, QRect const& geometry);
     void checkBlocking();
 };
 
@@ -1068,7 +1071,7 @@ public:
      * @see unreserve
      * @todo: add pointer to script/effect
      */
-    uint32_t reserve(ElectricBorder border, std::function<bool(ElectricBorder)> callback)
+    uint32_t reserve(electric_border border, std::function<bool(electric_border)> callback)
     {
         auto id = ++callback_id;
         for (auto& edge : edges) {
@@ -1089,7 +1092,7 @@ public:
      * @see reserve
      * @todo: add pointer to script/effect
      */
-    void unreserve(ElectricBorder border, uint32_t id)
+    void unreserve(electric_border border, uint32_t id)
     {
         for (auto& edge : edges) {
             if (edge->border == border) {
@@ -1122,7 +1125,7 @@ public:
      * corners)
      */
     template<typename Win>
-    void reserve(Win* window, ElectricBorder border)
+    void reserve(Win* window, electric_border border)
     {
         using var_win = typename Win::space_t::window_t;
 
@@ -1138,7 +1141,7 @@ public:
             }
         }
 
-        if (border != ElectricNone) {
+        if (border != electric_border::none) {
             createEdgeForClient(window, border);
         } else {
             if (hadBorder) // show again
@@ -1156,7 +1159,7 @@ public:
      * @see unreserveTouch
      * @since 5.10
      */
-    void reserveTouch(ElectricBorder border,
+    void reserveTouch(electric_border border,
                       QAction* action,
                       TouchCallback::CallbackFunction callback = nullptr)
     {
@@ -1172,7 +1175,7 @@ public:
      * @see reserveTouch
      * @since 5.10
      */
-    void unreserveTouch(ElectricBorder border, QAction* action)
+    void unreserveTouch(electric_border border, QAction* action)
     {
         for (auto& edge : edges) {
             if (edge->border == border) {
@@ -1388,38 +1391,39 @@ public:
         cursor_push_back_distance = QSize(pushBack, pushBack);
 
         auto borderConfig = config->group("ElectricBorders");
-        setActionForBorder(ElectricTopLeft,
+        setActionForBorder(electric_border::top_left,
                            &actions.top_left,
                            electricBorderAction(borderConfig.readEntry("TopLeft", "None")));
-        setActionForBorder(
-            ElectricTop, &actions.top, electricBorderAction(borderConfig.readEntry("Top", "None")));
-        setActionForBorder(ElectricTopRight,
+        setActionForBorder(electric_border::top,
+                           &actions.top,
+                           electricBorderAction(borderConfig.readEntry("Top", "None")));
+        setActionForBorder(electric_border::top_right,
                            &actions.top_right,
                            electricBorderAction(borderConfig.readEntry("TopRight", "None")));
-        setActionForBorder(ElectricRight,
+        setActionForBorder(electric_border::right,
                            &actions.right,
                            electricBorderAction(borderConfig.readEntry("Right", "None")));
-        setActionForBorder(ElectricBottomRight,
+        setActionForBorder(electric_border::bottom_right,
                            &actions.bottom_right,
                            electricBorderAction(borderConfig.readEntry("BottomRight", "None")));
-        setActionForBorder(ElectricBottom,
+        setActionForBorder(electric_border::bottom,
                            &actions.bottom,
                            electricBorderAction(borderConfig.readEntry("Bottom", "None")));
-        setActionForBorder(ElectricBottomLeft,
+        setActionForBorder(electric_border::bottom_left,
                            &actions.bottom_left,
                            electricBorderAction(borderConfig.readEntry("BottomLeft", "None")));
-        setActionForBorder(ElectricLeft,
+        setActionForBorder(electric_border::left,
                            &actions.left,
                            electricBorderAction(borderConfig.readEntry("Left", "None")));
 
         borderConfig = config->group("TouchEdges");
-        setActionForTouchBorder(ElectricTop,
+        setActionForTouchBorder(electric_border::top,
                                 electricBorderAction(borderConfig.readEntry("Top", "None")));
-        setActionForTouchBorder(ElectricRight,
+        setActionForTouchBorder(electric_border::right,
                                 electricBorderAction(borderConfig.readEntry("Right", "None")));
-        setActionForTouchBorder(ElectricBottom,
+        setActionForTouchBorder(electric_border::bottom,
                                 electricBorderAction(borderConfig.readEntry("Bottom", "None")));
-        setActionForTouchBorder(ElectricLeft,
+        setActionForTouchBorder(electric_border::left,
                                 electricBorderAction(borderConfig.readEntry("Left", "None")));
     }
 
@@ -1463,19 +1467,19 @@ public:
             for (QRect const& screenPart : screen) {
                 if (isLeftScreen(screenPart, fullArea)) {
                     // left most screen
-                    createVerticalEdge(ElectricLeft, screenPart, fullArea, output);
+                    createVerticalEdge(electric_border::left, screenPart, fullArea, output);
                 }
                 if (isRightScreen(screenPart, fullArea)) {
                     // right most screen
-                    createVerticalEdge(ElectricRight, screenPart, fullArea, output);
+                    createVerticalEdge(electric_border::right, screenPart, fullArea, output);
                 }
                 if (isTopScreen(screenPart, fullArea)) {
                     // top most screen
-                    createHorizontalEdge(ElectricTop, screenPart, fullArea, output);
+                    createHorizontalEdge(electric_border::top, screenPart, fullArea, output);
                 }
                 if (isBottomScreen(screenPart, fullArea)) {
                     // bottom most screen
-                    createHorizontalEdge(ElectricBottom, screenPart, fullArea, output);
+                    createHorizontalEdge(electric_border::bottom, screenPart, fullArea, output);
                 }
             }
         }
@@ -1515,14 +1519,14 @@ public:
     QSize cursor_push_back_distance;
 
     struct {
-        ElectricBorderAction top_left{ElectricActionNone};
-        ElectricBorderAction top{ElectricActionNone};
-        ElectricBorderAction top_right{ElectricActionNone};
-        ElectricBorderAction right{ElectricActionNone};
-        ElectricBorderAction bottom_right{ElectricActionNone};
-        ElectricBorderAction bottom{ElectricActionNone};
-        ElectricBorderAction bottom_left{ElectricActionNone};
-        ElectricBorderAction left{ElectricActionNone};
+        electric_border_action top_left{electric_border_action::none};
+        electric_border_action top{electric_border_action::none};
+        electric_border_action top_right{electric_border_action::none};
+        electric_border_action right{electric_border_action::none};
+        electric_border_action bottom_right{electric_border_action::none};
+        electric_border_action bottom{electric_border_action::none};
+        electric_border_action bottom_left{electric_border_action::none};
+        electric_border_action left{electric_border_action::none};
     } actions;
 
     struct {
@@ -1559,12 +1563,12 @@ private:
     // How large the touch target of the area recognizing touch gestures is
     static const int TOUCH_TARGET = 3;
 
-    void createHorizontalEdge(ElectricBorder border,
+    void createHorizontalEdge(electric_border border,
                               QRect const& screen,
                               QRect const& fullArea,
                               base::output* output)
     {
-        if (border != ElectricTop && border != ElectricBottom) {
+        if (border != electric_border::top && border != electric_border::bottom) {
             return;
         }
         int x = screen.x();
@@ -1582,38 +1586,40 @@ private:
             // An overlap with another output is near complete. We ignore this border.
             return;
         }
-        int const y
-            = (border == ElectricTop) ? screen.y() : screen.y() + screen.height() - TOUCH_TARGET;
+        int const y = (border == electric_border::top)
+            ? screen.y()
+            : screen.y() + screen.height() - TOUCH_TARGET;
         edges.push_back(createEdge(border, x, y, width, TOUCH_TARGET, output));
     }
 
-    void createVerticalEdge(ElectricBorder border,
+    void createVerticalEdge(electric_border border,
                             QRect const& screen,
                             QRect const& fullArea,
                             base::output* output)
     {
-        if (border != ElectricRight && border != KWin::ElectricLeft) {
+        if (border != electric_border::right && border != electric_border::left) {
             return;
         }
         int y = screen.y();
         int height = screen.height();
-        int const x
-            = (border == ElectricLeft) ? screen.x() : screen.x() + screen.width() - TOUCH_TARGET;
+        int const x = (border == electric_border::left)
+            ? screen.x()
+            : screen.x() + screen.width() - TOUCH_TARGET;
         if (isTopScreen(screen, fullArea)) {
             // also top most screen
             height -= corner_offset;
             y += corner_offset;
             // create top left/right edge
-            ElectricBorder const edge
-                = (border == ElectricLeft) ? ElectricTopLeft : ElectricTopRight;
+            auto const edge = (border == electric_border::left) ? electric_border::top_left
+                                                                : electric_border::top_right;
             edges.push_back(createEdge(edge, x, screen.y(), TOUCH_TARGET, TOUCH_TARGET, output));
         }
         if (isBottomScreen(screen, fullArea)) {
             // also bottom most screen
             height -= corner_offset;
             // create bottom left/right edge
-            ElectricBorder const edge
-                = (border == ElectricLeft) ? ElectricBottomLeft : ElectricBottomRight;
+            auto const edge = (border == electric_border::left) ? electric_border::bottom_left
+                                                                : electric_border::bottom_right;
             edges.push_back(createEdge(edge,
                                        x,
                                        screen.y() + screen.height() - TOUCH_TARGET,
@@ -1628,7 +1634,7 @@ private:
         edges.push_back(createEdge(border, x, y, TOUCH_TARGET, height, output));
     }
 
-    std::unique_ptr<screen_edge<screen_edger>> createEdge(ElectricBorder border,
+    std::unique_ptr<screen_edge<screen_edger>> createEdge(electric_border border,
                                                           int x,
                                                           int y,
                                                           int width,
@@ -1646,13 +1652,13 @@ private:
         edge->setGeometry(QRect(x, y, width, height));
         edge->setOutput(output);
         if (createAction) {
-            ElectricBorderAction const action = actionForEdge(*edge);
-            if (action != KWin::ElectricActionNone) {
+            auto const action = actionForEdge(*edge);
+            if (action != electric_border_action::none) {
                 edge->reserve();
                 edge->set_pointer_action(action);
             }
-            ElectricBorderAction const touchAction = actionForTouchEdge(*edge);
-            if (touchAction != KWin::ElectricActionNone) {
+            auto const touchAction = actionForTouchEdge(*edge);
+            if (touchAction != electric_border_action::none) {
                 edge->reserve();
                 edge->set_touch_action(touchAction);
             }
@@ -1684,14 +1690,14 @@ private:
         return edge;
     }
 
-    void setActionForBorder(ElectricBorder border,
-                            ElectricBorderAction* oldValue,
-                            ElectricBorderAction newValue)
+    void setActionForBorder(electric_border border,
+                            electric_border_action* oldValue,
+                            electric_border_action newValue)
     {
         if (*oldValue == newValue) {
             return;
         }
-        if (*oldValue == ElectricActionNone) {
+        if (*oldValue == electric_border_action::none) {
             // have to reserve
             for (auto& edge : edges) {
                 if (edge->border == border) {
@@ -1699,7 +1705,7 @@ private:
                 }
             }
         }
-        if (newValue == ElectricActionNone) {
+        if (newValue == electric_border_action::none) {
             // have to unreserve
             for (auto& edge : edges) {
                 if (edge->border == border) {
@@ -1716,17 +1722,17 @@ private:
         }
     }
 
-    void setActionForTouchBorder(ElectricBorder border, ElectricBorderAction newValue)
+    void setActionForTouchBorder(electric_border border, electric_border_action newValue)
     {
         auto it = touch_call_backs.find(border);
-        ElectricBorderAction oldValue = ElectricActionNone;
+        auto oldValue = electric_border_action::none;
         if (it != touch_call_backs.end()) {
             oldValue = it.value();
         }
         if (oldValue == newValue) {
             return;
         }
-        if (oldValue == ElectricActionNone) {
+        if (oldValue == electric_border_action::none) {
             // have to reserve
             for (auto& edge : edges) {
                 if (edge->border == border) {
@@ -1734,7 +1740,7 @@ private:
                 }
             }
         }
-        if (newValue == ElectricActionNone) {
+        if (newValue == electric_border_action::none) {
             // have to unreserve
             for (auto& edge : edges) {
                 if (edge->border == border) {
@@ -1760,49 +1766,49 @@ private:
     }
 
     template<typename Edge>
-    ElectricBorderAction actionForEdge(Edge& edge) const
+    electric_border_action actionForEdge(Edge& edge) const
     {
         switch (edge.border) {
-        case ElectricTopLeft:
+        case electric_border::top_left:
             return actions.top_left;
-        case ElectricTop:
+        case electric_border::top:
             return actions.top;
-        case ElectricTopRight:
+        case electric_border::top_right:
             return actions.top_right;
-        case ElectricRight:
+        case electric_border::right:
             return actions.right;
-        case ElectricBottomRight:
+        case electric_border::bottom_right:
             return actions.bottom_right;
-        case ElectricBottom:
+        case electric_border::bottom:
             return actions.bottom;
-        case ElectricBottomLeft:
+        case electric_border::bottom_left:
             return actions.bottom_left;
-        case ElectricLeft:
+        case electric_border::left:
             return actions.left;
         default:
             // fall through
             break;
         }
-        return ElectricActionNone;
+        return electric_border_action::none;
     }
 
     template<typename Edge>
-    ElectricBorderAction actionForTouchEdge(Edge& edge) const
+    electric_border_action actionForTouchEdge(Edge& edge) const
     {
         auto it = touch_call_backs.find(edge.border);
         if (it != touch_call_backs.end()) {
             return it.value();
         }
-        return ElectricActionNone;
+        return electric_border_action::none;
     }
 
-    ElectricBorderAction actionForTouchBorder(ElectricBorder border) const
+    electric_border_action actionForTouchBorder(electric_border border) const
     {
         return touch_call_backs.value(border);
     }
 
     template<typename Win>
-    void createEdgeForClient(Win* window, ElectricBorder border)
+    void createEdgeForClient(Win* window, electric_border border)
     {
         int y = 0;
         int x = 0;
@@ -1829,7 +1835,7 @@ private:
             bool const bordersBottom = (screen.y() + screen.height() == geo.y() + geo.height());
             bool const bordersRight = (screen.x() + screen.width() == geo.x() + geo.width());
 
-            if (bordersTop && border == ElectricTop) {
+            if (bordersTop && border == electric_border::top) {
                 if (!isTopScreen(screen, fullArea)) {
                     continue;
                 }
@@ -1839,7 +1845,7 @@ private:
                 width = geo.width();
                 break;
             }
-            if (bordersBottom && border == ElectricBottom) {
+            if (bordersBottom && border == electric_border::bottom) {
                 if (!isBottomScreen(screen, fullArea)) {
                     continue;
                 }
@@ -1849,7 +1855,7 @@ private:
                 width = geo.width();
                 break;
             }
-            if (bordersLeft && border == ElectricLeft) {
+            if (bordersLeft && border == electric_border::left) {
                 if (!isLeftScreen(screen, fullArea)) {
                     continue;
                 }
@@ -1859,7 +1865,7 @@ private:
                 height = geo.height();
                 break;
             }
-            if (bordersRight && border == ElectricRight) {
+            if (bordersRight && border == electric_border::right) {
                 if (!isRightScreen(screen, fullArea)) {
                     continue;
                 }
@@ -1894,19 +1900,19 @@ private:
         }
     }
 
-    static ElectricBorderAction electricBorderAction(const QString& name)
+    static electric_border_action electricBorderAction(const QString& name)
     {
         QString lowerName = name.toLower();
         if (lowerName == QStringLiteral("showdesktop")) {
-            return ElectricActionShowDesktop;
+            return electric_border_action::show_desktop;
         } else if (lowerName == QStringLiteral("lockscreen")) {
-            return ElectricActionLockScreen;
+            return electric_border_action::lockscreen;
         } else if (lowerName == QLatin1String("krunner")) {
-            return ElectricActionKRunner;
+            return electric_border_action::krunner;
         } else if (lowerName == QLatin1String("applicationlauncher")) {
-            return ElectricActionApplicationLauncher;
+            return electric_border_action::application_launcher;
         }
-        return ElectricActionNone;
+        return electric_border_action::none;
     }
 
     bool isLeftScreen(QRect const& screen, QRect const& fullArea) const
@@ -2036,7 +2042,7 @@ private:
 
     Qt::Orientations virtual_desktop_layout{};
 
-    QMap<ElectricBorder, ElectricBorderAction> touch_call_backs;
+    QMap<electric_border, electric_border_action> touch_call_backs;
     bool m_remainActiveOnFullscreen{false};
 
     screen_edger_singleton singleton;

@@ -59,42 +59,42 @@ SPDX-License-Identifier: GPL-2.0-or-later
     </group>
     <group name="Effect-windowview">
         <entry key="BorderActivateAll" type="IntList">
-            <default>ElectricTopLeft</default>
+            <default>int(win::electric_border::top_left)</default>
         </entry>
         <entry name="BorderActivatePresentWindows" key="BorderActivate" type="IntList">
-            <default>ElectricNone</default>
+            <default>int(win::electric_border::none)</default>
         </entry>
         <entry key="BorderActivateClass" type="IntList">
-            <default>ElectricNone</default>
+            <default>int(win::electric_border::none)</default>
         </entry>
     </group>
     <group name="Effect-DesktopGrid">
         <entry name="BorderActivateDesktopGrid" key="BorderActivate" type="IntList">
-            <default>ElectricNone</default>
+            <default>int(win::electric_border::none)</default>
         </entry>
     </group>
     <group name="Effect-Cube">
         <entry name="BorderActivateCube" key="BorderActivate" type="IntList">
-            <default>ElectricNone</default>
+            <default>int(win::electric_border::none)</default>
         </entry>
         <entry key="BorderActivateCylinder" type="IntList">
-            <default>ElectricNone</default>
+            <default>int(win::electric_border::none)</default>
         </entry>
         <entry key="BorderActivateSphere" type="IntList">
-            <default>ElectricNone</default>
+            <default>int(win::electric_border::none)</default>
         </entry>
     </group>
     <group name="Effect-Overview">
         <entry name="BorderActivateOverview" key="BorderActivate" type="IntList">
-            <default>ElectricNone</default>
+            <default>int(win::electric_border::none)</default>
         </entry>
     </group>
     <group name="TabBox">
         <entry name="BorderActivateTabBox" key="BorderActivate" type="IntList">
-            <default>ElectricLeft</default>
+            <default>int(win::electric_border::left)</default>
         </entry>
         <entry key="BorderAlternativeActivate" type="IntList">
-            <default>ElectricNone</default>
+            <default>int(win::electric_border::none)</default>
         </entry>
     </group>
     <group name="ScreenEdges">

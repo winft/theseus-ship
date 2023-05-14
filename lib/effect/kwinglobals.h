@@ -47,31 +47,4 @@ enum clientAreaOption {
     ScreenArea // one whole screen, ignore struts
 };
 
-enum ElectricBorder {
-    ElectricTop,
-    ElectricTopRight,
-    ElectricRight,
-    ElectricBottomRight,
-    ElectricBottom,
-    ElectricBottomLeft,
-    ElectricLeft,
-    ElectricTopLeft,
-    ELECTRIC_COUNT,
-    ElectricNone
-};
-Q_ENUM_NS(ElectricBorder)
-
-// TODO: Hardcoding is bad, need to add some way of registering global actions to these.
-// When designing the new system we must keep in mind that we have conditional actions
-// such as "only when moving windows" desktop switching that the current global action
-// system doesn't support.
-enum ElectricBorderAction {
-    ElectricActionNone,                // No special action, not set, desktop switch or an effect
-    ElectricActionShowDesktop,         // Show desktop or restore
-    ElectricActionLockScreen,          // Lock screen
-    ElectricActionKRunner,             // Open KRunner
-    ElectricActionApplicationLauncher, // Application Launcher
-    ELECTRIC_ACTION_COUNT
-};
-
 }

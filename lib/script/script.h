@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include "win/types.h"
 #include <kwinglobals.h>
 
 #include <QHash>
@@ -200,7 +201,7 @@ private Q_SLOTS:
     /**
      * Called when any reserve screen edge is triggered.
      */
-    bool slotBorderActivated(ElectricBorder border);
+    bool slotBorderActivated(win::electric_border border);
 
 private:
     /**
@@ -248,7 +249,7 @@ private:
     QDBusMessage m_invocationContext;
     bool m_starting{false};
     QHash<int, QJSValueList> m_screenEdgeCallbacks;
-    std::unordered_map<ElectricBorder, uint32_t> reserved_borders;
+    std::unordered_map<win::electric_border, uint32_t> reserved_borders;
     QHash<int, QAction*> m_touchScreenEdgeCallbacks;
     QJSValueList m_userActionsMenuCallbacks;
     scripting::platform_wrap& platform;

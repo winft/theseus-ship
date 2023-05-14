@@ -86,7 +86,7 @@ Q_SIGNALS:
     void activated();
 
 private Q_SLOTS:
-    bool borderActivated(ElectricBorder edge);
+    bool borderActivated(Edge edge);
 
 private:
     void enableEdge();

@@ -827,7 +827,7 @@ public:
         m_ready = true;
     }
 
-    bool toggle(ElectricBorder eb)
+    bool toggle(electric_border eb)
     {
         if (border_activate_alternative.find(eb) != border_activate_alternative.end()) {
             return toggle_mode(tabbox_mode::windows_alternative);
@@ -1206,7 +1206,7 @@ private:
                 if (!ok) {
                     continue;
                 }
-                auto border = static_cast<ElectricBorder>(i);
+                auto border = static_cast<electric_border>(i);
                 auto id = space.edges->reserve(border, [this](auto eb) { return toggle(eb); });
                 borders.insert({border, id});
             }
@@ -1216,7 +1216,7 @@ private:
         recreate_borders(border_activate_alternative, QStringLiteral("BorderAlternativeActivate"));
 
         auto touch_config = [this, config](const QString& key,
-                                           QHash<ElectricBorder, QAction*>& actions,
+                                           QHash<electric_border, QAction*>& actions,
                                            tabbox_mode mode,
                                            const QStringList& defaults = QStringList{}) {
             // fist erase old config
@@ -1235,8 +1235,8 @@ private:
                 auto a = new QAction(qobject.get());
                 QObject::connect(
                     a, &QAction::triggered, qobject.get(), [this, mode] { toggle_mode(mode); });
-                space.edges->reserveTouch(ElectricBorder(i), a);
-                actions.insert(ElectricBorder(i), a);
+                space.edges->reserveTouch(static_cast<electric_border>(i), a);
+                actions.insert(static_cast<electric_border>(i), a);
             }
         };
         touch_config(QStringLiteral("TouchBorderActivate"), m_touch_activate, tabbox_mode::windows);
@@ -1317,11 +1317,11 @@ private:
     // indicates whether the config is completely loaded
     bool m_ready{false};
 
-    std::unordered_map<ElectricBorder, uint32_t> border_activate;
-    std::unordered_map<ElectricBorder, uint32_t> border_activate_alternative;
+    std::unordered_map<electric_border, uint32_t> border_activate;
+    std::unordered_map<electric_border, uint32_t> border_activate_alternative;
 
-    QHash<ElectricBorder, QAction*> m_touch_activate;
-    QHash<ElectricBorder, QAction*> m_touch_alternative_activate;
+    QHash<electric_border, QAction*> m_touch_activate;
+    QHash<electric_border, QAction*> m_touch_alternative_activate;
     QScopedPointer<base::x11::event_filter> m_x11_event_filter;
 
     static constexpr auto s_windows{kli18n("Walk Through Windows")};

@@ -5,7 +5,7 @@
 File=kwintouchscreensettings.kcfg
 NameSpace=KWin
 ClassName=KWinTouchScreenSettings
-IncludeFiles=kwinglobals.h
+IncludeFiles=win/types.h
 Mutators=true
 DefaultValueGetters=true
 ParentInConstructor=true

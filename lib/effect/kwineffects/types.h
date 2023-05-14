@@ -116,6 +116,20 @@ enum class PinchDirection {
     Contracting,
 };
 
+enum ElectricBorder {
+    ElectricTop,
+    ElectricTopRight,
+    ElectricRight,
+    ElectricBottomRight,
+    ElectricBottom,
+    ElectricBottomLeft,
+    ElectricLeft,
+    ElectricTopLeft,
+    ELECTRIC_COUNT,
+    ElectricNone,
+};
+Q_ENUM_NS(ElectricBorder)
+
 /**
  * Infinite region (i.e. a special region type saying that everything needs to be painted).
  */

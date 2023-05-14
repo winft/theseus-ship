@@ -5,7 +5,7 @@
 File=kwinscreenedgescriptsettings.kcfg
 NameSpace=KWin
 ClassName=KWinScreenEdgeScriptSettings
-IncludeFiles=kwinglobals.h
+IncludeFiles=win/types.h
 Mutators=true
 DefaultValueGetters=true
 ParentInConstructor=true

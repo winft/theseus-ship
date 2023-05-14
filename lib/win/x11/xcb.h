@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/x11/xcb/property.h"
+#include "win/types.h"
 
 namespace KWin::win::x11
 {
@@ -60,25 +61,25 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
     // 0 = autohide
     // 1 = raise in front on activate
 
-    auto const value = property.value<uint32_t>(ElectricNone);
-    auto border = ElectricNone;
+    auto const value = property.value<uint32_t>(static_cast<uint32_t>(electric_border::none));
+    auto border = electric_border::none;
 
     switch (value & 0xFF) {
     case 0:
-        border = ElectricTop;
+        border = electric_border::top;
         break;
     case 1:
-        border = ElectricRight;
+        border = electric_border::right;
         break;
     case 2:
-        border = ElectricBottom;
+        border = electric_border::bottom;
         break;
     case 3:
-        border = ElectricLeft;
+        border = electric_border::left;
         break;
     }
 
-    if (border != ElectricNone) {
+    if (border != electric_border::none) {
         QObject::disconnect(win->notifiers.edge_remove);
         QObject::disconnect(win->notifiers.edge_geometry);
         auto successfullyHidden = false;
@@ -92,7 +93,7 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
             win->notifiers.edge_remove = QObject::connect(
                 win->qobject.get(), &Win::qobject_t::keepBelowChanged, win->qobject.get(), [win]() {
                     if (!win->control->keep_below) {
-                        win->space.edges->reserve(win, ElectricNone);
+                        win->space.edges->reserve(win, electric_border::none);
                     }
                 });
         } else {
@@ -112,7 +113,7 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
         if (successfullyHidden) {
             win->space.edges->reserve(win, border);
         } else {
-            win->space.edges->reserve(win, ElectricNone);
+            win->space.edges->reserve(win, electric_border::none);
         }
     } else if (!property.is_null() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
@@ -126,7 +127,7 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
 
         // this will call showOnScreenEdge to reset the state
         QObject::disconnect(win->notifiers.edge_geometry);
-        win->space.edges->reserve(win, ElectricNone);
+        win->space.edges->reserve(win, electric_border::none);
     }
 }
 

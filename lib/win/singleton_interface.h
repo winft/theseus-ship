@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "types.h"
+
 #include "kwin_export.h"
 #include "kwinglobals.h"
 
@@ -30,14 +32,14 @@ class virtual_desktop;
 class virtual_desktop_manager_qobject;
 
 struct screen_edger_singleton {
-    using callback_t = std::function<bool(ElectricBorder)>;
-    std::function<uint32_t(ElectricBorder, callback_t)> reserve;
-    std::function<void(ElectricBorder, uint32_t)> unreserve;
+    using callback_t = std::function<bool(electric_border)>;
+    std::function<uint32_t(electric_border, callback_t)> reserve;
+    std::function<void(electric_border, uint32_t)> unreserve;
 
-    std::function<void(ElectricBorder, QAction*)> reserve_touch;
-    std::function<void(ElectricBorder, QAction*)> unreserve_touch;
+    std::function<void(electric_border, QAction*)> reserve_touch;
+    std::function<void(electric_border, QAction*)> unreserve_touch;
 
-    std::function<ElectricBorderAction(ElectricBorder)> action_for_touch_border;
+    std::function<electric_border_action(electric_border)> action_for_touch_border;
 };
 
 struct virtual_desktops_singleton {

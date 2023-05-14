@@ -19,7 +19,7 @@
 
         <entry name="BorderActivate" type="IntList" />
         <entry name="BorderActivateAll" type="IntList">
-            <default code="true">QList&lt;int&gt;() &lt;&lt; int(ElectricTopLeft)</default>
+            <default code="true">QList&lt;int&gt;() &lt;&lt; int(win::electric_border::top_left)</default>
         </entry>
         <entry name="BorderActivateClass" type="IntList" />
         <entry name="BorderActivateClassCurrentDesktop" type="IntList" />

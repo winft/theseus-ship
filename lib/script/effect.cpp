@@ -296,13 +296,15 @@ QList<int> effect::touchEdgesForAction(const QString& action) const
     QList<int> ret;
     if (m_exclusiveCategory == QStringLiteral("show-desktop")
         && action == QStringLiteral("show-desktop")) {
-        std::vector<ElectricBorder> const borders(
-            {ElectricTop, ElectricRight, ElectricBottom, ElectricLeft});
+        std::vector<win::electric_border> const borders({win::electric_border::top,
+                                                         win::electric_border::right,
+                                                         win::electric_border::bottom,
+                                                         win::electric_border::left});
 
         for (const auto b : borders) {
             if (win::singleton_interface::edger->action_for_touch_border(b)
-                == ElectricActionShowDesktop) {
-                ret.append(b);
+                == win::electric_border_action::show_desktop) {
+                ret.append(static_cast<int>(b));
             }
         }
         return ret;

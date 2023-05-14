@@ -440,7 +440,9 @@ public:
         connect(ws->edges->qobject.get(),
                 &win::screen_edger_qobject::approaching,
                 this,
-                &EffectsHandler::screenEdgeApproaching);
+                [this](auto border, auto factor, auto const& geometry) {
+                    screenEdgeApproaching(static_cast<ElectricBorder>(border), factor, geometry);
+                });
 
         auto screen_locker_watcher = ws->base.space->screen_locker_watcher.get();
         using screen_locker_watcher_t = std::remove_pointer_t<decltype(screen_locker_watcher)>;
@@ -1219,7 +1221,8 @@ public:
     void reserveElectricBorder(ElectricBorder border, Effect* effect) override
     {
         auto id = scene.platform.base.space->edges->reserve(
-            border, [effect](auto eb) { return effect->borderActivated(eb); });
+            static_cast<win::electric_border>(border),
+            [effect](auto eb) { return effect->borderActivated(static_cast<ElectricBorder>(eb)); });
 
         auto it = reserved_borders.find(effect);
         if (it == reserved_borders.end()) {
@@ -1251,12 +1254,14 @@ public:
             return;
         }
 
-        scene.platform.base.space->edges->unreserve(border, it2->second);
+        scene.platform.base.space->edges->unreserve(static_cast<win::electric_border>(border),
+                                                    it2->second);
     }
 
     void registerTouchBorder(ElectricBorder border, QAction* action) override
     {
-        scene.platform.base.space->edges->reserveTouch(border, action);
+        scene.platform.base.space->edges->reserveTouch(static_cast<win::electric_border>(border),
+                                                       action);
     }
 
     void registerRealtimeTouchBorder(ElectricBorder border,
@@ -1264,17 +1269,20 @@ public:
                                      EffectsHandler::TouchBorderCallback progressCallback) override
     {
         scene.platform.base.space->edges->reserveTouch(
-            border,
+            static_cast<win::electric_border>(border),
             action,
             [progressCallback,
-             this](ElectricBorder border, const QSizeF& deltaProgress, base::output* output) {
-                progressCallback(border, deltaProgress, get_effect_screen(*this, *output));
+             this](auto border, const QSizeF& deltaProgress, base::output* output) {
+                progressCallback(static_cast<ElectricBorder>(border),
+                                 deltaProgress,
+                                 get_effect_screen(*this, *output));
             });
     }
 
     void unregisterTouchBorder(ElectricBorder border, QAction* action) override
     {
-        scene.platform.base.space->edges->unreserveTouch(border, action);
+        scene.platform.base.space->edges->unreserveTouch(static_cast<win::electric_border>(border),
+                                                         action);
     }
 
     void unreserve_borders(Effect& effect)
@@ -1287,7 +1295,8 @@ public:
         // Might be at shutdown with space already gone.
         if (scene.platform.base.space && scene.platform.base.space->edges) {
             for (auto& [key, id] : it->second) {
-                scene.platform.base.space->edges->unreserve(key, id);
+                scene.platform.base.space->edges->unreserve(static_cast<win::electric_border>(key),
+                                                            id);
             }
         }
 

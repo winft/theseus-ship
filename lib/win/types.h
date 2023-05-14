@@ -223,6 +223,32 @@ enum class tabbox_mode {
                                      // windows of current application
 };
 
+enum class electric_border {
+    top,
+    top_right,
+    right,
+    bottom_right,
+    bottom,
+    bottom_left,
+    left,
+    top_left,
+    _COUNT,
+    none,
+};
+
+// TODO: Hardcoding is bad, need to add some way of registering global actions to these.
+// When designing the new system we must keep in mind that we have conditional actions
+// such as "only when moving windows" desktop switching that the current global action
+// system doesn't support.
+enum class electric_border_action {
+    none,                 // No special action, not set, desktop switch or an effect
+    show_desktop,         // Show desktop or restore
+    lockscreen,           // Lock screen
+    krunner,              // Open KRunner
+    application_launcher, // Application Launcher
+    count,
+};
+
 enum class mouse_cmd {
     raise,
     lower,

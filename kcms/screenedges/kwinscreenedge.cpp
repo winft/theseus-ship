@@ -22,7 +22,7 @@ KWinScreenEdge::~KWinScreenEdge()
 {
 }
 
-void KWinScreenEdge::monitorHideEdge(ElectricBorder border, bool hidden)
+void KWinScreenEdge::monitorHideEdge(win::electric_border border, bool hidden)
 {
     auto const edge = KWinScreenEdge::electricBorderToMonitorEdge(border);
     monitor()->setEdgeHidden(edge, hidden);
@@ -31,7 +31,7 @@ void KWinScreenEdge::monitorHideEdge(ElectricBorder border, bool hidden)
     }
 }
 
-void KWinScreenEdge::monitorEnableEdge(ElectricBorder border, bool enabled)
+void KWinScreenEdge::monitorEnableEdge(win::electric_border border, bool enabled)
 {
     const int edge = KWinScreenEdge::electricBorderToMonitorEdge(border);
     monitor()->setEdgeEnabled(edge, enabled);
@@ -54,61 +54,71 @@ void KWinScreenEdge::monitorItemSetEnabled(int index, bool enabled)
 void KWinScreenEdge::monitorChangeEdge(const QList<int> &borderList, int index)
 {
     for (int border : borderList) {
-        monitorChangeEdge(static_cast<ElectricBorder>(border), index);
+        monitorChangeEdge(static_cast<win::electric_border>(border), index);
     }
 }
 
-void KWinScreenEdge::monitorChangeEdge(ElectricBorder border, int index)
+void KWinScreenEdge::monitorChangeEdge(win::electric_border border, int index)
 {
-    if (ELECTRIC_COUNT == border || ElectricNone == border) {
+    if (win::electric_border::_COUNT == border || win::electric_border::none == border) {
         return;
     }
     m_reference[border] = index;
     monitor()->selectEdgeItem(KWinScreenEdge::electricBorderToMonitorEdge(border), index);
 }
 
-QList<int> KWinScreenEdge::monitorCheckEffectHasEdge(int index) const
+QList<win::electric_border> KWinScreenEdge::monitorCheckEffectHasEdge(int index) const
 {
-    QList<int> list;
+    QList<win::electric_border> list;
     if (monitor()->selectedEdgeItem(Monitor::Top) == index) {
-        list.append(ElectricTop);
+        list.append(win::electric_border::top);
     }
     if (monitor()->selectedEdgeItem(Monitor::TopRight) == index) {
-        list.append(ElectricTopRight);
+        list.append(win::electric_border::top_right);
     }
     if (monitor()->selectedEdgeItem(Monitor::Right) == index) {
-        list.append(ElectricRight);
+        list.append(win::electric_border::right);
     }
     if (monitor()->selectedEdgeItem(Monitor::BottomRight) == index) {
-        list.append(ElectricBottomRight);
+        list.append(win::electric_border::bottom_right);
     }
     if (monitor()->selectedEdgeItem(Monitor::Bottom) == index) {
-        list.append(ElectricBottom);
+        list.append(win::electric_border::bottom);
     }
     if (monitor()->selectedEdgeItem(Monitor::BottomLeft) == index) {
-        list.append(ElectricBottomLeft);
+        list.append(win::electric_border::bottom_left);
     }
     if (monitor()->selectedEdgeItem(Monitor::Left) == index) {
-        list.append(ElectricLeft);
+        list.append(win::electric_border::left);
     }
     if (monitor()->selectedEdgeItem(Monitor::TopLeft) == index) {
-        list.append(ElectricTopLeft);
+        list.append(win::electric_border::top_left);
     }
 
     if (list.isEmpty()) {
-        list.append(ElectricNone);
+        list.append(win::electric_border::none);
     }
     return list;
 }
 
-int KWinScreenEdge::selectedEdgeItem(ElectricBorder border) const
+QList<int> KWinScreenEdge::monitorCheckEffectHasEdgeInt(int index) const
+{
+    QList<int> ret;
+    auto const orig = monitorCheckEffectHasEdge(index);
+    for (auto border : orig) {
+        ret << static_cast<int>(border);
+    }
+    return ret;
+}
+
+int KWinScreenEdge::selectedEdgeItem(win::electric_border border) const
 {
     return monitor()->selectedEdgeItem(KWinScreenEdge::electricBorderToMonitorEdge(border));
 }
 
-void KWinScreenEdge::monitorChangeDefaultEdge(ElectricBorder border, int index)
+void KWinScreenEdge::monitorChangeDefaultEdge(win::electric_border border, int index)
 {
-    if (ELECTRIC_COUNT == border || ElectricNone == border) {
+    if (win::electric_border::_COUNT == border || win::electric_border::none == border) {
         return;
     }
     m_default[border] = index;
@@ -117,7 +127,7 @@ void KWinScreenEdge::monitorChangeDefaultEdge(ElectricBorder border, int index)
 void KWinScreenEdge::monitorChangeDefaultEdge(const QList<int> &borderList, int index)
 {
     for (int border : borderList) {
-        monitorChangeDefaultEdge(static_cast<ElectricBorder>(border), index);
+        monitorChangeDefaultEdge(static_cast<win::electric_border>(border), index);
     }
 }
 
@@ -137,52 +147,27 @@ void KWinScreenEdge::setDefaults()
     onChanged();
 }
 
-int KWinScreenEdge::electricBorderToMonitorEdge(ElectricBorder border)
+int KWinScreenEdge::electricBorderToMonitorEdge(win::electric_border border)
 {
     switch(border) {
-    case ElectricTop:
+    case win::electric_border::top:
         return Monitor::Top;
-    case ElectricTopRight:
+    case win::electric_border::top_right:
         return Monitor::TopRight;
-    case ElectricRight:
+    case win::electric_border::right:
         return Monitor::Right;
-    case ElectricBottomRight:
+    case win::electric_border::bottom_right:
         return Monitor::BottomRight;
-    case ElectricBottom:
+    case win::electric_border::bottom:
         return Monitor::Bottom;
-    case ElectricBottomLeft:
+    case win::electric_border::bottom_left:
         return Monitor::BottomLeft;
-    case ElectricLeft:
+    case win::electric_border::left:
         return Monitor::Left;
-    case ElectricTopLeft:
+    case win::electric_border::top_left:
         return Monitor::TopLeft;
     default: // ELECTRIC_COUNT and ElectricNone
         return Monitor::None;
-    }
-}
-
-ElectricBorder KWinScreenEdge::monitorEdgeToElectricBorder(int edge)
-{
-    const Monitor::Edges monitorEdge = static_cast<Monitor::Edges>(edge);
-    switch (monitorEdge) {
-    case Monitor::Left:
-        return ElectricLeft;
-    case Monitor::Right:
-        return ElectricRight;
-    case Monitor::Top:
-        return ElectricTop;
-    case Monitor::Bottom:
-        return ElectricBottom;
-    case Monitor::TopLeft:
-        return ElectricTopLeft;
-    case Monitor::TopRight:
-        return ElectricTopRight;
-    case Monitor::BottomLeft:
-        return ElectricBottomLeft;
-    case Monitor::BottomRight:
-        return ElectricBottomRight;
-    default:
-        return ElectricNone;
     }
 }
 

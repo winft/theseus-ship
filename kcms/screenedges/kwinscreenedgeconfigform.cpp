@@ -116,10 +116,10 @@ void KWinScreenEdgesConfigForm::groupChanged()
     if (ui->kcfg_ElectricBorders->currentIndex() == 2) {
         hide = true;
     }
-    monitorHideEdge(ElectricTop, hide);
-    monitorHideEdge(ElectricRight, hide);
-    monitorHideEdge(ElectricBottom, hide);
-    monitorHideEdge(ElectricLeft, hide);
+    monitorHideEdge(win::electric_border::top, hide);
+    monitorHideEdge(win::electric_border::right, hide);
+    monitorHideEdge(win::electric_border::bottom, hide);
+    monitorHideEdge(win::electric_border::left, hide);
 }
 
 void KWinScreenEdgesConfigForm::updateDefaultIndicators()
