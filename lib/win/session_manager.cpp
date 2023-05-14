@@ -33,7 +33,7 @@ session_manager::~session_manager()
 {
 }
 
-SessionState session_manager::state() const
+session_state session_manager::state() const
 {
     return m_sessionState;
 }
@@ -42,18 +42,18 @@ void session_manager::setState(uint state)
 {
     switch (state) {
     case 0:
-        setState(SessionState::Saving);
+        setState(session_state::saving);
         break;
     case 1:
-        setState(SessionState::Quitting);
+        setState(session_state::quitting);
         break;
     default:
-        setState(SessionState::Normal);
+        setState(session_state::normal);
     }
 }
 
 // TODO should we rethink this now that we have dedicated start end end save methods?
-void session_manager::setState(SessionState state)
+void session_manager::setState(session_state state)
 {
     if (state == m_sessionState) {
         return;

@@ -7,14 +7,17 @@
 #pragma once
 
 #include "kwinglobals.h"
+#include "win/types.h"
 
 #include <QKeySequence>
 #include <QSharedPointer>
+#include <string>
 
 class QAction;
 
 namespace KWin::win
 {
+
 class swipe_gesture;
 class pinch_gesture;
 
@@ -41,7 +44,7 @@ struct PointerButtonShortcut {
 
 struct PointerAxisShortcut {
     Qt::KeyboardModifiers axisModifiers;
-    PointerAxisDirection axisDirection;
+    pointer_axis_direction axisDirection;
     bool operator==(const PointerAxisShortcut& rhs) const
     {
         return axisModifiers == rhs.axisModifiers && axisDirection == rhs.axisDirection;
@@ -49,8 +52,8 @@ struct PointerAxisShortcut {
 };
 
 struct RealtimeFeedbackSwipeShortcut {
-    DeviceType device;
-    SwipeDirection direction;
+    input_device_type device;
+    swipe_direction direction;
     std::function<void(qreal)> progressCallback;
     uint fingerCount;
 
@@ -62,7 +65,7 @@ struct RealtimeFeedbackSwipeShortcut {
 };
 
 struct RealtimeFeedbackPinchShortcut {
-    PinchDirection direction;
+    pinch_direction direction;
     std::function<void(qreal)> scaleCallback;
     uint fingerCount;
 

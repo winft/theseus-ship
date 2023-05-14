@@ -7,7 +7,7 @@
 #pragma once
 
 #include "kwin_export.h"
-#include "kwinglobals.h"
+#include "win/types.h"
 
 #include <QMap>
 #include <QObject>
@@ -55,8 +55,8 @@ public:
     void setMaximumFingerCount(uint count);
     uint maximumFingerCount() const;
 
-    SwipeDirection direction() const;
-    void setDirection(SwipeDirection direction);
+    swipe_direction direction() const;
+    void setDirection(swipe_direction direction);
 
     void setMinimumX(int x);
     int minimumX() const;
@@ -97,7 +97,7 @@ private:
     uint m_minimumFingerCount = 0;
     bool m_maximumFingerCountRelevant = false;
     uint m_maximumFingerCount = 0;
-    SwipeDirection m_direction{SwipeDirection::Down};
+    swipe_direction m_direction{swipe_direction::down};
     bool m_minimumXRelevant = false;
     int m_minimumX = 0;
     bool m_minimumYRelevant = false;
@@ -124,8 +124,8 @@ public:
     void setMaximumFingerCount(uint count);
     uint maximumFingerCount() const;
 
-    PinchDirection direction() const;
-    void setDirection(PinchDirection direction);
+    pinch_direction direction() const;
+    void setDirection(pinch_direction direction);
 
     qreal minimumScaleDelta() const;
 
@@ -151,7 +151,7 @@ private:
     uint m_minimumFingerCount = 0;
     bool m_maximumFingerCountRelevant = false;
     uint m_maximumFingerCount = 0;
-    PinchDirection m_direction{PinchDirection::Expanding};
+    pinch_direction m_direction{pinch_direction::expanding};
     bool m_minimumScaleDeltaRelevant = false;
     qreal m_minimumScaleDelta = DEFAULT_MINIMUM_SCALE_DELTA;
 };

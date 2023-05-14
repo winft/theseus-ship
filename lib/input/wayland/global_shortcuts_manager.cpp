@@ -112,12 +112,14 @@ void global_shortcuts_manager::add_shortcut(global_shortcut sc)
     m_shortcuts.push_back(std::move(sc));
 }
 
-void global_shortcuts_manager::add_gesture_shortcut(global_shortcut sc, DeviceType device)
+void global_shortcuts_manager::add_gesture_shortcut(global_shortcut sc,
+                                                    win::input_device_type device)
 {
     assert(!shortcut_exists(sc));
 
-    auto const& recognizer = device == DeviceType::Touchpad ? m_touchpadGestureRecognizer
-                                                            : m_touchscreenGestureRecognizer;
+    auto const& recognizer = device == win::input_device_type::touchpad
+        ? m_touchpadGestureRecognizer
+        : m_touchscreenGestureRecognizer;
     if (std::holds_alternative<win::RealtimeFeedbackSwipeShortcut>(sc.shortcut())) {
         recognizer->registerSwipeGesture(sc.swipeGesture());
     } else if (std::holds_alternative<win::RealtimeFeedbackPinchShortcut>(sc.shortcut())) {
@@ -139,7 +141,7 @@ void global_shortcuts_manager::registerPointerShortcut(QAction* action,
 
 void global_shortcuts_manager::registerAxisShortcut(QAction* action,
                                                     Qt::KeyboardModifiers modifiers,
-                                                    PointerAxisDirection axis)
+                                                    win::pointer_axis_direction axis)
 {
     auto sc = global_shortcut(win::PointerAxisShortcut{modifiers, axis}, action);
     if (!shortcut_exists(sc)) {
@@ -147,21 +149,21 @@ void global_shortcuts_manager::registerAxisShortcut(QAction* action,
     }
 }
 
-void global_shortcuts_manager::registerTouchpadSwipe(SwipeDirection direction,
+void global_shortcuts_manager::registerTouchpadSwipe(win::swipe_direction direction,
                                                      uint fingerCount,
                                                      QAction* action,
                                                      std::function<void(qreal)> progressCallback)
 {
     auto sc = global_shortcut(
         win::RealtimeFeedbackSwipeShortcut{
-            DeviceType::Touchpad, direction, progressCallback, fingerCount},
+            win::input_device_type::touchpad, direction, progressCallback, fingerCount},
         action);
     if (!shortcut_exists(sc)) {
-        add_gesture_shortcut(sc, DeviceType::Touchpad);
+        add_gesture_shortcut(sc, win::input_device_type::touchpad);
     }
 }
 
-void global_shortcuts_manager::registerTouchpadPinch(PinchDirection direction,
+void global_shortcuts_manager::registerTouchpadPinch(win::pinch_direction direction,
                                                      uint fingerCount,
                                                      QAction* action,
                                                      std::function<void(qreal)> progressCallback)
@@ -169,21 +171,21 @@ void global_shortcuts_manager::registerTouchpadPinch(PinchDirection direction,
     auto sc = global_shortcut(
         win::RealtimeFeedbackPinchShortcut{direction, progressCallback, fingerCount}, action);
     if (!shortcut_exists(sc)) {
-        add_gesture_shortcut(sc, DeviceType::Touchpad);
+        add_gesture_shortcut(sc, win::input_device_type::touchpad);
     }
 }
 
 void global_shortcuts_manager::registerTouchscreenSwipe(QAction* action,
                                                         std::function<void(qreal)> progressCallback,
-                                                        SwipeDirection direction,
+                                                        win::swipe_direction direction,
                                                         uint fingerCount)
 {
     auto sc = global_shortcut(
         win::RealtimeFeedbackSwipeShortcut{
-            DeviceType::Touchscreen, direction, progressCallback, fingerCount},
+            win::input_device_type::touchscreen, direction, progressCallback, fingerCount},
         action);
     if (!shortcut_exists(sc)) {
-        add_gesture_shortcut(sc, DeviceType::Touchscreen);
+        add_gesture_shortcut(sc, win::input_device_type::touchscreen);
     }
 }
 
@@ -246,41 +248,43 @@ bool global_shortcuts_manager::processPointerPressed(Qt::KeyboardModifiers mods,
     return match<win::PointerButtonShortcut>(m_shortcuts, mods, pointerButtons);
 }
 
-bool global_shortcuts_manager::processAxis(Qt::KeyboardModifiers mods, PointerAxisDirection axis)
+bool global_shortcuts_manager::processAxis(Qt::KeyboardModifiers mods,
+                                           win::pointer_axis_direction axis)
 {
     return match<win::PointerAxisShortcut>(m_shortcuts, mods, axis);
 }
 
-void global_shortcuts_manager::processSwipeStart(DeviceType device, uint fingerCount)
+void global_shortcuts_manager::processSwipeStart(win::input_device_type device, uint fingerCount)
 {
-    if (device == DeviceType::Touchpad) {
+    if (device == win::input_device_type::touchpad) {
         m_touchpadGestureRecognizer->startSwipeGesture(fingerCount);
     } else {
         m_touchscreenGestureRecognizer->startSwipeGesture(fingerCount);
     }
 }
 
-void global_shortcuts_manager::processSwipeUpdate(DeviceType device, const QSizeF& delta)
+void global_shortcuts_manager::processSwipeUpdate(win::input_device_type device,
+                                                  const QSizeF& delta)
 {
-    if (device == DeviceType::Touchpad) {
+    if (device == win::input_device_type::touchpad) {
         m_touchpadGestureRecognizer->updateSwipeGesture(delta);
     } else {
         m_touchscreenGestureRecognizer->updateSwipeGesture(delta);
     }
 }
 
-void global_shortcuts_manager::processSwipeCancel(DeviceType device)
+void global_shortcuts_manager::processSwipeCancel(win::input_device_type device)
 {
-    if (device == DeviceType::Touchpad) {
+    if (device == win::input_device_type::touchpad) {
         m_touchpadGestureRecognizer->cancelSwipeGesture();
     } else {
         m_touchscreenGestureRecognizer->cancelSwipeGesture();
     }
 }
 
-void global_shortcuts_manager::processSwipeEnd(DeviceType device)
+void global_shortcuts_manager::processSwipeEnd(win::input_device_type device)
 {
-    if (device == DeviceType::Touchpad) {
+    if (device == win::input_device_type::touchpad) {
         m_touchpadGestureRecognizer->endSwipeGesture();
     } else {
         m_touchscreenGestureRecognizer->endSwipeGesture();

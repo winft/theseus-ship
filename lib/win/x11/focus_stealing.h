@@ -43,7 +43,7 @@ bool allow_window_activation(Space& space,
 
     auto level
         = window->control->rules.checkFSP(space.options->qobject->focusStealingPreventionLevel());
-    if (space.session_manager->state() == SessionState::Saving
+    if (space.session_manager->state() == session_state::saving
         && enum_index(level) <= enum_index(fsp_level::medium)) {
         // <= normal
         return true;
@@ -153,7 +153,7 @@ bool allow_full_window_raising(Space& space, Win const* window, xcb_timestamp_t 
 {
     auto level
         = window->control->rules.checkFSP(space.options->qobject->focusStealingPreventionLevel());
-    if (space.session_manager->state() == SessionState::Saving
+    if (space.session_manager->state() == session_state::saving
         && enum_index(level) <= enum_index(fsp_level::medium)) {
         // <= normal
         return true;

@@ -42,16 +42,16 @@ public:
                                  Qt::MouseButtons pointerButtons);
     void registerAxisShortcut(QAction* action,
                               Qt::KeyboardModifiers modifiers,
-                              PointerAxisDirection axis);
+                              win::pointer_axis_direction axis);
 
-    void registerTouchpadSwipe(SwipeDirection /*direction*/,
+    void registerTouchpadSwipe(win::swipe_direction /*direction*/,
                                uint /*fingerCount*/,
                                QAction* /*action*/,
                                std::function<void(qreal)> /*progressCallback*/)
     {
     }
 
-    void registerTouchpadPinch(PinchDirection /*direction*/,
+    void registerTouchpadPinch(win::pinch_direction /*direction*/,
                                uint /*fingerCount*/,
                                QAction* /*action*/,
                                std::function<void(qreal)> /*progressCallback*/)
@@ -60,7 +60,7 @@ public:
 
     void registerTouchscreenSwipe(QAction* /*action*/,
                                   std::function<void(qreal)> /*progressCallback*/,
-                                  SwipeDirection /*direction*/,
+                                  win::swipe_direction /*direction*/,
                                   uint /*fingerCount*/)
     {
     }

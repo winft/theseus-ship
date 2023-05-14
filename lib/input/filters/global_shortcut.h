@@ -12,6 +12,7 @@
 #include "input/keyboard_redirect.h"
 #include "input/qt_event.h"
 #include "input/xkb/helpers.h"
+#include "win/input/global_shortcut.h"
 
 #include <QTimer>
 
@@ -55,12 +56,13 @@ public:
             return false;
         }
 
-        auto direction = PointerAxisUp;
+        auto direction = win::pointer_axis_direction::up;
         if (event.orientation == axis_orientation::horizontal) {
             // TODO(romangg): Doesn't < 0 equal left direction?
-            direction = event.delta < 0 ? PointerAxisRight : PointerAxisLeft;
+            direction = event.delta < 0 ? win::pointer_axis_direction::right
+                                        : win::pointer_axis_direction::left;
         } else if (event.delta < 0) {
-            direction = PointerAxisDown;
+            direction = win::pointer_axis_direction::down;
         }
 
         return this->redirect.platform.shortcuts->processAxis(mods, direction);
@@ -120,23 +122,24 @@ public:
 
     bool swipe_begin(swipe_begin_event const& event) override
     {
-        this->redirect.platform.shortcuts->processSwipeStart(DeviceType::Touchpad, event.fingers);
+        this->redirect.platform.shortcuts->processSwipeStart(win::input_device_type::touchpad,
+                                                             event.fingers);
         return false;
     }
 
     bool swipe_update(swipe_update_event const& event) override
     {
         this->redirect.platform.shortcuts->processSwipeUpdate(
-            DeviceType::Touchpad, QSizeF(event.delta.x(), event.delta.y()));
+            win::input_device_type::touchpad, QSizeF(event.delta.x(), event.delta.y()));
         return false;
     }
 
     bool swipe_end(swipe_end_event const& event) override
     {
         if (event.cancelled) {
-            this->redirect.platform.shortcuts->processSwipeCancel(DeviceType::Touchpad);
+            this->redirect.platform.shortcuts->processSwipeCancel(win::input_device_type::touchpad);
         } else {
-            this->redirect.platform.shortcuts->processSwipeEnd(DeviceType::Touchpad);
+            this->redirect.platform.shortcuts->processSwipeEnd(win::input_device_type::touchpad);
         }
         return false;
     }
@@ -169,7 +172,8 @@ public:
     bool touch_down(touch_down_event const& event) override
     {
         if (m_gestureTaken) {
-            this->redirect.platform.shortcuts->processSwipeCancel(DeviceType::Touchscreen);
+            this->redirect.platform.shortcuts->processSwipeCancel(
+                win::input_device_type::touchscreen);
             m_gestureCancelled = true;
             return true;
         } else {
@@ -205,8 +209,8 @@ public:
                 process_filters(
                     this->redirect.m_filters,
                     std::bind(&event_filter<Redirect>::touch_cancel, std::placeholders::_1));
-                this->redirect.platform.shortcuts->processSwipeStart(DeviceType::Touchscreen,
-                                                                     m_touchPoints.count());
+                this->redirect.platform.shortcuts->processSwipeStart(
+                    win::input_device_type::touchscreen, m_touchPoints.count());
                 return true;
             }
         }
@@ -230,8 +234,8 @@ public:
             auto& point = m_touchPoints[event.id];
             const QPointF dist = event.pos - point;
             const QSizeF delta = QSizeF(xfactor * dist.x(), yfactor * dist.y());
-            this->redirect.platform.shortcuts->processSwipeUpdate(DeviceType::Touchscreen,
-                                                                  5 * delta / m_touchPoints.size());
+            this->redirect.platform.shortcuts->processSwipeUpdate(
+                win::input_device_type::touchscreen, 5 * delta / m_touchPoints.size());
             point = event.pos;
             return true;
         }
@@ -244,7 +248,8 @@ public:
         m_touchPoints.remove(event.id);
         if (m_gestureTaken) {
             if (!m_gestureCancelled) {
-                this->redirect.platform.shortcuts->processSwipeEnd(DeviceType::Touchscreen);
+                this->redirect.platform.shortcuts->processSwipeEnd(
+                    win::input_device_type::touchscreen);
                 m_gestureCancelled = true;
             }
             m_gestureTaken &= m_touchPoints.count() > 0;

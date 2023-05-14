@@ -9,8 +9,9 @@
 
 #include "types.h"
 
-#include "kwinglobals.h"
+#include "kwin_export.h"
 
+#include <QObject>
 #include <QRect>
 
 namespace KWin::win
@@ -23,10 +24,10 @@ public:
     session_manager();
     ~session_manager() override;
 
-    SessionState state() const;
+    session_state state() const;
 
 Q_SIGNALS:
-    void stateChanged(SessionState prev, SessionState next);
+    void stateChanged(session_state prev, session_state next);
 
     void loadSessionRequested(const QString& name);
     void prepareSessionSaveRequested(const QString& name);
@@ -41,8 +42,8 @@ public Q_SLOTS:
     void quit();
 
 private:
-    void setState(SessionState state);
-    SessionState m_sessionState{SessionState::Normal};
+    void setState(session_state state);
+    session_state m_sessionState{session_state::normal};
 };
 
 struct session_info {

@@ -5,25 +5,28 @@
 */
 #pragma once
 
+#include "kwineffects/export.h"
+
 #include <QImage>
 #include <QPair>
 #include <QRect>
 #include <climits>
-
-namespace KWin
-{
-
-class Effect;
-class EffectWindow;
-
-typedef QPair<QString, Effect*> EffectPair;
-typedef QList<EffectWindow*> EffectWindowList;
 
 #define KWIN_EFFECT_API_MAKE_VERSION(major, minor) ((major) << 8 | (minor))
 #define KWIN_EFFECT_API_VERSION_MAJOR 0
 #define KWIN_EFFECT_API_VERSION_MINOR 233
 #define KWIN_EFFECT_API_VERSION                                                                    \
     KWIN_EFFECT_API_MAKE_VERSION(KWIN_EFFECT_API_VERSION_MAJOR, KWIN_EFFECT_API_VERSION_MINOR)
+
+namespace KWin
+{
+KWINEFFECTS_EXPORT Q_NAMESPACE
+
+    class Effect;
+class EffectWindow;
+
+typedef QPair<QString, Effect*> EffectPair;
+typedef QList<EffectWindow*> EffectWindowList;
 
 enum WindowQuadType {
     WindowQuadError, // for the stupid default ctor
@@ -67,6 +70,50 @@ enum EffectFrameStyle {
     EffectFrameNone,     ///< Displays no frame around the contents.
     EffectFrameUnstyled, ///< Displays a basic box around the contents.
     EffectFrameStyled    ///< Displays a Plasma-styled frame around the contents.
+};
+
+enum KWinOption {
+    CloseButtonCorner,
+    SwitchDesktopOnScreenEdge,
+    SwitchDesktopOnScreenEdgeMovingWindows,
+};
+
+/**
+ * Represents the state of the session running outside kwin
+ * Under Plasma this is managed by ksmserver
+ */
+enum class SessionState {
+    Normal,
+    Saving,
+    Quitting,
+};
+Q_ENUM_NS(SessionState)
+
+/**
+ * @brief The direction in which a pointer axis is moved.
+ */
+enum PointerAxisDirection {
+    PointerAxisUp,
+    PointerAxisDown,
+    PointerAxisLeft,
+    PointerAxisRight,
+};
+
+/**
+ * @brief Directions for swipe gestures
+ * @since 5.10
+ */
+enum class SwipeDirection {
+    Invalid,
+    Down,
+    Left,
+    Up,
+    Right,
+};
+
+enum class PinchDirection {
+    Expanding,
+    Contracting,
 };
 
 /**

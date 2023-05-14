@@ -67,21 +67,21 @@ public:
      */
     void registerAxisShortcut(QAction* action,
                               Qt::KeyboardModifiers modifiers,
-                              PointerAxisDirection axis);
+                              win::pointer_axis_direction axis);
 
-    void registerTouchpadSwipe(SwipeDirection direction,
+    void registerTouchpadSwipe(win::swipe_direction direction,
                                uint fingerCount,
                                QAction* action,
                                std::function<void(qreal)> progressCallback);
 
-    void registerTouchpadPinch(PinchDirection direction,
+    void registerTouchpadPinch(win::pinch_direction direction,
                                uint fingerCount,
                                QAction* action,
                                std::function<void(qreal)> progressCallback);
 
     void registerTouchscreenSwipe(QAction* action,
                                   std::function<void(qreal)> progressCallback,
-                                  SwipeDirection direction,
+                                  win::swipe_direction direction,
                                   uint fingerCount);
 
     /**
@@ -109,12 +109,12 @@ public:
      * @param axis The axis direction which has triggered this event
      * @return @c true if a shortcut triggered, @c false otherwise
      */
-    bool processAxis(Qt::KeyboardModifiers modifiers, PointerAxisDirection axis);
+    bool processAxis(Qt::KeyboardModifiers modifiers, win::pointer_axis_direction axis);
 
-    void processSwipeStart(DeviceType device, uint fingerCount);
-    void processSwipeUpdate(DeviceType device, const QSizeF& delta);
-    void processSwipeCancel(DeviceType device);
-    void processSwipeEnd(DeviceType device);
+    void processSwipeStart(win::input_device_type device, uint fingerCount);
+    void processSwipeUpdate(win::input_device_type device, const QSizeF& delta);
+    void processSwipeCancel(win::input_device_type device);
+    void processSwipeEnd(win::input_device_type device);
 
     void processPinchStart(uint fingerCount);
     void processPinchUpdate(qreal scale, qreal angleDelta, const QSizeF& delta);
@@ -129,7 +129,7 @@ private:
 
     bool shortcut_exists(win::global_shortcut const& sc);
     void add_shortcut(win::global_shortcut sc);
-    void add_gesture_shortcut(win::global_shortcut sc, DeviceType device);
+    void add_gesture_shortcut(win::global_shortcut sc, win::input_device_type device);
 
     QVector<win::global_shortcut> m_shortcuts;
 

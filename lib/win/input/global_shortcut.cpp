@@ -18,15 +18,15 @@ global_shortcut::global_shortcut(Shortcut&& sc, QAction* action)
     : m_shortcut(sc)
     , m_action(action)
 {
-    static const QMap<SwipeDirection, SwipeDirection> swipeDirs = {
-        {SwipeDirection::Up, SwipeDirection::Up},
-        {SwipeDirection::Down, SwipeDirection::Down},
-        {SwipeDirection::Left, SwipeDirection::Left},
-        {SwipeDirection::Right, SwipeDirection::Right},
+    static const QMap<swipe_direction, swipe_direction> swipeDirs = {
+        {swipe_direction::up, swipe_direction::up},
+        {swipe_direction::down, swipe_direction::down},
+        {swipe_direction::left, swipe_direction::left},
+        {swipe_direction::right, swipe_direction::right},
     };
-    static const QMap<PinchDirection, PinchDirection> pinchDirs = {
-        {PinchDirection::Expanding, PinchDirection::Expanding},
-        {PinchDirection::Contracting, PinchDirection::Contracting},
+    static const QMap<pinch_direction, pinch_direction> pinchDirs = {
+        {pinch_direction::expanding, pinch_direction::expanding},
+        {pinch_direction::contracting, pinch_direction::contracting},
     };
 
     if (auto swipeGesture = std::get_if<RealtimeFeedbackSwipeShortcut>(&sc)) {

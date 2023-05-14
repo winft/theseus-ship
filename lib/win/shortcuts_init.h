@@ -191,42 +191,42 @@ void shortcuts_init_virtual_desktops(Space& space)
                   direction, fingerCount, action, progressCallback);
           };
 
-    register_touchpad_swipe(SwipeDirection::Left, 3, swipeGestureReleasedX, [manager](qreal cb) {
+    register_touchpad_swipe(swipe_direction::left, 3, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
             manager->set_desktop_offset_x(cb);
             Q_EMIT manager->qobject->currentChanging(manager->current(),
                                                      manager->m_current_desktop_offset());
         }
     });
-    register_touchpad_swipe(SwipeDirection::Right, 3, swipeGestureReleasedX, [manager](qreal cb) {
+    register_touchpad_swipe(swipe_direction::right, 3, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
             manager->set_desktop_offset_x(-cb);
             Q_EMIT manager->qobject->currentChanging(manager->current(),
                                                      manager->m_current_desktop_offset());
         }
     });
-    register_touchpad_swipe(SwipeDirection::Left, 4, swipeGestureReleasedX, [manager](qreal cb) {
+    register_touchpad_swipe(swipe_direction::left, 4, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
             manager->set_desktop_offset_x(cb);
             Q_EMIT manager->qobject->currentChanging(manager->current(),
                                                      manager->m_current_desktop_offset());
         }
     });
-    register_touchpad_swipe(SwipeDirection::Right, 4, swipeGestureReleasedX, [manager](qreal cb) {
+    register_touchpad_swipe(swipe_direction::right, 4, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
             manager->set_desktop_offset_x(-cb);
             Q_EMIT manager->qobject->currentChanging(manager->current(),
                                                      manager->m_current_desktop_offset());
         }
     });
-    register_touchpad_swipe(SwipeDirection::Down, 3, swipeGestureReleasedY, [manager](qreal cb) {
+    register_touchpad_swipe(swipe_direction::down, 3, swipeGestureReleasedY, [manager](qreal cb) {
         if (manager->grid().height() > 1) {
             manager->set_desktop_offset_y(-cb);
             Q_EMIT manager->qobject->currentChanging(manager->current(),
                                                      manager->m_current_desktop_offset());
         }
     });
-    register_touchpad_swipe(SwipeDirection::Up, 3, swipeGestureReleasedY, [manager](qreal cb) {
+    register_touchpad_swipe(swipe_direction::up, 3, swipeGestureReleasedY, [manager](qreal cb) {
         if (manager->grid().height() > 1) {
             manager->set_desktop_offset_y(cb);
             Q_EMIT manager->qobject->currentChanging(manager->current(),
@@ -240,8 +240,8 @@ void shortcuts_init_virtual_desktops(Space& space)
                   action, progressCallback, direction, fingerCount);
           };
 
-    register_touchscreen_swipe_shortcut(SwipeDirection::Left, 3, swipeGestureReleasedX, left);
-    register_touchscreen_swipe_shortcut(SwipeDirection::Right, 3, swipeGestureReleasedX, right);
+    register_touchscreen_swipe_shortcut(swipe_direction::left, 3, swipeGestureReleasedX, left);
+    register_touchscreen_swipe_shortcut(swipe_direction::right, 3, swipeGestureReleasedX, right);
 
     // axis events
     auto register_axis_shortcut = [&input](auto modifiers, auto axis, auto action) {
@@ -249,10 +249,10 @@ void shortcuts_init_virtual_desktops(Space& space)
     };
     register_axis_shortcut(
         Qt::MetaModifier | Qt::AltModifier,
-        PointerAxisDown,
+        pointer_axis_direction::down,
         manager->qobject->template findChild<QAction*>(QStringLiteral("Switch to Next Desktop")));
     register_axis_shortcut(Qt::MetaModifier | Qt::AltModifier,
-                           PointerAxisUp,
+                           win::pointer_axis_direction::up,
                            manager->qobject->template findChild<QAction*>(
                                QStringLiteral("Switch to Previous Desktop")));
 }

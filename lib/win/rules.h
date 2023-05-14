@@ -41,8 +41,8 @@ void init_rule_book(rules::book& book, Space& space)
             manager, &manager_t::stateChanged, book.qobject.get(), [&book](auto old, auto next) {
                 // If starting to save a session or ending a save session due to either completion
                 // or cancellation, we need to disalbe/enable rule book updates.
-                auto was_save = old == SessionState::Saving;
-                auto will_save = next == SessionState::Saving;
+                auto was_save = old == session_state::saving;
+                auto will_save = next == session_state::saving;
                 if (was_save || will_save) {
                     book.setUpdatesDisabled(will_save && !was_save);
                 }

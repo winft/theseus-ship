@@ -88,32 +88,4 @@ enum TabBoxMode {
                                            // of current application
 };
 
-enum KWinOption {
-    CloseButtonCorner,
-    SwitchDesktopOnScreenEdge,
-    SwitchDesktopOnScreenEdgeMovingWindows
-};
-
-/**
- * @brief The direction in which a pointer axis is moved.
- */
-enum PointerAxisDirection { PointerAxisUp, PointerAxisDown, PointerAxisLeft, PointerAxisRight };
-
-/**
- * @brief Directions for swipe gestures
- * @since 5.10
- */
-enum class SwipeDirection { Invalid, Down, Left, Up, Right };
-
-enum class PinchDirection { Expanding, Contracting };
-
-enum class DeviceType { Touchpad, Touchscreen };
-
-/**
- * Represents the state of the session running outside kwin
- * Under Plasma this is managed by ksmserver
- */
-enum class SessionState { Normal, Saving, Quitting };
-Q_ENUM_NS(SessionState)
-
 }

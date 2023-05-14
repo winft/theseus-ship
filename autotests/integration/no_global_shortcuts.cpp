@@ -233,12 +233,14 @@ TEST_CASE("no global shortcuts", "[input]")
         std::unique_ptr<QAction> action(new QAction(nullptr));
         QSignalSpy actionSpy(action.get(), &QAction::triggered);
         QVERIFY(actionSpy.isValid());
-        PointerAxisDirection axisDirection = PointerAxisUp;
+        auto axisDirection = win::pointer_axis_direction::up;
 
         if (direction == Qt::Vertical) {
-            axisDirection = sign > 0 ? PointerAxisUp : PointerAxisDown;
+            axisDirection
+                = sign > 0 ? win::pointer_axis_direction::up : win::pointer_axis_direction::down;
         } else {
-            axisDirection = sign > 0 ? PointerAxisLeft : PointerAxisRight;
+            axisDirection
+                = sign > 0 ? win::pointer_axis_direction::left : win::pointer_axis_direction::right;
         }
 
         setup.base->input->shortcuts->registerAxisShortcut(

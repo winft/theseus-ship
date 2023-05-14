@@ -665,7 +665,8 @@ public:
                               PointerAxisDirection axis,
                               QAction* action) override
     {
-        scene.platform.base.input->shortcuts->registerAxisShortcut(action, modifiers, axis);
+        scene.platform.base.input->shortcuts->registerAxisShortcut(
+            action, modifiers, static_cast<win::pointer_axis_direction>(axis));
     }
 
     void registerTouchpadSwipeShortcut(SwipeDirection direction,
@@ -674,7 +675,7 @@ public:
                                        std::function<void(qreal)> progressCallback) override
     {
         scene.platform.base.input->shortcuts->registerTouchpadSwipe(
-            direction, fingerCount, action, progressCallback);
+            static_cast<win::swipe_direction>(direction), fingerCount, action, progressCallback);
     }
 
     void registerTouchpadPinchShortcut(PinchDirection direction,
@@ -683,7 +684,7 @@ public:
                                        std::function<void(qreal)> progressCallback) override
     {
         scene.platform.base.input->shortcuts->registerTouchpadPinch(
-            direction, fingerCount, action, progressCallback);
+            static_cast<win::pinch_direction>(direction), fingerCount, action, progressCallback);
     }
 
     void registerTouchscreenSwipeShortcut(SwipeDirection direction,
@@ -692,7 +693,7 @@ public:
                                           std::function<void(qreal)> progressCallback) override
     {
         scene.platform.base.input->shortcuts->registerTouchscreenSwipe(
-            action, progressCallback, direction, fingerCount);
+            action, progressCallback, static_cast<win::swipe_direction>(direction), fingerCount);
     }
 
     void startMousePolling() override
@@ -1319,7 +1320,7 @@ public:
 
     SessionState sessionState() const override
     {
-        return scene.platform.base.space->session_manager->state();
+        return static_cast<SessionState>(scene.platform.base.space->session_manager->state());
     }
 
     QByteArray readRootProperty(long atom, long type, int format) const override

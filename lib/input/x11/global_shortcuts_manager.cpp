@@ -101,7 +101,7 @@ void global_shortcuts_manager::registerPointerShortcut(QAction* action,
 
 void global_shortcuts_manager::registerAxisShortcut(QAction* action,
                                                     Qt::KeyboardModifiers modifiers,
-                                                    PointerAxisDirection axis)
+                                                    win::pointer_axis_direction axis)
 {
     addIfNotExists(global_shortcut(win::PointerAxisShortcut{modifiers, axis}, action));
 }

@@ -248,6 +248,37 @@ enum class mouse_wheel_cmd {
     nothing,
 };
 
+enum class session_state {
+    normal,
+    saving,
+    quitting,
+};
+
+enum class pointer_axis_direction {
+    up,
+    down,
+    left,
+    right,
+};
+
+enum class swipe_direction {
+    invalid,
+    up,
+    down,
+    left,
+    right,
+};
+
+enum class pinch_direction {
+    expanding,
+    contracting,
+};
+
+enum class input_device_type {
+    touchpad,
+    touchscreen,
+};
+
 }
 
 ENUM_FLAGS(KWin::win::position)
