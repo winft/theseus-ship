@@ -50,7 +50,7 @@ TEST_CASE("no crash reinit compositor", "[render]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     auto effect_name = GENERATE(as<QString>{}, "fade", "glide", "scale");
 

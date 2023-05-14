@@ -165,7 +165,7 @@ void StartupFeedbackEffect::reconfigure(Effect::ReconfigureFlags flags)
         m_type = BouncingFeedback;
     else if (busyBlinking) {
         m_type = BlinkingFeedback;
-        if (effects->compositingType() == OpenGLCompositing) {
+        if (effects->isOpenGLCompositing()) {
             ensureResources();
             m_blinkingShader = ShaderManager::instance()->generateShaderFromFile(
                 ShaderTrait::MapTexture,

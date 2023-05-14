@@ -690,7 +690,6 @@ QByteArray GLPlatform::chipClassToString8(ChipClass chipClass)
 GLPlatform::GLPlatform(xcb_connection_t* x11_connection)
     : m_driver(Driver_Unknown)
     , m_chipClass(UnknownChipClass)
-    , m_recommendedCompositor(QPainterCompositing)
     , m_glVersion(0)
     , m_glslVersion(0)
     , m_mesaVersion(0)
@@ -1018,15 +1017,9 @@ void GLPlatform::detect(gl_interface platformInterface)
             m_limitedGLSL = m_supportsGLSL;
         }
 
-        if (m_chipClass < R300) {
-            // fallback to NoCompositing for R100 and R200
-            m_recommendedCompositor = NoCompositing;
-        } else if (m_chipClass < R600) {
-            // NoCompositing due to NPOT limitations not supported by KWin's shaders
-            m_recommendedCompositor = NoCompositing;
-        } else {
-            m_recommendedCompositor = OpenGLCompositing;
-        }
+        // fallback to NoCompositing for R100 and R200 and for R600 due to NPOT limitations not
+        // supported by KWin's shaders
+        m_recommend_sw = m_chipClass < R300 || m_chipClass < R600;
 
         if (driver() == Driver_R600G || (driver() == Driver_R600C && m_renderer.contains("DRI2"))) {
             m_looseBinding = true;
@@ -1042,12 +1035,7 @@ void GLPlatform::detect(gl_interface platformInterface)
             m_preferBufferSubData = true;
         }
 
-        if (m_chipClass < NV40) {
-            m_recommendedCompositor = NoCompositing;
-        } else {
-            m_recommendedCompositor = OpenGLCompositing;
-        }
-
+        m_recommend_sw = m_chipClass < NV40;
         m_limitedNPOT = m_textureNPOT && m_chipClass < NV40;
         m_limitedGLSL = m_supportsGLSL && m_chipClass < G80;
     }
@@ -1060,30 +1048,26 @@ void GLPlatform::detect(gl_interface platformInterface)
         // see https://bugs.freedesktop.org/show_bug.cgi?id=80349#c1
         m_looseBinding = false;
 
-        if (m_chipClass < I915) {
-            m_recommendedCompositor = NoCompositing;
-        } else {
-            m_recommendedCompositor = OpenGLCompositing;
-        }
+        m_recommend_sw = m_chipClass < I915;
     }
 
     if (isPanfrost()) {
-        m_recommendedCompositor = OpenGLCompositing;
+        m_recommend_sw = false;
     }
 
     if (isLima()) {
-        m_recommendedCompositor = OpenGLCompositing;
+        m_recommend_sw = false;
         m_supportsGLSL = true;
     }
 
     if (isVideoCore4()) {
         // OpenGL works, but is much slower than QPainter
-        m_recommendedCompositor = QPainterCompositing;
+        m_recommend_sw = true;
     }
 
     if (isVideoCore3D()) {
         // OpenGL works, but is much slower than QPainter
-        m_recommendedCompositor = QPainterCompositing;
+        m_recommend_sw = true;
     }
 
     if (isMesaDriver() && platformInterface == gl_interface::egl) {
@@ -1096,45 +1080,41 @@ void GLPlatform::detect(gl_interface platformInterface)
     if (isSoftwareEmulation()) {
         if (m_driver < Driver_Llvmpipe) {
             // we recommend QPainter
-            m_recommendedCompositor = QPainterCompositing;
+            m_recommend_sw = true;
             // Software emulation does not provide GLSL
             m_limitedGLSL = m_supportsGLSL = false;
         } else {
             // llvmpipe does support GLSL
-            m_recommendedCompositor = OpenGLCompositing;
+            m_recommend_sw = false;
             m_limitedGLSL = false;
             m_supportsGLSL = true;
         }
     }
 
     if (m_driver == Driver_Qualcomm) {
-        if (m_chipClass == Adreno1XX) {
-            m_recommendedCompositor = NoCompositing;
-        } else {
-            // all other drivers support at least GLES 2
-            m_recommendedCompositor = OpenGLCompositing;
-        }
+        // all other drivers support at least GLES 2
+        m_recommend_sw = m_chipClass == Adreno1XX;
     }
 
     if (m_chipClass == UnknownChipClass && m_driver == Driver_Unknown) {
         // we don't know the hardware. Let's be optimistic and assume OpenGL compatible hardware
-        m_recommendedCompositor = OpenGLCompositing;
+        m_recommend_sw = false;
         m_supportsGLSL = true;
     }
 
     if (isVirtualBox()) {
         m_virtualMachine = true;
-        m_recommendedCompositor = OpenGLCompositing;
+        m_recommend_sw = false;
     }
 
     if (isVMware()) {
         m_virtualMachine = true;
-        m_recommendedCompositor = OpenGLCompositing;
+        m_recommend_sw = false;
     }
 
     if (m_driver == Driver_Virgl) {
         m_virtualMachine = true;
-        m_recommendedCompositor = OpenGLCompositing;
+        m_recommend_sw = false;
     }
 
     // and force back to shader supported on gles, we wouldn't have got a context if not supported
@@ -1368,9 +1348,9 @@ bool GLPlatform::isVirtualMachine() const
     return m_virtualMachine;
 }
 
-CompositingType GLPlatform::recommendedCompositor() const
+bool GLPlatform::recommend_sw() const
 {
-    return m_recommendedCompositor;
+    return m_recommend_sw;
 }
 
 bool GLPlatform::preferBufferSubData() const

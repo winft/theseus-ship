@@ -68,7 +68,7 @@ TEST_CASE("scene qpainter", "[render]")
         render::full_repaint(*setup.base->render->compositor);
         auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->render->compositor->scene.get());
         QVERIFY(scene);
-        QCOMPARE(setup.base->render->selected_compositor(), QPainterCompositing);
+        REQUIRE(setup.base->render->is_sw_compositing());
 
         // now let's render a reference image for comparison
         QImage referenceImage(QSize(1280, 1024), QImage::Format_RGB32);

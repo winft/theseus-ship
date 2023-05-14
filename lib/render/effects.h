@@ -64,8 +64,7 @@ class KWIN_EXPORT effects_handler_wrap : public EffectsHandler
 public:
     template<typename Scene>
     effects_handler_wrap(Scene& scene)
-        : EffectsHandler(scene.compositingType())
-        , loader(std::make_unique<effect_loader>(*this, scene.platform))
+        : loader(std::make_unique<effect_loader>(*this, scene.platform))
         , options{*scene.platform.options}
     {
         qRegisterMetaType<QVector<KWin::EffectWindow*>>();
@@ -530,6 +529,11 @@ public:
 
     ~effects_handler_impl() override
     {
+    }
+
+    bool isOpenGLCompositing() const override
+    {
+        return scene.isOpenGl();
     }
 
     bool isScreenLocked() const override

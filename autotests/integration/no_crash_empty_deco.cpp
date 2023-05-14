@@ -38,7 +38,7 @@ TEST_CASE("no crash empty deco", "[win]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     cursor()->set_pos(QPoint(640, 512));
 

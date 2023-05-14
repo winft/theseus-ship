@@ -183,8 +183,7 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("===========\n"));
     if (auto& effects = space.base.render->compositor->effects) {
         support.append(QStringLiteral("Compositing is active\n"));
-        switch (effects->compositingType()) {
-        case OpenGLCompositing: {
+        if (effects->isOpenGLCompositing()) {
             auto platform = GLPlatform::instance();
             if (platform->isGLES()) {
                 support.append(QStringLiteral("Compositing Type: OpenGL ES 2.0\n"));
@@ -269,15 +268,8 @@ QString get_support_info(Space const& space)
             support.append(QStringLiteral("Timer query support: "));
             support.append(platform->supports(GLFeature::TimerQuery) ? yes : no);
             support.append(QStringLiteral("OpenGL 2 Shaders are used\n"));
-            break;
-        }
-        case QPainterCompositing:
+        } else {
             support.append("Compositing Type: QPainter\n");
-            break;
-        case NoCompositing:
-        default:
-            support.append(
-                QStringLiteral("Something is really broken, neither OpenGL nor QPainter is used"));
         }
         support.append(QStringLiteral("\nLoaded Effects:\n"));
         support.append(QStringLiteral("---------------\n"));

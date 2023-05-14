@@ -130,7 +130,7 @@ TEST_CASE("scripted effects", "[effect]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     setup.base->space->virtual_desktop_manager->setCount(2);
 

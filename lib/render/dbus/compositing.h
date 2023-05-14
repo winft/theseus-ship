@@ -156,18 +156,14 @@ public:
                 return QStringLiteral("none");
             }
 
-            switch (compositor.scene->compositingType()) {
-            case OpenGLCompositing:
+            if (compositor.scene->isOpenGl()) {
                 if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
                     return QStringLiteral("gles");
                 } else {
                     return QStringLiteral("gl2");
                 }
-            case QPainterCompositing:
+            } else {
                 return QStringLiteral("qpainter");
-            case NoCompositing:
-            default:
-                return QStringLiteral("none");
             }
         };
         qobject->integration.reinit = [this] { return compositor.reinitialize(); };
@@ -183,5 +179,4 @@ public:
 private:
     Compositor& compositor;
 };
-
 }

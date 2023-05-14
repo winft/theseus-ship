@@ -48,7 +48,7 @@ public:
      */
     virtual void invertScreen() = 0;
 
-    virtual CompositingType selected_compositor() const = 0;
+    virtual bool is_sw_compositing() const = 0;
 
     std::unique_ptr<render::options> options;
     std::unique_ptr<render::post::night_color_manager<Base>> night_color;

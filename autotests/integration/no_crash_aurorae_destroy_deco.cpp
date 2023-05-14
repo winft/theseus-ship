@@ -45,7 +45,7 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
 
     auto& scene = app()->base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     cursor()->set_pos(QPoint(640, 512));
 

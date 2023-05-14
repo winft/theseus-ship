@@ -102,7 +102,7 @@ public:
         singleton_interface::supports_surfaceless_context = {};
     }
 
-    virtual CompositingType compositingType() const = 0;
+    virtual bool isOpenGl() const = 0;
 
     /**
      * The entry point for the main part of the painting pass. Repaints the given screen areas.

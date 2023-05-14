@@ -20,18 +20,23 @@ options_qobject::options_qobject(base::operation_mode mode)
 {
 }
 
+bool options_qobject::sw_compositing() const
+{
+    return m_sw_compositing;
+}
+
 bool options_qobject::isUseCompositing() const
 {
     return m_useCompositing || base::should_use_wayland_for_compositing(windowing_mode);
 }
 
-void options_qobject::setCompositingMode(int compositingMode)
+void options_qobject::set_sw_compositing(bool sw)
 {
-    if (m_compositingMode == static_cast<CompositingType>(compositingMode)) {
+    if (m_sw_compositing == sw) {
         return;
     }
-    m_compositingMode = static_cast<CompositingType>(compositingMode);
-    Q_EMIT compositingModeChanged();
+    m_sw_compositing = sw;
+    Q_EMIT sw_compositing_changed();
 }
 
 void options_qobject::setUseCompositing(bool useCompositing)
@@ -159,50 +164,49 @@ bool options::loadCompositingConfig(bool force)
 {
     KConfigGroup config(m_settings->config(), "Compositing");
 
-    bool useCompositing = false;
-    CompositingType compositingMode = NoCompositing;
+    bool useCompositing = true;
+    bool use_sw = false;
+
     QString compositingBackend = config.readEntry("Backend", "OpenGL");
-    if (compositingBackend == "QPainter")
-        compositingMode = QPainterCompositing;
-    else
-        compositingMode = OpenGLCompositing;
+
+    if (compositingBackend == "QPainter") {
+        use_sw = true;
+    }
 
     if (const char* c = getenv("KWIN_COMPOSE")) {
         switch (c[0]) {
         case 'O':
             qCDebug(KWIN_CORE) << "Compositing forced to OpenGL mode by environment variable";
-            compositingMode = OpenGLCompositing;
+            use_sw = false;
             useCompositing = true;
             break;
         case 'Q':
             qCDebug(KWIN_CORE) << "Compositing forced to QPainter mode by environment variable";
-            compositingMode = QPainterCompositing;
+            use_sw = true;
             useCompositing = true;
             break;
         case 'N':
-            if (getenv("KDE_FAILSAFE"))
-                qCDebug(KWIN_CORE) << "Compositing disabled forcefully by KDE failsafe mode";
-            else
-                qCDebug(KWIN_CORE) << "Compositing disabled forcefully by environment variable";
-            compositingMode = NoCompositing;
+            qCDebug(KWIN_CORE) << "Compositing disabled forcefully by environment variable";
+            useCompositing = false;
             break;
         default:
             qCDebug(KWIN_CORE) << "Unknown KWIN_COMPOSE mode set, ignoring";
             break;
         }
     }
-    qobject->setCompositingMode(compositingMode);
+
+    qobject->set_sw_compositing(use_sw);
 
     auto const platformSupportsNoCompositing
         = !base::should_use_wayland_for_compositing(qobject->windowing_mode);
 
-    if (qobject->m_compositingMode == NoCompositing && platformSupportsNoCompositing) {
+    if (!useCompositing && platformSupportsNoCompositing) {
         qobject->setUseCompositing(false);
         return false; // do not even detect compositing preferences if explicitly disabled
     }
 
     // it's either enforced by env or by initial resume from "suspend" or we check the settings
-    qobject->setUseCompositing(useCompositing || force
+    qobject->setUseCompositing(force
                                || config.readEntry("Enabled",
                                                    options_qobject::defaultUseCompositing()
                                                        || !platformSupportsNoCompositing));

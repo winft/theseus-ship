@@ -26,14 +26,7 @@ class KWIN_EXPORT options_qobject : public QObject
 public:
     options_qobject(base::operation_mode mode);
 
-    CompositingType compositingMode() const
-    {
-        return m_compositingMode;
-    }
-    void setCompositingMode(CompositingType mode)
-    {
-        m_compositingMode = mode;
-    }
+    bool sw_compositing() const;
 
     // Separate to mode so the user can toggle
     bool isUseCompositing() const;
@@ -76,7 +69,7 @@ public:
     }
 
     // setters
-    void setCompositingMode(int compositingMode);
+    void set_sw_compositing(bool sw);
     void setUseCompositing(bool useCompositing);
     void setHiddenPreviews(x11::hidden_preview hiddenPreviews);
     void setMaxFpsInterval(qint64 maxFpsInterval);
@@ -87,11 +80,6 @@ public:
     void setWindowsBlockCompositing(bool set);
     void setAnimationCurve(render::animation_curve curve);
 
-    // default values
-    static CompositingType defaultCompositingMode()
-    {
-        return OpenGLCompositing;
-    }
     static bool defaultUseCompositing()
     {
         return true;
@@ -129,7 +117,7 @@ public:
 
 Q_SIGNALS:
     // for properties
-    void compositingModeChanged();
+    void sw_compositing_changed();
     void useCompositingChanged();
     void maxFpsIntervalChanged();
     void refreshRateChanged();
@@ -144,7 +132,7 @@ Q_SIGNALS:
     void configChanged();
 
 private:
-    CompositingType m_compositingMode{defaultCompositingMode()};
+    bool m_sw_compositing{false};
     bool m_useCompositing{defaultUseCompositing()};
     x11::hidden_preview m_hiddenPreviews{defaultHiddenPreviews()};
     qint64 m_maxFpsInterval{defaultMaxFpsInterval()};

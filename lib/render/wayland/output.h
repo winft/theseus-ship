@@ -84,7 +84,7 @@ public:
     void set_delay(presentation_data const& data)
     {
         auto& scene = platform.compositor->scene;
-        if (scene->compositingType() != CompositingType::OpenGLCompositing) {
+        if (!scene->isOpenGl()) {
             return;
         }
         if (!GLPlatform::instance()->supports(GLFeature::TimerQuery)) {

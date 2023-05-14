@@ -105,7 +105,8 @@ void ResizeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Window
                 vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
                 vbo->render(GL_TRIANGLES);
                 glDisable(GL_BLEND);
-            } else if (effects->compositingType() == QPainterCompositing) {
+            } else {
+                // Assume QPainter compositing.
                 QPainter* painter = effects->scenePainter();
                 painter->save();
                 color.setAlphaF(alpha);

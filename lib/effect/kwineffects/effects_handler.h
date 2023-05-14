@@ -77,7 +77,6 @@ class KWINEFFECTS_EXPORT EffectsHandler : public QObject
      * Whether window decorations use the alpha channel.
      */
     Q_PROPERTY(bool decorationsHaveAlpha READ decorationsHaveAlpha)
-    Q_PROPERTY(CompositingType compositingType READ compositingType CONSTANT)
     Q_PROPERTY(QPoint cursorPos READ cursorPos)
     Q_PROPERTY(QSize virtualScreenSize READ virtualScreenSize NOTIFY virtualScreenSizeChanged)
     Q_PROPERTY(
@@ -97,7 +96,7 @@ public:
     using TouchBorderCallback
         = std::function<void(ElectricBorder border, const QSizeF&, EffectScreen* screen)>;
 
-    explicit EffectsHandler(CompositingType type);
+    explicit EffectsHandler();
     ~EffectsHandler() override;
     // for use by effects
     virtual void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
@@ -452,13 +451,12 @@ public:
 
     Q_SCRIPTABLE virtual bool isEffectLoaded(const QString& name) const = 0;
 
-    CompositingType compositingType() const;
     /**
      * @brief Whether the Compositor is OpenGL based (either GL 1 or 2).
      *
      * @return bool @c true in case of OpenGL based Compositor, @c false otherwise
      */
-    bool isOpenGLCompositing() const;
+    virtual bool isOpenGLCompositing() const = 0;
     /**
      * @brief Provides access to the QPainter which is rendering to the back buffer.
      *
@@ -1237,7 +1235,7 @@ protected:
 
     QVector<EffectPair> loaded_effects;
     // QHash< QString, EffectFactory* > effect_factories;
-    CompositingType compositing_type;
+    bool sw_composite;
 };
 
 /**

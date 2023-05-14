@@ -444,9 +444,9 @@ public:
         m_backend->screenGeometryChanged(size);
     }
 
-    CompositingType compositingType() const override
+    bool isOpenGl() const override
     {
-        return OpenGLCompositing;
+        return true;
     }
 
     bool hasSwapEvent() const override
@@ -549,7 +549,7 @@ public:
         if (!backend->isDirectRendering()) {
             return false;
         }
-        if (GLPlatform::instance()->recommendedCompositor() != OpenGLCompositing) {
+        if (GLPlatform::instance()->recommend_sw()) {
             qCDebug(KWIN_CORE) << "Driver does not recommend OpenGL compositing";
             return false;
         }

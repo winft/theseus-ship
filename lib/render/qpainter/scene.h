@@ -98,9 +98,9 @@ public:
         m_painter->restore();
     }
 
-    CompositingType compositingType() const override
+    bool isOpenGl() const override
     {
-        return QPainterCompositing;
+        return false;
     }
 
     std::unique_ptr<render::shadow<window_t>> createShadow(window_t* win) override

@@ -10,11 +10,8 @@ namespace KWin
 
 EffectsHandler* effects{nullptr};
 
-EffectsHandler::EffectsHandler(CompositingType type)
-    : compositing_type(type)
+EffectsHandler::EffectsHandler()
 {
-    if (compositing_type == NoCompositing)
-        return;
     KWin::effects = this;
 }
 
@@ -23,16 +20,6 @@ EffectsHandler::~EffectsHandler()
     // All effects should already be unloaded by Impl dtor
     Q_ASSERT(loaded_effects.count() == 0);
     KWin::effects = nullptr;
-}
-
-CompositingType EffectsHandler::compositingType() const
-{
-    return compositing_type;
-}
-
-bool EffectsHandler::isOpenGLCompositing() const
-{
-    return compositing_type == OpenGLCompositing;
 }
 
 QRect EffectsHandler::mapToRenderTarget(QRect const& rect) const

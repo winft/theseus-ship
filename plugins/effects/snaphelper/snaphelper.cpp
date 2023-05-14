@@ -154,7 +154,8 @@ void SnapHelperEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
 
         glDisable(GL_BLEND);
         glLineWidth(1.0);
-    } else if (effects->compositingType() == QPainterCompositing) {
+    } else {
+        // Assume QPainter compositing.
         QPainter* painter = effects->scenePainter();
         painter->save();
         QColor color = s_lineColor;

@@ -114,7 +114,8 @@ void MouseMarkEffect::paintScreen(int mask, const QRegion& region, ScreenPaintDa
             glDisable(GL_LINE_SMOOTH);
             glDisable(GL_BLEND);
         }
-    } else if (effects->compositingType() == QPainterCompositing) {
+    } else {
+        // Assume QPainter compositing.
         QPainter* painter = effects->scenePainter();
         painter->save();
         QPen pen(color);

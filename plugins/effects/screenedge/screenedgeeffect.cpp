@@ -89,7 +89,8 @@ void ScreenEdgeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
             texture->render(glow->geometry);
             texture->unbind();
             glDisable(GL_BLEND);
-        } else if (effects->compositingType() == QPainterCompositing) {
+        } else {
+            // Assume QPainter compositing.
             QImage tmp(glow->image->size(), QImage::Format_ARGB32_Premultiplied);
             tmp.fill(Qt::transparent);
             QPainter p(&tmp);
@@ -140,7 +141,8 @@ void ScreenEdgeEffect::edgeApproaching(ElectricBorder border, qreal factor, cons
                 || border == ElectricBottom) {
                 if (effects->isOpenGLCompositing()) {
                     glow->texture.reset(createEdgeGlow<GLTexture>(border, geometry.size()));
-                } else if (effects->compositingType() == QPainterCompositing) {
+                } else {
+                    // Assume QPainter compositing.
                     glow->image.reset(createEdgeGlow<QImage>(border, geometry.size()));
                 }
             }
@@ -183,7 +185,8 @@ ScreenEdgeEffect::createGlow(ElectricBorder border, qreal factor, const QRect& g
         if (glow->texture.isNull()) {
             return nullptr;
         }
-    } else if (effects->compositingType() == QPainterCompositing) {
+    } else {
+        // Assume QPainter compositing.
         if (border == ElectricTopLeft || border == ElectricTopRight || border == ElectricBottomRight
             || border == ElectricBottomLeft) {
             glow->image.reset(createCornerGlow<QImage>(border));

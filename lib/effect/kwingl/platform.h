@@ -388,7 +388,7 @@ public:
      * @returns The CompositingType recommended by the driver.
      * @since 4.10
      */
-    CompositingType recommendedCompositor() const;
+    bool recommend_sw() const;
 
     /**
      * Returns true if glMapBufferRange() is likely to perform worse than glBufferSubData()
@@ -474,7 +474,7 @@ private:
     QSet<QByteArray> m_extensions;
     Driver m_driver;
     ChipClass m_chipClass;
-    CompositingType m_recommendedCompositor;
+    bool m_recommend_sw{true};
     qint64 m_glVersion;
     qint64 m_glslVersion;
     qint64 m_mesaVersion;

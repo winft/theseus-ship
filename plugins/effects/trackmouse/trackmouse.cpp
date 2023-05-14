@@ -29,8 +29,7 @@ TrackMouseEffect::TrackMouseEffect()
     : m_angle(0)
 {
     initConfig<TrackMouseConfig>();
-    if (effects->isOpenGLCompositing() || effects->compositingType() == QPainterCompositing)
-        m_angleBase = 90.0;
+    m_angleBase = 90.0;
     m_mousePolling = false;
 
     m_action = new QAction(this);
@@ -115,8 +114,8 @@ void TrackMouseEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
             m_texture[i]->unbind();
         }
         glDisable(GL_BLEND);
-    } else if (effects->compositingType() == QPainterCompositing && !m_image[0].isNull()
-               && !m_image[1].isNull()) {
+    } else if (!m_image[0].isNull() && !m_image[1].isNull()) {
+        // Assume QPainter compositing.
         QPainter* painter = effects->scenePainter();
         const QPointF p = m_lastRect[0].topLeft()
             + QPoint(m_lastRect[0].width() / 2.0, m_lastRect[0].height() / 2.0);
@@ -230,8 +229,8 @@ void TrackMouseEffect::loadTexture()
             QImage img(f[i]);
             m_texture[i] = std::make_unique<GLTexture>(img);
             m_lastRect[i].setSize(img.size());
-        }
-        if (effects->compositingType() == QPainterCompositing) {
+        } else {
+            // Assume QPainter compositing.
             m_image[i] = QImage(f[i]);
             m_lastRect[i].setSize(m_image[i].size());
         }

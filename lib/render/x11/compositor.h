@@ -615,9 +615,6 @@ private:
         if (m_framesToTestForSafety <= 0) {
             return;
         }
-        if (!(this->scene->compositingType() & OpenGLCompositing)) {
-            return;
-        }
 
         this->platform.createOpenGLSafePoint(safepoint);
 

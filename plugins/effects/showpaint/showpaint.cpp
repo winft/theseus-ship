@@ -37,7 +37,8 @@ void ShowPaintEffect::paintScreen(int mask, const QRegion& region, ScreenPaintDa
     effects->paintScreen(mask, region, data);
     if (effects->isOpenGLCompositing()) {
         paintGL(data.projectionMatrix());
-    } else if (effects->compositingType() == QPainterCompositing) {
+    } else {
+        // Assume QPainter compositing.
         paintQPainter();
     }
     if (++m_colorIndex == s_colors.count()) {

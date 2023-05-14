@@ -56,7 +56,7 @@ InvertEffect::~InvertEffect() = default;
 
 bool InvertEffect::supported()
 {
-    return effects->compositingType() == OpenGLCompositing;
+    return effects->isOpenGLCompositing();
 }
 
 bool InvertEffect::loadData()

@@ -20,9 +20,8 @@
 
 namespace KWin
 {
-KWINEFFECTS_EXPORT Q_NAMESPACE
 
-    class Effect;
+class Effect;
 class EffectWindow;
 
 typedef QPair<QString, Effect*> EffectPair;
@@ -87,7 +86,6 @@ enum class SessionState {
     Saving,
     Quitting,
 };
-Q_ENUM_NS(SessionState)
 
 /**
  * @brief The direction in which a pointer axis is moved.
@@ -128,7 +126,6 @@ enum ElectricBorder {
     ELECTRIC_COUNT,
     ElectricNone,
 };
-Q_ENUM_NS(ElectricBorder)
 
 enum clientAreaOption {
     PlacementArea,    // geometry where a window will be initially placed after being mapped

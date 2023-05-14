@@ -49,7 +49,7 @@ TEST_CASE("desktop switching animation", "[effect]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     // We need at least 2 virtual desktops for the test.
     auto& vd_manager = setup.base->space->virtual_desktop_manager;

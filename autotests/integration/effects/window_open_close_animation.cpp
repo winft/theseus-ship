@@ -45,7 +45,7 @@ TEST_CASE("window open close animation", "[effect]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     setup_wayland_connection();
 

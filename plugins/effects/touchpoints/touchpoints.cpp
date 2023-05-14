@@ -175,10 +175,11 @@ bool TouchPointsEffect::isActive() const
 
 void TouchPointsEffect::drawCircle(const QColor& color, float cx, float cy, float r)
 {
-    if (effects->isOpenGLCompositing())
+    if (effects->isOpenGLCompositing()) {
         drawCircleGl(color, cx, cy, r);
-    else if (effects->compositingType() == QPainterCompositing)
+    } else {
         drawCircleQPainter(color, cx, cy, r);
+    }
 }
 
 void TouchPointsEffect::paintScreenSetup(int mask, QRegion region, ScreenPaintData& data)

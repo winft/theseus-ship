@@ -98,7 +98,7 @@ EffectQuickView::EffectQuickView(QObject* parent, ExportMode exportMode)
         = d->m_view->rendererInterface()->graphicsApi() == QSGRendererInterface::OpenGL;
 
     // Compositor renderer is not the same as QtQuick renderer
-    if (effects->compositingType() != OpenGLCompositing) {
+    if (!effects->isOpenGLCompositing()) {
         qCDebug(LIBKWINEFFECTS) << "Compositing is not OpenGL";
         d->m_useBlit = true;
     }

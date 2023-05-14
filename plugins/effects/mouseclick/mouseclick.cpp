@@ -248,10 +248,12 @@ bool MouseClickEffect::isActive() const
 
 void MouseClickEffect::drawCircle(const QColor& color, float cx, float cy, float r)
 {
-    if (effects->isOpenGLCompositing())
+    if (effects->isOpenGLCompositing()) {
         drawCircleGl(color, cx, cy, r);
-    else if (effects->compositingType() == QPainterCompositing)
+    } else {
+        // Assume QPainter compositing.
         drawCircleQPainter(color, cx, cy, r);
+    }
 }
 
 void MouseClickEffect::paintScreenSetup(int mask, QRegion region, ScreenPaintData& data)

@@ -198,7 +198,7 @@ public:
 
     std::unique_ptr<scene_t> create_scene()
     {
-        if (this->platform.selected_compositor() == QPainterCompositing) {
+        if (this->platform.is_sw_compositing()) {
             return qpainter::create_scene(this->platform);
         }
         return gl::create_scene(this->platform);

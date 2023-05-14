@@ -83,7 +83,7 @@ CubeEffect::CubeEffect()
     desktopNameFont.setBold(true);
     desktopNameFont.setPointSize(12);
 
-    if (effects->compositingType() == OpenGLCompositing) {
+    if (effects->isOpenGLCompositing()) {
         ensureResources();
         m_reflectionShader = ShaderManager::instance()->generateShaderFromFile(
             ShaderTrait::MapTexture,
@@ -308,9 +308,9 @@ void CubeEffect::slotWallPaperLoaded()
 bool CubeEffect::loadShader()
 {
     effects->makeOpenGLContextCurrent();
-    if (!(GLPlatform::instance()->supports(GLSL)
-          && (effects->compositingType() == OpenGLCompositing)))
+    if (!(GLPlatform::instance()->supports(GLSL) && effects->isOpenGLCompositing())) {
         return false;
+    }
 
     cylinderShader = ShaderManager::instance()->generateShaderFromFile(
         ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate,
@@ -729,7 +729,7 @@ void CubeEffect::paintCap(bool frontFirst, float zOffset, const QMatrix4x4& proj
     }
 
     bool capShader = false;
-    if (effects->compositingType() == OpenGLCompositing && m_capShader && m_capShader->isValid()) {
+    if (effects->isOpenGLCompositing() && m_capShader && m_capShader->isValid()) {
         capShader = true;
         ShaderManager::instance()->pushShader(m_capShader.get());
         float opacity = cubeOpacity;
@@ -1381,8 +1381,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
                     }
                 }
                 bool capShader = false;
-                if (effects->compositingType() == OpenGLCompositing && m_capShader
-                    && m_capShader->isValid()) {
+                if (effects->isOpenGLCompositing() && m_capShader && m_capShader->isValid()) {
                     capShader = true;
                     ShaderManager::instance()->pushShader(m_capShader.get());
                     m_capShader->setUniform("u_mirror", 0);

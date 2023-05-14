@@ -21,8 +21,9 @@ class KConfigLoader;
 
 namespace KWin
 {
+KWIN_EXPORT Q_NAMESPACE
 
-class EffectsHandler;
+    class EffectsHandler;
 
 namespace scripting
 {

@@ -124,7 +124,7 @@ TEST_CASE("opengl shadow", "[render]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     SECTION("tile overlaps")
     {

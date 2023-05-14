@@ -44,7 +44,7 @@ TEST_CASE("no crash no border", "[win]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     setup_wayland_connection(global_selection::xdg_decoration);
     cursor()->set_pos(QPoint(640, 512));

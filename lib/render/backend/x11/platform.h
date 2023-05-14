@@ -247,12 +247,9 @@ public:
         }
     }
 
-    CompositingType selected_compositor() const override
+    bool is_sw_compositing() const override
     {
-        if (gl_backend) {
-            return OpenGLCompositing;
-        }
-        return NoCompositing;
+        return !gl_backend;
     }
 
 private:

@@ -12,6 +12,13 @@
 namespace KWin::scripting
 {
 
+enum CompositingType {
+    NoCompositing = 0,
+    OpenGLCompositing = 1,
+    /*XRenderCompositing = 2,*/
+    QPainterCompositing = 3,
+};
+
 options::options(base::options& base, win::options& win, render::options& render)
     : base{base}
     , win{win}
@@ -164,7 +171,7 @@ options::options(base::options& base, win::options& win, render::options& render
                      this,
                      &options::hideUtilityWindowsForInactiveChanged);
     QObject::connect(qrender,
-                     &render::options_qobject::compositingModeChanged,
+                     &render::options_qobject::sw_compositing_changed,
                      this,
                      &options::compositingModeChanged);
     QObject::connect(qrender,
@@ -428,12 +435,12 @@ bool options::isHideUtilityWindowsForInactive() const
 
 int options::compositingMode() const
 {
-    return render.qobject->compositingMode();
+    return render.qobject->sw_compositing() ? QPainterCompositing : OpenGLCompositing;
 }
 
 void options::setCompositingMode(int mode)
 {
-    render.qobject->setCompositingMode(mode);
+    render.qobject->set_sw_compositing(mode == QPainterCompositing);
 }
 
 bool options::isUseCompositing() const

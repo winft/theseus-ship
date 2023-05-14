@@ -15,16 +15,3 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <xcb/xcb.h>
 
 #include <kwinconfig.h>
-
-namespace KWin
-{
-KWIN_EXPORT Q_NAMESPACE
-
-    enum CompositingType {
-        NoCompositing = 0,
-        OpenGLCompositing = 1,
-        /*XRenderCompositing = 2,*/
-        QPainterCompositing = 3,
-    };
-
-}
