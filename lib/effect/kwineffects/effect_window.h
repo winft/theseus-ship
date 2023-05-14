@@ -9,7 +9,6 @@
 #include <kwinconfig.h>
 #include <kwineffects/export.h>
 #include <kwineffects/types.h>
-#include <kwinglobals.h>
 
 #include <QIcon>
 #include <QObject>

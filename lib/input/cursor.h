@@ -9,7 +9,7 @@
 #include "base/x11/data.h"
 #include "win/cursor_shape.h"
 
-#include "kwinglobals.h"
+#include "kwin_export.h"
 
 #include <KSharedConfig>
 #include <QObject>

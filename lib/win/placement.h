@@ -17,7 +17,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "window_area.h"
 
 #include "base/options.h"
-#include "kwinglobals.h"
 #include "rules/ruling.h"
 
 #include <QList>

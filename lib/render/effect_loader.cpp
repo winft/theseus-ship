@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "kwineffects/effect.h"
 #include "kwineffects/effect_plugin_factory.h"
 #include "kwineffects/effects_handler.h"
+#include <kwinconfig.h>
 
 #include <QPluginLoader>
 #include <QStringList>

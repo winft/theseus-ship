@@ -8,9 +8,9 @@
 #include <kwineffects/effect_integration.h>
 #include <kwineffects/export.h>
 #include <kwineffects/types.h>
-#include <kwinglobals.h>
 
 #include <KSharedConfig>
+#include <xcb/xcb.h>
 
 class QAction;
 class QKeyEvent;

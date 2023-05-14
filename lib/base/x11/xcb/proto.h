@@ -8,6 +8,7 @@
 
 #include "wrapper.h"
 
+#include <QRect>
 #include <xcb/composite.h>
 #include <xcb/xcb.h>
 

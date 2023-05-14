@@ -12,7 +12,6 @@
 #include "singleton_interface.h"
 #include "xkb/manager.h"
 
-#include "kwinglobals.h"
 #include "utils/algorithm.h"
 
 #include <QAction>

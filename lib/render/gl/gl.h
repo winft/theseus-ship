@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "kwinglobals.h"
 #include <kwingl/platform.h>
 #include <kwingl/utils.h>
 

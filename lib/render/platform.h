@@ -11,9 +11,6 @@
 #include "outline.h"
 #include "post/night_color_manager.h"
 #include "singleton_interface.h"
-
-#include "kwinglobals.h"
-
 #include <memory>
 
 namespace KWin::render

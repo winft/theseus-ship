@@ -11,7 +11,6 @@
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
-#include "kwinglobals.h"
 
 namespace KWin::win
 {

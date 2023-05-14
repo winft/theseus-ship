@@ -8,8 +8,6 @@
 
 #include "base/x11/event_filter.h"
 
-#include "kwinglobals.h"
-
 #include <QDateTime>
 #include <QWidget>
 

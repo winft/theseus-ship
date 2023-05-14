@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <config-kwin.h>
 #include <kwineffects/effect_window.h>
-#include <kwinglobals.h>
 
 #include <KAboutData>
 #include <KLocalizedString>

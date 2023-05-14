@@ -22,7 +22,7 @@
 #include "window_model.h"
 #include "window_thumbnail_item.h"
 
-#include "kwinglobals.h"
+#include "kwin_export.h"
 #include <kwineffects/quick_scene.h>
 
 #include <QQmlContext>

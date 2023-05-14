@@ -6,7 +6,8 @@
 */
 #pragma once
 
-#include "kwinglobals.h"
+#include "kwin_export.h"
+#include <QObject>
 
 namespace KWin::win
 {

@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/output_space.h"
 #include "win/screen.h"
 #include "win/virtual_desktops.h"
+#include <kwin_export.h>
 
 #include <QObject>
 #include <QQmlEngine>
@@ -27,8 +28,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QRect>
 #include <QSize>
 #include <QStringList>
-
-#include <kwinglobals.h>
 
 #include <memory>
 #include <vector>
@@ -74,7 +73,7 @@ class KWIN_EXPORT space : public QObject
 
 public:
     //------------------------------------------------------------------
-    // enums copy&pasted from kwinglobals.h because qtscript is evil
+    // enums copy&pasted from win/types header because qtscript is evil
 
     enum ClientAreaOption {
         ///< geometry where a window will be initially placed after being mapped

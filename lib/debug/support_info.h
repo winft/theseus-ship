@@ -11,6 +11,7 @@
 #include "win/deco/bridge.h"
 
 #include <config-kwin.h>
+#include <kwinconfig.h>
 #include <kwingl/platform.h>
 
 #include <KLocalizedString>

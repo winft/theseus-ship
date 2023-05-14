@@ -13,6 +13,7 @@
 #include "xfixes_cursor_event_filter.h"
 
 #include <QAbstractEventDispatcher>
+#include <QApplication>
 #include <QTimer>
 
 namespace KWin::input::x11

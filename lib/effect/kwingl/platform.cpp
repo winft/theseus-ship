@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <xcb/xcb.h>
 
 namespace KWin
 {

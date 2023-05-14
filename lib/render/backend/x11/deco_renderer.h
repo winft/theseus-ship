@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "kwinglobals.h"
 #include "win/deco/renderer.h"
 
 #include <QTimer>

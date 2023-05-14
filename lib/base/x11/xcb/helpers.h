@@ -6,7 +6,6 @@
 */
 #pragma once
 
-#include "kwinglobals.h"
 #include "utils/memory.h"
 
 #include <QPoint>

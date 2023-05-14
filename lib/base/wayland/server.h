@@ -10,7 +10,7 @@
 #include "output_helpers.h"
 
 #include "base/logging.h"
-#include "kwinglobals.h"
+#include "kwin_export.h"
 #include "utils/flags.h"
 
 #include <KScreenLocker/KsldApp>

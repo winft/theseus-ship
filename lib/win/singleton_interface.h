@@ -8,7 +8,6 @@
 #include "types.h"
 
 #include "kwin_export.h"
-#include "kwinglobals.h"
 
 // Must be included before QOpenGLFramebufferObject.
 #include <epoxy/gl.h>

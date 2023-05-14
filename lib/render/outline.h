@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/config.h"
 #include "kwin_export.h"
-#include "kwinglobals.h"
 
 #include <QObject>
 #include <QRect>

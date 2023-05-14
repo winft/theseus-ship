@@ -6,8 +6,6 @@
 */
 #pragma once
 
-#include "kwinglobals.h"
-
 #include <xcb/xcb.h>
 
 namespace KWin::base::x11::xcb

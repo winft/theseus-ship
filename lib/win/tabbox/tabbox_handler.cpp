@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "tabbox_desktop_model.h"
 
 #include "base/x11/xcb/helpers.h"
-#include "kwinglobals.h"
 #include "script/platform.h"
 #include "tabbox_logging.h"
 #include "tabbox_switcher_item.h"

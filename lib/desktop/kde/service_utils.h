@@ -6,8 +6,6 @@
 */
 #pragma once
 
-#include "kwinglobals.h"
-
 #include <KApplicationTrader>
 #include <QFileInfo>
 #include <QLoggingCategory>

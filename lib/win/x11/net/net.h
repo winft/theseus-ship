@@ -5,10 +5,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
+#include "kwin_export.h"
 #include "win/types.h"
 
 #include <QFlags>
-#include <kwinglobals.h>
 
 namespace KWin::win::x11::net
 {

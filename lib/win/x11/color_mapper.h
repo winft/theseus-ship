@@ -6,7 +6,6 @@
 #pragma once
 
 #include "base/x11/data.h"
-#include "kwinglobals.h"
 
 #include <QObject>
 #include <xcb/xproto.h>

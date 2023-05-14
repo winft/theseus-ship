@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "kwinglobals.h"
+#include "kwin_export.h"
 #include "win/types.h"
 
 #include <QKeySequence>

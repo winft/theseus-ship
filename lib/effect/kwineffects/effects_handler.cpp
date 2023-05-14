@@ -63,5 +63,3 @@ EffectWindow* EffectsHandler::findWindow(QUuid const& id) const
 }
 
 }
-
-#include "moc_kwinglobals.cpp"

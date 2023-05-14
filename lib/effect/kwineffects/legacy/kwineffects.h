@@ -26,7 +26,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // Below header includes and forward declarations are preserved for backwards compatibility.
 #include <kwinconfig.h>
 #include <kwineffects_export.h>
-#include <kwinglobals.h>
 
 #include <QEasingCurve>
 #include <QIcon>

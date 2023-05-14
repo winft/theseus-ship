@@ -17,7 +17,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb/proto.h"
 #include "kwin_export.h"
-#include "kwinglobals.h"
 #include "win/activation.h"
 
 #include <KLazyLocalizedString>

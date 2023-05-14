@@ -131,7 +131,6 @@ install(FILES
     kwingl/legacy/kwinglutils_funcs.h
     kwinxrender/legacy/kwinxrenderutils.h
     kwinxrender/legacy/kwinxrenderutils_export.h
-    kwinglobals.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 install(FILES

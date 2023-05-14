@@ -8,6 +8,7 @@
 
 #include <kwinxrender/utils.h>
 
+#include <QColor>
 #include <xcb/render.h>
 
 namespace KWin::render::backend::x11

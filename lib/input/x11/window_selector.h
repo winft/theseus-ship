@@ -11,7 +11,6 @@
 #include "base/x11/event_filter.h"
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
-#include "kwinglobals.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window_find.h"
 

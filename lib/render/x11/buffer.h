@@ -7,8 +7,6 @@
 
 #include "render/buffer.h"
 
-#include <kwinglobals.h>
-
 #include <xcb/xcb.h>
 
 namespace KWin::render::x11

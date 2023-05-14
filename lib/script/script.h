@@ -8,7 +8,7 @@
 #pragma once
 
 #include "win/types.h"
-#include <kwinglobals.h>
+#include <kwin_export.h>
 
 #include <QHash>
 #include <QJSEngine>

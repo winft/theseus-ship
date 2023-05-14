@@ -11,6 +11,8 @@
 #include <memory>
 #include <utility>
 
+class QTimer;
+
 namespace KWin
 {
 

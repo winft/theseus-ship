@@ -7,10 +7,10 @@
 
 #include <kwineffects/export.h>
 #include <kwineffects/types.h>
-#include <kwinglobals.h>
 
 #include <KSharedConfig>
 #include <QKeyEvent>
+#include <xcb/xcb.h>
 
 namespace KWin
 {

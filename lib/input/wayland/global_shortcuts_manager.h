@@ -7,7 +7,7 @@
 #pragma once
 
 #include "input/types.h"
-#include "kwinglobals.h"
+#include "kwin_export.h"
 #include "win/input/gestures.h"
 #include "win/input/global_shortcut.h"
 

@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "kwinglobals.h"
+#include "kwin_export.h"
 
 #include "render/compositor_qobject.h"
 #include "render/types.h"

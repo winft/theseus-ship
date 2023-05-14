@@ -21,7 +21,7 @@ class js_engine_global_methods_wrapper : public QObject
     Q_OBJECT
 public:
     //------------------------------------------------------------------
-    // enums copy&pasted from kwinglobals.h for exporting
+    // enums copy&pasted from win/types header for exporting
 
     enum ClientAreaOption {
         ///< geometry where a window will be initially placed after being mapped

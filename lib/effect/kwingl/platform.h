@@ -7,10 +7,11 @@
 #pragma once
 
 #include <kwingl/export.h>
-#include <kwinglobals.h>
 
 #include <QByteArray>
 #include <QSet>
+
+struct xcb_connection_t;
 
 namespace KWin
 {
