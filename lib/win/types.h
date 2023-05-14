@@ -210,6 +210,19 @@ enum class win_op {
     application_rules,
 };
 
+// DesktopMode and WindowsMode are based on the order in which the desktop
+//  or window were viewed. DesktopListMode lists them in the order created.
+enum class tabbox_mode {
+    desktop,                         // Focus chain of desktops
+    desktop_list,                    // Static desktop order
+    windows,                         // Primary window switching mode
+    windows_alternative,             // Secondary window switching mode
+    current_app_windows,             // Same as primary window switching mode but only for windows
+                                     // of current application
+    current_app_windows_alternative, // Same as secondary switching mode but only for
+                                     // windows of current application
+};
+
 enum class mouse_cmd {
     raise,
     lower,

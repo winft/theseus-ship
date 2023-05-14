@@ -40,7 +40,7 @@ class KWIN_EXPORT tabbox_qobject : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
-    void tabbox_added(int);
+    void tabbox_added(tabbox_mode);
     void tabbox_closed();
     void tabbox_updated();
     void tabbox_key_event(QKeyEvent*);
@@ -97,7 +97,7 @@ public:
         m_tabbox = new tabbox_handler_impl(this);
         QTimer::singleShot(0, qobject.get(), [this] { handler_ready(); });
 
-        m_tabbox_mode = TabBoxDesktopMode; // init variables
+        m_tabbox_mode = tabbox_mode::desktop; // init variables
         QObject::connect(
             &m_delayed_show_timer, &QTimer::timeout, qobject.get(), [this] { show(); });
         QObject::connect(space.qobject.get(),
@@ -194,32 +194,32 @@ public:
      *
      * @see mode
      */
-    void set_mode(TabBoxMode mode)
+    void set_mode(tabbox_mode mode)
     {
         m_tabbox_mode = mode;
         switch (mode) {
-        case TabBoxWindowsMode:
+        case tabbox_mode::windows:
             m_tabbox->set_config(m_default_config);
             break;
-        case TabBoxWindowsAlternativeMode:
+        case tabbox_mode::windows_alternative:
             m_tabbox->set_config(m_alternative_config);
             break;
-        case TabBoxCurrentAppWindowsMode:
+        case tabbox_mode::current_app_windows:
             m_tabbox->set_config(m_default_current_application_config);
             break;
-        case TabBoxCurrentAppWindowsAlternativeMode:
+        case tabbox_mode::current_app_windows_alternative:
             m_tabbox->set_config(m_alternative_current_application_config);
             break;
-        case TabBoxDesktopMode:
+        case tabbox_mode::desktop:
             m_tabbox->set_config(m_desktop_config);
             break;
-        case TabBoxDesktopListMode:
+        case tabbox_mode::desktop_list:
             m_tabbox->set_config(m_desktop_list_config);
             break;
         }
     }
 
-    TabBoxMode mode() const
+    tabbox_mode mode() const
     {
         return m_tabbox_mode;
     }
@@ -557,10 +557,11 @@ public:
 
         if (m_tab_grab) {
             static const int mode_count = 4;
-            static const TabBoxMode modes[mode_count] = {TabBoxWindowsMode,
-                                                         TabBoxWindowsAlternativeMode,
-                                                         TabBoxCurrentAppWindowsMode,
-                                                         TabBoxCurrentAppWindowsAlternativeMode};
+            static const tabbox_mode modes[mode_count]
+                = {tabbox_mode::windows,
+                   tabbox_mode::windows_alternative,
+                   tabbox_mode::current_app_windows,
+                   tabbox_mode::current_app_windows_alternative};
             const QKeySequence cuts[2 * mode_count]
                 = {// forward
                    m_cut_walk_through_windows,
@@ -771,50 +772,52 @@ public:
 
     void slot_walk_through_windows()
     {
-        navigating_through_windows(true, m_cut_walk_through_windows, TabBoxWindowsMode);
+        navigating_through_windows(true, m_cut_walk_through_windows, tabbox_mode::windows);
     }
 
     void slot_walk_back_through_windows()
     {
-        navigating_through_windows(false, m_cut_walk_through_windows_reverse, TabBoxWindowsMode);
+        navigating_through_windows(false, m_cut_walk_through_windows_reverse, tabbox_mode::windows);
     }
 
     void slot_walk_through_windows_alternative()
     {
         navigating_through_windows(
-            true, m_cut_walk_through_windows_alternative, TabBoxWindowsAlternativeMode);
+            true, m_cut_walk_through_windows_alternative, tabbox_mode::windows_alternative);
     }
 
     void slot_walk_back_through_windows_alternative()
     {
-        navigating_through_windows(
-            false, m_cut_walk_through_windows_alternative_reverse, TabBoxWindowsAlternativeMode);
+        navigating_through_windows(false,
+                                   m_cut_walk_through_windows_alternative_reverse,
+                                   tabbox_mode::windows_alternative);
     }
 
     void slot_walk_through_current_app_windows()
     {
         navigating_through_windows(
-            true, m_cut_walk_through_current_app_windows, TabBoxCurrentAppWindowsMode);
+            true, m_cut_walk_through_current_app_windows, tabbox_mode::current_app_windows);
     }
 
     void slot_walk_back_through_current_app_windows()
     {
-        navigating_through_windows(
-            false, m_cut_walk_through_current_app_windows_reverse, TabBoxCurrentAppWindowsMode);
+        navigating_through_windows(false,
+                                   m_cut_walk_through_current_app_windows_reverse,
+                                   tabbox_mode::current_app_windows);
     }
 
     void slot_walk_through_current_app_windows_alternative()
     {
         navigating_through_windows(true,
                                    m_cut_walk_through_current_app_windows_alternative,
-                                   TabBoxCurrentAppWindowsAlternativeMode);
+                                   tabbox_mode::current_app_windows_alternative);
     }
 
     void slot_walk_back_through_current_app_windows_alternative()
     {
         navigating_through_windows(false,
                                    m_cut_walk_through_current_app_windows_alternative_reverse,
-                                   TabBoxCurrentAppWindowsAlternativeMode);
+                                   tabbox_mode::current_app_windows_alternative);
     }
 
     void handler_ready()
@@ -827,9 +830,9 @@ public:
     bool toggle(ElectricBorder eb)
     {
         if (border_activate_alternative.find(eb) != border_activate_alternative.end()) {
-            return toggle_mode(TabBoxWindowsAlternativeMode);
+            return toggle_mode(tabbox_mode::windows_alternative);
         } else {
-            return toggle_mode(TabBoxWindowsMode);
+            return toggle_mode(tabbox_mode::windows);
         }
     }
 
@@ -886,7 +889,7 @@ private:
     }
 
     // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
-    bool start_kde_walk_through_windows(TabBoxMode mode)
+    bool start_kde_walk_through_windows(tabbox_mode mode)
     {
         if (!establish_tabbox_grab()) {
             return false;
@@ -899,7 +902,7 @@ private:
     }
 
     // TabBoxDesktopMode | TabBoxDesktopListMode
-    bool start_walk_through_desktops(TabBoxMode mode)
+    bool start_walk_through_desktops(tabbox_mode mode)
     {
         if (!establish_tabbox_grab()) {
             return false;
@@ -913,16 +916,16 @@ private:
 
     bool start_walk_through_desktops()
     {
-        return start_walk_through_desktops(TabBoxDesktopMode);
+        return start_walk_through_desktops(tabbox_mode::desktop);
     }
 
     bool start_walk_through_desktop_list()
     {
-        return start_walk_through_desktops(TabBoxDesktopListMode);
+        return start_walk_through_desktops(tabbox_mode::desktop_list);
     }
 
     // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
-    void navigating_through_windows(bool forward, const QKeySequence& shortcut, TabBoxMode mode)
+    void navigating_through_windows(bool forward, const QKeySequence& shortcut, tabbox_mode mode)
     {
         if (!m_ready || is_grabbed()) {
             return;
@@ -1042,7 +1045,7 @@ private:
     }
 
     // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
-    void kde_one_step_through_windows(bool forward, TabBoxMode mode)
+    void kde_one_step_through_windows(bool forward, tabbox_mode mode)
     {
         set_mode(mode);
         reset();
@@ -1053,7 +1056,7 @@ private:
     }
 
     // TabBoxDesktopMode | TabBoxDesktopListMode
-    void one_step_through_desktops(bool forward, TabBoxMode mode)
+    void one_step_through_desktops(bool forward, tabbox_mode mode)
     {
         set_mode(mode);
         reset();
@@ -1064,12 +1067,12 @@ private:
 
     void one_step_through_desktops(bool forward)
     {
-        one_step_through_desktops(forward, TabBoxDesktopMode);
+        one_step_through_desktops(forward, tabbox_mode::desktop);
     }
 
     void one_step_through_desktop_list(bool forward)
     {
-        one_step_through_desktops(forward, TabBoxDesktopListMode);
+        one_step_through_desktops(forward, tabbox_mode::desktop_list);
     }
 
     bool establish_tabbox_grab()
@@ -1146,7 +1149,7 @@ private:
         global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
     }
 
-    bool toggle_mode(TabBoxMode mode)
+    bool toggle_mode(tabbox_mode mode)
     {
         if (!space.options->qobject->focusPolicyIsReasonable()) {
             // not supported.
@@ -1214,7 +1217,7 @@ private:
 
         auto touch_config = [this, config](const QString& key,
                                            QHash<ElectricBorder, QAction*>& actions,
-                                           TabBoxMode mode,
+                                           tabbox_mode mode,
                                            const QStringList& defaults = QStringList{}) {
             // fist erase old config
             for (auto it = actions.begin(); it != actions.end();) {
@@ -1236,10 +1239,10 @@ private:
                 actions.insert(ElectricBorder(i), a);
             }
         };
-        touch_config(QStringLiteral("TouchBorderActivate"), m_touch_activate, TabBoxWindowsMode);
+        touch_config(QStringLiteral("TouchBorderActivate"), m_touch_activate, tabbox_mode::windows);
         touch_config(QStringLiteral("TouchBorderAlternativeActivate"),
                      m_touch_alternative_activate,
-                     TabBoxWindowsAlternativeMode);
+                     tabbox_mode::windows_alternative);
     }
 
     void global_shortcut_changed(QAction* action, const QKeySequence& seq)
@@ -1277,7 +1280,7 @@ private:
         }
     }
 
-    TabBoxMode m_tabbox_mode;
+    tabbox_mode m_tabbox_mode;
     tabbox_handler_impl<tabbox<Space>>* m_tabbox;
     int m_delay_show_time;
 

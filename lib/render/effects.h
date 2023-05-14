@@ -424,7 +424,9 @@ public:
 
 #if KWIN_BUILD_TABBOX
         auto qt_tabbox = ws->tabbox->qobject.get();
-        connect(qt_tabbox, &win::tabbox_qobject::tabbox_added, this, &EffectsHandler::tabBoxAdded);
+        connect(qt_tabbox, &win::tabbox_qobject::tabbox_added, this, [this](auto mode) {
+            Q_EMIT tabBoxAdded(static_cast<int>(mode));
+        });
         connect(
             qt_tabbox, &win::tabbox_qobject::tabbox_updated, this, &EffectsHandler::tabBoxUpdated);
         connect(
