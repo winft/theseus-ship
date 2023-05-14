@@ -53,7 +53,7 @@ public:
         return false;
     }
 
-    void createOpenGLSafePoint(OpenGLSafePoint /*safePoint*/) override
+    void createOpenGLSafePoint(opengl_safe_point /*safePoint*/) override
     {
     }
 

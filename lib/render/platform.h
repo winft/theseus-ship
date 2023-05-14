@@ -40,7 +40,7 @@ public:
     virtual bool compositingPossible() const = 0;
     virtual QString compositingNotPossibleReason() const = 0;
     virtual bool openGLCompositingIsBroken() const = 0;
-    virtual void createOpenGLSafePoint(OpenGLSafePoint safePoint) = 0;
+    virtual void createOpenGLSafePoint(opengl_safe_point safePoint) = 0;
 
     /**
      * Platform specific way to invert the screen.

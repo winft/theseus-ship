@@ -972,8 +972,8 @@ std::unique_ptr<render::scene<Platform>> create_scene(Platform& platform)
         throw std::runtime_error("OpenGL library is unsafe to use");
     }
 
-    platform.createOpenGLSafePoint(OpenGLSafePoint::PreInit);
-    auto post = [&] { platform.createOpenGLSafePoint(OpenGLSafePoint::PostInit); };
+    platform.createOpenGLSafePoint(opengl_safe_point::pre_init);
+    auto post = [&] { platform.createOpenGLSafePoint(opengl_safe_point::post_init); };
 
     try {
         auto scene = std::make_unique<gl::scene<Platform>>(platform);

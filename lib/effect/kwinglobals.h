@@ -33,6 +33,4 @@ enum OpenGLPlatformInterface {
     EglPlatformInterface
 };
 
-enum class OpenGLSafePoint { PreInit, PostInit, PreFrame, PostFrame, PostLastGuardedFrame };
-
 }

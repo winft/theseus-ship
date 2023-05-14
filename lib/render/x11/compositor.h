@@ -421,7 +421,7 @@ public:
         }
 
         Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
-        create_opengl_safepoint(OpenGLSafePoint::PreFrame);
+        create_opengl_safepoint(opengl_safe_point::pre_frame);
 
         auto now_ns = std::chrono::steady_clock::now().time_since_epoch();
         auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
@@ -430,7 +430,7 @@ public:
         auto const duration = this->scene->paint(repaints, windows, now);
 
         this->update_paint_periods(duration);
-        create_opengl_safepoint(OpenGLSafePoint::PostFrame);
+        create_opengl_safepoint(opengl_safe_point::post_frame);
         this->retard_next_composition();
 
         for (auto win : windows) {
@@ -610,7 +610,7 @@ private:
         return true;
     }
 
-    void create_opengl_safepoint(OpenGLSafePoint safepoint)
+    void create_opengl_safepoint(opengl_safe_point safepoint)
     {
         if (m_framesToTestForSafety <= 0) {
             return;
@@ -621,9 +621,9 @@ private:
 
         this->platform.createOpenGLSafePoint(safepoint);
 
-        if (safepoint == OpenGLSafePoint::PostFrame) {
+        if (safepoint == opengl_safe_point::post_frame) {
             if (--m_framesToTestForSafety == 0) {
-                this->platform.createOpenGLSafePoint(OpenGLSafePoint::PostLastGuardedFrame);
+                this->platform.createOpenGLSafePoint(opengl_safe_point::post_last_guarded_frame);
             }
         }
     }

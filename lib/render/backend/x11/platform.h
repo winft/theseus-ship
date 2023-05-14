@@ -144,17 +144,17 @@ public:
         return QString();
     }
 
-    void createOpenGLSafePoint(OpenGLSafePoint safePoint) override
+    void createOpenGLSafePoint(opengl_safe_point safePoint) override
     {
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
         auto group = KConfigGroup(this->base.config.main, "Compositing");
         switch (safePoint) {
-        case OpenGLSafePoint::PreInit:
+        case opengl_safe_point::pre_init:
             group.writeEntry(unsafeKey, true);
             group.sync();
             // Deliberately continue with PreFrame
             Q_FALLTHROUGH();
-        case OpenGLSafePoint::PreFrame:
+        case opengl_safe_point::pre_frame:
             if (!m_openGLFreezeProtectionThread) {
                 Q_ASSERT(m_openGLFreezeProtection == nullptr);
                 m_openGLFreezeProtectionThread = std::make_unique<QThread>();
@@ -185,15 +185,15 @@ public:
                 QMetaObject::invokeMethod(m_openGLFreezeProtection, "start", Qt::QueuedConnection);
             }
             break;
-        case OpenGLSafePoint::PostInit:
+        case opengl_safe_point::post_init:
             group.writeEntry(unsafeKey, false);
             group.sync();
             // Deliberately continue with PostFrame
             Q_FALLTHROUGH();
-        case OpenGLSafePoint::PostFrame:
+        case opengl_safe_point::post_frame:
             QMetaObject::invokeMethod(m_openGLFreezeProtection, "stop", Qt::QueuedConnection);
             break;
-        case OpenGLSafePoint::PostLastGuardedFrame:
+        case opengl_safe_point::post_last_guarded_frame:
             m_openGLFreezeProtection->deleteLater();
             m_openGLFreezeProtection = nullptr;
             m_openGLFreezeProtectionThread->quit();

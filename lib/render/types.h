@@ -111,6 +111,14 @@ enum night_color_mode {
     constant,
 };
 
+enum class opengl_safe_point {
+    pre_init,
+    post_init,
+    pre_frame,
+    post_frame,
+    post_last_guarded_frame,
+};
+
 }
 
 ENUM_FLAGS(KWin::render::paint_type)
