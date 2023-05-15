@@ -6,6 +6,7 @@ add_library(base SHARED)
 
 target_link_libraries(base
   PUBLIC
+    utils
     Qt::Core
     Qt::DBus
     Qt::Gui
