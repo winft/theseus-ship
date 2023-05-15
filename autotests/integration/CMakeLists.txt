@@ -115,7 +115,7 @@ add_executable(tests
 
 target_link_libraries(tests
 PRIVATE
-  kwin_wayland_lib
+  wlroots
   Qt::Test
   Catch2::Catch2WithMain
   KF6::Crash

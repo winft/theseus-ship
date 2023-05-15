@@ -335,7 +335,7 @@ kcoreaddons_target_static_plugins(kwin_x11 "kwin/effects/plugins")
 
 add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
-  kwin_wayland_lib
+  wlroots
   KF6IdleTimeKWinPlugin
   KF6WindowSystemKWinPlugin
   KWinQpaPlugin
