@@ -142,20 +142,22 @@ void MagicLampEffect::apply(effect::window_paint_data& data, WindowQuadList& qua
             }
             if (panel) {
                 // Assumption: width of horizonal panel is greater than its height and vice versa
-                // The panel has to border one screen edge, so get it's screen area
-                QRect panelScreen = effects->clientArea(ScreenArea, panel);
+                auto const windowScreen = effects->clientArea(ScreenArea, &data.window);
+
                 if (panel->width() >= panel->height()) {
                     // horizontal panel
-                    if (panel->y() <= panelScreen.height() / 2)
+                    if (icon.center().y() <= windowScreen.center().y()) {
                         position = Top;
-                    else
+                    } else {
                         position = Bottom;
+                    }
                 } else {
                     // vertical panel
-                    if (panel->x() <= panelScreen.width() / 2)
+                    if (icon.center().x() <= windowScreen.center().x()) {
                         position = Left;
-                    else
+                    } else {
                         position = Right;
+                    }
                 }
             } else {
                 // we did not find a panel, so it might be autohidden
