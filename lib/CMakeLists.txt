@@ -65,7 +65,6 @@ generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 
 ### X11 library
 set(kwin_X11_SRCS
-   base/backend/x11/platform.cpp
    render/backend/x11/non_composited_outline.cpp
 )
 

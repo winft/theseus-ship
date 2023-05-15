@@ -8,7 +8,7 @@
 #define KWIN_MAIN_X11_H
 #include "main.h"
 
-#include "base/backend/x11/platform.h"
+#include "base/x11/platform.h"
 #include "render/backend/x11/platform.h"
 
 #include <QApplication>
@@ -48,7 +48,7 @@ private:
 
     static void crashHandler(int signal);
 
-    base::backend::x11::platform base;
+    base::x11::platform base;
 
     QScopedPointer<KWinSelectionOwner> owner;
     std::unique_ptr<win::x11::xcb_event_filter<base::x11::platform::space_t>> event_filter;

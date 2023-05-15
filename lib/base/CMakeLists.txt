@@ -89,6 +89,7 @@ target_sources(base-x11
       x11/event_filter_manager.h
       x11/fixx11h.h
       x11/grabs.h
+      x11/platform.h
       x11/selection_owner.h
       x11/user_interaction_filter.h
       x11/xcb/atom.h
