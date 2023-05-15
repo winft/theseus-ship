@@ -8,7 +8,6 @@ add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwintabbox\")
 ########### next target ###############
 
 set(kcm_kwintabbox_PART_SRCS
-    ${KWIN_SOURCE_DIR}/lib/win/tabbox/tabbox_config.cpp
     layoutpreview.cpp
     main.cpp
     thumbnailitem.cpp
@@ -28,6 +27,7 @@ kcoreaddons_add_plugin(kcm_kwintabbox SOURCES ${kcm_kwintabbox_PART_SRCS} INSTAL
 
 kcmutils_generate_desktop_file(kcm_kwintabbox)
 target_link_libraries(kcm_kwintabbox
+  win
   KF6::GlobalAccel
   KF6::I18n
   KF6::KCMUtils

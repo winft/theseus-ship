@@ -56,6 +56,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
 endif()
 
 configure_file(config-kwin.h.cmake config-kwin.h)
+generate_export_header(base BASE_NAME kwin)
 
 set_target_properties(base PROPERTIES
    VERSION ${CMAKE_PROJECT_VERSION}

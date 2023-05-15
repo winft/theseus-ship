@@ -61,8 +61,6 @@ target_precompile_headers(kwin PRIVATE
 )
 target_link_libraries(kwin ${kwinLibs} epoxy::epoxy)
 
-generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
-
 ### X11 library
 set(kwin_X11_SRCS
    render/backend/x11/non_composited_outline.cpp
@@ -176,5 +174,3 @@ install(EXPORT wlroots-export
   ${INSTALL_TARGETS_DEFAULT_ARGS}
   DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)

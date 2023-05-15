@@ -7,6 +7,7 @@
 #pragma once
 
 #include <QtDBus>
+#include <kwin_export.h>
 
 namespace KWin::win::dbus
 {
@@ -21,16 +22,16 @@ using virtual_desktop_data_vector = QVector<virtual_desktop_data>;
 
 }
 
-QDBusArgument const& operator<<(QDBusArgument& argument,
-                                KWin::win::dbus::virtual_desktop_data const& desk);
-QDBusArgument const& operator>>(QDBusArgument const& argument,
-                                KWin::win::dbus::virtual_desktop_data& desk);
+KWIN_EXPORT QDBusArgument const& operator<<(QDBusArgument& argument,
+                                            KWin::win::dbus::virtual_desktop_data const& desk);
+KWIN_EXPORT QDBusArgument const& operator>>(QDBusArgument const& argument,
+                                            KWin::win::dbus::virtual_desktop_data& desk);
 
 Q_DECLARE_METATYPE(KWin::win::dbus::virtual_desktop_data)
 
-QDBusArgument const& operator<<(QDBusArgument& argument,
-                                KWin::win::dbus::virtual_desktop_data_vector const& deskVector);
-QDBusArgument const& operator>>(QDBusArgument const& argument,
-                                KWin::win::dbus::virtual_desktop_data_vector& deskVector);
+KWIN_EXPORT QDBusArgument const&
+operator<<(QDBusArgument& argument, KWin::win::dbus::virtual_desktop_data_vector const& deskVector);
+KWIN_EXPORT QDBusArgument const&
+operator>>(QDBusArgument const& argument, KWin::win::dbus::virtual_desktop_data_vector& deskVector);
 
 Q_DECLARE_METATYPE(KWin::win::dbus::virtual_desktop_data_vector)

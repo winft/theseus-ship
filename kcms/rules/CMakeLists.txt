@@ -6,14 +6,6 @@
 add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwinrules\")
 
 set(kwinrules_SRCS
-    ../../lib/base/logging.cpp
-    ../../lib/win/rules/book_settings.cpp
-    ../../lib/input/cursor.cpp
-    ../../lib/input/singleton_interface.cpp
-    ../../lib/input/x11/cursor.cpp
-    ../../lib/win/cursor_shape.cpp
-    ../../lib/win/rules/ruling.cpp
-    ../../lib/win/dbus/virtual_desktop_types.cpp
     optionsmodel.cpp
     ruleitem.cpp
     rulesmodel.cpp
@@ -35,10 +27,10 @@ set(kwin_kcm_rules_XCB_LIBS
 )
 
 set(kcm_libs
+  input
+  win-x11
   KF6::KCMUtils
   KF6::WindowSystem
-  kwin
-  kwin_x11_lib
 )
 
 target_link_libraries(KWinRulesObjects ${kcm_libs} ${kwin_kcm_rules_XCB_LIBS})

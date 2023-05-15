@@ -16,6 +16,7 @@ qt_add_dbus_interface(kcmkwincommon_SRC
 add_library(kcmkwincommon SHARED ${kcmkwincommon_SRC})
 
 target_link_libraries(kcmkwincommon
+  base
   KF6::ConfigCore
   KF6::CoreAddons
   KF6::I18n
