@@ -42,6 +42,5 @@ target_link_libraries(kcm_kwinoptions
   KF6::I18n
   KF6::KCMUtils
   KF6::WindowSystem
-  kwin
   Qt::DBus
 )

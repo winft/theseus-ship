@@ -121,6 +121,7 @@ add_library(render-x11 SHARED)
 target_link_libraries(render-x11
   PUBLIC
     base-x11
+    kwinxrenderutils
     render
 )
 
@@ -128,6 +129,7 @@ target_sources(render-x11
   PUBLIC
     FILE_SET HEADERS
     FILES
+      backend/x11/non_composited_outline.h
       x11/buffer.h
       x11/compositor.h
       x11/compositor_selection_owner.h
@@ -141,6 +143,8 @@ target_sources(render-x11
       x11/shadow.h
       x11/types.h
   PRIVATE
+    backend/x11/glx_context_attribute_builder.cpp
+    backend/x11/non_composited_outline.cpp
     x11/compositor_selection_owner.cpp
 )
 

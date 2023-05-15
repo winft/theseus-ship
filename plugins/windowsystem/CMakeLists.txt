@@ -12,6 +12,8 @@ add_library(KF6WindowSystemKWinPlugin OBJECT ${kwindowsystem_plugin_SRCS})
 target_compile_definitions(KF6WindowSystemKWinPlugin PRIVATE QT_STATICPLUGIN)
 target_link_libraries(KF6WindowSystemKWinPlugin
 PRIVATE
-  kwin
+  render
+  win
+  KF6::Plasma
   KF6::WindowSystem
 )

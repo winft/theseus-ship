@@ -10,7 +10,7 @@
 namespace KWin::render::backend::x11
 {
 
-class glx_context_attribute_builder : public gl::context_attribute_builder
+class KWIN_EXPORT glx_context_attribute_builder : public gl::context_attribute_builder
 {
 public:
     std::vector<int> build() const override;

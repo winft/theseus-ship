@@ -13,92 +13,13 @@ add_subdirectory(xwl)
 add_subdirectory(debug)
 add_subdirectory(desktop)
 
-### Common library
-
-set(kwin_KDE_LIBS
-  KF6::ConfigCore
-  KF6::Service
-)
-
-set(kwin_XCB_LIBS
-    XCB::ICCCM
-    XCB::RENDER
-    XCB::SHM
-    XCB::XFIXES
-)
-
-set(kwin_INPUT_LIBS
-  XKB::XKB
-)
-
-set(kwinLibs
-    base-x11
-    debug-common
-    desktop-kde
-    input
-    render
-    script
-    win
-    ${kwin_KDE_LIBS}
-    ${kwin_XCB_LIBS}
-    ${kwin_INPUT_LIBS}
-
-    # For render code
-    kwinxrenderutils
-)
-
-add_library(kwin SHARED ${kwin_SRCS})
-
-set_target_properties(kwin PROPERTIES
-   VERSION ${CMAKE_PROJECT_VERSION}
-   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-)
-
-target_precompile_headers(kwin PRIVATE
-    cmake/precompiled/qt.h
-    cmake/precompiled/std.h
-    cmake/precompiled/xcb.h
-)
-target_link_libraries(kwin ${kwinLibs} epoxy::epoxy)
-
-### X11 library
-set(kwin_X11_SRCS
-   render/backend/x11/non_composited_outline.cpp
-)
-
-if (HAVE_EPOXY_GLX)
-    set(kwin_X11_SRCS
-        ${kwin_X11_SRCS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_context_attribute_builder.cpp
-    )
-endif()
-
-add_library(kwin_x11_lib STATIC
-  ${kwin_X11_SRCS}
-)
-
-target_link_libraries(kwin_x11_lib
-PUBLIC
-  kwin
-  input-x11
-  render-x11
-  KF6::Crash
-PRIVATE
-  Qt::GuiPrivate
-  X11::Xi
-)
-
-if (HAVE_DL_LIBRARY)
-    target_link_libraries(kwin_x11_lib PRIVATE ${DL_LIBRARY})
-endif()
-
-
 add_library(wlroots SHARED)
 
 target_link_libraries(wlroots
   PUBLIC
     debug-wl
     input-wl
+    win-x11
     Libinput::Libinput
     Pixman::Pixman
     wlroots::wlroots
@@ -160,8 +81,6 @@ kcoreaddons_target_static_plugins(
   wlroots "kwin/effects/plugins"
   LINK_OPTION "PRIVATE"
 )
-
-install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 
 install(TARGETS wlroots
   EXPORT wlroots-export

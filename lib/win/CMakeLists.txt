@@ -237,6 +237,7 @@ add_library(win-x11 SHARED)
 target_link_libraries(win-x11
   PUBLIC
     win
+    XCB::ICCCM
 )
 
 target_sources(win-x11

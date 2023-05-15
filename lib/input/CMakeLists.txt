@@ -89,6 +89,7 @@ target_link_libraries(input-x11
     base-x11
     input
     KF6::GlobalAccel
+    X11::Xi
 )
 
 target_sources(input-x11

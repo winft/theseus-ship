@@ -8,11 +8,12 @@
 #include "base/x11/data.h"
 #include "base/x11/xcb/window.h"
 #include "render/outline.h"
+#include <kwin_export.h>
 
 namespace KWin::render::backend::x11
 {
 
-class non_composited_outline : public outline_visual
+class KWIN_EXPORT non_composited_outline : public outline_visual
 {
 public:
     non_composited_outline(base::x11::data const& data, render::outline* outline);
