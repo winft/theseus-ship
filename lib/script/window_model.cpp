@@ -189,7 +189,7 @@ QString window_filter_model::screenName() const
 
 void window_filter_model::setScreenName(const QString& screen)
 {
-    auto const& outputs = base::singleton_interface::platform->get_outputs();
+    auto const& outputs = base::singleton_interface::get_outputs();
     auto output = base::find_output(outputs, screen);
     if (m_output != output) {
         m_output = output;

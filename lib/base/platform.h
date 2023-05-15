@@ -32,9 +32,6 @@ public:
 
     virtual clockid_t get_clockid() const;
 
-    /// Makes a copy of all outputs. Only for external use. Prefer subclass objects instead.
-    virtual std::vector<output*> get_outputs() const = 0;
-
     base::operation_mode operation_mode;
     output_topology topology;
     base::config config;

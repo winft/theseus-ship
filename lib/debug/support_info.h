@@ -163,7 +163,7 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("Active screen follows mouse: "));
     support.append(space.options->get_current_output_follows_mouse() ? yes : no);
 
-    auto const& outputs = space.base.get_outputs();
+    auto const& outputs = space.base.outputs;
     support.append(QStringLiteral("Number of Screens: %1\n\n").arg(outputs.size()));
     for (size_t i = 0; i < outputs.size(); ++i) {
         auto const output = outputs.at(i);

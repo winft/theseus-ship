@@ -56,14 +56,14 @@ void destroy_wayland_connection()
 
 base::output* get_output(size_t index)
 {
-    auto const& outputs = app()->base->get_outputs();
+    auto const& outputs = app()->base->outputs;
     assert(index < outputs.size());
     return outputs.at(index);
 }
 
 void set_current_output(int index)
 {
-    auto const& outputs = app()->base->get_outputs();
+    auto const& outputs = app()->base->outputs;
     auto output = base::get_output(outputs, index);
     QVERIFY(output);
     base::set_current_output(*app()->base, output);
@@ -76,7 +76,7 @@ void test_outputs_default()
 
 void test_outputs_geometries(std::vector<QRect> const& geometries)
 {
-    auto const& outputs = app()->base->get_outputs();
+    auto const& outputs = app()->base->outputs;
     QCOMPARE(outputs.size(), geometries.size());
 
     size_t index = 0;
@@ -582,7 +582,7 @@ KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_keyboard
 
 QPointF get_relative_touch_position(QPointF const& pos)
 {
-    auto output = base::get_nearest_output(app()->base->get_outputs(), pos.toPoint());
+    auto output = base::get_nearest_output(app()->base->outputs, pos.toPoint());
     assert(output);
 
     auto output_size = output->geometry().size();

@@ -150,7 +150,7 @@ void Integration::initScreens()
         QWindowSystemInterface::handleScreenRemoved(m_screens.takeLast());
     }
 
-    auto const outputs = base::singleton_interface::platform->get_outputs();
+    auto const outputs = base::singleton_interface::get_outputs();
     QVector<Screen*> newScreens;
 
     newScreens.reserve(std::max<size_t>(outputs.size(), 1));

@@ -670,7 +670,7 @@ private:
 
     void commit_gamma_ramps(int temperature)
     {
-        for (auto output : base.get_outputs()) {
+        for (auto output : base.outputs) {
             auto rampsize = output->gamma_ramp_size();
             if (!rampsize) {
                 continue;

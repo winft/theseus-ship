@@ -36,6 +36,7 @@ public:
     platform(base::config config)
         : base::platform(std::move(config))
     {
+        init_singleton_interface();
     }
 
     platform(base::config config,
@@ -44,12 +45,18 @@ public:
         : base::platform(std::move(config))
         , server{std::make_unique<wayland::server<platform>>(*this, socket_name, flags)}
     {
+        init_singleton_interface();
     }
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     platform(platform&& other) = delete;
     platform& operator=(platform&& other) = delete;
+
+    ~platform() override
+    {
+        singleton_interface::get_outputs = {};
+    }
 
     void enable_output(output_t* output)
     {
@@ -63,15 +70,6 @@ public:
         assert(contains(outputs, output));
         remove_all(outputs, output);
         Q_EMIT output_removed(output);
-    }
-
-    std::vector<base::output*> get_outputs() const override
-    {
-        std::vector<base::output*> vec;
-        for (auto&& output : outputs) {
-            vec.push_back(output);
-        }
-        return vec;
     }
 
     QProcessEnvironment process_environment;
@@ -90,6 +88,18 @@ public:
     std::unique_ptr<space_t> space;
     std::unique_ptr<scripting::platform<space_t>> script;
     std::unique_ptr<xwl::xwayland<space_t>> xwayland;
+
+private:
+    void init_singleton_interface() const
+    {
+        singleton_interface::get_outputs = [this] {
+            std::vector<base::output*> vec;
+            for (auto&& output : outputs) {
+                vec.push_back(output);
+            }
+            return vec;
+        };
+    }
 };
 
 }

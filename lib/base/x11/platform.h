@@ -32,6 +32,13 @@ public:
         : base::platform(std::move(config))
     {
         singleton_interface::platform = this;
+        singleton_interface::get_outputs = [this] {
+            std::vector<base::output*> vec;
+            for (auto&& output : outputs) {
+                vec.push_back(output);
+            }
+            return vec;
+        };
     }
 
     ~platform() override
@@ -39,16 +46,8 @@ public:
         for (auto out : outputs) {
             delete out;
         }
+        singleton_interface::get_outputs = {};
         singleton_interface::platform = nullptr;
-    }
-
-    std::vector<base::output*> get_outputs() const override
-    {
-        std::vector<base::output*> vec;
-        for (auto&& output : outputs) {
-            vec.push_back(output);
-        }
-        return vec;
     }
 
     std::vector<output_t*> outputs;

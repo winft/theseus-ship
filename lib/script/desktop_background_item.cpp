@@ -5,7 +5,6 @@
 */
 
 #include "desktop_background_item.h"
-#include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "script/scripting_logging.h"
 #include "script/singleton_interface.h"
@@ -32,7 +31,7 @@ QString desktop_background_item::outputName() const
 
 void desktop_background_item::setOutputName(QString const& name)
 {
-    auto const& outputs = base::singleton_interface::platform->get_outputs();
+    auto const& outputs = base::singleton_interface::get_outputs();
     setOutput(base::find_output(outputs, name));
 }
 
