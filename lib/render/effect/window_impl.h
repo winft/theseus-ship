@@ -151,6 +151,13 @@ public:
             *window.ref_win);
     }
 
+    bool isHidden() const override
+    {
+        return std::visit(
+            overload{[](auto&& ref_win) { return static_cast<bool>(ref_win->isHiddenInternal()); }},
+            *window.ref_win);
+    }
+
     bool isMinimized() const override
     {
         return std::visit(overload{[](auto&& ref_win) {
