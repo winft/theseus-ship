@@ -158,7 +158,10 @@ public:
             });
     }
 
-    virtual ~screen_edge() = default;
+    virtual ~screen_edge()
+    {
+        stopApproaching();
+    }
 
     bool isLeft() const
     {
