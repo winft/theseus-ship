@@ -69,8 +69,10 @@ abstract_script::abstract_script(int id,
     }
 
     new ScriptAdaptor(this);
-    QDBusConnection::sessionBus().registerObject(
-        QLatin1Char('/') + QString::number(scriptId()), this, QDBusConnection::ExportAdaptors);
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting/Script")
+                                                     + QString::number(scriptId()),
+                                                 this,
+                                                 QDBusConnection::ExportAdaptors);
 }
 
 abstract_script::~abstract_script()
