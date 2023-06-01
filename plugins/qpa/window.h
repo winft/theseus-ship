@@ -23,11 +23,11 @@ namespace KWin::QPA
 class Window : public QPlatformWindow
 {
 public:
-    explicit Window(QWindow *window);
+    explicit Window(QWindow* window);
     ~Window() override;
 
     void setVisible(bool visible) override;
-    void setGeometry(const QRect &rect) override;
+    void setGeometry(const QRect& rect) override;
     WId winId() const override;
     qreal devicePixelRatio() const override;
     void requestActivateWindow() override;

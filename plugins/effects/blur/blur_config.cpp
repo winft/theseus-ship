@@ -1,0 +1,45 @@
+/*
+    SPDX-FileCopyrightText: 2010 Fredrik Höglund <fredrik@kde.org>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+
+#include "blur_config.h"
+// KConfigSkeleton
+#include "blurconfig.h"
+#include <kwinconfig.h>
+
+#include <KPluginFactory>
+#include <kwineffects_interface.h>
+
+K_PLUGIN_CLASS(KWin::BlurEffectConfig)
+
+namespace KWin
+{
+
+BlurEffectConfig::BlurEffectConfig(QObject* parent,
+                                   const KPluginMetaData& data,
+                                   const QVariantList& args)
+    : KCModule(parent, data, args)
+{
+    ui.setupUi(widget());
+    BlurConfig::instance(KWIN_CONFIG);
+    addConfig(BlurConfig::self(), widget());
+}
+
+BlurEffectConfig::~BlurEffectConfig()
+{
+}
+
+void BlurEffectConfig::save()
+{
+    KCModule::save();
+
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
+    interface.reconfigureEffect(QStringLiteral("blur"));
+}
+
+} // namespace KWin
+
+#include "blur_config.moc"

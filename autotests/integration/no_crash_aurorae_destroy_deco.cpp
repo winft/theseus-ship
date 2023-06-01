@@ -45,7 +45,7 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
 
     auto& scene = app()->base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     cursor()->set_pos(QPoint(640, 512));
 
@@ -60,7 +60,7 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
         group.sync();
 
         win::space_reconfigure(*app()->base->space);
-        QCOMPARE(app()->base->options->qobject->borderlessMaximizedWindows(), true);
+        QCOMPARE(app()->base->space->options->qobject->borderlessMaximizedWindows(), true);
 
         // create an xcb window
         xcb_connection_t* c = xcb_connect(nullptr, nullptr);

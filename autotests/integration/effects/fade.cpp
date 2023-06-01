@@ -35,7 +35,7 @@ TEST_CASE("fade", "[effect]")
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames
-        = render::effect_loader(*effects, *setup.base->render->compositor).listOfKnownEffects();
+        = render::effect_loader(*effects, *setup.base->render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -50,10 +50,7 @@ TEST_CASE("fade", "[effect]")
     // load the translucency effect
     auto& e = setup.base->render->compositor->effects;
 
-    // find the effectsloader
-    auto effectloader = e->findChild<render::basic_effect_loader*>();
-    QVERIFY(effectloader);
-    QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);
+    QSignalSpy effectLoadedSpy(e->loader.get(), &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());
 
     QVERIFY(!e->isEffectLoaded(QStringLiteral("fade")));

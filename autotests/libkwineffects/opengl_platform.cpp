@@ -206,9 +206,9 @@ TEST_CASE("opengl platform", "[render],[unit]")
 
         QCOMPARE(gl->isLooseBinding(), false);
         QCOMPARE(gl->isGLES(), false);
-        QCOMPARE(gl->recommendedCompositor(), QPainterCompositing);
+        REQUIRE(gl->recommend_sw());
         QCOMPARE(gl->preferBufferSubData(), false);
-        QCOMPARE(gl->platformInterface(), NoOpenGLPlatformInterface);
+        QCOMPARE(gl->platformInterface(), gl_interface::unknown);
     }
 
     QDir dir(QFINDTESTDATA("data/glplatform"));
@@ -235,8 +235,8 @@ TEST_CASE("opengl platform", "[render],[unit]")
 
             auto gl = GLPlatform::instance();
             QVERIFY(gl);
-            gl->detect(EglPlatformInterface);
-            QCOMPARE(gl->platformInterface(), EglPlatformInterface);
+            gl->detect(gl_interface::egl);
+            QCOMPARE(gl->platformInterface(), gl_interface::egl);
 
             auto const settingsGroup = config.group("Settings");
 
@@ -286,8 +286,7 @@ TEST_CASE("opengl platform", "[render],[unit]")
 
             QCOMPARE(gl->isLooseBinding(), settingsGroup.readEntry("LooseBinding", false));
             QCOMPARE(gl->isGLES(), settingsGroup.readEntry("GLES", false));
-            QCOMPARE(gl->recommendedCompositor(),
-                     CompositingType(settingsGroup.readEntry("Compositor", int(NoCompositing))));
+            REQUIRE(gl->recommend_sw() == (settingsGroup.readEntry("Compositor", 0) != 1));
             QCOMPARE(gl->preferBufferSubData(),
                      settingsGroup.readEntry("PreferBufferSubData", false));
         }

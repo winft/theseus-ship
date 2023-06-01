@@ -34,7 +34,8 @@ namespace KWin::detail::test
 
 class client;
 
-using space = win::wayland::space<base::wayland::platform>;
+using space = win::wayland::space<render::wayland::platform<base::wayland::platform>,
+                                  input::wayland::platform<base::wayland::platform>>;
 using wayland_window = win::wayland::window<space>;
 
 struct KWIN_EXPORT output {

@@ -5,7 +5,7 @@
 File=kwinscreenedgesettings.kcfg
 NameSpace=KWin
 ClassName=KWinScreenEdgeSettings
-IncludeFiles=kwinglobals.h
+IncludeFiles=win/types.h
 Mutators=true
 DefaultValueGetters=true
 ParentInConstructor=true

@@ -14,19 +14,19 @@ namespace KWin
 namespace QPA
 {
 
-BackingStore::BackingStore(QWindow *window)
+BackingStore::BackingStore(QWindow* window)
     : QPlatformBackingStore(window)
 {
 }
 
 BackingStore::~BackingStore() = default;
 
-QPaintDevice *BackingStore::paintDevice()
+QPaintDevice* BackingStore::paintDevice()
 {
     return &m_backBuffer;
 }
 
-void BackingStore::resize(const QSize &size, const QRegion &staticContents)
+void BackingStore::resize(const QSize& size, const QRegion& staticContents)
 {
     Q_UNUSED(staticContents)
 
@@ -34,7 +34,7 @@ void BackingStore::resize(const QSize &size, const QRegion &staticContents)
         return;
     }
 
-    const QPlatformWindow *platformWindow = static_cast<QPlatformWindow *>(window()->handle());
+    const QPlatformWindow* platformWindow = static_cast<QPlatformWindow*>(window()->handle());
     const qreal devicePixelRatio = platformWindow->devicePixelRatio();
 
     m_backBuffer = QImage(size * devicePixelRatio, QImage::Format_ARGB32_Premultiplied);
@@ -44,7 +44,7 @@ void BackingStore::resize(const QSize &size, const QRegion &staticContents)
     m_frontBuffer.setDevicePixelRatio(devicePixelRatio);
 }
 
-static void blitImage(const QImage &source, QImage &target, const QRect &rect)
+static void blitImage(const QImage& source, QImage& target, const QRect& rect)
 {
     Q_ASSERT(source.format() == QImage::Format_ARGB32_Premultiplied);
     Q_ASSERT(target.format() == QImage::Format_ARGB32_Premultiplied);
@@ -57,25 +57,25 @@ static void blitImage(const QImage &source, QImage &target, const QRect &rect)
     const int height = rect.height() * devicePixelRatio;
 
     for (int i = y; i < y + height; ++i) {
-        const uint32_t *in = reinterpret_cast<const uint32_t *>(source.scanLine(i));
-        uint32_t *out = reinterpret_cast<uint32_t *>(target.scanLine(i));
+        const uint32_t* in = reinterpret_cast<const uint32_t*>(source.scanLine(i));
+        uint32_t* out = reinterpret_cast<uint32_t*>(target.scanLine(i));
         std::copy(in + x, in + x + width, out + x);
     }
 }
 
-static void blitImage(const QImage &source, QImage &target, const QRegion &region)
+static void blitImage(const QImage& source, QImage& target, const QRegion& region)
 {
-    for (const QRect &rect : region) {
+    for (const QRect& rect : region) {
         blitImage(source, target, rect);
     }
 }
 
-void BackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset)
+void BackingStore::flush(QWindow* window, const QRegion& region, const QPoint& offset)
 {
     Q_UNUSED(offset)
 
-    Window *platformWindow = static_cast<Window *>(window->handle());
-    auto *client = platformWindow->client();
+    Window* platformWindow = static_cast<Window*>(window->handle());
+    auto* client = platformWindow->client();
     if (!client) {
         return;
     }

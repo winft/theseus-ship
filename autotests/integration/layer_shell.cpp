@@ -25,9 +25,6 @@ namespace KWin::detail::test
 namespace
 {
 
-using wayland_space = win::wayland::space<base::wayland::platform>;
-using wayland_window = win::wayland::window<wayland_space>;
-
 enum class align {
     center,
     left,

@@ -53,8 +53,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
        </entry>
 
        <entry name="AnimationCurve" type="Enum">
-           <default>KWin::base::options_qobject::AnimationCurve::Linear</default>
-           <choices name="KWin::base::options_qobject::AnimationCurve">
+           <default>static_cast&lt;int&gt;(KWin::render::animation_curve::linear)</default>
+           <choices name="KWin::render::animation_curve">
                <choice name="Linear"/>
                <choice name="Quadratic"/>
                <choice name="Cubic"/>

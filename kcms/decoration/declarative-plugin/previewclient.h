@@ -6,7 +6,7 @@
 #ifndef KDECOARTIONS_PREVIEW_CLIENT_H
 #define KDECOARTIONS_PREVIEW_CLIENT_H
 
-#include "../../../win/deco/palette.h"
+#include "../../../lib/win/deco/palette.h"
 
 #include <KDecoration2/Private/DecoratedClientPrivate>
 #include <QObject>

@@ -11,7 +11,7 @@ class AuroraePackage : public KPackage::PackageStructure
     Q_OBJECT
 public:
     using KPackage::PackageStructure::PackageStructure;
-    void initPackage(KPackage::Package *package) override
+    void initPackage(KPackage::Package* package) override
     {
         package->setContentsPrefixPaths(QStringList());
         package->setDefaultPackageRoot(QStringLiteral("aurorae/themes/"));
@@ -32,7 +32,7 @@ public:
         package->setDefaultMimeTypes(QStringList{QStringLiteral("image/svg+xml-compressed")});
     }
 
-    void pathChanged(KPackage::Package *package) override
+    void pathChanged(KPackage::Package* package) override
     {
         if (package->path().isEmpty()) {
             return;

@@ -8,8 +8,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
-#include "scripting/platform.h"
-#include "scripting/script.h"
+#include "script/platform.h"
+#include "script/script.h"
 #include "win/deco/bridge.h"
 #include "win/deco/settings.h"
 #include "win/move.h"
@@ -344,7 +344,7 @@ TEST_CASE("quick tiling", "[win]")
         QSignalSpy quickTileChangedSpy(c->qobject.get(), &win::window_qobject::quicktiling_changed);
         QVERIFY(quickTileChangedSpy.isValid());
 
-        win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
+        win::perform_window_operation(c, win::win_op::unrestricted_move);
         QCOMPARE(c, get_wayland_window(setup.base->space->move_resize_window));
         QCOMPARE(cursor()->pos(), QPoint(49, 24));
 
@@ -423,7 +423,7 @@ TEST_CASE("quick tiling", "[win]")
         QSignalSpy quickTileChangedSpy(c->qobject.get(), &win::window_qobject::quicktiling_changed);
         QVERIFY(quickTileChangedSpy.isValid());
 
-        win::perform_window_operation(c, base::options_qobject::UnrestrictedMoveOp);
+        win::perform_window_operation(c, win::win_op::unrestricted_move);
         QCOMPARE(c, get_wayland_window(setup.base->space->move_resize_window));
         QCOMPARE(cursor()->pos(), QPoint(49, 24));
         QVERIFY(configureRequestedSpy.wait());
@@ -869,7 +869,7 @@ TEST_CASE("quick tiling", "[win]")
                                       &win::window_qobject::frame_geometry_changed);
         QVERIFY(geometryChangedSpy.isValid());
 
-        QVERIFY(setup.base->space->scripting);
+        QVERIFY(setup.base->script);
         QTemporaryFile tmpFile;
         QVERIFY(tmpFile.open());
 
@@ -877,10 +877,10 @@ TEST_CASE("quick tiling", "[win]")
         out << "workspace.slotWindowQuickTile" << QString::fromStdString(test_data.action) << "()";
         out.flush();
 
-        auto const id = setup.base->space->scripting->loadScript(tmpFile.fileName());
+        auto const id = setup.base->script->loadScript(tmpFile.fileName());
         QVERIFY(id != -1);
-        QVERIFY(setup.base->space->scripting->isScriptLoaded(tmpFile.fileName()));
-        auto s = setup.base->space->scripting->findScript(tmpFile.fileName());
+        QVERIFY(setup.base->script->isScriptLoaded(tmpFile.fileName()));
+        auto s = setup.base->script->findScript(tmpFile.fileName());
         QVERIFY(s);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         QVERIFY(runningChangedSpy.isValid());

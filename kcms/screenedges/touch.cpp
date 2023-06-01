@@ -106,10 +106,10 @@ void KWinScreenEdgesConfig::defaults()
 
 void KWinScreenEdgesConfig::monitorInit()
 {
-    m_form->monitorHideEdge(ElectricTopLeft, true);
-    m_form->monitorHideEdge(ElectricTopRight, true);
-    m_form->monitorHideEdge(ElectricBottomRight, true);
-    m_form->monitorHideEdge(ElectricBottomLeft, true);
+    m_form->monitorHideEdge(win::electric_border::top_left, true);
+    m_form->monitorHideEdge(win::electric_border::top_right, true);
+    m_form->monitorHideEdge(win::electric_border::bottom_right, true);
+    m_form->monitorHideEdge(win::electric_border::bottom_left, true);
 
     m_form->monitorAddItem(i18n("No Action"));
     m_form->monitorAddItem(i18n("Show Desktop"));
@@ -169,10 +169,10 @@ void KWinScreenEdgesConfig::monitorInit()
 void KWinScreenEdgesConfig::monitorLoadSettings()
 {
     // Load ElectricBorderActions
-    m_form->monitorChangeEdge(ElectricTop, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->top()));
-    m_form->monitorChangeEdge(ElectricRight, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->right()));
-    m_form->monitorChangeEdge(ElectricBottom, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->bottom()));
-    m_form->monitorChangeEdge(ElectricLeft, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->left()));
+    m_form->monitorChangeEdge(win::electric_border::top, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->top()));
+    m_form->monitorChangeEdge(win::electric_border::right, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->right()));
+    m_form->monitorChangeEdge(win::electric_border::bottom, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->bottom()));
+    m_form->monitorChangeEdge(win::electric_border::left, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->left()));
 
     // Load effect-specific actions:
 
@@ -211,10 +211,10 @@ void KWinScreenEdgesConfig::monitorLoadSettings()
 
 void KWinScreenEdgesConfig::monitorLoadDefaultSettings()
 {
-    m_form->monitorChangeDefaultEdge(ElectricTop, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultTopValue()));
-    m_form->monitorChangeDefaultEdge(ElectricRight, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultRightValue()));
-    m_form->monitorChangeDefaultEdge(ElectricBottom, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultBottomValue()));
-    m_form->monitorChangeDefaultEdge(ElectricLeft, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultLeftValue()));
+    m_form->monitorChangeDefaultEdge(win::electric_border::top, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultTopValue()));
+    m_form->monitorChangeDefaultEdge(win::electric_border::right, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultRightValue()));
+    m_form->monitorChangeDefaultEdge(win::electric_border::bottom, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultBottomValue()));
+    m_form->monitorChangeDefaultEdge(win::electric_border::left, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultLeftValue()));
 
     // Present Windows BorderActivateAll
     m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateAllValue(), PresentWindowsAll);
@@ -239,37 +239,37 @@ void KWinScreenEdgesConfig::monitorLoadDefaultSettings()
 void KWinScreenEdgesConfig::monitorSaveSettings()
 {
     // Save ElectricBorderActions
-    m_data->settings()->setTop(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(ElectricTop)));
-    m_data->settings()->setRight(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(ElectricRight)));
-    m_data->settings()->setBottom(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(ElectricBottom)));
-    m_data->settings()->setLeft(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(ElectricLeft)));
+    m_data->settings()->setTop(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(win::electric_border::top)));
+    m_data->settings()->setRight(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(win::electric_border::right)));
+    m_data->settings()->setBottom(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(win::electric_border::bottom)));
+    m_data->settings()->setLeft(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(win::electric_border::left)));
 
     // Save effect-specific actions:
 
     // Present Windows
-    m_data->settings()->setTouchBorderActivateAll(m_form->monitorCheckEffectHasEdge(PresentWindowsAll));
-    m_data->settings()->setTouchBorderActivatePresentWindows(m_form->monitorCheckEffectHasEdge(PresentWindowsCurrent));
-    m_data->settings()->setTouchBorderActivateClass(m_form->monitorCheckEffectHasEdge(PresentWindowsClass));
+    m_data->settings()->setTouchBorderActivateAll(m_form->monitorCheckEffectHasEdgeInt(PresentWindowsAll));
+    m_data->settings()->setTouchBorderActivatePresentWindows(m_form->monitorCheckEffectHasEdgeInt(PresentWindowsCurrent));
+    m_data->settings()->setTouchBorderActivateClass(m_form->monitorCheckEffectHasEdgeInt(PresentWindowsClass));
 
     // Desktop Cube
-    m_data->settings()->setTouchBorderActivateCube(m_form->monitorCheckEffectHasEdge(Cube));
-    m_data->settings()->setTouchBorderActivateCylinder(m_form->monitorCheckEffectHasEdge(Cylinder));
-    m_data->settings()->setTouchBorderActivateSphere(m_form->monitorCheckEffectHasEdge(Sphere));
+    m_data->settings()->setTouchBorderActivateCube(m_form->monitorCheckEffectHasEdgeInt(Cube));
+    m_data->settings()->setTouchBorderActivateCylinder(m_form->monitorCheckEffectHasEdgeInt(Cylinder));
+    m_data->settings()->setTouchBorderActivateSphere(m_form->monitorCheckEffectHasEdgeInt(Sphere));
 
     // TabBox
-    m_data->settings()->setTouchBorderActivateTabBox(m_form->monitorCheckEffectHasEdge(TabBox));
-    m_data->settings()->setTouchBorderAlternativeActivate(m_form->monitorCheckEffectHasEdge(TabBoxAlternative));
+    m_data->settings()->setTouchBorderActivateTabBox(m_form->monitorCheckEffectHasEdgeInt(TabBox));
+    m_data->settings()->setTouchBorderAlternativeActivate(m_form->monitorCheckEffectHasEdgeInt(TabBoxAlternative));
 
     // Dinamically loaded effects
     int lastIndex = EffectCount;
     for (int i = 0; i < m_effects.size(); i++) {
-        m_effectSettings[m_effects[i]]->setTouchBorderActivate(m_form->monitorCheckEffectHasEdge(lastIndex));
+        m_effectSettings[m_effects[i]]->setTouchBorderActivate(m_form->monitorCheckEffectHasEdgeInt(lastIndex));
         ++lastIndex;
     }
 
     // Scripts
     for (int i = 0; i < m_scripts.size(); i++) {
-        m_scriptSettings[m_scripts[i]]->setTouchBorderActivate(m_form->monitorCheckEffectHasEdge(lastIndex));
+        m_scriptSettings[m_scripts[i]]->setTouchBorderActivate(m_form->monitorCheckEffectHasEdgeInt(lastIndex));
         ++lastIndex;
     }
 }
@@ -298,28 +298,28 @@ void KWinScreenEdgesConfig::monitorShowEvent()
     m_form->monitorItemSetEnabled(TabBoxAlternative, reasonable);
 
     // Disable Edge if TouchEdges group entries are immutable
-    m_form->monitorEnableEdge(ElectricTop, !m_data->settings()->isTopImmutable());
-    m_form->monitorEnableEdge(ElectricRight, !m_data->settings()->isRightImmutable());
-    m_form->monitorEnableEdge(ElectricBottom, !m_data->settings()->isBottomImmutable());
-    m_form->monitorEnableEdge(ElectricLeft, !m_data->settings()->isLeftImmutable());
+    m_form->monitorEnableEdge(win::electric_border::top, !m_data->settings()->isTopImmutable());
+    m_form->monitorEnableEdge(win::electric_border::right, !m_data->settings()->isRightImmutable());
+    m_form->monitorEnableEdge(win::electric_border::bottom, !m_data->settings()->isBottomImmutable());
+    m_form->monitorEnableEdge(win::electric_border::left, !m_data->settings()->isLeftImmutable());
 }
 
-ElectricBorderAction KWinScreenEdgesConfig::electricBorderActionFromString(const QString &string)
+int KWinScreenEdgesConfig::electricBorderActionFromString(const QString &string)
 {
     QString lowerName = string.toLower();
     if (lowerName == QStringLiteral("showdesktop")) {
-        return ElectricActionShowDesktop;
+        return static_cast<int>(win::electric_border_action::show_desktop);
     }
     if (lowerName == QStringLiteral("lockscreen")) {
-        return ElectricActionLockScreen;
+        return static_cast<int>(win::electric_border_action::lockscreen);
     }
     if (lowerName == QStringLiteral("krunner")) {
-        return ElectricActionKRunner;
+        return static_cast<int>(win::electric_border_action::krunner);
     }
     if (lowerName == QStringLiteral("applicationlauncher")) {
-        return ElectricActionApplicationLauncher;
+        return static_cast<int>(win::electric_border_action::application_launcher);
     }
-    return ElectricActionNone;
+    return static_cast<int>(win::electric_border_action::none);
 }
 
 QString KWinScreenEdgesConfig::electricBorderActionToString(int action)

@@ -8,9 +8,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/output.h"
 
-#include <qpa/qplatformscreen.h>
 #include <QScopedPointer>
 #include <functional>
+#include <qpa/qplatformscreen.h>
 
 namespace KWin
 {
@@ -31,10 +31,10 @@ public:
     int depth() const override;
     QImage::Format format() const override;
     QSizeF physicalSize() const override;
-    QPlatformCursor *cursor() const override;
+    QPlatformCursor* cursor() const override;
     QDpi logicalDpi() const override;
     qreal devicePixelRatio() const override;
-    QList<QPlatformScreen *> virtualSiblings() const override;
+    QList<QPlatformScreen*> virtualSiblings() const override;
 
 private:
     base::output* output;

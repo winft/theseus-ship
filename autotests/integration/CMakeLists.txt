@@ -71,7 +71,6 @@ add_executable(tests
   window_rules.cpp
   window_selection.cpp
   x11_client.cpp
-  x11_timestamp_update.cpp
   xcb_size_hints.cpp
   xcb_wrapper.cpp
   xdg_activation.cpp
@@ -111,12 +110,14 @@ add_executable(tests
   ../libkwineffects/mock_gl.cpp
   ../tabbox/mock_tabbox_client.cpp
   ../tabbox/mock_tabbox_handler.cpp
-  ../../render/backend/x11/glx_context_attribute_builder.cpp
+  ../../lib/render/backend/x11/glx_context_attribute_builder.cpp
 )
 
 target_link_libraries(tests
 PRIVATE
-  kwin_wayland_lib
+  desktop-kde
+  script
+  wlroots
   Qt::Test
   Catch2::Catch2WithMain
   KF6::Crash

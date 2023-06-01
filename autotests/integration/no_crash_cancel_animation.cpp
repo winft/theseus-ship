@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "scripting/effect.h"
+#include "script/effect.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
 
@@ -40,20 +40,10 @@ TEST_CASE("no crash cancel animation", "[render]")
                                             10,
                                             QString(),
                                             *effects,
-                                            *setup.base->render->compositor);
+                                            *setup.base->render);
     QVERIFY(effect);
 
-    const auto children = effects->children();
-    for (auto it = children.begin(); it != children.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::basic_effect_loader") != 0) {
-            continue;
-        }
-        QVERIFY(QMetaObject::invokeMethod(*it,
-                                          "effectLoaded",
-                                          Q_ARG(KWin::Effect*, effect),
-                                          Q_ARG(QString, QStringLiteral("crashy"))));
-        break;
-    }
+    setup.base->render->compositor->effects->loader->effectLoaded(effect, "crashy");
     QVERIFY(setup.base->render->compositor->effects->isEffectLoaded(QStringLiteral("crashy")));
 
     using namespace Wrapland::Client;

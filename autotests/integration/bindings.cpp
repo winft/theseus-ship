@@ -8,8 +8,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
-#include "scripting/platform.h"
-#include "scripting/script.h"
+#include "script/platform.h"
+#include "script/script.h"
 #include "win/control.h"
 #include "win/move.h"
 #include "win/space.h"
@@ -103,7 +103,7 @@ TEST_CASE("bindings", "[input],[win]")
 
     SECTION("switch window script")
     {
-        QVERIFY(setup.base->space->scripting);
+        QVERIFY(setup.base->script);
 
         // first create windows
         auto surface1 = create_surface();
@@ -137,10 +137,10 @@ TEST_CASE("bindings", "[input],[win]")
             out << "workspace." << slot << "()";
             out.flush();
 
-            auto const id = setup.base->space->scripting->loadScript(tmpFile.fileName());
+            auto const id = setup.base->script->loadScript(tmpFile.fileName());
             QVERIFY(id != -1);
-            QVERIFY(setup.base->space->scripting->isScriptLoaded(tmpFile.fileName()));
-            auto s = setup.base->space->scripting->findScript(tmpFile.fileName());
+            QVERIFY(setup.base->script->isScriptLoaded(tmpFile.fileName()));
+            auto s = setup.base->script->findScript(tmpFile.fileName());
             QVERIFY(s);
             QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
             QVERIFY(runningChangedSpy.isValid());

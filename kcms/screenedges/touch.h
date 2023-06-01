@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kcmodule.h>
 #include <ksharedconfig.h>
 
-#include "kwinglobals.h"
+#include "win/types.h"
 
 class QShowEvent;
 
@@ -45,7 +45,7 @@ private:
     KWinTouchScreenData *m_data;
 
     enum EffectActions {
-        PresentWindowsAll = ELECTRIC_ACTION_COUNT, // Start at the end of built in actions
+        PresentWindowsAll = static_cast<int>(win::electric_border_action::count), // Start at the end of built in actions
         PresentWindowsCurrent,
         PresentWindowsClass,
         Cube,
@@ -62,7 +62,7 @@ private:
     void monitorSaveSettings();
     void monitorShowEvent();
 
-    static ElectricBorderAction electricBorderActionFromString(const QString &string);
+    static int electricBorderActionFromString(const QString &string);
     static QString electricBorderActionToString(int action);
 };
 

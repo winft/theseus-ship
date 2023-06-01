@@ -32,9 +32,6 @@ using namespace Wrapland::Client;
 namespace KWin::detail::test
 {
 
-using wayland_space = win::wayland::space<base::wayland::platform>;
-using wayland_window = win::wayland::window<wayland_space>;
-
 const QString s_destination{QStringLiteral("org.kde.KWin")};
 const QString s_path{QStringLiteral("/KWin")};
 const QString s_interface{QStringLiteral("org.kde.KWin")};

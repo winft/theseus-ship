@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <QWidget>
 
-#include "kwinglobals.h"
+#include "win/types.h"
 
 namespace KWin
 {
@@ -25,19 +25,20 @@ public:
     explicit KWinScreenEdge(QWidget *parent = nullptr);
     ~KWinScreenEdge() override;
 
-    void monitorHideEdge(ElectricBorder border, bool hidden);
-    void monitorEnableEdge(ElectricBorder border, bool enabled);
+    void monitorHideEdge(win::electric_border border, bool hidden);
+    void monitorEnableEdge(win::electric_border border, bool enabled);
 
     void monitorAddItem(const QString &item);
     void monitorItemSetEnabled(int index, bool enabled);
 
-    QList<int> monitorCheckEffectHasEdge(int index) const;
-    int selectedEdgeItem(ElectricBorder border) const;
+    QList<win::electric_border> monitorCheckEffectHasEdge(int index) const;
+    QList<int> monitorCheckEffectHasEdgeInt(int index) const;
+    int selectedEdgeItem(win::electric_border border) const;
 
-    void monitorChangeEdge(ElectricBorder border, int index);
+    void monitorChangeEdge(win::electric_border border, int index);
     void monitorChangeEdge(const QList<int> &borderList, int index);
 
-    void monitorChangeDefaultEdge(ElectricBorder border, int index);
+    void monitorChangeDefaultEdge(win::electric_border border, int index);
     void monitorChangeDefaultEdge(const QList<int> &borderList, int index);
 
     // revert to reference settings and assess for saveNeeded and default changed
@@ -59,12 +60,11 @@ private:
     virtual bool isDefault() const;
 
     // internal use, return Monitor::None if border equals ELECTRIC_COUNT or ElectricNone
-    static int electricBorderToMonitorEdge(ElectricBorder border);
-    static ElectricBorder monitorEdgeToElectricBorder(int edge);
+    static int electricBorderToMonitorEdge(win::electric_border border);
 
 private:
-    QHash<ElectricBorder, int> m_reference; // reference settings
-    QHash<ElectricBorder, int> m_default; // default settings
+    QHash<win::electric_border, int> m_reference; // reference settings
+    QHash<win::electric_border, int> m_default; // default settings
 };
 
 } // namespace

@@ -56,14 +56,14 @@ void destroy_wayland_connection()
 
 base::output* get_output(size_t index)
 {
-    auto const& outputs = app()->base->get_outputs();
+    auto const& outputs = app()->base->outputs;
     assert(index < outputs.size());
     return outputs.at(index);
 }
 
 void set_current_output(int index)
 {
-    auto const& outputs = app()->base->get_outputs();
+    auto const& outputs = app()->base->outputs;
     auto output = base::get_output(outputs, index);
     QVERIFY(output);
     base::set_current_output(*app()->base, output);
@@ -76,7 +76,7 @@ void test_outputs_default()
 
 void test_outputs_geometries(std::vector<QRect> const& geometries)
 {
-    auto const& outputs = app()->base->get_outputs();
+    auto const& outputs = app()->base->outputs;
     QCOMPARE(outputs.size(), geometries.size());
 
     size_t index = 0;
@@ -331,7 +331,7 @@ void lock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(app()->base->screen_locker_watcher.get(),
+    QSignalSpy lockWatcherSpy(app()->base->space->screen_locker_watcher.get(),
                               &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
@@ -343,7 +343,7 @@ void lock_screen()
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 2);
 
-    QVERIFY(app()->base->screen_locker_watcher->is_locked());
+    QVERIFY(app()->base->space->screen_locker_watcher->is_locked());
 }
 
 void unlock_screen()
@@ -351,7 +351,7 @@ void unlock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(app()->base->screen_locker_watcher.get(),
+    QSignalSpy lockWatcherSpy(app()->base->space->screen_locker_watcher.get(),
                               &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
@@ -384,7 +384,7 @@ void unlock_screen()
 
     QVERIFY(!base::wayland::is_screen_locked(app()->base));
 
-    QVERIFY(!app()->base->screen_locker_watcher->is_locked());
+    QVERIFY(!app()->base->space->screen_locker_watcher->is_locked());
 }
 
 void prepare_app_env(std::string const& qpa_plugin_path)
@@ -582,7 +582,7 @@ KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_keyboard
 
 QPointF get_relative_touch_position(QPointF const& pos)
 {
-    auto output = base::get_nearest_output(app()->base->get_outputs(), pos.toPoint());
+    auto output = base::get_nearest_output(app()->base->outputs, pos.toPoint());
     assert(output);
 
     auto output_size = output->geometry().size();

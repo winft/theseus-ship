@@ -30,6 +30,7 @@ target_link_libraries(kwin5_aurorae
   kwineffects
   Qt::Quick
   Qt::UiTools
+  base
 )
 
 install(TARGETS kwin5_aurorae DESTINATION ${KDE_INSTALL_PLUGINDIR}/org.kde.kdecoration2)

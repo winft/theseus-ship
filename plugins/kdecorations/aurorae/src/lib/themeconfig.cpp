@@ -82,7 +82,7 @@ ThemeConfig::ThemeConfig()
 {
 }
 
-void ThemeConfig::load(const KConfig &conf)
+void ThemeConfig::load(const KConfig& conf)
 {
     KConfigGroup general(&conf, "General");
     m_activeTextColor = general.readEntry("ActiveTextColor", defaultActiveTextColor());
@@ -90,10 +90,12 @@ void ThemeConfig::load(const KConfig &conf)
     m_activeFocusedTextColor = general.readEntry("ActiveFocusedTabColor", m_activeTextColor);
     m_activeUnfocusedTextColor = general.readEntry("ActiveUnfocusedTabColor", m_inactiveTextColor);
     m_inactiveFocusedTextColor = general.readEntry("InactiveFocusedTabColor", m_inactiveTextColor);
-    m_inactiveUnfocusedTextColor = general.readEntry("InactiveUnfocusedTabColor", m_inactiveTextColor);
+    m_inactiveUnfocusedTextColor
+        = general.readEntry("InactiveUnfocusedTabColor", m_inactiveTextColor);
     m_useTextShadow = general.readEntry("UseTextShadow", defaultUseTextShadow());
     m_activeTextShadowColor = general.readEntry("ActiveTextShadowColor", defaultActiveTextColor());
-    m_inactiveTextShadowColor = general.readEntry("InactiveTextShadowColor", defaultInactiveTextColor());
+    m_inactiveTextShadowColor
+        = general.readEntry("InactiveTextShadowColor", defaultInactiveTextColor());
     m_textShadowOffsetX = general.readEntry("TextShadowOffsetX", defaultTextShadowOffsetX());
     m_textShadowOffsetY = general.readEntry("TextShadowOffsetY", defaultTextShadowOffsetY());
     m_haloActive = general.readEntry("HaloActive", defaultHaloActive());
@@ -101,21 +103,17 @@ void ThemeConfig::load(const KConfig &conf)
     QString alignment = (general.readEntry("TitleAlignment", "Left")).toLower();
     if (alignment == QStringLiteral("left")) {
         m_alignment = Qt::AlignLeft;
-    }
-    else if (alignment == QStringLiteral("center")) {
+    } else if (alignment == QStringLiteral("center")) {
         m_alignment = Qt::AlignHCenter;
-    }
-    else {
+    } else {
         m_alignment = Qt::AlignRight;
     }
     alignment = (general.readEntry("TitleVerticalAlignment", "Center")).toLower();
     if (alignment == QStringLiteral("top")) {
         m_verticalAlignment = Qt::AlignTop;
-    }
-    else if (alignment == QStringLiteral("center")) {
+    } else if (alignment == QStringLiteral("center")) {
         m_verticalAlignment = Qt::AlignVCenter;
-    }
-    else {
+    } else {
         m_verticalAlignment = Qt::AlignBottom;
     }
     m_animationTime = general.readEntry("Animation", defaultAnimationTime());
@@ -123,7 +121,7 @@ void ThemeConfig::load(const KConfig &conf)
     m_decorationPosition = general.readEntry("DecorationPosition", defaultDecorationPosition());
 
     qreal scaleFactor = 1;
-    QScreen *primary = QGuiApplication::primaryScreen();
+    QScreen* primary = QGuiApplication::primaryScreen();
     if (primary) {
         const qreal dpi = primary->logicalDotsPerInchX();
         scaleFactor = dpi / 96.0f;
@@ -137,38 +135,59 @@ void ThemeConfig::load(const KConfig &conf)
     m_borderTop = qRound(scaleFactor * border.readEntry("BorderTop", defaultBorderTop()));
 
     m_titleEdgeTop = qRound(scaleFactor * border.readEntry("TitleEdgeTop", defaultTitleEdgeTop()));
-    m_titleEdgeBottom = qRound(scaleFactor * border.readEntry("TitleEdgeBottom", defaultTitleEdgeBottom()));
-    m_titleEdgeLeft = qRound(scaleFactor * border.readEntry("TitleEdgeLeft", defaultTitleEdgeLeft()));
-    m_titleEdgeRight = qRound(scaleFactor * border.readEntry("TitleEdgeRight", defaultTitleEdgeRight()));
-    m_titleEdgeTopMaximized = qRound(scaleFactor * border.readEntry("TitleEdgeTopMaximized", defaultTitleEdgeTopMaximized()));
-    m_titleEdgeBottomMaximized = qRound(scaleFactor * border.readEntry("TitleEdgeBottomMaximized", defaultTitleEdgeBottomMaximized()));
-    m_titleEdgeLeftMaximized = qRound(scaleFactor * border.readEntry("TitleEdgeLeftMaximized", defaultTitleEdgeLeftMaximized()));
-    m_titleEdgeRightMaximized = qRound(scaleFactor * border.readEntry("TitleEdgeRightMaximized", defaultTitleEdgeRightMaximized()));
-    m_titleBorderLeft = qRound(scaleFactor * border.readEntry("TitleBorderLeft", defaultTitleBorderLeft()));
-    m_titleBorderRight = qRound(scaleFactor * border.readEntry("TitleBorderRight", defaultTitleBorderRight()));
+    m_titleEdgeBottom
+        = qRound(scaleFactor * border.readEntry("TitleEdgeBottom", defaultTitleEdgeBottom()));
+    m_titleEdgeLeft
+        = qRound(scaleFactor * border.readEntry("TitleEdgeLeft", defaultTitleEdgeLeft()));
+    m_titleEdgeRight
+        = qRound(scaleFactor * border.readEntry("TitleEdgeRight", defaultTitleEdgeRight()));
+    m_titleEdgeTopMaximized = qRound(
+        scaleFactor * border.readEntry("TitleEdgeTopMaximized", defaultTitleEdgeTopMaximized()));
+    m_titleEdgeBottomMaximized
+        = qRound(scaleFactor
+                 * border.readEntry("TitleEdgeBottomMaximized", defaultTitleEdgeBottomMaximized()));
+    m_titleEdgeLeftMaximized = qRound(
+        scaleFactor * border.readEntry("TitleEdgeLeftMaximized", defaultTitleEdgeLeftMaximized()));
+    m_titleEdgeRightMaximized
+        = qRound(scaleFactor
+                 * border.readEntry("TitleEdgeRightMaximized", defaultTitleEdgeRightMaximized()));
+    m_titleBorderLeft
+        = qRound(scaleFactor * border.readEntry("TitleBorderLeft", defaultTitleBorderLeft()));
+    m_titleBorderRight
+        = qRound(scaleFactor * border.readEntry("TitleBorderRight", defaultTitleBorderRight()));
     m_titleHeight = qRound(scaleFactor * border.readEntry("TitleHeight", defaultTitleHeight()));
 
     m_buttonWidth = border.readEntry("ButtonWidth", defaultButtonWidth());
-    m_buttonWidthMinimize = qRound(scaleFactor * border.readEntry("ButtonWidthMinimize", m_buttonWidth));
-    m_buttonWidthMaximizeRestore = qRound(scaleFactor * border.readEntry("ButtonWidthMaximizeRestore", m_buttonWidth));
+    m_buttonWidthMinimize
+        = qRound(scaleFactor * border.readEntry("ButtonWidthMinimize", m_buttonWidth));
+    m_buttonWidthMaximizeRestore
+        = qRound(scaleFactor * border.readEntry("ButtonWidthMaximizeRestore", m_buttonWidth));
     m_buttonWidthClose = qRound(scaleFactor * border.readEntry("ButtonWidthClose", m_buttonWidth));
-    m_buttonWidthAllDesktops = qRound(scaleFactor * border.readEntry("ButtonWidthAlldesktops", m_buttonWidth));
-    m_buttonWidthKeepAbove = qRound(scaleFactor * border.readEntry("ButtonWidthKeepabove", m_buttonWidth));
-    m_buttonWidthKeepBelow = qRound(scaleFactor * border.readEntry("ButtonWidthKeepbelow", m_buttonWidth));
+    m_buttonWidthAllDesktops
+        = qRound(scaleFactor * border.readEntry("ButtonWidthAlldesktops", m_buttonWidth));
+    m_buttonWidthKeepAbove
+        = qRound(scaleFactor * border.readEntry("ButtonWidthKeepabove", m_buttonWidth));
+    m_buttonWidthKeepBelow
+        = qRound(scaleFactor * border.readEntry("ButtonWidthKeepbelow", m_buttonWidth));
     m_buttonWidthShade = qRound(scaleFactor * border.readEntry("ButtonWidthShade", m_buttonWidth));
     m_buttonWidthHelp = qRound(scaleFactor * border.readEntry("ButtonWidthHelp", m_buttonWidth));
     m_buttonWidthMenu = qRound(scaleFactor * border.readEntry("ButtonWidthMenu", m_buttonWidth));
-    m_buttonWidthAppMenu = qRound(scaleFactor * border.readEntry("ButtonWidthAppMenu", m_buttonWidthMenu));
+    m_buttonWidthAppMenu
+        = qRound(scaleFactor * border.readEntry("ButtonWidthAppMenu", m_buttonWidthMenu));
     m_buttonWidth = qRound(m_buttonWidth * scaleFactor);
     m_buttonHeight = qRound(scaleFactor * border.readEntry("ButtonHeight", defaultButtonHeight()));
-    m_buttonSpacing = qRound(scaleFactor * border.readEntry("ButtonSpacing", defaultButtonSpacing()));
-    m_buttonMarginTop = qRound(scaleFactor * border.readEntry("ButtonMarginTop", defaultButtonMarginTop()));
-    m_explicitButtonSpacer = qRound(scaleFactor * border.readEntry("ExplicitButtonSpacer", defaultExplicitButtonSpacer()));
+    m_buttonSpacing
+        = qRound(scaleFactor * border.readEntry("ButtonSpacing", defaultButtonSpacing()));
+    m_buttonMarginTop
+        = qRound(scaleFactor * border.readEntry("ButtonMarginTop", defaultButtonMarginTop()));
+    m_explicitButtonSpacer = qRound(
+        scaleFactor * border.readEntry("ExplicitButtonSpacer", defaultExplicitButtonSpacer()));
 
     m_paddingLeft = qRound(scaleFactor * border.readEntry("PaddingLeft", defaultPaddingLeft()));
     m_paddingRight = qRound(scaleFactor * border.readEntry("PaddingRight", defaultPaddingRight()));
     m_paddingTop = qRound(scaleFactor * border.readEntry("PaddingTop", defaultPaddingTop()));
-    m_paddingBottom = qRound(scaleFactor * border.readEntry("PaddingBottom", defaultPaddingBottom()));
+    m_paddingBottom
+        = qRound(scaleFactor * border.readEntry("PaddingBottom", defaultPaddingBottom()));
 }
 
 QColor ThemeConfig::activeTextColor(bool useTabs, bool focused) const
@@ -195,4 +214,4 @@ QColor ThemeConfig::inactiveTextColor(bool useTabs, bool focused) const
     }
 }
 
-} //namespace
+} // namespace

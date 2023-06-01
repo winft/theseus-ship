@@ -9,21 +9,23 @@
 #include "main_x11.h"
 
 #include <config-kwin.h>
+#include "main.h"
 
 #include "base/options.h"
 #include "base/seat/backend/logind/session.h"
 #include "base/x11/selection_owner.h"
 #include "base/x11/xcb/helpers.h"
-#include "base/x11/xcb_event_filter.h"
 #include "desktop/screen_locker_watcher.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
+#include "render/shortcuts_init.h"
 #include "render/x11/compositor.h"
-#include "scripting/platform.h"
+#include "script/platform.h"
 #include "win/shortcuts_init.h"
 #include "win/space.h"
 #include "win/x11/space.h"
 #include "win/x11/space_event.h"
+#include "win/x11/xcb_event_filter.h"
 
 #include <KConfigGroup>
 #include <KCrash>
@@ -50,6 +52,8 @@
 
 Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtWarningMsg)
 
+constexpr char kwin_internal_name[]{"kwin_x11"};
+
 namespace KWin
 {
 
@@ -73,7 +77,7 @@ public:
         addWM(QStringLiteral("metacity"));
         addWM(QStringLiteral("openbox"));
         addWM(QStringLiteral("fvwm2"));
-        addWM(QStringLiteral(KWIN_INTERNAL_NAME_X11));
+        addWM(kwin_internal_name);
 
         QVBoxLayout *mainLayout = new QVBoxLayout(this);
         mainLayout->addWidget(mainWidget);
@@ -165,12 +169,16 @@ xcb_atom_t KWinSelectionOwner::xa_version = XCB_ATOM_NONE;
 // ApplicationX11
 //************************************
 
+int ApplicationX11::crashes = 0;
+
 ApplicationX11::ApplicationX11(int &argc, char **argv)
-    : Application(argc, argv)
+    : QApplication(argc, argv)
     , base{base::config(KConfig::OpenFlag::FullConfig)}
     , owner()
     , m_replace(false)
 {
+    app_init();
+
     base.x11_data.connection = QX11Info::connection();
     base.x11_data.root_window = QX11Info::appRootWindow();
 }
@@ -206,8 +214,7 @@ void ApplicationX11::lostSelection()
 
 void ApplicationX11::start()
 {
-    prepare_start();
-    base.screen_locker_watcher->initialize();
+    setQuitOnLastWindowClosed(false);
 
     using base_t = base::x11::platform;
     base.is_crash_restart = crashes > 0;
@@ -257,18 +264,19 @@ void ApplicationX11::start()
         render->compositor = std::make_unique<base_t::render_t::compositor_t>(*render);
 
         try {
-            base.space = std::make_unique<base_t::space_t>(base);
+            base.space = std::make_unique<base_t::space_t>(*base.render, *base.input);
         } catch(std::exception& ex) {
             qCCritical(KWIN_CORE) << "Abort since space creation fails with:" << ex.what();
             exit(1);
         }
 
         win::init_shortcuts(*base.space);
+        render::init_shortcuts(*base.render);
 
-        event_filter = std::make_unique<base::x11::xcb_event_filter<base_t::space_t>>(*base.space);
+        event_filter = std::make_unique<win::x11::xcb_event_filter<base_t::space_t>>(*base.space);
         installNativeEventFilter(event_filter.get());
 
-        base.space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
+        base.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
         render->compositor->start(*base.space);
 
         // Trigger possible errors, there's still a chance to abort.
@@ -292,7 +300,7 @@ void ApplicationX11::crashChecking()
     if (crashes >= 4) {
         // Something has gone seriously wrong
         AlternativeWMDialog dialog;
-        QString cmd = QStringLiteral(KWIN_INTERNAL_NAME_X11);
+        auto cmd = QString(kwin_internal_name);
         if (dialog.exec() == QDialog::Accepted)
             cmd = dialog.selectedWM();
         else
@@ -314,7 +322,7 @@ void ApplicationX11::crashChecking()
         compgroup.writeEntry("Enabled", false);
     }
     // Reset crashes count if we stay up for more that 15 seconds
-    QTimer::singleShot(15 * 1000, this, [this] { crashes = 0; });
+    QTimer::singleShot(15 * 1000, this, [] { crashes = 0; });
 }
 
 void ApplicationX11::notifyKSplash()
@@ -345,8 +353,8 @@ void ApplicationX11::crashHandler(int signal)
 
 int main(int argc, char * argv[])
 {
-    KWin::Application::setupMalloc();
-    KWin::Application::setupLocalizedString();
+    KWin::app_setup_malloc();
+    KWin::app_setup_localized_string();
 
     int primaryScreen = 0;
     xcb_connection_t *c = xcb_connect(nullptr, &primaryScreen);
@@ -395,16 +403,16 @@ int main(int argc, char * argv[])
     QObject::connect(KSignalHandler::self(), &KSignalHandler::signalReceived,
                      &a, &QCoreApplication::exit);
 
-    KWin::Application::createAboutData();
+    KWin::app_create_about_data();
 
     QCommandLineOption replaceOption(QStringLiteral("replace"), i18n("Replace already-running ICCCM2.0-compliant window manager"));
 
     QCommandLineParser parser;
-    a.setupCommandLine(&parser);
+    KWin::app_setup_command_line(&parser);
     parser.addOption(replaceOption);
 
     parser.process(a);
-    a.processCommandLine(&parser);
+    KWin::app_process_command_line(a, &parser);
     a.setReplace(parser.isSet(replaceOption));
 
     // perform sanity checks

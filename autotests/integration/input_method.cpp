@@ -29,9 +29,6 @@ namespace KWin::detail::test
 
 TEST_CASE("input method", "[input],[win]")
 {
-    using wayland_space = win::wayland::space<base::wayland::platform>;
-    using wayland_window = win::wayland::window<wayland_space>;
-
     client ti_client;
     client im_client;
 

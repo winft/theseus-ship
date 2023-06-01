@@ -130,7 +130,7 @@ TEST_CASE("lockscreen", "[base]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     setup_wayland_connection(global_selection::seat);
     QVERIFY(wait_for_wayland_pointer());
@@ -576,8 +576,8 @@ TEST_CASE("lockscreen", "[base]")
         QSignalSpy actionSpy(action.get(), &QAction::triggered);
         QVERIFY(actionSpy.isValid());
 
-        input::platform_register_pointer_shortcut(
-            *setup.base->input, Qt::MetaModifier, Qt::LeftButton, action.get());
+        setup.base->input->shortcuts->registerPointerShortcut(
+            action.get(), Qt::MetaModifier, Qt::LeftButton);
 
         // Try to trigger the shortcut.
         quint32 timestamp = 1;
@@ -613,16 +613,18 @@ TEST_CASE("lockscreen", "[base]")
         QSignalSpy actionSpy(action.get(), &QAction::triggered);
         QVERIFY(actionSpy.isValid());
 
-        PointerAxisDirection axisDirection = PointerAxisUp;
+        auto axisDirection = win::pointer_axis_direction::up;
 
         if (direction == Qt::Vertical) {
-            axisDirection = sign > 0 ? PointerAxisUp : PointerAxisDown;
+            axisDirection
+                = sign > 0 ? win::pointer_axis_direction::up : win::pointer_axis_direction::down;
         } else {
-            axisDirection = sign > 0 ? PointerAxisLeft : PointerAxisRight;
+            axisDirection
+                = sign > 0 ? win::pointer_axis_direction::left : win::pointer_axis_direction::right;
         }
 
-        input::platform_register_axis_shortcut(
-            *setup.base->input, Qt::MetaModifier, axisDirection, action.get());
+        setup.base->input->shortcuts->registerAxisShortcut(
+            action.get(), Qt::MetaModifier, axisDirection);
 
         // Try to trigger the shortcut.
         quint32 timestamp = 1;

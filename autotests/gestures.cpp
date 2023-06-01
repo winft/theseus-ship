@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "integration/lib/catch_macros.h"
 
-#include "input/gestures.h"
+#include "win/input/gestures.h"
 
 #include <QSignalSpy>
 #include <catch2/generators/catch_generators.hpp>
@@ -20,7 +20,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
     {
         auto count = GENERATE(0, 1, 10);
 
-        input::swipe_gesture swipeGesture;
+        win::swipe_gesture swipeGesture;
         QCOMPARE(swipeGesture.minimumFingerCountIsRelevant(), false);
         QCOMPARE(swipeGesture.minimumFingerCount(), 0u);
 
@@ -37,7 +37,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
     {
         auto count = GENERATE(0, 1, 10);
 
-        input::pinch_gesture pinchGesture;
+        win::pinch_gesture pinchGesture;
         QCOMPARE(pinchGesture.minimumFingerCountIsRelevant(), false);
         QCOMPARE(pinchGesture.minimumFingerCount(), 0u);
 
@@ -54,7 +54,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
     {
         auto count = GENERATE(0, 1, 10);
 
-        input::swipe_gesture gesture;
+        win::swipe_gesture gesture;
         QCOMPARE(gesture.maximumFingerCountIsRelevant(), false);
         QCOMPARE(gesture.maximumFingerCount(), 0u);
 
@@ -71,7 +71,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
     {
         auto count = GENERATE(0, 1, 10);
 
-        input::pinch_gesture gesture;
+        win::pinch_gesture gesture;
         QCOMPARE(gesture.maximumFingerCountIsRelevant(), false);
         QCOMPARE(gesture.maximumFingerCount(), 0u);
 
@@ -86,38 +86,41 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
     SECTION("swipe direction")
     {
-        auto swipe_direction = GENERATE(
-            SwipeDirection::Up, SwipeDirection::Left, SwipeDirection::Right, SwipeDirection::Down);
+        auto swipe_direction = GENERATE(win::swipe_direction::up,
+                                        win::swipe_direction::left,
+                                        win::swipe_direction::right,
+                                        win::swipe_direction::down);
 
-        input::swipe_gesture gesture;
-        QCOMPARE(gesture.direction(), SwipeDirection::Down);
+        win::swipe_gesture gesture;
+        QCOMPARE(gesture.direction(), win::swipe_direction::down);
 
         gesture.setDirection(swipe_direction);
         QCOMPARE(gesture.direction(), swipe_direction);
 
-        gesture.setDirection(SwipeDirection::Down);
-        QCOMPARE(gesture.direction(), SwipeDirection::Down);
+        gesture.setDirection(win::swipe_direction::down);
+        QCOMPARE(gesture.direction(), win::swipe_direction::down);
     }
 
     SECTION("pinch direction")
     {
-        auto pinch_direction = GENERATE(PinchDirection::Contracting, PinchDirection::Expanding);
+        auto pinch_direction
+            = GENERATE(win::pinch_direction::contracting, win::pinch_direction::expanding);
 
-        input::pinch_gesture gesture;
-        QCOMPARE(gesture.direction(), PinchDirection::Expanding);
+        win::pinch_gesture gesture;
+        QCOMPARE(gesture.direction(), win::pinch_direction::expanding);
 
         gesture.setDirection(pinch_direction);
         QCOMPARE(gesture.direction(), pinch_direction);
 
-        gesture.setDirection(PinchDirection::Expanding);
-        QCOMPARE(gesture.direction(), PinchDirection::Expanding);
+        gesture.setDirection(win::pinch_direction::expanding);
+        QCOMPARE(gesture.direction(), win::pinch_direction::expanding);
     }
 
     SECTION("minimum x")
     {
         auto min = GENERATE(0, -1, 1);
 
-        input::swipe_gesture gesture;
+        win::swipe_gesture gesture;
         QCOMPARE(gesture.minimumX(), 0);
         QCOMPARE(gesture.minimumXIsRelevant(), false);
 
@@ -130,7 +133,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
     {
         auto min = GENERATE(0, -1, 1);
 
-        input::swipe_gesture gesture;
+        win::swipe_gesture gesture;
         QCOMPARE(gesture.minimumY(), 0);
         QCOMPARE(gesture.minimumYIsRelevant(), false);
 
@@ -143,7 +146,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
     {
         auto max = GENERATE(0, -1, 1);
 
-        input::swipe_gesture gesture;
+        win::swipe_gesture gesture;
         QCOMPARE(gesture.maximumX(), 0);
         QCOMPARE(gesture.maximumXIsRelevant(), false);
 
@@ -156,7 +159,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
     {
         auto max = GENERATE(0, -1, 1);
 
-        input::swipe_gesture gesture;
+        win::swipe_gesture gesture;
         QCOMPARE(gesture.maximumY(), 0);
         QCOMPARE(gesture.maximumYIsRelevant(), false);
 
@@ -167,7 +170,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
     SECTION("start geometry")
     {
-        input::swipe_gesture gesture;
+        win::swipe_gesture gesture;
         gesture.setStartGeometry(QRect(1, 2, 20, 30));
         QCOMPARE(gesture.minimumXIsRelevant(), true);
         QCOMPARE(gesture.minimumYIsRelevant(), true);
@@ -181,7 +184,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
     SECTION("set minimum delta")
     {
-        input::swipe_gesture swipeGesture;
+        win::swipe_gesture swipeGesture;
         QCOMPARE(swipeGesture.isMinimumDeltaRelevant(), false);
         QCOMPARE(swipeGesture.minimumDelta(), QSizeF());
         QCOMPARE(swipeGesture.minimumDeltaReached(QSizeF()), true);
@@ -191,9 +194,9 @@ TEST_CASE("gestures unit", "[input],[unit]")
         QCOMPARE(swipeGesture.minimumDeltaReached(QSizeF()), false);
         QCOMPARE(swipeGesture.minimumDeltaReached(QSizeF(2, 3)), true);
 
-        input::pinch_gesture pinchGesture;
+        win::pinch_gesture pinchGesture;
         QCOMPARE(pinchGesture.isMinimumScaleDeltaRelevant(), false);
-        QCOMPARE(pinchGesture.minimumScaleDelta(), input::DEFAULT_MINIMUM_SCALE_DELTA);
+        QCOMPARE(pinchGesture.minimumScaleDelta(), win::DEFAULT_MINIMUM_SCALE_DELTA);
         QCOMPARE(pinchGesture.minimumScaleDeltaReached(1.25), true);
         pinchGesture.setMinimumScaleDelta(.5);
         QCOMPARE(pinchGesture.isMinimumScaleDeltaRelevant(), true);
@@ -205,7 +208,7 @@ TEST_CASE("gestures unit", "[input],[unit]")
     SECTION("minimum delta reached")
     {
         struct data {
-            SwipeDirection direction;
+            win::swipe_direction direction;
             QSizeF min_delta;
             QSizeF delta;
             bool reached;
@@ -213,23 +216,23 @@ TEST_CASE("gestures unit", "[input],[unit]")
         };
 
         auto test_data
-            = GENERATE(data{SwipeDirection::Up, {0, -30}, {0, -40}, true, 1.0},
-                       data{SwipeDirection::Up, {0, -30}, {0, -30}, true, 1.0},
-                       data{SwipeDirection::Up, {0, -30}, {0, -29}, false, 29.0 / 30.0},
-                       data{SwipeDirection::Left, {30, -30}, {-40, 20}, true, 1.0},
-                       data{SwipeDirection::Left, {30, -40}, {-30, 0}, true, 1.0},
-                       data{SwipeDirection::Left, {30, -30}, {-29, 0}, false, 29.0 / 30.0},
-                       data{SwipeDirection::Right, {30, -30}, {40, 20}, true, 1.0},
-                       data{SwipeDirection::Right, {30, -40}, {30, 0}, true, 1.0},
-                       data{SwipeDirection::Right, {30, -30}, {29, 0}, false, 29.0 / 30.0},
-                       data{SwipeDirection::Down, {0, 30}, {0, 40}, true, 1.0},
-                       data{SwipeDirection::Down, {0, 30}, {0, 30}, true, 1.0},
-                       data{SwipeDirection::Down, {0, 30}, {0, 29}, false, 29.0 / 30.0});
+            = GENERATE(data{win::swipe_direction::up, {0, -30}, {0, -40}, true, 1.0},
+                       data{win::swipe_direction::up, {0, -30}, {0, -30}, true, 1.0},
+                       data{win::swipe_direction::up, {0, -30}, {0, -29}, false, 29.0 / 30.0},
+                       data{win::swipe_direction::left, {30, -30}, {-40, 20}, true, 1.0},
+                       data{win::swipe_direction::left, {30, -40}, {-30, 0}, true, 1.0},
+                       data{win::swipe_direction::left, {30, -30}, {-29, 0}, false, 29.0 / 30.0},
+                       data{win::swipe_direction::right, {30, -30}, {40, 20}, true, 1.0},
+                       data{win::swipe_direction::right, {30, -40}, {30, 0}, true, 1.0},
+                       data{win::swipe_direction::right, {30, -30}, {29, 0}, false, 29.0 / 30.0},
+                       data{win::swipe_direction::down, {0, 30}, {0, 40}, true, 1.0},
+                       data{win::swipe_direction::down, {0, 30}, {0, 30}, true, 1.0},
+                       data{win::swipe_direction::down, {0, 30}, {0, 29}, false, 29.0 / 30.0});
 
-        input::gesture_recognizer recognizer;
+        win::gesture_recognizer recognizer;
 
         // swipe gesture
-        input::swipe_gesture gesture;
+        win::swipe_gesture gesture;
         ;
         gesture.setDirection(test_data.direction);
         gesture.setMinimumDelta(test_data.min_delta);
@@ -237,13 +240,13 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
         recognizer.registerSwipeGesture(&gesture);
 
-        QSignalSpy startedSpy(&gesture, &input::swipe_gesture::started);
+        QSignalSpy startedSpy(&gesture, &win::swipe_gesture::started);
         QVERIFY(startedSpy.isValid());
-        QSignalSpy triggeredSpy(&gesture, &input::swipe_gesture::triggered);
+        QSignalSpy triggeredSpy(&gesture, &win::swipe_gesture::triggered);
         QVERIFY(triggeredSpy.isValid());
-        QSignalSpy cancelledSpy(&gesture, &input::swipe_gesture::cancelled);
+        QSignalSpy cancelledSpy(&gesture, &win::swipe_gesture::cancelled);
         QVERIFY(cancelledSpy.isValid());
-        QSignalSpy progressSpy(&gesture, &input::swipe_gesture::progress);
+        QSignalSpy progressSpy(&gesture, &win::swipe_gesture::progress);
         QVERIFY(progressSpy.isValid());
 
         recognizer.startSwipeGesture(1);
@@ -269,8 +272,8 @@ TEST_CASE("gestures unit", "[input],[unit]")
     SECTION("minimum scale delta")
     {
         // pinch gesture
-        input::pinch_gesture gesture;
-        gesture.setDirection(PinchDirection::Contracting);
+        win::pinch_gesture gesture;
+        gesture.setDirection(win::pinch_direction::contracting);
         gesture.setMinimumScaleDelta(.5);
         gesture.setMinimumFingerCount(3);
         gesture.setMaximumFingerCount(4);
@@ -278,16 +281,16 @@ TEST_CASE("gestures unit", "[input],[unit]")
         QCOMPARE(gesture.minimumScaleDeltaReached(1.25), false);
         QCOMPARE(gesture.minimumScaleDeltaReached(1.5), true);
 
-        input::gesture_recognizer recognizer;
+        win::gesture_recognizer recognizer;
         recognizer.registerPinchGesture(&gesture);
 
-        QSignalSpy startedSpy(&gesture, &input::pinch_gesture::started);
+        QSignalSpy startedSpy(&gesture, &win::pinch_gesture::started);
         QVERIFY(startedSpy.isValid());
-        QSignalSpy triggeredSpy(&gesture, &input::pinch_gesture::triggered);
+        QSignalSpy triggeredSpy(&gesture, &win::pinch_gesture::triggered);
         QVERIFY(triggeredSpy.isValid());
-        QSignalSpy cancelledSpy(&gesture, &input::pinch_gesture::cancelled);
+        QSignalSpy cancelledSpy(&gesture, &win::pinch_gesture::cancelled);
         QVERIFY(cancelledSpy.isValid());
-        QSignalSpy progressSpy(&gesture, &input::pinch_gesture::progress);
+        QSignalSpy progressSpy(&gesture, &win::pinch_gesture::progress);
         QVERIFY(progressSpy.isValid());
 
         recognizer.startPinchGesture(4);
@@ -299,11 +302,11 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
     SECTION("unregister swipe cancels")
     {
-        input::gesture_recognizer recognizer;
-        QScopedPointer<input::swipe_gesture> gesture(new input::swipe_gesture);
-        QSignalSpy startedSpy(gesture.data(), &input::swipe_gesture::started);
+        win::gesture_recognizer recognizer;
+        QScopedPointer<win::swipe_gesture> gesture(new win::swipe_gesture);
+        QSignalSpy startedSpy(gesture.data(), &win::swipe_gesture::started);
         QVERIFY(startedSpy.isValid());
-        QSignalSpy cancelledSpy(gesture.data(), &input::swipe_gesture::cancelled);
+        QSignalSpy cancelledSpy(gesture.data(), &win::swipe_gesture::cancelled);
         QVERIFY(cancelledSpy.isValid());
 
         recognizer.registerSwipeGesture(gesture.data());
@@ -320,11 +323,11 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
     SECTION("unregister pinch cancels")
     {
-        input::gesture_recognizer recognizer;
-        QScopedPointer<input::pinch_gesture> gesture(new input::pinch_gesture);
-        QSignalSpy startedSpy(gesture.data(), &input::pinch_gesture::started);
+        win::gesture_recognizer recognizer;
+        QScopedPointer<win::pinch_gesture> gesture(new win::pinch_gesture);
+        QSignalSpy startedSpy(gesture.data(), &win::pinch_gesture::started);
         QVERIFY(startedSpy.isValid());
-        QSignalSpy cancelledSpy(gesture.data(), &input::pinch_gesture::cancelled);
+        QSignalSpy cancelledSpy(gesture.data(), &win::pinch_gesture::cancelled);
         QVERIFY(cancelledSpy.isValid());
 
         recognizer.registerPinchGesture(gesture.data());
@@ -341,11 +344,11 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
     SECTION("delete swipe cancels")
     {
-        input::gesture_recognizer recognizer;
-        QScopedPointer<input::swipe_gesture> gesture(new input::swipe_gesture);
-        QSignalSpy startedSpy(gesture.data(), &input::swipe_gesture::started);
+        win::gesture_recognizer recognizer;
+        QScopedPointer<win::swipe_gesture> gesture(new win::swipe_gesture);
+        QSignalSpy startedSpy(gesture.data(), &win::swipe_gesture::started);
         QVERIFY(startedSpy.isValid());
-        QSignalSpy cancelledSpy(gesture.data(), &input::swipe_gesture::cancelled);
+        QSignalSpy cancelledSpy(gesture.data(), &win::swipe_gesture::cancelled);
         QVERIFY(cancelledSpy.isValid());
 
         recognizer.registerSwipeGesture(gesture.data());
@@ -358,18 +361,20 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
     SECTION("swipe cancel")
     {
-        auto direction = GENERATE(
-            SwipeDirection::Up, SwipeDirection::Left, SwipeDirection::Right, SwipeDirection::Down);
+        auto direction = GENERATE(win::swipe_direction::up,
+                                  win::swipe_direction::left,
+                                  win::swipe_direction::right,
+                                  win::swipe_direction::down);
 
-        input::gesture_recognizer recognizer;
-        QScopedPointer<input::swipe_gesture> gesture(new input::swipe_gesture);
+        win::gesture_recognizer recognizer;
+        QScopedPointer<win::swipe_gesture> gesture(new win::swipe_gesture);
 
         gesture->setDirection(direction);
-        QSignalSpy startedSpy(gesture.data(), &input::swipe_gesture::started);
+        QSignalSpy startedSpy(gesture.data(), &win::swipe_gesture::started);
         QVERIFY(startedSpy.isValid());
-        QSignalSpy cancelledSpy(gesture.data(), &input::swipe_gesture::cancelled);
+        QSignalSpy cancelledSpy(gesture.data(), &win::swipe_gesture::cancelled);
         QVERIFY(cancelledSpy.isValid());
-        QSignalSpy triggeredSpy(gesture.data(), &input::swipe_gesture::triggered);
+        QSignalSpy triggeredSpy(gesture.data(), &win::swipe_gesture::triggered);
         QVERIFY(triggeredSpy.isValid());
 
         recognizer.registerSwipeGesture(gesture.data());
@@ -384,23 +389,23 @@ TEST_CASE("gestures unit", "[input],[unit]")
     SECTION("swipe update trigger")
     {
         struct data {
-            SwipeDirection direction;
+            win::swipe_direction direction;
             QSizeF delta;
         };
 
-        auto test_data = GENERATE(data{SwipeDirection::Up, {2, -3}},
-                                  data{SwipeDirection::Left, {-3, 1}},
-                                  data{SwipeDirection::Right, {20, -19}},
-                                  data{SwipeDirection::Down, {0, 50}});
+        auto test_data = GENERATE(data{win::swipe_direction::up, {2, -3}},
+                                  data{win::swipe_direction::left, {-3, 1}},
+                                  data{win::swipe_direction::right, {20, -19}},
+                                  data{win::swipe_direction::down, {0, 50}});
 
-        input::gesture_recognizer recognizer;
-        input::swipe_gesture gesture;
+        win::gesture_recognizer recognizer;
+        win::swipe_gesture gesture;
 
         gesture.setDirection(test_data.direction);
 
-        QSignalSpy triggeredSpy(&gesture, &input::swipe_gesture::triggered);
+        QSignalSpy triggeredSpy(&gesture, &win::swipe_gesture::triggered);
         QVERIFY(triggeredSpy.isValid());
-        QSignalSpy cancelledSpy(&gesture, &input::swipe_gesture::cancelled);
+        QSignalSpy cancelledSpy(&gesture, &win::swipe_gesture::cancelled);
         QVERIFY(cancelledSpy.isValid());
 
         recognizer.registerSwipeGesture(&gesture);
@@ -425,11 +430,11 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
         auto test_data = GENERATE(data{1, 1, true}, data{2, 1, false}, data{1, 2, true});
 
-        input::gesture_recognizer recognizer;
-        input::swipe_gesture gesture;
+        win::gesture_recognizer recognizer;
+        win::swipe_gesture gesture;
         gesture.setMinimumFingerCount(test_data.min);
 
-        QSignalSpy startedSpy(&gesture, &input::swipe_gesture::started);
+        QSignalSpy startedSpy(&gesture, &win::swipe_gesture::started);
         QVERIFY(startedSpy.isValid());
 
         recognizer.registerSwipeGesture(&gesture);
@@ -447,11 +452,11 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
         auto test_data = GENERATE(data{1, 1, true}, data{2, 1, true}, data{1, 2, false});
 
-        input::gesture_recognizer recognizer;
-        input::swipe_gesture gesture;
+        win::gesture_recognizer recognizer;
+        win::swipe_gesture gesture;
         gesture.setMaximumFingerCount(test_data.max);
 
-        QSignalSpy startedSpy(&gesture, &input::swipe_gesture::started);
+        QSignalSpy startedSpy(&gesture, &win::swipe_gesture::started);
         QVERIFY(startedSpy.isValid());
 
         recognizer.registerSwipeGesture(&gesture);
@@ -461,28 +466,28 @@ TEST_CASE("gestures unit", "[input],[unit]")
 
     SECTION("not emit callbacks before direction decided")
     {
-        input::gesture_recognizer recognizer;
-        input::swipe_gesture up;
-        input::swipe_gesture down;
-        input::swipe_gesture right;
-        input::pinch_gesture expand;
-        input::pinch_gesture contract;
-        up.setDirection(SwipeDirection::Up);
-        down.setDirection(SwipeDirection::Down);
-        right.setDirection(SwipeDirection::Right);
-        expand.setDirection(PinchDirection::Expanding);
-        contract.setDirection(PinchDirection::Contracting);
+        win::gesture_recognizer recognizer;
+        win::swipe_gesture up;
+        win::swipe_gesture down;
+        win::swipe_gesture right;
+        win::pinch_gesture expand;
+        win::pinch_gesture contract;
+        up.setDirection(win::swipe_direction::up);
+        down.setDirection(win::swipe_direction::down);
+        right.setDirection(win::swipe_direction::right);
+        expand.setDirection(win::pinch_direction::expanding);
+        contract.setDirection(win::pinch_direction::contracting);
         recognizer.registerSwipeGesture(&up);
         recognizer.registerSwipeGesture(&down);
         recognizer.registerSwipeGesture(&right);
         recognizer.registerPinchGesture(&expand);
         recognizer.registerPinchGesture(&contract);
 
-        QSignalSpy upSpy(&up, &input::swipe_gesture::progress);
-        QSignalSpy downSpy(&down, &input::swipe_gesture::progress);
-        QSignalSpy rightSpy(&right, &input::swipe_gesture::progress);
-        QSignalSpy expandSpy(&expand, &input::pinch_gesture::progress);
-        QSignalSpy contractSpy(&contract, &input::pinch_gesture::progress);
+        QSignalSpy upSpy(&up, &win::swipe_gesture::progress);
+        QSignalSpy downSpy(&down, &win::swipe_gesture::progress);
+        QSignalSpy rightSpy(&right, &win::swipe_gesture::progress);
+        QSignalSpy expandSpy(&expand, &win::pinch_gesture::progress);
+        QSignalSpy contractSpy(&contract, &win::pinch_gesture::progress);
 
         // don't release callback until we know the direction of swipe gesture
         recognizer.startSwipeGesture(4);
@@ -548,11 +553,11 @@ TEST_CASE("gestures unit", "[input],[unit]")
                                   data{{10, 20, 30, 40}, {25, 61}, false},
                                   data{{10, 20, 30, 40}, {25, 25}, true});
 
-        input::gesture_recognizer recognizer;
-        input::swipe_gesture gesture;
+        win::gesture_recognizer recognizer;
+        win::swipe_gesture gesture;
         gesture.setStartGeometry(test_data.geometry);
 
-        QSignalSpy startedSpy(&gesture, &input::swipe_gesture::started);
+        QSignalSpy startedSpy(&gesture, &win::swipe_gesture::started);
         QVERIFY(startedSpy.isValid());
 
         recognizer.registerSwipeGesture(&gesture);

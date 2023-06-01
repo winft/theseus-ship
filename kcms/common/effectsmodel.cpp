@@ -7,7 +7,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "effectsmodel.h"
 
-#include <config-kwin.h>
 #include <kwin_effects_interface.h>
 
 #include <KAboutData>

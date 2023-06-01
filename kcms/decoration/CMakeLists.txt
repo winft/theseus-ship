@@ -33,6 +33,7 @@ target_link_libraries(kcm_kwindecoration
   KF6::KCMUtils
   Qt::DBus
   Qt::Quick
+  base
 )
 
 set(kwin-applywindowdecoration_SRCS
@@ -49,6 +50,7 @@ target_link_libraries(kwin-applywindowdecoration
   KF6::I18n
   KF6::KCMUtils
   Qt::DBus
+  base
 )
 
 configure_file(window-decorations.knsrc.cmake ${CMAKE_CURRENT_BINARY_DIR}/window-decorations.knsrc)

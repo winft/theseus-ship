@@ -57,9 +57,6 @@ using namespace Wrapland::Client;
 namespace KWin::detail::test
 {
 
-using wayland_space = win::wayland::space<base::wayland::platform>;
-using wayland_window = win::wayland::window<wayland_space>;
-
 TEST_CASE("xdg-shell window", "[win]")
 {
     test::setup setup("xdg-shell-window");

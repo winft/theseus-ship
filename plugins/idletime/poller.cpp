@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <algorithm>
 
-KWinIdleTimePoller::KWinIdleTimePoller(QObject *parent)
+KWinIdleTimePoller::KWinIdleTimePoller(QObject* parent)
     : KAbstractIdleTimePoller(parent)
 {
 }
@@ -37,7 +37,6 @@ void KWinIdleTimePoller::cleanup()
 
     delete m_catchResumeTimeout;
     m_catchResumeTimeout = nullptr;
-
 }
 
 bool KWinIdleTimePoller::isAvailable()
@@ -99,7 +98,7 @@ void KWinIdleTimePoller::removeTimeout(int nextTimeout)
     m_timeouts.erase(it);
 }
 
-QList< int > KWinIdleTimePoller::timeouts() const
+QList<int> KWinIdleTimePoller::timeouts() const
 {
     return QList<int>();
 }

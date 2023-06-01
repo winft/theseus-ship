@@ -21,7 +21,8 @@ Q_DECLARE_LOGGING_CATEGORY(AURORAE)
 
 class KConfig;
 
-namespace Aurorae {
+namespace Aurorae
+{
 class AuroraeThemePrivate;
 class ThemeConfig;
 
@@ -39,12 +40,7 @@ enum AuroraeButtonType {
     AppMenuButton
 };
 
-enum DecorationPosition {
-    DecorationTop = 0,
-    DecorationLeft,
-    DecorationRight,
-    DecorationBottom
-};
+enum DecorationPosition { DecorationTop = 0, DecorationLeft, DecorationRight, DecorationBottom };
 
 class /*LIBAURORAE_EXPORT*/ AuroraeTheme : public QObject
 {
@@ -106,9 +102,9 @@ public:
     explicit AuroraeTheme(QObject* parent = nullptr);
     ~AuroraeTheme() override;
     // TODO: KSharedConfigPtr
-    void loadTheme(const QString &name, const KConfig &config);
+    void loadTheme(const QString& name, const KConfig& config);
     bool isValid() const;
-    const QString &themeName() const;
+    const QString& themeName() const;
     int leftBorder() const;
     int rightBorder() const;
     int topBorder() const;
@@ -164,7 +160,7 @@ public:
      * Sets the title edges according to maximized state.
      * Title edges are global to all windows.
      */
-    void titleEdges(int &left, int &top, int &right, int &bottom, bool maximized) const;
+    void titleEdges(int& left, int& top, int& right, int& bottom, bool maximized) const;
     void setCompositingActive(bool active);
     bool isCompositingActive() const;
 
@@ -183,14 +179,14 @@ public:
 
     DecorationPosition decorationPosition() const;
 
-    void setTabDragMimeType(const QString &mime);
-    const QString &tabDragMimeType() const;
+    void setTabDragMimeType(const QString& mime);
+    const QString& tabDragMimeType() const;
 
     // TODO: move to namespace
     static QLatin1String mapButtonToName(AuroraeButtonType type);
 
 public Q_SLOTS:
-    void loadTheme(const QString &name);
+    void loadTheme(const QString& name);
 
 Q_SIGNALS:
     void themeChanged();
@@ -202,12 +198,12 @@ private:
      * Sets the borders according to maximized state.
      * Borders are global to all windows.
      */
-    void borders(int &left, int &top, int &right, int &bottom, bool maximized) const;
+    void borders(int& left, int& top, int& right, int& bottom, bool maximized) const;
     /**
      * Sets the padding according.
      * Padding is global to all windows.
      */
-    void padding(int &left, int &top, int &right, int &bottom) const;
+    void padding(int& left, int& top, int& right, int& bottom) const;
 
     AuroraeThemePrivate* const d;
 };

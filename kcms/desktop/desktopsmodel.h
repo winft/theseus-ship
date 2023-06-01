@@ -10,7 +10,7 @@
 
 #include <QAbstractListModel>
 
-#include "../../win/dbus/virtual_desktop_types.h"
+#include "../../lib/win/dbus/virtual_desktop_types.h"
 
 class QDBusArgument;
 class QDBusMessage;

@@ -37,7 +37,7 @@ TEST_CASE("no crash reinit compositor", "[render]")
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
 
     auto const builtinNames
-        = render::effect_loader(*effects, *setup.base->render->compositor).listOfKnownEffects();
+        = render::effect_loader(*effects, *setup.base->render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -50,7 +50,7 @@ TEST_CASE("no crash reinit compositor", "[render]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     auto effect_name = GENERATE(as<QString>{}, "fade", "glide", "scale");
 

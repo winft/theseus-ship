@@ -46,7 +46,7 @@ TEST_CASE("translucency", "[effect]")
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames
-        = render::effect_loader(*effects, *setup.base->render->compositor).listOfKnownEffects();
+        = render::effect_loader(*effects, *setup.base->render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -59,10 +59,7 @@ TEST_CASE("translucency", "[effect]")
 
     // load the translucency effect
     auto& e = setup.base->render->compositor->effects;
-    // find the effectsloader
-    auto effectloader = e->findChild<render::basic_effect_loader*>();
-    QVERIFY(effectloader);
-    QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);
+    QSignalSpy effectLoadedSpy(e->loader.get(), &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());
 
     QVERIFY(!e->isEffectLoaded(QStringLiteral("translucency")));
@@ -128,7 +125,7 @@ TEST_CASE("translucency", "[effect]")
         effects->setCurrentDesktop(2);
         QVERIFY(!translucency_effect->isActive());
         cursor()->set_pos(client->geo.frame.center());
-        win::perform_window_operation(client, base::options_qobject::MoveOp);
+        win::perform_window_operation(client, win::win_op::move);
         QVERIFY(translucency_effect->isActive());
         QTest::qWait(200);
         QVERIFY(translucency_effect->isActive());

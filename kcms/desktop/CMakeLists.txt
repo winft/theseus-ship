@@ -8,7 +8,6 @@ add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwin_virtualdesktops\")
 ########### next target ###############
 
 set(kcm_kwin_virtualdesktops_PART_SRCS
-    ../../win/dbus/virtual_desktop_types.cpp
     animationsmodel.cpp
     desktopsmodel.cpp
     virtualdesktops.cpp
@@ -22,6 +21,7 @@ kcmutils_generate_desktop_file(kcm_kwin_virtualdesktops)
 
 target_link_libraries(kcm_kwin_virtualdesktops
   kcmkwincommon
+  win
   KF6::KCMUtils
   KF6::I18n
   KF6::XmlGui

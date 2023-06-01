@@ -9,6 +9,7 @@
 #include "base/seat/backend/wlroots/session.h"
 #include "input/backend/wlroots/platform.h"
 #include "render/backend/wlroots/platform.h"
+#include "render/shortcuts_init.h"
 #include "win/shortcuts_init.h"
 
 extern "C" {
@@ -155,15 +156,14 @@ void setup::start()
         return;
     }
 
-    base->space = std::make_unique<base_t::space_t>(*base);
+    base->space = std::make_unique<base_t::space_t>(*base->render, *base->input);
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
-    base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
+    render::init_shortcuts(*base->render);
+    base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->compositor->start(*base->space);
-
     base->server->create_addons([this] { handle_server_addons_created(); });
-    base->screen_locker_watcher->initialize();
 
     TRY_REQUIRE_WITH_TIMEOUT(ready, 10000);
 }
@@ -236,7 +236,7 @@ void setup::create_xwayland()
 
     try {
         base->xwayland
-            = std::make_unique<xwl::xwayland<wayland_space>>(*base->space, status_callback);
+            = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "System error creating Xwayland: " << exc.what() << std::endl;
     } catch (std::exception const& exc) {

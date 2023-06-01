@@ -27,7 +27,6 @@ namespace KWin::detail::test
 {
 
 struct setup final {
-    using wayland_space = win::wayland::space<base::wayland::platform>;
     using base_t = base::backend::wlroots::platform;
 
     setup(std::string const& test_name);

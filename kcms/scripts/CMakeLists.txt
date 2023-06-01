@@ -19,6 +19,7 @@ target_link_libraries(kcm_kwin_scripts
   KF6::KCMUtilsCore
   KF6::Package
   Qt::DBus
+  base
 )
 
 kpackage_install_package(package kcm_kwin_scripts kcms)

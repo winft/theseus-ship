@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
     </kcfgfile>
     <group name="Script-$(ScriptName)">
         <entry key="BorderActivate" type="IntList">
-            <default>ElectricNone</default>
+            <default>int(win::electric_border::none)</default>
         </entry>
     </group>
 </kcfg>

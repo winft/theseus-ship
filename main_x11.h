@@ -8,29 +8,24 @@
 #define KWIN_MAIN_X11_H
 #include "main.h"
 
-#include "base/backend/x11/platform.h"
+#include "base/x11/platform.h"
 #include "render/backend/x11/platform.h"
 
+#include <QApplication>
 #include <memory>
 
 namespace KWin
 {
 
-namespace base::x11
+namespace win::x11
 {
 template<typename Space>
 class xcb_event_filter;
 }
 
-namespace win::x11
-{
-template<typename Base>
-class space;
-}
-
 class KWinSelectionOwner;
 
-class ApplicationX11 : public Application
+class ApplicationX11 : public QApplication
 {
     Q_OBJECT
 public:
@@ -40,7 +35,9 @@ public:
     void start();
 
     void setReplace(bool replace);
-    void notifyKSplash() override;
+    void notifyKSplash();
+
+    static int crashes;
 
 private Q_SLOTS:
     void lostSelection();
@@ -51,10 +48,10 @@ private:
 
     static void crashHandler(int signal);
 
-    base::backend::x11::platform base;
+    base::x11::platform base;
 
     QScopedPointer<KWinSelectionOwner> owner;
-    std::unique_ptr<base::x11::xcb_event_filter<win::x11::space<base::x11::platform>>> event_filter;
+    std::unique_ptr<win::x11::xcb_event_filter<base::x11::platform::space_t>> event_filter;
     bool m_replace;
 };
 

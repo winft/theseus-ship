@@ -45,7 +45,7 @@ TEST_CASE("screen changes", "[base]")
     auto xdgOutputManager = registry.createXdgOutputManager(xdgOMData.name, xdgOMData.version);
 
     // should be one output
-    QCOMPARE(setup.base->get_outputs().size(), 1);
+    QCOMPARE(setup.base->outputs.size(), 1);
     QCOMPARE(outputAnnouncedSpy.count(), 1);
     const quint32 firstOutputId = outputAnnouncedSpy.first().first().value<quint32>();
     QVERIFY(firstOutputId != 0u);

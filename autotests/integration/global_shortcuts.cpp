@@ -24,6 +24,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Server/seat.h>
 
 #include <KGlobalAccel>
+#include <QKeySequenceEdit>
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 

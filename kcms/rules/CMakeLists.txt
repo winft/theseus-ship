@@ -5,25 +5,15 @@
 # KI18N Translation Domain for this library
 add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwinrules\")
 
-include_directories(../../)
-
 set(kwinrules_SRCS
-    ../../base/logging.cpp
-    ../../win/rules/book_settings.cpp
-    ../../input/cursor.cpp
-    ../../input/cursor_shape.cpp
-    ../../input/singleton_interface.cpp
-    ../../input/x11/cursor.cpp
-    ../../win/rules/ruling.cpp
-    ../../win/dbus/virtual_desktop_types.cpp
     optionsmodel.cpp
     ruleitem.cpp
     rulesmodel.cpp
     rulebookmodel.cpp
 )
 
-kconfig_add_kcfg_files(kwinrules_SRCS ../../win/rules/kconfig/rules_settings.kcfgc)
-kconfig_add_kcfg_files(kwinrules_SRCS ../../win/rules/kconfig/rules_book_settings_base.kcfgc)
+kconfig_add_kcfg_files(kwinrules_SRCS ../../lib/win/rules/kconfig/rules_settings.kcfgc)
+kconfig_add_kcfg_files(kwinrules_SRCS ../../lib/win/rules/kconfig/rules_book_settings_base.kcfgc)
 
 add_library(KWinRulesObjects STATIC ${kwinrules_SRCS})
 set_target_properties(KWinRulesObjects PROPERTIES
@@ -37,10 +27,10 @@ set(kwin_kcm_rules_XCB_LIBS
 )
 
 set(kcm_libs
+  input
+  win-x11
   KF6::KCMUtils
   KF6::WindowSystem
-  kwin
-  kwin_x11_lib
 )
 
 target_link_libraries(KWinRulesObjects ${kcm_libs} ${kwin_kcm_rules_XCB_LIBS})

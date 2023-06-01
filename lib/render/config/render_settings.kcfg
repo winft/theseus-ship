@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!--
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+
+SPDX-License-Identifier: GPL-2.0-or-later
+-->
+
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+                          http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
+    <kcfgfile arg="true" />
+    <group name="Compositing">
+        <entry name="MaxFPS" type="UInt">
+            <default>60</default>
+        </entry>
+        <entry name="RefreshRate" type="UInt">
+            <default>0</default>
+        </entry>
+        <entry name="VBlankTime" type="UInt">
+            <default>6144</default>
+        </entry>
+        <entry name="Backend" type="String">
+            <default>OpenGL</default>
+        </entry>
+        <entry name="Enabled" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="GLTextureFilter" type="Int">
+            <default>2</default>
+            <min>-1</min>
+            <max>2</max>
+        </entry>
+        <entry name="GLStrictBinding" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="GLLegacy" type="Bool">
+            <default>false</default>
+        </entry>
+        <entry name="HiddenPreviews" type="Int">
+            <default>5</default>
+            <min>4</min>
+            <max>6</max>
+        </entry>
+        <entry name="GLPlatformInterface" type="String">
+            <default>glx</default>
+        </entry>
+        <entry name="WindowsBlockCompositing" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="AnimationCurve" type="Enum">
+            <default>static_cast&lt;int&gt;(KWin::render::animation_curve::linear)</default>
+            <choices name="KWin::render::animation_curve">
+                <choice name="Linear"/>
+                <choice name="Quadratic"/>
+                <choice name="Cubic"/>
+                <choice name="Quartic"/>
+                <choice name="Sine"/>
+            </choices>
+       </entry>
+    </group>
+    <group name="KDE">
+        <entry name="AnimationDurationFactor" type="Double">
+            <default>1</default>
+            <min>0</min>
+        </entry>
+    </group>
+</kcfg>

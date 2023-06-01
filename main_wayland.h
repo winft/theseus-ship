@@ -6,22 +6,19 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_MAIN_WAYLAND_H
 #define KWIN_MAIN_WAYLAND_H
 
-#include "main.h"
-
 #include "base/backend/wlroots/platform.h"
 
+#include <QApplication>
 #include <QProcessEnvironment>
 #include <memory>
 
 namespace KWin
 {
 
-class ApplicationWayland : public Application
+class ApplicationWayland : public QApplication
 {
     Q_OBJECT
 public:
-    using wayland_space = win::wayland::space<base::wayland::platform>;
-
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 

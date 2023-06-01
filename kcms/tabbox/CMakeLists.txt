@@ -5,12 +5,9 @@
 # KI18N Translation Domain for this library
 add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwintabbox\")
 
-include_directories(${KWIN_SOURCE_DIR}/effects ${KWIN_SOURCE_DIR}/tabbox ${KWIN_SOURCE_DIR})
-
 ########### next target ###############
 
 set(kcm_kwintabbox_PART_SRCS
-    ${KWIN_SOURCE_DIR}/win/tabbox/tabbox_config.cpp
     layoutpreview.cpp
     main.cpp
     thumbnailitem.cpp
@@ -21,7 +18,7 @@ set(kcm_kwintabbox_PART_SRCS
 
 ki18n_wrap_ui(kcm_kwintabbox_PART_SRCS main.ui)
 qt_add_dbus_interface(kcm_kwintabbox_PART_SRCS
-  ${KWIN_SOURCE_DIR}/render/dbus/org.kde.kwin.Effects.xml
+  ${KWIN_SOURCE_DIR}/lib/effect/org.kde.kwin.Effects.xml
   kwin_effects_interface
 )
 
@@ -30,6 +27,7 @@ kcoreaddons_add_plugin(kcm_kwintabbox SOURCES ${kcm_kwintabbox_PART_SRCS} INSTAL
 
 kcmutils_generate_desktop_file(kcm_kwintabbox)
 target_link_libraries(kcm_kwintabbox
+  win
   KF6::GlobalAccel
   KF6::I18n
   KF6::KCMUtils

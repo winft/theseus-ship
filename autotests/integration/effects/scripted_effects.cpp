@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "scripting/effect.h"
+#include "script/effect.h"
 #include "win/actions.h"
 #include "win/space.h"
 #include "win/virtual_desktops.h"
@@ -69,7 +69,7 @@ QList<QAction*> ScriptedEffectWithDebugSpy::actions()
 ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy(test::setup& setup)
     : scripting::effect(
         *KWin::effects,
-        [&]() -> base::options& { return *setup.base->options; },
+        [&]() -> render::options& { return *setup.base->render->options; },
         [&] { return setup.base->topology.size; })
     , setup{setup}
 {
@@ -118,7 +118,7 @@ TEST_CASE("scripted effects", "[effect]")
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
 
     auto const builtinNames
-        = render::effect_loader(*effects, *setup.base->render->compositor).listOfKnownEffects();
+        = render::effect_loader(*effects, *setup.base->render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -130,7 +130,7 @@ TEST_CASE("scripted effects", "[effect]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     setup.base->space->virtual_desktop_manager->setCount(2);
 

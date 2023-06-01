@@ -19,12 +19,12 @@ namespace QPA
 class BackingStore : public QPlatformBackingStore
 {
 public:
-    explicit BackingStore(QWindow *window);
+    explicit BackingStore(QWindow* window);
     ~BackingStore() override;
 
-    QPaintDevice *paintDevice() override;
-    void flush(QWindow *window, const QRegion &region, const QPoint &offset) override;
-    void resize(const QSize &size, const QRegion &staticContents) override;
+    QPaintDevice* paintDevice() override;
+    void flush(QWindow* window, const QRegion& region, const QPoint& offset) override;
+    void resize(const QSize& size, const QRegion& staticContents) override;
 
 private:
     QImage m_backBuffer;

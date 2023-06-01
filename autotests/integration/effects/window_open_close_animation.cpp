@@ -35,7 +35,7 @@ TEST_CASE("window open close animation", "[effect]")
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames
-        = render::effect_loader(*effects, *setup.base->render->compositor).listOfKnownEffects();
+        = render::effect_loader(*effects, *setup.base->render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -45,7 +45,7 @@ TEST_CASE("window open close animation", "[effect]")
 
     auto& scene = setup.base->render->compositor->scene;
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
+    REQUIRE(scene->isOpenGl());
 
     setup_wayland_connection();
 

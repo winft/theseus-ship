@@ -6,10 +6,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "integration.h"
 
+#include "backingstore.h"
 #include "base/app_singleton.h"
 #include "base/platform.h"
 #include "base/singleton_interface.h"
-#include "backingstore.h"
 #include "offscreensurface.h"
 #include "render/singleton_interface.h"
 #include "screen.h"
@@ -44,7 +44,7 @@ Integration::Integration()
 
 Integration::~Integration()
 {
-    for (QPlatformScreen *platformScreen : qAsConst(m_screens)) {
+    for (QPlatformScreen* platformScreen : qAsConst(m_screens)) {
         QWindowSystemInterface::handleScreenRemoved(platformScreen);
     }
 }
@@ -96,32 +96,33 @@ void Integration::initialize()
     m_screens << dummyScreen;
 }
 
-QAbstractEventDispatcher *Integration::createEventDispatcher() const
+QAbstractEventDispatcher* Integration::createEventDispatcher() const
 {
     return new QUnixEventDispatcherQPA;
 }
 
-QPlatformBackingStore *Integration::createPlatformBackingStore(QWindow *window) const
+QPlatformBackingStore* Integration::createPlatformBackingStore(QWindow* window) const
 {
     return new BackingStore(window);
 }
 
-QPlatformWindow *Integration::createPlatformWindow(QWindow *window) const
+QPlatformWindow* Integration::createPlatformWindow(QWindow* window) const
 {
     return new Window(window);
 }
 
-QPlatformOffscreenSurface *Integration::createPlatformOffscreenSurface(QOffscreenSurface *surface) const
+QPlatformOffscreenSurface*
+Integration::createPlatformOffscreenSurface(QOffscreenSurface* surface) const
 {
     return new OffscreenSurface(surface);
 }
 
-QPlatformFontDatabase *Integration::fontDatabase() const
+QPlatformFontDatabase* Integration::fontDatabase() const
 {
     return m_fontDb.get();
 }
 
-QPlatformTheme *Integration::createPlatformTheme(const QString &name) const
+QPlatformTheme* Integration::createPlatformTheme(const QString& name) const
 {
     return QGenericUnixTheme::createUnixTheme(name);
 }
@@ -149,7 +150,7 @@ void Integration::initScreens()
         QWindowSystemInterface::handleScreenRemoved(m_screens.takeLast());
     }
 
-    auto const outputs = base::singleton_interface::platform->get_outputs();
+    auto const outputs = base::singleton_interface::get_outputs();
     QVector<Screen*> newScreens;
 
     newScreens.reserve(std::max<size_t>(outputs.size(), 1));
@@ -169,12 +170,12 @@ void Integration::initScreens()
     m_screens = newScreens;
 }
 
-QPlatformNativeInterface *Integration::nativeInterface() const
+QPlatformNativeInterface* Integration::nativeInterface() const
 {
     return m_nativeInterface.data();
 }
 
-QPlatformServices *Integration::services() const
+QPlatformServices* Integration::services() const
 {
     return m_services.data();
 }

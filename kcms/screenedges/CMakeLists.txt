@@ -5,7 +5,6 @@
 # KI18N Translation Domain for this library
 add_definitions(-DTRANSLATION_DOMAIN=\"kcmkwinscreenedges\")
 
-include_directories(${KWIN_SOURCE_DIR}/effects)
 set(kcm_screenedges_SRCS
     monitor.cpp
     screenpreviewwidget.cpp
@@ -13,7 +12,7 @@ set(kcm_screenedges_SRCS
     kwinscreenedgeconfigform.cpp
 )
 qt_add_dbus_interface(kcm_screenedges_SRCS
-  ${KWIN_SOURCE_DIR}/render/dbus/org.kde.kwin.Effects.xml
+  ${KWIN_SOURCE_DIR}/lib/effect/org.kde.kwin.Effects.xml
   kwin_effects_interface
 )
 

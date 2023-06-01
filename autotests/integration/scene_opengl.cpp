@@ -20,8 +20,8 @@ TEST_CASE("scene opengl", "[render]")
 
         auto& scene = setup->base->render->compositor->scene;
         QVERIFY(scene);
-        QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
-        QCOMPARE(setup->base->render->selected_compositor(), KWin::OpenGLCompositing);
+        REQUIRE(scene->isOpenGl());
+        REQUIRE(!setup->base->render->is_sw_compositing());
 
         // trigger a repaint
         render::full_repaint(*setup->base->render->compositor);

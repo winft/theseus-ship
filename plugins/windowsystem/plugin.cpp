@@ -4,10 +4,10 @@
     SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 */
 #include "plugin.h"
-#include "windowsystem.h"
 #include "windoweffects.h"
+#include "windowsystem.h"
 
-KWindowSystemKWinPlugin::KWindowSystemKWinPlugin(QObject *parent)
+KWindowSystemKWinPlugin::KWindowSystemKWinPlugin(QObject* parent)
     : KWindowSystemPluginInterface(parent)
 {
 }
@@ -16,12 +16,12 @@ KWindowSystemKWinPlugin::~KWindowSystemKWinPlugin()
 {
 }
 
-KWindowEffectsPrivate *KWindowSystemKWinPlugin::createEffects()
+KWindowEffectsPrivate* KWindowSystemKWinPlugin::createEffects()
 {
     return new KWin::WindowEffects();
 }
 
-KWindowSystemPrivate *KWindowSystemKWinPlugin::createWindowSystem()
+KWindowSystemPrivate* KWindowSystemKWinPlugin::createWindowSystem()
 {
     return new KWin::WindowSystem();
 }

@@ -7,8 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QtGui/private/qtx11extras_p.h>
 #include <QtTest>
 
-#include "../../effect/lib/kwinxrender/utils.h"
 #include "../testutils.h"
+#include "kwinxrender/utils.h"
 
 class BlendPictureTest : public QObject
 {

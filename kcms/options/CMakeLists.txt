@@ -6,8 +6,6 @@
 # KI18N Translation Domain for this library
 add_definitions(-DTRANSLATION_DOMAIN=\"kcmkwm\")
 
-include_directories(${KWIN_SOURCE_DIR})
-
 set(kcm_kwinoptions_PART_SRCS
     main.cpp
     mouse.cpp
@@ -34,7 +32,7 @@ kconfig_add_kcfg_files(kcm_kwinoptions_PART_SRCS kwinoptions_settings.kcfgc GENE
 kconfig_add_kcfg_files(kcm_kwinoptions_PART_SRCS kwinoptions_kdeglobals_settings.kcfgc GENERATE_MOC)
 
 qt_add_dbus_interface(kcm_kwinoptions_PART_SRCS
-  ${KWIN_SOURCE_DIR}/render/dbus/org.kde.kwin.Effects.xml
+  ${KWIN_SOURCE_DIR}/lib/effect/org.kde.kwin.Effects.xml
   kwin_effects_interface
 )
 
@@ -44,6 +42,5 @@ target_link_libraries(kcm_kwinoptions
   KF6::I18n
   KF6::KCMUtils
   KF6::WindowSystem
-  kwin
   Qt::DBus
 )

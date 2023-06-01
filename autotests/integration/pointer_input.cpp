@@ -88,9 +88,9 @@ TEST_CASE("pointer input", "[input]")
     test_outputs_default();
     cursor()->set_pos(QPoint(640, 512));
 
-    auto loadReferenceThemeCursor = [&](auto const& shape) {
+    auto loadReferenceThemeCursor = [&](auto const& shape) -> effect::cursor_image {
         if (!setup.base->server->internal_connection.shm) {
-            return PlatformCursorImage();
+            return {};
         }
 
         using cursor_t = std::remove_pointer_t<decltype(cursor())>;
@@ -99,12 +99,12 @@ TEST_CASE("pointer input", "[input]")
 
         wl_cursor_image* cursor = cursorTheme->get(shape);
         if (!cursor) {
-            return PlatformCursorImage();
+            return {};
         }
 
         wl_buffer* b = wl_cursor_image_get_buffer(cursor);
         if (!b) {
-            return PlatformCursorImage();
+            return {};
         }
 
         setup.base->server->internal_connection.client->flush();
@@ -114,7 +114,7 @@ TEST_CASE("pointer input", "[input]")
         auto wlResource = setup.base->server->internal_connection.server->getResource(bufferId);
         auto buffer = Wrapland::Server::Buffer::get(setup.base->server->display.get(), wlResource);
         if (!buffer) {
-            return PlatformCursorImage{};
+            return {};
         }
 
         const qreal scale = setup.base->topology.max_scale;
@@ -123,7 +123,7 @@ TEST_CASE("pointer input", "[input]")
 
         const QPoint hotSpot(qRound(cursor->hotspot_x / scale), qRound(cursor->hotspot_y / scale));
 
-        return PlatformCursorImage(image, hotSpot);
+        return {image, hotSpot};
     };
 
     auto get_wayland_window_from_id = [&](uint32_t id) {
@@ -379,13 +379,13 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAll3", "Move");
         group.sync();
         win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->options->qobject->commandAllModifier(), qt_mod);
-        QCOMPARE(setup.base->options->qobject->commandAll1(),
-                 base::options_qobject::MouseUnrestrictedMove);
-        QCOMPARE(setup.base->options->qobject->commandAll2(),
-                 base::options_qobject::MouseUnrestrictedMove);
-        QCOMPARE(setup.base->options->qobject->commandAll3(),
-                 base::options_qobject::MouseUnrestrictedMove);
+        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), qt_mod);
+        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+                 win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll2(),
+                 win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+                 win::mouse_cmd::unrestricted_move);
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
@@ -453,13 +453,13 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAll3", "Move");
         group.sync();
         win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->options->qobject->commandAll1(),
-                 base::options_qobject::MouseUnrestrictedMove);
-        QCOMPARE(setup.base->options->qobject->commandAll2(),
-                 base::options_qobject::MouseUnrestrictedMove);
-        QCOMPARE(setup.base->options->qobject->commandAll3(),
-                 base::options_qobject::MouseUnrestrictedMove);
+        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), Qt::MetaModifier);
+        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+                 win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll2(),
+                 win::mouse_cmd::unrestricted_move);
+        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+                 win::mouse_cmd::unrestricted_move);
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
@@ -717,11 +717,11 @@ TEST_CASE("pointer input", "[input]")
         group.sync();
         win::space_reconfigure(*setup.base->space);
         // verify the settings
-        QCOMPARE(setup.base->options->qobject->focusPolicy(),
-                 base::options_qobject::FocusFollowsMouse);
-        QVERIFY(setup.base->options->qobject->isAutoRaise());
-        QCOMPARE(setup.base->options->qobject->autoRaiseInterval(), 20);
-        QCOMPARE(setup.base->options->qobject->delayFocusInterval(), 200);
+        QCOMPARE(setup.base->space->options->qobject->focusPolicy(),
+                 win::focus_policy::follows_mouse);
+        QVERIFY(setup.base->space->options->qobject->isAutoRaise());
+        QCOMPARE(setup.base->space->options->qobject->autoRaiseInterval(), 20);
+        QCOMPARE(setup.base->space->options->qobject->delayFocusInterval(), 200);
 
         // create two windows
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
@@ -904,7 +904,7 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("ClickRaise", click_raise);
         group.sync();
         win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->options->qobject->isClickRaise(), click_raise);
+        QCOMPARE(setup.base->space->options->qobject->isClickRaise(), click_raise);
 
         // Create two windows.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
@@ -1570,18 +1570,18 @@ TEST_CASE("pointer input", "[input]")
 
         struct data {
             Qt::Edges edges;
-            input::cursor_shape cursor_shape;
+            win::cursor_shape cursor_shape;
         };
 
         auto test_data
-            = GENERATE(data{Qt::TopEdge | Qt::LeftEdge, input::extended_cursor::SizeNorthWest},
-                       data{Qt::TopEdge, input::extended_cursor::SizeNorth},
-                       data{Qt::TopEdge | Qt::RightEdge, input::extended_cursor::SizeNorthEast},
-                       data{Qt::RightEdge, input::extended_cursor::SizeEast},
-                       data{Qt::BottomEdge | Qt::RightEdge, input::extended_cursor::SizeSouthEast},
-                       data{Qt::BottomEdge, input::extended_cursor::SizeSouth},
-                       data{Qt::BottomEdge | Qt::LeftEdge, input::extended_cursor::SizeSouthWest},
-                       data{Qt::LeftEdge, input::extended_cursor::SizeWest});
+            = GENERATE(data{Qt::TopEdge | Qt::LeftEdge, win::extended_cursor::SizeNorthWest},
+                       data{Qt::TopEdge, win::extended_cursor::SizeNorth},
+                       data{Qt::TopEdge | Qt::RightEdge, win::extended_cursor::SizeNorthEast},
+                       data{Qt::RightEdge, win::extended_cursor::SizeEast},
+                       data{Qt::BottomEdge | Qt::RightEdge, win::extended_cursor::SizeSouthEast},
+                       data{Qt::BottomEdge, win::extended_cursor::SizeSouth},
+                       data{Qt::BottomEdge | Qt::LeftEdge, win::extended_cursor::SizeSouthWest},
+                       data{Qt::LeftEdge, win::extended_cursor::SizeWest});
 
         // first modify the config for this run
         auto group = setup.base->config.main->group("MouseBindings");
@@ -1589,9 +1589,9 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAll3", "Resize");
         group.sync();
         win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->options->qobject->commandAll3(),
-                 base::options_qobject::MouseUnrestrictedResize);
+        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), Qt::MetaModifier);
+        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+                 win::mouse_cmd::unrestricted_resize);
 
         // create a test client
         using namespace Wrapland::Client;
@@ -1623,10 +1623,10 @@ TEST_CASE("pointer input", "[input]")
 
         cursor()->set_pos(cursorPos);
 
-        const PlatformCursorImage arrowCursor = loadReferenceThemeCursor(Qt::ArrowCursor);
-        QVERIFY(!arrowCursor.image().isNull());
-        QCOMPARE(cursor()->platform_image().image(), arrowCursor.image());
-        QCOMPARE(cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
+        auto const arrowCursor = loadReferenceThemeCursor(Qt::ArrowCursor);
+        QVERIFY(!arrowCursor.image.isNull());
+        QCOMPARE(cursor()->platform_image().first, arrowCursor.image);
+        QCOMPARE(cursor()->platform_image().second, arrowCursor.hot_spot);
 
         // start resizing the client
         int timestamp = 1;
@@ -1635,17 +1635,17 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(win::is_resize(c));
 
         auto const resizeCursor = loadReferenceThemeCursor(test_data.cursor_shape);
-        QVERIFY(!resizeCursor.image().isNull());
-        QCOMPARE(cursor()->platform_image().image(), resizeCursor.image());
-        QCOMPARE(cursor()->platform_image().hotSpot(), resizeCursor.hotSpot());
+        QVERIFY(!resizeCursor.image.isNull());
+        QCOMPARE(cursor()->platform_image().first, resizeCursor.image);
+        QCOMPARE(cursor()->platform_image().second, resizeCursor.hot_spot);
 
         // finish resizing the client
         keyboard_key_released(KEY_LEFTMETA, timestamp++);
         pointer_button_released(BTN_RIGHT, timestamp++);
         QVERIFY(!win::is_resize(c));
 
-        QCOMPARE(cursor()->platform_image().image(), arrowCursor.image());
-        QCOMPARE(cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
+        QCOMPARE(cursor()->platform_image().first, arrowCursor.image);
+        QCOMPARE(cursor()->platform_image().second, arrowCursor.hot_spot);
     }
 
     SECTION("move cursor")
@@ -1658,9 +1658,9 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAll1", "Move");
         group.sync();
         win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->options->qobject->commandAll1(),
-                 base::options_qobject::MouseUnrestrictedMove);
+        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), Qt::MetaModifier);
+        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+                 win::mouse_cmd::unrestricted_move);
 
         // create a test client
         using namespace Wrapland::Client;
@@ -1674,10 +1674,10 @@ TEST_CASE("pointer input", "[input]")
         // move cursor to the test position
         cursor()->set_pos(c->geo.frame.center());
 
-        const PlatformCursorImage arrowCursor = loadReferenceThemeCursor(Qt::ArrowCursor);
-        QVERIFY(!arrowCursor.image().isNull());
-        QCOMPARE(cursor()->platform_image().image(), arrowCursor.image());
-        QCOMPARE(cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
+        auto const arrowCursor = loadReferenceThemeCursor(Qt::ArrowCursor);
+        QVERIFY(!arrowCursor.image.isNull());
+        QCOMPARE(cursor()->platform_image().first, arrowCursor.image);
+        QCOMPARE(cursor()->platform_image().second, arrowCursor.hot_spot);
 
         // start moving the client
         int timestamp = 1;
@@ -1685,18 +1685,18 @@ TEST_CASE("pointer input", "[input]")
         pointer_button_pressed(BTN_LEFT, timestamp++);
         QVERIFY(win::is_move(c));
 
-        const PlatformCursorImage sizeAllCursor = loadReferenceThemeCursor(Qt::SizeAllCursor);
-        QVERIFY(!sizeAllCursor.image().isNull());
-        QCOMPARE(cursor()->platform_image().image(), sizeAllCursor.image());
-        QCOMPARE(cursor()->platform_image().hotSpot(), sizeAllCursor.hotSpot());
+        auto const sizeAllCursor = loadReferenceThemeCursor(Qt::SizeAllCursor);
+        QVERIFY(!sizeAllCursor.image.isNull());
+        QCOMPARE(cursor()->platform_image().first, sizeAllCursor.image);
+        QCOMPARE(cursor()->platform_image().second, sizeAllCursor.hot_spot);
 
         // finish moving the client
         keyboard_key_released(KEY_LEFTMETA, timestamp++);
         pointer_button_released(BTN_LEFT, timestamp++);
         QVERIFY(!win::is_move(c));
 
-        QCOMPARE(cursor()->platform_image().image(), arrowCursor.image());
-        QCOMPARE(cursor()->platform_image().hotSpot(), arrowCursor.hotSpot());
+        QCOMPARE(cursor()->platform_image().first, arrowCursor.image);
+        QCOMPARE(cursor()->platform_image().second, arrowCursor.hot_spot);
     }
 
     SECTION("hide show cursor")

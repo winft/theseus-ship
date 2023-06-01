@@ -6,20 +6,22 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "main_wayland.h"
 
 #include "config-kwin.h"
+#include "main.h"
 
 #include "base/app_singleton.h"
 #include "base/backend/wlroots/platform.h"
 #include "base/seat/backend/wlroots/session.h"
 #include "base/wayland/server.h"
 #include "desktop/screen_locker_watcher.h"
-#include "render/backend/wlroots/platform.h"
-#include "render/effects.h"
-#include "render/wayland/compositor.h"
 #include "input/backend/wlroots/platform.h"
 #include "input/wayland/cursor.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
-#include "scripting/platform.h"
+#include "render/backend/wlroots/platform.h"
+#include "render/effects.h"
+#include "render/shortcuts_init.h"
+#include "render/wayland/compositor.h"
+#include "script/platform.h"
 #include "win/shortcuts_init.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
@@ -36,19 +38,19 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KUpdateLaunchEnvironmentJob>
 
 // Qt
-#include <qplatformdefs.h>
 #include <QCommandLineParser>
 #include <QDBusConnection>
+#include <QDebug>
 #include <QFileInfo>
 #include <QProcess>
-#include <QDebug>
 #include <QWindow>
+#include <qplatformdefs.h>
 
 #include <sched.h>
 #include <sys/resource.h>
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
 Q_IMPORT_PLUGIN(KWindowSystemKWinPlugin)
@@ -98,13 +100,10 @@ void disableDrKonqi()
 // that would enable drkonqi
 Q_CONSTRUCTOR_FUNCTION(disableDrKonqi)
 
-enum class RealTimeFlags
-{
-    DontReset,
-    ResetOnFork
-};
+enum class RealTimeFlags { DontReset, ResetOnFork };
 
-namespace {
+namespace
+{
 void gainRealTime()
 {
 #if HAVE_SCHED_RESET_ON_FORK
@@ -120,9 +119,10 @@ void gainRealTime()
 // ApplicationWayland
 //************************************
 
-ApplicationWayland::ApplicationWayland(int &argc, char **argv)
-    : Application(argc, argv)
+ApplicationWayland::ApplicationWayland(int& argc, char** argv)
+    : QApplication(argc, argv)
 {
+    app_init();
 }
 
 ApplicationWayland::~ApplicationWayland()
@@ -164,7 +164,7 @@ void ApplicationWayland::start(base::operation_mode mode,
 {
     assert(mode != base::operation_mode::x11);
 
-    prepare_start();
+    setQuitOnLastWindowClosed(false);
 
     using base_t = base::backend::wlroots::platform;
     base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::FullConfig),
@@ -196,14 +196,15 @@ void ApplicationWayland::start(base::operation_mode mode,
 
     try {
         base->render->compositor = std::make_unique<render_t::compositor_t>(*base->render);
-    } catch(std::system_error const& exc) {
+    } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
         exit(exc.code().value());
     }
 
-    base->space = std::make_unique<base_t::space_t>(*base);
+    base->space = std::make_unique<base_t::space_t>(*base->render, *base->input);
     win::init_shortcuts(*base->space);
-    base->space->scripting = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
+    render::init_shortcuts(*base->render);
+    base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->compositor->start(*base->space);
 
@@ -213,7 +214,6 @@ void ApplicationWayland::start(base::operation_mode mode,
 
     base->process_environment = environment;
     base->server->create_addons([this] { handle_server_addons_created(); });
-    base->screen_locker_watcher->initialize();
 }
 
 void ApplicationWayland::handle_server_addons_created()
@@ -238,7 +238,8 @@ void ApplicationWayland::create_xwayland()
     };
 
     try {
-        base->xwayland = std::make_unique<xwl::xwayland<wayland_space>>(*base->space, status_callback);
+        using space_t = base::wayland::platform::space_t;
+        base->xwayland = std::make_unique<xwl::xwayland<space_t>>(*base->space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());
@@ -263,21 +264,24 @@ void ApplicationWayland::startSession()
             auto p = new QProcess(this);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
             p->setProcessEnvironment(process_environment);
-            connect(p, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [this, p] (int code, QProcess::ExitStatus status) {
-                exit_with_process = nullptr;
-                p->deleteLater();
-                if (status == QProcess::CrashExit) {
-                    qWarning() << "Session process has crashed";
-                    QCoreApplication::exit(-1);
-                    return;
-                }
+            connect(p,
+                    qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
+                    this,
+                    [this, p](int code, QProcess::ExitStatus status) {
+                        exit_with_process = nullptr;
+                        p->deleteLater();
+                        if (status == QProcess::CrashExit) {
+                            qWarning() << "Session process has crashed";
+                            QCoreApplication::exit(-1);
+                            return;
+                        }
 
-                if (code) {
-                    qWarning() << "Session process exited with code" << code;
-                }
+                        if (code) {
+                            qWarning() << "Session process exited with code" << code;
+                        }
 
-                QCoreApplication::exit(code);
-            });
+                        QCoreApplication::exit(code);
+                    });
             p->setProgram(program);
             p->setArguments(arguments);
             p->start();
@@ -289,7 +293,7 @@ void ApplicationWayland::startSession()
     }
     // start the applications passed to us as command line arguments
     if (!m_applicationsToStart.isEmpty()) {
-        for (const QString &application: qAsConst(m_applicationsToStart)) {
+        for (const QString& application : qAsConst(m_applicationsToStart)) {
             QStringList arguments = KShell::splitArgs(application);
             if (arguments.isEmpty()) {
                 qWarning("Failed to launch application: %s is an invalid command",
@@ -321,7 +325,7 @@ void ApplicationWayland::startSession()
 
 } // namespace
 
-int main(int argc, char * argv[])
+int main(int argc, char* argv[])
 {
     // Redirect stderr output. This is useful as a workaround for missing logs in systemd journal
     // when launching a full Plasma session.
@@ -336,8 +340,9 @@ int main(int argc, char * argv[])
         std::cerr << "kwin_wayland does not support running as root." << std::endl;
         return 1;
     }
-    KWin::Application::setupMalloc();
-    KWin::Application::setupLocalizedString();
+
+    KWin::app_setup_malloc();
+    KWin::app_setup_localized_string();
     KWin::gainRealTime();
 
     signal(SIGPIPE, SIG_IGN);
@@ -374,49 +379,54 @@ int main(int argc, char * argv[])
     KSignalHandler::self()->watchSignal(SIGTERM);
     KSignalHandler::self()->watchSignal(SIGINT);
     KSignalHandler::self()->watchSignal(SIGHUP);
-    QObject::connect(KSignalHandler::self(), &KSignalHandler::signalReceived,
-                     &a, &QCoreApplication::exit);
+    QObject::connect(
+        KSignalHandler::self(), &KSignalHandler::signalReceived, &a, &QCoreApplication::exit);
 
-    KWin::Application::createAboutData();
+    KWin::app_create_about_data();
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
                                       i18n("Start a rootless Xwayland server."));
-    QCommandLineOption waylandSocketOption(QStringList{QStringLiteral("s"), QStringLiteral("socket")},
-                                           i18n("Name of the Wayland socket to listen on. If not set \"wayland-0\" is used."),
-                                           QStringLiteral("socket"));
+    QCommandLineOption waylandSocketOption(
+        QStringList{QStringLiteral("s"), QStringLiteral("socket")},
+        i18n("Name of the Wayland socket to listen on. If not set \"wayland-0\" is used."),
+        QStringLiteral("socket"));
 
     QCommandLineParser parser;
-    a.setupCommandLine(&parser);
+    KWin::app_setup_command_line(&parser);
 
     parser.addOption(xwaylandOption);
     parser.addOption(waylandSocketOption);
 
     QCommandLineOption libinputOption(QStringLiteral("libinput"),
-                                      i18n("Enable libinput support for input events processing. Note: never use in a nested session.	(deprecated)"));
+                                      i18n("Enable libinput support for input events processing. "
+                                           "Note: never use in a nested session.	(deprecated)"));
     parser.addOption(libinputOption);
 
     QCommandLineOption screenLockerOption(QStringLiteral("lockscreen"),
                                           i18n("Starts the session in locked mode."));
     parser.addOption(screenLockerOption);
 
-    QCommandLineOption noScreenLockerOption(QStringLiteral("no-lockscreen"),
-                                            i18n("Starts the session without lock screen support."));
+    QCommandLineOption noScreenLockerOption(
+        QStringLiteral("no-lockscreen"), i18n("Starts the session without lock screen support."));
     parser.addOption(noScreenLockerOption);
 
-    QCommandLineOption noGlobalShortcutsOption(QStringLiteral("no-global-shortcuts"),
-                                               i18n("Starts the session without global shortcuts support."));
+    QCommandLineOption noGlobalShortcutsOption(
+        QStringLiteral("no-global-shortcuts"),
+        i18n("Starts the session without global shortcuts support."));
     parser.addOption(noGlobalShortcutsOption);
 
-    QCommandLineOption exitWithSessionOption(QStringLiteral("exit-with-session"),
-                                             i18n("Exit after the session application, which is started by KWin, closed."),
-                                             QStringLiteral("/path/to/session"));
+    QCommandLineOption exitWithSessionOption(
+        QStringLiteral("exit-with-session"),
+        i18n("Exit after the session application, which is started by KWin, closed."),
+        QStringLiteral("/path/to/session"));
     parser.addOption(exitWithSessionOption);
 
-    parser.addPositionalArgument(QStringLiteral("applications"),
-                                 i18n("Applications to start once Wayland and Xwayland server are started"),
-                                 QStringLiteral("[/path/to/application...]"));
+    parser.addPositionalArgument(
+        QStringLiteral("applications"),
+        i18n("Applications to start once Wayland and Xwayland server are started"),
+        QStringLiteral("[/path/to/application...]"));
 
     parser.process(a);
-    a.processCommandLine(&parser);
+    KWin::app_process_command_line(a, &parser);
 
     if (parser.isSet(exitWithSessionOption)) {
         a.setSessionArgument(parser.value(exitWithSessionOption));

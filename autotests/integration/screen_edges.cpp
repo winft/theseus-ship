@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/wayland/server.h"
 #include "base/x11/xcb/proto.h"
 #include "input/cursor.h"
-#include "input/gestures.h"
 #include "win/actions.h"
 #include "win/activation.h"
 #include "win/screen_edges.h"
@@ -35,14 +34,14 @@ class TestObject : public QObject
 {
     Q_OBJECT
 public Q_SLOTS:
-    bool callback(KWin::ElectricBorder border);
+    bool callback(win::electric_border border);
 Q_SIGNALS:
-    void gotCallback(KWin::ElectricBorder);
+    void gotCallback(win::electric_border);
 };
 
-bool TestObject::callback(KWin::ElectricBorder border)
+bool TestObject::callback(win::electric_border border)
 {
-    qDebug() << "GOT CALLBACK" << border;
+    qDebug() << "GOT CALLBACK" << static_cast<int>(border);
     Q_EMIT gotCallback(border);
     return true;
 }
@@ -51,7 +50,7 @@ bool TestObject::callback(KWin::ElectricBorder border)
 
 TEST_CASE("screen edges", "[input],[win]")
 {
-    qRegisterMetaType<KWin::ElectricBorder>("ElectricBorder");
+    qRegisterMetaType<win::electric_border>("win::electric_border");
 
     // TODO(romangg): This test fails with Xwayland enabled. Fix it!
     test::setup setup("screen-edges");
@@ -64,11 +63,11 @@ TEST_CASE("screen edges", "[input],[win]")
         setup.base->space->edges = std::make_unique<win::screen_edger<space>>(*setup.base->space);
     };
 
-    auto unreserve = [&](uint32_t id, ElectricBorder border) {
+    auto unreserve = [&](uint32_t id, win::electric_border border) {
         setup.base->space->edges->unreserve(border, id);
     };
 
-    auto unreserve_many = [&](std::deque<uint32_t>& border_ids, ElectricBorder border) {
+    auto unreserve_many = [&](std::deque<uint32_t>& border_ids, win::electric_border border) {
         QVERIFY(!border_ids.empty());
         unreserve(border_ids.front(), border);
         border_ids.pop_front();
@@ -82,14 +81,14 @@ TEST_CASE("screen edges", "[input],[win]")
         QCOMPARE(screenEdges->time_threshold, 150);
         QCOMPARE(screenEdges->reactivate_threshold, 350);
         QCOMPARE(screenEdges->cursor_push_back_distance, QSize(1, 1));
-        QCOMPARE(screenEdges->actions.top_left, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.top, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.top_right, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.right, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.bottom_right, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.bottom, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.bottom_left, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.left, ElectricBorderAction::ElectricActionNone);
+        QCOMPARE(screenEdges->actions.top_left, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.top, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.top_right, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.right, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.bottom_right, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.bottom, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.bottom_left, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.left, win::electric_border_action::none);
 
         auto& edges = screenEdges->edges;
         QCOMPARE(edges.size(), 8);
@@ -107,7 +106,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(te->isTop());
         QVERIFY(!te->isRight());
         QVERIFY(!te->isBottom());
-        QCOMPARE(te->border, ElectricBorder::ElectricTopLeft);
+        QCOMPARE(te->border, win::electric_border::top_left);
         te = edges.at(1).get();
         QVERIFY(te->isCorner());
         QVERIFY(!te->isScreenEdge());
@@ -115,7 +114,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(!te->isTop());
         QVERIFY(!te->isRight());
         QVERIFY(te->isBottom());
-        QCOMPARE(te->border, ElectricBorder::ElectricBottomLeft);
+        QCOMPARE(te->border, win::electric_border::bottom_left);
         te = edges.at(2).get();
         QVERIFY(!te->isCorner());
         QVERIFY(te->isScreenEdge());
@@ -123,7 +122,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(!te->isTop());
         QVERIFY(!te->isRight());
         QVERIFY(!te->isBottom());
-        QCOMPARE(te->border, ElectricBorder::ElectricLeft);
+        QCOMPARE(te->border, win::electric_border::left);
         te = edges.at(3).get();
         QVERIFY(te->isCorner());
         QVERIFY(!te->isScreenEdge());
@@ -131,7 +130,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(te->isTop());
         QVERIFY(te->isRight());
         QVERIFY(!te->isBottom());
-        QCOMPARE(te->border, ElectricBorder::ElectricTopRight);
+        QCOMPARE(te->border, win::electric_border::top_right);
         te = edges.at(4).get();
         QVERIFY(te->isCorner());
         QVERIFY(!te->isScreenEdge());
@@ -139,7 +138,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(!te->isTop());
         QVERIFY(te->isRight());
         QVERIFY(te->isBottom());
-        QCOMPARE(te->border, ElectricBorder::ElectricBottomRight);
+        QCOMPARE(te->border, win::electric_border::bottom_right);
         te = edges.at(5).get();
         QVERIFY(!te->isCorner());
         QVERIFY(te->isScreenEdge());
@@ -147,7 +146,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(!te->isTop());
         QVERIFY(te->isRight());
         QVERIFY(!te->isBottom());
-        QCOMPARE(te->border, ElectricBorder::ElectricRight);
+        QCOMPARE(te->border, win::electric_border::right);
         te = edges.at(6).get();
         QVERIFY(!te->isCorner());
         QVERIFY(te->isScreenEdge());
@@ -155,7 +154,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(te->isTop());
         QVERIFY(!te->isRight());
         QVERIFY(!te->isBottom());
-        QCOMPARE(te->border, ElectricBorder::ElectricTop);
+        QCOMPARE(te->border, win::electric_border::top);
         te = edges.at(7).get();
         QVERIFY(!te->isCorner());
         QVERIFY(te->isScreenEdge());
@@ -163,7 +162,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(!te->isTop());
         QVERIFY(!te->isRight());
         QVERIFY(te->isBottom());
-        QCOMPARE(te->border, ElectricBorder::ElectricBottom);
+        QCOMPARE(te->border, win::electric_border::bottom);
 
         // we shouldn't have any x windows, though
         QCOMPARE(screenEdges->windows().size(), 0);
@@ -181,14 +180,14 @@ TEST_CASE("screen edges", "[input],[win]")
         // we don't have multiple desktops, so it's returning false
         REQUIRE(screenEdges->desktop_switching.always);
         REQUIRE(screenEdges->desktop_switching.when_moving_client);
-        QCOMPARE(screenEdges->actions.top_left, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.top, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.top_right, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.right, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.bottom_right, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.bottom, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.bottom_left, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.left, ElectricBorderAction::ElectricActionNone);
+        QCOMPARE(screenEdges->actions.top_left, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.top, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.top_right, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.right, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.bottom_right, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.bottom, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.bottom_left, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.left, win::electric_border_action::none);
 
         QCOMPARE(screenEdges->windows().size(), 0);
 
@@ -348,14 +347,14 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(spy.isValid());
 
         std::deque<uint32_t> border_ids;
-        border_ids.push_back(screenEdges->reserve(ElectricLeft, cb));
-        border_ids.push_back(screenEdges->reserve(ElectricTopLeft, cb));
-        border_ids.push_back(screenEdges->reserve(ElectricTop, cb));
-        border_ids.push_back(screenEdges->reserve(ElectricTopRight, cb));
-        border_ids.push_back(screenEdges->reserve(ElectricRight, cb));
-        border_ids.push_back(screenEdges->reserve(ElectricBottomRight, cb));
-        border_ids.push_back(screenEdges->reserve(ElectricBottom, cb));
-        border_ids.push_back(screenEdges->reserve(ElectricBottomLeft, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::left, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::top_left, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::top, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::top_right, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::right, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::bottom_right, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::bottom, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::bottom_left, cb));
 
         auto& edges = screenEdges->edges;
         QCOMPARE(edges.size(), 10);
@@ -441,8 +440,8 @@ TEST_CASE("screen edges", "[input],[win]")
         REQUIRE_FALSE(spy.count() == 2);
         return;
 
-        QCOMPARE(spy.first().first().value<ElectricBorder>(), ElectricLeft);
-        QCOMPARE(spy.last().first().value<ElectricBorder>(), ElectricLeft);
+        QCOMPARE(spy.first().first().value<win::electric_border>(), win::electric_border::left);
+        QCOMPARE(spy.last().first().value<win::electric_border>(), win::electric_border::left);
         QCOMPARE(cursor()->pos(), QPoint(1, 100));
 
         // let's disable pushback
@@ -457,23 +456,23 @@ TEST_CASE("screen edges", "[input],[win]")
         // TODO(romangg): Is the other way around on Wayland than it was on X11. Needs
         // investigation.
         REQUIRE_FALSE(spy.count() == 3);
-        QCOMPARE(spy.at(0).first().value<ElectricBorder>(), ElectricLeft);
+        QCOMPARE(spy.at(0).first().value<win::electric_border>(), win::electric_border::left);
 #if 0
-        QCOMPARE(spy.at(1).first().value<ElectricBorder>(), ElectricLeft);
-        QCOMPARE(spy.at(2).first().value<ElectricBorder>(), ElectricLeft);
+        QCOMPARE(spy.at(1).first().value<win::electric_border>(), win::electric_border::left);
+        QCOMPARE(spy.at(2).first().value<win::electric_border>(), win::electric_border::left);
 #endif
         // TODO(romangg): No dead pixel on Wayland? Needs investigation.
         REQUIRE_FALSE(cursor()->pos() == QPoint(0, 100));
 
         // now let's unreserve again
-        unreserve_many(border_ids, ElectricTopLeft);
-        unreserve_many(border_ids, ElectricTop);
-        unreserve_many(border_ids, ElectricTopRight);
-        unreserve_many(border_ids, ElectricRight);
-        unreserve_many(border_ids, ElectricBottomRight);
-        unreserve_many(border_ids, ElectricBottom);
-        unreserve_many(border_ids, ElectricBottomLeft);
-        unreserve_many(border_ids, ElectricLeft);
+        unreserve_many(border_ids, win::electric_border::top_left);
+        unreserve_many(border_ids, win::electric_border::top);
+        unreserve_many(border_ids, win::electric_border::top_right);
+        unreserve_many(border_ids, win::electric_border::right);
+        unreserve_many(border_ids, win::electric_border::bottom_right);
+        unreserve_many(border_ids, win::electric_border::bottom);
+        unreserve_many(border_ids, win::electric_border::bottom_left);
+        unreserve_many(border_ids, win::electric_border::left);
 
         // Some do, some not on Wayland. Needs investigation.
 #if 0
@@ -495,7 +494,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(spy.isValid());
 
         std::deque<uint32_t> border_ids;
-        border_ids.push_back(screenEdges->reserve(ElectricLeft, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::left, cb));
 
         // check activating a different edge doesn't do anything
         screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc(), true);
@@ -512,7 +511,7 @@ TEST_CASE("screen edges", "[input],[win]")
         REQUIRE_FALSE(cursor()->pos() == QPoint(0, 50));
 
         // use a different edge, this time with pushback
-        border_ids.push_back(screenEdges->reserve(KWin::ElectricRight, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::right, cb));
         cursor()->set_pos(99, 50);
         screenEdges->check(QPoint(99, 50), QDateTime::currentDateTimeUtc());
 
@@ -520,7 +519,7 @@ TEST_CASE("screen edges", "[input],[win]")
         REQUIRE_FALSE(spy.count() == 2);
         return;
 
-        QCOMPARE(spy.last().first().value<ElectricBorder>(), ElectricLeft);
+        QCOMPARE(spy.last().first().value<win::electric_border>(), win::electric_border::left);
 
         // TODO(romangg): No dead pixel on Wayland? Needs investigation.
         REQUIRE_FALSE(cursor()->pos() == QPoint(98, 50));
@@ -535,12 +534,13 @@ TEST_CASE("screen edges", "[input],[win]")
         // TODO(romangg): Should have been triggered once more. Needs investigation.
         REQUIRE_FALSE(spy.count() == 3);
         // TODO(romangg): Follow up
-        REQUIRE_FALSE(spy.last().first().value<ElectricBorder>() == ElectricRight);
+        REQUIRE_FALSE(spy.last().first().value<win::electric_border>()
+                      == win::electric_border::right);
         // TODO(romangg): Follow up
         REQUIRE_FALSE(cursor()->pos() == QPoint(98, 50));
 
-        unreserve_many(border_ids, ElectricLeft);
-        unreserve_many(border_ids, ElectricRight);
+        unreserve_many(border_ids, win::electric_border::left);
+        unreserve_many(border_ids, win::electric_border::right);
     }
 
     SECTION("overlapping edges")
@@ -580,21 +580,21 @@ TEST_CASE("screen edges", "[input],[win]")
     SECTION("push back")
     {
         struct data {
-            ElectricBorder border;
+            win::electric_border border;
             int pushback;
             QPoint trigger;
             QPoint expected;
         };
 
-        auto test_data = GENERATE(data{ElectricTopLeft, 3, {}, {3, 3}},
-                                  data{ElectricTop, 5, {50, 0}, {50, 5}},
-                                  data{ElectricTopRight, 2, {99, 0}, {97, 2}},
-                                  data{ElectricRight, 10, {99, 50}, {89, 50}},
-                                  data{ElectricBottomRight, 5, {99, 99}, {94, 94}},
-                                  data{ElectricBottom, 10, {50, 99}, {50, 89}},
-                                  data{ElectricBottomLeft, 3, {0, 99}, {3, 96}},
-                                  data{ElectricLeft, 10, {0, 50}, {10, 50}},
-                                  data{ElectricLeft, 10, {50, 0}, {50, 0}});
+        auto test_data = GENERATE(data{win::electric_border::top_left, 3, {}, {3, 3}},
+                                  data{win::electric_border::top, 5, {50, 0}, {50, 5}},
+                                  data{win::electric_border::top_right, 2, {99, 0}, {97, 2}},
+                                  data{win::electric_border::right, 10, {99, 50}, {89, 50}},
+                                  data{win::electric_border::bottom_right, 5, {99, 99}, {94, 94}},
+                                  data{win::electric_border::bottom, 10, {50, 99}, {50, 89}},
+                                  data{win::electric_border::bottom_left, 3, {0, 99}, {3, 96}},
+                                  data{win::electric_border::left, 10, {0, 50}, {10, 50}},
+                                  data{win::electric_border::left, 10, {50, 0}, {50, 0}});
 
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
         config->group("Windows").writeEntry("ElectricBorderPushbackPixels", test_data.pushback);
@@ -662,17 +662,17 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(spy.isValid());
 
         std::deque<uint32_t> border_ids;
-        border_ids.push_back(screenEdges->reserve(KWin::ElectricLeft, cb));
-        border_ids.push_back(screenEdges->reserve(KWin::ElectricBottomRight, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::left, cb));
+        border_ids.push_back(screenEdges->reserve(win::electric_border::bottom_right, cb));
 
         QAction action;
-        screenEdges->reserveTouch(KWin::ElectricRight, &action);
+        screenEdges->reserveTouch(win::electric_border::right, &action);
 
         // currently there is no active client yet, so check blocking shouldn't do anything
         Q_EMIT screenEdges->qobject->checkBlocking();
 
         for (auto& e : screenEdges->edges) {
-            REQUIRE(e->activatesForTouchGesture() == (e->border == KWin::ElectricRight));
+            REQUIRE(e->activatesForTouchGesture() == (e->border == win::electric_border::right));
         }
 
         cursor()->set_pos(0, 50);
@@ -689,7 +689,7 @@ TEST_CASE("screen edges", "[input],[win]")
         // doesn't call for corners
         for (auto& e : screenEdges->edges) {
             e->checkBlocking();
-            REQUIRE(e->activatesForTouchGesture() == (e->border == KWin::ElectricRight));
+            REQUIRE(e->activatesForTouchGesture() == (e->border == win::electric_border::right));
         }
         // calling again should not trigger
         QTest::qWait(160);
@@ -704,7 +704,7 @@ TEST_CASE("screen edges", "[input],[win]")
         client->setFullScreen(false);
         Q_EMIT screenEdges->qobject->checkBlocking();
         for (auto& e : screenEdges->edges) {
-            REQUIRE(e->activatesForTouchGesture() == (e->border == KWin::ElectricRight));
+            REQUIRE(e->activatesForTouchGesture() == (e->border == win::electric_border::right));
         }
 
         // TODO: Does not trigger for some reason on Wayland.
@@ -732,7 +732,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QCOMPARE(cursor()->pos(), QPoint(0, 50));
 
         // the corner should always trigger
-        screenEdges->unreserve(KWin::ElectricLeft, &callback);
+        screenEdges->unreserve(win::electric_border::left, &callback);
         cursor()->set_pos(99, 99);
         QVERIFY(spy.isEmpty());
 
@@ -743,8 +743,8 @@ TEST_CASE("screen edges", "[input],[win]")
         QVERIFY(!spy.isEmpty());
 #endif
 
-        unreserve_many(border_ids, ElectricLeft);
-        unreserve_many(border_ids, ElectricBottomRight);
+        unreserve_many(border_ids, win::electric_border::left);
+        unreserve_many(border_ids, win::electric_border::bottom_right);
     }
 
     SECTION("client edge")
@@ -766,7 +766,7 @@ TEST_CASE("screen edges", "[input],[win]")
         client->setFrameGeometry(QRect(10, 50, 10, 50));
 
         auto& screenEdges = setup.base->space->edges;
-        screenEdges->reserve(client, KWin::ElectricBottom);
+        screenEdges->reserve(client, win::electric_border::bottom);
         auto& edge = screenEdges->edges.back();
 
         // TODO(romangg): This changed recently. Needs investigation..
@@ -775,13 +775,13 @@ TEST_CASE("screen edges", "[input],[win]")
         REQUIRE(!edge->activatesForTouchGesture());
 
         // remove old reserves and resize to be in the middle of the screen
-        screenEdges->reserve(client, KWin::ElectricNone);
+        screenEdges->reserve(client, win::electric_border::none);
         client->setFrameGeometry(QRect(2, 2, 20, 20));
 
         // for none of the edges it should be able to be set
-        for (int i = 0; i < ELECTRIC_COUNT; ++i) {
+        for (size_t i = 0; i < static_cast<size_t>(win::electric_border::_COUNT); ++i) {
             client->hideClient(true);
-            screenEdges->reserve(client, static_cast<ElectricBorder>(i));
+            screenEdges->reserve(client, static_cast<win::electric_border>(i));
 
             // TODO(romangg): Possible on Wayland. Needs investigation.
             REQUIRE_FALSE(!client->isHiddenInternal());
@@ -790,7 +790,7 @@ TEST_CASE("screen edges", "[input],[win]")
         // now let's try to set it and activate it
         client->setFrameGeometry(QRect({}, setup.base->topology.size));
         client->hideClient(true);
-        screenEdges->reserve(client, KWin::ElectricLeft);
+        screenEdges->reserve(client, win::electric_border::left);
         QCOMPARE(client->isHiddenInternal(), true);
 
         cursor()->set_pos(0, 50);
@@ -804,26 +804,26 @@ TEST_CASE("screen edges", "[input],[win]")
 
         // now let's reserve the client for each of the edges, in the end for the right one
         client->hideClient(true);
-        screenEdges->reserve(client, KWin::ElectricTop);
-        screenEdges->reserve(client, KWin::ElectricBottom);
+        screenEdges->reserve(client, win::electric_border::top);
+        screenEdges->reserve(client, win::electric_border::bottom);
         QCOMPARE(client->isHiddenInternal(), true);
 
         // corners shouldn't get reserved
-        screenEdges->reserve(client, KWin::ElectricTopLeft);
+        screenEdges->reserve(client, win::electric_border::top_left);
         QCOMPARE(client->isHiddenInternal(), false);
         client->hideClient(true);
-        screenEdges->reserve(client, KWin::ElectricTopRight);
+        screenEdges->reserve(client, win::electric_border::top_right);
         QCOMPARE(client->isHiddenInternal(), false);
         client->hideClient(true);
-        screenEdges->reserve(client, KWin::ElectricBottomRight);
+        screenEdges->reserve(client, win::electric_border::bottom_right);
         QCOMPARE(client->isHiddenInternal(), false);
         client->hideClient(true);
-        screenEdges->reserve(client, KWin::ElectricBottomLeft);
+        screenEdges->reserve(client, win::electric_border::bottom_left);
         QCOMPARE(client->isHiddenInternal(), false);
 
         // now finally reserve on right one
         client->hideClient(true);
-        screenEdges->reserve(client, KWin::ElectricRight);
+        screenEdges->reserve(client, win::electric_border::right);
         QCOMPARE(client->isHiddenInternal(), true);
 
         // now let's emulate the removal of a Client through base.space
@@ -834,7 +834,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QCOMPARE(client->isHiddenInternal(), true);
 
         // now let's try to trigger the client showing with the check method instead of enter notify
-        screenEdges->reserve(client, KWin::ElectricTop);
+        screenEdges->reserve(client, win::electric_border::top);
         QCOMPARE(client->isHiddenInternal(), true);
         cursor()->set_pos(50, 0);
         screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc());
@@ -842,7 +842,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QCOMPARE(cursor()->pos(), QPoint(50, 1));
 
         // unreserve by setting to none edge
-        screenEdges->reserve(client, KWin::ElectricNone);
+        screenEdges->reserve(client, win::electric_border::none);
         // check on previous edge again, should fail
         client->hideClient(true);
         cursor()->set_pos(50, 0);
@@ -854,7 +854,7 @@ TEST_CASE("screen edges", "[input],[win]")
         client->setFrameGeometry(QRect({}, setup.base->topology.size));
         client->hideClient(false);
         win::set_keep_below(client, true);
-        screenEdges->reserve(client, KWin::ElectricLeft);
+        screenEdges->reserve(client, win::electric_border::left);
         REQUIRE(client->control->keep_below);
         REQUIRE(!client->isHiddenInternal());
 
@@ -883,14 +883,14 @@ TEST_CASE("screen edges", "[input],[win]")
         return;
 
         REQUIRE(!screenEdges->desktop_switching.when_moving_client);
-        QCOMPARE(screenEdges->actions.top_left, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.top, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.top_right, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.right, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.bottom_right, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.bottom, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.bottom_left, ElectricBorderAction::ElectricActionNone);
-        QCOMPARE(screenEdges->actions.left, ElectricBorderAction::ElectricActionNone);
+        QCOMPARE(screenEdges->actions.top_left, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.top, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.top_right, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.right, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.bottom_right, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.bottom, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.bottom_left, win::electric_border_action::none);
+        QCOMPARE(screenEdges->actions.left, win::electric_border_action::none);
 
         auto& edges = screenEdges->edges;
         QCOMPARE(edges.size(), 8);
@@ -948,15 +948,15 @@ TEST_CASE("screen edges", "[input],[win]")
     SECTION("touch callback")
     {
         struct data {
-            ElectricBorder border;
+            win::electric_border border;
             QPoint start_pos;
             QSizeF delta;
         };
 
-        auto test_data = GENERATE(data{ElectricLeft, {0, 50}, {250, 20}},
-                                  data{ElectricTop, {50, 0}, {20, 250}},
-                                  data{ElectricRight, {99, 50}, {-200, 0}},
-                                  data{ElectricBottom, {50, 99}, {0, -200}});
+        auto test_data = GENERATE(data{win::electric_border::left, {0, 50}, {250, 20}},
+                                  data{win::electric_border::top, {50, 0}, {20, 250}},
+                                  data{win::electric_border::right, {99, 50}, {-200, 0}},
+                                  data{win::electric_border::bottom, {50, 99}, {0, -200}});
 
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
         auto group = config->group("TouchEdges");

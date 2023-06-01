@@ -10,12 +10,11 @@ set(plugin_SRCS
     previewsettings.cpp
     plugin.cpp
     buttonsmodel.cpp
-    ../../../win/deco/palette.cpp
-    ../../../win/deco/decorations_logging.cpp
 )
 
 add_library(kdecorationprivatedeclarative SHARED ${plugin_SRCS})
 target_link_libraries(kdecorationprivatedeclarative
+  win
   KDecoration2::KDecoration
   KDecoration2::KDecoration2Private
   KF6::CoreAddons

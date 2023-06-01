@@ -50,7 +50,7 @@ TEST_CASE("screens", "[base]")
                                   data{"FocusStrictlyUnderMouse", true});
 
         auto original_config = setup.base->config.main;
-        auto& options = setup.base->options;
+        auto& options = setup.base->space->options;
 
         QCOMPARE(options->get_current_output_follows_mouse(), false);
 
@@ -63,7 +63,7 @@ TEST_CASE("screens", "[base]")
         config->sync();
 
         setup.base->config.main = config;
-        options = std::make_unique<base::options>(setup.base->operation_mode, config);
+        options = std::make_unique<win::options>(config);
         options->loadConfig();
 
         QCOMPARE(options->get_current_output_follows_mouse(), test_data.expected_default);
@@ -74,7 +74,7 @@ TEST_CASE("screens", "[base]")
         QCOMPARE(options->get_current_output_follows_mouse(), !test_data.expected_default);
 
         setup.base->config.main = original_config;
-        options = std::make_unique<base::options>(setup.base->operation_mode, original_config);
+        options = std::make_unique<win::options>(original_config);
         options->loadConfig();
         QCOMPARE(options->get_current_output_follows_mouse(), false);
     }
@@ -117,7 +117,7 @@ TEST_CASE("screens", "[base]")
         QVERIFY(output_added_spy.isValid());
         QVERIFY(output_removed_spy.isValid());
 
-        QCOMPARE(base->get_outputs().size(), 1);
+        QCOMPARE(base->outputs.size(), 1);
 
         // change to two screens
         std::vector<QRect> geometries{{QRect{0, 0, 100, 200}, QRect{100, 0, 100, 200}}};
@@ -125,7 +125,7 @@ TEST_CASE("screens", "[base]")
 
         QCOMPARE(output_added_spy.count(), 2);
         QCOMPARE(output_removed_spy.count(), 1);
-        QCOMPARE(base->get_outputs().size(), 2);
+        QCOMPARE(base->outputs.size(), 2);
 
         output_added_spy.clear();
         output_removed_spy.clear();
@@ -136,7 +136,7 @@ TEST_CASE("screens", "[base]")
 
         QCOMPARE(output_removed_spy.count(), 2);
         QCOMPARE(output_added_spy.count(), 1);
-        QCOMPARE(base->get_outputs().size(), 1);
+        QCOMPARE(base->outputs.size(), 1);
 
         // Setting the same geometries should emit the signal again.
         QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
@@ -185,7 +185,7 @@ TEST_CASE("screens", "[base]")
 
         QCOMPARE(changedSpy.count(), 1);
 
-        auto const& outputs = setup.base->get_outputs();
+        auto const& outputs = setup.base->outputs;
         QCOMPARE(outputs.size(), test_data.geometries.size());
         REQUIRE(base::get_intersecting_outputs(outputs, test_data.test_geo).size()
                 == test_data.expected_count);
@@ -202,7 +202,7 @@ TEST_CASE("screens", "[base]")
 
         auto& base = setup.base;
         setup.set_outputs(2);
-        QCOMPARE(base->get_outputs().size(), 2);
+        QCOMPARE(base->outputs.size(), 2);
 
         QSignalSpy current_changed_spy(base.get(), &base::platform::current_output_changed);
         QVERIFY(current_changed_spy.isValid());
@@ -247,14 +247,14 @@ TEST_CASE("screens", "[base]")
         QVERIFY(!setup.base->space->stacking.active);
 
         QCOMPARE(win::get_current_output(*setup.base->space),
-                 base::get_output(setup.base->get_outputs(), 0));
+                 base::get_output(setup.base->outputs, 0));
 
         // it's not the active client, so changing won't work
         win::set_current_output_by_window(*setup.base, *client);
         QVERIFY(changedSpy.isEmpty());
         QVERIFY(current_output_spy.isEmpty());
 
-        auto output = base::get_output(setup.base->get_outputs(), 0);
+        auto output = base::get_output(setup.base->outputs, 0);
         QVERIFY(output);
         QCOMPARE(win::get_current_output(*setup.base->space), output);
 
@@ -264,7 +264,7 @@ TEST_CASE("screens", "[base]")
         QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client);
 
         // first of all current should be changed just by the fact that there is an active client
-        output = base::get_output(setup.base->get_outputs(), 1);
+        output = base::get_output(setup.base->outputs, 1);
         QVERIFY(output);
         QCOMPARE(client->topo.central_output, output);
         QCOMPARE(win::get_current_output(*setup.base->space), output);
@@ -274,7 +274,7 @@ TEST_CASE("screens", "[base]")
         QCOMPARE(changedSpy.count(), 0);
         QCOMPARE(current_output_spy.count(), 1);
 
-        output = base::get_output(setup.base->get_outputs(), 1);
+        output = base::get_output(setup.base->outputs, 1);
         QVERIFY(output);
         QCOMPARE(win::get_current_output(*setup.base->space), output);
 
@@ -287,7 +287,7 @@ TEST_CASE("screens", "[base]")
         win::unset_active_window(*setup.base->space);
         win::set_active(client, false);
 
-        output = base::get_output(setup.base->get_outputs(), 1);
+        output = base::get_output(setup.base->outputs, 1);
         QVERIFY(output);
         QCOMPARE(win::get_current_output(*setup.base->space), output);
     }
@@ -322,7 +322,7 @@ TEST_CASE("screens", "[base]")
 
         pointer_motion_absolute(QPointF(0, 0), 1);
 
-        auto output = base::get_output(setup.base->get_outputs(), 0);
+        auto output = base::get_output(setup.base->outputs, 0);
         QVERIFY(output);
         QCOMPARE(win::get_current_output(*setup.base->space), output);
 
@@ -331,7 +331,7 @@ TEST_CASE("screens", "[base]")
 
         pointer_motion_absolute(test_data.cursor_pos, 2);
 
-        output = base::get_output(setup.base->get_outputs(), test_data.expected);
+        output = base::get_output(setup.base->outputs, test_data.expected);
         QVERIFY(output);
         QCOMPARE(win::get_current_output(*setup.base->space), output);
     }
@@ -369,7 +369,7 @@ TEST_CASE("screens", "[base]")
 
         base::set_current_output_by_position(*setup.base, test_data.cursor_pos);
 
-        auto output = base::get_output(setup.base->get_outputs(), test_data.expected);
+        auto output = base::get_output(setup.base->outputs, test_data.expected);
         QVERIFY(output);
         QCOMPARE(win::get_current_output(*setup.base->space), output);
     }

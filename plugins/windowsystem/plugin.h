@@ -14,9 +14,9 @@ class KWindowSystemKWinPlugin : public KWindowSystemPluginInterface
     Q_INTERFACES(KWindowSystemPluginInterface)
 
 public:
-    explicit KWindowSystemKWinPlugin(QObject *parent = nullptr);
+    explicit KWindowSystemKWinPlugin(QObject* parent = nullptr);
     ~KWindowSystemKWinPlugin() override;
 
-    KWindowEffectsPrivate *createEffects() override;
-    KWindowSystemPrivate *createWindowSystem() override;
+    KWindowEffectsPrivate* createEffects() override;
+    KWindowSystemPrivate* createWindowSystem() override;
 };
