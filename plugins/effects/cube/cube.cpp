@@ -112,6 +112,7 @@ CubeEffect::CubeEffect()
             keyboard_grab = false;
         }
     });
+    connect(effects, &EffectsHandler::windowAdded, this, &CubeEffect::window_added);
 
     reconfigure(ReconfigureAll);
 }
@@ -374,6 +375,15 @@ void CubeEffect::startVerticalAnimation(VerticalAnimationState state)
     verticalTimeLine.reset();
     verticalStartAngle = verticalCurrentAngle;
     verticalAnimationState = state;
+}
+
+void CubeEffect::window_added(EffectWindow* win)
+{
+    if (!activated) {
+        return;
+    }
+
+    window_refs[win] = EffectWindowVisibleRef(win, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
 }
 
 void CubeEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
@@ -1103,7 +1113,6 @@ void CubeEffect::prePaintWindow(EffectWindow* w,
                 }
                 if (useZOrdering && !w->isDesktop() && !w->isDock() && !w->isOnAllDesktops())
                     data.setTransformed();
-                w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
             } else {
                 // check for windows belonging to the previous desktop
                 int prev_desktop = painting_desktop - 1;
@@ -1112,7 +1121,6 @@ void CubeEffect::prePaintWindow(EffectWindow* w,
                 if (w->isOnDesktop(prev_desktop) && mode == Cube && !useZOrdering) {
                     QRect rect = effects->clientArea(FullArea, activeScreen, prev_desktop);
                     if (w->x() + w->width() > rect.x() + rect.width()) {
-                        w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
                         data.quads = data.quads.splitAtX(rect.width() - w->x());
                         if (w->y() < rect.y()) {
                             data.quads = data.quads.splitAtY(-w->y());
@@ -1132,7 +1140,6 @@ void CubeEffect::prePaintWindow(EffectWindow* w,
                 if (w->isOnDesktop(next_desktop) && mode == Cube && !useZOrdering) {
                     QRect rect = effects->clientArea(FullArea, activeScreen, next_desktop);
                     if (w->x() < rect.x()) {
-                        w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
                         data.quads = data.quads.splitAtX(-w->x());
                         if (w->y() < rect.y()) {
                             data.quads = data.quads.splitAtY(-w->y());
@@ -1145,7 +1152,6 @@ void CubeEffect::prePaintWindow(EffectWindow* w,
                         return;
                     }
                 }
-                w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
             }
         }
     }
@@ -1642,13 +1648,15 @@ void CubeEffect::setActive(bool active)
             watcher->setFuture(
                 QtConcurrent::run([this, wallpaperPath] { return loadWallPaper(wallpaperPath); }));
         }
+
+        auto const windows = effects->stackingOrder();
         activated = true;
         activeScreen = effects->activeScreen();
         keyboard_grab = effects->grabKeyboard(this);
         effects->startMouseInterception(this, Qt::OpenHandCursor);
         frontDesktop = effects->currentDesktop();
         zoom = 0.0;
-        zOrderingFactor = zPosition / (effects->stackingOrder().count() - 1);
+        zOrderingFactor = zPosition / (windows.size() - 1);
         animations.enqueue(AnimationState::Start);
         animationState = AnimationState::None;
         verticalAnimationState = VerticalAnimationState::None;
@@ -1667,8 +1675,15 @@ void CubeEffect::setActive(bool active)
                                       + temporaryCoeff * temporaryCoeff);
         }
         m_rotationMatrix.setToIdentity();
+
+        window_refs.reserve(windows.size());
+
+        for (auto win : windows) {
+            window_refs[win] = EffectWindowVisibleRef(win, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
+        }
     } else {
         animations.enqueue(AnimationState::Stop);
+        window_refs.clear();
     }
     effects->addRepaintFull();
 }

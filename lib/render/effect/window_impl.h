@@ -19,6 +19,7 @@
 #include "win/types.h"
 
 #include <kwineffects/effect_window.h>
+#include <kwineffects/effect_window_visible_ref.h>
 #include <kwineffects/effects_handler.h>
 #include <kwineffects/window_quad.h>
 #include <kwingl/texture.h>
@@ -66,21 +67,6 @@ public:
             auto cachedTexture = static_cast<GLTexture*>(cachedTextureVariant.value<void*>());
             delete cachedTexture;
         }
-    }
-
-    void enablePainting(int reason) override
-    {
-        window.enablePainting(static_cast<window_paint_disable_type>(reason));
-    }
-
-    void disablePainting(int reason) override
-    {
-        window.disablePainting(static_cast<window_paint_disable_type>(reason));
-    }
-
-    bool isPaintingEnabled() override
-    {
-        return window.isPaintingEnabled();
     }
 
     void addRepaint(QRect const& rect) override
@@ -811,6 +797,52 @@ public:
         window.unreference_previous_buffer();
     }
 
+    void refVisible(EffectWindowVisibleRef const* holder) override
+    {
+        auto const reason = holder->reason();
+
+        if (reason & PAINT_DISABLED) {
+            ++force_visible.hidden;
+        }
+        if (reason & PAINT_DISABLED_BY_DELETE) {
+            ++force_visible.deleted;
+        }
+        if (reason & PAINT_DISABLED_BY_DESKTOP) {
+            ++force_visible.desktop;
+        }
+        if (reason & PAINT_DISABLED_BY_MINIMIZE) {
+            ++force_visible.minimized;
+        }
+    }
+
+    void unrefVisible(EffectWindowVisibleRef const* holder) override
+    {
+        auto const reason = holder->reason();
+
+        if (reason & PAINT_DISABLED) {
+            assert(force_visible.hidden > 0);
+            --force_visible.hidden;
+        }
+        if (reason & PAINT_DISABLED_BY_DELETE) {
+            assert(force_visible.deleted > 0);
+            --force_visible.deleted;
+        }
+        if (reason & PAINT_DISABLED_BY_DESKTOP) {
+            assert(force_visible.desktop > 0);
+            --force_visible.desktop;
+        }
+        if (reason & PAINT_DISABLED_BY_MINIMIZE) {
+            assert(force_visible.minimized > 0);
+            --force_visible.minimized;
+        }
+    }
+
+    bool is_forced_visible() const
+    {
+        auto const& fv = force_visible;
+        return fv.hidden + fv.deleted + fv.desktop + fv.minimized;
+    }
+
     QWindow* internalWindow() const override
     {
         if constexpr (requires { typename space_t::internal_window_t; }) {
@@ -873,6 +905,13 @@ private:
     bool managed = false;
     bool waylandClient{false};
     bool x11Client{false};
+
+    struct {
+        int hidden{0};
+        int deleted{0};
+        int desktop{0};
+        int minimized{0};
+    } force_visible;
 };
 
 }

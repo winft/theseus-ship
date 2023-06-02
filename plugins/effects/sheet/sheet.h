@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <kwineffects/effect.h>
 #include <kwineffects/effect_window_deleted_ref.h>
+#include <kwineffects/effect_window_visible_ref.h>
 #include <kwineffects/time_line.h>
 
 namespace KWin
@@ -52,6 +53,7 @@ private:
 
     struct Animation {
         EffectWindowDeletedRef deletedRef;
+        EffectWindowVisibleRef visibleRef;
         TimeLine timeLine;
         int parentY;
     };

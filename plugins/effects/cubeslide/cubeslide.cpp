@@ -192,18 +192,12 @@ void CubeSlideEffect::prePaintWindow(EffectWindow* w,
                                      WindowPrePaintData& data,
                                      std::chrono::milliseconds presentTime)
 {
-    if (stickyPainting) {
+    if (isActive() && !stickyPainting && cube_painting) {
         if (staticWindows.contains(w)) {
-            w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
-        } else {
-            w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
-        }
-    } else if (isActive() && cube_painting) {
-        if (staticWindows.contains(w)) {
-            w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
             effects->prePaintWindow(w, data, presentTime);
             return;
         }
+
         QRect rect = effects->clientArea(FullArea, effects->activeScreen(), painting_desktop);
         if (w->isOnDesktop(painting_desktop)) {
             if (w->x() < rect.x()) {
@@ -218,7 +212,6 @@ void CubeSlideEffect::prePaintWindow(EffectWindow* w,
             if (w->y() + w->height() > rect.y() + rect.height()) {
                 data.quads = data.quads.splitAtY(rect.height() - w->y());
             }
-            w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
         } else if (w->isOnDesktop(other_desktop)) {
             RotationDirection direction = slideRotations.head();
             bool enable = false;
@@ -243,12 +236,10 @@ void CubeSlideEffect::prePaintWindow(EffectWindow* w,
             if (enable) {
                 data.setTransformed();
                 data.setTranslucent();
-                w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
-            } else
-                w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
-        } else
-            w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
+            }
+        }
     }
+
     effects->prePaintWindow(w, data, presentTime);
 }
 
@@ -387,7 +378,8 @@ void CubeSlideEffect::postPaintScreen()
             else
                 timeLine.setEasingCurve(QEasingCurve::Linear);
             if (slideRotations.empty()) {
-                for (EffectWindow* w : qAsConst(staticWindows)) {
+                auto const keys = staticWindows.keys();
+                for (EffectWindow* w : qAsConst(keys)) {
                     w->setData(WindowForceBlurRole, QVariant());
                     w->setData(WindowForceBackgroundContrastRole, QVariant());
                 }
@@ -516,7 +508,7 @@ void CubeSlideEffect::startAnimation()
         if (!shouldAnimate(w)) {
             w->setData(WindowForceBlurRole, QVariant(true));
             w->setData(WindowForceBackgroundContrastRole, QVariant(true));
-            staticWindows.insert(w);
+            staticWindows[w] = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
         }
     }
     if (slideRotations.count() == 1) {
@@ -534,7 +526,7 @@ void CubeSlideEffect::slotWindowAdded(EffectWindow* w)
         return;
     }
     if (!shouldAnimate(w)) {
-        staticWindows.insert(w);
+        staticWindows[w] = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
         w->setData(WindowForceBlurRole, QVariant(true));
         w->setData(WindowForceBackgroundContrastRole, QVariant(true));
     }
@@ -683,7 +675,8 @@ void CubeSlideEffect::slotNumberDesktopsChanged()
         return;
     }
 
-    for (EffectWindow* w : qAsConst(staticWindows)) {
+    auto const keys = staticWindows.keys();
+    for (auto w : qAsConst(keys)) {
         w->setData(WindowForceBlurRole, QVariant());
         w->setData(WindowForceBackgroundContrastRole, QVariant());
     }

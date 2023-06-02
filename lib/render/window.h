@@ -90,7 +90,7 @@ public:
     // should the window be painted
     bool isPaintingEnabled() const
     {
-        return disable_painting == window_paint_disable_type::none;
+        return disable_painting == window_paint_disable_type::none || effect->is_forced_visible();
     }
 
     void resetPaintingEnabled()
@@ -116,16 +116,6 @@ public:
                        }
                    }},
                    *ref_win);
-    }
-
-    void enablePainting(window_paint_disable_type reason)
-    {
-        disable_painting &= ~reason;
-    }
-
-    void disablePainting(window_paint_disable_type reason)
-    {
-        disable_painting |= reason;
     }
 
     // is the window visible at all

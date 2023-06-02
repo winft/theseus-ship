@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_MAGICLAMP_H
 #define KWIN_MAGICLAMP_H
 
+#include <kwineffects/effect_window_visible_ref.h>
 #include <kwineffects/offscreen_effect.h>
 #include <kwineffects/time_line.h>
 
@@ -13,6 +14,7 @@ namespace KWin
 {
 
 struct MagicLampAnimation {
+    EffectWindowVisibleRef visibleRef;
     TimeLine timeLine;
 };
 

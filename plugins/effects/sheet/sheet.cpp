@@ -60,7 +60,6 @@ void SheetEffect::prePaintWindow(EffectWindow* w,
 {
     if (m_animations.contains(w)) {
         data.setTransformed();
-        w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DELETE);
     }
 
     effects->prePaintWindow(w, data, presentTime);
@@ -177,6 +176,7 @@ void SheetEffect::slotWindowClosed(EffectWindow* w)
     Animation& animation = m_animations[w];
 
     animation.deletedRef = EffectWindowDeletedRef(w);
+    animation.visibleRef = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_DELETE);
     animation.timeLine.reset();
     animation.parentY = 0;
     animation.timeLine.setDuration(m_duration);

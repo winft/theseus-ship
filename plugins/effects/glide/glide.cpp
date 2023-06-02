@@ -84,7 +84,6 @@ void GlideEffect::prePaintWindow(EffectWindow* w,
 {
     if (m_animations.contains(w)) {
         data.setTransformed();
-        w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DELETE);
     }
 
     effects->prePaintWindow(w, data, presentTime);
@@ -238,6 +237,7 @@ void GlideEffect::windowClosed(EffectWindow* w)
 
     GlideAnimation& animation = m_animations[w];
     animation.deletedRef = EffectWindowDeletedRef(w);
+    animation.visibleRef = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_DELETE);
     animation.timeLine.reset();
     animation.timeLine.setDirection(TimeLine::Forward);
     animation.timeLine.setDuration(m_duration);

@@ -175,6 +175,7 @@ void FallApartEffect::slotWindowClosed(EffectWindow* c)
     auto& animation = windows[c];
     animation.progress = 0;
     animation.deletedRef = EffectWindowDeletedRef(c);
+    animation.visibleRef = EffectWindowVisibleRef(c, EffectWindow::PAINT_DISABLED_BY_DELETE);
 
     redirect(c);
 }

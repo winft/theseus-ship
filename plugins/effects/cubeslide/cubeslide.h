@@ -7,6 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_CUBESLIDE_H
 
 #include <kwineffects/effect.h>
+#include <kwineffects/effect_window_visible_ref.h>
 #include <kwingl/utils.h>
 
 #include <QQueue>
@@ -87,7 +88,7 @@ private:
     int other_desktop;
     bool firstDesktop;
     bool stickyPainting;
-    QSet<EffectWindow*> staticWindows;
+    QHash<EffectWindow*, EffectWindowVisibleRef> staticWindows;
     QTimeLine timeLine;
     std::chrono::milliseconds lastPresentTime;
     QQueue<RotationDirection> slideRotations;

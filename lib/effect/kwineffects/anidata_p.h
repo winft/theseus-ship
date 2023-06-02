@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "kwingl/utils.h"
 #include <kwineffects/animation_effect.h>
 #include <kwineffects/effect_window_deleted_ref.h>
+#include <kwineffects/effect_window_visible_ref.h>
 #include <kwineffects/time_line.h>
 
 #include <QEasingCurve>
@@ -83,6 +84,7 @@ public:
     bool waitAtSource;
     bool keepAlive;
     EffectWindowDeletedRef deletedRef;
+    EffectWindowVisibleRef visibleRef;
     PreviousWindowPixmapLockPtr previousWindowPixmapLock;
     AnimationEffect::TerminationFlags terminationFlags;
     GLShader* shader{nullptr};

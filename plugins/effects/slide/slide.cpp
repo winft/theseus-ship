@@ -184,14 +184,7 @@ void SlideEffect::prePaintWindow(EffectWindow* w,
                                  WindowPrePaintData& data,
                                  std::chrono::milliseconds presentTime)
 {
-    for (const auto& desktop : std::as_const(m_paintCtx.visibleDesktops)) {
-        if (w->isOnDesktop(desktop)) {
-            w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
-            data.setTransformed();
-            break;
-        }
-    }
-
+    data.setTransformed();
     effects->prePaintWindow(w, data, presentTime);
 }
 
@@ -323,7 +316,11 @@ void SlideEffect::startAnimation(int old, int current, EffectWindow* movingWindo
 void SlideEffect::prepareSwitching()
 {
     const auto windows = effects->stackingOrder();
+    window_refs.reserve(windows.count());
+
     for (EffectWindow* w : windows) {
+        window_refs[w] = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
+
         if (shouldElevate(w)) {
             effects->setElevatedWindow(w, true);
             m_elevatedWindows << w;
@@ -349,6 +346,7 @@ void SlideEffect::finishedSwitching()
     }
 
     m_elevatedWindows.clear();
+    window_refs.clear();
     m_movingWindow = nullptr;
     m_state = State::Inactive;
     m_lastPresentTime = std::chrono::milliseconds::zero();
@@ -431,6 +429,8 @@ void SlideEffect::windowAdded(EffectWindow* w)
     }
     w->setData(WindowForceBackgroundContrastRole, QVariant(true));
     w->setData(WindowForceBlurRole, QVariant(true));
+
+    window_refs[w] = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
 }
 
 void SlideEffect::windowDeleted(EffectWindow* w)
@@ -442,6 +442,7 @@ void SlideEffect::windowDeleted(EffectWindow* w)
         m_movingWindow = nullptr;
     }
     m_elevatedWindows.removeAll(w);
+    window_refs.erase(w);
 }
 
 /*

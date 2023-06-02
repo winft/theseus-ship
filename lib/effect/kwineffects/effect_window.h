@@ -27,6 +27,7 @@ class Surface;
 namespace KWin
 {
 
+class EffectWindowVisibleRef;
 class WindowQuadList;
 
 class EffectWindowGroup
@@ -356,9 +357,6 @@ public:
     explicit EffectWindow(QObject* parent = nullptr);
     ~EffectWindow() override;
 
-    virtual void enablePainting(int reason) = 0;
-    virtual void disablePainting(int reason) = 0;
-    virtual bool isPaintingEnabled() = 0;
     Q_SCRIPTABLE virtual void addRepaint(const QRect& r) = 0;
     Q_SCRIPTABLE virtual void addRepaint(int x, int y, int w, int h) = 0;
     Q_SCRIPTABLE virtual void addRepaintFull() = 0;
@@ -707,6 +705,11 @@ public:
      * @since 4.11
      */
     virtual void unreferencePreviousWindowPixmap() = 0;
+
+protected:
+    friend EffectWindowVisibleRef;
+    virtual void refVisible(EffectWindowVisibleRef const* holder) = 0;
+    virtual void unrefVisible(EffectWindowVisibleRef const* holder) = 0;
 
 private:
     class Private;

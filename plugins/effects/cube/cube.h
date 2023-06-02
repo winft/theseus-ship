@@ -7,14 +7,16 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_CUBE_H
 
 #include <kwineffects/effect.h>
+#include <kwineffects/effect_screen.h>
+#include <kwineffects/effect_window_visible_ref.h>
 #include <kwineffects/time_line.h>
 #include <kwingl/utils.h>
 
-#include "kwineffects/effect_screen.h"
 #include <QFont>
 #include <QMatrix4x4>
 #include <QObject>
 #include <QQueue>
+#include <unordered_map>
 
 namespace KWin
 {
@@ -159,6 +161,8 @@ private:
     void startAnimation(AnimationState state);
     void startVerticalAnimation(VerticalAnimationState state);
 
+    void window_added(EffectWindow* win);
+
     bool activated;
     bool cube_painting;
     bool keyboard_grab;
@@ -238,6 +242,8 @@ private:
     QAction* m_cubeAction;
     QAction* m_cylinderAction;
     QAction* m_sphereAction;
+
+    std::unordered_map<EffectWindow*, EffectWindowVisibleRef> window_refs;
 };
 
 } // namespace

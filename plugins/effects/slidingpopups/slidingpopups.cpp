@@ -167,7 +167,6 @@ void SlidingPopupsEffect::prePaintWindow(EffectWindow* win,
 
     (*animationIt).timeline.advance(presentTime);
     data.setTransformed();
-    win->enablePainting(EffectWindow::PAINT_DISABLED | EffectWindow::PAINT_DISABLED_BY_DELETE);
 
     effects->prePaintWindow(win, data, presentTime);
 }
@@ -304,7 +303,13 @@ void SlidingPopupsEffect::slide_out(EffectWindow* win)
     }
 
     auto& animation = animations[win];
-    animation.deletedRef = EffectWindowDeletedRef(win);
+
+    if (win->isDeleted()) {
+        animation.deletedRef = EffectWindowDeletedRef(win);
+    }
+    animation.visibleRef = EffectWindowVisibleRef(
+        win, EffectWindow::PAINT_DISABLED | EffectWindow::PAINT_DISABLED_BY_DELETE);
+
     animation.kind = AnimationKind::Out;
     animation.timeline.setDirection(TimeLine::Backward);
     animation.timeline.setDuration((*dataIt).out);

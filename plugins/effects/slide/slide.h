@@ -8,12 +8,15 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_SLIDE_H
 #define KWIN_SLIDE_H
 
+#include "springmotion.h"
+
 #include "kwineffects/effect_screen.h"
 #include <kwineffects/effect.h>
+#include <kwineffects/effect_window_visible_ref.h>
 #include <kwineffects/time_line.h>
 #include <kwineffects/types.h>
 
-#include "springmotion.h"
+#include <unordered_map>
 
 namespace KWin
 {
@@ -128,6 +131,7 @@ private:
     } m_paintCtx;
 
     EffectWindowList m_elevatedWindows;
+    std::unordered_map<EffectWindow*, EffectWindowVisibleRef> window_refs;
 };
 
 inline int SlideEffect::horizontalGap() const

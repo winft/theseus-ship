@@ -10,6 +10,7 @@
 #include <kwineffects/effect.h>
 #include <kwineffects/effect_integration.h>
 #include <kwineffects/effect_window_deleted_ref.h>
+#include <kwineffects/effect_window_visible_ref.h>
 #include <kwineffects/time_line.h>
 
 #include <memory>
@@ -49,6 +50,7 @@ public:
 
     struct Animation {
         EffectWindowDeletedRef deletedRef;
+        EffectWindowVisibleRef visibleRef;
         AnimationKind kind;
         TimeLine timeline;
     };
