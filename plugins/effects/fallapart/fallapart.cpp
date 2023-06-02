@@ -126,7 +126,6 @@ void FallApartEffect::postPaintScreen()
             ++it;
         } else {
             unredirect(it.key());
-            it.key()->unrefWindow();
             it = windows.erase(it);
         }
     }
@@ -172,8 +171,11 @@ void FallApartEffect::slotWindowClosed(EffectWindow* c)
     if (e && e != this)
         return;
     c->setData(WindowClosedGrabRole, QVariant::fromValue(static_cast<void*>(this)));
-    windows[c].progress = 0;
-    c->refWindow();
+
+    auto& animation = windows[c];
+    animation.progress = 0;
+    animation.deletedRef = EffectWindowDeletedRef(c);
+
     redirect(c);
 }
 
@@ -198,7 +200,6 @@ void FallApartEffect::slotWindowDataChanged(EffectWindow* w, int role)
     }
 
     unredirect(it.key());
-    it.key()->unrefWindow();
     windows.erase(it);
 }
 

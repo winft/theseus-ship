@@ -111,9 +111,6 @@ void SheetEffect::postPaintWindow(EffectWindow* w)
         EffectWindow* w = animationIt.key();
         w->addRepaintFull();
         if ((*animationIt).timeLine.done()) {
-            if (w->isDeleted()) {
-                w->unrefWindow();
-            }
             animationIt = m_animations.erase(animationIt);
         } else {
             ++animationIt;
@@ -177,10 +174,9 @@ void SheetEffect::slotWindowClosed(EffectWindow* w)
         return;
     }
 
-    w->refWindow();
-
     Animation& animation = m_animations[w];
 
+    animation.deletedRef = EffectWindowDeletedRef(w);
     animation.timeLine.reset();
     animation.parentY = 0;
     animation.timeLine.setDuration(m_duration);

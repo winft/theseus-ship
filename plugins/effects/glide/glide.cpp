@@ -165,10 +165,6 @@ void GlideEffect::postPaintScreen()
     auto animationIt = m_animations.begin();
     while (animationIt != m_animations.end()) {
         if ((*animationIt).timeLine.done()) {
-            EffectWindow* w = animationIt.key();
-            if (w->isDeleted()) {
-                w->unrefWindow();
-            }
             animationIt = m_animations.erase(animationIt);
         } else {
             ++animationIt;
@@ -238,10 +234,10 @@ void GlideEffect::windowClosed(EffectWindow* w)
         return;
     }
 
-    w->refWindow();
     w->setData(WindowClosedGrabRole, QVariant::fromValue(static_cast<void*>(this)));
 
     GlideAnimation& animation = m_animations[w];
+    animation.deletedRef = EffectWindowDeletedRef(w);
     animation.timeLine.reset();
     animation.timeLine.setDirection(TimeLine::Forward);
     animation.timeLine.setDuration(m_duration);
@@ -268,10 +264,6 @@ void GlideEffect::windowDataChanged(EffectWindow* w, int role)
     auto animationIt = m_animations.find(w);
     if (animationIt == m_animations.end()) {
         return;
-    }
-
-    if (w->isDeleted() && role == WindowClosedGrabRole) {
-        w->unrefWindow();
     }
 
     m_animations.erase(animationIt);

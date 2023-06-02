@@ -7,12 +7,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_FALLAPART_H
 #define KWIN_FALLAPART_H
 
+#include <kwineffects/effect_window_deleted_ref.h>
 #include <kwineffects/offscreen_effect.h>
 
 namespace KWin
 {
 
 struct FallApartAnimation {
+    EffectWindowDeletedRef deletedRef;
     std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
     qreal progress = 0;
 };

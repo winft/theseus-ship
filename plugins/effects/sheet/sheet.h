@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_SHEET_H
 
 #include <kwineffects/effect.h>
+#include <kwineffects/effect_window_deleted_ref.h>
 #include <kwineffects/time_line.h>
 
 namespace KWin
@@ -50,6 +51,7 @@ private:
     std::chrono::milliseconds m_duration;
 
     struct Animation {
+        EffectWindowDeletedRef deletedRef;
         TimeLine timeLine;
         int parentY;
     };

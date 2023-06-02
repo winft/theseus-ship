@@ -10,12 +10,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_GLIDE_H
 
 #include <kwineffects/effect.h>
+#include <kwineffects/effect_window_deleted_ref.h>
 #include <kwineffects/time_line.h>
 
 namespace KWin
 {
 
 struct GlideAnimation {
+    EffectWindowDeletedRef deletedRef;
     TimeLine timeLine;
 };
 

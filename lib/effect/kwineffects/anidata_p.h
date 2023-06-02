@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "kwingl/utils.h"
 #include <kwineffects/animation_effect.h>
+#include <kwineffects/effect_window_deleted_ref.h>
 #include <kwineffects/time_line.h>
 
 #include <QEasingCurve>
@@ -31,21 +32,6 @@ private:
     Q_DISABLE_COPY(FullScreenEffectLock)
 };
 typedef QSharedPointer<FullScreenEffectLock> FullScreenEffectLockPtr;
-
-/**
- * Keeps windows alive during animation after they got closed
- */
-class KeepAliveLock
-{
-public:
-    KeepAliveLock(EffectWindow* w);
-    ~KeepAliveLock();
-
-private:
-    EffectWindow* m_window;
-    Q_DISABLE_COPY(KeepAliveLock)
-};
-typedef QSharedPointer<KeepAliveLock> KeepAliveLockPtr;
 
 /**
  * References the previous window pixmap to prevent discarding.
@@ -96,7 +82,7 @@ public:
     QSharedPointer<FullScreenEffectLock> fullScreenEffectLock;
     bool waitAtSource;
     bool keepAlive;
-    KeepAliveLockPtr keepAliveLock;
+    EffectWindowDeletedRef deletedRef;
     PreviousWindowPixmapLockPtr previousWindowPixmapLock;
     AnimationEffect::TerminationFlags terminationFlags;
     GLShader* shader{nullptr};

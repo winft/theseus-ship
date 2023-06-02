@@ -51,7 +51,6 @@ quint64 AnimationEffectPrivate::m_animCounter = 0;
 AnimationEffect::AnimationEffect()
     : d_ptr(new AnimationEffectPrivate())
 {
-    Q_D(AnimationEffect);
     if (!s_clock.isValid())
         s_clock.start();
     /* this is the same as the QTimer::singleShot(0, SLOT(init())) kludge
@@ -1036,19 +1035,11 @@ void AnimationEffect::_windowClosed(EffectWindow* w)
         return;
     }
 
-    KeepAliveLockPtr keepAliveLock;
-
     QList<AniData>& animations = (*it).first;
     for (auto animationIt = animations.begin(); animationIt != animations.end(); ++animationIt) {
-        if (!(*animationIt).keepAlive) {
-            continue;
+        if (animationIt->keepAlive) {
+            animationIt->deletedRef = EffectWindowDeletedRef(w);
         }
-
-        if (keepAliveLock.isNull()) {
-            keepAliveLock = KeepAliveLockPtr::create(w);
-        }
-
-        (*animationIt).keepAliveLock = keepAliveLock;
     }
 }
 
