@@ -44,12 +44,6 @@ void MagicLampEffect::reconfigure(ReconfigureFlags)
 
 void MagicLampEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
-    auto animationIt = m_animations.begin();
-    while (animationIt != m_animations.end()) {
-        (*animationIt).timeLine.advance(data.present_time);
-        ++animationIt;
-    }
-
     // We need to mark the screen windows as transformed. Otherwise the
     // whole screen won't be repainted, resulting in artefacts.
     data.paint.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
@@ -59,10 +53,9 @@ void MagicLampEffect::prePaintScreen(effect::screen_prepaint_data& data)
 
 void MagicLampEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
-    // Schedule window for transformation if the animation is still in
-    //  progress
-    if (m_animations.contains(&data.window)) {
-        // We'll transform this window
+    // Schedule window for transformation if the animation is still in progress
+    if (auto anim_it = m_animations.find(&data.window); anim_it != m_animations.end()) {
+        anim_it->timeLine.advance(data.present_time);
         data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
     }
 

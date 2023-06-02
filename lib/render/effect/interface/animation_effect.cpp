@@ -451,27 +451,6 @@ bool AnimationEffect::cancel(quint64 animationId)
     return false;
 }
 
-void AnimationEffect::prePaintScreen(effect::screen_prepaint_data& data)
-{
-    Q_D(AnimationEffect);
-    if (d->m_animations.isEmpty()) {
-        effects->prePaintScreen(data);
-        return;
-    }
-
-    for (auto entry = d->m_animations.begin(); entry != d->m_animations.end(); ++entry) {
-        for (auto anim = entry->first.begin(); anim != entry->first.end(); ++anim) {
-            if (anim->startTime <= clock()) {
-                if (anim->frozenTime < 0) {
-                    anim->timeLine.advance(data.present_time);
-                }
-            }
-        }
-    }
-
-    effects->prePaintScreen(data);
-}
-
 static int xCoord(const QRect& r, int flag)
 {
     if (flag & AnimationEffect::Left) {
@@ -526,22 +505,26 @@ void AnimationEffect::disconnectGeometryChanges()
 void AnimationEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     Q_D(AnimationEffect);
-    auto entry = d->m_animations.constFind(&data.window);
-    if (entry != d->m_animations.constEnd()) {
-        for (QList<AniData>::const_iterator anim = entry->first.constBegin();
-             anim != entry->first.constEnd();
-             ++anim) {
+    auto entry = d->m_animations.find(&data.window);
+
+    if (entry != d->m_animations.end()) {
+        for (auto anim = entry->first.begin(); anim != entry->first.end(); ++anim) {
             if (anim->startTime > clock() && !anim->waitAtSource) {
                 continue;
             }
 
-            if (anim->attribute == Opacity || anim->attribute == CrossFadePrevious)
+            if (anim->frozenTime < 0) {
+                anim->timeLine.advance(data.present_time);
+            }
+
+            if (anim->attribute == Opacity || anim->attribute == CrossFadePrevious) {
                 data.set_translucent();
-            else if (!(anim->attribute == Brightness || anim->attribute == Saturation)) {
+            } else if (!(anim->attribute == Brightness || anim->attribute == Saturation)) {
                 data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
             }
         }
     }
+
     effects->prePaintWindow(data);
 }
 
