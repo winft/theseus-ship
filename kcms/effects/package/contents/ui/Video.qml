@@ -13,7 +13,6 @@ import QtMultimedia as Multimedia
 Multimedia.Video {
     id: videoItem
 
-    autoPlay: true
     source: model.VideoRole
     width: 400
     height: 400
