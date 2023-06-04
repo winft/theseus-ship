@@ -146,7 +146,7 @@ public:
 
                 // Bind the offscreen FBO and draw the window on it unscaled
                 updateOffscreenSurfaces();
-                GLRenderTarget::pushRenderTarget(m_offscreenTarget);
+                GLFramebuffer::pushRenderTarget(m_offscreenTarget);
 
                 QMatrix4x4 modelViewProjectionMatrix;
                 modelViewProjectionMatrix.ortho(
@@ -247,7 +247,7 @@ public:
                 cache->bind();
                 glCopyTexSubImage2D(
                     GL_TEXTURE_2D, 0, 0, 0, 0, m_offscreenTex->height() - th, tw, th);
-                GLRenderTarget::popRenderTarget();
+                GLFramebuffer::popRenderTarget();
 
                 if (hardwareClipping) {
                     glEnable(GL_SCISSOR_TEST);
@@ -322,7 +322,7 @@ private:
             qCWarning(KWIN_CORE) << "Lanczos Filter forced on by environment variable";
         }
 
-        if (!GLRenderTarget::supported())
+        if (!GLFramebuffer::supported())
             return;
 
         auto gl = GLPlatform::instance();
@@ -369,7 +369,7 @@ private:
             m_offscreenTex = new GLTexture(GL_RGBA8, w, h);
             m_offscreenTex->setFilter(GL_LINEAR);
             m_offscreenTex->setWrapMode(GL_CLAMP_TO_EDGE);
-            m_offscreenTarget = new GLRenderTarget(m_offscreenTex);
+            m_offscreenTarget = new GLFramebuffer(m_offscreenTex);
         }
     }
 
@@ -443,7 +443,7 @@ private:
     }
 
     GLTexture* m_offscreenTex;
-    GLRenderTarget* m_offscreenTarget;
+    GLFramebuffer* m_offscreenTarget;
     QBasicTimer m_timer;
     bool m_inited;
     std::unique_ptr<GLShader> m_shader;

@@ -22,7 +22,7 @@ class ZoomAccessibilityIntegration;
 #endif
 
 class EffectScreen;
-class GLRenderTarget;
+class GLFramebuffer;
 class GLTexture;
 class GLVertexBuffer;
 
@@ -88,7 +88,7 @@ private:
 private:
     struct OffscreenData {
         std::unique_ptr<GLTexture> texture;
-        std::unique_ptr<GLRenderTarget> framebuffer;
+        std::unique_ptr<GLFramebuffer> framebuffer;
         std::unique_ptr<GLVertexBuffer> vbo;
         QRect viewport;
     };

@@ -86,15 +86,15 @@ public:
 
         this->startRenderTimer();
 
-        native_fbo = GLRenderTarget(0, QRect({}, platform.base.topology.size));
-        GLRenderTarget::pushRenderTarget(&native_fbo);
+        native_fbo = GLFramebuffer(0, QRect({}, platform.base.topology.size));
+        GLFramebuffer::pushRenderTarget(&native_fbo);
 
         return repaint;
     }
 
     void endRenderingFrame(QRegion const& renderedRegion, QRegion const& damagedRegion) override
     {
-        GLRenderTarget::popRenderTarget();
+        GLFramebuffer::popRenderTarget();
 
         if (damagedRegion.isEmpty()) {
             this->setLastDamage(QRegion());
@@ -216,7 +216,7 @@ private:
         return static_cast<bool>(swap_filter);
     }
 
-    GLRenderTarget native_fbo;
+    GLFramebuffer native_fbo;
     int m_bufferAge{0};
     bool m_needsCompositeTimerStart = false;
 };

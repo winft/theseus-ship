@@ -58,7 +58,7 @@ MagnifierEffect::~MagnifierEffect()
 
 bool MagnifierEffect::supported()
 {
-    return effects->isOpenGLCompositing() && GLRenderTarget::blitSupported();
+    return effects->isOpenGLCompositing() && GLFramebuffer::blitSupported();
 }
 
 void MagnifierEffect::reconfigure(ReconfigureFlags)
@@ -203,7 +203,7 @@ void MagnifierEffect::zoomIn()
         m_texture = std::make_unique<GLTexture>(
             GL_RGBA8, m_magnifierSize.width(), m_magnifierSize.height());
         m_texture->setYInverted(false);
-        m_fbo = std::make_unique<GLRenderTarget>(m_texture.get());
+        m_fbo = std::make_unique<GLFramebuffer>(m_texture.get());
     }
     effects->addRepaint(
         magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH));
@@ -243,7 +243,7 @@ void MagnifierEffect::toggle()
             m_texture = std::make_unique<GLTexture>(
                 GL_RGBA8, m_magnifierSize.width(), m_magnifierSize.height());
             m_texture->setYInverted(false);
-            m_fbo = std::make_unique<GLRenderTarget>(m_texture.get());
+            m_fbo = std::make_unique<GLFramebuffer>(m_texture.get());
         }
     } else {
         m_targetZoom = 1;

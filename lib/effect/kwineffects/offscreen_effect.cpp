@@ -18,7 +18,7 @@ namespace KWin
 
 struct OffscreenData {
     QScopedPointer<GLTexture> texture;
-    QScopedPointer<GLRenderTarget> renderTarget;
+    QScopedPointer<GLFramebuffer> renderTarget;
     bool isDirty = true;
     GLShader* shader = nullptr;
 };
@@ -70,7 +70,7 @@ static void allocateOffscreenData(EffectWindow* window, OffscreenData* offscreen
     offscreenData->texture.reset(new GLTexture(GL_RGBA8, geometry.size()));
     offscreenData->texture->setFilter(GL_LINEAR);
     offscreenData->texture->setWrapMode(GL_CLAMP_TO_EDGE);
-    offscreenData->renderTarget.reset(new GLRenderTarget(offscreenData->texture.data()));
+    offscreenData->renderTarget.reset(new GLFramebuffer(offscreenData->texture.data()));
     offscreenData->isDirty = true;
 }
 
@@ -117,7 +117,7 @@ void OffscreenEffect::apply(EffectWindow* window,
 GLTexture* OffscreenEffectPrivate::maybeRender(EffectWindow* window, OffscreenData* offscreenData)
 {
     if (offscreenData->isDirty) {
-        GLRenderTarget::pushRenderTarget(offscreenData->renderTarget.data());
+        GLFramebuffer::pushRenderTarget(offscreenData->renderTarget.data());
         glClearColor(0.0, 0.0, 0.0, 0.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -134,7 +134,7 @@ GLTexture* OffscreenEffectPrivate::maybeRender(EffectWindow* window, OffscreenDa
         const int mask = Effect::PAINT_WINDOW_TRANSFORMED | Effect::PAINT_WINDOW_TRANSLUCENT;
         effects->drawWindow(window, mask, infiniteRegion(), data);
 
-        GLRenderTarget::popRenderTarget();
+        GLFramebuffer::popRenderTarget();
         offscreenData->isDirty = false;
     }
 

@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin
 {
 
-class GLRenderTarget;
+class GLFramebuffer;
 class GLTexture;
 
 class MagnifierEffect : public Effect
@@ -54,7 +54,7 @@ private:
     std::chrono::milliseconds m_lastPresentTime;
     QSize m_magnifierSize;
     std::unique_ptr<GLTexture> m_texture;
-    std::unique_ptr<GLRenderTarget> m_fbo;
+    std::unique_ptr<GLFramebuffer> m_fbo;
 };
 
 } // namespace

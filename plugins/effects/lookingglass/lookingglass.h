@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin
 {
 
-class GLRenderTarget;
+class GLFramebuffer;
 class GLShader;
 class GLTexture;
 class GLVertexBuffer;
@@ -64,7 +64,7 @@ private:
     int radius;
     int initialradius;
     std::unique_ptr<GLTexture> m_texture;
-    std::unique_ptr<GLRenderTarget> m_fbo;
+    std::unique_ptr<GLFramebuffer> m_fbo;
     std::unique_ptr<GLVertexBuffer> m_vbo;
     std::unique_ptr<GLShader> m_shader;
     std::chrono::milliseconds m_lastPresentTime;

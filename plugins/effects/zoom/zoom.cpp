@@ -266,7 +266,7 @@ ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(EffectScreen* screen)
         data.texture.reset(new GLTexture(GL_RGBA8, nativeSize));
         data.texture->setFilter(GL_LINEAR);
         data.texture->setWrapMode(GL_CLAMP_TO_EDGE);
-        data.framebuffer = std::make_unique<GLRenderTarget>(data.texture.get());
+        data.framebuffer = std::make_unique<GLFramebuffer>(data.texture.get());
     }
     if (!data.vbo || data.viewport != rect) {
         data.vbo.reset(new GLVertexBuffer(GLVertexBuffer::Static));
@@ -301,9 +301,9 @@ void ZoomEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& d
     OffscreenData* offscreenData = ensureOffscreenData(data.screen());
 
     // Render the scene in an offscreen texture and then upscale it.
-    GLRenderTarget::pushRenderTarget(offscreenData->framebuffer.get());
+    GLFramebuffer::pushRenderTarget(offscreenData->framebuffer.get());
     effects->paintScreen(mask, region, data);
-    GLRenderTarget::popRenderTarget();
+    GLFramebuffer::popRenderTarget();
 
     data *= QVector2D(zoom, zoom);
     const QSize screenSize = effects->virtualScreenSize();

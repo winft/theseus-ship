@@ -413,10 +413,10 @@ void window_thumbnail_item::updateOffscreenTexture()
         m_offscreenTexture.reset(new GLTexture(GL_RGBA8, textureSize));
         m_offscreenTexture->setFilter(GL_LINEAR);
         m_offscreenTexture->setWrapMode(GL_CLAMP_TO_EDGE);
-        m_offscreenTarget.reset(new GLRenderTarget(m_offscreenTexture.data()));
+        m_offscreenTarget.reset(new GLFramebuffer(m_offscreenTexture.data()));
     }
 
-    GLRenderTarget::pushRenderTarget(m_offscreenTarget.data());
+    GLFramebuffer::pushRenderTarget(m_offscreenTarget.data());
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -437,7 +437,7 @@ void window_thumbnail_item::updateOffscreenTexture()
     // frame, which is not ideal, but it is acceptable for things such as thumbnails.
     auto mask = Effect::PAINT_WINDOW_TRANSFORMED;
     effects->drawWindow(effectWindow, static_cast<int>(mask), infiniteRegion(), data);
-    GLRenderTarget::popRenderTarget();
+    GLFramebuffer::popRenderTarget();
 
     // The fence is needed to avoid the case where qtquick renderer starts using
     // the texture while all rendering commands to it haven't completed yet.

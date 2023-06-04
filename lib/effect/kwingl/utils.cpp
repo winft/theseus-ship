@@ -29,7 +29,7 @@
 #include <cmath>
 #include <deque>
 
-#define DEBUG_GLRENDERTARGET 0
+#define DEBUG_GLFRAMEBUFFER 0
 
 #ifdef __GNUC__
 #define likely(x) __builtin_expect(!!(x), 1)
@@ -158,7 +158,7 @@ void initGL(const std::function<resolveFuncPtr(const char*)>& resolveFunction)
     initDebugOutput();
 
     GLTexturePrivate::initStatic();
-    GLRenderTarget::initStatic();
+    GLFramebuffer::initStatic();
     GLVertexBuffer::initStatic();
 }
 
@@ -166,7 +166,7 @@ void cleanupGL()
 {
     ShaderManager::cleanup();
     GLTexturePrivate::cleanup();
-    GLRenderTarget::cleanup();
+    GLFramebuffer::cleanup();
     GLVertexBuffer::cleanup();
     GLPlatform::cleanup();
 
@@ -938,12 +938,12 @@ std::unique_ptr<GLShader> ShaderManager::loadShaderFromCode(const QByteArray& ve
     return shader;
 }
 
-/***  GLRenderTarget  ***/
-bool GLRenderTarget::sSupported = false;
-bool GLRenderTarget::s_blitSupported = false;
-QStack<GLRenderTarget*> GLRenderTarget::s_renderTargets = QStack<GLRenderTarget*>();
+/***  GLFramebuffer  ***/
+bool GLFramebuffer::sSupported = false;
+bool GLFramebuffer::s_blitSupported = false;
+QStack<GLFramebuffer*> GLFramebuffer::s_renderTargets = QStack<GLFramebuffer*>();
 
-void GLRenderTarget::initStatic()
+void GLFramebuffer::initStatic()
 {
     if (GLPlatform::instance()->isGLES()) {
         sSupported = true;
@@ -959,36 +959,36 @@ void GLRenderTarget::initStatic()
     }
 }
 
-void GLRenderTarget::cleanup()
+void GLFramebuffer::cleanup()
 {
     Q_ASSERT(s_renderTargets.isEmpty());
     sSupported = false;
     s_blitSupported = false;
 }
 
-bool GLRenderTarget::blitSupported()
+bool GLFramebuffer::blitSupported()
 {
     return s_blitSupported;
 }
 
-GLRenderTarget* GLRenderTarget::currentRenderTarget()
+GLFramebuffer* GLFramebuffer::currentRenderTarget()
 {
     return s_renderTargets.isEmpty() ? nullptr : s_renderTargets.top();
 }
 
-void GLRenderTarget::pushRenderTarget(GLRenderTarget* target)
+void GLFramebuffer::pushRenderTarget(GLFramebuffer* target)
 {
     target->bind();
     s_renderTargets.push(target);
 }
 
-void GLRenderTarget::pushRenderTargets(QStack<GLRenderTarget*> targets)
+void GLFramebuffer::pushRenderTargets(QStack<GLFramebuffer*> targets)
 {
     targets.top()->bind();
     s_renderTargets.append(targets);
 }
 
-GLRenderTarget* GLRenderTarget::popRenderTarget()
+GLFramebuffer* GLFramebuffer::popRenderTarget()
 {
     auto target = s_renderTargets.pop();
     if (!s_renderTargets.isEmpty()) {
@@ -998,7 +998,7 @@ GLRenderTarget* GLRenderTarget::popRenderTarget()
     return target;
 }
 
-GLRenderTarget::GLRenderTarget(GLuint framebuffer, QRect const& viewport)
+GLFramebuffer::GLFramebuffer(GLuint framebuffer, QRect const& viewport)
     : mFramebuffer{framebuffer}
     , mViewport{viewport}
     , mValid{true}
@@ -1006,7 +1006,7 @@ GLRenderTarget::GLRenderTarget(GLuint framebuffer, QRect const& viewport)
 {
 }
 
-GLRenderTarget::GLRenderTarget(GLTexture* texture)
+GLFramebuffer::GLFramebuffer(GLTexture* texture)
     : mViewport{QRect(QPoint(0, 0), texture->size())}
 {
     // Make sure FBO is supported
@@ -1016,12 +1016,12 @@ GLRenderTarget::GLRenderTarget(GLTexture* texture)
         qCCritical(LIBKWINGLUTILS) << "Render targets aren't supported!";
 }
 
-GLRenderTarget::GLRenderTarget(GLRenderTarget&& other) noexcept
+GLFramebuffer::GLFramebuffer(GLFramebuffer&& other) noexcept
 {
     *this = std::move(other);
 }
 
-GLRenderTarget& GLRenderTarget::operator=(GLRenderTarget&& other) noexcept
+GLFramebuffer& GLFramebuffer::operator=(GLFramebuffer&& other) noexcept
 {
     mFramebuffer = other.mFramebuffer;
     mViewport = other.mViewport;
@@ -1032,19 +1032,19 @@ GLRenderTarget& GLRenderTarget::operator=(GLRenderTarget&& other) noexcept
     return *this;
 }
 
-GLRenderTarget::~GLRenderTarget()
+GLFramebuffer::~GLFramebuffer()
 {
     if (mValid && !mForeign) {
         glDeleteFramebuffers(1, &mFramebuffer);
     }
 }
 
-QSize GLRenderTarget::size() const
+QSize GLFramebuffer::size() const
 {
     return mViewport.size();
 }
 
-void GLRenderTarget::bind()
+void GLFramebuffer::bind()
 {
     if (!valid()) {
         qCCritical(LIBKWINGLUTILS) << "Can't enable invalid render target!";
@@ -1088,23 +1088,23 @@ static QString formatFramebufferStatus(GLenum status)
     }
 }
 
-void GLRenderTarget::initFBO(GLTexture* texture)
+void GLFramebuffer::initFBO(GLTexture* texture)
 {
     assert(texture);
     assert(!mForeign);
 
     GLuint const cur_fbo = currentRenderTarget() ? currentRenderTarget()->mFramebuffer : 0;
 
-#if DEBUG_GLRENDERTARGET
+#if DEBUG_GLFRAMEBUFFER
     GLenum err = glGetError();
     if (err != GL_NO_ERROR)
         qCCritical(LIBKWINGLUTILS)
-            << "Error status when entering GLRenderTarget::initFBO: " << formatGLError(err);
+            << "Error status when entering GLFramebuffer::initFBO: " << formatGLError(err);
 #endif
 
     glGenFramebuffers(1, &mFramebuffer);
 
-#if DEBUG_GLRENDERTARGET
+#if DEBUG_GLFRAMEBUFFER
     if ((err = glGetError()) != GL_NO_ERROR) {
         qCCritical(LIBKWINGLUTILS) << "glGenFramebuffers failed: " << formatGLError(err);
         return;
@@ -1113,7 +1113,7 @@ void GLRenderTarget::initFBO(GLTexture* texture)
 
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
 
-#if DEBUG_GLRENDERTARGET
+#if DEBUG_GLFRAMEBUFFER
     if ((err = glGetError()) != GL_NO_ERROR) {
         qCCritical(LIBKWINGLUTILS) << "glBindFramebuffer failed: " << formatGLError(err);
         glDeleteFramebuffers(1, &mFramebuffer);
@@ -1124,7 +1124,7 @@ void GLRenderTarget::initFBO(GLTexture* texture)
     glFramebufferTexture2D(
         GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture->target(), texture->texture(), 0);
 
-#if DEBUG_GLRENDERTARGET
+#if DEBUG_GLFRAMEBUFFER
     if ((err = glGetError()) != GL_NO_ERROR) {
         qCCritical(LIBKWINGLUTILS) << "glFramebufferTexture2D failed: " << formatGLError(err);
         glBindFramebuffer(GL_FRAMEBUFFER, cur_fbo);
@@ -1152,9 +1152,9 @@ void GLRenderTarget::initFBO(GLTexture* texture)
     mValid = true;
 }
 
-void GLRenderTarget::blitFromFramebuffer(const QRect& source,
-                                         const QRect& destination,
-                                         GLenum filter)
+void GLFramebuffer::blitFromFramebuffer(const QRect& source,
+                                        const QRect& destination,
+                                        GLenum filter)
 {
     if (!valid()) {
         return;
@@ -1166,7 +1166,7 @@ void GLRenderTarget::blitFromFramebuffer(const QRect& source,
         return;
     }
 
-    GLRenderTarget::pushRenderTarget(this);
+    GLFramebuffer::pushRenderTarget(this);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFramebuffer);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, top->mFramebuffer);
 
@@ -1188,7 +1188,7 @@ void GLRenderTarget::blitFromFramebuffer(const QRect& source,
     glBlitFramebuffer(
         srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, GL_COLOR_BUFFER_BIT, filter);
 
-    GLRenderTarget::popRenderTarget();
+    GLFramebuffer::popRenderTarget();
 }
 
 // ------------------------------------------------------------------
@@ -2081,7 +2081,7 @@ void GLVertexBuffer::draw(const QRegion& region,
             glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
         } else {
             // Clip using scissoring
-            auto renderTarget = GLRenderTarget::currentRenderTarget();
+            auto renderTarget = GLFramebuffer::currentRenderTarget();
             for (auto const& r : region) {
                 glScissor(r.x(),
                           renderTarget->size().height() - (r.y() + r.height()),
@@ -2097,7 +2097,7 @@ void GLVertexBuffer::draw(const QRegion& region,
         glDrawArrays(primitiveMode, first, count);
     } else {
         // Clip using scissoring
-        auto renderTarget = GLRenderTarget::currentRenderTarget();
+        auto renderTarget = GLFramebuffer::currentRenderTarget();
         for (auto const& r : region) {
             glScissor(
                 r.x(), renderTarget->size().height() - (r.y() + r.height()), r.width(), r.height());

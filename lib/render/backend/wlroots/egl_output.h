@@ -77,7 +77,7 @@ public:
 
         auto const texSize = out->base.view_geometry().size();
         render.texture = GLTexture(GL_TEXTURE_2D, texSize.width(), texSize.height());
-        render.fbo = GLRenderTarget(&render.texture.value());
+        render.fbo = GLFramebuffer(&render.texture.value());
         return render.fbo.valid();
     }
 
@@ -127,7 +127,7 @@ public:
     std::deque<QRegion> damageHistory;
 
     struct {
-        GLRenderTarget fbo;
+        GLFramebuffer fbo;
         std::optional<GLTexture> texture;
         std::shared_ptr<GLVertexBuffer> vbo;
     } render;
