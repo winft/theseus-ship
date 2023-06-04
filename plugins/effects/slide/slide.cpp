@@ -230,16 +230,7 @@ void SlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowP
         for (EffectScreen* screen : screens) {
             QPoint drawTranslation = getDrawCoords(desktopTranslation, screen);
             data += drawTranslation;
-
-            const QRect screenArea = screen->geometry();
-            const QRect damage = screenArea.translated(drawTranslation).intersected(screenArea);
-
-            effects->paintWindow(
-                w,
-                mask,
-                // Only paint the region that intersects the current screen and desktop.
-                region.intersected(damage),
-                data);
+            effects->paintWindow(w, mask, region, data);
 
             // Undo the translation for the next screen. I know, it hurts me too.
             data += QPoint(-drawTranslation.x(), -drawTranslation.y());
