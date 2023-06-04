@@ -72,26 +72,6 @@ void SheetEffect::paintWindow(effect::window_paint_data& data)
         return;
     }
 
-    // Perspective projection distorts objects near edges of the viewport
-    // in undesired way. To fix this, the center of the window will be
-    // moved to the origin, after applying perspective projection, the
-    // center is moved back to its "original" projected position. Overall,
-    // this is how the window will be transformed:
-    //  [move to the origin] -> [scale] -> [rotate] -> [translate] ->
-    //    -> [perspective projection] -> [reverse "move to the origin"]
-    auto const oldProjMatrix = data.paint.projection_matrix;
-    auto const windowGeo = data.window.frameGeometry();
-    const QVector3D invOffset = oldProjMatrix.map(QVector3D(windowGeo.center()));
-
-    QMatrix4x4 invOffsetMatrix;
-    invOffsetMatrix.translate(invOffset.x(), invOffset.y());
-    data.paint.projection_matrix = invOffsetMatrix * oldProjMatrix;
-
-    // Move the center of the window to the origin.
-    const QRectF screenGeo = effects->virtualScreenGeometry();
-    const QPointF offset = screenGeo.center() - windowGeo.center();
-    data.paint.geo.translation += QVector3D(offset.x(), offset.y(), 0);
-
     const qreal t = (*animationIt).timeLine.value();
     data.paint.geo.rotation.axis = {1, 0, 0};
     data.paint.geo.rotation.angle = interpolate(60.0, 0.0, t);

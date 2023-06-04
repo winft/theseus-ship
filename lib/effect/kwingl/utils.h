@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include <kwineffects/paint_data.h>
 #include <kwingl/export.h>
 #include <kwingl/texture.h>
 #include <kwingl/utils_funcs.h>
@@ -403,21 +404,18 @@ public:
     static bool blitSupported();
 
     /**
-     * Blits from @a source rectangle in the current render target to the @a destination rectangle
-     * in this render target.
+     * Blits from @a source rectangle in logical coordinates in the current framebuffer to the @a
+     * destination rectangle in texture-local coordinates in this framebuffer, taking into account
+     * any transformations the source render target may have.
      *
      * Be aware that framebuffer blitting may not be supported on all hardware. Use blitSupported()
      * to check whether it is supported.
-     *
-     * The @a source and the @a destination rectangles can have different sizes. The @a filter
-     * indicates what filter will be used in case scaling needs to be performed.
-     *
-     * @see blitSupported
-     * @since 4.8
      */
-    void blit_from_current_render_target(const QRect& source = QRect(),
-                                         const QRect& destination = QRect(),
-                                         GLenum filter = GL_LINEAR);
+    bool blit_from_current_render_target(effect::render_data const& data,
+                                         QRect const& source,
+                                         QRect const& destination);
+
+    GLTexture* const texture{nullptr};
 
 protected:
     void initFBO(GLTexture* texture);
@@ -427,11 +425,16 @@ private:
     static void cleanup();
     void bind();
 
+    void blit_from_current_render_target_impl(effect::render_data const& data,
+                                              QRect const& source,
+                                              QRect const& destination);
+
     static bool sSupported;
     static bool s_blitSupported;
     static QStack<GLFramebuffer*> s_renderTargets;
 
     GLuint mFramebuffer{0};
+    std::unique_ptr<GLTexture> blit_helper_tex;
 
     QSize mSize;
     QRect mViewport;
@@ -574,7 +577,7 @@ public:
     /**
      * Draws count vertices beginning with first.
      */
-    void draw(std::function<QRegion(QRegion const&)> vp_transform,
+    void draw(effect::render_data const& data,
               QRegion const& region,
               GLenum primitiveMode,
               int first,
@@ -590,9 +593,7 @@ public:
     /**
      * Same as above restricting painting to @a region.
      */
-    void render(std::function<QRegion(QRegion const&)> vp_transform,
-                QRegion const& region,
-                GLenum primitiveMode);
+    void render(effect::render_data const& data, const QRegion& region, GLenum primitiveMode);
     /**
      * Sets the color the geometry will be rendered with.
      * For legacy rendering glColor is used before rendering the geometry.

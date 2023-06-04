@@ -37,6 +37,7 @@ public:
     void setModelViewProjectionMatrix(const QMatrix4x4& matrix);
     void setOffset(float offset);
     void setTargetTextureSize(const QSize& renderTextureSize);
+    void setFragCoordToUv(QMatrix4x4 const& fragCoordToUv);
     void setNoiseTextureSize(const QSize& noiseTextureSize);
     void setTexturePosition(const QPoint& texPos);
     void setBlurRect(const QRect& blurRect, const QSize& screenSize);
@@ -54,7 +55,7 @@ private:
 
     int m_mvpMatrixLocationUpsample;
     int m_offsetLocationUpsample;
-    int m_renderTextureSizeLocationUpsample;
+    int m_fragCoordToUvLocationUpsample;
     int m_halfpixelLocationUpsample;
 
     int m_mvpMatrixLocationCopysample;

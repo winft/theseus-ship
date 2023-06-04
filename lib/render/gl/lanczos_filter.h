@@ -111,8 +111,8 @@ public:
                                             ShaderTrait::Modulate,
                                             ShaderTrait::AdjustSaturation}));
                 auto shader = binder.shader();
-                auto mvp = data.paint.screen_projection_matrix;
-                mvp.translate(textureRect.x(), textureRect.y());
+                auto mvp = effect::get_mvp(data);
+                mvp.translate(tx, ty);
                 shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
 
                 auto const rgb = data.paint.brightness * data.paint.opacity;
@@ -120,10 +120,7 @@ public:
                                    QVector4D(rgb, rgb, rgb, data.paint.opacity));
                 shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
-                cachedTexture->render([this](auto r) { return m_scene->mapToRenderTarget(r); },
-                                      scissor,
-                                      textureRect.size());
-
+                cachedTexture->render(data.render, scissor, textureRect.size());
                 glDisable(GL_BLEND);
                 cachedTexture->unbind();
                 m_timer.start(5000, this);
@@ -136,7 +133,16 @@ public:
             }
         }
 
-        effect::window_paint_data thumbData = data;
+        QMatrix4x4 thumb_proj;
+        thumb_proj.ortho(0, m_offscreenTex->width(), m_offscreenTex->height(), 0, 0, 65535);
+
+        auto thumbData = effect::window_paint_data(
+            data.window,
+            data.paint,
+            effect::render_data{
+                .projection = thumb_proj,
+                .viewport = {0, 0, m_offscreenTex->width(), m_offscreenTex->height()},
+            });
         thumbData.paint.region = infiniteRegion();
         thumbData.paint.geo.scale.setX(1.0);
         thumbData.paint.geo.scale.setY(1.0);
@@ -149,11 +155,6 @@ public:
         // Bind the offscreen FBO and draw the window on it unscaled
         updateOffscreenSurfaces();
         GLFramebuffer::pushRenderTarget(m_offscreenTarget);
-
-        QMatrix4x4 modelViewProjectionMatrix;
-        modelViewProjectionMatrix.ortho(
-            0, m_offscreenTex->width(), m_offscreenTex->height(), 0, 0, 65535);
-        thumbData.paint.projection_matrix = modelViewProjectionMatrix;
 
         glClearColor(0.0, 0.0, 0.0, 0.0);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -174,7 +175,7 @@ public:
         createOffsets(kernelSize, sw, Qt::Horizontal);
 
         ShaderManager::instance()->pushShader(m_shader.get());
-        m_shader->setUniform(GLShader::ModelViewProjectionMatrix, modelViewProjectionMatrix);
+        m_shader->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(thumbData));
         setUniforms();
 
         // Draw the window back into the FBO, this time scaled horizontally
@@ -239,7 +240,7 @@ public:
         ShaderManager::instance()->popShader();
 
         // create cache texture
-        GLTexture* cache = new GLTexture(GL_RGBA8, tw, th);
+        auto cache = new GLTexture(GL_RGBA8, tw, th);
 
         cache->setFilter(GL_LINEAR);
         cache->setWrapMode(GL_CLAMP_TO_EDGE);
@@ -253,8 +254,8 @@ public:
         ShaderBinder binder(QFlags(
             {ShaderTrait::MapTexture, ShaderTrait::Modulate, ShaderTrait::AdjustSaturation}));
         auto shader = binder.shader();
-        auto mvp = data.paint.screen_projection_matrix;
-        mvp.translate(textureRect.x(), textureRect.y());
+        auto mvp = effect::get_mvp(data);
+        mvp.translate(tx, ty);
         shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
 
         auto const rgb = data.paint.brightness * data.paint.opacity;
@@ -262,9 +263,7 @@ public:
                            QVector4D(rgb, rgb, rgb, data.paint.opacity));
         shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
-        cache->render(
-            [this](auto r) { return m_scene->mapToRenderTarget(r); }, scissor, textureRect.size());
-
+        cache->render(data.render, scissor, textureRect.size());
         glDisable(GL_BLEND);
 
         cache->unbind();

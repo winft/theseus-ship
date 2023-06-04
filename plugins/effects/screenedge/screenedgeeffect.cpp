@@ -85,7 +85,7 @@ void ScreenEdgeEffect::paintScreen(effect::screen_paint_data& data)
             const QVector4D constant(opacity, opacity, opacity, opacity);
             binder.shader()->setUniform(GLShader::ModulationConstant, constant);
 
-            auto mvp = data.paint.projection_matrix;
+            auto mvp = effect::get_mvp(data);
             mvp.translate(glow->geometry.x(), glow->geometry.y());
             binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
             texture->render(glow->geometry.size());

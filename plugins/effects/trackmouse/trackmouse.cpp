@@ -97,19 +97,19 @@ void TrackMouseEffect::paintScreen(effect::screen_paint_data& data)
         }
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        QMatrix4x4 matrix(data.paint.projection_matrix);
         const QPointF p = m_lastRect[0].topLeft()
             + QPoint(m_lastRect[0].width() / 2.0, m_lastRect[0].height() / 2.0);
         auto const x = p.x() * data.paint.geo.scale.x() + data.paint.geo.translation.x();
         auto const y = p.y() * data.paint.geo.scale.y() + data.paint.geo.translation.y();
 
         for (int i = 0; i < 2; ++i) {
+            QMatrix4x4 matrix;
             matrix.translate(x, y, 0.0);
             matrix.rotate(i ? -2 * m_angle : m_angle, 0, 0, 1.0);
             matrix.translate(-x, -y, 0.0);
-            QMatrix4x4 mvp(matrix);
-            mvp.translate(m_lastRect[i].x(), m_lastRect[i].y());
-            shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+            matrix.translate(m_lastRect[i].x(), m_lastRect[i].y());
+            shader->setUniform(GLShader::ModelViewProjectionMatrix,
+                               data.render.projection * data.render.view * matrix);
             m_texture[i]->bind();
             m_texture[i]->render(m_lastRect[i].size());
             m_texture[i]->unbind();

@@ -76,12 +76,6 @@ public:
         }
     }
 
-    QImage blit_from_framebuffer(QRect const& geometry, double scale) const override
-    {
-        // Provides OpenGL blits.
-        return render::effects_handler_impl<Scene>::blit_from_framebuffer(geometry, scale);
-    }
-
     effect::region_integration& get_blur_integration() override
     {
         return blur;

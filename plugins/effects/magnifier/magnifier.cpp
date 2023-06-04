@@ -122,7 +122,7 @@ void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
                   static_cast<double>(area.width()) / m_zoom,
                   static_cast<double>(area.height()) / m_zoom);
 
-    m_fbo->blit_from_current_render_target(srcArea);
+    m_fbo->blit_from_current_render_target(data.render, srcArea, QRect(QPoint(), m_fbo->size()));
 
     // paint magnifier
     m_texture->bind();
@@ -176,7 +176,7 @@ void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
     vbo->setData(verts.size() / 2, 2, verts.constData(), nullptr);
 
     ShaderBinder binder(ShaderTrait::UniformColor);
-    binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, data.paint.projection_matrix);
+    binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
     vbo->render(GL_TRIANGLES);
 }
 

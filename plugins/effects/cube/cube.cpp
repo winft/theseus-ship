@@ -416,6 +416,7 @@ void CubeEffect::paintScreen(effect::screen_paint_data& data)
 {
     if (activated) {
         QRect rect = effects->clientArea(FullArea, activeScreen, effects->currentDesktop());
+        auto const mvp = effect::get_mvp(data);
 
         // background
         float clearColor[4];
@@ -428,12 +429,11 @@ void CubeEffect::paintScreen(effect::screen_paint_data& data)
         // wallpaper
         if (wallpaper) {
             ShaderBinder binder(ShaderTrait::MapTexture);
-            binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
-                                        data.paint.projection_matrix);
+            binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
             wallpaper->bind();
 
             // TODO(romangg): Should we restrict to data.paint.region?
-            wallpaper->render({}, infiniteRegion(), rect.size());
+            wallpaper->render(data.render, infiniteRegion(), rect.size());
             wallpaper->unbind();
         }
 
@@ -489,7 +489,7 @@ void CubeEffect::paintScreen(effect::screen_paint_data& data)
 
             reflectionPainting = true;
             glEnable(GL_CULL_FACE);
-            paintCap(true, -point - zTranslate, data.paint.projection_matrix);
+            paintCap(true, -point - zTranslate, mvp);
 
             // cube
             glCullFace(GL_BACK);
@@ -498,7 +498,7 @@ void CubeEffect::paintScreen(effect::screen_paint_data& data)
             glCullFace(GL_FRONT);
             paintCube(data);
 
-            paintCap(false, -point - zTranslate, data.paint.projection_matrix);
+            paintCap(false, -point - zTranslate, mvp);
             glDisable(GL_CULL_FACE);
             reflectionPainting = false;
 
@@ -528,7 +528,7 @@ void CubeEffect::paintScreen(effect::screen_paint_data& data)
             if (m_reflectionShader && m_reflectionShader->isValid()) {
                 // ensure blending is enabled - no attribute stack
                 ShaderBinder binder(m_reflectionShader.get());
-                auto windowTransformation = data.paint.projection_matrix;
+                auto windowTransformation = mvp;
                 windowTransformation.translate(rect.x() + rect.width() * 0.5f, 0.0, 0.0);
                 m_reflectionShader->setUniform(GLShader::ModelViewProjectionMatrix,
                                                windowTransformation);
@@ -558,7 +558,7 @@ void CubeEffect::paintScreen(effect::screen_paint_data& data)
         }
         glEnable(GL_CULL_FACE);
         // caps
-        paintCap(false, -point - zTranslate, data.paint.projection_matrix);
+        paintCap(false, -point - zTranslate, mvp);
 
         // cube
         glCullFace(GL_FRONT);
@@ -568,7 +568,7 @@ void CubeEffect::paintScreen(effect::screen_paint_data& data)
         paintCube(data);
 
         // cap
-        paintCap(true, -point - zTranslate, data.paint.projection_matrix);
+        paintCap(true, -point - zTranslate, mvp);
         glDisable(GL_CULL_FACE);
 
         glDisable(GL_BLEND);
@@ -1337,12 +1337,10 @@ void CubeEffect::paintWindow(effect::window_paint_data& data)
             data.shader = currentShader;
         }
 
-        data.paint.projection_matrix = data.paint.screen_projection_matrix;
         if (reflectionPainting) {
-            data.paint.model_view_matrix
-                = m_reflectionMatrix * m_rotationMatrix * m_currentFaceMatrix;
+            data.model *= m_reflectionMatrix * m_rotationMatrix * m_currentFaceMatrix;
         } else {
-            data.paint.model_view_matrix = m_rotationMatrix * m_currentFaceMatrix;
+            data.model *= m_rotationMatrix * m_currentFaceMatrix;
         }
     }
 
@@ -1411,7 +1409,7 @@ void CubeEffect::paintWindow(effect::window_paint_data& data)
                     ShaderManager::instance()->pushShader(m_capShader.get());
                     m_capShader->setUniform("u_mirror", 0);
                     m_capShader->setUniform("u_untextured", 1);
-                    auto mvp = data.paint.screen_projection_matrix;
+                    auto mvp = effect::get_mvp(data);
                     if (reflectionPainting) {
                         mvp = mvp * m_reflectionMatrix * m_rotationMatrix * m_currentFaceMatrix;
                     } else {

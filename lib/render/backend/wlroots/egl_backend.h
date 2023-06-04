@@ -138,23 +138,26 @@ public:
         return std::make_unique<egl_texture<type>>(texture, this);
     }
 
-    QRegion prepareRenderingFrame() override
+    effect::render_data set_render_target_to_output(base::output const& output) override
     {
-        this->startRenderTimer();
-        return QRegion();
-    }
-
-    QRegion prepareRenderingForScreen(base::output* output_ptr) override
-    {
-        auto const& output = *output_ptr;
         auto const& out = get_egl_out(&output);
+        auto const geo = output.geometry();
 
         auto native_out = static_cast<base::backend::wlroots::output const&>(output).native;
         wlr_output_attach_render(native_out, &out->bufferAge);
-        wlr_renderer_begin(
-            platform.renderer, output.geometry().width(), output.geometry().height());
+        wlr_renderer_begin(platform.renderer, geo.width(), geo.height());
 
         prepare_render_targets(*out);
+
+        auto data = gl::create_view_projection(geo);
+        data.viewport = {{}, geo.size()};
+        data.flip_y = false;
+        return data;
+    }
+
+    QRegion get_output_render_region(base::output const& output) const override
+    {
+        auto const& out = get_egl_out(&output);
 
         if (!this->supportsBufferAge()) {
             // If buffer age exenstion is not supported we always repaint the whole output as we
@@ -238,7 +241,8 @@ public:
         return data.base.client_extensions.contains(ext);
     }
 
-    std::unique_ptr<egl_output<typename Platform::output_t>>& get_egl_out(base::output const* out)
+    std::unique_ptr<egl_output<typename Platform::output_t>>&
+    get_egl_out(base::output const* out) const
     {
         using out_t = typename Platform::output_t;
         using base_wlout_t = base::wayland::output<base::wayland::platform>;
@@ -291,21 +295,6 @@ private:
         pixman_region32_fini(&damage);
     }
 
-    QRect get_viewport(egl_output_t const& egl_out) const
-    {
-        auto const& overall = platform.base.topology.size;
-        auto const& geo = egl_out.out->base.geometry();
-        auto const& view = egl_out.out->base.view_geometry();
-
-        auto const width_ratio = view.width() / static_cast<double>(geo.width());
-        auto const height_ratio = view.height() / static_cast<double>(geo.height());
-
-        return QRect(-geo.x() * width_ratio,
-                     (geo.height() - overall.height() + geo.y()) * height_ratio,
-                     overall.width() * width_ratio,
-                     overall.height() * height_ratio);
-    }
-
     void initRenderTarget(egl_output_t& egl_out)
     {
         if (egl_out.render.vbo) {
@@ -320,20 +309,17 @@ private:
     void prepare_render_targets(egl_output_t& egl_out)
     {
         auto wlr_fbo = wlr_gles2_renderer_get_current_fbo(platform.renderer);
-        auto const vp = get_viewport(egl_out);
+
+        auto geo = egl_out.out->base.view_geometry();
+        if (has_portrait_transform(egl_out.out->base)) {
+            geo = geo.transposed();
+        }
+
+        native_fbo = GLFramebuffer(wlr_fbo, geo.size(), geo);
+        GLFramebuffer::pushRenderTarget(&native_fbo);
 
         if (egl_out.render.fbo.valid()) {
-            auto geo = egl_out.out->base.geometry();
-            geo.moveTopLeft({});
-
-            native_fbo = GLFramebuffer(wlr_fbo, geo.size(), geo);
-            GLFramebuffer::pushRenderTarget(&native_fbo);
-
             GLFramebuffer::pushRenderTarget(&egl_out.render.fbo);
-            glViewport(vp.x(), vp.y(), vp.width(), vp.height());
-        } else {
-            native_fbo = GLFramebuffer(wlr_fbo, vp.size(), vp);
-            GLFramebuffer::pushRenderTarget(&native_fbo);
         }
     }
 
@@ -349,17 +335,9 @@ private:
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        auto geo = egl_out.out->base.view_geometry();
-        if (has_portrait_transform(egl_out.out->base)) {
-            geo = geo.transposed();
-            geo.moveTopLeft(geo.topLeft().transposed());
-        }
-        glViewport(geo.x(), geo.y(), geo.width(), geo.height());
-
         auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
 
         QMatrix4x4 rotationMatrix;
-        rotationMatrix.flipCoordinates();
         rotationMatrix.rotate(
             rotation_in_degree(static_cast<base::backend::wlroots::output&>(egl_out.out->base)),
             0,

@@ -65,6 +65,12 @@ public:
             return renderTimer.nsecsElapsed();
         }
 
+        QMatrix4x4 proj;
+        proj.ortho(0, geometry.width(), 0, geometry.height(), 0.1, 65535);
+        QMatrix4x4 view;
+        view.translate(geometry.width() / 2, geometry.height() / 2);
+        effect::render_data{};
+
         m_painter->begin(buffer);
         m_painter->save();
         m_painter->setWindow(geometry);
@@ -72,7 +78,8 @@ public:
         this->repaint_output = output;
         QRegion updateRegion, validRegion;
 
-        this->paintScreen(mask,
+        this->paintScreen({.view = view, .projection = proj, .viewport = geometry},
+                          mask,
                           damage.intersected(geometry),
                           QRegion(),
                           &updateRegion,
@@ -134,7 +141,7 @@ public:
     }
 
 protected:
-    void paintBackground(QRegion const& region) override
+    void paintBackground(QRegion const& region, QMatrix4x4 const& /*projection*/) override
     {
         m_painter->setBrush(Qt::black);
         for (const QRect& rect : region) {
@@ -147,7 +154,7 @@ protected:
         return std::make_unique<qpainter_window_t>(ref_win, *this);
     }
 
-    void paintCursor() override
+    void paintCursor()
     {
         auto cursor = this->platform.compositor->software_cursor.get();
         if (!cursor->enabled) {

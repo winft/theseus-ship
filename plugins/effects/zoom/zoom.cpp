@@ -255,15 +255,13 @@ void ZoomEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseco
     effects->prePaintScreen(data, presentTime);
 }
 
-ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(EffectScreen const* screen)
+ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(QRect const& viewport,
+                                                           EffectScreen const* screen)
 {
-    auto const rect = effects->renderTargetRect();
-    auto const devicePixelRatio = effects->renderTargetScale();
-    auto const nativeSize = rect.size() * devicePixelRatio;
+    auto const rect = viewport;
+    auto const nativeSize = rect.size();
 
-    // TODO(romangg): With nullptr this won't throw?
-    auto& data = m_offscreenData.at(effects->waylandDisplay() ? screen : nullptr);
-
+    auto& data = m_offscreenData[effects->waylandDisplay() ? screen : nullptr];
     if (!data.texture || data.texture->size() != nativeSize) {
         data.texture.reset(new GLTexture(GL_RGBA8, nativeSize));
         data.texture->setFilter(GL_LINEAR);
@@ -301,11 +299,19 @@ ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(EffectScreen const* s
 
 void ZoomEffect::paintScreen(effect::screen_paint_data& data)
 {
-    auto offscreenData = ensureOffscreenData(data.screen);
+    auto offscreenData = ensureOffscreenData(data.render.viewport, data.screen);
+
+    QMatrix4x4 projection;
+    projection.ortho(QRect{{}, offscreenData->framebuffer->size()});
 
     // Render the scene in an offscreen texture and then upscale it.
+    effect::screen_paint_data offscreen_data{
+        .paint = {.mask = data.paint.mask, .region = data.paint.region},
+        .render = {.projection = projection},
+    };
+
     GLFramebuffer::pushRenderTarget(offscreenData->framebuffer.get());
-    effects->paintScreen(data);
+    effects->paintScreen(offscreen_data);
     GLFramebuffer::popRenderTarget();
 
     data.paint.geo.scale *= QVector3D(zoom, zoom, 1);
@@ -384,7 +390,7 @@ void ZoomEffect::paintScreen(effect::screen_paint_data& data)
     matrix.scale(data.paint.geo.scale);
 
     auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
-    shader->setUniform(GLShader::ModelViewProjectionMatrix, data.paint.projection_matrix * matrix);
+    shader->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data) * matrix);
     for (auto& [screen, off_data] : m_offscreenData) {
         off_data.texture->bind();
         off_data.vbo->render(GL_TRIANGLES);
@@ -416,7 +422,7 @@ void ZoomEffect::paintScreen(effect::screen_paint_data& data)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             auto s = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
-            auto mvp = data.paint.projection_matrix;
+            auto mvp = effect::get_mvp(data);
             mvp.translate(rect.x(), rect.y());
             s->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
 

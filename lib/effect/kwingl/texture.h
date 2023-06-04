@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include <kwineffects/paint_data.h>
 #include <kwineffects/types.h>
 #include <kwingl/export.h>
 
@@ -93,10 +94,13 @@ public:
     virtual void discard();
     void bind();
     void unbind();
-    void render(QSize const& size);
-    void render(std::function<QRegion(QRegion const&)> vp_transform,
+
+    void render(QSize const& target_size);
+    void render(effect::render_data const& data, QRegion const& region, QSize const& target_size);
+    void render(effect::render_data const& data,
+                QRect const& source,
                 QRegion const& region,
-                QSize const& size);
+                QSize const& target_size);
 
     GLuint texture() const;
     GLenum target() const;

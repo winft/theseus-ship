@@ -74,30 +74,29 @@ private:
     QRegion deco_blur_region(EffectWindow const* win) const;
     bool deco_supports_blur_behind(EffectWindow const* win) const;
     bool should_blur(effect::window_paint_data const& data) const;
-    void do_blur(effect::window_paint_data const& data,
-                 QRegion const& shape,
-                 QRect const& screen,
-                 bool isDock);
-    void upload_region(QVector2D*& map, QRegion const& region, int const downSampleIterations);
-    void
-    upload_geometry(GLVertexBuffer* vbo, QRegion const& blur_region, QRegion const& windowRegion);
+    void do_blur(effect::window_paint_data const& data, QRegion const& shape, bool isDock);
+    void upload_region(QVector2D*& map, QRegion const& region);
+    void upload_geometry(GLVertexBuffer* vbo,
+                         QRegion const& expanded_blur_region,
+                         QRegion const& blur_region);
     void generate_noise_texture();
 
-    void upsample_to_screen(GLVertexBuffer* vbo,
+    void upsample_to_screen(effect::window_paint_data const& data,
+                            GLVertexBuffer* vbo,
                             int vboStart,
-                            int blurRectCount,
-                            const QMatrix4x4& screenProjection);
-    void apply_noise(GLVertexBuffer* vbo,
+                            int blurRectCount);
+    void apply_noise(effect::window_paint_data const& data,
+                     GLVertexBuffer* vbo,
                      int vboStart,
-                     int blurRectCount,
-                     const QMatrix4x4& screenProjection,
-                     QPoint windowPosition);
-    void downsample_texture(GLVertexBuffer* vbo, int blurRectCount);
-    void upsample_texture(GLVertexBuffer* vbo, int blurRectCount);
-    void copy_screen_sample_texture(GLVertexBuffer* vbo,
+                     int blurRectCount);
+    void downsample_texture(GLVertexBuffer* vbo, int blurRectCount, QMatrix4x4 const& mvp);
+    void upsample_texture(GLVertexBuffer* vbo, int blurRectCount, QMatrix4x4 const& mvp);
+    void copy_screen_sample_texture(QSize const& viewport,
+                                    QSize const& fboSize,
+                                    GLVertexBuffer* vbo,
                                     int blurRectCount,
-                                    QRegion blurShape,
-                                    const QMatrix4x4& screenProjection);
+                                    QRect const& boundingRect,
+                                    QMatrix4x4 const& mvp);
 
 private:
     BlurShader* shader;

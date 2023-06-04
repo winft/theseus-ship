@@ -78,9 +78,6 @@ void ShowFpsEffect::prePaintScreen(effect::paint_data& data, std::chrono::millis
                                    QStringLiteral("kwin/effects/showfps/qml/main.qml")));
         m_scene->setSource(url, {{QStringLiteral("effect"), QVariant::fromValue(this)}});
     }
-
-    const auto rect = effects->renderTargetRect();
-    m_scene->setGeometry(QRect(rect.x() + rect.width() - 300, 0, 300, 150));
 }
 
 void ShowFpsEffect::paintScreen(effect::screen_paint_data& data)
@@ -95,6 +92,8 @@ void ShowFpsEffect::paintScreen(effect::screen_paint_data& data)
         Q_EMIT fpsChanged();
     }
 
+    auto const rect = data.render.viewport;
+    m_scene->setGeometry(QRect(rect.x() + rect.width() - 300, 0, 300, 150));
     effects->renderEffectQuickView(m_scene.get());
 }
 

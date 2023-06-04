@@ -199,7 +199,7 @@ void ContrastEffect::drawWindow(effect::window_paint_data& data)
         return;
     }
 
-    auto const screen = effects->renderTargetRect();
+    auto const screen = data.render.viewport;
     auto shape
         = data.paint.region & contrastRegion(&data.window).translated(data.window.pos()) & screen;
 
@@ -225,42 +225,38 @@ void ContrastEffect::drawWindow(effect::window_paint_data& data)
     }
 
     if (!shape.isEmpty()) {
-        doContrast(data, shape, screen);
+        doContrast(data, shape & screen);
     }
 
     // Draw the window over the contrast area
     effects->drawWindow(data);
 }
 
-void ContrastEffect::doContrast(effect::window_paint_data const& data,
-                                QRegion const& shape,
-                                QRect const& screen)
+void ContrastEffect::doContrast(effect::window_paint_data const& data, QRegion const& shape)
 {
-    auto const actualShape = shape & screen;
-    auto const r = actualShape.boundingRect();
-
-    auto const scale = effects->renderTargetScale();
+    auto mvp = effect::get_mvp(data);
+    auto const rect = mvp.mapRect(shape.boundingRect());
 
     // Upload geometry for the horizontal and vertical passes
     auto vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    uploadGeometry(vbo, actualShape);
+    uploadGeometry(vbo, shape);
     vbo->bindArrays();
 
     // Create a scratch texture and copy the area in the back buffer that we're
     // going to blur into it
-    GLTexture scratch(GL_RGBA8, r.width() * scale, r.height() * scale);
+    GLTexture scratch(GL_RGBA8, rect.width(), rect.height());
     scratch.setFilter(GL_LINEAR);
     scratch.setWrapMode(GL_CLAMP_TO_EDGE);
     scratch.bind();
 
-    auto const sg = effects->renderTargetRect();
+    auto const sg = data.render.viewport;
     glCopyTexSubImage2D(GL_TEXTURE_2D,
                         0,
                         0,
                         0,
-                        (r.x() - sg.x()) * scale,
-                        (sg.height() - (r.y() - sg.y() + r.height())) * scale,
+                        rect.x() - sg.x(),
+                        sg.height() - (rect.y() - sg.y() + rect.height()),
                         scratch.width(),
                         scratch.height());
 
@@ -274,12 +270,13 @@ void ContrastEffect::doContrast(effect::window_paint_data const& data,
     // Set up the texture matrix to transform from screen coordinates
     // to texture coordinates.
     QMatrix4x4 textureMatrix;
-    textureMatrix.scale(1.0 / r.width(), -1.0 / r.height(), 1);
-    textureMatrix.translate(-r.x(), -r.height() - r.y(), 0);
-    shader->setTextureMatrix(textureMatrix);
-    shader->setModelViewProjectionMatrix(data.paint.screen_projection_matrix);
+    textureMatrix.scale(1.0 / rect.width(), -1.0 / rect.height(), 1);
+    textureMatrix.translate(-rect.x(), -rect.height() - rect.y(), 0);
 
-    vbo->draw(GL_TRIANGLES, 0, actualShape.rectCount() * 6);
+    shader->setTextureMatrix(textureMatrix);
+    shader->setModelViewProjectionMatrix(mvp);
+
+    vbo->draw(GL_TRIANGLES, 0, shape.rectCount() * 6);
 
     scratch.unbind();
     scratch.discard();

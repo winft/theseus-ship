@@ -53,8 +53,7 @@ public:
 private:
     QRegion contrastRegion(const EffectWindow* w) const;
     bool shouldContrast(effect::window_paint_data const& data) const;
-    void
-    doContrast(effect::window_paint_data const& data, QRegion const& shape, QRect const& screen);
+    void doContrast(effect::window_paint_data const& data, QRegion const& shape);
     void uploadRegion(QVector2D*& map, const QRegion& region);
     void uploadGeometry(GLVertexBuffer* vbo, const QRegion& region);
 

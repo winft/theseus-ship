@@ -169,11 +169,6 @@ public:
         return false;
     }
 
-    virtual QMatrix4x4 screenProjectionMatrix() const
-    {
-        return QMatrix4x4();
-    }
-
     virtual void triggerFence()
     {
     }
@@ -210,18 +205,6 @@ public:
         return QVector<QByteArray>{};
     }
 
-    QRegion mapToRenderTarget(const QRegion& region) const
-    {
-        QRegion result;
-        for (auto const& rect : region) {
-            result += QRect((rect.x() - m_renderTargetRect.x()) * m_renderTargetScale,
-                            (rect.y() - m_renderTargetRect.y()) * m_renderTargetScale,
-                            rect.width() * m_renderTargetScale,
-                            rect.height() * m_renderTargetScale);
-        }
-        return result;
-    }
-
     // shape/size of a window changed
     template<typename RefWin>
     void windowGeometryShapeChanged(RefWin* ref_win)
@@ -237,9 +220,6 @@ public:
     scene_windowing_integration windowing_integration;
 
     uint32_t window_id{0};
-
-    QRect m_renderTargetRect;
-    qreal m_renderTargetScale = 1;
 
     void createStackingOrder(std::deque<typename window_t::ref_t> const& ref_wins)
     {
@@ -259,13 +239,13 @@ public:
     }
 
     // shared implementation, starts painting the screen
-    void paintScreen(paint_type& mask,
+    void paintScreen(effect::render_data const& render,
+                     paint_type& mask,
                      const QRegion& damage,
                      const QRegion& repaint,
                      QRegion* updateRegion,
                      QRegion* validRegion,
-                     std::chrono::milliseconds presentTime,
-                     const QMatrix4x4& projection = QMatrix4x4())
+                     std::chrono::milliseconds presentTime)
     {
         auto const& space_size = platform.base.topology.size;
         const QRegion displayRegion(0, 0, space_size.width(), space_size.height());
@@ -313,7 +293,7 @@ public:
         repaint_region = repaint;
 
         if (flags(mask & paint_type::screen_background_first)) {
-            paintBackground(region);
+            paintBackground(region, render.projection * render.view);
         }
 
         effect::screen_paint_data data{
@@ -323,8 +303,8 @@ public:
             .paint = {
                 .mask = static_cast<int>(mask),
                 .region = region,
-                .screen_projection_matrix = projection,
             },
+            .render = render,
         };
         platform.compositor->effects->paintScreen(data);
 
@@ -345,9 +325,6 @@ public:
         Q_ASSERT(!PaintClipper::clip());
     }
 
-    // Render cursor texture in case hardware cursor is disabled/non-applicable
-    virtual void paintCursor() = 0;
-
     // called after all effects had their paintScreen() called
     void finalPaintScreen(paint_type mask, effect::screen_paint_data& data)
     {
@@ -356,7 +333,7 @@ public:
                 & (paint_type::screen_transformed | paint_type::screen_with_transformed_windows))) {
             paintGenericScreen(mask, data);
         } else {
-            paintSimpleScreen(mask, data.paint.region);
+            paintSimpleScreen(mask, data.paint.region, data.render);
         }
     }
 
@@ -371,13 +348,15 @@ public:
 
     // The generic (unoptimized) painting code that can handle even transformations. It simply
     // paints bottom-to-top.
-    virtual void paintGenericScreen(paint_type mask, effect::screen_paint_data const& /*data*/)
+    virtual void paintGenericScreen(paint_type mask, effect::screen_paint_data const& data)
     {
         if (!(mask & paint_type::screen_background_first)) {
-            paintBackground(infiniteRegion());
+            paintBackground(infiniteRegion(), data.render.projection * data.render.view);
         }
+
         QVector<Phase2Data> phase2;
         phase2.reserve(stacking_order.size());
+
         for (auto const& win : stacking_order) {
             // Bottom to top.
             //
@@ -418,8 +397,8 @@ public:
                            win_data.quads});
         }
 
-        for (auto const& data : phase2) {
-            paintWindow(data.window, data.mask, data.region, data.quads);
+        for (auto const& data2 : phase2) {
+            paintWindow(data.render, data2.window, data2.mask, data2.region, data2.quads);
         }
 
         auto const& space_size = platform.base.topology.size;
@@ -504,7 +483,9 @@ public:
 
     // The optimized case without any transformations at all. It can paint only the requested region
     // and can use clipping to reduce painting and improve performance.
-    virtual void paintSimpleScreen(paint_type orig_mask, QRegion region)
+    virtual void paintSimpleScreen(paint_type orig_mask,
+                                   QRegion const& region,
+                                   effect::render_data const& render_data)
     {
         Q_ASSERT((orig_mask
                   & (paint_type::screen_transformed | paint_type::screen_with_transformed_windows))
@@ -575,7 +556,7 @@ public:
         // Fill any areas of the root window not covered by opaque windows
         if (!(orig_mask & paint_type::screen_background_first)) {
             paintedArea = dirtyArea - allclips;
-            paintBackground(paintedArea);
+            paintBackground(paintedArea, render_data.projection * render_data.view);
         }
 
         // Now walk the list bottom to top and draw the windows.
@@ -586,7 +567,7 @@ public:
             paintedArea |= data->region;
             data->region = paintedArea;
 
-            paintWindow(data->window, data->mask, data->region, data->quads);
+            paintWindow(render_data, data->window, data->mask, data->region, data->quads);
         }
 
         if (fullRepaint) {
@@ -606,7 +587,7 @@ public:
     }
 
     // paint the background (not the desktop background - the whole background)
-    virtual void paintBackground(QRegion const& region) = 0;
+    virtual void paintBackground(QRegion const& region, QMatrix4x4 const& projection) = 0;
 
     // called after all effects had their paintWindow() called, eventually by paintWindow() below
     void finalPaintWindow(effect::window_paint_data& data)
@@ -615,7 +596,11 @@ public:
     }
 
     // shared implementation, starts painting the window
-    virtual void paintWindow(window_t* win, paint_type mask, QRegion region, WindowQuadList quads)
+    virtual void paintWindow(effect::render_data const& render_data,
+                             window_t* win,
+                             paint_type mask,
+                             QRegion region,
+                             WindowQuadList quads)
     {
         // no painting outside visible screen (and no transformations)
         region &= QRect({}, platform.base.topology.size);
@@ -629,8 +614,8 @@ public:
             {
                 .mask = static_cast<int>(mask),
                 .region = region,
-                .screen_projection_matrix = screenProjectionMatrix(),
             },
+            render_data,
         };
         data.quads = quads;
         platform.compositor->effects->paintWindow(data);

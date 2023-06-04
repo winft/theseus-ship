@@ -76,21 +76,28 @@ public:
         return std::make_unique<GlxTexture<type>>(texture, this);
     }
 
-    QRegion prepareRenderingFrame() override
+    effect::render_data set_render_target() override
     {
-        QRegion repaint;
+        auto const rect = QRect({}, platform.base.topology.size);
 
-        if (this->supportsBufferAge()) {
-            repaint = this->accumulatedDamageHistory(m_bufferAge);
-        }
-
-        this->startRenderTimer();
-
-        native_fbo
-            = GLFramebuffer(0, platform.base.topology.size, QRect({}, platform.base.topology.size));
+        native_fbo = GLFramebuffer(0, platform.base.topology.size, rect);
         GLFramebuffer::pushRenderTarget(&native_fbo);
 
-        return repaint;
+        auto data = gl::create_view_projection(rect);
+        data.viewport = rect;
+        data.projection.scale(1, -1);
+        data.flip_y = false;
+
+        return data;
+    }
+
+    QRegion get_render_region() const override
+    {
+        if (!this->supportsBufferAge()) {
+            return {};
+        }
+
+        return this->accumulatedDamageHistory(m_bufferAge);
     }
 
     void endRenderingFrame(QRegion const& renderedRegion, QRegion const& damagedRegion) override

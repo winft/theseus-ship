@@ -75,7 +75,7 @@ public:
 
         make_current();
 
-        auto const texSize = out->base.view_geometry().size();
+        auto const texSize = out->base.geometry().size();
         render.texture = GLTexture(GL_TEXTURE_2D, texSize.width(), texSize.height());
         render.fbo = GLFramebuffer(&render.texture.value());
         return render.fbo.valid();

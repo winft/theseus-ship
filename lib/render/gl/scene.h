@@ -331,7 +331,11 @@ public:
         QRegion valid;
 
         m_backend->makeCurrent();
-        auto const repaint = m_backend->prepareRenderingFrame();
+        m_backend->startRenderTimer();
+
+        auto render = m_backend->set_render_target();
+        auto const repaint = m_backend->get_render_region();
+
         GLVertexBuffer::streamingBuffer()->beginFrame();
 
         GLenum const status = glGetGraphicsResetStatus();
@@ -340,18 +344,15 @@ public:
             return 0;
         }
 
-        this->m_renderTargetRect = QRect(QPoint(), this->platform.base.topology.size);
-        this->m_renderTargetScale = 1.;
-
         auto mask = paint_type::none;
-        updateProjectionMatrix();
+        vp_projection = render.projection * render.view;
 
         // Call generic implementation.
-        this->paintScreen(mask, damage, repaint, &update, &valid, presentTime, projectionMatrix());
+        this->paintScreen(render, mask, damage, repaint, &update, &valid, presentTime);
 
         if (!GLPlatform::instance()->isGLES()) {
-            auto const displayRegion = QRegion(
-                0, 0, this->m_renderTargetRect.width(), this->m_renderTargetRect.height());
+            auto const displayRegion
+                = QRegion(0, 0, render.viewport.width(), render.viewport.height());
 
             // Copy dirty parts from front to backbuffer.
             if (!m_backend->supportsBufferAge() && GLPlatform::instance()->driver() == Driver_NVidia
@@ -388,15 +389,13 @@ public:
     {
         this->createStackingOrder(get_leads(ref_wins));
 
-        // Trigger render timer start.
-        m_backend->prepareRenderingFrame();
+        m_backend->startRenderTimer();
 
         // Makes context current on the output.
-        auto const repaint = m_backend->prepareRenderingForScreen(output);
-        GLVertexBuffer::streamingBuffer()->beginFrame();
+        auto render = m_backend->set_render_target_to_output(*output);
+        auto const repaint = m_backend->get_output_render_region(*output);
 
-        this->m_renderTargetRect = output->geometry();
-        this->m_renderTargetScale = output->scale();
+        GLVertexBuffer::streamingBuffer()->beginFrame();
 
         GLenum const status = glGetGraphicsResetStatus();
         if (status != GL_NO_ERROR) {
@@ -404,22 +403,15 @@ public:
             return 0;
         }
 
-        updateProjectionMatrix();
-
         auto mask = paint_type::none;
         QRegion update;
         QRegion valid;
         this->repaint_output = output;
+        vp_projection = render.projection * render.view;
 
         // Call generic implementation.
-        this->paintScreen(mask,
-                          damage.intersected(this->m_renderTargetRect),
-                          repaint,
-                          &update,
-                          &valid,
-                          presentTime,
-                          projectionMatrix());
-        paintCursor();
+        this->paintScreen(render, mask, damage, repaint, &update, &valid, presentTime);
+        paintCursor(render);
 
         GLVertexBuffer::streamingBuffer()->endOfFrame();
         m_backend->endRenderingFrameForScreen(output, valid, update);
@@ -440,7 +432,6 @@ public:
         if (!viewportLimitsMatched(size)) {
             return;
         }
-        glViewport(0, 0, size.width(), size.height());
         m_backend->screenGeometryChanged(size);
     }
 
@@ -481,16 +472,6 @@ public:
             m_currentFence = m_syncManager->nextFence();
             m_currentFence->trigger();
         }
-    }
-
-    QMatrix4x4 projectionMatrix() const
-    {
-        return m_projectionMatrix;
-    }
-
-    QMatrix4x4 screenProjectionMatrix() const override
-    {
-        return m_screenProjectionMatrix;
     }
 
     bool animationsSupported() const override
@@ -559,22 +540,6 @@ public:
     std::unordered_map<uint32_t, gl_window_t*> windows;
 
 protected:
-    void paintSimpleScreen(paint_type mask, QRegion region) override
-    {
-        m_screenProjectionMatrix = m_projectionMatrix;
-
-        render::scene<Platform>::paintSimpleScreen(mask, region);
-    }
-
-    void paintGenericScreen(paint_type mask, effect::screen_paint_data const& data) override
-    {
-        const QMatrix4x4 screenMatrix = transformation(mask, data);
-
-        m_screenProjectionMatrix = m_projectionMatrix * screenMatrix;
-
-        render::scene<Platform>::paintGenericScreen(mask, data);
-    }
-
     std::unique_ptr<window_t> createWindow(typename window_t::ref_t ref_win) override
     {
         return std::make_unique<gl_window_t>(ref_win, *this);
@@ -609,7 +574,7 @@ protected:
      * Render cursor texture in case hardware cursor is disabled.
      * Useful for screen recording apps or backends that can't do planes.
      */
-    void paintCursor() override
+    void paintCursor(effect::render_data const& render)
     {
         using compositor_t = typename Platform::compositor_t;
         if constexpr (requires(compositor_t comp) { comp.software_cursor; }) {
@@ -647,7 +612,7 @@ protected:
             // get cursor position in projection coordinates
             auto const cursorPos
                 = this->platform.base.space->input->cursor->pos() - cursor->hotspot();
-            QMatrix4x4 mvp = m_projectionMatrix;
+            auto mvp = render.projection * render.view;
             mvp.translate(cursorPos.x(), cursorPos.y());
 
             // handle transparence
@@ -667,7 +632,7 @@ protected:
         }
     }
 
-    void paintBackground(QRegion const& region) override
+    void paintBackground(QRegion const& region, QMatrix4x4 const& projection) override
     {
         PaintClipper pc(region);
 
@@ -699,7 +664,7 @@ protected:
         vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
 
         ShaderBinder binder(ShaderTrait::UniformColor);
-        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, m_projectionMatrix);
+        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, projection);
 
         vbo->render(GL_TRIANGLES);
     }
@@ -740,32 +705,6 @@ protected:
         }
     }
 
-    QMatrix4x4 transformation(paint_type mask, effect::screen_paint_data const& data) const
-    {
-        QMatrix4x4 matrix;
-
-        if (!(mask & paint_type::screen_transformed)) {
-            return matrix;
-        }
-
-        matrix.translate(data.paint.geo.translation);
-        matrix.scale(data.paint.geo.scale.x(), data.paint.geo.scale.y(), data.paint.geo.scale.z());
-
-        if (data.paint.geo.rotation.angle == 0.0) {
-            return matrix;
-        }
-
-        // Apply the rotation
-        // cannot use data.rotation->applyTo(&matrix) as QGraphicsRotation uses projectedRotate to
-        // map back to 2D
-        matrix.translate(data.paint.geo.rotation.origin);
-        auto const axis = data.paint.geo.rotation.axis;
-        matrix.rotate(data.paint.geo.rotation.angle, axis.x(), axis.y(), axis.z());
-        matrix.translate(-data.paint.geo.rotation.origin);
-
-        return matrix;
-    }
-
     void paintEffectQuickView(EffectQuickView* view) override
     {
         auto texture = view->bufferAsTexture();
@@ -782,7 +721,7 @@ protected:
         auto shader = ShaderManager::instance()->pushShader(traits);
         auto const rect = view->geometry();
 
-        QMatrix4x4 mvp(projectionMatrix());
+        auto mvp = vp_projection;
         mvp.translate(rect.x(), rect.y());
         shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
 
@@ -794,7 +733,7 @@ protected:
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         texture->bind();
-        texture->render(view->geometry().size());
+        texture->render(rect.size());
         texture->unbind();
         glDisable(GL_BLEND);
 
@@ -906,38 +845,6 @@ private:
             eff_win.window.performPaint(mask, data);
     }
 
-    void updateProjectionMatrix()
-    {
-        // Create a perspective projection with a 60° field-of-view,
-        // and an aspect ratio of 1.0.
-        const float fovY = 60.0f;
-        const float aspect = 1.0f;
-        const float zNear = 0.1f;
-        const float zFar = 100.0f;
-
-        const float yMax = zNear * std::tan(fovY * M_PI / 360.0f);
-        const float yMin = -yMax;
-        const float xMin = yMin * aspect;
-        const float xMax = yMax * aspect;
-
-        QMatrix4x4 projection;
-        projection.frustum(xMin, xMax, yMin, yMax, zNear, zFar);
-
-        // Create a second matrix that transforms screen coordinates
-        // to world coordinates.
-        const float scaleFactor = 1.1 * std::tan(fovY * M_PI / 360.0f) / yMax;
-
-        QMatrix4x4 matrix;
-        auto const& space_size = this->platform.base.topology.size;
-        matrix.translate(xMin * scaleFactor, yMax * scaleFactor, -1.1);
-        matrix.scale((xMax - xMin) * scaleFactor / space_size.width(),
-                     -(yMax - yMin) * scaleFactor / space_size.height(),
-                     0.001);
-
-        // Combine the matrices
-        m_projectionMatrix = projection * matrix;
-    }
-
     backend_t* m_backend;
     SyncManager* m_syncManager{nullptr};
     SyncObject* m_currentFence{nullptr};
@@ -950,8 +857,7 @@ private:
         QMetaObject::Connection notifier;
     } sw_cursor;
 
-    QMatrix4x4 m_projectionMatrix;
-    QMatrix4x4 m_screenProjectionMatrix;
+    QMatrix4x4 vp_projection;
     GLuint vao{0};
 };
 

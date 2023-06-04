@@ -502,22 +502,33 @@ void GLTexture::unbind()
     glBindTexture(d_ptr->m_target, 0);
 }
 
-void GLTexture::render(QSize const& size)
+void GLTexture::render(QSize const& target_size)
 {
-    render({}, infiniteRegion(), size);
+    render({}, infiniteRegion(), target_size);
 }
 
-void GLTexture::render(std::function<QRegion(QRegion const&)> vp_transform,
+void GLTexture::render(effect::render_data const& data,
                        QRegion const& region,
-                       QSize const& size)
+                       QSize const& target_size)
 {
-    if (size.isEmpty()) {
-        // nothing to paint. m_vbo is likely nullptr and d_ptr->m_cachedSize empty as well, #337090
+    auto const rotated_size
+        = d_ptr->m_textureToBufferMatrix.mapRect(QRect(QPoint(), size())).size();
+    render(data, QRect(QPoint(), rotated_size), region, target_size);
+}
+
+void GLTexture::render(effect::render_data const& data,
+                       QRect const& source,
+                       QRegion const& region,
+                       QSize const& target_size)
+{
+    if (target_size.isEmpty()) {
+        // nothing to paint. m_vbo is likely nullptr and cacheed size empty as well, #337090
         return;
     }
 
-    if (size != d_ptr->m_cachedSize) {
-        d_ptr->m_cachedSize = size;
+    if (target_size != d_ptr->cache.size || d_ptr->cache.source != source) {
+        d_ptr->cache.size = target_size;
+        d_ptr->cache.source = source;
 
         if (!d_ptr->m_vbo) {
             d_ptr->m_vbo = std::make_unique<GLVertexBuffer>(KWin::GLVertexBuffer::Static);
@@ -526,31 +537,46 @@ void GLTexture::render(std::function<QRegion(QRegion const&)> vp_transform,
         float const verts[4 * 2] = {0.f,
                                     0.f,
                                     0.f,
-                                    static_cast<float>(size.height()),
-                                    static_cast<float>(size.width()),
+                                    static_cast<float>(target_size.height()),
+                                    static_cast<float>(target_size.width()),
                                     0.f,
-                                    static_cast<float>(size.width()),
-                                    static_cast<float>(size.height())};
+                                    static_cast<float>(target_size.width()),
+                                    static_cast<float>(target_size.height())};
 
         float const texWidth = (target() == GL_TEXTURE_RECTANGLE_ARB) ? width() : 1.0f;
         float const texHeight = (target() == GL_TEXTURE_RECTANGLE_ARB) ? height() : 1.0f;
 
-        auto y_inverted = d_ptr->m_textureToBufferTransform == effect::transform_type::flipped_180;
+        auto const rotated_size
+            = d_ptr->m_textureToBufferMatrix.mapRect(QRect(QPoint(), size())).size();
 
-        float const texcoords[4 * 2]
-            = {0.0f,
-               y_inverted ? 0.0f : texHeight, // y needs to be swapped (normalized coords)
-               0.0f,
-               y_inverted ? texHeight : 0.0f,
-               texWidth,
-               y_inverted ? 0.0f : texHeight,
-               texWidth,
-               y_inverted ? texHeight : 0.0f};
+        QMatrix4x4 textureMat;
+        textureMat.translate(texWidth / 2, texHeight / 2);
+        textureMat *= d_ptr->m_textureToBufferMatrix;
+
+        // our Y axis is flipped vs OpenGL
+        textureMat.scale(1, -1);
+        textureMat.translate(-texWidth / 2, -texHeight / 2);
+        textureMat.scale(texWidth / rotated_size.width(), texHeight / rotated_size.height());
+
+        auto const p1 = textureMat.map(QPointF(source.x(), source.y()));
+        auto const p2 = textureMat.map(QPointF(source.x(), source.y() + source.height()));
+        auto const p3 = textureMat.map(QPointF(source.x() + source.width(), source.y()));
+        auto const p4
+            = textureMat.map(QPointF(source.x() + source.width(), source.y() + source.height()));
+
+        float const texcoords[4 * 2] = {static_cast<float>(p1.x()),
+                                        static_cast<float>(p1.y()),
+                                        static_cast<float>(p2.x()),
+                                        static_cast<float>(p2.y()),
+                                        static_cast<float>(p3.x()),
+                                        static_cast<float>(p3.y()),
+                                        static_cast<float>(p4.x()),
+                                        static_cast<float>(p4.y())};
 
         d_ptr->m_vbo->setData(4, 2, verts, texcoords);
     }
 
-    d_ptr->m_vbo->render(vp_transform, region, GL_TRIANGLE_STRIP);
+    d_ptr->m_vbo->render(data, region, GL_TRIANGLE_STRIP);
 }
 
 GLuint GLTexture::texture() const
@@ -661,9 +687,29 @@ void GLTexturePrivate::updateMatrix()
 
     m_textureToBufferMatrix.setToIdentity();
     switch (m_textureToBufferTransform) {
+    case effect::transform_type::rotated_90:
+        rotate(90);
+        break;
+    case effect::transform_type::rotated_180:
+        rotate(180);
+        break;
+    case effect::transform_type::rotated_270:
+        rotate(270);
+        break;
+    case effect::transform_type::flipped:
+        flip();
+        break;
+    case effect::transform_type::flipped_90:
+        flip();
+        rotate(90);
+        break;
     case effect::transform_type::flipped_180:
         flip();
         rotate(180);
+        break;
+    case effect::transform_type::flipped_270:
+        flip();
+        rotate(270);
         break;
     case effect::transform_type::normal:
     default:
@@ -678,13 +724,17 @@ void GLTexturePrivate::updateMatrix()
     else
         m_matrix[UnnormalizedCoordinates].scale(1.0 / m_size.width(), 1.0 / m_size.height());
 
-    if (m_textureToBufferTransform == effect::transform_type::normal) {
-        m_matrix[NormalizedCoordinates].translate(0.0, 1.0);
-        m_matrix[NormalizedCoordinates].scale(1.0, -1.0);
+    m_matrix[NormalizedCoordinates].translate(0.5, 0.5);
+    m_matrix[NormalizedCoordinates] *= m_textureToBufferMatrix;
 
-        m_matrix[UnnormalizedCoordinates].translate(0.0, m_size.height());
-        m_matrix[UnnormalizedCoordinates].scale(1.0, -1.0);
-    }
+    // our Y axis is flipped vs OpenGL
+    m_matrix[NormalizedCoordinates].scale(1, -1);
+    m_matrix[NormalizedCoordinates].translate(-0.5, -0.5);
+
+    m_matrix[UnnormalizedCoordinates].translate(m_size.width() / 2, m_size.height() / 2);
+    m_matrix[UnnormalizedCoordinates] *= m_textureToBufferMatrix;
+    m_matrix[UnnormalizedCoordinates].scale(1, -1);
+    m_matrix[UnnormalizedCoordinates].translate(-m_size.width() / 2, -m_size.height() / 2);
 }
 
 void GLTexture::set_content_transform(effect::transform_type transform)

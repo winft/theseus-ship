@@ -116,19 +116,27 @@ void OffscreenEffectPrivate::maybeRender(EffectWindow& window, OffscreenData* of
     glClear(GL_COLOR_BUFFER_BIT);
 
     auto const geometry = window.expandedGeometry();
-    QMatrix4x4 projectionMatrix;
-    projectionMatrix.ortho(QRect(0, 0, geometry.width(), geometry.height()));
+    assert(geometry.size() == offscreenData->renderTarget->size());
+
+    QMatrix4x4 projection;
+    projection.ortho(QRect({0, 0}, geometry.size()));
+
+    QMatrix4x4 view;
+    view.translate(-geometry.x(), -geometry.y());
+
+    effect::render_data render;
+    render.view = view;
+    render.projection = projection;
+    render.viewport = {{}, geometry.size()};
 
     effect::window_paint_data data{
         window,
         {
             .mask = Effect::PAINT_WINDOW_TRANSFORMED | Effect::PAINT_WINDOW_TRANSLUCENT,
             .region = infiniteRegion(),
-            .geo = {.translation
-                    = {static_cast<float>(-geometry.x()), static_cast<float>(-geometry.y()), 0}},
             .opacity = 1.,
-            .projection_matrix = projectionMatrix,
         },
+        render,
     };
 
     effects->drawWindow(data);
@@ -170,9 +178,11 @@ void OffscreenEffectPrivate::paint(GLTexture* texture,
     auto const rgb = data.paint.brightness * data.paint.opacity;
     auto const a = data.paint.opacity;
 
-    auto mvp = data.paint.screen_projection_matrix;
-    mvp.translate(data.window.x(), data.window.y());
-    shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+    auto mvp = effect::get_mvp(data);
+    QMatrix4x4 translate;
+    translate.translate(data.window.x(), data.window.y());
+
+    shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp * translate);
     shader->setUniform(GLShader::ModulationConstant, QVector4D(rgb, rgb, rgb, a));
     shader->setUniform(GLShader::Saturation, data.paint.saturation);
     shader->setUniform(GLShader::TextureWidth, texture->width());
@@ -182,11 +192,7 @@ void OffscreenEffectPrivate::paint(GLTexture* texture,
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     texture->bind();
-    vbo->draw([](auto r) { return effects->mapToRenderTarget(r); },
-              data.paint.region,
-              primitiveType,
-              0,
-              verticesPerQuad * quads.count());
+    vbo->draw(data.render, data.paint.region, primitiveType, 0, verticesPerQuad * quads.count());
     texture->unbind();
 
     glDisable(GL_BLEND);
