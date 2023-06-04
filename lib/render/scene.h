@@ -375,6 +375,10 @@ public:
         for (auto const& win : stacking_order) {
             // Bottom to top.
             //
+            if (!win->isPaintingEnabled()) {
+                continue;
+            }
+
             // Reset the repaint_region.
             // This has to be done here because many effects schedule a repaint for
             // the next frame within Effects::prePaintWindow.
@@ -385,7 +389,6 @@ public:
             data.mask = static_cast<int>(
                 orig_mask
                 | (win->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
-            win->resetPaintingEnabled();
             data.paint = infiniteRegion(); // no clipping, so doesn't really matter
             data.clip = QRegion();
             data.quads = win->buildQuads();
@@ -398,9 +401,6 @@ public:
                 qFatal("Pre-paint calls are not allowed to transform quads!");
             }
 #endif
-            if (!win->isPaintingEnabled()) {
-                continue;
-            }
             phase2.append(
                 {win, infiniteRegion(), data.clip, static_cast<paint_type>(data.mask), data.quads});
         }
@@ -422,12 +422,14 @@ public:
                                      QVector<Phase2Data>& phase2data)
     {
         auto win = ref_win.render.get();
+        if (!win->isPaintingEnabled()) {
+            return;
+        }
 
         WindowPrePaintData data;
         data.mask = static_cast<int>(
             orig_mask
             | (win->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
-        win->resetPaintingEnabled();
         data.paint = region;
         data.paint |= win::repaints(ref_win);
 
@@ -469,16 +471,15 @@ public:
         // preparation step
         platform.compositor->effects->prePaintWindow(
             win->effect.get(), data, m_expectedPresentTimestamp);
+
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
             qFatal("Pre-paint calls are not allowed to transform quads!");
         }
 #endif
-        if (!win->isPaintingEnabled()) {
-            return;
-        }
 
         dirtyArea |= data.paint;
+
         // Schedule the window for painting
         phase2data.append(
             {win, data.paint, data.clip, static_cast<paint_type>(data.mask), data.quads});

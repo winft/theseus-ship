@@ -48,25 +48,6 @@ enum class paint_type {
     // screen_with_transformed_windows_without_full_repaints = 1 << 9 has been removed
 };
 
-enum class window_paint_disable_type {
-    none = 0,
-
-    // Window will not be painted for an unspecified reason
-    unspecified = 1 << 0,
-
-    // Window will not be painted because it is deleted
-    by_delete = 1 << 1,
-
-    // Window will not be painted because of which desktop it's on
-    by_desktop = 1 << 2,
-
-    // Window will not be painted because it is minimized
-    by_minimize = 1 << 3,
-
-    // Window will not be painted because it's not on the current activity
-    by_activity = 1 << 5, /// Deprecated
-};
-
 enum class shadow_element {
     top,
     top_right,
@@ -122,5 +103,4 @@ enum class opengl_safe_point {
 }
 
 ENUM_FLAGS(KWin::render::paint_type)
-ENUM_FLAGS(KWin::render::window_paint_disable_type)
 ENUM_FLAGS(KWin::render::load_effect_flags)
