@@ -58,7 +58,6 @@ private:
     QRect expand(const QRect& rect) const;
     QRegion expand(const QRegion& region) const;
     bool renderTargetsValid() const;
-    void deleteFBOs();
     void initBlurStrengthValues();
     void updateTexture();
     QRegion blurRegion(const EffectWindow* w) const;
@@ -95,8 +94,8 @@ private:
 
 private:
     BlurShader* m_shader;
-    QVector<GLFramebuffer*> m_renderTargets;
-    QVector<GLTexture*> m_renderTextures;
+    std::vector<std::unique_ptr<GLFramebuffer>> m_renderTargets;
+    std::vector<std::unique_ptr<GLTexture>> m_renderTextures;
     QStack<GLFramebuffer*> m_renderTargetStack;
 
     GLTexture m_noiseTexture;

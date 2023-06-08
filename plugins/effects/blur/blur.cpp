@@ -63,7 +63,8 @@ BlurEffect::BlurEffect()
 
 BlurEffect::~BlurEffect()
 {
-    deleteFBOs();
+    m_renderTargets.clear();
+    m_renderTextures.clear();
 }
 
 void BlurEffect::reset()
@@ -75,24 +76,17 @@ void BlurEffect::reset()
 
 bool BlurEffect::renderTargetsValid() const
 {
-    return !m_renderTargets.isEmpty()
-        && std::find_if(m_renderTargets.cbegin(),
-                        m_renderTargets.cend(),
-                        [](const GLFramebuffer* target) { return !target->valid(); })
-        == m_renderTargets.cend();
-}
-
-void BlurEffect::deleteFBOs()
-{
-    qDeleteAll(m_renderTextures);
-
-    m_renderTargets.clear();
-    m_renderTextures.clear();
+    return !m_renderTargets.empty()
+        && std::all_of(m_renderTargets.cbegin(), m_renderTargets.cend(), [](auto&& target) {
+               return target->valid();
+           });
+    ;
 }
 
 void BlurEffect::updateTexture()
 {
-    deleteFBOs();
+    m_renderTargets.clear();
+    m_renderTextures.clear();
 
     /* Reserve memory for:
      *  - The original sized texture (1)
@@ -129,20 +123,22 @@ void BlurEffect::updateTexture()
     }
 
     for (int i = 0; i <= m_downSampleIterations; i++) {
-        m_renderTextures.append(
-            new GLTexture(textureFormat, effects->virtualScreenSize() / (1 << i)));
-        m_renderTextures.constLast()->setFilter(GL_LINEAR);
-        m_renderTextures.constLast()->setWrapMode(GL_CLAMP_TO_EDGE);
+        m_renderTextures.emplace_back(
+            std::make_unique<GLTexture>(textureFormat, effects->virtualScreenSize() / (1 << i)));
+        m_renderTextures.back()->setFilter(GL_LINEAR);
+        m_renderTextures.back()->setWrapMode(GL_CLAMP_TO_EDGE);
 
-        m_renderTargets.append(new GLFramebuffer(m_renderTextures.constLast()));
+        m_renderTargets.emplace_back(
+            std::make_unique<GLFramebuffer>(m_renderTextures.back().get()));
     }
 
     // This last set is used as a temporary helper texture
-    m_renderTextures.append(new GLTexture(textureFormat, effects->virtualScreenSize()));
-    m_renderTextures.constLast()->setFilter(GL_LINEAR);
-    m_renderTextures.constLast()->setWrapMode(GL_CLAMP_TO_EDGE);
+    m_renderTextures.emplace_back(
+        std::make_unique<GLTexture>(textureFormat, effects->virtualScreenSize()));
+    m_renderTextures.back()->setFilter(GL_LINEAR);
+    m_renderTextures.back()->setWrapMode(GL_CLAMP_TO_EDGE);
 
-    m_renderTargets.append(new GLFramebuffer(m_renderTextures.constLast()));
+    m_renderTargets.emplace_back(std::make_unique<GLFramebuffer>(m_renderTextures.back().get()));
 
     m_renderTargetsValid = renderTargetsValid();
 
@@ -152,16 +148,16 @@ void BlurEffect::updateTexture()
 
     // Upsample
     for (int i = 1; i < m_downSampleIterations; i++) {
-        m_renderTargetStack.push(m_renderTargets[i]);
+        m_renderTargetStack.push(m_renderTargets.at(i).get());
     }
 
     // Downsample
     for (int i = m_downSampleIterations; i > 0; i--) {
-        m_renderTargetStack.push(m_renderTargets[i]);
+        m_renderTargetStack.push(m_renderTargets.at(i).get());
     }
 
     // Copysample
-    m_renderTargetStack.push(m_renderTargets[0]);
+    m_renderTargetStack.push(m_renderTargets.front().get());
 
     // Invalidate noise texture
     m_noiseTexture = {};
@@ -561,7 +557,7 @@ void BlurEffect::doBlur(const QRegion& shape,
 
     const QRegion expandedBlurRegion = expand(shape) & expand(screen);
 
-    const bool useSRGB = m_renderTextures.constFirst()->internalFormat() == GL_SRGB8_ALPHA8;
+    const bool useSRGB = m_renderTextures.front()->internalFormat() == GL_SRGB8_ALPHA8;
 
     // Upload geometry for the down and upsample iterations
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
@@ -582,7 +578,7 @@ void BlurEffect::doBlur(const QRegion& shape,
      * when maximized windows or windows near the panel affect the dock blur.
      */
     if (isDock) {
-        m_renderTargets.last()->blitFromFramebuffer(effects->mapToRenderTarget(sourceRect),
+        m_renderTargets.back()->blitFromFramebuffer(effects->mapToRenderTarget(sourceRect),
                                                     destRect);
         GLFramebuffer::pushRenderTargets(m_renderTargetStack);
 
@@ -595,7 +591,7 @@ void BlurEffect::doBlur(const QRegion& shape,
         mvp.ortho(0, screenRect.width(), screenRect.height(), 0, 0, 65535);
         copyScreenSampleTexture(vbo, blurRectCount, shape.translated(xTranslate, yTranslate), mvp);
     } else {
-        m_renderTargets.first()->blitFromFramebuffer(effects->mapToRenderTarget(sourceRect),
+        m_renderTargets.front()->blitFromFramebuffer(effects->mapToRenderTarget(sourceRect),
                                                      destRect);
         GLFramebuffer::pushRenderTargets(m_renderTargetStack);
 
@@ -774,7 +770,7 @@ void BlurEffect::copyScreenSampleTexture(GLVertexBuffer* vbo,
      */
     m_shader->setBlurRect(blurShape.boundingRect().adjusted(1, 1, -1, -1),
                           effects->virtualScreenSize());
-    m_renderTextures.last()->bind();
+    m_renderTextures.back()->bind();
 
     vbo->draw(GL_TRIANGLES, 0, blurRectCount);
     GLFramebuffer::popRenderTarget();
