@@ -26,6 +26,7 @@ public:
         ThemeNameRole,
         ConfigurationRole,
         RecommendedBorderSizeRole,
+        KcmoduleNameRole,
     };
 
 public:
