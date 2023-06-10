@@ -673,8 +673,8 @@ QQuickItem* Decoration::item() const
     return m_item;
 }
 
-ThemeProvider::ThemeProvider(QObject* parent, const KPluginMetaData& data, const QVariantList& args)
-    : KDecoration2::DecorationThemeProvider(parent, data, args)
+ThemeProvider::ThemeProvider(QObject* parent, const KPluginMetaData& data)
+    : KDecoration2::DecorationThemeProvider(parent)
     , m_data(data)
 {
     init();

@@ -20,7 +20,7 @@ class DesktopEffectsData : public KCModuleData
     Q_OBJECT
 
 public:
-    explicit DesktopEffectsData(QObject *parent = nullptr, const QVariantList &args = QVariantList());
+    explicit DesktopEffectsData(QObject *parent);
     ~DesktopEffectsData() override;
 
     bool isDefaults() const override;

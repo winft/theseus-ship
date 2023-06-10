@@ -25,10 +25,8 @@ ResizeEffectConfigForm::ResizeEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-ResizeEffectConfig::ResizeEffectConfig(QObject* parent,
-                                       const KPluginMetaData& data,
-                                       const QVariantList& args)
-    : KCModule(parent, data, args)
+ResizeEffectConfig::ResizeEffectConfig(QObject* parent, const KPluginMetaData& data)
+    : KCModule(parent, data)
 {
     m_ui = new ResizeEffectConfigForm(widget());
 

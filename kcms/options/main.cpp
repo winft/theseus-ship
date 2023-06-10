@@ -59,8 +59,8 @@ public:
     }
 };
 
-KWinOptions::KWinOptions(QObject *parent, const KPluginMetaData &data, const QVariantList &args)
-    : KCModule(parent, data, args)
+KWinOptions::KWinOptions(QObject *parent, const KPluginMetaData &data)
+    : KCModule(parent, data)
 {
     mSettings = new KWinOptionsSettings(this);
 
@@ -166,8 +166,8 @@ void KWinOptions::updateUnmanagedState()
     unmanagedWidgetDefaultState(isDefault);
 }
 
-KActionsOptions::KActionsOptions(QObject *parent, const KPluginMetaData &data, const QVariantList &args)
-    : KCModule(parent, data, args)
+KActionsOptions::KActionsOptions(QObject *parent, const KPluginMetaData &data)
+    : KCModule(parent, data)
 {
     mSettings = new KWinOptionsSettings(this);
 

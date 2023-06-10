@@ -25,9 +25,7 @@ class ResizeEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit ResizeEffectConfig(QObject* parent,
-                                const KPluginMetaData& data,
-                                const QVariantList& args);
+    explicit ResizeEffectConfig(QObject* parent, const KPluginMetaData& data);
 
 public Q_SLOTS:
     void save() override;

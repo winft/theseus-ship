@@ -34,10 +34,8 @@ LookingGlassEffectConfigForm::LookingGlassEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-LookingGlassEffectConfig::LookingGlassEffectConfig(QObject* parent,
-                                                   const KPluginMetaData& data,
-                                                   const QVariantList& args)
-    : KCModule(parent, data, args)
+LookingGlassEffectConfig::LookingGlassEffectConfig(QObject* parent, const KPluginMetaData& data)
+    : KCModule(parent, data)
     , m_ui(widget())
 {
     QVBoxLayout* layout = new QVBoxLayout(widget());

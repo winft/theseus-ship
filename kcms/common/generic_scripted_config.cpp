@@ -49,7 +49,7 @@ QObject* generic_scripted_config_factory::create(const char* iface,
 generic_scripted_config::generic_scripted_config(const QString& keyword,
                                                  QWidget* parent,
                                                  const QVariantList& args)
-    : KCModule(parent, KPluginMetaData(), args)
+    : KCModule(parent, KPluginMetaData())
     , m_packageName(keyword)
     , m_translator(new KLocalizedTranslator(this))
 {

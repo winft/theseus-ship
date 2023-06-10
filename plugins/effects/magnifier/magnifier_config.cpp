@@ -33,10 +33,8 @@ MagnifierEffectConfigForm::MagnifierEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-MagnifierEffectConfig::MagnifierEffectConfig(QObject* parent,
-                                             const KPluginMetaData& data,
-                                             const QVariantList& args)
-    : KCModule(parent, data, args)
+MagnifierEffectConfig::MagnifierEffectConfig(QObject* parent, const KPluginMetaData& data)
+    : KCModule(parent, data)
     , m_ui(widget())
 {
     QVBoxLayout* layout = new QVBoxLayout(widget());
