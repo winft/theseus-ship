@@ -51,7 +51,6 @@ OverviewEffect::OverviewEffect()
 
     const QKeySequence defaultToggleShortcut = Qt::META | Qt::Key_W;
     auto toggleAction = m_state->toggleAction();
-    connect(toggleAction, &QAction::triggered, m_state, &EffectTogglableState::toggle);
     toggleAction->setObjectName(QStringLiteral("Overview"));
     toggleAction->setText(i18n("Toggle Overview"));
     m_toggleShortcut
