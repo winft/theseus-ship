@@ -132,10 +132,10 @@ public:
         // TODO, create new buffer?
     }
 
-    typename abstract_type::texture_priv_t*
+    std::unique_ptr<typename abstract_type::texture_priv_t>
     createBackendTexture(typename abstract_type::texture_t* texture) override
     {
-        return new egl_texture<type>(texture, this);
+        return std::make_unique<egl_texture<type>>(texture, this);
     }
 
     QRegion prepareRenderingFrame() override

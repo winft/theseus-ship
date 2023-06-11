@@ -28,14 +28,8 @@ public:
     using private_t = texture_private<Backend>;
 
     explicit texture(Backend* backend)
-        : GLTexture(*backend->createBackendTexture(this))
+        : GLTexture(backend->createBackendTexture(this))
     {
-    }
-
-    texture& operator=(texture const& tex)
-    {
-        d_ptr = tex.d_ptr;
-        return *this;
     }
 
     void discard() override final
@@ -50,8 +44,7 @@ public:
         }
 
         // decrease the reference counter for the old texture
-        // new texture_private();
-        d_ptr = d_func()->backend()->createBackendTexture(this);
+        discard();
 
         return d_func()->updateTexture(buffer);
     }
@@ -63,11 +56,11 @@ public:
 
     inline private_t* d_func()
     {
-        return reinterpret_cast<private_t*>(qGetPtrHelper(d_ptr));
+        return static_cast<private_t*>(d_ptr.get());
     }
     inline const private_t* d_func() const
     {
-        return reinterpret_cast<private_t const*>(qGetPtrHelper(d_ptr));
+        return static_cast<private_t const*>(d_ptr.get());
     }
 };
 

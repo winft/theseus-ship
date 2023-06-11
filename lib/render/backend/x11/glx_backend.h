@@ -70,10 +70,10 @@ public:
         m_bufferAge = 0;
     }
 
-    typename abstract_type::texture_priv_t*
+    std::unique_ptr<typename abstract_type::texture_priv_t>
     createBackendTexture(typename abstract_type::texture_t* texture) override
     {
-        return new GlxTexture<type>(texture, this);
+        return std::make_unique<GlxTexture<type>>(texture, this);
     }
 
     QRegion prepareRenderingFrame() override

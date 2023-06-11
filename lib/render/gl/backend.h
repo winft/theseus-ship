@@ -58,7 +58,7 @@ public:
         return m_renderTimer.nsecsElapsed();
     }
     virtual void screenGeometryChanged(const QSize& size) = 0;
-    virtual texture_priv_t* createBackendTexture(texture_t* texture) = 0;
+    virtual std::unique_ptr<texture_priv_t> createBackendTexture(texture_t* texture) = 0;
 
     /**
      * @brief Backend specific code to prepare the rendering of a frame including flushing the

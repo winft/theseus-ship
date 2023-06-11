@@ -86,22 +86,19 @@ struct {
 };
 
 GLTexture::GLTexture()
-    : d_ptr(new GLTexturePrivate())
+    : d_ptr{std::make_unique<GLTexturePrivate>()}
 {
 }
 
-GLTexture::GLTexture(GLTexturePrivate& dd)
-    : d_ptr(&dd)
+GLTexture::GLTexture(std::unique_ptr<GLTexturePrivate> impl)
+    : d_ptr{std::move(impl)}
 {
 }
 
-GLTexture::GLTexture(const GLTexture& tex)
-    : d_ptr(tex.d_ptr)
-{
-}
+GLTexture::GLTexture(GLTexture&& tex) = default;
 
 GLTexture::GLTexture(const QImage& image, GLenum target)
-    : d_ptr(new GLTexturePrivate())
+    : GLTexture()
 {
     if (image.isNull()) {
         return;
@@ -211,7 +208,7 @@ GLTexture::GLTexture(const QString& fileName)
 }
 
 GLTexture::GLTexture(GLenum internalFormat, int width, int height, int levels)
-    : d_ptr(new GLTexturePrivate())
+    : GLTexture()
 {
     d_ptr->m_target = GL_TEXTURE_2D;
     d_ptr->m_scale.setWidth(1.0 / width);
@@ -265,7 +262,7 @@ GLTexture::GLTexture(GLenum internalFormat, const QSize& size, int levels)
 }
 
 GLTexture::GLTexture(GLuint textureId, GLenum internalFormat, const QSize& size, int levels)
-    : d_ptr(new GLTexturePrivate())
+    : GLTexture()
 {
     d_ptr->m_foreign = true;
     d_ptr->m_texture = textureId;
@@ -281,15 +278,9 @@ GLTexture::GLTexture(GLuint textureId, GLenum internalFormat, const QSize& size,
     d_ptr->updateMatrix();
 }
 
-GLTexture::~GLTexture()
-{
-}
+GLTexture::~GLTexture() = default;
 
-GLTexture& GLTexture::operator=(const GLTexture& tex)
-{
-    d_ptr = tex.d_ptr;
-    return *this;
-}
+GLTexture& GLTexture::operator=(GLTexture&& tex) = default;
 
 GLTexturePrivate::GLTexturePrivate()
     : m_texture(0)
@@ -453,7 +444,7 @@ void GLTexture::update(const QImage& image, const QPoint& offset, const QRect& s
 
 void GLTexture::discard()
 {
-    d_ptr = new GLTexturePrivate();
+    d_ptr = std::make_unique<GLTexturePrivate>();
 }
 
 void GLTexture::bind()
