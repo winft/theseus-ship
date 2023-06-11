@@ -103,29 +103,28 @@ GLTexture::GLTexture(const GLTexture& tex)
 GLTexture::GLTexture(const QImage& image, GLenum target)
     : d_ptr(new GLTexturePrivate())
 {
-    Q_D(GLTexture);
-
-    if (image.isNull())
+    if (image.isNull()) {
         return;
-
-    d->m_target = target;
-
-    if (d->m_target != GL_TEXTURE_RECTANGLE_ARB) {
-        d->m_scale.setWidth(1.0 / image.width());
-        d->m_scale.setHeight(1.0 / image.height());
-    } else {
-        d->m_scale.setWidth(1.0);
-        d->m_scale.setHeight(1.0);
     }
 
-    d->m_size = image.size();
-    d->m_yInverted = true;
-    d->m_canUseMipmaps = false;
-    d->m_mipLevels = 1;
+    d_ptr->m_target = target;
 
-    d->updateMatrix();
+    if (d_ptr->m_target != GL_TEXTURE_RECTANGLE_ARB) {
+        d_ptr->m_scale.setWidth(1.0 / image.width());
+        d_ptr->m_scale.setHeight(1.0 / image.height());
+    } else {
+        d_ptr->m_scale.setWidth(1.0);
+        d_ptr->m_scale.setHeight(1.0);
+    }
 
-    glGenTextures(1, &d->m_texture);
+    d_ptr->m_size = image.size();
+    d_ptr->m_yInverted = true;
+    d_ptr->m_canUseMipmaps = false;
+    d_ptr->m_mipLevels = 1;
+
+    d_ptr->updateMatrix();
+
+    glGenTextures(1, &d_ptr->m_texture);
     bind();
 
     if (!GLPlatform::instance()->isGLES()) {
@@ -138,7 +137,7 @@ GLTexture::GLTexture(const QImage& image, GLenum target)
 
         if (index < sizeof(formatTable) / sizeof(formatTable[0])
             && formatTable[index].internalFormat
-            && !(formatTable[index].type == GL_UNSIGNED_SHORT && !d->s_supportsTexture16Bit)) {
+            && !(formatTable[index].type == GL_UNSIGNED_SHORT && !d_ptr->s_supportsTexture16Bit)) {
             internalFormat = formatTable[index].internalFormat;
             format = formatTable[index].format;
             type = formatTable[index].type;
@@ -150,16 +149,16 @@ GLTexture::GLTexture(const QImage& image, GLenum target)
             type = GL_UNSIGNED_INT_8_8_8_8_REV;
         }
 
-        d->m_internalFormat = internalFormat;
+        d_ptr->m_internalFormat = internalFormat;
 
-        if (d->s_supportsTextureStorage) {
-            glTexStorage2D(d->m_target, 1, internalFormat, im.width(), im.height());
+        if (d_ptr->s_supportsTextureStorage) {
+            glTexStorage2D(d_ptr->m_target, 1, internalFormat, im.width(), im.height());
             glTexSubImage2D(
-                d->m_target, 0, 0, 0, im.width(), im.height(), format, type, im.constBits());
-            d->m_immutable = true;
+                d_ptr->m_target, 0, 0, 0, im.width(), im.height(), format, type, im.constBits());
+            d_ptr->m_immutable = true;
         } else {
-            glTexParameteri(d->m_target, GL_TEXTURE_MAX_LEVEL, d->m_mipLevels - 1);
-            glTexImage2D(d->m_target,
+            glTexParameteri(d_ptr->m_target, GL_TEXTURE_MAX_LEVEL, d_ptr->m_mipLevels - 1);
+            glTexImage2D(d_ptr->m_target,
                          0,
                          internalFormat,
                          im.width(),
@@ -170,11 +169,11 @@ GLTexture::GLTexture(const QImage& image, GLenum target)
                          im.constBits());
         }
     } else {
-        d->m_internalFormat = GL_RGBA8;
+        d_ptr->m_internalFormat = GL_RGBA8;
 
-        if (d->s_supportsARGB32) {
+        if (d_ptr->s_supportsARGB32) {
             const QImage im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-            glTexImage2D(d->m_target,
+            glTexImage2D(d_ptr->m_target,
                          0,
                          GL_BGRA_EXT,
                          im.width(),
@@ -185,7 +184,7 @@ GLTexture::GLTexture(const QImage& image, GLenum target)
                          im.constBits());
         } else {
             const QImage im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
-            glTexImage2D(d->m_target,
+            glTexImage2D(d_ptr->m_target,
                          0,
                          GL_RGBA,
                          im.width(),
@@ -214,28 +213,26 @@ GLTexture::GLTexture(const QString& fileName)
 GLTexture::GLTexture(GLenum internalFormat, int width, int height, int levels)
     : d_ptr(new GLTexturePrivate())
 {
-    Q_D(GLTexture);
+    d_ptr->m_target = GL_TEXTURE_2D;
+    d_ptr->m_scale.setWidth(1.0 / width);
+    d_ptr->m_scale.setHeight(1.0 / height);
+    d_ptr->m_size = QSize(width, height);
+    d_ptr->m_canUseMipmaps = levels > 1;
+    d_ptr->m_mipLevels = levels;
+    d_ptr->m_filter = levels > 1 ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST;
 
-    d->m_target = GL_TEXTURE_2D;
-    d->m_scale.setWidth(1.0 / width);
-    d->m_scale.setHeight(1.0 / height);
-    d->m_size = QSize(width, height);
-    d->m_canUseMipmaps = levels > 1;
-    d->m_mipLevels = levels;
-    d->m_filter = levels > 1 ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST;
+    d_ptr->updateMatrix();
 
-    d->updateMatrix();
-
-    glGenTextures(1, &d->m_texture);
+    glGenTextures(1, &d_ptr->m_texture);
     bind();
 
     if (!GLPlatform::instance()->isGLES()) {
-        if (d->s_supportsTextureStorage) {
-            glTexStorage2D(d->m_target, levels, internalFormat, width, height);
-            d->m_immutable = true;
+        if (d_ptr->s_supportsTextureStorage) {
+            glTexStorage2D(d_ptr->m_target, levels, internalFormat, width, height);
+            d_ptr->m_immutable = true;
         } else {
-            glTexParameteri(d->m_target, GL_TEXTURE_MAX_LEVEL, levels - 1);
-            glTexImage2D(d->m_target,
+            glTexParameteri(d_ptr->m_target, GL_TEXTURE_MAX_LEVEL, levels - 1);
+            glTexImage2D(d_ptr->m_target,
                          0,
                          internalFormat,
                          width,
@@ -245,17 +242,18 @@ GLTexture::GLTexture(GLenum internalFormat, int width, int height, int levels)
                          GL_UNSIGNED_INT_8_8_8_8_REV,
                          nullptr);
         }
-        d->m_internalFormat = internalFormat;
+        d_ptr->m_internalFormat = internalFormat;
     } else {
         // The format parameter in glTexSubImage() must match the internal format
         // of the texture, so it's important that we allocate the texture with
         // the format that will be used in update() and clear().
-        const GLenum format = d->s_supportsARGB32 ? GL_BGRA_EXT : GL_RGBA;
-        glTexImage2D(d->m_target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, nullptr);
+        const GLenum format = d_ptr->s_supportsARGB32 ? GL_BGRA_EXT : GL_RGBA;
+        glTexImage2D(
+            d_ptr->m_target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, nullptr);
 
         // This is technically not true, but it means that code that calls
         // internalFormat() won't need to be specialized for GLES2.
-        d->m_internalFormat = GL_RGBA8;
+        d_ptr->m_internalFormat = GL_RGBA8;
     }
 
     unbind();
@@ -269,19 +267,18 @@ GLTexture::GLTexture(GLenum internalFormat, const QSize& size, int levels)
 GLTexture::GLTexture(GLuint textureId, GLenum internalFormat, const QSize& size, int levels)
     : d_ptr(new GLTexturePrivate())
 {
-    Q_D(GLTexture);
-    d->m_foreign = true;
-    d->m_texture = textureId;
-    d->m_target = GL_TEXTURE_2D;
-    d->m_scale.setWidth(1.0 / size.width());
-    d->m_scale.setHeight(1.0 / size.height());
-    d->m_size = size;
-    d->m_canUseMipmaps = levels > 1;
-    d->m_mipLevels = levels;
-    d->m_filter = levels > 1 ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST;
-    d->m_internalFormat = internalFormat;
+    d_ptr->m_foreign = true;
+    d_ptr->m_texture = textureId;
+    d_ptr->m_target = GL_TEXTURE_2D;
+    d_ptr->m_scale.setWidth(1.0 / size.width());
+    d_ptr->m_scale.setHeight(1.0 / size.height());
+    d_ptr->m_size = size;
+    d_ptr->m_canUseMipmaps = levels > 1;
+    d_ptr->m_mipLevels = levels;
+    d_ptr->m_filter = levels > 1 ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST;
+    d_ptr->m_internalFormat = internalFormat;
 
-    d->updateMatrix();
+    d_ptr->updateMatrix();
 }
 
 GLTexture::~GLTexture()
@@ -369,23 +366,21 @@ void GLTexturePrivate::cleanup()
 
 bool GLTexture::isNull() const
 {
-    Q_D(const GLTexture);
-    return GL_NONE == d->m_texture;
+    return GL_NONE == d_ptr->m_texture;
 }
 
 QSize GLTexture::size() const
 {
-    Q_D(const GLTexture);
-    return d->m_size;
+    return d_ptr->m_size;
 }
 
 void GLTexture::update(const QImage& image, const QPoint& offset, const QRect& src)
 {
-    if (image.isNull() || isNull())
+    if (image.isNull() || isNull()) {
         return;
+    }
 
-    Q_D(GLTexture);
-    Q_ASSERT(!d->m_foreign);
+    Q_ASSERT(!d_ptr->m_foreign);
 
     GLenum glFormat;
     GLenum type;
@@ -395,7 +390,7 @@ void GLTexture::update(const QImage& image, const QPoint& offset, const QRect& s
 
         if (index < sizeof(formatTable) / sizeof(formatTable[0])
             && formatTable[index].internalFormat
-            && !(formatTable[index].type == GL_UNSIGNED_SHORT && !d->s_supportsTexture16Bit)) {
+            && !(formatTable[index].type == GL_UNSIGNED_SHORT && !d_ptr->s_supportsTexture16Bit)) {
             glFormat = formatTable[index].format;
             type = formatTable[index].type;
             uploadFormat = index;
@@ -405,7 +400,7 @@ void GLTexture::update(const QImage& image, const QPoint& offset, const QRect& s
             uploadFormat = QImage::Format_ARGB32_Premultiplied;
         }
     } else {
-        if (d->s_supportsARGB32) {
+        if (d_ptr->s_supportsARGB32) {
             glFormat = GL_BGRA_EXT;
             type = GL_UNSIGNED_BYTE;
             uploadFormat = QImage::Format_ARGB32_Premultiplied;
@@ -415,7 +410,7 @@ void GLTexture::update(const QImage& image, const QPoint& offset, const QRect& s
             uploadFormat = QImage::Format_RGBA8888_Premultiplied;
         }
     }
-    bool useUnpack = d->s_supportsUnpack && image.format() == uploadFormat && !src.isNull();
+    bool useUnpack = d_ptr->s_supportsUnpack && image.format() == uploadFormat && !src.isNull();
 
     QImage im;
     if (useUnpack) {
@@ -445,7 +440,7 @@ void GLTexture::update(const QImage& image, const QPoint& offset, const QRect& s
     bind();
 
     glTexSubImage2D(
-        d->m_target, 0, offset.x(), offset.y(), width, height, glFormat, type, im.constBits());
+        d_ptr->m_target, 0, offset.x(), offset.y(), width, height, glFormat, type, im.constBits());
 
     unbind();
 
@@ -463,18 +458,16 @@ void GLTexture::discard()
 
 void GLTexture::bind()
 {
-    Q_D(GLTexture);
+    glBindTexture(d_ptr->m_target, d_ptr->m_texture);
 
-    glBindTexture(d->m_target, d->m_texture);
-
-    if (d->m_markedDirty) {
-        d->onDamage();
+    if (d_ptr->m_markedDirty) {
+        d_ptr->onDamage();
     }
-    if (d->m_filterChanged) {
+    if (d_ptr->m_filterChanged) {
         GLenum minFilter = GL_NEAREST;
         GLenum magFilter = GL_NEAREST;
 
-        switch (d->m_filter) {
+        switch (d_ptr->m_filter) {
         case GL_NEAREST:
             minFilter = magFilter = GL_NEAREST;
             break;
@@ -486,40 +479,37 @@ void GLTexture::bind()
         case GL_NEAREST_MIPMAP_NEAREST:
         case GL_NEAREST_MIPMAP_LINEAR:
             magFilter = GL_NEAREST;
-            minFilter = d->m_canUseMipmaps ? d->m_filter : GL_NEAREST;
+            minFilter = d_ptr->m_canUseMipmaps ? d_ptr->m_filter : GL_NEAREST;
             break;
 
         case GL_LINEAR_MIPMAP_NEAREST:
         case GL_LINEAR_MIPMAP_LINEAR:
             magFilter = GL_LINEAR;
-            minFilter = d->m_canUseMipmaps ? d->m_filter : GL_LINEAR;
+            minFilter = d_ptr->m_canUseMipmaps ? d_ptr->m_filter : GL_LINEAR;
             break;
         }
 
-        glTexParameteri(d->m_target, GL_TEXTURE_MIN_FILTER, minFilter);
-        glTexParameteri(d->m_target, GL_TEXTURE_MAG_FILTER, magFilter);
+        glTexParameteri(d_ptr->m_target, GL_TEXTURE_MIN_FILTER, minFilter);
+        glTexParameteri(d_ptr->m_target, GL_TEXTURE_MAG_FILTER, magFilter);
 
-        d->m_filterChanged = false;
+        d_ptr->m_filterChanged = false;
     }
-    if (d->m_wrapModeChanged) {
-        glTexParameteri(d->m_target, GL_TEXTURE_WRAP_S, d->m_wrapMode);
-        glTexParameteri(d->m_target, GL_TEXTURE_WRAP_T, d->m_wrapMode);
-        d->m_wrapModeChanged = false;
+    if (d_ptr->m_wrapModeChanged) {
+        glTexParameteri(d_ptr->m_target, GL_TEXTURE_WRAP_S, d_ptr->m_wrapMode);
+        glTexParameteri(d_ptr->m_target, GL_TEXTURE_WRAP_T, d_ptr->m_wrapMode);
+        d_ptr->m_wrapModeChanged = false;
     }
 }
 
 void GLTexture::generateMipmaps()
 {
-    Q_D(GLTexture);
-
-    if (d->m_canUseMipmaps && d->s_supportsFramebufferObjects)
-        glGenerateMipmap(d->m_target);
+    if (d_ptr->m_canUseMipmaps && d_ptr->s_supportsFramebufferObjects)
+        glGenerateMipmap(d_ptr->m_target);
 }
 
 void GLTexture::unbind()
 {
-    Q_D(GLTexture);
-    glBindTexture(d->m_target, 0);
+    glBindTexture(d_ptr->m_target, 0);
 }
 
 void GLTexture::render(const QRect& rect)
@@ -529,16 +519,17 @@ void GLTexture::render(const QRect& rect)
 
 void GLTexture::render(const QRegion& region, const QRect& rect, bool hardwareClipping)
 {
-    Q_D(GLTexture);
-    if (rect.isEmpty())
-        return; // nothing to paint and m_vbo is likely nullptr and d->m_cachedSize empty as well,
-                // #337090
-    if (rect.size() != d->m_cachedSize) {
-        d->m_cachedSize = rect.size();
+    if (rect.isEmpty()) {
+        // nothing to paint. m_vbo is likely nullptr and d_ptr->m_cachedSize empty as well, #337090
+        return;
+    }
+
+    if (rect.size() != d_ptr->m_cachedSize) {
+        d_ptr->m_cachedSize = rect.size();
         QRect r(rect);
         r.moveTo(0, 0);
-        if (!d->m_vbo) {
-            d->m_vbo = std::make_unique<GLVertexBuffer>(KWin::GLVertexBuffer::Static);
+        if (!d_ptr->m_vbo) {
+            d_ptr->m_vbo = std::make_unique<GLVertexBuffer>(KWin::GLVertexBuffer::Static);
         }
 
         const float verts[4 * 2]
@@ -557,47 +548,42 @@ void GLTexture::render(const QRegion& region, const QRect& rect, bool hardwareCl
 
         const float texcoords[4 * 2]
             = {0.0f,
-               d->m_yInverted ? 0.0f : texHeight, // y needs to be swapped (normalized coords)
+               d_ptr->m_yInverted ? 0.0f : texHeight, // y needs to be swapped (normalized coords)
                0.0f,
-               d->m_yInverted ? texHeight : 0.0f,
+               d_ptr->m_yInverted ? texHeight : 0.0f,
                texWidth,
-               d->m_yInverted ? 0.0f : texHeight,
+               d_ptr->m_yInverted ? 0.0f : texHeight,
                texWidth,
-               d->m_yInverted ? texHeight : 0.0f};
+               d_ptr->m_yInverted ? texHeight : 0.0f};
 
-        d->m_vbo->setData(4, 2, verts, texcoords);
+        d_ptr->m_vbo->setData(4, 2, verts, texcoords);
     }
-    d->m_vbo->render(region, GL_TRIANGLE_STRIP, hardwareClipping);
+    d_ptr->m_vbo->render(region, GL_TRIANGLE_STRIP, hardwareClipping);
 }
 
 GLuint GLTexture::texture() const
 {
-    Q_D(const GLTexture);
-    return d->m_texture;
+    return d_ptr->m_texture;
 }
 
 GLenum GLTexture::target() const
 {
-    Q_D(const GLTexture);
-    return d->m_target;
+    return d_ptr->m_target;
 }
 
 GLenum GLTexture::filter() const
 {
-    Q_D(const GLTexture);
-    return d->m_filter;
+    return d_ptr->m_filter;
 }
 
 GLenum GLTexture::internalFormat() const
 {
-    Q_D(const GLTexture);
-    return d->m_internalFormat;
+    return d_ptr->m_internalFormat;
 }
 
 void GLTexture::clear()
 {
-    Q_D(GLTexture);
-    Q_ASSERT(!d->m_foreign);
+    Q_ASSERT(!d_ptr->m_foreign);
     if (!GLTexturePrivate::s_fbo && GLFramebuffer::supported()
         && GLPlatform::instance()->driver() != Driver_Catalyst) // fail. -> bug #323065
         glGenFramebuffers(1, &GLTexturePrivate::s_fbo);
@@ -610,7 +596,7 @@ void GLTexture::clear()
             glBindFramebuffer(GL_FRAMEBUFFER, GLTexturePrivate::s_fbo);
         glClearColor(0, 0, 0, 0);
         glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, d->m_texture, 0);
+            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, d_ptr->m_texture, 0);
         glClear(GL_COLOR_BUFFER_BIT);
         if (GLTexturePrivate::s_fbo != previousFramebuffer)
             glBindFramebuffer(GL_FRAMEBUFFER, previousFramebuffer);
@@ -629,7 +615,7 @@ void GLTexture::clear()
                                 GL_UNSIGNED_INT_8_8_8_8_REV,
                                 buffer.data());
             } else {
-                const GLenum format = d->s_supportsARGB32 ? GL_BGRA_EXT : GL_RGBA;
+                const GLenum format = d_ptr->s_supportsARGB32 ? GL_BGRA_EXT : GL_RGBA;
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
                                 0,
@@ -647,25 +633,22 @@ void GLTexture::clear()
 
 bool GLTexture::isDirty() const
 {
-    Q_D(const GLTexture);
-    return d->m_markedDirty;
+    return d_ptr->m_markedDirty;
 }
 
 void GLTexture::setFilter(GLenum filter)
 {
-    Q_D(GLTexture);
-    if (filter != d->m_filter) {
-        d->m_filter = filter;
-        d->m_filterChanged = true;
+    if (filter != d_ptr->m_filter) {
+        d_ptr->m_filter = filter;
+        d_ptr->m_filterChanged = true;
     }
 }
 
 void GLTexture::setWrapMode(GLenum mode)
 {
-    Q_D(GLTexture);
-    if (mode != d->m_wrapMode) {
-        d->m_wrapMode = mode;
-        d->m_wrapModeChanged = true;
+    if (mode != d_ptr->m_wrapMode) {
+        d_ptr->m_wrapMode = mode;
+        d_ptr->m_wrapModeChanged = true;
     }
 }
 
@@ -676,8 +659,7 @@ void GLTexturePrivate::onDamage()
 
 void GLTexture::setDirty()
 {
-    Q_D(GLTexture);
-    d->m_markedDirty = true;
+    d_ptr->m_markedDirty = true;
 }
 
 void GLTexturePrivate::updateMatrix()
@@ -701,52 +683,45 @@ void GLTexturePrivate::updateMatrix()
 
 bool GLTexture::isYInverted() const
 {
-    Q_D(const GLTexture);
-    return d->m_yInverted;
+    return d_ptr->m_yInverted;
 }
 
 void GLTexture::setYInverted(bool inverted)
 {
-    Q_D(GLTexture);
-    if (d->m_yInverted == inverted)
+    if (d_ptr->m_yInverted == inverted)
         return;
 
-    d->m_yInverted = inverted;
-    d->updateMatrix();
+    d_ptr->m_yInverted = inverted;
+    d_ptr->updateMatrix();
 }
 
 void GLTexture::setSwizzle(GLenum red, GLenum green, GLenum blue, GLenum alpha)
 {
-    Q_D(GLTexture);
-
     if (!GLPlatform::instance()->isGLES()) {
         const GLuint swizzle[] = {red, green, blue, alpha};
         glTexParameteriv(
-            d->m_target, GL_TEXTURE_SWIZZLE_RGBA, reinterpret_cast<const GLint*>(swizzle));
+            d_ptr->m_target, GL_TEXTURE_SWIZZLE_RGBA, reinterpret_cast<const GLint*>(swizzle));
     } else {
-        glTexParameteri(d->m_target, GL_TEXTURE_SWIZZLE_R, red);
-        glTexParameteri(d->m_target, GL_TEXTURE_SWIZZLE_G, green);
-        glTexParameteri(d->m_target, GL_TEXTURE_SWIZZLE_B, blue);
-        glTexParameteri(d->m_target, GL_TEXTURE_SWIZZLE_A, alpha);
+        glTexParameteri(d_ptr->m_target, GL_TEXTURE_SWIZZLE_R, red);
+        glTexParameteri(d_ptr->m_target, GL_TEXTURE_SWIZZLE_G, green);
+        glTexParameteri(d_ptr->m_target, GL_TEXTURE_SWIZZLE_B, blue);
+        glTexParameteri(d_ptr->m_target, GL_TEXTURE_SWIZZLE_A, alpha);
     }
 }
 
 int GLTexture::width() const
 {
-    Q_D(const GLTexture);
-    return d->m_size.width();
+    return d_ptr->m_size.width();
 }
 
 int GLTexture::height() const
 {
-    Q_D(const GLTexture);
-    return d->m_size.height();
+    return d_ptr->m_size.height();
 }
 
 QMatrix4x4 GLTexture::matrix(TextureCoordinateType type) const
 {
-    Q_D(const GLTexture);
-    return d->m_matrix[type];
+    return d_ptr->m_matrix[type];
 }
 
 bool GLTexture::framebufferObjectSupported()
