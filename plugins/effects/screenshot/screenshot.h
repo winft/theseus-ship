@@ -98,7 +98,7 @@ private:
     std::vector<ScreenShotScreenData> m_screenScreenShots;
 
     QScopedPointer<ScreenShotDBusInterface2> m_dbusInterface2;
-    EffectScreen* m_paintedScreen = nullptr;
+    EffectScreen const* m_paintedScreen{nullptr};
 };
 
 } // namespace KWin

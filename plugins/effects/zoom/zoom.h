@@ -94,7 +94,7 @@ private:
     };
 
     GLTexture* ensureCursorTexture();
-    OffscreenData* ensureOffscreenData(EffectScreen* screen);
+    OffscreenData* ensureOffscreenData(EffectScreen const* screen);
     void markCursorTextureDirty();
 
 #if HAVE_ACCESSIBILITY
@@ -127,7 +127,7 @@ private:
     int xMove, yMove;
     double moveFactor;
     std::chrono::milliseconds lastPresentTime;
-    std::map<EffectScreen*, OffscreenData> m_offscreenData;
+    std::map<EffectScreen const*, OffscreenData> m_offscreenData;
 };
 
 } // namespace

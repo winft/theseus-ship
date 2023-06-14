@@ -70,7 +70,7 @@ private:
                 const QMatrix4x4& screenProjection,
                 bool isDock,
                 QRect windowRect);
-    void uploadRegion(QVector2D*& map, const QRegion& region, const int downSampleIterations);
+    void uploadRegion(QVector2D*& map, QRegion const& region, int const downSampleIterations);
     void
     uploadGeometry(GLVertexBuffer* vbo, const QRegion& blurRegion, const QRegion& windowRegion);
     void generateNoiseTexture();

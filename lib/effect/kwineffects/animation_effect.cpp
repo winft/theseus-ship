@@ -235,9 +235,10 @@ quint64 AnimationEffect::p_animate(EffectWindow* w,
                 this,
                 &AnimationEffect::_windowExpandedGeometryChanged);
     }
-    AniMap::iterator it = d->m_animations.find(w);
-    if (it == d->m_animations.end())
+    auto it = d->m_animations.find(w);
+    if (it == d->m_animations.end()) {
         it = d->m_animations.insert(w, QPair<QList<AniData>, QRect>(QList<AniData>(), QRect()));
+    }
 
     FullScreenEffectLockPtr fullscreen;
     if (fullScreenEffect) {
@@ -291,27 +292,31 @@ quint64 AnimationEffect::p_animate(EffectWindow* w,
     if (delay > 0) {
         QTimer::singleShot(delay, this, &AnimationEffect::triggerRepaint);
         const QSize& s = effects->virtualScreenSize();
-        if (waitAtSource)
+        if (waitAtSource) {
             w->addLayerRepaint(0, 0, s.width(), s.height());
+        }
     } else {
         triggerRepaint();
     }
+
     if (shader) {
         OffscreenEffect::redirect(w);
     }
+
     return ret_id;
 }
 
 bool AnimationEffect::retarget(quint64 animationId, FPx2 newTarget, int newRemainingTime)
 {
     Q_D(AnimationEffect);
-    if (animationId == d->m_justEndedAnimation)
-        return false; // this is just ending, do not try to retarget it
-    for (AniMap::iterator entry = d->m_animations.begin(), mapEnd = d->m_animations.end();
-         entry != mapEnd;
+    if (animationId == d->m_justEndedAnimation) {
+        // this is just ending, do not try to retarget it
+        return false;
+    }
+
+    for (auto entry = d->m_animations.begin(), mapEnd = d->m_animations.end(); entry != mapEnd;
          ++entry) {
-        for (QList<AniData>::iterator anim = entry->first.begin(), animEnd = entry->first.end();
-             anim != animEnd;
+        for (auto anim = entry->first.begin(), animEnd = entry->first.end(); anim != animEnd;
              ++anim) {
             if (anim->id == animationId) {
                 anim->from.set(interpolated(*anim, 0), interpolated(*anim, 1));
@@ -336,11 +341,9 @@ bool AnimationEffect::freezeInTime(quint64 animationId, qint64 frozenTime)
     if (animationId == d->m_justEndedAnimation) {
         return false; // this is just ending, do not try to retarget it
     }
-    for (AniMap::iterator entry = d->m_animations.begin(), mapEnd = d->m_animations.end();
-         entry != mapEnd;
+    for (auto entry = d->m_animations.begin(), mapEnd = d->m_animations.end(); entry != mapEnd;
          ++entry) {
-        for (QList<AniData>::iterator anim = entry->first.begin(), animEnd = entry->first.end();
-             anim != animEnd;
+        for (auto anim = entry->first.begin(), animEnd = entry->first.end(); anim != animEnd;
              ++anim) {
             if (anim->id == animationId) {
                 if (frozenTime >= 0) {
@@ -417,13 +420,14 @@ bool AnimationEffect::complete(quint64 animationId)
 bool AnimationEffect::cancel(quint64 animationId)
 {
     Q_D(AnimationEffect);
-    if (animationId == d->m_justEndedAnimation)
-        return true; // this is just ending, do not try to cancel it but fake success
-    for (AniMap::iterator entry = d->m_animations.begin(), mapEnd = d->m_animations.end();
-         entry != mapEnd;
+    if (animationId == d->m_justEndedAnimation) {
+        // this is just ending, do not try to cancel it but fake success
+        return true;
+    }
+
+    for (auto entry = d->m_animations.begin(), mapEnd = d->m_animations.end(); entry != mapEnd;
          ++entry) {
-        for (QList<AniData>::iterator anim = entry->first.begin(), animEnd = entry->first.end();
-             anim != animEnd;
+        for (auto anim = entry->first.begin(), animEnd = entry->first.end(); anim != animEnd;
              ++anim) {
             if (anim->id == animationId) {
                 if (anim->shader
@@ -471,22 +475,24 @@ void AnimationEffect::prePaintScreen(ScreenPrePaintData& data,
 
 static int xCoord(const QRect& r, int flag)
 {
-    if (flag & AnimationEffect::Left)
+    if (flag & AnimationEffect::Left) {
         return r.x();
-    else if (flag & AnimationEffect::Right)
+    }
+    if (flag & AnimationEffect::Right) {
         return r.right();
-    else
-        return r.x() + r.width() / 2;
+    }
+    return r.x() + r.width() / 2;
 }
 
 static int yCoord(const QRect& r, int flag)
 {
-    if (flag & AnimationEffect::Top)
+    if (flag & AnimationEffect::Top) {
         return r.y();
-    else if (flag & AnimationEffect::Bottom)
+    }
+    if (flag & AnimationEffect::Bottom) {
         return r.bottom();
-    else
-        return r.y() + r.height() / 2;
+    }
+    return r.y() + r.height() / 2;
 }
 
 QRect AnimationEffect::clipRect(const QRect& geo, const AniData& anim) const
@@ -499,7 +505,7 @@ QRect AnimationEffect::clipRect(const QRect& geo, const AniData& anim) const
     if (anim.from[1] < 1.0 || anim.to[1] < 1.0) {
         clip.setHeight(clip.height() * ratio[1]);
     }
-    const QRect center = geo.adjusted(
+    auto const center = geo.adjusted(
         clip.width() / 2, clip.height() / 2, -(clip.width() + 1) / 2, -(clip.height() + 1) / 2);
     const int x[2] = {xCoord(center, metaData(SourceAnchor, anim.meta)),
                       xCoord(center, metaData(TargetAnchor, anim.meta))};
@@ -523,7 +529,7 @@ void AnimationEffect::prePaintWindow(EffectWindow* w,
                                      std::chrono::milliseconds presentTime)
 {
     Q_D(AnimationEffect);
-    AniMap::const_iterator entry = d->m_animations.constFind(w);
+    auto entry = d->m_animations.constFind(w);
     if (entry != d->m_animations.constEnd()) {
         for (QList<AniData>::const_iterator anim = entry->first.constBegin();
              anim != entry->first.constEnd();
@@ -554,7 +560,7 @@ static inline float geometryCompensation(int flags, float v)
 void AnimationEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
 {
     Q_D(AnimationEffect);
-    AniMap::const_iterator entry = d->m_animations.constFind(w);
+    auto entry = d->m_animations.constFind(w);
     if (entry != d->m_animations.constEnd()) {
         for (QList<AniData>::const_iterator anim = entry->first.constBegin();
              anim != entry->first.constEnd();
@@ -620,7 +626,7 @@ void AnimationEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
                 break;
             }
             case Position: {
-                const QRect geo = w->frameGeometry();
+                auto const geo = w->frameGeometry();
                 const float prgrs = progress(*anim);
                 if (anim->from[0] >= 0.0 && anim->to[0] >= 0.0) {
                     float dest = interpolated(*anim, 0);
@@ -641,7 +647,7 @@ void AnimationEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
                 const float prgrs = progress(*anim);
                 data.setRotationAngle(anim->from[0] + prgrs * (anim->to[0] - anim->from[0]));
 
-                const QRect geo = w->rect();
+                auto const geo = w->rect();
                 const uint sAnchor = metaData(SourceAnchor, anim->meta),
                            tAnchor = metaData(TargetAnchor, anim->meta);
                 QPointF pt(xCoord(geo, sAnchor), yCoord(geo, sAnchor));
@@ -841,17 +847,14 @@ void AnimationEffect::setMetaData(MetaType type, uint value, uint& meta)
 void AnimationEffect::triggerRepaint()
 {
     Q_D(AnimationEffect);
-    for (AniMap::const_iterator entry = d->m_animations.constBegin(),
-                                mapEnd = d->m_animations.constEnd();
-         entry != mapEnd;
-         ++entry)
+    for (auto entry = d->m_animations.constBegin(); entry != d->m_animations.constEnd(); ++entry) {
         *const_cast<QRect*>(&(entry->second)) = QRect();
+    }
     updateLayerRepaints();
     if (d->m_needSceneRepaint) {
         effects->addRepaintFull();
     } else {
-        AniMap::const_iterator it = d->m_animations.constBegin(), end = d->m_animations.constEnd();
-        for (; it != end; ++it) {
+        for (auto it = d->m_animations.constBegin(); it != d->m_animations.constEnd(); ++it) {
             it.key()->addLayerRepaint(it->second);
         }
     }
@@ -879,23 +882,21 @@ void AnimationEffect::updateLayerRepaints()
 {
     Q_D(AnimationEffect);
     d->m_needSceneRepaint = false;
-    for (AniMap::const_iterator entry = d->m_animations.constBegin(),
-                                mapEnd = d->m_animations.constEnd();
-         entry != mapEnd;
-         ++entry) {
-        if (!entry->second.isNull())
+    for (auto entry = d->m_animations.constBegin(); entry != d->m_animations.constEnd(); ++entry) {
+        if (!entry->second.isNull()) {
             continue;
+        }
+
         float f[2] = {1.0, 1.0};
         float t[2] = {0.0, 0.0};
         bool createRegion = false;
         QList<QRect> rects;
         QRect* layerRect = const_cast<QRect*>(&(entry->second));
-        for (QList<AniData>::const_iterator anim = entry->first.constBegin(),
-                                            animEnd = entry->first.constEnd();
-             anim != animEnd;
-             ++anim) {
-            if (anim->startTime > clock())
+
+        for (auto anim = entry->first.constBegin(); anim != entry->first.constEnd(); ++anim) {
+            if (anim->startTime > clock()) {
                 continue;
+            }
             switch (anim->attribute) {
             case Opacity:
             case Brightness:
@@ -910,9 +911,10 @@ void AnimationEffect::updateLayerRepaints()
                 *layerRect = QRect(QPoint(0, 0), effects->virtualScreenSize());
                 goto region_creation; // sic! no need to do anything else
             case Generic:
-                d->m_needSceneRepaint
-                    = true; // we don't know whether this will change visual stacking order
-                return;     // sic! no need to do anything else
+                // we don't know whether this will change visual stacking order
+                // sic! no need to do anything else
+                d->m_needSceneRepaint = true;
+                return;
             case Translation:
             case Position: {
                 createRegion = true;
@@ -978,17 +980,22 @@ void AnimationEffect::updateLayerRepaints()
         }
     region_creation:
         if (createRegion) {
-            const QRect geo = entry.key()->expandedGeometry();
-            if (rects.isEmpty())
+            auto const geo = entry.key()->expandedGeometry();
+            if (rects.isEmpty()) {
                 rects << geo;
-            QList<QRect>::const_iterator r, rEnd = rects.constEnd();
-            for (r = rects.constBegin(); r != rEnd; ++r) { // transform
+            }
+
+            auto r = rects.constEnd();
+            auto rEnd = r;
+
+            for (r = rects.constBegin(); r != rEnd; ++r) {
+                // transform
                 const_cast<QRect*>(&(*r))->setSize(
                     QSize(qRound(r->width() * f[0]), qRound(r->height() * f[1])));
-                const_cast<QRect*>(&(*r))->translate(
-                    t[0], t[1]); // "const_cast" - don't do that at home, kids ;-)
+                const_cast<QRect*>(&(*r))->translate(t[0], t[1]);
             }
-            QRect rect = rects.at(0);
+
+            auto rect = rects.at(0);
             if (rects.count() > 1) {
                 for (r = rects.constBegin() + 1; r != rEnd; ++r) // unite
                     rect |= *r;
@@ -1006,13 +1013,14 @@ void AnimationEffect::updateLayerRepaints()
 void AnimationEffect::_windowExpandedGeometryChanged(KWin::EffectWindow* w)
 {
     Q_D(AnimationEffect);
-    AniMap::const_iterator entry = d->m_animations.constFind(w);
-    if (entry != d->m_animations.constEnd()) {
+
+    if (auto entry = d->m_animations.constFind(w); entry != d->m_animations.constEnd()) {
         *const_cast<QRect*>(&(entry->second)) = QRect();
         updateLayerRepaints();
-        if (!entry->second
-                 .isNull()) // actually got updated, ie. is in use - ensure it get's a repaint
+        if (!entry->second.isNull()) {
+            // actually got updated, ie. is in use - ensure it get's a repaint
             w->addLayerRepaint(entry->second);
+        }
     }
 }
 
@@ -1025,7 +1033,7 @@ void AnimationEffect::_windowClosed(EffectWindow* w)
         return;
     }
 
-    QList<AniData>& animations = (*it).first;
+    auto& animations = (*it).first;
     for (auto animationIt = animations.begin(); animationIt != animations.end(); ++animationIt) {
         if (animationIt->keepAlive) {
             animationIt->deletedRef = EffectWindowDeletedRef(w);
@@ -1042,24 +1050,25 @@ void AnimationEffect::_windowDeleted(EffectWindow* w)
 QString AnimationEffect::debug(const QString& /*parameter*/) const
 {
     Q_D(const AnimationEffect);
-    QString dbg;
-    if (d->m_animations.isEmpty())
-        dbg = QStringLiteral("No window is animated");
-    else {
-        AniMap::const_iterator entry = d->m_animations.constBegin(),
-                               mapEnd = d->m_animations.constEnd();
-        for (; entry != mapEnd; ++entry) {
-            QString caption
-                = entry.key()->isDeleted() ? QStringLiteral("[Deleted]") : entry.key()->caption();
-            if (caption.isEmpty())
-                caption = QStringLiteral("[Untitled]");
-            dbg += QLatin1String("Animating window: ") + caption + QLatin1Char('\n');
-            QList<AniData>::const_iterator anim = entry->first.constBegin(),
-                                           animEnd = entry->first.constEnd();
-            for (; anim != animEnd; ++anim)
-                dbg += anim->debugInfo();
-        }
+
+    if (d->m_animations.isEmpty()) {
+        return QStringLiteral("No window is animated");
     }
+
+    QString dbg;
+
+    for (auto entry = d->m_animations.constBegin(); entry != d->m_animations.constEnd(); ++entry) {
+        auto caption
+            = entry.key()->isDeleted() ? QStringLiteral("[Deleted]") : entry.key()->caption();
+        if (caption.isEmpty()) {
+            caption = QStringLiteral("[Untitled]");
+        }
+        dbg += QLatin1String("Animating window: ") + caption + QLatin1Char('\n');
+
+        for (auto anim = entry->first.constBegin(); anim != entry->first.constEnd(); ++anim)
+            dbg += anim->debugInfo();
+    }
+
     return dbg;
 }
 

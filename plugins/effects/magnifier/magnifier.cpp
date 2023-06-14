@@ -107,70 +107,77 @@ void MagnifierEffect::prePaintScreen(ScreenPrePaintData& data,
 
 void MagnifierEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
-    effects->paintScreen(mask, region, data); // paint normal screen
-    if (m_zoom != 1.0) {
-        // get the right area from the current rendered screen
-        const QRect area = magnifierArea();
-        const QPoint cursor = cursorPos();
+    effects->paintScreen(mask, region, data);
 
-        QRect srcArea(cursor.x() - static_cast<double>(area.width()) / (m_zoom * 2),
-                      cursor.y() - static_cast<double>(area.height()) / (m_zoom * 2),
-                      static_cast<double>(area.width()) / m_zoom,
-                      static_cast<double>(area.height()) / m_zoom);
-        if (effects->isOpenGLCompositing()) {
-            m_fbo->blitFromFramebuffer(srcArea);
-            // paint magnifier
-            m_texture->bind();
-            auto s = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
-            QMatrix4x4 mvp;
-            const QSize size = effects->virtualScreenSize();
-            mvp.ortho(0, size.width(), size.height(), 0, 0, 65535);
-            mvp.translate(area.x(), area.y());
-            s->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-            m_texture->render(area);
-            ShaderManager::instance()->popShader();
-            m_texture->unbind();
-            QVector<float> verts;
-            GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
-            vbo->reset();
-            vbo->setColor(QColor(0, 0, 0));
-            const QRectF areaF = area;
-            // top frame
-            verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-            verts << areaF.left() - FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-            verts << areaF.left() - FRAME_WIDTH << areaF.top();
-            verts << areaF.left() - FRAME_WIDTH << areaF.top();
-            verts << areaF.right() + FRAME_WIDTH << areaF.top();
-            verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-            // left frame
-            verts << areaF.left() << areaF.top() - FRAME_WIDTH;
-            verts << areaF.left() - FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-            verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-            verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-            verts << areaF.left() << areaF.bottom() + FRAME_WIDTH;
-            verts << areaF.left() << areaF.top() - FRAME_WIDTH;
-            // right frame
-            verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-            verts << areaF.right() << areaF.top() - FRAME_WIDTH;
-            verts << areaF.right() << areaF.bottom() + FRAME_WIDTH;
-            verts << areaF.right() << areaF.bottom() + FRAME_WIDTH;
-            verts << areaF.right() + FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-            verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-            // bottom frame
-            verts << areaF.right() + FRAME_WIDTH << areaF.bottom();
-            verts << areaF.left() - FRAME_WIDTH << areaF.bottom();
-            verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-            verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-            verts << areaF.right() + FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-            verts << areaF.right() + FRAME_WIDTH << areaF.bottom();
-            vbo->setData(verts.size() / 2, 2, verts.constData(), nullptr);
-
-            ShaderBinder binder(ShaderTrait::UniformColor);
-            binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
-                                        data.projectionMatrix());
-            vbo->render(GL_TRIANGLES);
-        }
+    if (m_zoom == 1.0 || !effects->isOpenGLCompositing()) {
+        return;
     }
+
+    // get the right area from the current rendered screen
+    auto const area = magnifierArea();
+    auto const cursor = cursorPos();
+
+    QRect srcArea(cursor.x() - static_cast<double>(area.width()) / (m_zoom * 2),
+                  cursor.y() - static_cast<double>(area.height()) / (m_zoom * 2),
+                  static_cast<double>(area.width()) / m_zoom,
+                  static_cast<double>(area.height()) / m_zoom);
+
+    m_fbo->blitFromFramebuffer(srcArea);
+
+    // paint magnifier
+    m_texture->bind();
+
+    auto s = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
+    auto const size = effects->virtualScreenSize();
+
+    QMatrix4x4 mvp;
+    mvp.ortho(0, size.width(), size.height(), 0, 0, 65535);
+    mvp.translate(area.x(), area.y());
+
+    s->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+    m_texture->render(area);
+    ShaderManager::instance()->popShader();
+    m_texture->unbind();
+
+    QVector<float> verts;
+    auto vbo = GLVertexBuffer::streamingBuffer();
+    vbo->reset();
+    vbo->setColor(QColor(0, 0, 0));
+    QRectF const areaF = area;
+
+    // top frame
+    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
+    verts << areaF.left() - FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
+    verts << areaF.left() - FRAME_WIDTH << areaF.top();
+    verts << areaF.left() - FRAME_WIDTH << areaF.top();
+    verts << areaF.right() + FRAME_WIDTH << areaF.top();
+    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
+    // left frame
+    verts << areaF.left() << areaF.top() - FRAME_WIDTH;
+    verts << areaF.left() - FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
+    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
+    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
+    verts << areaF.left() << areaF.bottom() + FRAME_WIDTH;
+    verts << areaF.left() << areaF.top() - FRAME_WIDTH;
+    // right frame
+    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
+    verts << areaF.right() << areaF.top() - FRAME_WIDTH;
+    verts << areaF.right() << areaF.bottom() + FRAME_WIDTH;
+    verts << areaF.right() << areaF.bottom() + FRAME_WIDTH;
+    verts << areaF.right() + FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
+    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
+    // bottom frame
+    verts << areaF.right() + FRAME_WIDTH << areaF.bottom();
+    verts << areaF.left() - FRAME_WIDTH << areaF.bottom();
+    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
+    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
+    verts << areaF.right() + FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
+    verts << areaF.right() + FRAME_WIDTH << areaF.bottom();
+    vbo->setData(verts.size() / 2, 2, verts.constData(), nullptr);
+
+    ShaderBinder binder(ShaderTrait::UniformColor);
+    binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
+    vbo->render(GL_TRIANGLES);
 }
 
 void MagnifierEffect::postPaintScreen()

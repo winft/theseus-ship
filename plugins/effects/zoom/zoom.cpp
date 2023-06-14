@@ -255,19 +255,22 @@ void ZoomEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseco
     effects->prePaintScreen(data, presentTime);
 }
 
-ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(EffectScreen* screen)
+ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(EffectScreen const* screen)
 {
-    const QRect rect = effects->renderTargetRect();
-    const qreal devicePixelRatio = effects->renderTargetScale();
-    const QSize nativeSize = rect.size() * devicePixelRatio;
+    auto const rect = effects->renderTargetRect();
+    auto const devicePixelRatio = effects->renderTargetScale();
+    auto const nativeSize = rect.size() * devicePixelRatio;
 
-    OffscreenData& data = m_offscreenData[effects->waylandDisplay() ? screen : nullptr];
+    // TODO(romangg): With nullptr this won't throw?
+    auto& data = m_offscreenData.at(effects->waylandDisplay() ? screen : nullptr);
+
     if (!data.texture || data.texture->size() != nativeSize) {
         data.texture.reset(new GLTexture(GL_RGBA8, nativeSize));
         data.texture->setFilter(GL_LINEAR);
         data.texture->setWrapMode(GL_CLAMP_TO_EDGE);
         data.framebuffer = std::make_unique<GLFramebuffer>(data.texture.get());
     }
+
     if (!data.vbo || data.viewport != rect) {
         data.vbo.reset(new GLVertexBuffer(GLVertexBuffer::Static));
         data.viewport = rect;
@@ -298,7 +301,7 @@ ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(EffectScreen* screen)
 
 void ZoomEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
-    OffscreenData* offscreenData = ensureOffscreenData(data.screen());
+    auto offscreenData = ensureOffscreenData(data.screen());
 
     // Render the scene in an offscreen texture and then upscale it.
     GLFramebuffer::pushRenderTarget(offscreenData->framebuffer.get());

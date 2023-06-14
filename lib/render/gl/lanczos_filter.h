@@ -76,15 +76,15 @@ public:
                 double width = winGeo.right() - left;
                 double height = winGeo.bottom() - top;
 
-                int tx = data.xTranslation() + w->x() + left * data.xScale();
-                int ty = data.yTranslation() + w->y() + top * data.yScale();
-                int tw = width * data.xScale();
-                int th = height * data.yScale();
-                const QRect textureRect(tx, ty, tw, th);
-                const bool hardwareClipping = !(QRegion(textureRect) - region).isEmpty();
+                auto tx = data.xTranslation() + w->x() + left * data.xScale();
+                auto ty = data.yTranslation() + w->y() + top * data.yScale();
+                auto tw = width * data.xScale();
+                auto th = height * data.yScale();
+                QRect const textureRect(tx, ty, tw, th);
+                auto const hardwareClipping = !(QRegion(textureRect) - region).isEmpty();
 
-                int sw = width;
-                int sh = height;
+                auto sw = width;
+                auto sh = height;
 
                 QRegion scissor = infiniteRegion();
                 if (hardwareClipping) {
@@ -104,14 +104,14 @@ public:
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-                        const qreal rgb = data.brightness() * data.opacity();
-                        const qreal a = data.opacity();
+                        auto const rgb = data.brightness() * data.opacity();
+                        auto const a = data.opacity();
 
                         ShaderBinder binder(QFlags({ShaderTrait::MapTexture,
                                                     ShaderTrait::Modulate,
                                                     ShaderTrait::AdjustSaturation}));
-                        GLShader* shader = binder.shader();
-                        QMatrix4x4 mvp = data.screenProjectionMatrix();
+                        auto shader = binder.shader();
+                        auto mvp = data.screenProjectionMatrix();
                         mvp.translate(textureRect.x(), textureRect.y());
                         shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
                         shader->setUniform(GLShader::ModulationConstant,
@@ -256,14 +256,14 @@ public:
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-                const qreal rgb = data.brightness() * data.opacity();
-                const qreal a = data.opacity();
+                auto const rgb = data.brightness() * data.opacity();
+                auto const a = data.opacity();
 
                 ShaderBinder binder(QFlags({ShaderTrait::MapTexture,
                                             ShaderTrait::Modulate,
                                             ShaderTrait::AdjustSaturation}));
-                GLShader* shader = binder.shader();
-                QMatrix4x4 mvp = data.screenProjectionMatrix();
+                auto shader = binder.shader();
+                auto mvp = data.screenProjectionMatrix();
                 mvp.translate(textureRect.x(), textureRect.y());
                 shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
                 shader->setUniform(GLShader::ModulationConstant, QVector4D(rgb, rgb, rgb, a));

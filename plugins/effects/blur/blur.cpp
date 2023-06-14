@@ -342,17 +342,17 @@ QRegion BlurEffect::blurRegion(const EffectWindow* w) const
 }
 
 void BlurEffect::uploadRegion(QVector2D*& map,
-                              const QRegion& region,
-                              const int downSampleIterations)
+                              QRegion const& region,
+                              int const downSampleIterations)
 {
     for (int i = 0; i <= downSampleIterations; i++) {
-        const int divisionRatio = (1 << i);
+        auto const divisionRatio = (1 << i);
 
         for (const QRect& r : region) {
-            const QVector2D topLeft(r.x() / divisionRatio, r.y() / divisionRatio);
-            const QVector2D topRight((r.x() + r.width()) / divisionRatio, r.y() / divisionRatio);
-            const QVector2D bottomLeft(r.x() / divisionRatio, (r.y() + r.height()) / divisionRatio);
-            const QVector2D bottomRight((r.x() + r.width()) / divisionRatio,
+            QVector2D const topLeft(r.x() / divisionRatio, r.y() / divisionRatio);
+            QVector2D const topRight((r.x() + r.width()) / divisionRatio, r.y() / divisionRatio);
+            QVector2D const bottomLeft(r.x() / divisionRatio, (r.y() + r.height()) / divisionRatio);
+            QVector2D const bottomRight((r.x() + r.width()) / divisionRatio,
                                         (r.y() + r.height()) / divisionRatio);
 
             // First triangle
@@ -372,20 +372,20 @@ void BlurEffect::uploadGeometry(GLVertexBuffer* vbo,
                                 const QRegion& blurRegion,
                                 const QRegion& windowRegion)
 {
-    const int vertexCount
+    auto const vertexCount
         = ((blurRegion.rectCount() * (m_downSampleIterations + 1)) + windowRegion.rectCount()) * 6;
-
-    if (!vertexCount)
+    if (!vertexCount) {
         return;
+    }
 
-    QVector2D* map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
+    auto map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
 
     uploadRegion(map, blurRegion, m_downSampleIterations);
     uploadRegion(map, windowRegion, 0);
 
     vbo->unmap();
 
-    const GLVertexAttrib layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};
+    GLVertexAttrib const layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};
 
     vbo->setAttribLayout(layout, 2, sizeof(QVector2D));
 }
@@ -453,64 +453,68 @@ void BlurEffect::prePaintWindow(EffectWindow* w,
 
 bool BlurEffect::shouldBlur(const EffectWindow* w, int mask, const WindowPaintData& data) const
 {
-    if (!m_renderTargetsValid || !m_shader || !m_shader->isValid())
+    if (!m_renderTargetsValid || !m_shader || !m_shader->isValid()) {
         return false;
-
-    if (effects->activeFullScreenEffect() && !w->data(WindowForceBlurRole).toBool())
+    }
+    if (effects->activeFullScreenEffect() && !w->data(WindowForceBlurRole).toBool()) {
         return false;
-
-    if (w->isDesktop())
+    }
+    if (w->isDesktop()) {
         return false;
+    }
 
-    bool scaled = !qFuzzyCompare(data.xScale(), 1.0) && !qFuzzyCompare(data.yScale(), 1.0);
-    bool translated = data.xTranslation() || data.yTranslation();
+    auto const scaled = !qFuzzyCompare(data.xScale(), 1.0) && !qFuzzyCompare(data.yScale(), 1.0);
+    auto const translated = data.xTranslation() || data.yTranslation();
 
     if ((scaled || (translated || (mask & PAINT_WINDOW_TRANSFORMED)))
-        && !w->data(WindowForceBlurRole).toBool())
+        && !w->data(WindowForceBlurRole).toBool()) {
         return false;
+    }
 
     return true;
 }
 
 void BlurEffect::drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data)
 {
-    if (shouldBlur(w, mask, data)) {
-        const QRect screen = effects->renderTargetRect();
-        auto shape = blurRegion(w).translated(w->pos());
-
-        // let's do the evil parts - someone wants to blur behind a transformed window
-        const bool translated = data.xTranslation() || data.yTranslation();
-        const bool scaled = data.xScale() != 1 || data.yScale() != 1;
-        if (scaled) {
-            QPoint pt = shape.boundingRect().topLeft();
-            QRegion scaledShape;
-            for (QRect r : shape) {
-                r.moveTo(pt.x() + (r.x() - pt.x()) * data.xScale() + data.xTranslation(),
-                         pt.y() + (r.y() - pt.y()) * data.yScale() + data.yTranslation());
-                r.setWidth(r.width() * data.xScale());
-                r.setHeight(r.height() * data.yScale());
-                scaledShape |= r;
-            }
-            shape = scaledShape;
-
-            // Only translated, not scaled
-        } else if (translated) {
-            shape = shape.translated(data.xTranslation(), data.yTranslation());
-        }
-
-        EffectWindow* modal = w->transientFor();
-        const bool transientForIsDock = (modal ? modal->isDock() : false);
-
-        shape &= region;
-        if (!shape.isEmpty()) {
-            doBlur(shape,
-                   screen,
-                   data.opacity(),
-                   data.screenProjectionMatrix(),
-                   w->isDock() || transientForIsDock,
-                   w->frameGeometry());
-        }
+    if (!shouldBlur(w, mask, data)) {
+        effects->drawWindow(w, mask, region, data);
+        return;
     }
+
+    auto const screen = effects->renderTargetRect();
+    auto shape = blurRegion(w).translated(w->pos());
+
+    // let's do the evil parts - someone wants to blur behind a transformed window
+    auto const translated = data.xTranslation() || data.yTranslation();
+    auto const scaled = data.xScale() != 1 || data.yScale() != 1;
+
+    if (scaled) {
+        auto pt = shape.boundingRect().topLeft();
+        QRegion scaledShape;
+
+        for (auto r : shape) {
+            r.moveTo(pt.x() + (r.x() - pt.x()) * data.xScale() + data.xTranslation(),
+                     pt.y() + (r.y() - pt.y()) * data.yScale() + data.yTranslation());
+            r.setWidth(r.width() * data.xScale());
+            r.setHeight(r.height() * data.yScale());
+            scaledShape |= r;
+        }
+
+        shape = scaledShape;
+    } else if (translated) {
+        // Only translated, not scaled
+        shape = shape.translated(data.xTranslation(), data.yTranslation());
+    }
+
+    auto modal = w->transientFor();
+    auto const transientForIsDock = (modal ? modal->isDock() : false);
+
+    doBlur(shape & region,
+           screen,
+           data.opacity(),
+           data.screenProjectionMatrix(),
+           w->isDock() || transientForIsDock,
+           w->frameGeometry());
 
     // Draw the window over the blurred area
     effects->drawWindow(w, mask, region, data);
@@ -550,14 +554,17 @@ void BlurEffect::doBlur(const QRegion& shape,
                         bool isDock,
                         QRect windowRect)
 {
+    if (shape.isEmpty()) {
+        return;
+    }
+
     // Blur would not render correctly on a secondary monitor because of wrong coordinates
     // BUG: 393723
-    const int xTranslate = -screen.x();
-    const int yTranslate = effects->virtualScreenSize().height() - screen.height() - screen.y();
+    auto const xTranslate = -screen.x();
+    auto const yTranslate = effects->virtualScreenSize().height() - screen.height() - screen.y();
 
-    const QRegion expandedBlurRegion = expand(shape) & expand(screen);
-
-    const bool useSRGB = m_renderTextures.front()->internalFormat() == GL_SRGB8_ALPHA8;
+    auto const expandedBlurRegion = expand(shape) & expand(screen);
+    auto const useSRGB = m_renderTextures.front()->internalFormat() == GL_SRGB8_ALPHA8;
 
     // Upload geometry for the down and upsample iterations
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();

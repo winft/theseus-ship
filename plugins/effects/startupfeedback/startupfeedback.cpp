@@ -151,19 +151,22 @@ bool StartupFeedbackEffect::supported()
 void StartupFeedbackEffect::reconfigure(Effect::ReconfigureFlags flags)
 {
     Q_UNUSED(flags)
-    KConfigGroup c = m_configWatcher->config()->group("FeedbackStyle");
-    const bool busyCursor = c.readEntry("BusyCursor", true);
+
+    auto c = m_configWatcher->config()->group("FeedbackStyle");
+    auto const busyCursor = c.readEntry("BusyCursor", true);
 
     c = m_configWatcher->config()->group("BusyCursorSettings");
     m_timeout = std::chrono::seconds(c.readEntry("Timeout", s_startupDefaultTimeout));
     m_startupInfo->setTimeout(m_timeout.count());
-    const bool busyBlinking = c.readEntry("Blinking", false);
-    const bool busyBouncing = c.readEntry("Bouncing", true);
-    if (!busyCursor)
+
+    auto const busyBlinking = c.readEntry("Blinking", false);
+    auto const busyBouncing = c.readEntry("Bouncing", true);
+
+    if (!busyCursor) {
         m_type = NoFeedback;
-    else if (busyBouncing)
+    } else if (busyBouncing) {
         m_type = BouncingFeedback;
-    else if (busyBlinking) {
+    } else if (busyBlinking) {
         m_type = BlinkingFeedback;
         if (effects->isOpenGLCompositing()) {
             ensureResources();
@@ -177,8 +180,10 @@ void StartupFeedbackEffect::reconfigure(Effect::ReconfigureFlags flags)
                 qCDebug(KWIN_STARTUPFEEDBACK) << "Blinking Shader is not valid";
             }
         }
-    } else
+    } else {
         m_type = PassiveFeedback;
+    }
+
     if (m_active) {
         stop();
         start(m_startups[m_currentStartup]);
@@ -188,16 +193,19 @@ void StartupFeedbackEffect::reconfigure(Effect::ReconfigureFlags flags)
 void StartupFeedbackEffect::prePaintScreen(ScreenPrePaintData& data,
                                            std::chrono::milliseconds presentTime)
 {
-    int time = 0;
+    auto time = 0;
+
     if (m_lastPresentTime.count()) {
         time = (presentTime - m_lastPresentTime).count();
     }
+
     m_lastPresentTime = presentTime;
 
-    if (m_active && effects->isCursorHidden()) {
-        stop();
-    }
     if (m_active) {
+        if (effects->isCursorHidden()) {
+            stop();
+        }
+
         // need the unclipped version
         switch (m_type) {
         case BouncingFeedback:
@@ -215,47 +223,56 @@ void StartupFeedbackEffect::prePaintScreen(ScreenPrePaintData& data,
                 % BLINKING_FRAMES;
             break;
         default:
-            break; // nothing
+            // nothing
+            break;
         }
     }
+
     effects->prePaintScreen(data, presentTime);
 }
 
 void StartupFeedbackEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
     effects->paintScreen(mask, region, data);
-    if (m_active) {
-        GLTexture* texture;
-        switch (m_type) {
-        case BouncingFeedback:
-            texture = m_bouncingTextures[FRAME_TO_BOUNCE_TEXTURE[m_frame]].get();
-            break;
-        case BlinkingFeedback: // fall through
-        case PassiveFeedback:
-            texture = m_texture.get();
-            break;
-        default:
-            return; // safety
-        }
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        texture->bind();
-        if (m_type == BlinkingFeedback && m_blinkingShader && m_blinkingShader->isValid()) {
-            const QColor& blinkingColor = BLINKING_COLORS[FRAME_TO_BLINKING_COLOR[m_frame]];
-            ShaderManager::instance()->pushShader(m_blinkingShader.get());
-            m_blinkingShader->setUniform(GLShader::Color, blinkingColor);
-        } else {
-            ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
-        }
-        QMatrix4x4 mvp = data.projectionMatrix();
-        mvp.translate(m_currentGeometry.x(), m_currentGeometry.y());
-        ShaderManager::instance()->getBoundShader()->setUniform(GLShader::ModelViewProjectionMatrix,
-                                                                mvp);
-        texture->render(m_currentGeometry);
-        ShaderManager::instance()->popShader();
-        texture->unbind();
-        glDisable(GL_BLEND);
+    if (!m_active) {
+        return;
     }
+
+    GLTexture* texture;
+    switch (m_type) {
+    case BouncingFeedback:
+        texture = m_bouncingTextures[FRAME_TO_BOUNCE_TEXTURE[m_frame]].get();
+        break;
+    case BlinkingFeedback: // fall through
+    case PassiveFeedback:
+        texture = m_texture.get();
+        break;
+    default:
+        // safety
+        return;
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    texture->bind();
+
+    if (m_type == BlinkingFeedback && m_blinkingShader && m_blinkingShader->isValid()) {
+        const QColor& blinkingColor = BLINKING_COLORS[FRAME_TO_BLINKING_COLOR[m_frame]];
+        ShaderManager::instance()->pushShader(m_blinkingShader.get());
+        m_blinkingShader->setUniform(GLShader::Color, blinkingColor);
+    } else {
+        ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
+    }
+
+    auto mvp = data.projectionMatrix();
+    mvp.translate(m_currentGeometry.x(), m_currentGeometry.y());
+
+    ShaderManager::instance()->getBoundShader()->setUniform(GLShader::ModelViewProjectionMatrix,
+                                                            mvp);
+    texture->render(m_currentGeometry);
+    ShaderManager::instance()->popShader();
+    texture->unbind();
+    glDisable(GL_BLEND);
 }
 
 void StartupFeedbackEffect::postPaintScreen()
@@ -331,10 +348,13 @@ void StartupFeedbackEffect::gotStartupChange(const QString& id, const QIcon& ico
 
 void StartupFeedbackEffect::start(const Startup& startup)
 {
-    if (m_type == NoFeedback || m_splashVisible || effects->isCursorHidden())
+    if (m_type == NoFeedback || m_splashVisible || effects->isCursorHidden()) {
         return;
-    if (!m_active)
+    }
+    if (!m_active) {
         effects->startMousePolling();
+    }
+
     m_active = true;
 
     // read details about the mouse-cursor theme define per default
@@ -345,23 +365,29 @@ void StartupFeedbackEffect::start(const Startup& startup)
     if (!iconSize) {
         iconSize = QApplication::style()->pixelMetric(QStyle::PM_SmallIconSize);
     }
-    // get ratio for bouncing cursor so we don't need to manually calculate the sizes for each icon
-    // size
-    if (m_type == BouncingFeedback)
+
+    // get bouncing cursor ratio so we don't need to manually calculate the sizes for each icon size
+    if (m_type == BouncingFeedback) {
         m_bounceSizesRatio = iconSize / 16.0;
-    const QPixmap iconPixmap = startup.icon.pixmap(iconSize);
+    }
+
+    auto const iconPixmap = startup.icon.pixmap(iconSize);
     prepareTextures(iconPixmap);
+
     m_dirtyRect = m_currentGeometry = feedbackRect();
     effects->addRepaint(m_dirtyRect);
 }
 
 void StartupFeedbackEffect::stop()
 {
-    if (m_active)
+    if (m_active) {
         effects->stopMousePolling();
+    }
+
     m_active = false;
     m_lastPresentTime = std::chrono::milliseconds::zero();
     effects->makeOpenGLContextCurrent();
+
     switch (m_type) {
     case BouncingFeedback:
         for (int i = 0; i < 5; ++i) {
@@ -373,16 +399,20 @@ void StartupFeedbackEffect::stop()
         m_texture.reset();
         break;
     case NoFeedback:
-        return; // don't want the full repaint
+        // don't want the full repaint
+        return;
     default:
-        break; // impossible
+        // impossible
+        break;
     }
+
     effects->addRepaintFull();
 }
 
 void StartupFeedbackEffect::prepareTextures(const QPixmap& pix)
 {
     effects->makeOpenGLContextCurrent();
+
     switch (m_type) {
     case BouncingFeedback:
         for (int i = 0; i < 5; ++i) {
@@ -407,15 +437,18 @@ void StartupFeedbackEffect::prepareTextures(const QPixmap& pix)
 
 QImage StartupFeedbackEffect::scalePixmap(const QPixmap& pm, const QSize& size) const
 {
-    const QSize& adjustedSize = size * m_bounceSizesRatio;
-    QImage scaled
+    auto const& adjustedSize = size * m_bounceSizesRatio;
+    auto scaled
         = pm.toImage().scaled(adjustedSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
     if (scaled.format() != QImage::Format_ARGB32_Premultiplied
-        && scaled.format() != QImage::Format_ARGB32)
+        && scaled.format() != QImage::Format_ARGB32) {
         scaled = scaled.convertToFormat(QImage::Format_ARGB32);
+    }
 
     QImage result(20 * m_bounceSizesRatio, 20 * m_bounceSizesRatio, QImage::Format_ARGB32);
     QPainter p(&result);
+
     p.setCompositionMode(QPainter::CompositionMode_Source);
     p.fillRect(result.rect(), Qt::transparent);
     p.drawImage((20 * m_bounceSizesRatio - adjustedSize.width()) / 2,
@@ -425,23 +458,28 @@ QImage StartupFeedbackEffect::scalePixmap(const QPixmap& pm, const QSize& size) 
                 0,
                 adjustedSize.width(),
                 adjustedSize.height() * m_bounceSizesRatio);
+
     return result;
 }
 
 QRect StartupFeedbackEffect::feedbackRect() const
 {
     int xDiff;
-    if (m_cursorSize <= 16)
+
+    if (m_cursorSize <= 16) {
         xDiff = 8 + 7;
-    else if (m_cursorSize <= 32)
+    } else if (m_cursorSize <= 32) {
         xDiff = 16 + 7;
-    else if (m_cursorSize <= 48)
+    } else if (m_cursorSize <= 48) {
         xDiff = 24 + 7;
-    else
+    } else {
         xDiff = 32 + 7;
+    }
+
     int yDiff = xDiff;
     GLTexture* texture = nullptr;
     int yOffset = 0;
+
     switch (m_type) {
     case BouncingFeedback:
         texture = m_bouncingTextures[FRAME_TO_BOUNCE_TEXTURE[m_frame]].get();
@@ -455,11 +493,13 @@ QRect StartupFeedbackEffect::feedbackRect() const
         // nothing
         break;
     }
-    const QPoint cursorPos = effects->cursorPos() + QPoint(xDiff, yDiff + yOffset);
-    QRect rect;
-    if (texture)
-        rect = QRect(cursorPos, texture->size());
-    return rect;
+
+    if (!texture) {
+        return {};
+    }
+
+    auto const cursorPos = effects->cursorPos() + QPoint(xDiff, yDiff + yOffset);
+    return {cursorPos, texture->size()};
 }
 
 bool StartupFeedbackEffect::isActive() const
@@ -467,4 +507,4 @@ bool StartupFeedbackEffect::isActive() const
     return m_active;
 }
 
-} // namespace
+}

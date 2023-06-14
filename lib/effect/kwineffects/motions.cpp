@@ -101,7 +101,7 @@ void WindowMotionManager::calculate(int time)
     if (!effects->animationTimeFactor()) {
         // Just skip it completely if the user wants no animation
         m_movingWindowsSet.clear();
-        QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.begin();
+        auto it = m_managedWindows.begin();
         for (; it != m_managedWindows.end(); ++it) {
             WindowMotion* motion = &it.value();
             motion->translation.finish();
@@ -109,7 +109,7 @@ void WindowMotionManager::calculate(int time)
         }
     }
 
-    QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.begin();
+    auto it = m_managedWindows.begin();
     for (; it != m_managedWindows.end(); ++it) {
         WindowMotion* motion = &it.value();
         int stopped = 0;
@@ -159,7 +159,7 @@ void WindowMotionManager::calculate(int time)
 
 void WindowMotionManager::reset()
 {
-    QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.begin();
+    auto it = m_managedWindows.begin();
     for (; it != m_managedWindows.end(); ++it) {
         WindowMotion* motion = &it.value();
         EffectWindow* window = it.key();
@@ -172,9 +172,10 @@ void WindowMotionManager::reset()
 
 void WindowMotionManager::reset(EffectWindow* w)
 {
-    QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.find(w);
-    if (it == m_managedWindows.end())
+    auto it = m_managedWindows.find(w);
+    if (it == m_managedWindows.end()) {
         return;
+    }
 
     WindowMotion* motion = &it.value();
     motion->translation.setTarget(w->pos());
@@ -185,9 +186,10 @@ void WindowMotionManager::reset(EffectWindow* w)
 
 void WindowMotionManager::apply(EffectWindow* w, WindowPaintData& data)
 {
-    QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.find(w);
-    if (it == m_managedWindows.end())
+    auto it = m_managedWindows.find(w);
+    if (it == m_managedWindows.end()) {
         return;
+    }
 
     // TODO: Take into account existing scale so that we can work with multiple managers (E.g.
     // Present windows + grid)
@@ -198,9 +200,11 @@ void WindowMotionManager::apply(EffectWindow* w, WindowPaintData& data)
 
 void WindowMotionManager::moveWindow(EffectWindow* w, QPoint target, double scale, double yScale)
 {
-    QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.find(w);
-    if (it == m_managedWindows.end())
-        abort(); // Notify the effect author that they did something wrong
+    auto it = m_managedWindows.find(w);
+    if (it == m_managedWindows.end()) {
+        // Notify the effect author that they did something wrong
+        abort();
+    }
 
     WindowMotion* motion = &it.value();
 
@@ -219,9 +223,10 @@ void WindowMotionManager::moveWindow(EffectWindow* w, QPoint target, double scal
 
 QRectF WindowMotionManager::transformedGeometry(EffectWindow* w) const
 {
-    QHash<EffectWindow*, WindowMotion>::const_iterator it = m_managedWindows.constFind(w);
-    if (it == m_managedWindows.end())
+    auto it = m_managedWindows.constFind(w);
+    if (it == m_managedWindows.end()) {
         return w->frameGeometry();
+    }
 
     const WindowMotion* motion = &it.value();
     QRectF geometry(w->frameGeometry());
@@ -237,9 +242,11 @@ QRectF WindowMotionManager::transformedGeometry(EffectWindow* w) const
 
 void WindowMotionManager::setTransformedGeometry(EffectWindow* w, const QRectF& geometry)
 {
-    QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.find(w);
-    if (it == m_managedWindows.end())
+    auto it = m_managedWindows.find(w);
+    if (it == m_managedWindows.end()) {
         return;
+    }
+
     WindowMotion* motion = &it.value();
     motion->translation.setValue(geometry.topLeft());
     motion->scale.setValue(
@@ -248,9 +255,10 @@ void WindowMotionManager::setTransformedGeometry(EffectWindow* w, const QRectF& 
 
 QRectF WindowMotionManager::targetGeometry(EffectWindow* w) const
 {
-    QHash<EffectWindow*, WindowMotion>::const_iterator it = m_managedWindows.constFind(w);
-    if (it == m_managedWindows.end())
+    auto it = m_managedWindows.constFind(w);
+    if (it == m_managedWindows.end()) {
         return w->frameGeometry();
+    }
 
     const WindowMotion* motion = &it.value();
     QRectF geometry(w->frameGeometry());

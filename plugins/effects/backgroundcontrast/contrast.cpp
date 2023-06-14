@@ -134,10 +134,10 @@ QRegion ContrastEffect::contrastRegion(const EffectWindow* w) const
 void ContrastEffect::uploadRegion(QVector2D*& map, const QRegion& region)
 {
     for (const QRect& r : region) {
-        const QVector2D topLeft(r.x(), r.y());
-        const QVector2D topRight(r.x() + r.width(), r.y());
-        const QVector2D bottomLeft(r.x(), r.y() + r.height());
-        const QVector2D bottomRight(r.x() + r.width(), r.y() + r.height());
+        QVector2D const topLeft(r.x(), r.y());
+        QVector2D const topRight(r.x() + r.width(), r.y());
+        QVector2D const bottomLeft(r.x(), r.y() + r.height());
+        QVector2D const bottomRight(r.x() + r.width(), r.y() + r.height());
 
         // First triangle
         *(map++) = topRight;
@@ -153,15 +153,16 @@ void ContrastEffect::uploadRegion(QVector2D*& map, const QRegion& region)
 
 void ContrastEffect::uploadGeometry(GLVertexBuffer* vbo, const QRegion& region)
 {
-    const int vertexCount = region.rectCount() * 6;
-    if (!vertexCount)
+    auto const vertexCount = region.rectCount() * 6;
+    if (!vertexCount) {
         return;
+    }
 
-    QVector2D* map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
+    auto map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
     uploadRegion(map, region);
     vbo->unmap();
 
-    const GLVertexAttrib layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};
+    GLVertexAttrib const layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};
 
     vbo->setAttribLayout(layout, 2, sizeof(QVector2D));
 }
@@ -170,21 +171,23 @@ bool ContrastEffect::shouldContrast(const EffectWindow* w,
                                     int mask,
                                     const WindowPaintData& data) const
 {
-    if (!shader || !shader->isValid())
+    if (!shader || !shader->isValid()) {
         return false;
-
-    if (effects->activeFullScreenEffect() && !w->data(WindowForceBackgroundContrastRole).toBool())
+    }
+    if (effects->activeFullScreenEffect() && !w->data(WindowForceBackgroundContrastRole).toBool()) {
         return false;
-
-    if (w->isDesktop())
+    }
+    if (w->isDesktop()) {
         return false;
+    }
 
-    bool scaled = !qFuzzyCompare(data.xScale(), 1.0) && !qFuzzyCompare(data.yScale(), 1.0);
-    bool translated = data.xTranslation() || data.yTranslation();
+    auto const scaled = !qFuzzyCompare(data.xScale(), 1.0) && !qFuzzyCompare(data.yScale(), 1.0);
+    auto const translated = data.xTranslation() || data.yTranslation();
 
     if ((scaled || (translated || (mask & PAINT_WINDOW_TRANSFORMED)))
-        && !w->data(WindowForceBackgroundContrastRole).toBool())
+        && !w->data(WindowForceBackgroundContrastRole).toBool()) {
         return false;
+    }
 
     return true;
 }
@@ -196,11 +199,12 @@ void ContrastEffect::drawWindow(EffectWindow* w,
 {
     if (shouldContrast(w, mask, data)) {
         auto const screen = effects->renderTargetRect();
-        QRegion shape = region & contrastRegion(w).translated(w->pos()) & screen;
+        auto shape = region & contrastRegion(w).translated(w->pos()) & screen;
 
         // let's do the evil parts - someone wants to blur behind a transformed window
-        const bool translated = data.xTranslation() || data.yTranslation();
-        const bool scaled = data.xScale() != 1 || data.yScale() != 1;
+        auto const translated = data.xTranslation() || data.yTranslation();
+        auto const scaled = data.xScale() != 1 || data.yScale() != 1;
+
         if (scaled) {
             QPoint pt = shape.boundingRect().topLeft();
             QRegion scaledShape;
@@ -234,13 +238,13 @@ void ContrastEffect::doContrast(EffectWindow* w,
                                 const float opacity,
                                 const QMatrix4x4& screenProjection)
 {
-    const QRegion actualShape = shape & screen;
-    const QRect r = actualShape.boundingRect();
+    auto const actualShape = shape & screen;
+    auto const r = actualShape.boundingRect();
 
     auto const scale = effects->renderTargetScale();
 
     // Upload geometry for the horizontal and vertical passes
-    GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
+    auto vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
     uploadGeometry(vbo, actualShape);
     vbo->bindArrays();
