@@ -29,14 +29,14 @@ class KWINEFFECTS_EXPORT QuickSceneView : public EffectQuickView
 {
     Q_OBJECT
     Q_PROPERTY(QuickSceneEffect* effect READ effect CONSTANT)
-    Q_PROPERTY(EffectScreen* screen READ screen CONSTANT)
+    Q_PROPERTY(EffectScreen const* screen READ screen CONSTANT)
 
 public:
-    explicit QuickSceneView(QuickSceneEffect* effect, EffectScreen* screen);
+    explicit QuickSceneView(QuickSceneEffect* effect, EffectScreen const* screen);
     ~QuickSceneView() override;
 
     QuickSceneEffect* effect() const;
-    EffectScreen* screen() const;
+    EffectScreen const* screen() const;
 
     QQuickItem* rootItem() const;
     void setRootItem(QQuickItem* item);
@@ -53,7 +53,7 @@ public Q_SLOTS:
 
 private:
     QuickSceneEffect* m_effect;
-    EffectScreen* m_screen;
+    EffectScreen const* m_screen;
     std::unique_ptr<QQuickItem> m_rootItem;
     bool m_dirty = false;
 };
@@ -94,7 +94,7 @@ public:
     /**
      * Returns the scene view on the specified screen
      */
-    QuickSceneView* viewForScreen(EffectScreen* screen) const;
+    QuickSceneView* viewForScreen(EffectScreen const* screen) const;
 
     /**
      * Returns the view at the specified @a pos in the global screen coordinates.
@@ -148,8 +148,9 @@ public:
     Q_INVOKABLE void checkItemDroppedOutOfScreen(const QPointF& globalPos, QQuickItem* item);
 
 Q_SIGNALS:
-    void itemDraggedOutOfScreen(QQuickItem* item, QList<EffectScreen*> screens);
-    void itemDroppedOutOfScreen(const QPointF& globalPos, QQuickItem* item, EffectScreen* screen);
+    void itemDraggedOutOfScreen(QQuickItem* item, QList<EffectScreen const*> screens);
+    void
+    itemDroppedOutOfScreen(QPointF const& globalPos, QQuickItem* item, EffectScreen const* screen);
     void activeViewChanged(KWin::QuickSceneView* view);
 
 protected:
@@ -159,13 +160,13 @@ protected:
      *
      * @see QQmlComponent::createWithInitialProperties()
      */
-    virtual QVariantMap initialProperties(EffectScreen* screen);
+    virtual QVariantMap initialProperties(EffectScreen const* screen);
 
 private:
-    void handleScreenAdded(EffectScreen* screen);
-    void handleScreenRemoved(EffectScreen* screen);
+    void handleScreenAdded(EffectScreen const* screen);
+    void handleScreenRemoved(EffectScreen const* screen);
 
-    void addScreen(EffectScreen* screen);
+    void addScreen(EffectScreen const* screen);
     void startInternal();
     void stopInternal();
 

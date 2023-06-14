@@ -23,7 +23,7 @@ class QuickSceneViewIncubator : public QQmlIncubator
 public:
     QuickSceneViewIncubator(
         QuickSceneEffect* effect,
-        EffectScreen* screen,
+        EffectScreen const* screen,
         const std::function<void(QuickSceneViewIncubator*)>& statusChangedCallback)
         : QQmlIncubator(QQmlIncubator::Asynchronous)
         , m_effect(effect)
@@ -51,7 +51,7 @@ public:
 
 private:
     QuickSceneEffect* m_effect;
-    EffectScreen* m_screen;
+    EffectScreen const* m_screen;
     std::function<void(QuickSceneViewIncubator*)> m_statusChangedCallback;
     std::unique_ptr<QuickSceneView> m_view;
 };
@@ -63,18 +63,18 @@ public:
     {
         return effect->d.get();
     }
-    bool isItemOnScreen(QQuickItem* item, EffectScreen* screen) const;
+    bool isItemOnScreen(QQuickItem* item, EffectScreen const* screen) const;
 
     std::unique_ptr<QQmlComponent> qmlComponent;
     QUrl source;
-    std::map<EffectScreen*, std::unique_ptr<QQmlIncubator>> incubators;
-    std::map<EffectScreen*, std::unique_ptr<QuickSceneView>> views;
+    std::map<EffectScreen const*, std::unique_ptr<QQmlIncubator>> incubators;
+    std::map<EffectScreen const*, std::unique_ptr<QuickSceneView>> views;
     QPointer<QuickSceneView> mouseImplicitGrab;
     bool running = false;
-    EffectScreen* paintedScreen = nullptr;
+    EffectScreen const* paintedScreen{nullptr};
 };
 
-bool QuickSceneEffectPrivate::isItemOnScreen(QQuickItem* item, EffectScreen* screen) const
+bool QuickSceneEffectPrivate::isItemOnScreen(QQuickItem* item, EffectScreen const* screen) const
 {
     if (!item || !screen || !views.contains(screen)) {
         return false;
@@ -84,7 +84,7 @@ bool QuickSceneEffectPrivate::isItemOnScreen(QQuickItem* item, EffectScreen* scr
     return item->window() == view->window();
 }
 
-QuickSceneView::QuickSceneView(QuickSceneEffect* effect, EffectScreen* screen)
+QuickSceneView::QuickSceneView(QuickSceneEffect* effect, EffectScreen const* screen)
     : EffectQuickView(effect)
     , m_effect(effect)
     , m_screen(screen)
@@ -124,7 +124,7 @@ QuickSceneEffect* QuickSceneView::effect() const
     return m_effect;
 }
 
-EffectScreen* QuickSceneView::screen() const
+EffectScreen const* QuickSceneView::screen() const
 {
     return m_screen;
 }
@@ -184,9 +184,9 @@ bool QuickSceneEffect::supported()
 
 void QuickSceneEffect::checkItemDraggedOutOfScreen(QQuickItem* item)
 {
-    const QRectF globalGeom
+    auto const globalGeom
         = QRectF(item->mapToGlobal(QPointF(0, 0)), QSizeF(item->width(), item->height()));
-    QList<EffectScreen*> screens;
+    QList<EffectScreen const*> screens;
 
     for (auto const& [screen, view] : d->views) {
         if (!d->isItemOnScreen(item, screen)
@@ -254,7 +254,7 @@ void QuickSceneEffect::setSource(const QUrl& url)
     }
 }
 
-QuickSceneView* QuickSceneEffect::viewForScreen(EffectScreen* screen) const
+QuickSceneView* QuickSceneEffect::viewForScreen(EffectScreen const* screen) const
 {
     auto const it = d->views.find(screen);
     return it == d->views.end() ? nullptr : it->second.get();
@@ -397,23 +397,23 @@ bool QuickSceneEffect::isActive() const
     return !d->views.empty() && !effects->isScreenLocked();
 }
 
-QVariantMap QuickSceneEffect::initialProperties(EffectScreen* /*screen*/)
+QVariantMap QuickSceneEffect::initialProperties(EffectScreen const* /*screen*/)
 {
     return QVariantMap();
 }
 
-void QuickSceneEffect::handleScreenAdded(EffectScreen* screen)
+void QuickSceneEffect::handleScreenAdded(EffectScreen const* screen)
 {
     addScreen(screen);
 }
 
-void QuickSceneEffect::handleScreenRemoved(EffectScreen* screen)
+void QuickSceneEffect::handleScreenRemoved(EffectScreen const* screen)
 {
     d->views.erase(screen);
     d->incubators.erase(screen);
 }
 
-void QuickSceneEffect::addScreen(EffectScreen* screen)
+void QuickSceneEffect::addScreen(EffectScreen const* screen)
 {
     auto properties = initialProperties(screen);
     properties["width"] = screen->geometry().width();
@@ -479,8 +479,8 @@ void QuickSceneEffect::startInternal()
     // Install an event filter to monitor cursor shape changes.
     qApp->installEventFilter(this);
 
-    const QList<EffectScreen*> screens = effects->screens();
-    for (EffectScreen* screen : screens) {
+    auto const screens = effects->screens();
+    for (auto screen : screens) {
         addScreen(screen);
     }
 
