@@ -46,7 +46,7 @@ ResizeEffect::~ResizeEffect()
 {
 }
 
-void ResizeEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void ResizeEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
     if (m_active) {
         data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
@@ -54,24 +54,27 @@ void ResizeEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::millise
     AnimationEffect::prePaintScreen(data, presentTime);
 }
 
-void ResizeEffect::prePaintWindow(EffectWindow* w,
-                                  WindowPrePaintData& data,
+void ResizeEffect::prePaintWindow(effect::window_prepaint_data& data,
                                   std::chrono::milliseconds presentTime)
 {
-    if (m_active && w == m_resizeWindow)
-        data.mask |= PAINT_WINDOW_TRANSFORMED;
-    AnimationEffect::prePaintWindow(w, data, presentTime);
+    if (m_active && &data.window == m_resizeWindow) {
+        data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
+    }
+    AnimationEffect::prePaintWindow(data, presentTime);
 }
 
-void ResizeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void ResizeEffect::paintWindow(effect::window_paint_data& data)
 {
-    if (m_active && w == m_resizeWindow) {
+    if (m_active && &data.window == m_resizeWindow) {
         if (m_features & TextureScale) {
-            data += (m_currentGeometry.topLeft() - m_originalGeometry.topLeft());
-            data *= QVector2D(float(m_currentGeometry.width()) / m_originalGeometry.width(),
-                              float(m_currentGeometry.height()) / m_originalGeometry.height());
+            data.paint.geo.translation
+                += QVector3D(m_currentGeometry.topLeft() - m_originalGeometry.topLeft());
+            data.paint.geo.scale
+                *= QVector3D(float(m_currentGeometry.width()) / m_originalGeometry.width(),
+                             float(m_currentGeometry.height()) / m_originalGeometry.height(),
+                             1);
         }
-        effects->paintWindow(w, mask, region, data);
+        effects->paintWindow(data);
 
         if (m_features & Outline) {
             QRegion intersection = m_originalGeometry.intersected(m_currentGeometry);
@@ -87,7 +90,7 @@ void ResizeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Window
                 vbo->setUseColor(true);
                 ShaderBinder binder(ShaderTrait::UniformColor);
                 binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
-                                            data.screenProjectionMatrix());
+                                            data.paint.screen_projection_matrix);
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 color.setAlphaF(alpha);
@@ -117,7 +120,7 @@ void ResizeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Window
             }
         }
     } else {
-        AnimationEffect::paintWindow(w, mask, region, data);
+        AnimationEffect::paintWindow(data);
     }
 }
 

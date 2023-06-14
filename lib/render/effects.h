@@ -91,20 +91,17 @@ public:
 
     ~effects_handler_wrap() override;
 
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(EffectWindow* w,
-                        WindowPrePaintData& data,
+    void prePaintWindow(effect::window_prepaint_data& data,
                         std::chrono::milliseconds presentTime) override;
-    void
-    paintWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
+    void paintWindow(effect::window_paint_data& data) override;
     void postPaintWindow(EffectWindow* w) override;
 
     Effect* provides(Effect::Feature ef);
 
-    void
-    drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
+    void drawWindow(effect::window_paint_data& data) override;
 
     void buildQuads(EffectWindow* w, WindowQuadList& quadList) override;
 
@@ -199,19 +196,10 @@ public Q_SLOTS:
 protected:
     void effectsChanged();
 
-    virtual void final_paint_screen(paint_type mask, QRegion const& region, ScreenPaintData& data)
-        = 0;
+    virtual void final_paint_screen(paint_type mask, effect::screen_paint_data& data) = 0;
 
-    virtual void final_paint_window(EffectWindow* window,
-                                    paint_type mask,
-                                    QRegion const& region,
-                                    WindowPaintData& data)
-        = 0;
-    virtual void final_draw_window(EffectWindow* window,
-                                   paint_type mask,
-                                   QRegion const& region,
-                                   WindowPaintData& data)
-        = 0;
+    virtual void final_paint_window(effect::window_paint_data& data) = 0;
+    virtual void final_draw_window(effect::window_paint_data& data) = 0;
 
     /**
      * Default implementation does nothing and returns @c true.
@@ -596,26 +584,20 @@ public:
         scene.platform.compositor->addRepaint(QRegion(x, y, w, h));
     }
 
-    void final_paint_screen(paint_type mask, QRegion const& region, ScreenPaintData& data) override
+    void final_paint_screen(paint_type mask, effect::screen_paint_data& data) override
     {
-        scene.finalPaintScreen(mask, region, data);
+        scene.finalPaintScreen(mask, data);
         Q_EMIT frameRendered();
     }
 
-    void final_paint_window(EffectWindow* window,
-                            paint_type mask,
-                            QRegion const& region,
-                            WindowPaintData& data) override
+    void final_paint_window(effect::window_paint_data& data) override
     {
-        scene.finalPaintWindow(static_cast<effect_window_t*>(window), mask, region, data);
+        scene.finalPaintWindow(data);
     }
 
-    void final_draw_window(EffectWindow* window,
-                           paint_type mask,
-                           QRegion const& region,
-                           WindowPaintData& data) override
+    void final_draw_window(effect::window_paint_data& data) override
     {
-        scene.finalDrawWindow(static_cast<effect_window_t*>(window), mask, region, data);
+        scene.finalDrawWindow(data);
     }
 
     void activateWindow(EffectWindow* c) override

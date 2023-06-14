@@ -25,10 +25,9 @@ public:
     SlidingPopupsEffect();
     ~SlidingPopupsEffect() override;
 
-    void prePaintWindow(EffectWindow* win,
-                        WindowPrePaintData& data,
+    void prePaintWindow(effect::window_prepaint_data& data,
                         std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow* win, int mask, QRegion region, WindowPaintData& data) override;
+    void paintWindow(effect::window_paint_data& data) override;
     void postPaintWindow(EffectWindow* win) override;
     void reconfigure(ReconfigureFlags flags) override;
     bool isActive() const override;

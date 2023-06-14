@@ -28,13 +28,12 @@ public:
     CubeSlideEffect();
     ~CubeSlideEffect() override;
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(EffectWindow* w,
-                        WindowPrePaintData& data,
+    void prePaintWindow(effect::window_prepaint_data& data,
                         std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
+    void paintWindow(effect::window_paint_data& data) override;
     bool isActive() const override;
 
     int requestedEffectChainPosition() const override
@@ -76,7 +75,7 @@ private Q_SLOTS:
 
 private:
     enum RotationDirection { Left, Right, Upwards, Downwards };
-    void paintSlideCube(int mask, QRegion region, ScreenPaintData& data);
+    void paintSlideCube(effect::screen_paint_data const& data);
     void windowMovingChanged(float progress, RotationDirection direction);
 
     bool shouldAnimate(const EffectWindow* w) const;

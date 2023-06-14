@@ -89,11 +89,11 @@ public:
         return renderTimer.nsecsElapsed();
     }
 
-    void paintGenericScreen(paint_type mask, ScreenPaintData data) override
+    void paintGenericScreen(paint_type mask, effect::screen_paint_data const& data) override
     {
         m_painter->save();
-        m_painter->translate(data.xTranslation(), data.yTranslation());
-        m_painter->scale(data.xScale(), data.yScale());
+        m_painter->translate(data.paint.geo.translation.x(), data.paint.geo.translation.y());
+        m_painter->scale(data.paint.geo.scale.x(), data.paint.geo.scale.y());
         render::scene<Platform>::paintGenericScreen(mask, data);
         m_painter->restore();
     }

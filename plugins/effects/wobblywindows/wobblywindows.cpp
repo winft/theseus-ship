@@ -242,7 +242,7 @@ void WobblyWindowsEffect::setDrag(qreal drag)
     m_drag = drag;
 }
 
-void WobblyWindowsEffect::prePaintScreen(ScreenPrePaintData& data,
+void WobblyWindowsEffect::prePaintScreen(effect::paint_data& data,
                                          std::chrono::milliseconds presentTime)
 {
     // We need to mark the screen windows as transformed. Otherwise the whole
@@ -257,13 +257,12 @@ void WobblyWindowsEffect::prePaintScreen(ScreenPrePaintData& data,
 
 static const std::chrono::milliseconds integrationStep(10);
 
-void WobblyWindowsEffect::prePaintWindow(EffectWindow* w,
-                                         WindowPrePaintData& data,
+void WobblyWindowsEffect::prePaintWindow(effect::window_prepaint_data& data,
                                          std::chrono::milliseconds presentTime)
 {
-    auto infoIt = windows.find(w);
+    auto infoIt = windows.find(&data.window);
     if (infoIt != windows.end()) {
-        data.setTransformed();
+        data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
 
         // We have to reset the clip region in order to render clients below
         // opaque wobbly windows.
@@ -273,25 +272,22 @@ void WobblyWindowsEffect::prePaintWindow(EffectWindow* w,
             const auto delta = std::min(presentTime - infoIt->clock, integrationStep);
             infoIt->clock += delta;
 
-            if (!updateWindowWobblyDatas(w, delta.count())) {
+            if (!updateWindowWobblyDatas(&data.window, delta.count())) {
                 break;
             }
         }
     }
 
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void WobblyWindowsEffect::apply(EffectWindow* w,
-                                int mask,
-                                WindowPaintData& data,
-                                WindowQuadList& quads)
+void WobblyWindowsEffect::apply(effect::window_paint_data& data, WindowQuadList& quads)
 {
-    if (!(mask & PAINT_SCREEN_TRANSFORMED) && windows.contains(w)) {
+    if (!(data.paint.mask & PAINT_SCREEN_TRANSFORMED) && windows.contains(&data.window)) {
         quads = quads.makeRegularGrid(m_xTesselation, m_yTesselation);
 
-        WindowWobblyInfos& wwi = windows[w];
-        auto const win_geo = w->frameGeometry();
+        auto& wwi = windows[&data.window];
+        auto const win_geo = data.window.frameGeometry();
 
         int tx = win_geo.x();
         int ty = win_geo.y();
@@ -314,10 +310,11 @@ void WobblyWindowsEffect::apply(EffectWindow* w,
             right = qMax(right, quads[i].right());
             bottom = qMax(bottom, quads[i].bottom());
         }
-        QRectF dirtyRect(left * data.xScale() + w->x() + data.xTranslation(),
-                         top * data.yScale() + w->y() + data.yTranslation(),
-                         (right - left + 1.0) * data.xScale(),
-                         (bottom - top + 1.0) * data.yScale());
+        QRectF dirtyRect(
+            left * data.paint.geo.scale.x() + data.window.x() + data.paint.geo.translation.x(),
+            top * data.paint.geo.scale.y() + data.window.y() + data.paint.geo.translation.y(),
+            (right - left + 1.0) * data.paint.geo.scale.x(),
+            (bottom - top + 1.0) * data.paint.geo.scale.y());
         // Expand the dirty region by 1px to fix potential round/floor issues.
         dirtyRect.adjust(-1.0, -1.0, 1.0, 1.0);
 

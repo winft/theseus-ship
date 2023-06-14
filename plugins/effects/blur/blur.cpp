@@ -390,7 +390,7 @@ void BlurEffect::uploadGeometry(GLVertexBuffer* vbo,
     vbo->setAttribLayout(layout, 2, sizeof(QVector2D));
 }
 
-void BlurEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void BlurEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
     m_paintedArea = QRegion();
     m_currentBlur = QRegion();
@@ -398,13 +398,12 @@ void BlurEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseco
     effects->prePaintScreen(data, presentTime);
 }
 
-void BlurEffect::prePaintWindow(EffectWindow* w,
-                                WindowPrePaintData& data,
+void BlurEffect::prePaintWindow(effect::window_prepaint_data& data,
                                 std::chrono::milliseconds presentTime)
 {
     // this effect relies on prePaintWindow being called in the bottom to top order
 
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 
     if (!m_shader || !m_shader->isValid()) {
         return;
@@ -425,99 +424,97 @@ void BlurEffect::prePaintWindow(EffectWindow* w,
 
     // if we have to paint a non-opaque part of this window that intersects with the
     // currently blurred region we have to redraw the whole region
-    if ((data.paint - oldClip).intersects(m_currentBlur)) {
-        data.paint |= m_currentBlur;
+    if ((data.paint.region - oldClip).intersects(m_currentBlur)) {
+        data.paint.region |= m_currentBlur;
     }
 
     // in case this window has regions to be blurred
-    const QRect screen = effects->virtualScreenGeometry();
-    const QRegion blurArea = blurRegion(w).translated(w->pos()) & screen;
-    const QRegion expandedBlur = (w->isDock() ? blurArea : expand(blurArea)) & screen;
+    auto const screen = effects->virtualScreenGeometry();
+    auto const blurArea = blurRegion(&data.window).translated(data.window.pos()) & screen;
+    auto const expandedBlur = (data.window.isDock() ? blurArea : expand(blurArea)) & screen;
 
     // if this window or a window underneath the blurred area is painted again we have to
     // blur everything
-    if (m_paintedArea.intersects(expandedBlur) || data.paint.intersects(blurArea)) {
-        data.paint |= expandedBlur;
+    if (m_paintedArea.intersects(expandedBlur) || data.paint.region.intersects(blurArea)) {
+        data.paint.region |= expandedBlur;
         // we have to check again whether we do not damage a blurred area
         // of a window
         if (expandedBlur.intersects(m_currentBlur)) {
-            data.paint |= m_currentBlur;
+            data.paint.region |= m_currentBlur;
         }
     }
 
     m_currentBlur |= expandedBlur;
 
     m_paintedArea -= data.clip;
-    m_paintedArea |= data.paint;
+    m_paintedArea |= data.paint.region;
 }
 
-bool BlurEffect::shouldBlur(const EffectWindow* w, int mask, const WindowPaintData& data) const
+bool BlurEffect::shouldBlur(effect::window_paint_data const& data) const
 {
     if (!m_renderTargetsValid || !m_shader || !m_shader->isValid()) {
         return false;
     }
-    if (effects->activeFullScreenEffect() && !w->data(WindowForceBlurRole).toBool()) {
+    if (effects->activeFullScreenEffect() && !data.window.data(WindowForceBlurRole).toBool()) {
         return false;
     }
-    if (w->isDesktop()) {
+    if (data.window.isDesktop()) {
         return false;
     }
 
-    auto const scaled = !qFuzzyCompare(data.xScale(), 1.0) && !qFuzzyCompare(data.yScale(), 1.0);
-    auto const translated = data.xTranslation() || data.yTranslation();
+    auto const scaled = !qFuzzyCompare(data.paint.geo.scale.x(), 1.f)
+        && !qFuzzyCompare(data.paint.geo.scale.y(), 1.f);
+    auto const translated = data.paint.geo.translation.x() || data.paint.geo.translation.y();
 
-    if ((scaled || (translated || (mask & PAINT_WINDOW_TRANSFORMED)))
-        && !w->data(WindowForceBlurRole).toBool()) {
+    if ((scaled || (translated || (data.paint.mask & PAINT_WINDOW_TRANSFORMED)))
+        && !data.window.data(WindowForceBlurRole).toBool()) {
         return false;
     }
 
     return true;
 }
 
-void BlurEffect::drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data)
+void BlurEffect::drawWindow(effect::window_paint_data& data)
 {
-    if (!shouldBlur(w, mask, data)) {
-        effects->drawWindow(w, mask, region, data);
+    if (!shouldBlur(data)) {
+        effects->drawWindow(data);
         return;
     }
 
     auto const screen = effects->renderTargetRect();
-    auto shape = blurRegion(w).translated(w->pos());
+    auto shape = blurRegion(&data.window).translated(data.window.pos());
 
     // let's do the evil parts - someone wants to blur behind a transformed window
-    auto const translated = data.xTranslation() || data.yTranslation();
-    auto const scaled = data.xScale() != 1 || data.yScale() != 1;
+    auto const scaled = !qFuzzyCompare(data.paint.geo.scale.x(), 1.f)
+        && !qFuzzyCompare(data.paint.geo.scale.y(), 1.f);
 
     if (scaled) {
         auto pt = shape.boundingRect().topLeft();
         QRegion scaledShape;
 
         for (auto r : shape) {
-            r.moveTo(pt.x() + (r.x() - pt.x()) * data.xScale() + data.xTranslation(),
-                     pt.y() + (r.y() - pt.y()) * data.yScale() + data.yTranslation());
-            r.setWidth(r.width() * data.xScale());
-            r.setHeight(r.height() * data.yScale());
+            r.moveTo(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
+                         + data.paint.geo.translation.x(),
+                     pt.y() + (r.y() - pt.y()) * data.paint.geo.scale.y()
+                         + data.paint.geo.translation.y());
+            r.setWidth(r.width() * data.paint.geo.scale.x());
+            r.setHeight(r.height() * data.paint.geo.scale.y());
             scaledShape |= r;
         }
 
         shape = scaledShape;
-    } else if (translated) {
+    } else if (data.paint.geo.translation.x() || data.paint.geo.translation.y()) {
         // Only translated, not scaled
-        shape = shape.translated(data.xTranslation(), data.yTranslation());
+        shape = shape.translated(data.paint.geo.translation.x(), data.paint.geo.translation.y());
     }
 
-    auto modal = w->transientFor();
+    auto modal = data.window.transientFor();
     auto const transientForIsDock = (modal ? modal->isDock() : false);
 
-    doBlur(shape & region,
-           screen,
-           data.opacity(),
-           data.screenProjectionMatrix(),
-           w->isDock() || transientForIsDock,
-           w->frameGeometry());
+    doBlur(data, shape & data.paint.region, screen, data.window.isDock() || transientForIsDock);
 
     // Draw the window over the blurred area
-    effects->drawWindow(w, mask, region, data);
+    effects->drawWindow(data);
 }
 
 void BlurEffect::generateNoiseTexture()
@@ -547,16 +544,17 @@ void BlurEffect::generateNoiseTexture()
     m_noiseTexture.setWrapMode(GL_REPEAT);
 }
 
-void BlurEffect::doBlur(const QRegion& shape,
+void BlurEffect::doBlur(effect::window_paint_data const& data,
+                        const QRegion& shape,
                         const QRect& screen,
-                        const float opacity,
-                        const QMatrix4x4& screenProjection,
-                        bool isDock,
-                        QRect windowRect)
+                        bool isDock)
 {
     if (shape.isEmpty()) {
         return;
     }
+
+    auto const windowRect = data.window.frameGeometry();
+    auto const opacity = data.paint.opacity;
 
     // Blur would not render correctly on a secondary monitor because of wrong coordinates
     // BUG: 393723
@@ -630,8 +628,7 @@ void BlurEffect::doBlur(const QRegion& shape,
     upscaleRenderToScreen(vbo,
                           blurRectCount * (m_downSampleIterations + 1),
                           shape.rectCount() * 6,
-                          screenProjection,
-                          windowRect.topLeft());
+                          data.paint.screen_projection_matrix);
 
     if (useSRGB) {
         glDisable(GL_FRAMEBUFFER_SRGB);
@@ -660,7 +657,7 @@ void BlurEffect::doBlur(const QRegion& shape,
         applyNoise(vbo,
                    blurRectCount * (m_downSampleIterations + 1),
                    shape.rectCount() * 6,
-                   screenProjection,
+                   data.paint.screen_projection_matrix,
                    windowRect.topLeft());
         glDisable(GL_BLEND);
     }
@@ -671,8 +668,7 @@ void BlurEffect::doBlur(const QRegion& shape,
 void BlurEffect::upscaleRenderToScreen(GLVertexBuffer* vbo,
                                        int vboStart,
                                        int blurRectCount,
-                                       const QMatrix4x4& screenProjection,
-                                       QPoint /*windowPosition*/)
+                                       const QMatrix4x4& screenProjection)
 {
     m_renderTextures[1]->bind();
 

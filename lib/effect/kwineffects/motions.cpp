@@ -185,9 +185,9 @@ void WindowMotionManager::reset(EffectWindow const* w)
     motion->scale.finish();
 }
 
-void WindowMotionManager::apply(EffectWindow const* w, WindowPaintData& data)
+void WindowMotionManager::apply(effect::window_paint_data& data)
 {
-    auto it = m_managedWindows.find(w);
+    auto it = m_managedWindows.find(&data.window);
     if (it == m_managedWindows.end()) {
         return;
     }
@@ -195,8 +195,10 @@ void WindowMotionManager::apply(EffectWindow const* w, WindowPaintData& data)
     // TODO: Take into account existing scale so that we can work with multiple managers (E.g.
     // Present windows + grid)
     auto motion = &it.value();
-    data += (motion->translation.value() - QPointF(w->x(), w->y()));
-    data *= QVector2D(motion->scale.value());
+    data.paint.geo.translation
+        += QVector3D(motion->translation.value() - QPointF(data.window.x(), data.window.y()));
+    auto const scale = motion->scale.value();
+    data.paint.geo.scale *= QVector3D(scale.x(), scale.y(), 1);
 }
 
 void WindowMotionManager::moveWindow(EffectWindow const* w,

@@ -451,7 +451,7 @@ bool AnimationEffect::cancel(quint64 animationId)
     return false;
 }
 
-void AnimationEffect::prePaintScreen(ScreenPrePaintData& data,
+void AnimationEffect::prePaintScreen(effect::paint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
     Q_D(AnimationEffect);
@@ -524,12 +524,11 @@ void AnimationEffect::disconnectGeometryChanges()
                &AnimationEffect::_windowExpandedGeometryChanged);
 }
 
-void AnimationEffect::prePaintWindow(EffectWindow* w,
-                                     WindowPrePaintData& data,
+void AnimationEffect::prePaintWindow(effect::window_prepaint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
     Q_D(AnimationEffect);
-    auto entry = d->m_animations.constFind(w);
+    auto entry = d->m_animations.constFind(&data.window);
     if (entry != d->m_animations.constEnd()) {
         for (QList<AniData>::const_iterator anim = entry->first.constBegin();
              anim != entry->first.constEnd();
@@ -539,13 +538,13 @@ void AnimationEffect::prePaintWindow(EffectWindow* w,
             }
 
             if (anim->attribute == Opacity || anim->attribute == CrossFadePrevious)
-                data.setTranslucent();
+                data.set_translucent();
             else if (!(anim->attribute == Brightness || anim->attribute == Saturation)) {
-                data.setTransformed();
+                data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
             }
         }
     }
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
 static inline float geometryCompensation(int flags, float v)
@@ -557,10 +556,10 @@ static inline float geometryCompensation(int flags, float v)
     return 0.5 * (1.0 - v); // half compensation
 }
 
-void AnimationEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void AnimationEffect::paintWindow(effect::window_paint_data& data)
 {
     Q_D(AnimationEffect);
-    auto entry = d->m_animations.constFind(w);
+    auto entry = d->m_animations.constFind(&data.window);
     if (entry != d->m_animations.constEnd()) {
         for (QList<AniData>::const_iterator anim = entry->first.constBegin();
              anim != entry->first.constEnd();
@@ -571,22 +570,22 @@ void AnimationEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
 
             switch (anim->attribute) {
             case Opacity:
-                data.multiplyOpacity(interpolated(*anim));
+                data.paint.opacity *= interpolated(*anim);
                 break;
             case Brightness:
-                data.multiplyBrightness(interpolated(*anim));
+                data.paint.brightness *= interpolated(*anim);
                 break;
             case Saturation:
-                data.multiplySaturation(interpolated(*anim));
+                data.paint.saturation *= interpolated(*anim);
                 break;
             case Scale: {
-                const QSize sz = w->frameGeometry().size();
+                auto const sz = data.window.frameGeometry().size();
                 float f1(1.0), f2(0.0);
                 if (anim->from[0] >= 0.0 && anim->to[0] >= 0.0) { // scale x
                     f1 = interpolated(*anim, 0);
                     f2 = geometryCompensation(anim->meta & AnimationEffect::Horizontal, f1);
-                    data.translate(f2 * sz.width());
-                    data.setXScale(data.xScale() * f1);
+                    data.paint.geo.translation += QVector3D(f2 * sz.width(), 0, 0);
+                    data.paint.geo.scale *= QVector3D(f1, 1, 1);
                 }
                 if (anim->from[1] >= 0.0 && anim->to[1] >= 0.0) { // scale y
                     if (!anim->isOneDimensional()) {
@@ -595,60 +594,78 @@ void AnimationEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
                     } else if (((anim->meta & AnimationEffect::Vertical) >> 1)
                                != (anim->meta & AnimationEffect::Horizontal))
                         f2 = geometryCompensation(anim->meta & AnimationEffect::Vertical, f1);
-                    data.translate(0.0, f2 * sz.height());
-                    data.setYScale(data.yScale() * f1);
+                    data.paint.geo.translation += QVector3D(0, f2 * sz.height(), 0);
+                    data.paint.geo.scale *= QVector3D(1, f1, 1);
                 }
                 break;
             }
             case Clip:
-                region = clipRect(w->expandedGeometry(), *anim);
+                data.paint.region = clipRect(data.window.expandedGeometry(), *anim);
                 break;
             case Translation:
-                data += QPointF(interpolated(*anim, 0), interpolated(*anim, 1));
+                data.paint.geo.translation
+                    += QVector3D(interpolated(*anim, 0), interpolated(*anim, 1), 0);
                 break;
             case Size: {
                 FPx2 dest = anim->from + progress(*anim) * (anim->to - anim->from);
-                const QSize sz = w->frameGeometry().size();
+                auto const sz = data.window.frameGeometry().size();
                 float f;
                 if (anim->from[0] >= 0.0 && anim->to[0] >= 0.0) { // resize x
                     f = dest[0] / sz.width();
-                    data.translate(geometryCompensation(anim->meta & AnimationEffect::Horizontal, f)
-                                   * sz.width());
-                    data.setXScale(data.xScale() * f);
+                    data.paint.geo.translation += QVector3D(
+                        geometryCompensation(anim->meta & AnimationEffect::Horizontal, f)
+                            * sz.width(),
+                        0,
+                        0);
+                    data.paint.geo.scale *= QVector3D(f, 1, 1);
                 }
                 if (anim->from[1] >= 0.0 && anim->to[1] >= 0.0) { // resize y
                     f = dest[1] / sz.height();
-                    data.translate(0.0,
-                                   geometryCompensation(anim->meta & AnimationEffect::Vertical, f)
-                                       * sz.height());
-                    data.setYScale(data.yScale() * f);
+                    data.paint.geo.translation
+                        += QVector3D(0.0,
+                                     geometryCompensation(anim->meta & AnimationEffect::Vertical, f)
+                                         * sz.height(),
+                                     0);
+                    data.paint.geo.scale *= QVector3D(1, f, 1);
                 }
                 break;
             }
             case Position: {
-                auto const geo = w->frameGeometry();
+                auto const geo = data.window.frameGeometry();
                 const float prgrs = progress(*anim);
                 if (anim->from[0] >= 0.0 && anim->to[0] >= 0.0) {
                     float dest = interpolated(*anim, 0);
-                    const int x[2] = {xCoord(geo, metaData(SourceAnchor, anim->meta)),
+                    int const x[2] = {xCoord(geo, metaData(SourceAnchor, anim->meta)),
                                       xCoord(geo, metaData(TargetAnchor, anim->meta))};
-                    data.translate(dest - (x[0] + prgrs * (x[1] - x[0])));
+                    data.paint.geo.translation
+                        += QVector3D(dest - (x[0] + prgrs * (x[1] - x[0])), 0, 0);
                 }
                 if (anim->from[1] >= 0.0 && anim->to[1] >= 0.0) {
                     float dest = interpolated(*anim, 1);
                     const int y[2] = {yCoord(geo, metaData(SourceAnchor, anim->meta)),
                                       yCoord(geo, metaData(TargetAnchor, anim->meta))};
-                    data.translate(0.0, dest - (y[0] + prgrs * (y[1] - y[0])));
+                    data.paint.geo.translation
+                        += QVector3D(0.0, dest - (y[0] + prgrs * (y[1] - y[0])), 0);
                 }
                 break;
             }
             case Rotation: {
-                data.setRotationAxis(static_cast<Qt::Axis>(metaData(Axis, anim->meta)));
-                const float prgrs = progress(*anim);
-                data.setRotationAngle(anim->from[0] + prgrs * (anim->to[0] - anim->from[0]));
+                auto& rot = data.paint.geo.rotation;
 
-                auto const geo = w->rect();
-                const uint sAnchor = metaData(SourceAnchor, anim->meta),
+                auto const prgrs = progress(*anim);
+                rot.angle = anim->from[0] + prgrs * (anim->to[0] - anim->from[0]);
+
+                auto const axis_meta = static_cast<Qt::Axis>(metaData(Axis, anim->meta));
+                if (axis_meta == Qt::XAxis) {
+                    rot.axis = {1, 0, 0};
+                } else if (axis_meta == Qt::YAxis) {
+                    rot.axis = {0, 1, 0};
+                } else if (axis_meta == Qt::ZAxis) {
+                    rot.axis = {0, 0, 1};
+                }
+
+                auto const geo = data.window.rect();
+                uint const sAnchor = metaData(SourceAnchor, anim->meta),
                            tAnchor = metaData(TargetAnchor, anim->meta);
                 QPointF pt(xCoord(geo, sAnchor), yCoord(geo, sAnchor));
 
@@ -656,20 +673,21 @@ void AnimationEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
                     QPointF pt2(xCoord(geo, tAnchor), yCoord(geo, tAnchor));
                     pt += static_cast<qreal>(prgrs) * (pt2 - pt);
                 }
-                data.setRotationOrigin(QVector3D(pt));
+
+                rot.origin = QVector3D(pt);
                 break;
             }
             case Generic:
-                genericAnimation(w, data, progress(*anim), anim->meta);
+                genericAnimation(data, progress(*anim), anim->meta);
                 break;
             case CrossFadePrevious:
-                data.setCrossFadeProgress(progress(*anim));
+                data.cross_fade_progress = qBound(0., progress(*anim), 1.);
                 break;
             case Shader:
                 if (anim->shader && anim->shader->isValid()) {
                     ShaderBinder binder{anim->shader};
                     anim->shader->setUniform("animationProgress", progress(*anim));
-                    setShader(w, anim->shader);
+                    setShader(data.window, anim->shader);
                 }
                 break;
             case ShaderUniform:
@@ -677,7 +695,7 @@ void AnimationEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
                     ShaderBinder binder{anim->shader};
                     anim->shader->setUniform("animationProgress", progress(*anim));
                     anim->shader->setUniform(anim->meta, interpolated(*anim));
-                    setShader(w, anim->shader);
+                    setShader(data.window, anim->shader);
                 }
                 break;
             default:
@@ -686,7 +704,7 @@ void AnimationEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
         }
     }
 
-    effects->paintWindow(w, mask, region, data);
+    effects->paintWindow(data);
 }
 
 void AnimationEffect::postPaintScreen()
@@ -704,7 +722,7 @@ void AnimationEffect::postPaintScreen()
                 ++animCounter;
                 continue;
             }
-            EffectWindow* window = entry.key();
+            auto window = entry.key();
             d->m_justEndedAnimation = anim->id;
             if (anim->shader
                 && std::none_of(

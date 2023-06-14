@@ -32,8 +32,8 @@ public:
 
     void reconfigure(ReconfigureFlags flags) override;
 
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void paintWindow(effect::window_paint_data& data) override;
     void postPaintScreen() override;
 
     int requestedEffectChainPosition() const override;
@@ -55,7 +55,7 @@ private Q_SLOTS:
     void updateActiveWindow(EffectWindow* w);
 
 private:
-    void dimWindow(WindowPaintData& data, qreal strength);
+    void dimWindow(effect::window_paint_data& data, qreal strength);
     bool canDimWindow(const EffectWindow* w) const;
     void scheduleInTransition(EffectWindow* w);
     void scheduleGroupInTransition(EffectWindow* w);

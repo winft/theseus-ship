@@ -352,13 +352,13 @@ void QuickSceneEffect::activateView(QuickSceneView* view)
     Q_EMIT activeViewChanged(view);
 }
 
-void QuickSceneEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void QuickSceneEffect::paintScreen(effect::screen_paint_data& data)
 {
-    effects->paintScreen(mask, region, data);
-    d->paintedScreen = data.screen();
+    effects->paintScreen(data);
+    d->paintedScreen = data.screen;
 
     if (effects->waylandDisplay()) {
-        if (auto it = d->views.find(data.screen()); it != d->views.end()) {
+        if (auto it = d->views.find(data.screen); it != d->views.end()) {
             effects->renderEffectQuickView(it->second.get());
         }
     } else {

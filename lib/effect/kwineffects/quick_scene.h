@@ -131,7 +131,7 @@ public:
 
     bool eventFilter(QObject* watched, QEvent* event) override;
 
-    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
+    void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
 

@@ -23,14 +23,10 @@ public:
     static bool supported();
 
     // Effect interface
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
     void postPaintScreen() override;
-    void drawWindow(EffectWindow* window,
-                    int mask,
-                    const QRegion& region,
-                    WindowPaintData& data) override;
-    void
-    apply(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads) override;
+    void drawWindow(effect::window_paint_data& data) override;
+    void apply(effect::window_paint_data& data, WindowQuadList& quads) override;
     bool isActive() const override;
 
     int requestedEffectChainPosition() const override

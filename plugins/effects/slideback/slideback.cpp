@@ -130,7 +130,7 @@ QRect SlideBackEffect::getSlideDestination(const QRect& windowUnderGeometry,
     return slideRect;
 }
 
-void SlideBackEffect::prePaintScreen(ScreenPrePaintData& data,
+void SlideBackEffect::prePaintScreen(effect::paint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
     int time = 0;
@@ -165,28 +165,32 @@ void SlideBackEffect::postPaintScreen()
     effects->postPaintScreen();
 }
 
-void SlideBackEffect::prePaintWindow(EffectWindow* w,
-                                     WindowPrePaintData& data,
+void SlideBackEffect::prePaintWindow(effect::window_prepaint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
-    if (motionManager.isManaging(w)) {
-        data.setTransformed();
+    if (motionManager.isManaging(&data.window)) {
+        data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
     }
 
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void SlideBackEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void SlideBackEffect::paintWindow(effect::window_paint_data& data)
 {
-    if (motionManager.isManaging(w)) {
-        motionManager.apply(w, data);
+    if (motionManager.isManaging(&data.window)) {
+        motionManager.apply(data);
     }
+
     for (auto const& r : qAsConst(clippedRegions)) {
-        region = region.intersected(r);
+        data.paint.region = data.paint.region.intersected(r);
     }
-    effects->paintWindow(w, mask, region, data);
-    for (int i = clippedRegions.count() - 1; i > -1; --i)
+
+    effects->paintWindow(data);
+
+    for (int i = clippedRegions.count() - 1; i > -1; --i) {
         PaintClipper::pop(clippedRegions.at(i));
+    }
+
     clippedRegions.clear();
 }
 

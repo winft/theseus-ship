@@ -200,7 +200,7 @@ public:
      * transformed in prePaintWindow() by calling
      * WindowPrePaintData::setTransformed()
      */
-    void apply(EffectWindow const* w, WindowPaintData& data);
+    void apply(effect::window_paint_data& data);
     /**
      * Set all motion targets and values back to where the
      * windows were before transformations. The same as

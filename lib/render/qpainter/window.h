@@ -30,10 +30,9 @@ public:
     {
     }
 
-    void performPaint(paint_type mask, const QRegion& region, WindowPaintData& data) override
+    void performPaint(paint_type mask, effect::window_paint_data& data) override
     {
-        std::visit(overload{[&](auto&& win) { perform_paint(*win, mask, region, data); }},
-                   *this->ref_win);
+        std::visit(overload{[&](auto&& win) { perform_paint(*win, mask, data); }}, *this->ref_win);
     }
 
 protected:
@@ -44,13 +43,13 @@ protected:
 
 private:
     template<typename Win>
-    void perform_paint(Win& win, paint_type mask, QRegion region, WindowPaintData data)
+    void perform_paint(Win& win, paint_type mask, effect::window_paint_data& data)
     {
         if (!(mask & (paint_type::window_transformed | paint_type::screen_transformed))) {
-            region &= win::visible_rect(&win);
+            data.paint.region &= win::visible_rect(&win);
         }
 
-        if (region.isEmpty()) {
+        if (data.paint.region.isEmpty()) {
             return;
         }
 
@@ -67,18 +66,18 @@ private:
         auto scenePainter = scene.scenePainter();
         auto painter = scenePainter;
         painter->save();
-        painter->setClipRegion(region);
+        painter->setClipRegion(data.paint.region);
         painter->setClipping(true);
 
         auto const win_pos = win.geo.pos();
         painter->translate(win_pos.x(), win_pos.y());
 
         if (flags(mask & paint_type::window_transformed)) {
-            painter->translate(data.xTranslation(), data.yTranslation());
-            painter->scale(data.xScale(), data.yScale());
+            painter->translate(data.paint.geo.translation.x(), data.paint.geo.translation.y());
+            painter->scale(data.paint.geo.scale.x(), data.paint.geo.scale.y());
         }
 
-        const bool opaque = qFuzzyCompare(1.0, data.opacity());
+        auto const opaque = qFuzzyCompare(1.0, data.paint.opacity);
         QImage tempImage;
         QPainter tempPainter;
 
@@ -132,7 +131,7 @@ private:
             tempPainter.restore();
             tempPainter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
             QColor translucent(Qt::transparent);
-            translucent.setAlphaF(data.opacity());
+            translucent.setAlphaF(data.paint.opacity);
             tempPainter.fillRect(QRect(QPoint(0, 0), win::visible_rect(&win).size()), translucent);
             tempPainter.end();
             painter = scenePainter;

@@ -31,8 +31,7 @@ public:
     static bool enabledByDefault();
 
     void reconfigure(ReconfigureFlags flags) override;
-    void
-    drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
+    void drawWindow(effect::window_paint_data& data) override;
 
     bool provides(Feature feature) override;
     bool isActive() const override;
@@ -53,12 +52,9 @@ public:
 
 private:
     QRegion contrastRegion(const EffectWindow* w) const;
-    bool shouldContrast(const EffectWindow* w, int mask, const WindowPaintData& data) const;
-    void doContrast(EffectWindow* w,
-                    const QRegion& shape,
-                    const QRect& screen,
-                    const float opacity,
-                    const QMatrix4x4& screenProjection);
+    bool shouldContrast(effect::window_paint_data const& data) const;
+    void
+    doContrast(effect::window_paint_data const& data, QRegion const& shape, QRect const& screen);
     void uploadRegion(QVector2D*& map, const QRegion& region);
     void uploadGeometry(GLVertexBuffer* vbo, const QRegion& region);
 

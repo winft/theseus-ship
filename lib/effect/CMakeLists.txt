@@ -59,7 +59,6 @@ set(kwin_EFFECTSLIB_SRCS
     kwineffects/quick_scene.cpp
     kwineffects/motions.cpp
     kwineffects/paint_clipper.cpp
-    kwineffects/paint_data.cpp
     kwineffects/time_line.cpp
     kwineffects/window_quad.cpp
 )

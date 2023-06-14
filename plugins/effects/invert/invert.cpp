@@ -76,16 +76,13 @@ bool InvertEffect::loadData()
     return true;
 }
 
-void InvertEffect::drawWindow(EffectWindow* w,
-                              int mask,
-                              const QRegion& region,
-                              WindowPaintData& data)
+void InvertEffect::drawWindow(effect::window_paint_data& data)
 {
     // Load if we haven't already
     if (m_valid && !m_inited)
         m_valid = loadData();
 
-    bool useShader = m_valid && (m_allWindows != m_windows.contains(w));
+    auto useShader = m_valid && (m_allWindows != m_windows.contains(&data.window));
     if (useShader) {
         ShaderManager* shaderManager = ShaderManager::instance();
         shaderManager->pushShader(m_shader.get());
@@ -93,7 +90,7 @@ void InvertEffect::drawWindow(EffectWindow* w,
         data.shader = m_shader.get();
     }
 
-    effects->drawWindow(w, mask, region, data);
+    effects->drawWindow(data);
 
     if (useShader) {
         ShaderManager::instance()->popShader();

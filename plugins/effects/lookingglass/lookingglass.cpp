@@ -185,7 +185,7 @@ QRect LookingGlassEffect::magnifierArea() const
     return QRect(cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
 }
 
-void LookingGlassEffect::prePaintScreen(ScreenPrePaintData& data,
+void LookingGlassEffect::prePaintScreen(effect::paint_data& data,
                                         std::chrono::milliseconds presentTime)
 {
     const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
@@ -240,10 +240,10 @@ void LookingGlassEffect::slotWindowDamaged()
     }
 }
 
-void LookingGlassEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void LookingGlassEffect::paintScreen(effect::screen_paint_data& data)
 {
     // Call the next effect.
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
     if (m_valid && m_enabled) {
         // Disable render texture
         GLFramebuffer* target = GLFramebuffer::popRenderTarget();
@@ -257,7 +257,7 @@ void LookingGlassEffect::paintScreen(int mask, const QRegion& region, ScreenPain
         m_shader->setUniform("u_zoom", static_cast<float>(zoom));
         m_shader->setUniform("u_radius", static_cast<float>(radius));
         m_shader->setUniform("u_cursor", QVector2D(cursorPos().x(), cursorPos().y()));
-        m_shader->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
+        m_shader->setUniform(GLShader::ModelViewProjectionMatrix, data.paint.projection_matrix);
         m_vbo->render(GL_TRIANGLES);
         m_texture->unbind();
     }

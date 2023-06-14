@@ -7,6 +7,7 @@
 
 #include <kwineffects/effect_integration.h>
 #include <kwineffects/export.h>
+#include <kwineffects/paint_data.h>
 #include <kwineffects/types.h>
 
 #include <KSharedConfig>
@@ -28,11 +29,6 @@ namespace KWin
 class EffectFrame;
 class EffectQuickView;
 class EffectScreen;
-class EffectWindow;
-class ScreenPaintData;
-class ScreenPrePaintData;
-class WindowPaintData;
-class WindowPrePaintData;
 class WindowQuadList;
 
 /**
@@ -99,19 +95,16 @@ public:
     explicit EffectsHandler();
     ~EffectsHandler() override;
     // for use by effects
-    virtual void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+    virtual void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
         = 0;
-    virtual void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) = 0;
+    virtual void paintScreen(effect::screen_paint_data& data) = 0;
     virtual void postPaintScreen() = 0;
-    virtual void
-    prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime)
+    virtual void prePaintWindow(effect::window_prepaint_data& data,
+                                std::chrono::milliseconds presentTime)
         = 0;
-    virtual void
-    paintWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data)
-        = 0;
+    virtual void paintWindow(effect::window_paint_data& data) = 0;
     virtual void postPaintWindow(EffectWindow* w) = 0;
-    virtual void drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data)
-        = 0;
+    virtual void drawWindow(effect::window_paint_data& data) = 0;
     virtual void buildQuads(EffectWindow* w, WindowQuadList& quadList) = 0;
     virtual QVariant kwinOption(KWinOption kwopt) = 0;
     /**

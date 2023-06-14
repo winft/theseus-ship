@@ -28,9 +28,8 @@ class FallApartEffect : public OffscreenEffect
 public:
     FallApartEffect();
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow* w,
-                        WindowPrePaintData& data,
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(effect::window_prepaint_data& data,
                         std::chrono::milliseconds presentTime) override;
     void postPaintScreen() override;
     bool isActive() const override;
@@ -49,7 +48,7 @@ public:
     static bool supported();
 
 protected:
-    void apply(EffectWindow* w, int mask, WindowPaintData& data, WindowQuadList& quads) override;
+    void apply(effect::window_paint_data& data, WindowQuadList& quads) override;
 
 public Q_SLOTS:
     void slotWindowClosed(KWin::EffectWindow* c);

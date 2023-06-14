@@ -74,7 +74,7 @@ void MagnifierEffect::reconfigure(ReconfigureFlags)
         toggle();
 }
 
-void MagnifierEffect::prePaintScreen(ScreenPrePaintData& data,
+void MagnifierEffect::prePaintScreen(effect::paint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
     const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
@@ -101,13 +101,13 @@ void MagnifierEffect::prePaintScreen(ScreenPrePaintData& data,
 
     effects->prePaintScreen(data, presentTime);
     if (m_zoom != 1.0)
-        data.paint
+        data.region
             |= magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
 }
 
-void MagnifierEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
 {
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
 
     if (m_zoom == 1.0 || !effects->isOpenGLCompositing()) {
         return;
@@ -176,7 +176,7 @@ void MagnifierEffect::paintScreen(int mask, const QRegion& region, ScreenPaintDa
     vbo->setData(verts.size() / 2, 2, verts.constData(), nullptr);
 
     ShaderBinder binder(ShaderTrait::UniformColor);
-    binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
+    binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, data.paint.projection_matrix);
     vbo->render(GL_TRIANGLES);
 }
 

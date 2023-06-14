@@ -187,10 +187,10 @@ void ScreenShotEffect::cancelScreenScreenShots()
     m_screenScreenShots.clear();
 }
 
-void ScreenShotEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void ScreenShotEffect::paintScreen(effect::screen_paint_data& data)
 {
-    m_paintedScreen = data.screen();
-    effects->paintScreen(mask, region, data);
+    m_paintedScreen = data.screen;
+    effects->paintScreen(data);
 
     for (ScreenShotWindowData& data : m_windowScreenShots) {
         takeScreenShot(&data);
@@ -213,7 +213,6 @@ void ScreenShotEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
 void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
 {
     auto window = screenshot->window;
-    WindowPaintData d(window);
     auto geometry = window->expandedGeometry();
     auto devicePixelRatio = 1.;
 
@@ -242,24 +241,30 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
         return;
     }
 
-    d.setXTranslation(-geometry.x());
-    d.setYTranslation(-geometry.y());
-
-    // render window into offscreen texture
-    int mask = PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_TRANSLUCENT;
     QImage img;
-
     if (effects->isOpenGLCompositing()) {
+        QMatrix4x4 projection;
+        projection.ortho(QRect(0, 0, geometry.width(), geometry.height()));
         GLFramebuffer::pushRenderTarget(target.data());
+
+        effect::window_paint_data win_data{
+            *window,
+            {
+                // render window into offscreen texture
+                .mask = PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_TRANSLUCENT,
+                .region = infiniteRegion(),
+                .geo
+                = {.translation
+                   = {static_cast<float>(-geometry.x()), static_cast<float>(-geometry.y()), 0.}},
+                .projection_matrix = projection,
+            },
+        };
+
         glClearColor(0.0, 0.0, 0.0, 0.0);
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0.0, 0.0, 0.0, 1.0);
 
-        QMatrix4x4 projection;
-        projection.ortho(QRect(0, 0, geometry.width(), geometry.height()));
-        d.setProjectionMatrix(projection);
-
-        effects->drawWindow(window, mask, infiniteRegion(), d);
+        effects->drawWindow(win_data);
 
         // copy content from framebuffer into image
         img = QImage(offscreenTexture->size(), QImage::Format_ARGB32);

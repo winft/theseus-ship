@@ -275,7 +275,7 @@ bool effect::init(QString const& effectName, QString const& pathToScript, KShare
     return true;
 }
 
-void effect::animationEnded(KWin::EffectWindow* w, Attribute a, uint meta)
+void effect::animationEnded(KWin::EffectWindow const* w, Attribute a, uint meta)
 {
     AnimationEffect::animationEnded(w, a, meta);
     Q_EMIT animationEnded(w, 0);

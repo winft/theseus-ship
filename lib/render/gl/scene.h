@@ -566,7 +566,7 @@ protected:
         render::scene<Platform>::paintSimpleScreen(mask, region);
     }
 
-    void paintGenericScreen(paint_type mask, ScreenPaintData data) override
+    void paintGenericScreen(paint_type mask, effect::screen_paint_data const& data) override
     {
         const QMatrix4x4 screenMatrix = transformation(mask, data);
 
@@ -580,11 +580,10 @@ protected:
         return std::make_unique<gl_window_t>(ref_win, *this);
     }
 
-    void finalDrawWindow(effect_window_t* eff_win,
-                         paint_type mask,
-                         QRegion region,
-                         WindowPaintData& data) override
+    void finalDrawWindow(effect::window_paint_data& data) override
     {
+        auto& eff_win = static_cast<effect_window_t&>(data.window);
+
         if (base::wayland::is_screen_locked(this->platform.base)) {
             if (std::visit(overload{[&](auto&& win) {
                                if constexpr (requires(decltype(win) win) { win.isLockScreen(); }) {
@@ -599,11 +598,11 @@ protected:
                                }
                                return true;
                            }},
-                           *eff_win->window.ref_win)) {
+                           *eff_win.window.ref_win)) {
                 return;
             }
         }
-        performPaintWindow(eff_win, mask, region, data);
+        performPaintWindow(data);
     }
 
     /**
@@ -729,7 +728,7 @@ protected:
         }
     }
 
-    QMatrix4x4 transformation(paint_type mask, const ScreenPaintData& data) const
+    QMatrix4x4 transformation(paint_type mask, effect::screen_paint_data const& data) const
     {
         QMatrix4x4 matrix;
 
@@ -737,20 +736,20 @@ protected:
             return matrix;
         }
 
-        matrix.translate(data.translation());
-        const QVector3D scale = data.scale();
-        matrix.scale(scale.x(), scale.y(), scale.z());
+        matrix.translate(data.paint.geo.translation);
+        matrix.scale(data.paint.geo.scale.x(), data.paint.geo.scale.y(), data.paint.geo.scale.z());
 
-        if (data.rotationAngle() == 0.0)
+        if (data.paint.geo.rotation.angle == 0.0) {
             return matrix;
+        }
 
         // Apply the rotation
         // cannot use data.rotation->applyTo(&matrix) as QGraphicsRotation uses projectedRotate to
         // map back to 2D
-        matrix.translate(data.rotationOrigin());
-        const QVector3D axis = data.rotationAxis();
-        matrix.rotate(data.rotationAngle(), axis.x(), axis.y(), axis.z());
-        matrix.translate(-data.rotationOrigin());
+        matrix.translate(data.paint.geo.rotation.origin);
+        auto const axis = data.paint.geo.rotation.axis;
+        matrix.rotate(data.paint.geo.rotation.angle, axis.x(), axis.y(), axis.z());
+        matrix.translate(-data.paint.geo.rotation.origin);
 
         return matrix;
     }
@@ -899,18 +898,18 @@ private:
         return leads;
     }
 
-    void performPaintWindow(effect_window_t* eff_win,
-                            paint_type mask,
-                            QRegion region,
-                            WindowPaintData& data)
+    void performPaintWindow(effect::window_paint_data& data)
     {
+        auto& eff_win = static_cast<effect_window_t&>(data.window);
+        auto mask = static_cast<paint_type>(data.paint.mask);
+
         if (flags(mask & paint_type::window_lanczos)) {
             if (!lanczos) {
                 lanczos = new lanczos_filter<scene>(this);
             }
-            lanczos->performPaint(eff_win, mask, region, data);
+            lanczos->performPaint(eff_win, mask, data);
         } else
-            eff_win->window.performPaint(mask, region, data);
+            eff_win.window.performPaint(mask, data);
     }
 
     QMatrix4x4 createProjectionMatrix() const

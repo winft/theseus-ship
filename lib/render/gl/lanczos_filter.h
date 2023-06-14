@@ -49,9 +49,9 @@ public:
     }
 
     template<typename EffWinImpl>
-    void performPaint(EffWinImpl* w, paint_type mask, QRegion region, WindowPaintData& data)
+    void performPaint(EffWinImpl& eff_win, paint_type mask, effect::window_paint_data& data)
     {
-        if (data.xScale() < 0.9 || data.yScale() < 0.9) {
+        if (data.paint.geo.scale.x() < 0.9 || data.paint.geo.scale.y() < 0.9) {
             if (!m_inited) {
                 init();
             }
@@ -64,35 +64,37 @@ public:
                                                                output,
                                                                win::get_desktop(*win));
                              }},
-                             *w->window.ref_win);
+                             *eff_win.window.ref_win);
 
             // window geometry may not be bigger than screen geometry to fit into the FBO
-            QRect winGeo(w->expandedGeometry());
+            QRect winGeo(eff_win.expandedGeometry());
             if (m_shader && winGeo.width() <= screenRect.width()
                 && winGeo.height() <= screenRect.height()) {
-                winGeo.translate(-w->frameGeometry().topLeft());
+                winGeo.translate(-eff_win.frameGeometry().topLeft());
                 double left = winGeo.left();
                 double top = winGeo.top();
                 double width = winGeo.right() - left;
                 double height = winGeo.bottom() - top;
 
-                auto tx = data.xTranslation() + w->x() + left * data.xScale();
-                auto ty = data.yTranslation() + w->y() + top * data.yScale();
-                auto tw = width * data.xScale();
-                auto th = height * data.yScale();
+                auto tx = data.paint.geo.translation.x() + eff_win.x()
+                    + left * data.paint.geo.scale.x();
+                auto ty
+                    = data.paint.geo.translation.y() + eff_win.y() + top * data.paint.geo.scale.y();
+                auto tw = width * data.paint.geo.scale.x();
+                auto th = height * data.paint.geo.scale.y();
                 QRect const textureRect(tx, ty, tw, th);
-                auto const hardwareClipping = !(QRegion(textureRect) - region).isEmpty();
+                auto const hardwareClipping = !(QRegion(textureRect) - data.paint.region).isEmpty();
 
                 auto sw = width;
                 auto sh = height;
 
                 QRegion scissor = infiniteRegion();
                 if (hardwareClipping) {
-                    scissor = m_scene->mapToRenderTarget(region);
+                    scissor = m_scene->mapToRenderTarget(data.paint.region);
                 }
 
                 auto cachedTexture = static_cast<GLTexture*>(
-                    static_cast<EffectWindow*>(w)->data(LanczosCacheRole).value<void*>());
+                    eff_win.data(LanczosCacheRole).template value<void*>());
 
                 if (cachedTexture) {
                     if (cachedTexture->width() == tw && cachedTexture->height() == th) {
@@ -104,19 +106,18 @@ public:
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-                        auto const rgb = data.brightness() * data.opacity();
-                        auto const a = data.opacity();
-
                         ShaderBinder binder(QFlags({ShaderTrait::MapTexture,
                                                     ShaderTrait::Modulate,
                                                     ShaderTrait::AdjustSaturation}));
                         auto shader = binder.shader();
-                        auto mvp = data.screenProjectionMatrix();
+                        auto mvp = data.paint.screen_projection_matrix;
                         mvp.translate(textureRect.x(), textureRect.y());
                         shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+
+                        auto const rgb = data.paint.brightness * data.paint.opacity;
                         shader->setUniform(GLShader::ModulationConstant,
-                                           QVector4D(rgb, rgb, rgb, a));
-                        shader->setUniform(GLShader::Saturation, data.saturation());
+                                           QVector4D(rgb, rgb, rgb, data.paint.opacity));
+                        shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
                         cachedTexture->render(scissor, textureRect, hardwareClipping);
 
@@ -131,18 +132,19 @@ public:
                         // offscreen texture not matching - delete
                         delete cachedTexture;
                         cachedTexture = nullptr;
-                        w->setData(LanczosCacheRole, QVariant());
+                        eff_win.setData(LanczosCacheRole, QVariant());
                     }
                 }
 
-                WindowPaintData thumbData = data;
-                thumbData.setXScale(1.0);
-                thumbData.setYScale(1.0);
-                thumbData.setXTranslation(-w->x() - left);
-                thumbData.setYTranslation(-w->y() - top);
-                thumbData.setBrightness(1.0);
-                thumbData.setOpacity(1.0);
-                thumbData.setSaturation(1.0);
+                effect::window_paint_data thumbData = data;
+                thumbData.paint.region = infiniteRegion();
+                thumbData.paint.geo.scale.setX(1.0);
+                thumbData.paint.geo.scale.setY(1.0);
+                thumbData.paint.geo.translation.setX(-eff_win.x() - left);
+                thumbData.paint.geo.translation.setY(-eff_win.y() - top);
+                thumbData.paint.brightness = 1.0;
+                thumbData.paint.opacity = 1.0;
+                thumbData.paint.saturation = 1.0;
 
                 // Bind the offscreen FBO and draw the window on it unscaled
                 updateOffscreenSurfaces();
@@ -151,11 +153,11 @@ public:
                 QMatrix4x4 modelViewProjectionMatrix;
                 modelViewProjectionMatrix.ortho(
                     0, m_offscreenTex->width(), m_offscreenTex->height(), 0, 0, 65535);
-                thumbData.setProjectionMatrix(modelViewProjectionMatrix);
+                thumbData.paint.projection_matrix = modelViewProjectionMatrix;
 
                 glClearColor(0.0, 0.0, 0.0, 0.0);
                 glClear(GL_COLOR_BUFFER_BIT);
-                w->window.performPaint(mask, infiniteRegion(), thumbData);
+                eff_win.window.performPaint(mask, thumbData);
 
                 // Create a scratch texture and copy the rendered window into it
                 GLTexture tex(GL_RGBA8, sw, sh);
@@ -256,18 +258,18 @@ public:
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-                auto const rgb = data.brightness() * data.opacity();
-                auto const a = data.opacity();
-
                 ShaderBinder binder(QFlags({ShaderTrait::MapTexture,
                                             ShaderTrait::Modulate,
                                             ShaderTrait::AdjustSaturation}));
                 auto shader = binder.shader();
-                auto mvp = data.screenProjectionMatrix();
+                auto mvp = data.paint.screen_projection_matrix;
                 mvp.translate(textureRect.x(), textureRect.y());
                 shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-                shader->setUniform(GLShader::ModulationConstant, QVector4D(rgb, rgb, rgb, a));
-                shader->setUniform(GLShader::Saturation, data.saturation());
+
+                auto const rgb = data.paint.brightness * data.paint.opacity;
+                shader->setUniform(GLShader::ModulationConstant,
+                                   QVector4D(rgb, rgb, rgb, data.paint.opacity));
+                shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
                 cache->render(scissor, textureRect, hardwareClipping);
 
@@ -278,14 +280,15 @@ public:
                 }
 
                 cache->unbind();
-                w->setData(LanczosCacheRole, QVariant::fromValue(static_cast<void*>(cache)));
+                eff_win.setData(LanczosCacheRole, QVariant::fromValue(static_cast<void*>(cache)));
 
                 // Delete the offscreen surface after 5 seconds
                 m_timer.start(5000, this);
                 return;
             }
-        } // if ( effects->compositingType() == KWin::OpenGLCompositing )
-        w->window.performPaint(mask, region, data);
+        }
+
+        eff_win.window.performPaint(mask, data);
     }
 
 protected:

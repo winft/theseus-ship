@@ -190,7 +190,7 @@ void StartupFeedbackEffect::reconfigure(Effect::ReconfigureFlags flags)
     }
 }
 
-void StartupFeedbackEffect::prePaintScreen(ScreenPrePaintData& data,
+void StartupFeedbackEffect::prePaintScreen(effect::paint_data& data,
                                            std::chrono::milliseconds presentTime)
 {
     auto time = 0;
@@ -214,7 +214,7 @@ void StartupFeedbackEffect::prePaintScreen(ScreenPrePaintData& data,
                 = qRound(static_cast<qreal>(m_progress) / static_cast<qreal>(BOUNCE_FRAME_DURATION))
                 % BOUNCE_FRAMES;
             m_currentGeometry = feedbackRect(); // bounce alters geometry with m_frame
-            data.paint = data.paint.united(m_currentGeometry);
+            data.region = data.region.united(m_currentGeometry);
             break;
         case BlinkingFeedback:
             m_progress = (m_progress + time) % BLINKING_DURATION;
@@ -231,9 +231,9 @@ void StartupFeedbackEffect::prePaintScreen(ScreenPrePaintData& data,
     effects->prePaintScreen(data, presentTime);
 }
 
-void StartupFeedbackEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void StartupFeedbackEffect::paintScreen(effect::screen_paint_data& data)
 {
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
     if (!m_active) {
         return;
     }
@@ -264,7 +264,7 @@ void StartupFeedbackEffect::paintScreen(int mask, const QRegion& region, ScreenP
         ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
     }
 
-    auto mvp = data.projectionMatrix();
+    auto mvp = data.paint.projection_matrix;
     mvp.translate(m_currentGeometry.x(), m_currentGeometry.y());
 
     ShaderManager::instance()->getBoundShader()->setUniform(GLShader::ModelViewProjectionMatrix,

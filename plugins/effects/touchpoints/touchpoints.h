@@ -22,8 +22,8 @@ class TouchPointsEffect : public Effect
 public:
     TouchPointsEffect();
     ~TouchPointsEffect() override;
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
     bool touchDown(qint32 id, const QPointF& pos, quint32 time) override;
@@ -50,8 +50,8 @@ public:
 
 private:
     inline void drawCircle(const QColor& color, float cx, float cy, float r);
-    inline void paintScreenSetup(int mask, QRegion region, ScreenPaintData& data);
-    inline void paintScreenFinish(int mask, QRegion region, ScreenPaintData& data);
+    inline void paintScreenSetup(effect::screen_paint_data const& data);
+    inline void paintScreenFinish(effect::screen_paint_data const& data);
 
     void repaint();
 
@@ -59,8 +59,8 @@ private:
     float computeRadius(int time, bool press, int ring);
     void drawCircleGl(const QColor& color, float cx, float cy, float r);
     void drawCircleQPainter(const QColor& color, float cx, float cy, float r);
-    void paintScreenSetupGl(int mask, QRegion region, ScreenPaintData& data);
-    void paintScreenFinishGl(int mask, QRegion region, ScreenPaintData& data);
+    void paintScreenSetupGl(effect::screen_paint_data const& data);
+    void paintScreenFinishGl(effect::screen_paint_data const& data);
 
     Qt::GlobalColor colorForId(quint32 id);
 

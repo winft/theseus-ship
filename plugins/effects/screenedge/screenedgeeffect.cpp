@@ -55,7 +55,7 @@ void ScreenEdgeEffect::cleanup()
     m_borders.clear();
 }
 
-void ScreenEdgeEffect::prePaintScreen(ScreenPrePaintData& data,
+void ScreenEdgeEffect::prePaintScreen(effect::paint_data& data,
                                       std::chrono::milliseconds presentTime)
 {
     effects->prePaintScreen(data, presentTime);
@@ -63,13 +63,14 @@ void ScreenEdgeEffect::prePaintScreen(ScreenPrePaintData& data,
         if (glow->strength == 0.0) {
             continue;
         }
-        data.paint += glow->geometry;
+        data.region += glow->geometry;
     }
 }
 
-void ScreenEdgeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void ScreenEdgeEffect::paintScreen(effect::screen_paint_data& data)
 {
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
+
     for (auto& [border, glow] : m_borders) {
         const qreal opacity = glow->strength;
         if (opacity == 0.0) {
@@ -83,7 +84,8 @@ void ScreenEdgeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
             ShaderBinder binder(ShaderTrait::MapTexture | ShaderTrait::Modulate);
             const QVector4D constant(opacity, opacity, opacity, opacity);
             binder.shader()->setUniform(GLShader::ModulationConstant, constant);
-            QMatrix4x4 mvp = data.projectionMatrix();
+
+            auto mvp = data.paint.projection_matrix;
             mvp.translate(glow->geometry.x(), glow->geometry.y());
             binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
             texture->render(glow->geometry);

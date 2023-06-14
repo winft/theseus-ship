@@ -35,12 +35,10 @@ public:
     static bool enabledByDefault();
 
     void reconfigure(ReconfigureFlags flags) override;
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow* w,
-                        WindowPrePaintData& data,
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(effect::window_prepaint_data& data,
                         std::chrono::milliseconds presentTime) override;
-    void
-    drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
+    void drawWindow(effect::window_paint_data& data) override;
 
     bool provides(Feature feature) override;
     bool isActive() const override;
@@ -63,13 +61,11 @@ private:
     QRegion blurRegion(const EffectWindow* w) const;
     QRegion decorationBlurRegion(const EffectWindow* w) const;
     bool decorationSupportsBlurBehind(const EffectWindow* w) const;
-    bool shouldBlur(const EffectWindow* w, int mask, const WindowPaintData& data) const;
-    void doBlur(const QRegion& shape,
+    bool shouldBlur(effect::window_paint_data const& data) const;
+    void doBlur(effect::window_paint_data const& data,
+                const QRegion& shape,
                 const QRect& screen,
-                const float opacity,
-                const QMatrix4x4& screenProjection,
-                bool isDock,
-                QRect windowRect);
+                bool isDock);
     void uploadRegion(QVector2D*& map, QRegion const& region, int const downSampleIterations);
     void
     uploadGeometry(GLVertexBuffer* vbo, const QRegion& blurRegion, const QRegion& windowRegion);
@@ -78,8 +74,7 @@ private:
     void upscaleRenderToScreen(GLVertexBuffer* vbo,
                                int vboStart,
                                int blurRectCount,
-                               const QMatrix4x4& screenProjection,
-                               QPoint windowPosition);
+                               const QMatrix4x4& screenProjection);
     void applyNoise(GLVertexBuffer* vbo,
                     int vboStart,
                     int blurRectCount,

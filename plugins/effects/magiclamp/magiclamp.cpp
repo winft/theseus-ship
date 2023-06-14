@@ -42,7 +42,7 @@ void MagicLampEffect::reconfigure(ReconfigureFlags)
     m_duration = std::chrono::milliseconds(static_cast<int>(animationTime(d)));
 }
 
-void MagicLampEffect::prePaintScreen(ScreenPrePaintData& data,
+void MagicLampEffect::prePaintScreen(effect::paint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
     auto animationIt = m_animations.begin();
@@ -58,31 +58,28 @@ void MagicLampEffect::prePaintScreen(ScreenPrePaintData& data,
     effects->prePaintScreen(data, presentTime);
 }
 
-void MagicLampEffect::prePaintWindow(EffectWindow* w,
-                                     WindowPrePaintData& data,
+void MagicLampEffect::prePaintWindow(effect::window_prepaint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
     // Schedule window for transformation if the animation is still in
     //  progress
-    if (m_animations.contains(w)) {
+    if (m_animations.contains(&data.window)) {
         // We'll transform this window
-        data.setTransformed();
+        data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
     }
 
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void MagicLampEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, WindowQuadList& quads)
+void MagicLampEffect::apply(effect::window_paint_data& data, WindowQuadList& quads)
 {
-    Q_UNUSED(mask)
-    Q_UNUSED(data)
-    auto animationIt = m_animations.constFind(w);
+    auto animationIt = m_animations.constFind(&data.window);
     if (animationIt != m_animations.constEnd()) {
         // 0 = not minimized, 1 = fully minimized
         const qreal progress = (*animationIt).timeLine.value();
 
-        QRect geo = w->frameGeometry();
-        QRect icon = w->iconGeometry();
+        auto geo = data.window.frameGeometry();
+        auto icon = data.window.iconGeometry();
         IconPosition position = Top;
         // If there's no icon geometry, minimize to the center of the screen
         if (!icon.isValid()) {

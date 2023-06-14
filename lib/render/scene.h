@@ -285,14 +285,14 @@ public:
 
         QRegion region = damage;
 
-        ScreenPrePaintData pdata;
+        effect::paint_data pdata;
         pdata.mask = static_cast<int>(mask);
-        pdata.paint = region;
+        pdata.region = region;
 
         platform.compositor->effects->prePaintScreen(pdata, m_expectedPresentTimestamp);
 
         mask = static_cast<paint_type>(pdata.mask);
-        region = pdata.paint;
+        region = pdata.region;
 
         if (flags(
                 mask
@@ -316,11 +316,17 @@ public:
             paintBackground(region);
         }
 
-        ScreenPaintData data(projection,
-                             repaint_output
-                                 ? platform.compositor->effects->findScreen(repaint_output->name())
-                                 : nullptr);
-        platform.compositor->effects->paintScreen(static_cast<int>(mask), region, data);
+        effect::screen_paint_data data{
+            .screen = repaint_output
+                ? platform.compositor->effects->findScreen(repaint_output->name())
+                : nullptr,
+            .paint = {
+                .mask = static_cast<int>(mask),
+                .region = region,
+                .screen_projection_matrix = projection,
+            },
+        };
+        platform.compositor->effects->paintScreen(data);
 
         for (auto const& w : stacking_order) {
             platform.compositor->effects->postPaintWindow(w->effect.get());
@@ -343,14 +349,14 @@ public:
     virtual void paintCursor() = 0;
 
     // called after all effects had their paintScreen() called
-    void finalPaintScreen(paint_type mask, QRegion region, ScreenPaintData& data)
+    void finalPaintScreen(paint_type mask, effect::screen_paint_data& data)
     {
         if (flags(
                 mask
                 & (paint_type::screen_transformed | paint_type::screen_with_transformed_windows))) {
             paintGenericScreen(mask, data);
         } else {
-            paintSimpleScreen(mask, region);
+            paintSimpleScreen(mask, data.paint.region);
         }
     }
 
@@ -365,9 +371,9 @@ public:
 
     // The generic (unoptimized) painting code that can handle even transformations. It simply
     // paints bottom-to-top.
-    virtual void paintGenericScreen(paint_type orig_mask, ScreenPaintData /*data*/)
+    virtual void paintGenericScreen(paint_type mask, effect::screen_paint_data const& /*data*/)
     {
-        if (!(orig_mask & paint_type::screen_background_first)) {
+        if (!(mask & paint_type::screen_background_first)) {
             paintBackground(infiniteRegion());
         }
         QVector<Phase2Data> phase2;
@@ -385,24 +391,31 @@ public:
             std::visit(overload{[this](auto&& win) { win::reset_repaints(*win, repaint_output); }},
                        *win->ref_win);
 
-            WindowPrePaintData data;
-            data.mask = static_cast<int>(
-                orig_mask
-                | (win->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
-            data.paint = infiniteRegion(); // no clipping, so doesn't really matter
-            data.clip = QRegion();
-            data.quads = win->buildQuads();
+            effect::window_prepaint_data win_data{
+                .window = *win->effect,
+                .paint = {
+                    .mask = static_cast<int>(mask
+                            | (win->isOpaque() ? paint_type::window_opaque
+                                               : paint_type::window_translucent)),
+                    // no clipping, so doesn't really matter
+                    .region = infiniteRegion(),
+                },
+                .clip = {},
+                .quads = win->buildQuads(),
+            };
 
             // preparation step
-            platform.compositor->effects->prePaintWindow(
-                win->effect.get(), data, m_expectedPresentTimestamp);
+            platform.compositor->effects->prePaintWindow(win_data, m_expectedPresentTimestamp);
 #if !defined(QT_NO_DEBUG)
-            if (data.quads.isTransformed()) {
+            if (win_data.quads.isTransformed()) {
                 qFatal("Pre-paint calls are not allowed to transform quads!");
             }
 #endif
-            phase2.append(
-                {win, infiniteRegion(), data.clip, static_cast<paint_type>(data.mask), data.quads});
+            phase2.append({win,
+                           infiniteRegion(),
+                           win_data.clip,
+                           static_cast<paint_type>(win_data.paint.mask),
+                           win_data.quads});
         }
 
         for (auto const& data : phase2) {
@@ -426,12 +439,14 @@ public:
             return;
         }
 
-        WindowPrePaintData data;
-        data.mask = static_cast<int>(
-            orig_mask
-            | (win->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
-        data.paint = region;
-        data.paint |= win::repaints(ref_win);
+        effect::window_prepaint_data data{
+            .window = *win->effect,
+            .paint
+            = {.mask = static_cast<int>(orig_mask
+                                        | (win->isOpaque() ? paint_type::window_opaque
+                                                           : paint_type::window_translucent)),
+               .region = region | win::repaints(ref_win)},
+        };
 
         // Reset the repaint_region.
         // This has to be done here because many effects schedule a repaint for
@@ -454,7 +469,7 @@ public:
                 win::frame_to_client_pos(&ref_win, ref_win.geo.pos()) - ref_win.geo.pos());
             data.clip = clientShape & opaqueShape;
             if (clientShape == opaqueShape) {
-                data.mask = static_cast<int>(orig_mask | paint_type::window_opaque);
+                data.paint.mask = static_cast<int>(orig_mask | paint_type::window_opaque);
             }
         } else {
             data.clip = QRegion();
@@ -469,8 +484,7 @@ public:
         data.quads = win->buildQuads();
 
         // preparation step
-        platform.compositor->effects->prePaintWindow(
-            win->effect.get(), data, m_expectedPresentTimestamp);
+        platform.compositor->effects->prePaintWindow(data, m_expectedPresentTimestamp);
 
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
@@ -478,11 +492,14 @@ public:
         }
 #endif
 
-        dirtyArea |= data.paint;
+        dirtyArea |= data.paint.region;
 
         // Schedule the window for painting
-        phase2data.append(
-            {win, data.paint, data.clip, static_cast<paint_type>(data.mask), data.quads});
+        phase2data.append({win,
+                           data.paint.region,
+                           data.clip,
+                           static_cast<paint_type>(data.paint.mask),
+                           data.quads});
     }
 
     // The optimized case without any transformations at all. It can paint only the requested region
@@ -592,10 +609,9 @@ public:
     virtual void paintBackground(QRegion region) = 0;
 
     // called after all effects had their paintWindow() called, eventually by paintWindow() below
-    void
-    finalPaintWindow(effect_window_t* w, paint_type mask, QRegion region, WindowPaintData& data)
+    void finalPaintWindow(effect::window_paint_data& data)
     {
-        platform.compositor->effects->drawWindow(w, static_cast<int>(mask), region, data);
+        platform.compositor->effects->drawWindow(data);
     }
 
     // shared implementation, starts painting the window
@@ -603,21 +619,29 @@ public:
     {
         // no painting outside visible screen (and no transformations)
         region &= QRect({}, platform.base.topology.size);
-        if (region.isEmpty()) // completely clipped
+        if (region.isEmpty()) {
+            // completely clipped
             return;
+        }
 
-        WindowPaintData data(win->effect.get(), screenProjectionMatrix());
+        effect::window_paint_data data{
+            *win->effect,
+            {
+                .mask = static_cast<int>(mask),
+                .region = region,
+                .screen_projection_matrix = screenProjectionMatrix(),
+            },
+        };
         data.quads = quads;
-        platform.compositor->effects->paintWindow(
-            win->effect.get(), static_cast<int>(mask), region, data);
+        platform.compositor->effects->paintWindow(data);
     }
 
     // called after all effects had their drawWindow() called, eventually called from drawWindow()
-    virtual void finalDrawWindow(effect_window_t* eff_win,
-                                 paint_type mask,
-                                 QRegion region,
-                                 WindowPaintData& data)
+    virtual void finalDrawWindow(effect::window_paint_data& data)
     {
+        auto& eff_win = static_cast<effect_window_t&>(data.window);
+        auto mask = static_cast<paint_type>(data.paint.mask);
+
         if (base::wayland::is_screen_locked(platform.base)) {
             if (!std::visit(
                     overload{[](auto&& win) {
@@ -630,11 +654,11 @@ public:
                         }
                         return do_draw;
                     }},
-                    *eff_win->window.ref_win)) {
+                    *eff_win.window.ref_win)) {
                 return;
             }
         }
-        eff_win->window.performPaint(mask, region, data);
+        eff_win.window.performPaint(mask, data);
     }
 
     // let the scene decide whether it's better to paint more of the screen, eg. in order to allow a

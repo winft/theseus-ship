@@ -61,27 +61,21 @@ void KWin::BlendChanges::start(int delay)
     m_state = ShowingCache;
 }
 
-void BlendChanges::drawWindow(EffectWindow* window,
-                              int mask,
-                              const QRegion& region,
-                              WindowPaintData& data)
+void BlendChanges::drawWindow(effect::window_paint_data& data)
 {
     // draw the new picture underneath at full opacity
     if (m_state != ShowingCache) {
-        Effect::drawWindow(window, mask, region, data);
+        Effect::drawWindow(data);
     }
     // then the old on top, it works better than changing both alphas with the current blend mode
     if (m_state != Off) {
-        OffscreenEffect::drawWindow(window, mask, region, data);
+        OffscreenEffect::drawWindow(data);
     }
 }
 
-void BlendChanges::apply(EffectWindow* /*window*/,
-                         int /*mask*/,
-                         WindowPaintData& data,
-                         WindowQuadList& /*quads*/)
+void BlendChanges::apply(effect::window_paint_data& data, WindowQuadList& /*quads*/)
 {
-    data.setOpacity(1.0 - m_timeline.value() * data.opacity());
+    data.paint.opacity = 1.0 - m_timeline.value() * data.paint.opacity;
 }
 
 bool BlendChanges::isActive() const
@@ -103,7 +97,7 @@ void BlendChanges::postPaintScreen()
     effects->addRepaintFull();
 }
 
-void BlendChanges::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void BlendChanges::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
     if (m_state == Off) {
         return;

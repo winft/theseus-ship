@@ -31,8 +31,8 @@ public:
 
     void reconfigure(ReconfigureFlags) override;
 
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(effect::screen_paint_data& data) override;
     bool isActive() const override;
 
     static bool supported();

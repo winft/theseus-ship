@@ -55,7 +55,7 @@ public:
     }
 
     // perform the actual painting of the window
-    virtual void performPaint(paint_type mask, const QRegion& region, WindowPaintData& data) = 0;
+    virtual void performPaint(paint_type mask, effect::window_paint_data& data) = 0;
 
     // do any cleanup needed when the window's buffer is discarded
     void discard_buffer()

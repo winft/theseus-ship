@@ -155,78 +155,80 @@ void SlidingPopupsEffect::reconfigure(ReconfigureFlags flags)
     }
 }
 
-void SlidingPopupsEffect::prePaintWindow(EffectWindow* win,
-                                         WindowPrePaintData& data,
+void SlidingPopupsEffect::prePaintWindow(effect::window_prepaint_data& data,
                                          std::chrono::milliseconds presentTime)
 {
-    auto animationIt = animations.find(win);
+    auto animationIt = animations.find(&data.window);
     if (animationIt == animations.end()) {
-        effects->prePaintWindow(win, data, presentTime);
+        effects->prePaintWindow(data, presentTime);
         return;
     }
 
     (*animationIt).timeline.advance(presentTime);
-    data.setTransformed();
+    data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
 
-    effects->prePaintWindow(win, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void SlidingPopupsEffect::paintWindow(EffectWindow* win,
-                                      int mask,
-                                      QRegion region,
-                                      WindowPaintData& data)
+void SlidingPopupsEffect::paintWindow(effect::window_paint_data& data)
 {
-    auto animationIt = animations.constFind(win);
+    auto animationIt = animations.constFind(&data.window);
     if (animationIt == animations.constEnd()) {
-        effects->paintWindow(win, mask, region, data);
+        effects->paintWindow(data);
         return;
     }
 
-    auto const& animData = window_data[win];
+    auto const& animData = window_data[&data.window];
     int const slideLength = (animData.distance > 0) ? animData.distance : config.distance;
 
     int split_point = 0;
     auto const screen_area
-        = effects->clientArea(FullScreenArea, win->screen(), effects->currentDesktop());
-    auto const geo = win->expandedGeometry();
+        = effects->clientArea(FullScreenArea, data.window.screen(), effects->currentDesktop());
+    auto const geo = data.window.expandedGeometry();
     auto const time = (*animationIt).timeline.value();
 
     switch (animData.location) {
     case effect::position::left:
         if (slideLength < geo.width()) {
-            data.multiplyOpacity(time);
+            data.paint.opacity *= time;
         }
-        data.translate(-interpolate(qMin(geo.width(), slideLength), 0.0, time));
+        data.paint.geo.translation
+            -= QVector3D(interpolate(qMin(geo.width(), slideLength), 0.0, time), 0, 0);
         split_point = geo.width() - (geo.x() + geo.width() - screen_area.x() - animData.offset);
-        region &= QRegion(geo.x() + split_point, geo.y(), geo.width() - split_point, geo.height());
+        data.paint.region
+            &= QRegion(geo.x() + split_point, geo.y(), geo.width() - split_point, geo.height());
         break;
     case effect::position::top:
         if (slideLength < geo.height()) {
-            data.multiplyOpacity(time);
+            data.paint.opacity *= time;
         }
-        data.translate(0.0, -interpolate(qMin(geo.height(), slideLength), 0.0, time));
+        data.paint.geo.translation
+            -= QVector3D(0, interpolate(qMin(geo.height(), slideLength), 0.0, time), 0);
         split_point = geo.height() - (geo.y() + geo.height() - screen_area.y() - animData.offset);
-        region &= QRegion(geo.x(), geo.y() + split_point, geo.width(), geo.height() - split_point);
+        data.paint.region
+            &= QRegion(geo.x(), geo.y() + split_point, geo.width(), geo.height() - split_point);
         break;
     case effect::position::right:
         if (slideLength < geo.width()) {
-            data.multiplyOpacity(time);
+            data.paint.opacity *= time;
         }
-        data.translate(interpolate(qMin(geo.width(), slideLength), 0.0, time));
+        data.paint.geo.translation
+            += QVector3D(interpolate(qMin(geo.width(), slideLength), 0.0, time), 0, 0);
         split_point = screen_area.x() + screen_area.width() - geo.x() - animData.offset;
-        region &= QRegion(geo.x(), geo.y(), split_point, geo.height());
+        data.paint.region &= QRegion(geo.x(), geo.y(), split_point, geo.height());
         break;
     case effect::position::bottom:
     default:
         if (slideLength < geo.height()) {
-            data.multiplyOpacity(time);
+            data.paint.opacity *= time;
         }
-        data.translate(0.0, interpolate(qMin(geo.height(), slideLength), 0.0, time));
+        data.paint.geo.translation
+            += QVector3D(0, interpolate(qMin(geo.height(), slideLength), 0.0, time), 0);
         split_point = screen_area.y() + screen_area.height() - geo.y() - animData.offset;
-        region &= QRegion(geo.x(), geo.y(), geo.width(), split_point);
+        data.paint.region &= QRegion(geo.x(), geo.y(), geo.width(), split_point);
     }
 
-    effects->paintWindow(win, mask, region, data);
+    effects->paintWindow(data);
 }
 
 void SlidingPopupsEffect::postPaintWindow(EffectWindow* win)

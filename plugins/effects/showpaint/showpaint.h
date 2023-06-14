@@ -18,8 +18,8 @@ class ShowPaintEffect : public Effect
 public:
     ShowPaintEffect();
 
-    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
-    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
+    void paintScreen(effect::screen_paint_data& data) override;
+    void paintWindow(effect::window_paint_data& data) override;
 
     bool isActive() const override;
 
