@@ -51,6 +51,32 @@ void ThumbnailAsideEffect::reconfigure(ReconfigureFlags)
     arrange();
 }
 
+/** Helper to set WindowPaintData and QRegion to necessary transformations so that
+ * a following drawWindow() would put the window at the requested geometry (useful for
+ * thumbnails)
+ */
+static void setPositionTransformations(WindowPaintData& data,
+                                       QRect& region,
+                                       EffectWindow* w,
+                                       QRect const& r,
+                                       Qt::AspectRatioMode aspect)
+{
+    auto size = w->size();
+    size.scale(r.size(), aspect);
+
+    data.setXScale(size.width() / double(w->width()));
+    data.setYScale(size.height() / double(w->height()));
+
+    auto width = int(w->width() * data.xScale());
+    auto height = int(w->height() * data.yScale());
+    int x = r.x() + (r.width() - width) / 2;
+    int y = r.y() + (r.height() - height) / 2;
+
+    region = QRect(x, y, width, height);
+    data.setXTranslation(x - w->x());
+    data.setYTranslation(y - w->y());
+}
+
 void ThumbnailAsideEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
     painted = QRegion();

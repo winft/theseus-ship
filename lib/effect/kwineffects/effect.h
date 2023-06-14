@@ -427,15 +427,6 @@ public:
     {
         return x * (1 - a) + y * a;
     }
-    /** Helper to set WindowPaintData and QRegion to necessary transformations so that
-     * a following drawWindow() would put the window at the requested geometry (useful for
-     * thumbnails)
-     */
-    static void setPositionTransformations(WindowPaintData& data,
-                                           QRect& region,
-                                           EffectWindow* w,
-                                           const QRect& r,
-                                           Qt::AspectRatioMode aspect);
 
 public Q_SLOTS:
     virtual bool borderActivated(ElectricBorder border);
