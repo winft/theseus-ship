@@ -83,6 +83,7 @@ Files:
   kcms/tabbox/thumbnails/*
   plugins/idletime/kwin.json
   plugins/kdecorations/aurorae/src/aurorae.json
+  plugins/kdecorations/aurorae/src/config/kcm_auroraeconfig.json
   plugins/kdecorations/aurorae/src/qml/qmldir
   plugins/kdecorations/aurorae/themes/plastik/code/qmldir
   plugins/kdecorations/aurorae/themes/plastik/package/metadata.json

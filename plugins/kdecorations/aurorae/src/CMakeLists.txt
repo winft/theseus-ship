@@ -61,19 +61,7 @@ configure_file(aurorae.knsrc.cmake ${CMAKE_CURRENT_BINARY_DIR}/aurorae.knsrc)
 ########### install files ###############
 
 if (KWIN_BUILD_KCMS)
-    kwin_add_effect_config(kwin_aurorae_config auroraeconfig.cpp)
-
-    target_link_libraries(kwin_aurorae_config
-        KF6::ConfigGui
-        KF6::KCMUtils
-        KF6::I18n
-        KDecoration2::KDecoration
-        Qt::DBus
-        Qt::UiTools
-        Qt::Widgets
-        kwineffects
-        base
-    )
+    add_subdirectory(config)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/aurorae.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})
 endif()
 
