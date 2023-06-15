@@ -74,11 +74,16 @@ public:
      * @param renderedRegion The possibly larger region that has been rendered
      * @param damagedRegion The damaged region that should be posted
      */
-    virtual void endRenderingFrame(QRegion const& damage, QRegion const& damagedRegion) = 0;
+    virtual void endRenderingFrame(QRegion const& /*damage*/, QRegion const& /*damagedRegion*/)
+    {
+        assert(false);
+    }
+
     virtual void endRenderingFrameForScreen(base::output* /*output*/,
                                             QRegion const& /*damage*/,
                                             QRegion const& /*damagedRegion*/)
     {
+        assert(false);
     }
 
     /**

@@ -144,10 +144,6 @@ public:
         return QRegion();
     }
 
-    void endRenderingFrame(QRegion const& /*rendered*/, QRegion const& /*damaged*/) override
-    {
-    }
-
     QRegion prepareRenderingForScreen(base::output* output) override
     {
         auto const& out = get_egl_out(output);
