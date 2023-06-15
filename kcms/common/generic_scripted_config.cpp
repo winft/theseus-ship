@@ -7,7 +7,6 @@
 
 #include "config-kwin.h"
 #include <kwineffects_interface.h>
-#define TRANSLATION_DOMAIN "kwin_scripting"
 #include <KLocalizedString>
 #include <KLocalizedTranslator>
 #include <kconfigloader.h>

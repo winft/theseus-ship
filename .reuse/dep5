@@ -67,6 +67,7 @@ Files:
   plugins/effects/windowview/metadata.json
   plugins/effects/wobblywindows/metadata.json
   plugins/effects/zoom/metadata.json
+  kcms/common/generic_scripted_config.json
   kcms/compositing/kwincompositing.json
   kcms/decoration/declarative-plugin/qmldir
   kcms/decoration/kcm_kwindecoration.json
@@ -95,7 +96,6 @@ Files:
   lib/effect/org.kde.kwin.Effects.xml
   lib/render/dbus/org.kde.kwin.ColorCorrect.xml
   lib/render/dbus/org.kde.kwin.Compositing.xml
-  lib/script/generic_scripted_config.json
   lib/script/org.kde.kwin.Script.xml
   plugins/scripts/desktopchangeosd/metadata.json
   plugins/scripts/minimizeall/metadata.json
