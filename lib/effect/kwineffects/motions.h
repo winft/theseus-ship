@@ -167,7 +167,7 @@ public:
     /**
      * Register a window for managing.
      */
-    void manage(EffectWindow* w);
+    void manage(EffectWindow const* w);
     /**
      * Register a list of windows for managing.
      */
@@ -180,7 +180,7 @@ public:
      * Deregister a window. All transformations applied to the
      * window will be permanently removed and cannot be recovered.
      */
-    void unmanage(EffectWindow* w);
+    void unmanage(EffectWindow const* w);
     /**
      * Deregister all windows, returning the manager to its
      * originally initiated state.
@@ -200,7 +200,7 @@ public:
      * transformed in prePaintWindow() by calling
      * WindowPrePaintData::setTransformed()
      */
-    void apply(EffectWindow* w, WindowPaintData& data);
+    void apply(EffectWindow const* w, WindowPaintData& data);
     /**
      * Set all motion targets and values back to where the
      * windows were before transformations. The same as
@@ -211,7 +211,7 @@ public:
      * Resets the motion target and current value of a single
      * window.
      */
-    void reset(EffectWindow* w);
+    void reset(EffectWindow const* w);
 
     /**
      * Ask the manager to move the window to the target position
@@ -219,14 +219,14 @@ public:
      * set to 0.0, `scale` will be used as the scale in the
      * vertical direction as well as in the horizontal direction.
      */
-    void moveWindow(EffectWindow* w, QPoint target, double scale = 1.0, double yScale = 0.0);
+    void moveWindow(EffectWindow const* w, QPoint target, double scale = 1.0, double yScale = 0.0);
     /**
      * This is an overloaded method, provided for convenience.
      *
      * Ask the manager to move the window to the target rectangle.
      * Automatically determines scale.
      */
-    inline void moveWindow(EffectWindow* w, QRect target)
+    inline void moveWindow(EffectWindow const* w, QRect target)
     {
         // TODO: Scale might be slightly different in the comparison due to rounding
         moveWindow(w,
@@ -239,30 +239,30 @@ public:
      * Retrieve the current tranformed geometry of a registered
      * window.
      */
-    QRectF transformedGeometry(EffectWindow* w) const;
+    QRectF transformedGeometry(EffectWindow const* w) const;
     /**
      * Sets the current transformed geometry of a registered window to the given geometry.
      * @see transformedGeometry
      * @since 4.5
      */
-    void setTransformedGeometry(EffectWindow* w, const QRectF& geometry);
+    void setTransformedGeometry(EffectWindow const* w, const QRectF& geometry);
     /**
      * Retrieve the current target geometry of a registered
      * window.
      */
-    QRectF targetGeometry(EffectWindow* w) const;
+    QRectF targetGeometry(EffectWindow const* w) const;
     /**
      * Return the window that has its transformed geometry under
      * the specified point. It is recommended to use the stacking
      * order as it's what the user sees, but it is slightly
      * slower to process.
      */
-    EffectWindow* windowAtPoint(QPoint point, bool useStackingOrder = true) const;
+    EffectWindow const* windowAtPoint(QPoint point, bool useStackingOrder = true) const;
 
     /**
      * Return a list of all currently registered windows.
      */
-    inline EffectWindowList managedWindows() const
+    inline QList<EffectWindow const*> managedWindows() const
     {
         return m_managedWindows.keys();
     }
@@ -270,7 +270,7 @@ public:
      * Returns whether or not a specified window is being managed
      * by this manager object.
      */
-    inline bool isManaging(EffectWindow* w) const
+    inline bool isManaging(EffectWindow const* w) const
     {
         return m_managedWindows.contains(w);
     }
@@ -295,7 +295,7 @@ public:
      * Returns whether a window has reached its targets yet
      * or not.
      */
-    inline bool isWindowMoving(EffectWindow* w) const
+    inline bool isWindowMoving(EffectWindow const* w) const
     {
         return m_movingWindowsSet.contains(w);
     }
@@ -307,8 +307,8 @@ private:
         Motion2D translation; // Absolute position
         Motion2D scale;       // xScale and yScale
     };
-    QHash<EffectWindow*, WindowMotion> m_managedWindows;
-    QSet<EffectWindow*> m_movingWindowsSet;
+    QHash<EffectWindow const*, WindowMotion> m_managedWindows;
+    QSet<EffectWindow const*> m_movingWindowsSet;
 };
 
 template<typename T>
