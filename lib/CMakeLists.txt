@@ -21,6 +21,12 @@ target_link_libraries(wlroots
     debug-wl
     input-wl
     win-x11
+
+    # TODO(romangg): Linking against script lib is needed at the moment because in the base platform
+    #                the script platform is composited, but in the future it should be made possible
+    #                to build the wlroots backend lib without it.
+    script
+
     Libinput::Libinput
     Pixman::Pixman
     wlroots::wlroots
