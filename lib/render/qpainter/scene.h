@@ -134,7 +134,7 @@ public:
     }
 
 protected:
-    void paintBackground(QRegion region) override
+    void paintBackground(QRegion const& region) override
     {
         m_painter->setBrush(Qt::black);
         for (const QRect& rect : region) {

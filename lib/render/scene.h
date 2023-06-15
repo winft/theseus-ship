@@ -606,7 +606,7 @@ public:
     }
 
     // paint the background (not the desktop background - the whole background)
-    virtual void paintBackground(QRegion region) = 0;
+    virtual void paintBackground(QRegion const& region) = 0;
 
     // called after all effects had their paintWindow() called, eventually by paintWindow() below
     void finalPaintWindow(effect::window_paint_data& data)

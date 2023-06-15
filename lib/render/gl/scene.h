@@ -669,7 +669,7 @@ protected:
         }
     }
 
-    void paintBackground(QRegion region) override
+    void paintBackground(QRegion const& region) override
     {
         PaintClipper pc(region);
         if (!PaintClipper::clip()) {
@@ -825,7 +825,7 @@ protected:
                              i18n("Desktop effects were restarted due to a graphics reset"));
     }
 
-    void doPaintBackground(const QVector<float>& vertices)
+    void doPaintBackground(QVector<float> const& vertices)
     {
         GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
         vbo->reset();
