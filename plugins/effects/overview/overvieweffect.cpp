@@ -40,7 +40,8 @@ OverviewEffect::OverviewEffect()
             &EffectTogglableState::statusChanged,
             this,
             [this](EffectTogglableState::Status status) {
-                if (status == EffectTogglableState::Status::Activating) {
+                if (status == EffectTogglableState::Status::Activating
+                    || status == EffectTogglableState::Status::Active) {
                     m_searchText = QString();
                 }
                 setRunning(status != EffectTogglableState::Status::Inactive);
