@@ -10,7 +10,6 @@
 #include "wlr_includes.h"
 #include "wlr_non_owning_data_buffer.h"
 
-#include "render/gl/kwin_eglext.h"
 #include "render/gl/window.h"
 #include "render/wayland/buffer.h"
 
@@ -24,6 +23,12 @@
 #include <cassert>
 #include <drm_fourcc.h>
 #include <epoxy/gl.h>
+
+#ifndef EGL_WL_bind_wayland_display
+#define EGL_WAYLAND_BUFFER_WL 0x31D5
+#define EGL_WAYLAND_PLANE_WL 0x31D6
+#define EGL_WAYLAND_Y_INVERTED_WL 0x31DB
+#endif
 
 namespace KWin::render::backend::wlroots
 {
