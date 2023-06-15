@@ -85,8 +85,8 @@ public:
     virtual void discard();
     void bind();
     void unbind();
-    void render(const QRect& rect);
-    void render(const QRegion& region, const QRect& rect, bool hardwareClipping = false);
+    void render(QSize const& size);
+    void render(QRegion const& region, QSize const& size, bool hardwareClipping = false);
 
     GLuint texture() const;
     GLenum target() const;

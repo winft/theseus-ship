@@ -88,7 +88,7 @@ void ScreenEdgeEffect::paintScreen(effect::screen_paint_data& data)
             auto mvp = data.paint.projection_matrix;
             mvp.translate(glow->geometry.x(), glow->geometry.y());
             binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-            texture->render(glow->geometry);
+            texture->render(glow->geometry.size());
             texture->unbind();
             glDisable(GL_BLEND);
         } else {

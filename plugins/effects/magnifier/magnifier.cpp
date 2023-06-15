@@ -135,7 +135,7 @@ void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
     mvp.translate(area.x(), area.y());
 
     s->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-    m_texture->render(area);
+    m_texture->render(area.size());
     ShaderManager::instance()->popShader();
     m_texture->unbind();
 

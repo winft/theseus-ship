@@ -660,7 +660,7 @@ protected:
             sw_cursor.texture->bind();
             ShaderBinder binder(ShaderTrait::MapTexture);
             binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-            sw_cursor.texture->render(QRegion(cursorRect), cursorRect);
+            sw_cursor.texture->render(QRegion(cursorRect), cursorRect.size());
             sw_cursor.texture->unbind();
 
             cursor->mark_as_rendered();
@@ -782,7 +782,7 @@ protected:
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         texture->bind();
-        texture->render(view->geometry());
+        texture->render(view->geometry().size());
         texture->unbind();
         glDisable(GL_BLEND);
 

@@ -119,7 +119,7 @@ public:
                                            QVector4D(rgb, rgb, rgb, data.paint.opacity));
                         shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
-                        cachedTexture->render(scissor, textureRect, hardwareClipping);
+                        cachedTexture->render(scissor, textureRect.size(), hardwareClipping);
 
                         glDisable(GL_BLEND);
                         if (hardwareClipping) {
@@ -271,7 +271,7 @@ public:
                                    QVector4D(rgb, rgb, rgb, data.paint.opacity));
                 shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
-                cache->render(scissor, textureRect, hardwareClipping);
+                cache->render(scissor, textureRect.size(), hardwareClipping);
 
                 glDisable(GL_BLEND);
 

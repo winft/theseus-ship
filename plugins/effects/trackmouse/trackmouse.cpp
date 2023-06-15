@@ -111,7 +111,7 @@ void TrackMouseEffect::paintScreen(effect::screen_paint_data& data)
             mvp.translate(m_lastRect[i].x(), m_lastRect[i].y());
             shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
             m_texture[i]->bind();
-            m_texture[i]->render(m_lastRect[i]);
+            m_texture[i]->render(m_lastRect[i].size());
             m_texture[i]->unbind();
         }
         glDisable(GL_BLEND);

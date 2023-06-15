@@ -431,7 +431,7 @@ void CubeEffect::paintScreen(effect::screen_paint_data& data)
             binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
                                         data.paint.projection_matrix);
             wallpaper->bind();
-            wallpaper->render(data.paint.region, rect);
+            wallpaper->render(data.paint.region, rect.size());
             wallpaper->unbind();
         }
 

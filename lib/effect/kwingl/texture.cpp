@@ -503,41 +503,38 @@ void GLTexture::unbind()
     glBindTexture(d_ptr->m_target, 0);
 }
 
-void GLTexture::render(const QRect& rect)
+void GLTexture::render(QSize const& size)
 {
-    render(infiniteRegion(), rect, false);
+    render(infiniteRegion(), size, false);
 }
 
-void GLTexture::render(const QRegion& region, const QRect& rect, bool hardwareClipping)
+void GLTexture::render(QRegion const& region, QSize const& size, bool hardwareClipping)
 {
-    if (rect.isEmpty()) {
+    if (size.isEmpty()) {
         // nothing to paint. m_vbo is likely nullptr and d_ptr->m_cachedSize empty as well, #337090
         return;
     }
 
-    if (rect.size() != d_ptr->m_cachedSize) {
-        d_ptr->m_cachedSize = rect.size();
-        QRect r(rect);
-        r.moveTo(0, 0);
+    if (size != d_ptr->m_cachedSize) {
+        d_ptr->m_cachedSize = size;
+
         if (!d_ptr->m_vbo) {
             d_ptr->m_vbo = std::make_unique<GLVertexBuffer>(KWin::GLVertexBuffer::Static);
         }
 
-        const float verts[4 * 2]
-            = {// NOTICE: r.x/y could be replaced by "0", but that would make it unreadable...
-               static_cast<float>(r.x()),
-               static_cast<float>(r.y()),
-               static_cast<float>(r.x()),
-               static_cast<float>(r.y() + rect.height()),
-               static_cast<float>(r.x() + rect.width()),
-               static_cast<float>(r.y()),
-               static_cast<float>(r.x() + rect.width()),
-               static_cast<float>(r.y() + rect.height())};
+        float const verts[4 * 2] = {0.f,
+                                    0.f,
+                                    0.f,
+                                    static_cast<float>(size.height()),
+                                    static_cast<float>(size.width()),
+                                    0.f,
+                                    static_cast<float>(size.width()),
+                                    static_cast<float>(size.height())};
 
-        const float texWidth = (target() == GL_TEXTURE_RECTANGLE_ARB) ? width() : 1.0f;
-        const float texHeight = (target() == GL_TEXTURE_RECTANGLE_ARB) ? height() : 1.0f;
+        float const texWidth = (target() == GL_TEXTURE_RECTANGLE_ARB) ? width() : 1.0f;
+        float const texHeight = (target() == GL_TEXTURE_RECTANGLE_ARB) ? height() : 1.0f;
 
-        const float texcoords[4 * 2]
+        float const texcoords[4 * 2]
             = {0.0f,
                d_ptr->m_yInverted ? 0.0f : texHeight, // y needs to be swapped (normalized coords)
                0.0f,
@@ -549,6 +546,7 @@ void GLTexture::render(const QRegion& region, const QRect& rect, bool hardwareCl
 
         d_ptr->m_vbo->setData(4, 2, verts, texcoords);
     }
+
     d_ptr->m_vbo->render(region, GL_TRIANGLE_STRIP, hardwareClipping);
 }
 

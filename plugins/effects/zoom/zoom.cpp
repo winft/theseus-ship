@@ -420,7 +420,7 @@ void ZoomEffect::paintScreen(effect::screen_paint_data& data)
             mvp.translate(rect.x(), rect.y());
             s->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
 
-            cursorTexture->render(rect);
+            cursorTexture->render(rect.size());
             ShaderManager::instance()->popShader();
             cursorTexture->unbind();
             glDisable(GL_BLEND);

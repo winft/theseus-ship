@@ -269,7 +269,7 @@ void StartupFeedbackEffect::paintScreen(effect::screen_paint_data& data)
 
     ShaderManager::instance()->getBoundShader()->setUniform(GLShader::ModelViewProjectionMatrix,
                                                             mvp);
-    texture->render(m_currentGeometry);
+    texture->render(m_currentGeometry.size());
     ShaderManager::instance()->popShader();
     texture->unbind();
     glDisable(GL_BLEND);
