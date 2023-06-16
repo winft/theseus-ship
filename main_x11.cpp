@@ -215,6 +215,7 @@ void ApplicationX11::lostSelection()
 void ApplicationX11::start()
 {
     setQuitOnLastWindowClosed(false);
+    setQuitLockEnabled(false);
 
     using base_t = base::x11::platform;
     base.is_crash_restart = crashes > 0;

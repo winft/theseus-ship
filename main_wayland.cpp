@@ -165,6 +165,7 @@ void ApplicationWayland::start(base::operation_mode mode,
     assert(mode != base::operation_mode::x11);
 
     setQuitOnLastWindowClosed(false);
+    setQuitLockEnabled(false);
 
     using base_t = base::backend::wlroots::platform;
     base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::FullConfig),
