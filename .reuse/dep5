@@ -97,10 +97,10 @@ Files:
   lib/render/dbus/org.kde.kwin.ColorCorrect.xml
   lib/render/dbus/org.kde.kwin.Compositing.xml
   lib/script/org.kde.kwin.Script.xml
-  plugins/scripts/desktopchangeosd/metadata.json
-  plugins/scripts/minimizeall/metadata.json
-  plugins/scripts/synchronizeskipswitcher/metadata.json
-  plugins/scripts/videowall/metadata.json
+  plugins/scripts/desktopchangeosd/package/metadata.json
+  plugins/scripts/minimizeall/package/metadata.json
+  plugins/scripts/synchronizeskipswitcher/package/metadata.json
+  plugins/scripts/videowall/package/metadata.json
   lib/win/dbus/org.kde.KWin.Session.xml
   lib/win/dbus/org.kde.KWin.VirtualDesktopManager.xml
   lib/win/dbus/org.kde.kappmenu.xml
