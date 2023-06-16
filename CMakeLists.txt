@@ -224,12 +224,6 @@ find_package(XCB 1.10 REQUIRED COMPONENTS
 )
 set_package_properties(XCB PROPERTIES TYPE REQUIRED)
 
-# and the optional XCB dependencies
-if (XCB_ICCCM_VERSION VERSION_LESS "0.4")
-    set(XCB_ICCCM_FOUND FALSE)
-endif()
-add_feature_info("XCB-ICCCM" XCB_ICCCM_FOUND "Required for building test applications for KWin")
-
 find_package(Freetype REQUIRED)
 set_package_properties(Freetype PROPERTIES
     DESCRIPTION "A font rendering engine"

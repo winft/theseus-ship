@@ -2,11 +2,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-if (XCB_ICCCM_FOUND)
-    set(normalhintsbasesizetest_SRCS normalhintsbasesizetest.cpp)
-    add_executable(normalhintsbasesizetest ${normalhintsbasesizetest_SRCS})
-    target_link_libraries(normalhintsbasesizetest XCB::XCB XCB::ICCCM)
-endif()
+set(normalhintsbasesizetest_SRCS normalhintsbasesizetest.cpp)
+add_executable(normalhintsbasesizetest ${normalhintsbasesizetest_SRCS})
+target_link_libraries(normalhintsbasesizetest XCB::XCB XCB::ICCCM)
 
 # next target
 set(screenedgeshowtest_SRCS screenedgeshowtest.cpp)
