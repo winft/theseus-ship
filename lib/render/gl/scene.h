@@ -838,11 +838,6 @@ protected:
         vbo->render(GL_TRIANGLES);
     }
 
-    void updateProjectionMatrix()
-    {
-        m_projectionMatrix = createProjectionMatrix();
-    }
-
 private:
     bool viewportLimitsMatched(const QSize& size) const
     {
@@ -912,7 +907,7 @@ private:
             eff_win.window.performPaint(mask, data);
     }
 
-    QMatrix4x4 createProjectionMatrix() const
+    void updateProjectionMatrix()
     {
         // Create a perspective projection with a 60° field-of-view,
         // and an aspect ratio of 1.0.
@@ -941,7 +936,7 @@ private:
                      0.001);
 
         // Combine the matrices
-        return m_backend->transformation * projection * matrix;
+        m_projectionMatrix = m_backend->transformation * projection * matrix;
     }
 
     backend_t* m_backend;
