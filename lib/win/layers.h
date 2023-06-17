@@ -54,12 +54,6 @@ layer layer_for_dock(Win const& win)
 {
     assert(win.control);
 
-    // Slight hack for the 'allow window to cover panel' Kicker setting.
-    // Don't move keepbelow docks below normal window, but only to the same
-    // layer, so that both may be raised to cover the other.
-    if (win.control->keep_below) {
-        return win::layer::normal;
-    }
     if (win.control->keep_above) {
         // slight hack for the autohiding panels
         return win::layer::above;
