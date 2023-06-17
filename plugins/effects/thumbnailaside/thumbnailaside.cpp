@@ -31,9 +31,9 @@ ThumbnailAsideEffect::ThumbnailAsideEffect()
 
     connect(effects, &EffectsHandler::windowClosed, this, &ThumbnailAsideEffect::slotWindowClosed);
     connect(effects,
-            &EffectsHandler::windowGeometryShapeChanged,
+            &EffectsHandler::windowFrameGeometryChanged,
             this,
-            &ThumbnailAsideEffect::slotWindowGeometryShapeChanged);
+            &ThumbnailAsideEffect::slotWindowFrameGeometryChanged);
     connect(
         effects, &EffectsHandler::windowDamaged, this, &ThumbnailAsideEffect::slotWindowDamaged);
     connect(
@@ -111,7 +111,7 @@ void ThumbnailAsideEffect::slotWindowDamaged(EffectWindow* w, QRegion const&)
     }
 }
 
-void ThumbnailAsideEffect::slotWindowGeometryShapeChanged(EffectWindow* w, const QRect& old)
+void ThumbnailAsideEffect::slotWindowFrameGeometryChanged(EffectWindow* w, const QRect& old)
 {
     for (auto const& d : qAsConst(windows)) {
         if (d.window == w) {

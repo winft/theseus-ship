@@ -1420,11 +1420,6 @@ protected:
             qtwin,
             &win::window_qobject::frame_geometry_changed,
             this,
-            [this, &window](auto const& rect) { slotGeometryShapeChanged(window, rect); });
-        QObject::connect(
-            qtwin,
-            &win::window_qobject::frame_geometry_changed,
-            this,
             [this, &window](auto const& rect) { slotFrameGeometryChanged(window, rect); });
         QObject::connect(qtwin,
                          &win::window_qobject::damaged,
@@ -1480,10 +1475,6 @@ protected:
                 &win::window_qobject::opacityChanged,
                 this,
                 [this, &window](auto old) { slotOpacityChanged(window, old); });
-        connect(window.qobject.get(),
-                &win::window_qobject::frame_geometry_changed,
-                this,
-                [this, &window](auto const& old) { slotGeometryShapeChanged(window, old); });
         connect(window.qobject.get(),
                 &win::window_qobject::frame_geometry_changed,
                 this,
@@ -1571,20 +1562,6 @@ protected:
     void slotClientModalityChanged(Win& window)
     {
         Q_EMIT windowModalityChanged(window.render->effect.get());
-    }
-
-    template<typename Win>
-    void slotGeometryShapeChanged(Win& window, const QRect& old)
-    {
-        assert(window.render);
-        assert(window.render->effect);
-
-        if (window.control && (win::is_move(&window) || win::is_resize(&window))) {
-            // For that we have windowStepUserMovedResized.
-            return;
-        }
-
-        Q_EMIT windowGeometryShapeChanged(window.render->effect.get(), old);
     }
 
     template<typename Win>

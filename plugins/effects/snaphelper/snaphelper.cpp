@@ -67,9 +67,9 @@ SnapHelperEffect::SnapHelperEffect()
             this,
             &SnapHelperEffect::slotWindowFinishUserMovedResized);
     connect(effects,
-            &EffectsHandler::windowGeometryShapeChanged,
+            &EffectsHandler::windowFrameGeometryChanged,
             this,
-            &SnapHelperEffect::slotWindowGeometryShapeChanged);
+            &SnapHelperEffect::slotWindowFrameGeometryChanged);
 }
 
 SnapHelperEffect::~SnapHelperEffect()
@@ -252,7 +252,7 @@ void SnapHelperEffect::slotWindowFinishUserMovedResized(EffectWindow* w)
     effects->addRepaint(computeDirtyRegion(m_geometry));
 }
 
-void SnapHelperEffect::slotWindowGeometryShapeChanged(EffectWindow* w, const QRect& old)
+void SnapHelperEffect::slotWindowFrameGeometryChanged(EffectWindow* w, const QRect& old)
 {
     if (w != m_window) {
         return;
