@@ -1125,7 +1125,7 @@ public:
      * corners)
      */
     template<typename Win>
-    void reserve(Win* window, electric_border border)
+    bool reserve(Win* window, electric_border border)
     {
         using var_win = typename Win::space_t::window_t;
 
@@ -1141,12 +1141,11 @@ public:
             }
         }
 
-        if (border != electric_border::none) {
-            createEdgeForClient(window, border);
-        } else {
-            if (hadBorder) // show again
-                window->showOnScreenEdge();
+        if (border == electric_border::none) {
+            return hadBorder;
         }
+
+        return createEdgeForClient(window, border);
     }
 
     /**
@@ -1808,7 +1807,7 @@ private:
     }
 
     template<typename Win>
-    void createEdgeForClient(Win* window, electric_border border)
+    bool createEdgeForClient(Win* window, electric_border border)
     {
         int y = 0;
         int x = 0;
@@ -1877,15 +1876,15 @@ private:
             }
         }
 
-        if (width > 0 && height > 0) {
-            auto edge = createEdge(border, x, y, width, height, foundOutput, false);
-            edge->setClient(window);
-            edge->reserve();
-            edges.push_back(std::move(edge));
-        } else {
-            // we could not create an edge window, so don't allow the window to hide
-            window->showOnScreenEdge();
+        if (width <= 0 || height <= 0) {
+            return false;
         }
+
+        auto edge = createEdge(border, x, y, width, height, foundOutput, false);
+        edge->setClient(window);
+        edge->reserve();
+        edges.push_back(std::move(edge));
+        return true;
     }
 
     void deleteEdgeForClient(typename Space::window_t window)

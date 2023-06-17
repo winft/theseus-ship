@@ -77,20 +77,19 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
     if (border != electric_border::none) {
         QObject::disconnect(win->notifiers.edge_geometry);
 
-        win->hideClient(true);
+        auto reserve_edge = [win, border]() {
+            if (win->space.edges->reserve(win, border)) {
+                win->hideClient(true);
+            } else {
+                win->hideClient(false);
+            }
+        };
+
+        reserve_edge();
         win->notifiers.edge_geometry = QObject::connect(win->qobject.get(),
                                                         &Win::qobject_t::frame_geometry_changed,
                                                         win->qobject.get(),
-                                                        [win, border]() {
-                                                            win->hideClient(true);
-                                                            win->space.edges->reserve(win, border);
-                                                        });
-
-        if (win->isHiddenInternal()) {
-            win->space.edges->reserve(win, border);
-        } else {
-            win->space.edges->reserve(win, electric_border::none);
-        }
+                                                        reserve_edge);
     } else if (!property.is_null() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
         // so that the client knows that it is not hidden
@@ -99,10 +98,8 @@ void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
                             win->space.atoms->kde_screen_edge_show);
     } else {
         // restore
-        // TODO: add proper unreserve
-
-        // this will call showOnScreenEdge to reset the state
         QObject::disconnect(win->notifiers.edge_geometry);
+        win->hideClient(false);
         win->space.edges->reserve(win, electric_border::none);
     }
 }
