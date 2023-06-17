@@ -268,6 +268,7 @@ void OffscreenEffect::setShader(EffectWindow const& window, GLShader* shader)
 
 void OffscreenEffect::handleWindowDeleted(EffectWindow* window)
 {
+    effects->makeOpenGLContextCurrent();
     unredirect(window);
 }
 
