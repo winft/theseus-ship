@@ -18,6 +18,28 @@ options_qobject::options_qobject(operation_mode mode)
 
 void options::updateSettings()
 {
+    auto group = KConfigGroup(config, "ModifierOnlyShortcuts");
+    m_modifierOnlyShortcuts.clear();
+
+    if (group.hasKey("Shift")) {
+        m_modifierOnlyShortcuts.insert(Qt::ShiftModifier, group.readEntry("Shift", QStringList()));
+    }
+    if (group.hasKey("Control")) {
+        m_modifierOnlyShortcuts.insert(Qt::ControlModifier,
+                                       group.readEntry("Control", QStringList()));
+    }
+    if (group.hasKey("Alt")) {
+        m_modifierOnlyShortcuts.insert(Qt::AltModifier, group.readEntry("Alt", QStringList()));
+    }
+
+    m_modifierOnlyShortcuts.insert(
+        Qt::MetaModifier,
+        group.readEntry("Meta",
+                        QStringList{QStringLiteral("org.kde.plasmashell"),
+                                    QStringLiteral("/PlasmaShell"),
+                                    QStringLiteral("org.kde.PlasmaShell"),
+                                    QStringLiteral("activateLauncherMenu")}));
+
     Q_EMIT qobject->configChanged();
 }
 
@@ -31,6 +53,7 @@ options::options(operation_mode mode, KSharedConfigPtr config)
     , config{config}
     , m_configWatcher{KConfigWatcher::create(config)}
 {
+    updateSettings();
 }
 
 options::~options() = default;
