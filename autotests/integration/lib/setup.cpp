@@ -64,7 +64,7 @@ setup::setup(std::string const& test_name,
     qunsetenv("XKB_DEFAULT_OPTIONS");
 
     base = std::make_unique<base::backend::wlroots::platform>(
-        base::config(KConfig::OpenFlag::SimpleConfig),
+        base::config(KConfig::OpenFlag::SimpleConfig, ""),
         socket_name,
         flags,
         base::backend::wlroots::start_options::headless);

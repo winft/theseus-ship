@@ -173,7 +173,7 @@ int ApplicationX11::crashes = 0;
 
 ApplicationX11::ApplicationX11(int &argc, char **argv)
     : QApplication(argc, argv)
-    , base{base::config(KConfig::OpenFlag::FullConfig)}
+    , base{base::config(KConfig::OpenFlag::FullConfig, "kwinrc")}
     , owner()
     , m_replace(false)
 {
