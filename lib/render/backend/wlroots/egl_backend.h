@@ -266,13 +266,6 @@ public:
     GLFramebuffer native_fbo;
     wlr_egl* native{nullptr};
 
-protected:
-    void present() override
-    {
-        // Not in use. This backend does per-screen rendering.
-        Q_UNREACHABLE();
-    }
-
 private:
     void cleanup()
     {

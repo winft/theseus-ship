@@ -104,21 +104,6 @@ public:
 
     virtual bool isOpenGl() const = 0;
 
-    /**
-     * The entry point for the main part of the painting pass. Repaints the given screen areas.
-     *
-     * @param damage is the area that needs to be repaint
-     * @param windows provides the stacking order
-     * @return the elapsed time in ns
-     */
-    virtual int64_t paint(QRegion /*damage*/,
-                          std::deque<typename window_t::ref_t> const& /*windows*/,
-                          std::chrono::milliseconds /*presentTime*/)
-    {
-        assert(false);
-        return 0;
-    }
-
     virtual int64_t paint_output(output_t* /*output*/,
                                  QRegion /*damage*/,
                                  std::deque<typename window_t::ref_t> const& /*ref_wins*/,
@@ -126,6 +111,10 @@ public:
     {
         assert(false);
         return 0;
+    }
+
+    virtual void end_paint()
+    {
     }
 
     virtual std::unique_ptr<window_t> createWindow(typename window_t::ref_t ref_win) = 0;
@@ -296,10 +285,9 @@ public:
             paintBackground(region, render.projection * render.view);
         }
 
+        assert(repaint_output);
         effect::screen_paint_data data{
-            .screen = repaint_output
-                ? platform.compositor->effects->findScreen(repaint_output->name())
-                : nullptr,
+            .screen = platform.compositor->effects->findScreen(repaint_output->name()),
             .paint = {
                 .mask = static_cast<int>(mask),
                 .region = region,
@@ -596,11 +584,11 @@ public:
     }
 
     // shared implementation, starts painting the window
-    virtual void paintWindow(effect::render_data const& render_data,
-                             window_t* win,
-                             paint_type mask,
-                             QRegion region,
-                             WindowQuadList quads)
+    void paintWindow(effect::render_data const& render_data,
+                     window_t* win,
+                     paint_type mask,
+                     QRegion region,
+                     WindowQuadList quads)
     {
         // no painting outside visible screen (and no transformations)
         region &= QRect({}, platform.base.topology.size);
@@ -665,9 +653,7 @@ public:
     // The dirty region before it was unioned with repaint_region
     QRegion damaged_region;
 
-    /**
-     * The output currently being repainted. Only relevant for per-output painting.
-     */
+    // The output currently being repainted.
     output_t* repaint_output{nullptr};
 
 private:

@@ -173,7 +173,6 @@ public:
                 return;
             }
         }
-        this->scene->idle();
     }
 
     bool is_locked() const

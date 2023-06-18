@@ -1038,6 +1038,11 @@ GLFramebuffer::~GLFramebuffer()
     }
 }
 
+QRect GLFramebuffer::viewport() const
+{
+    return mViewport;
+}
+
 QSize GLFramebuffer::size() const
 {
     return mSize;
@@ -1052,6 +1057,9 @@ void GLFramebuffer::bind()
 
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
     glViewport(mViewport.x(), mViewport.y(), mViewport.width(), mViewport.height());
+
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(mViewport.x(), mViewport.y(), mViewport.width(), mViewport.height());
 }
 
 static QString formatFramebufferStatus(GLenum status)
@@ -2135,13 +2143,13 @@ void GLVertexBuffer::draw(effect::render_data const& data,
             glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
         } else {
             // Clip using scissoring
+            auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
             auto const vp_region = effect::map_to_viewport(data, region);
-            glEnable(GL_SCISSOR_TEST);
             for (auto const& rect : vp_region) {
                 glScissor(rect.x(), rect.y(), rect.width(), rect.height());
                 glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
             }
-            glDisable(GL_SCISSOR_TEST);
+            glScissor(vp.x(), vp.y(), vp.width(), vp.height());
         }
         return;
     }
@@ -2150,13 +2158,13 @@ void GLVertexBuffer::draw(effect::render_data const& data,
         glDrawArrays(primitiveMode, first, count);
     } else {
         // Clip using scissoring
+        auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
         auto const vp_region = effect::map_to_viewport(data, region);
-        glEnable(GL_SCISSOR_TEST);
         for (auto const& rect : vp_region) {
             glScissor(rect.x(), rect.y(), rect.width(), rect.height());
             glDrawArrays(primitiveMode, first, count);
         }
-        glDisable(GL_SCISSOR_TEST);
+        glScissor(vp.x(), vp.y(), vp.width(), vp.height());
     }
 }
 

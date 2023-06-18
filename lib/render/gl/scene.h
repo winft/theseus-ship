@@ -313,75 +313,6 @@ public:
         delete m_syncManager;
     }
 
-    int64_t paint(QRegion damage,
-                  std::deque<typename window_t::ref_t> const& toplevels,
-                  std::chrono::milliseconds presentTime) override
-    {
-        // Remove all subordinate transients. These are painted as part of their leads.
-        // TODO: Optimize this by *not* painting them as part of their leads if no quad transforming
-        //       (and opacity changing or animated?) effects are active.
-        auto const leads = get_leads(toplevels);
-        this->createStackingOrder(leads);
-
-        // After this call, update will contain the damaged region in the back buffer. This is the
-        // region that needs to be posted to repair the front buffer. It doesn't include the
-        // additional damage returned by prepareRenderingFrame(). The valid region is the region
-        // that has been repainted, and may be larger than the update region.
-        QRegion update;
-        QRegion valid;
-
-        m_backend->makeCurrent();
-        m_backend->startRenderTimer();
-
-        auto render = m_backend->set_render_target();
-        auto const repaint = m_backend->get_render_region();
-
-        GLVertexBuffer::streamingBuffer()->beginFrame();
-
-        GLenum const status = glGetGraphicsResetStatus();
-        if (status != GL_NO_ERROR) {
-            handleGraphicsReset(status);
-            return 0;
-        }
-
-        auto mask = paint_type::none;
-        vp_projection = render.projection * render.view;
-
-        // Call generic implementation.
-        this->paintScreen(render, mask, damage, repaint, &update, &valid, presentTime);
-
-        if (!GLPlatform::instance()->isGLES()) {
-            auto const displayRegion
-                = QRegion(0, 0, render.viewport.width(), render.viewport.height());
-
-            // Copy dirty parts from front to backbuffer.
-            if (!m_backend->supportsBufferAge() && GLPlatform::instance()->driver() == Driver_NVidia
-                && valid != displayRegion) {
-                glReadBuffer(GL_FRONT);
-                m_backend->copyPixels(displayRegion - valid);
-                glReadBuffer(GL_BACK);
-                valid = displayRegion;
-            }
-        }
-
-        GLVertexBuffer::streamingBuffer()->endOfFrame();
-        m_backend->endRenderingFrame(valid, update);
-
-        if (m_currentFence) {
-            if (!m_syncManager->updateFences()) {
-                qCDebug(KWIN_CORE)
-                    << "Aborting explicit synchronization with the X command stream.";
-                qCDebug(KWIN_CORE) << "Future frames will be rendered unsynchronized.";
-                delete m_syncManager;
-                m_syncManager = nullptr;
-            }
-            m_currentFence = nullptr;
-        }
-
-        this->clearStackingOrder();
-        return m_backend->renderTime();
-    }
-
     int64_t paint_output(output_t* output,
                          QRegion damage,
                          std::deque<typename window_t::ref_t> const& ref_wins,
@@ -420,6 +351,23 @@ public:
         this->repaint_output = nullptr;
 
         return m_backend->renderTime();
+    }
+
+    void end_paint() override
+    {
+        m_backend->try_present();
+
+        if (m_currentFence) {
+            if (!m_syncManager->updateFences()) {
+                qCDebug(KWIN_CORE)
+                    << "Aborting explicit synchronization with the X command stream. "
+                       "Future frames will be rendered unsynchronized.";
+                delete m_syncManager;
+                m_syncManager = nullptr;
+            }
+
+            m_currentFence = nullptr;
+        }
     }
 
     std::unique_ptr<render::shadow<window_t>> createShadow(window_t* win) override
@@ -490,7 +438,7 @@ public:
     {
         if (m_backend->hasPendingFlush()) {
             makeOpenGLContextCurrent();
-            m_backend->present();
+            m_backend->try_present();
         }
         render::scene<Platform>::idle();
     }

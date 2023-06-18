@@ -371,7 +371,9 @@ public:
 
     ~GLFramebuffer();
 
+    QRect viewport() const;
     QSize size() const;
+
     bool valid() const
     {
         return mValid;

@@ -81,17 +81,6 @@ public:
     virtual void screenGeometryChanged(const QSize& size) = 0;
     virtual std::unique_ptr<texture_priv_t> createBackendTexture(texture_t* texture) = 0;
 
-    /**
-     * @brief Backend specific code to handle the end of rendering a frame.
-     *
-     * @param renderedRegion The possibly larger region that has been rendered
-     * @param damagedRegion The damaged region that should be posted
-     */
-    virtual void endRenderingFrame(QRegion const& /*damage*/, QRegion const& /*damagedRegion*/)
-    {
-        assert(false);
-    }
-
     virtual void endRenderingFrameForScreen(base::output* /*output*/,
                                             QRegion const& /*damage*/,
                                             QRegion const& /*damagedRegion*/)
@@ -99,34 +88,14 @@ public:
         assert(false);
     }
 
-    virtual effect::render_data set_render_target()
+    virtual effect::render_data set_render_target_to_output(base::output const& /*output*/) = 0;
+
+    virtual QRegion get_output_render_region(base::output const& /*output*/) const = 0;
+
+    virtual void try_present()
     {
         assert(false);
-        return {};
     }
-
-    virtual effect::render_data set_render_target_to_output(base::output const& /*output*/)
-    {
-        assert(false);
-        return {};
-    }
-
-    virtual QRegion get_render_region() const
-    {
-        assert(false);
-        return {};
-    }
-
-    virtual QRegion get_output_render_region(base::output const& /*output*/) const
-    {
-        assert(false);
-        return {};
-    }
-
-    /**
-     * @brief Backend specific flushing of frame to screen.
-     */
-    virtual void present() = 0;
 
     virtual bool makeCurrent() = 0;
     virtual void doneCurrent() = 0;
