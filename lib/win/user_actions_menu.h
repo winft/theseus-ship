@@ -651,17 +651,17 @@ private:
 
         advancedMenu->addSeparator();
 
-        m_shortcutOperation = advancedMenu->addAction(i18n("Set Window Short&cut..."));
+        m_shortcutOperation = advancedMenu->addAction(i18n("Set Window Short&cut…"));
         m_shortcutOperation->setIcon(QIcon::fromTheme(QStringLiteral("configure-shortcuts")));
         setShortcut(m_shortcutOperation, QStringLiteral("Setup Window Shortcut"));
         m_shortcutOperation->setData(static_cast<int>(win_op::setup_window_shortcut));
 
-        QAction* action = advancedMenu->addAction(i18n("Configure Special &Window Settings..."));
+        QAction* action = advancedMenu->addAction(i18n("Configure Special &Window Settings…"));
         action->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-actions")));
         action->setData(static_cast<int>(win_op::window_rules));
         m_rulesOperation = action;
 
-        action = advancedMenu->addAction(i18n("Configure S&pecial Application Settings..."));
+        action = advancedMenu->addAction(i18n("Configure S&pecial Application Settings…"));
         action->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-actions")));
         action->setData(static_cast<int>(win_op::application_rules));
         m_applicationRulesOperation = action;
@@ -671,7 +671,7 @@ private:
             action
                 = advancedMenu->addAction(i18nc("Entry in context menu of window decoration to "
                                                 "open the configuration module of KWin",
-                                                "Configure W&indow Manager..."));
+                                                "Configure W&indow Manager…"));
             action->setIcon(QIcon::fromTheme(QStringLiteral("configure")));
             QObject::connect(action, &QAction::triggered, qobject.get(), [this, configModules]() {
                 // opens the KWin configuration
