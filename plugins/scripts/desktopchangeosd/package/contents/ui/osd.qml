@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 import QtQuick
 import QtQuick.Window
-import org.kde.plasma.core as PlasmaCore;
+import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.extras as PlasmaExtras
 import org.kde.kwin
 
