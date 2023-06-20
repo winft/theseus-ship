@@ -62,9 +62,7 @@ OverviewEffect::OverviewEffect()
     initConfig<OverviewConfig>();
     reconfigure(ReconfigureAll);
 
-    setSource(QUrl::fromLocalFile(
-        QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                               QStringLiteral("kwin/effects/overview/qml/main.qml"))));
+    setSource(QUrl(QStringLiteral("qrc:/overview/qml/main.qml")));
 }
 
 OverviewEffect::~OverviewEffect()
