@@ -12,7 +12,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 import QtQuick
-import org.kde.plasma.core as PlasmaCore
 import org.kde.ksvg 1.0 as KSvg
 import org.kde.kwin.decoration
 
