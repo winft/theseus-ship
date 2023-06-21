@@ -32,6 +32,8 @@ platform_wrap::platform_wrap(base::options& options,
     , m_scriptsLock(new QRecursiveMutex)
 {
     qRegisterMetaType<KWin::SessionState>();
+
+    qml_engine->setProperty("_kirigamiTheme", QStringLiteral("KirigamiPlasmaStyle"));
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
                                                  this,
                                                  QDBusConnection::ExportScriptableContents
