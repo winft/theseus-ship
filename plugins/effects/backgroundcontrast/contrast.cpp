@@ -210,20 +210,30 @@ void ContrastEffect::drawWindow(effect::window_paint_data& data)
         || !qFuzzyCompare(data.paint.geo.scale.y(), 1.f)) {
         QPoint pt = shape.boundingRect().topLeft();
         QRegion scaledShape;
-        for (QRect r : shape) {
-            r.moveTo(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
-                         + data.paint.geo.translation.x(),
-                     pt.y() + (r.y() - pt.y()) * data.paint.geo.scale.y()
-                         + data.paint.geo.translation.y());
-            r.setWidth(r.width() * data.paint.geo.scale.x());
-            r.setHeight(r.height() * data.paint.geo.scale.y());
-            scaledShape |= r;
+        for (auto const& r : shape) {
+            QPointF const topLeft(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
+                                      + data.paint.geo.translation.x(),
+                                  pt.y() + (r.y() - pt.y()) * data.paint.geo.scale.y()
+                                      + data.paint.geo.translation.y());
+            QPoint const bottomRight(
+                std::floor(topLeft.x() + r.width() * data.paint.geo.scale.x()) - 1,
+                std::floor(topLeft.y() + r.height() * data.paint.geo.scale.y()) - 1);
+            scaledShape
+                |= QRect(QPoint(std::floor(topLeft.x()), std::floor(topLeft.y())), bottomRight);
         }
         shape = scaledShape & data.paint.region;
     } else if (data.paint.geo.translation.x() || data.paint.geo.translation.y()) {
         // Only translated, not scaled
-        shape = shape.translated(data.paint.geo.translation.x(), data.paint.geo.translation.y());
-        shape = shape & data.paint.region;
+        QRegion translated;
+        for (auto const& r : shape) {
+            const QRectF t = QRectF(r).translated(data.paint.geo.translation.x(),
+                                                  data.paint.geo.translation.y());
+            const QPoint topLeft(std::ceil(t.x()), std::ceil(t.y()));
+            const QPoint bottomRight(std::floor(t.x() + t.width() - 1),
+                                     std::floor(t.y() + t.height() - 1));
+            translated |= QRect(topLeft, bottomRight);
+        }
+        shape = translated & data.paint.region;
     }
 
     if (!shape.isEmpty()) {
