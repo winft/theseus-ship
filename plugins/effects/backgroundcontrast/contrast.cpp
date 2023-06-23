@@ -33,6 +33,7 @@ void update_function(ContrastEffect& effect, KWin::effect::color_update const& u
             .contrastRegion = update.region,
         };
     } else {
+        effects->makeOpenGLContextCurrent();
         win_data.erase(update.base.window);
     }
 }
@@ -79,7 +80,10 @@ void ContrastEffect::reconfigure(ReconfigureFlags flags)
 
 void ContrastEffect::slotWindowDeleted(EffectWindow* w)
 {
-    m_windowData.erase(w);
+    if (auto it = m_windowData.find(w); it != m_windowData.end()) {
+        effects->makeOpenGLContextCurrent();
+        m_windowData.erase(it);
+    }
 }
 
 bool ContrastEffect::enabledByDefault()
@@ -246,10 +250,10 @@ void ContrastEffect::drawWindow(effect::window_paint_data& data)
     effects->drawWindow(data);
 }
 
-void ContrastEffect::doContrast(effect::window_paint_data const& data, QRegion const& shape)
+void ContrastEffect::doContrast(effect::window_paint_data& data, QRegion const& shape)
 {
     auto mvp = effect::get_mvp(data);
-    auto const rect = mvp.mapRect(shape.boundingRect());
+    auto const rect = effect::map_to_viewport(data.render, shape.boundingRect());
 
     // Upload geometry for the horizontal and vertical passes
     auto vbo = GLVertexBuffer::streamingBuffer();
@@ -257,44 +261,40 @@ void ContrastEffect::doContrast(effect::window_paint_data const& data, QRegion c
     uploadGeometry(vbo, shape);
     vbo->bindArrays();
 
-    // Create a scratch texture and copy the area in the back buffer that we're
-    // going to blur into it
-    GLTexture scratch(GL_RGBA8, rect.width(), rect.height());
-    scratch.setFilter(GL_LINEAR);
-    scratch.setWrapMode(GL_CLAMP_TO_EDGE);
-    scratch.bind();
+    assert(m_windowData.contains(&data.window));
+    auto& win_data = m_windowData.at(&data.window);
+    auto& texture = win_data.texture;
 
-    auto const sg = data.render.viewport;
-    glCopyTexSubImage2D(GL_TEXTURE_2D,
-                        0,
-                        0,
-                        0,
-                        rect.x() - sg.x(),
-                        sg.height() - (rect.y() - sg.y() + rect.height()),
-                        scratch.width(),
-                        scratch.height());
+    if (!texture || texture->size() != rect.size()) {
+        texture = std::make_unique<GLTexture>(GL_RGBA8, rect.size());
+        win_data.fbo = std::make_unique<GLFramebuffer>(texture.get());
+        texture->setFilter(GL_LINEAR);
+        texture->setWrapMode(GL_CLAMP_TO_EDGE);
+    }
+
+    texture->bind();
+
+    win_data.fbo->blit_from_current_render_target(
+        data.render, shape.boundingRect(), QRect({}, texture->size()));
 
     // Draw the texture on the offscreen framebuffer object, while blurring it horizontally
 
-    shader->setColorMatrix(m_windowData.at(&data.window).colorMatrix);
+    shader->setColorMatrix(win_data.colorMatrix);
     shader->bind();
 
     shader->setOpacity(data.paint.opacity);
 
-    // Set up the texture matrix to transform from screen coordinates
-    // to texture coordinates.
+    // Set up the texture matrix to transform from screen coordinates to texture coordinates.
     QMatrix4x4 textureMatrix;
-    textureMatrix.scale(1.0 / rect.width(), -1.0 / rect.height(), 1);
-    textureMatrix.translate(-rect.x(), -rect.height() - rect.y(), 0);
+    textureMatrix.scale(1.0 / rect.width(), 1.0 / rect.height(), 1);
+    textureMatrix.translate(-rect.x(), -rect.y(), 0);
 
     shader->setTextureMatrix(textureMatrix);
     shader->setModelViewProjectionMatrix(mvp);
 
     vbo->draw(GL_TRIANGLES, 0, shape.rectCount() * 6);
 
-    scratch.unbind();
-    scratch.discard();
-
+    texture->unbind();
     vbo->unbindArrays();
 
     if (data.paint.opacity < 1.0) {

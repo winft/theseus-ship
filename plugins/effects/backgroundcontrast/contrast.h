@@ -48,13 +48,15 @@ public:
     struct Data {
         QMatrix4x4 colorMatrix;
         QRegion contrastRegion;
+        std::unique_ptr<GLTexture> texture;
+        std::unique_ptr<GLFramebuffer> fbo;
     };
     std::unordered_map<EffectWindow const*, Data> m_windowData;
 
 private:
     QRegion contrastRegion(const EffectWindow* w) const;
     bool shouldContrast(effect::window_paint_data const& data) const;
-    void doContrast(effect::window_paint_data const& data, QRegion const& shape);
+    void doContrast(effect::window_paint_data& data, QRegion const& shape);
     void uploadRegion(std::span<QVector2D> map, const QRegion& region);
     void uploadGeometry(GLVertexBuffer* vbo, const QRegion& region);
 
