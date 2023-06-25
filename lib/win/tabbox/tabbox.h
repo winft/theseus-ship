@@ -939,6 +939,13 @@ private:
 
         set_mode(mode);
         reset();
+
+        // Show the switcher only when there are two or more clients.
+        if (handler->client_list().size() <= 1) {
+            close();
+            return false;
+        }
+
         return true;
     }
 
