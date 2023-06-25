@@ -213,8 +213,7 @@ void tabbox_client_model::create_client_list(int desktop, bool partial_reset)
     }
     if (tabbox_handle->config().client_applications_mode()
             != tabbox_config::AllWindowsCurrentApplication
-        && (tabbox_handle->config().show_desktop_mode() == tabbox_config::ShowDesktopClient
-            || m_client_list.empty())) {
+        && tabbox_handle->config().show_desktop_mode() == tabbox_config::ShowDesktopClient) {
         if (auto desktop_client = tabbox_handle->desktop_client()) {
             m_client_list.push_back(desktop_client);
         }
