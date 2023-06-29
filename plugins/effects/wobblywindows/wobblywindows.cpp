@@ -283,43 +283,47 @@ void WobblyWindowsEffect::prePaintWindow(effect::window_prepaint_data& data,
 
 void WobblyWindowsEffect::apply(effect::window_paint_data& data, WindowQuadList& quads)
 {
-    if (!(data.paint.mask & PAINT_SCREEN_TRANSFORMED) && windows.contains(&data.window)) {
-        quads = quads.makeRegularGrid(m_xTesselation, m_yTesselation);
-
-        auto& wwi = windows[&data.window];
-        auto const win_geo = data.window.frameGeometry();
-
-        int tx = win_geo.x();
-        int ty = win_geo.y();
-        int width = win_geo.width();
-        int height = win_geo.height();
-        double left = 0.0;
-        double top = 0.0;
-        double right = width;
-        double bottom = height;
-
-        for (int i = 0; i < quads.count(); ++i) {
-            for (int j = 0; j < 4; ++j) {
-                WindowVertex& v = quads[i][j];
-                Pair uv = {v.x() / width, v.y() / height};
-                Pair newPos = computeBezierPoint(wwi, uv);
-                v.move(newPos.x - tx, newPos.y - ty);
-            }
-            left = qMin(left, quads[i].left());
-            top = qMin(top, quads[i].top());
-            right = qMax(right, quads[i].right());
-            bottom = qMax(bottom, quads[i].bottom());
-        }
-        QRectF dirtyRect(
-            left * data.paint.geo.scale.x() + data.window.x() + data.paint.geo.translation.x(),
-            top * data.paint.geo.scale.y() + data.window.y() + data.paint.geo.translation.y(),
-            (right - left + 1.0) * data.paint.geo.scale.x(),
-            (bottom - top + 1.0) * data.paint.geo.scale.y());
-        // Expand the dirty region by 1px to fix potential round/floor issues.
-        dirtyRect.adjust(-1.0, -1.0, 1.0, 1.0);
-
-        m_updateRegion = m_updateRegion.united(dirtyRect.toRect());
+    if ((data.paint.mask & PAINT_SCREEN_TRANSFORMED) || !windows.contains(&data.window)) {
+        return;
     }
+
+    quads = quads.makeRegularGrid(m_xTesselation, m_yTesselation);
+
+    auto& wwi = windows[&data.window];
+    auto const win_geo = data.window.frameGeometry();
+
+    int tx = win_geo.x();
+    int ty = win_geo.y();
+    int width = win_geo.width();
+    int height = win_geo.height();
+    double left = 0.0;
+    double top = 0.0;
+    double right = width;
+    double bottom = height;
+
+    for (int i = 0; i < quads.count(); ++i) {
+        for (int j = 0; j < 4; ++j) {
+            WindowVertex& v = quads[i][j];
+            Pair uv = {v.x() / width, v.y() / height};
+            Pair newPos = computeBezierPoint(wwi, uv);
+            v.move(newPos.x - tx, newPos.y - ty);
+        }
+        left = qMin(left, quads[i].left());
+        top = qMin(top, quads[i].top());
+        right = qMax(right, quads[i].right());
+        bottom = qMax(bottom, quads[i].bottom());
+    }
+
+    QRectF dirtyRect(
+        left * data.paint.geo.scale.x() + data.window.x() + data.paint.geo.translation.x(),
+        top * data.paint.geo.scale.y() + data.window.y() + data.paint.geo.translation.y(),
+        (right - left + 1.0) * data.paint.geo.scale.x(),
+        (bottom - top + 1.0) * data.paint.geo.scale.y());
+
+    // Expand the dirty region by 1px to fix potential round/floor issues.
+    dirtyRect.adjust(-1.0, -1.0, 1.0, 1.0);
+
+    m_updateRegion = m_updateRegion.united(dirtyRect.toRect());
 }
 
 void WobblyWindowsEffect::postPaintScreen()

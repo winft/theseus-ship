@@ -65,62 +65,63 @@ void ResizeEffect::prePaintWindow(effect::window_prepaint_data& data,
 
 void ResizeEffect::paintWindow(effect::window_paint_data& data)
 {
-    if (m_active && &data.window == m_resizeWindow) {
-        if (m_features & TextureScale) {
-            data.paint.geo.translation
-                += QVector3D(m_currentGeometry.topLeft() - m_originalGeometry.topLeft());
-            data.paint.geo.scale
-                *= QVector3D(float(m_currentGeometry.width()) / m_originalGeometry.width(),
-                             float(m_currentGeometry.height()) / m_originalGeometry.height(),
-                             1);
-        }
-        effects->paintWindow(data);
-
-        if (m_features & Outline) {
-            QRegion intersection = m_originalGeometry.intersected(m_currentGeometry);
-            QRegion paintRegion
-                = QRegion(m_originalGeometry).united(m_currentGeometry).subtracted(intersection);
-            float alpha = 0.8f;
-            QColor color
-                = KColorScheme(QPalette::Normal, KColorScheme::Selection).background().color();
-
-            if (effects->isOpenGLCompositing()) {
-                GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
-                vbo->reset();
-                vbo->setUseColor(true);
-                ShaderBinder binder(ShaderTrait::UniformColor);
-                binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
-                                            data.paint.screen_projection_matrix);
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                color.setAlphaF(alpha);
-                vbo->setColor(color);
-                QVector<float> verts;
-                verts.reserve(paintRegion.rectCount() * 12);
-                for (const QRect& r : paintRegion) {
-                    verts << r.x() + r.width() << r.y();
-                    verts << r.x() << r.y();
-                    verts << r.x() << r.y() + r.height();
-                    verts << r.x() << r.y() + r.height();
-                    verts << r.x() + r.width() << r.y() + r.height();
-                    verts << r.x() + r.width() << r.y();
-                }
-                vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
-                vbo->render(GL_TRIANGLES);
-                glDisable(GL_BLEND);
-            } else {
-                // Assume QPainter compositing.
-                QPainter* painter = effects->scenePainter();
-                painter->save();
-                color.setAlphaF(alpha);
-                for (const QRect& r : paintRegion) {
-                    painter->fillRect(r, color);
-                }
-                painter->restore();
-            }
-        }
-    } else {
+    if (!m_active || &data.window != m_resizeWindow) {
         AnimationEffect::paintWindow(data);
+        return;
+    }
+
+    if (m_features & TextureScale) {
+        data.paint.geo.translation
+            += QVector3D(m_currentGeometry.topLeft() - m_originalGeometry.topLeft());
+        data.paint.geo.scale
+            *= QVector3D(float(m_currentGeometry.width()) / m_originalGeometry.width(),
+                         float(m_currentGeometry.height()) / m_originalGeometry.height(),
+                         1);
+    }
+
+    effects->paintWindow(data);
+
+    if (m_features & Outline) {
+        QRegion intersection = m_originalGeometry.intersected(m_currentGeometry);
+        QRegion paintRegion
+            = QRegion(m_originalGeometry).united(m_currentGeometry).subtracted(intersection);
+        float alpha = 0.8f;
+        QColor color = KColorScheme(QPalette::Normal, KColorScheme::Selection).background().color();
+
+        if (effects->isOpenGLCompositing()) {
+            GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
+            vbo->reset();
+            vbo->setUseColor(true);
+            ShaderBinder binder(ShaderTrait::UniformColor);
+            binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
+                                        data.paint.screen_projection_matrix);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            color.setAlphaF(alpha);
+            vbo->setColor(color);
+            QVector<float> verts;
+            verts.reserve(paintRegion.rectCount() * 12);
+            for (const QRect& r : paintRegion) {
+                verts << r.x() + r.width() << r.y();
+                verts << r.x() << r.y();
+                verts << r.x() << r.y() + r.height();
+                verts << r.x() << r.y() + r.height();
+                verts << r.x() + r.width() << r.y() + r.height();
+                verts << r.x() + r.width() << r.y();
+            }
+            vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
+            vbo->render(GL_TRIANGLES);
+            glDisable(GL_BLEND);
+        } else {
+            // Assume QPainter compositing.
+            QPainter* painter = effects->scenePainter();
+            painter->save();
+            color.setAlphaF(alpha);
+            for (const QRect& r : paintRegion) {
+                painter->fillRect(r, color);
+            }
+            painter->restore();
+        }
     }
 }
 
