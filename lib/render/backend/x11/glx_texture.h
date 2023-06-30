@@ -105,7 +105,9 @@ public:
 
         m_glxpixmap = glXCreatePixmap(display(), info->fbconfig, win_integrate.pixmap, attrs);
         this->m_size = size;
-        this->m_yInverted = info->y_inverted ? true : false;
+        q->set_content_transform(info->y_inverted ? effect::transform_type::flipped_180
+                                                  : effect::transform_type::normal);
+
         this->m_canUseMipmaps = false;
 
         glGenTextures(1, &this->m_texture);

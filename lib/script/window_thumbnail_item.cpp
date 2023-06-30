@@ -238,7 +238,8 @@ QSGNode* window_thumbnail_item::updatePaintNode(QSGNode* oldNode, QQuickItem::Up
     }
     node->setTexture(m_provider->texture());
 
-    if (m_offscreenTexture && m_offscreenTexture->isYInverted()) {
+    if (m_offscreenTexture
+        && m_offscreenTexture->get_content_transform() == effect::transform_type::flipped_180) {
         node->setTextureCoordinatesTransform(QSGImageNode::MirrorVertically);
     } else {
         node->setTextureCoordinatesTransform(QSGImageNode::NoTransform);

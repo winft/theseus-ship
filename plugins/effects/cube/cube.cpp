@@ -865,7 +865,8 @@ void CubeEffect::paintCubeCap()
                 float texY2 = 0.0;
                 float texY3 = 0.0;
                 if (texture) {
-                    if (capTexture->isYInverted()) {
+                    if (capTexture->get_content_transform()
+                        == effect::transform_type::flipped_180) {
                         texX1 = x1 / (rect.width()) + 0.5;
                         texY1 = 0.5 + z1 / zTexture * 0.5;
                         texX2 = x2 / (rect.width()) + 0.5;
@@ -929,7 +930,7 @@ void CubeEffect::paintCylinderCap()
             const float z3 = segment * (i - 1) * cos(azimuthAngle2);
             const float z4 = segment * i * cos(azimuthAngle2);
             if (texture) {
-                if (capTexture->isYInverted()) {
+                if (capTexture->get_content_transform() == effect::transform_type::flipped_180) {
                     texCoords << (radius + x1) / (radius * 2.0f) << (z1 + radius) / (radius * 2.0f);
                     texCoords << (radius + x2) / (radius * 2.0f) << (z2 + radius) / (radius * 2.0f);
                     texCoords << (radius + x3) / (radius * 2.0f) << (z3 + radius) / (radius * 2.0f);
@@ -997,7 +998,7 @@ void CubeEffect::paintSphereCap()
             const float x4 = radius * sin(topAngle) * sin((90.0 + (j + 1) * 10.0) * M_PI / 180.0);
             const float z4 = radius * sin(topAngle) * cos((90.0 + (j + 1) * 10.0) * M_PI / 180.0);
             if (texture) {
-                if (capTexture->isYInverted()) {
+                if (capTexture->get_content_transform() == effect::transform_type::flipped_180) {
                     texCoords << x4 / (rect.width()) + 0.5 << 0.5 + z4 / zTexture * 0.5;
                     texCoords << x1 / (rect.width()) + 0.5 << 0.5 + z1 / zTexture * 0.5;
                     texCoords << x2 / (rect.width()) + 0.5 << 0.5 + z2 / zTexture * 0.5;

@@ -209,7 +209,7 @@ void MagnifierEffect::zoomIn()
         effects->makeOpenGLContextCurrent();
         m_texture = std::make_unique<GLTexture>(
             GL_RGBA8, m_magnifierSize.width(), m_magnifierSize.height());
-        m_texture->setYInverted(false);
+        m_texture->set_content_transform(effect::transform_type::normal);
         m_fbo = std::make_unique<GLFramebuffer>(m_texture.get());
     }
     effects->addRepaint(
@@ -249,7 +249,7 @@ void MagnifierEffect::toggle()
             effects->makeOpenGLContextCurrent();
             m_texture = std::make_unique<GLTexture>(
                 GL_RGBA8, m_magnifierSize.width(), m_magnifierSize.height());
-            m_texture->setYInverted(false);
+            m_texture->set_content_transform(effect::transform_type::normal);
             m_fbo = std::make_unique<GLFramebuffer>(m_texture.get());
         }
     } else {

@@ -166,6 +166,10 @@ struct cursor_image {
     QPoint hot_spot;
 };
 
-}
+enum class transform_type {
+    normal,
+    flipped_180,
+};
 
+}
 }

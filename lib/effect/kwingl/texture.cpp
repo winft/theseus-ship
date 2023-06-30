@@ -115,7 +115,7 @@ GLTexture::GLTexture(const QImage& image, GLenum target)
     }
 
     d_ptr->m_size = image.size();
-    d_ptr->m_yInverted = true;
+    set_content_transform(effect::transform_type::flipped_180);
     d_ptr->m_canUseMipmaps = false;
     d_ptr->m_mipLevels = 1;
 
@@ -288,7 +288,6 @@ GLTexturePrivate::GLTexturePrivate()
     , m_internalFormat(0)
     , m_filter(GL_NEAREST)
     , m_wrapMode(GL_REPEAT)
-    , m_yInverted(false)
     , m_canUseMipmaps(false)
     , m_markedDirty(false)
     , m_filterChanged(true)
@@ -534,15 +533,17 @@ void GLTexture::render(QRegion const& region, QSize const& size, bool hardwareCl
         float const texWidth = (target() == GL_TEXTURE_RECTANGLE_ARB) ? width() : 1.0f;
         float const texHeight = (target() == GL_TEXTURE_RECTANGLE_ARB) ? height() : 1.0f;
 
+        auto y_inverted = d_ptr->m_textureToBufferTransform == effect::transform_type::flipped_180;
+
         float const texcoords[4 * 2]
             = {0.0f,
-               d_ptr->m_yInverted ? 0.0f : texHeight, // y needs to be swapped (normalized coords)
+               y_inverted ? 0.0f : texHeight, // y needs to be swapped (normalized coords)
                0.0f,
-               d_ptr->m_yInverted ? texHeight : 0.0f,
+               y_inverted ? texHeight : 0.0f,
                texWidth,
-               d_ptr->m_yInverted ? 0.0f : texHeight,
+               y_inverted ? 0.0f : texHeight,
                texWidth,
-               d_ptr->m_yInverted ? texHeight : 0.0f};
+               y_inverted ? texHeight : 0.0f};
 
         d_ptr->m_vbo->setData(4, 2, verts, texcoords);
     }
@@ -653,6 +654,20 @@ void GLTexture::setDirty()
 
 void GLTexturePrivate::updateMatrix()
 {
+    auto flip = [this] { m_textureToBufferMatrix.scale(-1, 1); };
+    auto rotate = [this](auto angle) { m_textureToBufferMatrix.rotate(angle, 0, 0, 1); };
+
+    m_textureToBufferMatrix.setToIdentity();
+    switch (m_textureToBufferTransform) {
+    case effect::transform_type::flipped_180:
+        flip();
+        rotate(180);
+        break;
+    case effect::transform_type::normal:
+    default:
+        break;
+    }
+
     m_matrix[NormalizedCoordinates].setToIdentity();
     m_matrix[UnnormalizedCoordinates].setToIdentity();
 
@@ -661,7 +676,7 @@ void GLTexturePrivate::updateMatrix()
     else
         m_matrix[UnnormalizedCoordinates].scale(1.0 / m_size.width(), 1.0 / m_size.height());
 
-    if (!m_yInverted) {
+    if (m_textureToBufferTransform == effect::transform_type::normal) {
         m_matrix[NormalizedCoordinates].translate(0.0, 1.0);
         m_matrix[NormalizedCoordinates].scale(1.0, -1.0);
 
@@ -670,18 +685,23 @@ void GLTexturePrivate::updateMatrix()
     }
 }
 
-bool GLTexture::isYInverted() const
+void GLTexture::set_content_transform(effect::transform_type transform)
 {
-    return d_ptr->m_yInverted;
+    if (d_ptr->m_textureToBufferTransform == transform) {
+        return;
+    }
+    d_ptr->m_textureToBufferTransform = transform;
+    d_ptr->updateMatrix();
 }
 
-void GLTexture::setYInverted(bool inverted)
+effect::transform_type GLTexture::get_content_transform() const
 {
-    if (d_ptr->m_yInverted == inverted)
-        return;
+    return d_ptr->m_textureToBufferTransform;
+}
 
-    d_ptr->m_yInverted = inverted;
-    d_ptr->updateMatrix();
+QMatrix4x4 GLTexture::get_content_transform_matrix() const
+{
+    return d_ptr->m_textureToBufferMatrix;
 }
 
 void GLTexture::setSwizzle(GLenum red, GLenum green, GLenum blue, GLenum alpha)

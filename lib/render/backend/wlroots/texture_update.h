@@ -79,7 +79,8 @@ void attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffer* buff
 
     texture.m_size = buffer->size();
     texture.updateMatrix();
-    texture.q->setYInverted(yInverted);
+    texture.q->set_content_transform(yInverted ? effect::transform_type::flipped_180
+                                               : effect::transform_type::normal);
 }
 
 template<typename Texture>
@@ -94,7 +95,7 @@ bool update_texture_from_fbo(Texture& texture, std::shared_ptr<QOpenGLFramebuffe
 
     texture.q->setWrapMode(GL_CLAMP_TO_EDGE);
     texture.q->setFilter(GL_LINEAR);
-    texture.q->setYInverted(false);
+    texture.q->set_content_transform(effect::transform_type::normal);
 
     texture.updateMatrix();
 
@@ -225,7 +226,11 @@ bool update_texture_from_dmabuf(Texture& texture, Dmabuf* dmabuf)
 
     // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
     // of Y-inverted is the inverse of OpenGL.
-    texture.q->setYInverted(!(dmabuf->flags & Wrapland::Server::linux_dmabuf_flag_v1::y_inverted));
+    if (dmabuf->flags & Wrapland::Server::linux_dmabuf_flag_v1::y_inverted) {
+        texture.q->set_content_transform(effect::transform_type::normal);
+    } else {
+        texture.q->set_content_transform(effect::transform_type::flipped_180);
+    }
 
     return true;
 }
@@ -257,7 +262,7 @@ bool update_texture_from_data(Texture& texture,
 
         texture.m_texture = tex_attribs.tex;
         texture.q->unbind();
-        texture.q->setYInverted(true);
+        texture.q->set_content_transform(effect::transform_type::flipped_180);
         texture.m_size = size;
         texture.updateMatrix();
 
