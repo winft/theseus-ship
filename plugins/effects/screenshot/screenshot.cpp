@@ -226,15 +226,15 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
     }
 
     auto validTarget = true;
-    QScopedPointer<GLTexture> offscreenTexture;
-    QScopedPointer<GLFramebuffer> target;
+    std::unique_ptr<GLTexture> offscreenTexture;
+    std::unique_ptr<GLFramebuffer> fbo;
 
     if (effects->isOpenGLCompositing()) {
         offscreenTexture.reset(new GLTexture(GL_RGBA8, geometry.size() * devicePixelRatio));
         offscreenTexture->setFilter(GL_LINEAR);
         offscreenTexture->setWrapMode(GL_CLAMP_TO_EDGE);
-        target.reset(new GLFramebuffer(offscreenTexture.data()));
-        validTarget = target->valid();
+        fbo = std::make_unique<GLFramebuffer>(offscreenTexture.get());
+        validTarget = fbo->valid();
     }
 
     if (!validTarget) {
@@ -245,7 +245,7 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
     if (effects->isOpenGLCompositing()) {
         QMatrix4x4 projection;
         projection.ortho(QRect(0, 0, geometry.width(), geometry.height()));
-        GLFramebuffer::pushRenderTarget(target.data());
+        GLFramebuffer::pushRenderTarget(fbo.get());
 
         effect::window_paint_data win_data{
             *window,

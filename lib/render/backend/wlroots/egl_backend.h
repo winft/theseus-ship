@@ -144,36 +144,37 @@ public:
         return QRegion();
     }
 
-    QRegion prepareRenderingForScreen(base::output* output) override
+    QRegion prepareRenderingForScreen(base::output* output_ptr) override
     {
-        auto const& out = get_egl_out(output);
+        auto const& output = *output_ptr;
+        auto const& out = get_egl_out(&output);
 
-        auto native_out = static_cast<base::backend::wlroots::output*>(output)->native;
+        auto native_out = static_cast<base::backend::wlroots::output const&>(output).native;
         wlr_output_attach_render(native_out, &out->bufferAge);
         wlr_renderer_begin(
-            platform.renderer, output->geometry().width(), output->geometry().height());
+            platform.renderer, output.geometry().width(), output.geometry().height());
 
         prepare_render_targets(*out);
 
         if (!this->supportsBufferAge()) {
             // If buffer age exenstion is not supported we always repaint the whole output as we
             // don't know the status of the back buffer we render to.
-            return output->geometry();
+            return output.geometry();
         }
         if (out->render.fbo.valid()) {
             // If we render to the extra frame buffer, do not use buffer age. It leads to artifacts.
             // TODO(romangg): Can we make use of buffer age even in this case somehow?
-            return output->geometry();
+            return output.geometry();
         }
         if (out->bufferAge == 0) {
             // If buffer age is 0, the contents of the back buffer we now will render to are
             // undefined and it has to be repainted completely.
-            return output->geometry();
+            return output.geometry();
         }
         if (out->bufferAge > static_cast<int>(out->damageHistory.size())) {
             // If buffer age is older than our damage history has recorded we do not have all damage
             // logged for that age and we need to repaint completely.
-            return output->geometry();
+            return output.geometry();
         }
 
         // But if all conditions are satisfied we can look up our damage history up until to the

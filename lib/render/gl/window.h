@@ -262,8 +262,9 @@ public:
 
         setBlendEnabled(false);
 
-        if (!data.shader)
+        if (!data.shader) {
             ShaderManager::instance()->popShader();
+        }
 
         endRenderWindow();
     }
@@ -485,8 +486,9 @@ private:
             data.quads = quads;
         }
 
-        if (data.quads.isEmpty())
+        if (data.quads.isEmpty()) {
             return false;
+        }
 
         auto texture = bindTexture();
         if (!texture) {

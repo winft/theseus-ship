@@ -672,13 +672,18 @@ protected:
     void paintBackground(QRegion const& region) override
     {
         PaintClipper pc(region);
+
         if (!PaintClipper::clip()) {
             glClearColor(0, 0, 0, 0);
             glClear(GL_COLOR_BUFFER_BIT);
             return;
         }
-        if (pc.clip() && pc.paintArea().isEmpty())
-            return; // no background to paint
+
+        if (pc.clip() && pc.paintArea().isEmpty()) {
+            // no background to paint
+            return;
+        }
+
         QVector<float> verts;
         for (PaintClipper::Iterator iterator; !iterator.isDone(); iterator.next()) {
             QRect r = iterator.boundingRect();

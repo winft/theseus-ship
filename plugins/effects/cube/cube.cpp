@@ -997,6 +997,7 @@ void CubeEffect::paintSphereCap()
                 = radius * sin(bottomAngle) * cos((90.0 + (j + 1) * 10.0) * M_PI / 180.0);
             const float x4 = radius * sin(topAngle) * sin((90.0 + (j + 1) * 10.0) * M_PI / 180.0);
             const float z4 = radius * sin(topAngle) * cos((90.0 + (j + 1) * 10.0) * M_PI / 180.0);
+
             if (texture) {
                 if (capTexture->get_content_transform() == effect::transform_type::flipped_180) {
                     texCoords << x4 / (rect.width()) + 0.5 << 0.5 + z4 / zTexture * 0.5;

@@ -121,46 +121,37 @@ void GlideEffect::paintWindow(effect::window_paint_data& data)
     data.paint.geo.translation += QVector3D(offset.x(), offset.y(), 0);
 
     auto const params = data.window.isDeleted() ? m_outParams : m_inParams;
-    const qreal t = (*animationIt).timeLine.value();
+    qreal const time = (*animationIt).timeLine.value();
 
     QVector3D const x_axis{1, 0, 0};
     QVector3D const y_axis{0, 1, 0};
 
     switch (params.edge) {
-    case RotationEdge::Top:
-        data.paint.geo.rotation.axis = x_axis;
-        data.paint.geo.rotation.origin = QVector3D(0, 0, 0);
-        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, t);
-        break;
-
     case RotationEdge::Right:
         data.paint.geo.rotation.axis = y_axis;
         data.paint.geo.rotation.origin = QVector3D(data.window.width(), 0, 0);
-        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, t);
+        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, time);
         break;
-
     case RotationEdge::Bottom:
         data.paint.geo.rotation.axis = x_axis;
         data.paint.geo.rotation.origin = QVector3D(0, data.window.height(), 0);
-        data.paint.geo.rotation.angle = interpolate(params.angle.from, params.angle.to, t);
+        data.paint.geo.rotation.angle = interpolate(params.angle.from, params.angle.to, time);
         break;
-
     case RotationEdge::Left:
         data.paint.geo.rotation.axis = y_axis;
         data.paint.geo.rotation.origin = QVector3D(0, 0, 0);
-        data.paint.geo.rotation.angle = interpolate(params.angle.from, params.angle.to, t);
+        data.paint.geo.rotation.angle = interpolate(params.angle.from, params.angle.to, time);
         break;
-
+    case RotationEdge::Top:
     default:
-        // Fallback to Top.
         data.paint.geo.rotation.axis = x_axis;
         data.paint.geo.rotation.origin = QVector3D(0, 0, 0);
-        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, t);
+        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, time);
         break;
     }
 
-    data.paint.geo.translation.setZ(-interpolate(params.distance.from, params.distance.to, t));
-    data.paint.opacity *= interpolate(params.opacity.from, params.opacity.to, t);
+    data.paint.geo.translation.setZ(-interpolate(params.distance.from, params.distance.to, time));
+    data.paint.opacity *= interpolate(params.opacity.from, params.opacity.to, time);
 
     effects->paintWindow(data);
 }

@@ -310,7 +310,7 @@ void MouseClickEffect::drawCircleQPainter(const QColor& color, float cx, float c
 
 void MouseClickEffect::paintScreenSetupGl(effect::screen_paint_data const& data)
 {
-    GLShader* shader = ShaderManager::instance()->pushShader(ShaderTrait::UniformColor);
+    auto shader = ShaderManager::instance()->pushShader(ShaderTrait::UniformColor);
     shader->setUniform(GLShader::ModelViewProjectionMatrix, data.paint.projection_matrix);
 
     glLineWidth(m_lineWidth);
