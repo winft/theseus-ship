@@ -89,8 +89,21 @@ private:
 
 private:
     BlurShader* m_shader;
-    std::vector<std::unique_ptr<GLFramebuffer>> m_renderTargets;
-    std::vector<std::unique_ptr<GLTexture>> m_renderTextures;
+
+    struct render_target {
+        render_target(std::unique_ptr<GLTexture> tex)
+            : texture{std::move(tex)}
+            , fbo{std::make_unique<GLFramebuffer>(texture.get())}
+        {
+            texture->setFilter(GL_LINEAR);
+            texture->setWrapMode(GL_CLAMP_TO_EDGE);
+        }
+
+        std::unique_ptr<GLTexture> texture;
+        std::unique_ptr<GLFramebuffer> fbo;
+    };
+
+    std::vector<render_target> render_targets;
     QStack<GLFramebuffer*> m_renderTargetStack;
 
     GLTexture m_noiseTexture;
