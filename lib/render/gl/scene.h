@@ -941,7 +941,7 @@ private:
                      0.001);
 
         // Combine the matrices
-        m_projectionMatrix = m_backend->transformation * projection * matrix;
+        m_projectionMatrix = projection * matrix;
     }
 
     backend_t* m_backend;

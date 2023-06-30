@@ -232,11 +232,6 @@ public:
         }
     }
 
-    /**
-     * For final backend-specific corrections to the scene projection matrix. Defaults to identity.
-     */
-    QMatrix4x4 transformation;
-
     Platform& platform;
 
 protected:
