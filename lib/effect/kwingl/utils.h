@@ -91,13 +91,8 @@ public:
     QMatrix4x4 getUniformMatrix4x4(const char* name);
 
     enum MatrixUniform {
-        TextureMatrix = 0,
-        ProjectionMatrix,
-        ModelViewMatrix,
         ModelViewProjectionMatrix,
-        WindowTransformation,
-        ScreenTransformation,
-        MatrixCount
+        MatrixCount,
     };
 
     enum Vec2Uniform { Offset, Vec2UniformCount };

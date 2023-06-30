@@ -425,12 +425,7 @@ void GLShader::resolveLocations()
     if (mLocationsResolved)
         return;
 
-    mMatrixLocation[TextureMatrix] = uniformLocation("textureMatrix");
-    mMatrixLocation[ProjectionMatrix] = uniformLocation("projection");
-    mMatrixLocation[ModelViewMatrix] = uniformLocation("modelview");
     mMatrixLocation[ModelViewProjectionMatrix] = uniformLocation("modelViewProjectionMatrix");
-    mMatrixLocation[WindowTransformation] = uniformLocation("windowTransformation");
-    mMatrixLocation[ScreenTransformation] = uniformLocation("screenTransformation");
 
     mVec2Location[Offset] = uniformLocation("offset");
 
