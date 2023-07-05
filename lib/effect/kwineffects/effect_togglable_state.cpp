@@ -154,6 +154,8 @@ static PinchDirection opposite(PinchDirection direction)
         return PinchDirection::Expanding;
     case PinchDirection::Expanding:
         return PinchDirection::Contracting;
+    default:
+        Q_UNREACHABLE();
     }
 }
 
@@ -170,6 +172,8 @@ static SwipeDirection opposite(SwipeDirection direction)
         return SwipeDirection::Right;
     case SwipeDirection::Right:
         return SwipeDirection::Left;
+    default:
+        Q_UNREACHABLE();
     }
 }
 
