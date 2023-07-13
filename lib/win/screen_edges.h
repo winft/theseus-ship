@@ -158,7 +158,10 @@ public:
             });
     }
 
-    virtual ~screen_edge() = default;
+    virtual ~screen_edge()
+    {
+        stopApproaching();
+    }
 
     bool isLeft() const
     {
@@ -1116,16 +1119,13 @@ public:
      * Once the Edge for the client triggers, the client gets shown again and the Edge unreserved.
      * The idea is that the Edge can only get activated if the client is currently hidden.
      *
-     * To make sure that the client can always be shown again the implementation also starts to
-     * track geometry changes and shows the Client again. The same for screen geometry changes.
-     *
      * The Edge gets automatically destroyed if the client gets released.
      * @param client The Client for which an Edge should be reserved
      * @param border The border which the client wants to use, only proper borders are supported (no
      * corners)
      */
     template<typename Win>
-    void reserve(Win* window, electric_border border)
+    bool reserve(Win* window, electric_border border)
     {
         using var_win = typename Win::space_t::window_t;
 
@@ -1141,12 +1141,11 @@ public:
             }
         }
 
-        if (border != electric_border::none) {
-            createEdgeForClient(window, border);
-        } else {
-            if (hadBorder) // show again
-                window->showOnScreenEdge();
+        if (border == electric_border::none) {
+            return hadBorder;
         }
+
+        return createEdgeForClient(window, border);
     }
 
     /**
@@ -1808,7 +1807,7 @@ private:
     }
 
     template<typename Win>
-    void createEdgeForClient(Win* window, electric_border border)
+    bool createEdgeForClient(Win* window, electric_border border)
     {
         int y = 0;
         int x = 0;
@@ -1877,15 +1876,15 @@ private:
             }
         }
 
-        if (width > 0 && height > 0) {
-            auto edge = createEdge(border, x, y, width, height, foundOutput, false);
-            edge->setClient(window);
-            edge->reserve();
-            edges.push_back(std::move(edge));
-        } else {
-            // we could not create an edge window, so don't allow the window to hide
-            window->showOnScreenEdge();
+        if (width <= 0 || height <= 0) {
+            return false;
         }
+
+        auto edge = createEdge(border, x, y, width, height, foundOutput, false);
+        edge->setClient(window);
+        edge->reserve();
+        edges.push_back(std::move(edge));
+        return true;
     }
 
     void deleteEdgeForClient(typename Space::window_t window)

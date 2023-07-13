@@ -13,7 +13,9 @@
 #include <vector>
 
 extern "C" {
+#define static
 #include <wlr/backend/drm.h>
+#undef static
 }
 
 #include <Wrapland/Server/drm_lease_v1.h>

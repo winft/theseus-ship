@@ -31,12 +31,12 @@ ShowPaintEffect::ShowPaintEffect()
     connect(toggleAction, &QAction::triggered, this, &ShowPaintEffect::toggle);
 }
 
-void ShowPaintEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void ShowPaintEffect::paintScreen(effect::screen_paint_data& data)
 {
     m_painted = QRegion();
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
     if (effects->isOpenGLCompositing()) {
-        paintGL(data.projectionMatrix());
+        paintGL(data.paint.projection_matrix);
     } else {
         // Assume QPainter compositing.
         paintQPainter();
@@ -46,10 +46,10 @@ void ShowPaintEffect::paintScreen(int mask, const QRegion& region, ScreenPaintDa
     }
 }
 
-void ShowPaintEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void ShowPaintEffect::paintWindow(effect::window_paint_data& data)
 {
-    m_painted |= region;
-    effects->paintWindow(w, mask, region, data);
+    m_painted |= data.paint.region;
+    effects->paintWindow(data);
 }
 
 void ShowPaintEffect::paintGL(const QMatrix4x4& projection)

@@ -173,7 +173,7 @@ int ApplicationX11::crashes = 0;
 
 ApplicationX11::ApplicationX11(int &argc, char **argv)
     : QApplication(argc, argv)
-    , base{base::config(KConfig::OpenFlag::FullConfig)}
+    , base{base::config(KConfig::OpenFlag::FullConfig, "kwinrc")}
     , owner()
     , m_replace(false)
 {
@@ -215,6 +215,7 @@ void ApplicationX11::lostSelection()
 void ApplicationX11::start()
 {
     setQuitOnLastWindowClosed(false);
+    setQuitLockEnabled(false);
 
     using base_t = base::x11::platform;
     base.is_crash_restart = crashes > 0;

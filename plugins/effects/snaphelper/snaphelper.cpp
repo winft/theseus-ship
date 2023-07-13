@@ -67,9 +67,9 @@ SnapHelperEffect::SnapHelperEffect()
             this,
             &SnapHelperEffect::slotWindowFinishUserMovedResized);
     connect(effects,
-            &EffectsHandler::windowGeometryShapeChanged,
+            &EffectsHandler::windowFrameGeometryChanged,
             this,
-            &SnapHelperEffect::slotWindowGeometryShapeChanged);
+            &SnapHelperEffect::slotWindowFrameGeometryChanged);
 }
 
 SnapHelperEffect::~SnapHelperEffect()
@@ -84,7 +84,7 @@ void SnapHelperEffect::reconfigure(ReconfigureFlags flags)
         std::chrono::milliseconds(static_cast<int>(animationTime(250))));
 }
 
-void SnapHelperEffect::prePaintScreen(ScreenPrePaintData& data,
+void SnapHelperEffect::prePaintScreen(effect::paint_data& data,
                                       std::chrono::milliseconds presentTime)
 {
     if (m_animation.active) {
@@ -94,9 +94,9 @@ void SnapHelperEffect::prePaintScreen(ScreenPrePaintData& data,
     effects->prePaintScreen(data, presentTime);
 }
 
-void SnapHelperEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void SnapHelperEffect::paintScreen(effect::screen_paint_data& data)
 {
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
 
     const qreal opacityFactor = m_animation.active ? m_animation.timeLine.value() : 1.0;
     const QList<EffectScreen*> screens = effects->screens();
@@ -107,7 +107,8 @@ void SnapHelperEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
         vbo->reset();
         vbo->setUseColor(true);
         ShaderBinder binder(ShaderTrait::UniformColor);
-        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
+        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
+                                    data.paint.projection_matrix);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -251,7 +252,7 @@ void SnapHelperEffect::slotWindowFinishUserMovedResized(EffectWindow* w)
     effects->addRepaint(computeDirtyRegion(m_geometry));
 }
 
-void SnapHelperEffect::slotWindowGeometryShapeChanged(EffectWindow* w, const QRect& old)
+void SnapHelperEffect::slotWindowFrameGeometryChanged(EffectWindow* w, const QRect& old)
 {
     if (w != m_window) {
         return;

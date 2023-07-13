@@ -8,8 +8,8 @@
 
 #include "kwincompositing_setting.h"
 
-KWinCompositingData::KWinCompositingData(QObject *parent, const QVariantList &args)
-    : KCModuleData(parent, args)
+KWinCompositingData::KWinCompositingData(QObject *parent)
+    : KCModuleData(parent)
     , m_settings(new KWinCompositingSetting(this))
 
 {

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <kwineffects/effect_togglable_state.h>
 #include <kwineffects/quick_scene.h>
 
 namespace KWin
@@ -25,7 +26,6 @@ class OverviewEffect : public QuickSceneEffect
     Q_PROPERTY(QString searchText MEMBER m_searchText NOTIFY searchTextChanged)
 
 public:
-    enum class Status { Inactive, Activating, Deactivating, Active };
     OverviewEffect();
     ~OverviewEffect() override;
 
@@ -37,11 +37,15 @@ public:
     int animationDuration() const;
     void setAnimationDuration(int duration);
 
-    qreal partialActivationFactor() const;
-    void setPartialActivationFactor(qreal factor);
+    qreal partialActivationFactor() const
+    {
+        return m_state->partialActivationFactor();
+    }
 
-    bool gestureInProgress() const;
-    void setGestureInProgress(bool gesture);
+    bool gestureInProgress() const
+    {
+        return m_state->inProgress();
+    }
 
     int requestedEffectChainPosition() const override;
     bool borderActivated(ElectricBorder border) override;
@@ -58,29 +62,20 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void activate();
-    void partialActivate(qreal factor);
-    void cancelPartialActivate();
-    void partialDeactivate(qreal factor);
-    void cancelPartialDeactivate();
     void deactivate();
-    void quickDeactivate();
-    void toggle();
 
 private:
     void realDeactivate();
 
+    EffectTogglableState* const m_state;
+    EffectTogglableTouchBorder* const m_border;
+
     QTimer* m_shutdownTimer;
-    QAction* m_toggleAction = nullptr;
-    QAction* m_realtimeToggleAction = nullptr;
     QList<QKeySequence> m_toggleShortcut;
     QList<ElectricBorder> m_borderActivate;
-    QList<ElectricBorder> m_touchBorderActivate;
     QString m_searchText;
-    Status m_status = Status::Inactive;
-    qreal m_partialActivationFactor = 0;
     int m_animationDuration = 400;
     int m_layout = 1;
-    bool m_gestureInProgress = false;
 };
 
 } // namespace KWin

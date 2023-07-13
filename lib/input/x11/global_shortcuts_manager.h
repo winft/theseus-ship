@@ -70,7 +70,7 @@ Q_SIGNALS:
 
 private:
     void objectDeleted(QObject* object);
-    bool addIfNotExists(win::global_shortcut sc);
+    bool add(win::global_shortcut sc);
 
     QVector<win::global_shortcut> m_shortcuts;
 };

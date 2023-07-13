@@ -15,13 +15,16 @@
 namespace KWin
 {
 
+namespace effect
+{
+struct paint_data;
+struct screen_paint_data;
+struct window_prepaint_data;
+struct window_paint_data;
+}
+
 class EffectFrame;
-class EffectWindow;
-class ScreenPrePaintData;
-class ScreenPaintData;
 class WindowQuadList;
-class WindowPrePaintData;
-class WindowPaintData;
 
 /**
  * @short Base class for all KWin effects
@@ -189,7 +192,7 @@ public:
      * @a presentTime specifies the expected monotonic time when the rendered frame
      * will be displayed on the screen.
     */
-    virtual void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime);
+    virtual void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime);
     /**
      * In this method you can:
      * @li paint something on top of the windows (by painting after calling
@@ -200,7 +203,7 @@ public:
      * In OpenGL based compositing, the frameworks ensures that the context is current
      * when this method is invoked.
      */
-    virtual void paintScreen(int mask, const QRegion& region, ScreenPaintData& data);
+    virtual void paintScreen(effect::screen_paint_data& data);
     /**
      * Called after all the painting has been finished.
      * In this method you can:
@@ -226,8 +229,7 @@ public:
      * @a presentTime specifies the expected monotonic time when the rendered frame
      * will be displayed on the screen.
      */
-    virtual void prePaintWindow(EffectWindow* w,
-                                WindowPrePaintData& data,
+    virtual void prePaintWindow(effect::window_prepaint_data& data,
                                 std::chrono::milliseconds presentTime);
     /**
      * This is the main method for painting windows.
@@ -239,7 +241,7 @@ public:
      * In OpenGL based compositing, the frameworks ensures that the context is current
      * when this method is invoked.
      */
-    virtual void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data);
+    virtual void paintWindow(effect::window_paint_data& data);
     /**
      * Called for every window after all painting has been finished.
      * In this method you can:
@@ -278,8 +280,7 @@ public:
      * In OpenGL based compositing, the frameworks ensures that the context is current
      * when this method is invoked.
      */
-    virtual void
-    drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data);
+    virtual void drawWindow(effect::window_paint_data& data);
 
     /**
      * Define new window quads so that they can be transformed by other effects.
@@ -427,15 +428,6 @@ public:
     {
         return x * (1 - a) + y * a;
     }
-    /** Helper to set WindowPaintData and QRegion to necessary transformations so that
-     * a following drawWindow() would put the window at the requested geometry (useful for
-     * thumbnails)
-     */
-    static void setPositionTransformations(WindowPaintData& data,
-                                           QRect& region,
-                                           EffectWindow* w,
-                                           const QRect& r,
-                                           Qt::AspectRatioMode aspect);
 
 public Q_SLOTS:
     virtual bool borderActivated(ElectricBorder border);

@@ -85,7 +85,7 @@ void KscreenEffect::reconfigure(ReconfigureFlags flags)
     m_timeLine.setDuration(std::chrono::milliseconds(animationTime<KscreenConfig>(250)));
 }
 
-void KscreenEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void KscreenEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
     if (m_state == StateFadingIn || m_state == StateFadingOut) {
         m_timeLine.advance(presentTime);
@@ -104,37 +104,37 @@ void KscreenEffect::postPaintScreen()
     }
 }
 
-void KscreenEffect::prePaintWindow(EffectWindow* w,
-                                   WindowPrePaintData& data,
+void KscreenEffect::prePaintWindow(effect::window_prepaint_data& data,
                                    std::chrono::milliseconds presentTime)
 {
     if (m_state != StateNormal) {
-        data.setTranslucent();
+        data.set_translucent();
     }
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void KscreenEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void KscreenEffect::paintWindow(effect::window_paint_data& data)
 {
     // fade to black and fully opaque
     switch (m_state) {
     case StateFadingOut:
-        data.setOpacity(data.opacity() + (1.0 - data.opacity()) * m_timeLine.value());
-        data.multiplyBrightness(1.0 - m_timeLine.value());
+        data.paint.opacity = data.paint.opacity + (1.0 - data.paint.opacity) * m_timeLine.value();
+        data.paint.brightness *= 1.0 - m_timeLine.value();
         break;
     case StateFadedOut:
-        data.multiplyOpacity(0.0);
-        data.multiplyBrightness(0.0);
+        data.paint.opacity = 0.0;
+        data.paint.brightness = 0.0;
         break;
     case StateFadingIn:
-        data.setOpacity(data.opacity() + (1.0 - data.opacity()) * (1.0 - m_timeLine.value()));
-        data.multiplyBrightness(m_timeLine.value());
+        data.paint.opacity
+            = data.paint.opacity + (1.0 - data.paint.opacity) * (1.0 - m_timeLine.value());
+        data.paint.brightness *= m_timeLine.value();
         break;
     default:
         // no adjustment
         break;
     }
-    effects->paintWindow(w, mask, region, data);
+    effects->paintWindow(data);
 }
 
 void KscreenEffect::switchState()

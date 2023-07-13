@@ -31,9 +31,9 @@ ThumbnailAsideEffect::ThumbnailAsideEffect()
 
     connect(effects, &EffectsHandler::windowClosed, this, &ThumbnailAsideEffect::slotWindowClosed);
     connect(effects,
-            &EffectsHandler::windowGeometryShapeChanged,
+            &EffectsHandler::windowFrameGeometryChanged,
             this,
-            &ThumbnailAsideEffect::slotWindowGeometryShapeChanged);
+            &ThumbnailAsideEffect::slotWindowFrameGeometryChanged);
     connect(
         effects, &EffectsHandler::windowDamaged, this, &ThumbnailAsideEffect::slotWindowDamaged);
     connect(
@@ -51,34 +51,56 @@ void ThumbnailAsideEffect::reconfigure(ReconfigureFlags)
     arrange();
 }
 
-void ThumbnailAsideEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+/** Helper to set WindowPaintData and QRegion to necessary transformations so that
+ * a following drawWindow() would put the window at the requested geometry (useful for
+ * thumbnails)
+ */
+static void setPositionTransformations(effect::window_paint_data& data,
+                                       QRect const& r,
+                                       Qt::AspectRatioMode aspect)
+{
+    auto size = data.window.size();
+    size.scale(r.size(), aspect);
+
+    data.paint.geo.scale.setX(size.width() / double(data.window.width()));
+    data.paint.geo.scale.setY(size.height() / double(data.window.height()));
+
+    auto width = static_cast<int>(data.window.width() * data.paint.geo.scale.x());
+    auto height = static_cast<int>(data.window.height() * data.paint.geo.scale.y());
+    int x = r.x() + (r.width() - width) / 2;
+    int y = r.y() + (r.height() - height) / 2;
+
+    data.paint.region = QRect(x, y, width, height);
+    data.paint.geo.translation.setX(x - data.window.x());
+    data.paint.geo.translation.setY(y - data.window.y());
+}
+
+void ThumbnailAsideEffect::paintScreen(effect::screen_paint_data& data)
 {
     painted = QRegion();
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
 
-    const QMatrix4x4 projectionMatrix = data.projectionMatrix();
+    auto const projectionMatrix = data.paint.projection_matrix;
     for (auto const& d : qAsConst(windows)) {
         if (painted.intersects(d.rect)) {
-            WindowPaintData data(d.window, projectionMatrix);
-            data.multiplyOpacity(opacity);
-            QRect region;
-            setPositionTransformations(data, region, d.window, d.rect, Qt::KeepAspectRatio);
-            effects->drawWindow(d.window,
-                                PAINT_WINDOW_OPAQUE | PAINT_WINDOW_TRANSLUCENT
-                                    | PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_LANCZOS,
-                                region,
-                                data);
+            effect::window_paint_data win_data{
+                *d.window,
+                {
+                    .mask = PAINT_WINDOW_OPAQUE | PAINT_WINDOW_TRANSLUCENT
+                        | PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_LANCZOS,
+                    .projection_matrix = projectionMatrix,
+                }};
+            setPositionTransformations(win_data, d.rect, Qt::KeepAspectRatio);
+            win_data.paint.opacity = d.window->opacity() * opacity;
+            effects->drawWindow(win_data);
         }
     }
 }
 
-void ThumbnailAsideEffect::paintWindow(EffectWindow* w,
-                                       int mask,
-                                       QRegion region,
-                                       WindowPaintData& data)
+void ThumbnailAsideEffect::paintWindow(effect::window_paint_data& data)
 {
-    effects->paintWindow(w, mask, region, data);
-    painted |= region;
+    effects->paintWindow(data);
+    painted |= data.paint.region;
 }
 
 void ThumbnailAsideEffect::slotWindowDamaged(EffectWindow* w, QRegion const&)
@@ -89,7 +111,7 @@ void ThumbnailAsideEffect::slotWindowDamaged(EffectWindow* w, QRegion const&)
     }
 }
 
-void ThumbnailAsideEffect::slotWindowGeometryShapeChanged(EffectWindow* w, const QRect& old)
+void ThumbnailAsideEffect::slotWindowFrameGeometryChanged(EffectWindow* w, const QRect& old)
 {
     for (auto const& d : qAsConst(windows)) {
         if (d.window == w) {

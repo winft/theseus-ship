@@ -9,7 +9,6 @@
 
 #include <kwingl/export.h>
 
-#include <QExplicitlySharedDataPointer>
 #include <QMatrix4x4>
 #include <QRegion>
 #include <QSharedPointer>
@@ -32,12 +31,12 @@ class KWINGLUTILS_EXPORT GLTexture
 {
 public:
     GLTexture();
-    GLTexture(const GLTexture& tex);
+    GLTexture(GLTexture&& tex);
     explicit GLTexture(const QImage& image, GLenum target = GL_TEXTURE_2D);
     explicit GLTexture(const QPixmap& pixmap, GLenum target = GL_TEXTURE_2D);
     explicit GLTexture(const QString& fileName);
     GLTexture(GLenum internalFormat, int width, int height, int levels = 1);
-    explicit GLTexture(GLenum internalFormat, const QSize& size, int levels = 1);
+    GLTexture(GLenum internalFormat, QSize const& size, int levels = 1);
 
     /**
      * Create a GLTexture wrapper around an existing texture.
@@ -47,7 +46,7 @@ public:
     explicit GLTexture(GLuint textureId, GLenum internalFormat, const QSize& size, int levels = 1);
     virtual ~GLTexture();
 
-    GLTexture& operator=(const GLTexture& tex);
+    GLTexture& operator=(GLTexture&& tex);
 
     bool isNull() const;
     QSize size() const;
@@ -86,8 +85,8 @@ public:
     virtual void discard();
     void bind();
     void unbind();
-    void render(const QRect& rect);
-    void render(const QRegion& region, const QRect& rect, bool hardwareClipping = false);
+    void render(QSize const& size);
+    void render(QRegion const& region, QSize const& size, bool hardwareClipping = false);
 
     GLuint texture() const;
     GLenum target() const;
@@ -131,8 +130,8 @@ public:
     static bool supportsFormatRG();
 
 protected:
-    QExplicitlySharedDataPointer<GLTexturePrivate> d_ptr;
-    GLTexture(GLTexturePrivate& dd);
+    std::unique_ptr<GLTexturePrivate> d_ptr;
+    GLTexture(std::unique_ptr<GLTexturePrivate> impl);
 
 private:
     Q_DECLARE_PRIVATE(GLTexture)

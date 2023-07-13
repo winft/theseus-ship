@@ -194,6 +194,7 @@ set_package_properties(wlroots PROPERTIES
 
 if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.17)
   set(HAVE_WLR_SESSION_ON_AUTOCREATE 1)
+  set(HAVE_WLR_VALUE_DRM_FORMATS 1)
 endif()
 
 find_package(X11)
@@ -222,12 +223,6 @@ find_package(XCB 1.10 REQUIRED COMPONENTS
     XKB
 )
 set_package_properties(XCB PROPERTIES TYPE REQUIRED)
-
-# and the optional XCB dependencies
-if (XCB_ICCCM_VERSION VERSION_LESS "0.4")
-    set(XCB_ICCCM_FOUND FALSE)
-endif()
-add_feature_info("XCB-ICCCM" XCB_ICCCM_FOUND "Required for building test applications for KWin")
 
 find_package(Freetype REQUIRED)
 set_package_properties(Freetype PROPERTIES

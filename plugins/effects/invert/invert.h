@@ -26,8 +26,7 @@ public:
     InvertEffect();
     ~InvertEffect() override;
 
-    void
-    drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
+    void drawWindow(effect::window_paint_data& data) override;
     bool isActive() const override;
     bool provides(Feature) override;
 

@@ -70,10 +70,10 @@ public:
         m_bufferAge = 0;
     }
 
-    typename abstract_type::texture_priv_t*
+    std::unique_ptr<typename abstract_type::texture_priv_t>
     createBackendTexture(typename abstract_type::texture_t* texture) override
     {
-        return new GlxTexture<type>(texture, this);
+        return std::make_unique<GlxTexture<type>>(texture, this);
     }
 
     QRegion prepareRenderingFrame() override
@@ -86,15 +86,15 @@ public:
 
         this->startRenderTimer();
 
-        native_fbo = GLRenderTarget(0, QRect({}, platform.base.topology.size));
-        GLRenderTarget::pushRenderTarget(&native_fbo);
+        native_fbo = GLFramebuffer(0, QRect({}, platform.base.topology.size));
+        GLFramebuffer::pushRenderTarget(&native_fbo);
 
         return repaint;
     }
 
     void endRenderingFrame(QRegion const& renderedRegion, QRegion const& damagedRegion) override
     {
-        GLRenderTarget::popRenderTarget();
+        GLFramebuffer::popRenderTarget();
 
         if (damagedRegion.isEmpty()) {
             this->setLastDamage(QRegion());
@@ -216,7 +216,7 @@ private:
         return static_cast<bool>(swap_filter);
     }
 
-    GLRenderTarget native_fbo;
+    GLFramebuffer native_fbo;
     int m_bufferAge{0};
     bool m_needsCompositeTimerStart = false;
 };

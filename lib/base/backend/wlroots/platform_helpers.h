@@ -8,10 +8,12 @@
 #include "utils/flags.h"
 
 extern "C" {
+#define static
 #include <wlr/backend.h>
 #include <wlr/backend/drm.h>
 #include <wlr/backend/headless.h>
 #include <wlr/backend/multi.h>
+#undef static
 }
 
 namespace KWin::base::backend::wlroots

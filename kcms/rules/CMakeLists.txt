@@ -35,8 +35,5 @@ set(kcm_libs
 
 target_link_libraries(KWinRulesObjects ${kcm_libs} ${kwin_kcm_rules_XCB_LIBS})
 
-kcoreaddons_add_plugin(kcm_kwinrules SOURCES kcmrules.cpp INSTALL_NAMESPACE "plasma/kcms/systemsettings")
-kcmutils_generate_desktop_file(kcm_kwinrules)
+kcmutils_add_qml_kcm(kcm_kwinrules SOURCES kcmrules.cpp)
 target_link_libraries(kcm_kwinrules KWinRulesObjects)
-
-kpackage_install_package(package kcm_kwinrules kcms)

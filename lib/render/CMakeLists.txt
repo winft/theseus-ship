@@ -35,7 +35,6 @@ target_sources(render
       gl/egl_context_attribute_builder.h
       gl/egl_data.h
       gl/gl.h
-      gl/kwin_eglext.h
       gl/lanczos_filter.h
       gl/scene.h
       gl/shadow.h

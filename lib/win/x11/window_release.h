@@ -211,6 +211,7 @@ template<typename Win>
 void release_window(Win* win, bool on_shutdown)
 {
     using var_win = typename Win::space_t::window_t;
+    auto& space = win->space;
 
     Q_ASSERT(!win->deleting);
     win->deleting = true;
@@ -222,7 +223,7 @@ void release_window(Win* win, bool on_shutdown)
     }
 
 #if KWIN_BUILD_TABBOX
-    auto& tabbox = win->space.tabbox;
+    auto& tabbox = space.tabbox;
     if (tabbox->is_displayed() && tabbox->current_client()
         && tabbox->current_client() == var_win(win)) {
         tabbox->next_prev(true);
@@ -249,9 +250,9 @@ void release_window(Win* win, bool on_shutdown)
     Q_EMIT win->qobject->closed();
 
     // Remove ForceTemporarily rules
-    rules::discard_used_rules(*win->space.rule_book, *win, true);
+    rules::discard_used_rules(*space.rule_book, *win, true);
 
-    blocker block(win->space.stacking.order);
+    blocker block(space.stacking.order);
 
     if (win->control->move_resize.enabled) {
         win->leaveMoveResize();
@@ -261,20 +262,20 @@ void release_window(Win* win, bool on_shutdown)
     win->geo.update.block++;
 
     if (on_current_desktop(win) && win->isShown()) {
-        win->space.base.render->compositor->addRepaint(visible_rect(win));
+        space.base.render->compositor->addRepaint(visible_rect(win));
     }
 
     // Grab X during the release to make removing of properties, setting to withdrawn state
     // and repareting to root an atomic operation
     // (https://lists.kde.org/?l=kde-devel&m=116448102901184&w=2)
-    base::x11::grab_server(win->space.base.x11_data.connection);
+    base::x11::grab_server(space.base.x11_data.connection);
     export_mapping_state(win, XCB_ICCCM_WM_STATE_WITHDRAWN);
 
     // So that it's not considered visible anymore (can't use hideClient(), it would set flags)
     win->hidden = true;
 
     if (!on_shutdown) {
-        process_window_hidden(win->space, *win);
+        process_window_hidden(space, *win);
     }
 
     // Destroying decoration would cause ugly visual effect
@@ -284,7 +285,7 @@ void release_window(Win* win, bool on_shutdown)
     clean_grouping(win);
 
     if (!on_shutdown) {
-        remove_controlled_window_from_space(win->space, win);
+        remove_controlled_window_from_space(space, win);
         // Only when the window is being unmapped, not when closing down KWin (NETWM
         // sections 5.5,5.7)
         win->net_info->setDesktop(0);
@@ -293,17 +294,17 @@ void release_window(Win* win, bool on_shutdown)
         win->net_info->setState(net::States(), win->net_info->state());
     }
 
-    auto& atoms = win->space.atoms;
+    auto& atoms = space.atoms;
     win->xcb_windows.client.delete_property(atoms->kde_net_wm_user_creation_time);
     win->xcb_windows.client.delete_property(atoms->net_frame_extents);
     win->xcb_windows.client.delete_property(atoms->kde_net_wm_frame_strut);
 
     auto const client_rect = frame_to_client_rect(win, win->geo.frame);
     win->xcb_windows.client.reparent(
-        win->space.base.x11_data.root_window, client_rect.x(), client_rect.y());
+        space.base.x11_data.root_window, client_rect.x(), client_rect.y());
 
     xcb_change_save_set(
-        win->space.base.x11_data.connection, XCB_SET_MODE_DELETE, win->xcb_windows.client);
+        space.base.x11_data.connection, XCB_SET_MODE_DELETE, win->xcb_windows.client);
     win->xcb_windows.client.select_input(XCB_EVENT_MASK_NO_EVENT);
 
     if (on_shutdown) {
@@ -327,10 +328,10 @@ void release_window(Win* win, bool on_shutdown)
         del->remnant->unref();
         delete win;
     } else {
-        delete_window_from_space(win->space, *win);
+        delete_window_from_space(space, *win);
     }
 
-    base::x11::ungrab_server(win->space.base.x11_data.connection);
+    base::x11::ungrab_server(space.base.x11_data.connection);
 }
 
 /**

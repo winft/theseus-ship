@@ -38,57 +38,58 @@ static const Qt::GlobalColor s_colors[] = {Qt::blue,
 
 Qt::GlobalColor TouchPointsEffect::colorForId(quint32 id)
 {
-    auto it = m_colors.constFind(id);
-    if (it != m_colors.constEnd()) {
+    if (auto it = m_colors.constFind(id); it != m_colors.constEnd()) {
         return it.value();
     }
+
     static int s_colorIndex = -1;
     s_colorIndex = (s_colorIndex + 1) % 10;
     m_colors.insert(id, s_colors[s_colorIndex]);
     return s_colors[s_colorIndex];
 }
 
-bool TouchPointsEffect::touchDown(qint32 id, const QPointF& pos, quint32 time)
+bool TouchPointsEffect::touchDown(qint32 id, const QPointF& pos, quint32 /*time*/)
 {
-    Q_UNUSED(time)
     TouchPoint point;
     point.pos = pos;
     point.press = true;
     point.color = colorForId(id);
+
     m_points << point;
     m_latestPositions.insert(id, pos);
+
     repaint();
     return false;
 }
 
-bool TouchPointsEffect::touchMotion(qint32 id, const QPointF& pos, quint32 time)
+bool TouchPointsEffect::touchMotion(qint32 id, const QPointF& pos, quint32 /*time*/)
 {
-    Q_UNUSED(time)
     TouchPoint point;
     point.pos = pos;
     point.press = true;
     point.color = colorForId(id);
+
     m_points << point;
     m_latestPositions.insert(id, pos);
+
     repaint();
     return false;
 }
 
-bool TouchPointsEffect::touchUp(qint32 id, quint32 time)
+bool TouchPointsEffect::touchUp(qint32 id, quint32 /*time*/)
 {
-    Q_UNUSED(time)
-    auto it = m_latestPositions.constFind(id);
-    if (it != m_latestPositions.constEnd()) {
+    if (auto it = m_latestPositions.constFind(id); it != m_latestPositions.constEnd()) {
         TouchPoint point;
         point.pos = it.value();
         point.press = false;
         point.color = colorForId(id);
         m_points << point;
     }
+
     return false;
 }
 
-void TouchPointsEffect::prePaintScreen(ScreenPrePaintData& data,
+void TouchPointsEffect::prePaintScreen(effect::paint_data& data,
                                        std::chrono::milliseconds presentTime)
 {
     int time = 0;
@@ -115,11 +116,11 @@ void TouchPointsEffect::prePaintScreen(ScreenPrePaintData& data,
     effects->prePaintScreen(data, presentTime);
 }
 
-void TouchPointsEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void TouchPointsEffect::paintScreen(effect::screen_paint_data& data)
 {
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
 
-    paintScreenSetup(mask, region, data);
+    paintScreenSetup(data);
     for (auto it = m_points.constBegin(), end = m_points.constEnd(); it != end; ++it) {
         for (int i = 0; i < m_ringCount; ++i) {
             float alpha = computeAlpha(it->time, i);
@@ -131,7 +132,7 @@ void TouchPointsEffect::paintScreen(int mask, const QRegion& region, ScreenPaint
             }
         }
     }
-    paintScreenFinish(mask, region, data);
+    paintScreenFinish(data);
 }
 
 void TouchPointsEffect::postPaintScreen()
@@ -182,38 +183,44 @@ void TouchPointsEffect::drawCircle(const QColor& color, float cx, float cy, floa
     }
 }
 
-void TouchPointsEffect::paintScreenSetup(int mask, QRegion region, ScreenPaintData& data)
+void TouchPointsEffect::paintScreenSetup(effect::screen_paint_data const& data)
 {
-    if (effects->isOpenGLCompositing())
-        paintScreenSetupGl(mask, region, data);
+    if (effects->isOpenGLCompositing()) {
+        paintScreenSetupGl(data);
+    }
 }
 
-void TouchPointsEffect::paintScreenFinish(int mask, QRegion region, ScreenPaintData& data)
+void TouchPointsEffect::paintScreenFinish(effect::screen_paint_data const& data)
 {
-    if (effects->isOpenGLCompositing())
-        paintScreenFinishGl(mask, region, data);
+    if (effects->isOpenGLCompositing()) {
+        paintScreenFinishGl(data);
+    }
 }
 
 void TouchPointsEffect::drawCircleGl(const QColor& color, float cx, float cy, float r)
 {
-    static const int num_segments = 80;
-    static const float theta = 2 * 3.1415926 / float(num_segments);
-    static const float c = cosf(theta); // precalculate the sine and cosine
-    static const float s = sinf(theta);
+    static int const num_segments = 80;
+    static float const theta = 2 * 3.1415926 / float(num_segments);
+    static float const c = cosf(theta); // precalculate the sine and cosine
+    static float const s = sinf(theta);
     float t;
 
-    float x = r; // we start at angle = 0
-    float y = 0;
+    // we start at angle = 0
+    auto x = r;
+    auto y = 0.f;
 
-    GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
+    auto vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
     vbo->setUseColor(true);
     vbo->setColor(color);
+
     QVector<float> verts;
     verts.reserve(num_segments * 2);
 
     for (int ii = 0; ii < num_segments; ++ii) {
-        verts << x + cx << y + cy; // output vertex
+        // output vertex
+        verts << x + cx << y + cy;
+
         // apply the rotation matrix
         t = x;
         x = c * x - s * y;
@@ -225,24 +232,24 @@ void TouchPointsEffect::drawCircleGl(const QColor& color, float cx, float cy, fl
 
 void TouchPointsEffect::drawCircleQPainter(const QColor& color, float cx, float cy, float r)
 {
-    QPainter* painter = effects->scenePainter();
+    auto painter = effects->scenePainter();
     painter->save();
     painter->setPen(color);
     painter->drawArc(cx - r, cy - r, r * 2, r * 2, 0, 5760);
     painter->restore();
 }
 
-void TouchPointsEffect::paintScreenSetupGl(int, QRegion, ScreenPaintData& data)
+void TouchPointsEffect::paintScreenSetupGl(effect::screen_paint_data const& data)
 {
-    GLShader* shader = ShaderManager::instance()->pushShader(ShaderTrait::UniformColor);
-    shader->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
+    auto shader = ShaderManager::instance()->pushShader(ShaderTrait::UniformColor);
+    shader->setUniform(GLShader::ModelViewProjectionMatrix, data.paint.projection_matrix);
 
     glLineWidth(m_lineWidth);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void TouchPointsEffect::paintScreenFinishGl(int, QRegion, ScreenPaintData&)
+void TouchPointsEffect::paintScreenFinishGl(effect::screen_paint_data const& /*data*/)
 {
     glDisable(GL_BLEND);
 

@@ -81,7 +81,7 @@ void DimInactiveEffect::reconfigure(ReconfigureFlags flags)
     effects->addRepaintFull();
 }
 
-void DimInactiveEffect::prePaintScreen(ScreenPrePaintData& data,
+void DimInactiveEffect::prePaintScreen(effect::paint_data& data,
                                        std::chrono::milliseconds presentTime)
 {
     if (m_fullScreenTransition.active) {
@@ -97,32 +97,29 @@ void DimInactiveEffect::prePaintScreen(ScreenPrePaintData& data,
     effects->prePaintScreen(data, presentTime);
 }
 
-void DimInactiveEffect::paintWindow(EffectWindow* w,
-                                    int mask,
-                                    QRegion region,
-                                    WindowPaintData& data)
+void DimInactiveEffect::paintWindow(effect::window_paint_data& data)
 {
-    auto transitionIt = m_transitions.constFind(w);
+    auto transitionIt = m_transitions.constFind(&data.window);
     if (transitionIt != m_transitions.constEnd()) {
         const qreal transitionProgress = (*transitionIt).value();
         dimWindow(data, m_dimStrength * transitionProgress);
-        effects->paintWindow(w, mask, region, data);
+        effects->paintWindow(data);
         return;
     }
 
-    auto forceIt = m_forceDim.constFind(w);
+    auto forceIt = m_forceDim.constFind(&data.window);
     if (forceIt != m_forceDim.constEnd()) {
         const qreal forcedStrength = *forceIt;
         dimWindow(data, forcedStrength);
-        effects->paintWindow(w, mask, region, data);
+        effects->paintWindow(data);
         return;
     }
 
-    if (canDimWindow(w)) {
+    if (canDimWindow(&data.window)) {
         dimWindow(data, m_dimStrength);
     }
 
-    effects->paintWindow(w, mask, region, data);
+    effects->paintWindow(data);
 }
 
 void DimInactiveEffect::postPaintScreen()
@@ -148,7 +145,7 @@ void DimInactiveEffect::postPaintScreen()
     effects->postPaintScreen();
 }
 
-void DimInactiveEffect::dimWindow(WindowPaintData& data, qreal strength)
+void DimInactiveEffect::dimWindow(effect::window_paint_data& data, qreal strength)
 {
     qreal dimFactor;
     if (m_fullScreenTransition.active) {
@@ -159,8 +156,8 @@ void DimInactiveEffect::dimWindow(WindowPaintData& data, qreal strength)
         dimFactor = 1.0;
     }
 
-    data.multiplyBrightness(1.0 - strength * dimFactor);
-    data.multiplySaturation(1.0 - strength * dimFactor);
+    data.paint.brightness *= 1.0 - strength * dimFactor;
+    data.paint.saturation *= 1.0 - strength * dimFactor;
 }
 
 bool DimInactiveEffect::canDimWindow(const EffectWindow* w) const

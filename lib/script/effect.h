@@ -253,7 +253,7 @@ Q_SIGNALS:
      * Signal emitted whenever the effect's config changed.
      */
     void configChanged();
-    void animationEnded(KWin::EffectWindow* w, quint64 animationId);
+    void animationEnded(KWin::EffectWindow const* w, quint64 animationId);
     void isActiveFullScreenEffectChanged();
 
 protected:
@@ -263,7 +263,7 @@ protected:
 
     QJSEngine* engine() const;
     bool init(QString const& effectName, QString const& pathToScript, KSharedConfigPtr config);
-    void animationEnded(KWin::EffectWindow* w, Attribute a, uint meta) override;
+    void animationEnded(KWin::EffectWindow const* w, Attribute a, uint meta) override;
 
     EffectsHandler& effects;
 

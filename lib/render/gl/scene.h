@@ -566,7 +566,7 @@ protected:
         render::scene<Platform>::paintSimpleScreen(mask, region);
     }
 
-    void paintGenericScreen(paint_type mask, ScreenPaintData data) override
+    void paintGenericScreen(paint_type mask, effect::screen_paint_data const& data) override
     {
         const QMatrix4x4 screenMatrix = transformation(mask, data);
 
@@ -580,11 +580,10 @@ protected:
         return std::make_unique<gl_window_t>(ref_win, *this);
     }
 
-    void finalDrawWindow(effect_window_t* eff_win,
-                         paint_type mask,
-                         QRegion region,
-                         WindowPaintData& data) override
+    void finalDrawWindow(effect::window_paint_data& data) override
     {
+        auto& eff_win = static_cast<effect_window_t&>(data.window);
+
         if (base::wayland::is_screen_locked(this->platform.base)) {
             if (std::visit(overload{[&](auto&& win) {
                                if constexpr (requires(decltype(win) win) { win.isLockScreen(); }) {
@@ -599,11 +598,11 @@ protected:
                                }
                                return true;
                            }},
-                           *eff_win->window.ref_win)) {
+                           *eff_win.window.ref_win)) {
                 return;
             }
         }
-        performPaintWindow(eff_win, mask, region, data);
+        performPaintWindow(data);
     }
 
     /**
@@ -661,7 +660,7 @@ protected:
             sw_cursor.texture->bind();
             ShaderBinder binder(ShaderTrait::MapTexture);
             binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-            sw_cursor.texture->render(QRegion(cursorRect), cursorRect);
+            sw_cursor.texture->render(QRegion(cursorRect), cursorRect.size());
             sw_cursor.texture->unbind();
 
             cursor->mark_as_rendered();
@@ -670,7 +669,7 @@ protected:
         }
     }
 
-    void paintBackground(QRegion region) override
+    void paintBackground(QRegion const& region) override
     {
         PaintClipper pc(region);
         if (!PaintClipper::clip()) {
@@ -729,7 +728,7 @@ protected:
         }
     }
 
-    QMatrix4x4 transformation(paint_type mask, const ScreenPaintData& data) const
+    QMatrix4x4 transformation(paint_type mask, effect::screen_paint_data const& data) const
     {
         QMatrix4x4 matrix;
 
@@ -737,20 +736,20 @@ protected:
             return matrix;
         }
 
-        matrix.translate(data.translation());
-        const QVector3D scale = data.scale();
-        matrix.scale(scale.x(), scale.y(), scale.z());
+        matrix.translate(data.paint.geo.translation);
+        matrix.scale(data.paint.geo.scale.x(), data.paint.geo.scale.y(), data.paint.geo.scale.z());
 
-        if (data.rotationAngle() == 0.0)
+        if (data.paint.geo.rotation.angle == 0.0) {
             return matrix;
+        }
 
         // Apply the rotation
         // cannot use data.rotation->applyTo(&matrix) as QGraphicsRotation uses projectedRotate to
         // map back to 2D
-        matrix.translate(data.rotationOrigin());
-        const QVector3D axis = data.rotationAxis();
-        matrix.rotate(data.rotationAngle(), axis.x(), axis.y(), axis.z());
-        matrix.translate(-data.rotationOrigin());
+        matrix.translate(data.paint.geo.rotation.origin);
+        auto const axis = data.paint.geo.rotation.axis;
+        matrix.rotate(data.paint.geo.rotation.angle, axis.x(), axis.y(), axis.z());
+        matrix.translate(-data.paint.geo.rotation.origin);
 
         return matrix;
     }
@@ -783,7 +782,7 @@ protected:
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         texture->bind();
-        texture->render(view->geometry());
+        texture->render(view->geometry().size());
         texture->unbind();
         glDisable(GL_BLEND);
 
@@ -826,7 +825,7 @@ protected:
                              i18n("Desktop effects were restarted due to a graphics reset"));
     }
 
-    void doPaintBackground(const QVector<float>& vertices)
+    void doPaintBackground(QVector<float> const& vertices)
     {
         GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
         vbo->reset();
@@ -837,11 +836,6 @@ protected:
         binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, m_projectionMatrix);
 
         vbo->render(GL_TRIANGLES);
-    }
-
-    void updateProjectionMatrix()
-    {
-        m_projectionMatrix = createProjectionMatrix();
     }
 
 private:
@@ -899,21 +893,21 @@ private:
         return leads;
     }
 
-    void performPaintWindow(effect_window_t* eff_win,
-                            paint_type mask,
-                            QRegion region,
-                            WindowPaintData& data)
+    void performPaintWindow(effect::window_paint_data& data)
     {
+        auto& eff_win = static_cast<effect_window_t&>(data.window);
+        auto mask = static_cast<paint_type>(data.paint.mask);
+
         if (flags(mask & paint_type::window_lanczos)) {
             if (!lanczos) {
                 lanczos = new lanczos_filter<scene>(this);
             }
-            lanczos->performPaint(eff_win, mask, region, data);
+            lanczos->performPaint(eff_win, mask, data);
         } else
-            eff_win->window.performPaint(mask, region, data);
+            eff_win.window.performPaint(mask, data);
     }
 
-    QMatrix4x4 createProjectionMatrix() const
+    void updateProjectionMatrix()
     {
         // Create a perspective projection with a 60° field-of-view,
         // and an aspect ratio of 1.0.
@@ -942,7 +936,7 @@ private:
                      0.001);
 
         // Combine the matrices
-        return m_backend->transformation * projection * matrix;
+        m_projectionMatrix = m_backend->transformation * projection * matrix;
     }
 
     backend_t* m_backend;

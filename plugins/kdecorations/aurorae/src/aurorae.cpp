@@ -12,10 +12,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "aurorae.h"
-#include "auroraetheme.h"
 
 #include "config-kwin.h"
 
+#include "auroraeshared.h"
+#include "auroraetheme.h"
 #include "decorationoptions.h"
 
 #include <kwineffects/effect_quick_view.h>
@@ -26,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/DecorationSettings>
 #include <KDecoration2/DecorationShadow>
 // KDE
-#include <KConfigDialogManager>
 #include <KConfigGroup>
 #include <KConfigLoader>
 #include <KDesktopFile>
@@ -36,11 +36,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KPluginFactory>
 #include <KSharedConfig>
 // Qt
-#include <QComboBox>
 #include <QDebug>
 #include <QDirIterator>
 #include <QGuiApplication>
-#include <QLabel>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
@@ -52,14 +50,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QQuickWindow>
 #include <QStandardPaths>
 #include <QTimer>
-#include <QUiLoader>
-#include <QVBoxLayout>
 
 K_PLUGIN_FACTORY_WITH_JSON(AuroraeDecoFactory,
                            "aurorae.json",
                            registerPlugin<Aurorae::Decoration>();
-                           registerPlugin<Aurorae::ThemeProvider>();
-                           registerPlugin<Aurorae::ConfigurationModule>();)
+                           registerPlugin<Aurorae::ThemeProvider>();)
 
 namespace Aurorae
 {
@@ -115,13 +110,7 @@ void Helper::unref()
 }
 
 static const QString s_defaultTheme = QStringLiteral("kwin4_decoration_qml_plastik");
-static const QString s_qmlPackageFolder = QStringLiteral(KWIN_NAME "/decorations/");
-/*
- * KDecoration2::BorderSize doesn't map to the indices used for the Aurorae SVG Button Sizes.
- * BorderSize defines None and NoSideBorder as index 0 and 1. These do not make sense for Button
- * Size, thus we need to perform a mapping between the enum value and the config value.
- */
-static const int s_indexMapper = 2;
+static const QString s_qmlPackageFolder = QStringLiteral("kwin/decorations/");
 
 QQmlComponent* Helper::component(const QString& themeName)
 {
@@ -247,19 +236,6 @@ void Helper::init()
     qmlRegisterAnonymousType<KDecoration2::Decoration>("org.kde.kwin.decoration", 0);
     qmlRegisterAnonymousType<KDecoration2::DecoratedClient>("org.kde.kwin.decoration", 0);
     qRegisterMetaType<KDecoration2::BorderSize>();
-}
-
-static QString findTheme(const QVariantList& args)
-{
-    if (args.isEmpty()) {
-        return QString();
-    }
-    const auto map = args.first().toMap();
-    auto it = map.constFind(QStringLiteral("theme"));
-    if (it == map.constEnd()) {
-        return QString();
-    }
-    return it.value().toString();
 }
 
 Decoration::Decoration(QObject* parent, const QVariantList& args)
@@ -697,8 +673,8 @@ QQuickItem* Decoration::item() const
     return m_item;
 }
 
-ThemeProvider::ThemeProvider(QObject* parent, const KPluginMetaData& data, const QVariantList& args)
-    : KDecoration2::DecorationThemeProvider(parent, data, args)
+ThemeProvider::ThemeProvider(QObject* parent, const KPluginMetaData& data)
+    : KDecoration2::DecorationThemeProvider(parent)
     , m_data(data)
 {
     init();
@@ -719,7 +695,9 @@ void ThemeProvider::findAllQmlThemes()
         data.setPluginId(m_data.pluginId());
         data.setThemeName(offer.pluginId());
         data.setVisibleName(offer.name());
-        data.setHasConfiguration(hasConfiguration(offer.pluginId()));
+        if (hasConfiguration(offer.pluginId())) {
+            data.setConfigurationName("kcm_auroraedecoration");
+        }
         m_themes.append(data);
     }
 }
@@ -760,7 +738,9 @@ void ThemeProvider::findAllSvgThemes()
         data.setPluginId(m_data.pluginId());
         data.setThemeName(QLatin1String("__aurorae__svg__") + packageName);
         data.setVisibleName(name);
-        data.setHasConfiguration(hasConfiguration(data.themeName()));
+        if (hasConfiguration(data.themeName())) {
+            data.setConfigurationName("kcm_auroraedecoration");
+        }
         m_themes.append(data);
     }
 }
@@ -777,107 +757,6 @@ bool ThemeProvider::hasConfiguration(const QString& theme)
         QStandardPaths::GenericDataLocation,
         QStringLiteral("kwin/decorations/%1/contents/config/main.xml").arg(theme));
     return !(ui.isEmpty() || xml.isEmpty());
-}
-
-ConfigurationModule::ConfigurationModule(QObject* parent,
-                                         const KPluginMetaData& data,
-                                         const QVariantList& args)
-    : KCModule(parent, data, args)
-    , m_theme(findTheme(args))
-    , m_buttonSize(int(KDecoration2::BorderSize::Normal) - s_indexMapper)
-{
-    init();
-}
-
-void ConfigurationModule::init()
-{
-    if (m_theme.startsWith(QLatin1String("__aurorae__svg__"))) {
-        // load the generic setting module
-        initSvg();
-    } else {
-        initQml();
-    }
-}
-
-void ConfigurationModule::initSvg()
-{
-    QWidget* form = new QWidget(widget());
-    form->setLayout(new QHBoxLayout(form));
-    QComboBox* sizes = new QComboBox(form);
-    sizes->addItem(i18nc("@item:inlistbox Button size:", "Tiny"));
-    sizes->addItem(i18nc("@item:inlistbox Button size:", "Normal"));
-    sizes->addItem(i18nc("@item:inlistbox Button size:", "Large"));
-    sizes->addItem(i18nc("@item:inlistbox Button size:", "Very Large"));
-    sizes->addItem(i18nc("@item:inlistbox Button size:", "Huge"));
-    sizes->addItem(i18nc("@item:inlistbox Button size:", "Very Huge"));
-    sizes->addItem(i18nc("@item:inlistbox Button size:", "Oversized"));
-    sizes->setObjectName(QStringLiteral("kcfg_ButtonSize"));
-
-    QLabel* label = new QLabel(i18n("Button size:"), form);
-    label->setBuddy(sizes);
-    form->layout()->addWidget(label);
-    form->layout()->addWidget(sizes);
-
-    widget()->layout()->addWidget(form);
-
-    KCoreConfigSkeleton* skel
-        = new KCoreConfigSkeleton(KSharedConfig::openConfig(QStringLiteral("auroraerc")), this);
-    skel->setCurrentGroup(m_theme.mid(16));
-    skel->addItemInt(QStringLiteral("ButtonSize"),
-                     m_buttonSize,
-                     int(KDecoration2::BorderSize::Normal) - s_indexMapper,
-                     QStringLiteral("ButtonSize"));
-    addConfig(skel, form);
-}
-
-void ConfigurationModule::initQml()
-{
-    const QString packageRoot = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                                       QLatin1String("kwin/decorations/") + m_theme,
-                                                       QStandardPaths::LocateDirectory);
-    if (packageRoot.isEmpty()) {
-        return;
-    }
-
-    const KPluginMetaData metaData
-        = KPluginMetaData::fromJsonFile(packageRoot + QLatin1String("/metadata.json"));
-    if (!metaData.isValid()) {
-        return;
-    }
-
-    const QString xml = packageRoot + QLatin1String("/contents/config/main.xml");
-    const QString ui = packageRoot + QLatin1String("/contents/ui/config.ui");
-    if (!QFileInfo::exists(xml) || !QFileInfo::exists(ui)) {
-        return;
-    }
-
-    KLocalizedTranslator* translator = new KLocalizedTranslator(this);
-    QCoreApplication::instance()->installTranslator(translator);
-    const QString translationDomain = metaData.value("X-KWin-Config-TranslationDomain");
-    if (!translationDomain.isEmpty()) {
-        translator->setTranslationDomain(translationDomain);
-    }
-
-    // load the KConfigSkeleton
-    QFile configFile(xml);
-    KSharedConfigPtr auroraeConfig = KSharedConfig::openConfig("auroraerc");
-    KConfigGroup configGroup = auroraeConfig->group(m_theme);
-    m_skeleton = new KConfigLoader(configGroup, &configFile, this);
-    // load the ui file
-    QUiLoader* loader = new QUiLoader(this);
-    loader->setLanguageChangeEnabled(true);
-    QFile uiFile(ui);
-    uiFile.open(QFile::ReadOnly);
-    QWidget* customConfigForm = loader->load(&uiFile, widget());
-    translator->addContextToMonitor(customConfigForm->objectName());
-    uiFile.close();
-    widget()->layout()->addWidget(customConfigForm);
-    // connect the ui file with the skeleton
-    addConfig(m_skeleton, customConfigForm);
-
-    // send a custom event to the translator to retranslate using our translator
-    QEvent le(QEvent::LanguageChange);
-    QCoreApplication::sendEvent(customConfigForm, &le);
 }
 
 }

@@ -361,23 +361,19 @@ inline GLShader* ShaderBinder::shader()
 }
 
 /**
- * @short Render target object
- *
- * Render target object enables you to render onto a texture. This texture can
- *  later be used to e.g. do post-processing of the scene.
- *
- * @author Rivo Laks <rivolaks@hot.ee>
+ * Framebuffer object enables you to render onto a texture. This texture can later be used to e.g.
+ * do post-processing of the scene.
  */
-class KWINGLUTILS_EXPORT GLRenderTarget
+class KWINGLUTILS_EXPORT GLFramebuffer
 {
 public:
-    GLRenderTarget() = default;
-    GLRenderTarget(GLRenderTarget&& other) noexcept;
-    GLRenderTarget& operator=(GLRenderTarget&& other) noexcept;
-    explicit GLRenderTarget(GLuint framebuffer, QRect const& viewport);
-    explicit GLRenderTarget(GLTexture* texture);
+    GLFramebuffer() = default;
+    GLFramebuffer(GLFramebuffer&& other) noexcept;
+    GLFramebuffer& operator=(GLFramebuffer&& other) noexcept;
+    explicit GLFramebuffer(GLuint framebuffer, QRect const& viewport);
+    explicit GLFramebuffer(GLTexture* texture);
 
-    ~GLRenderTarget();
+    ~GLFramebuffer();
 
     QSize size() const;
     bool valid() const
@@ -391,17 +387,17 @@ public:
         return sSupported;
     }
 
-    static GLRenderTarget* currentRenderTarget();
+    static GLFramebuffer* currentRenderTarget();
 
     /**
      * Pushes the render target stack of the input parameter in reverse order.
-     * @param targets The stack of GLRenderTargets
+     * @param targets The stack of GLFramebuffers
      * @since 5.13
      */
-    static void pushRenderTargets(QStack<GLRenderTarget*> targets);
+    static void pushRenderTargets(QStack<GLFramebuffer*> targets);
 
-    static void pushRenderTarget(GLRenderTarget* target);
-    static GLRenderTarget* popRenderTarget();
+    static void pushRenderTarget(GLFramebuffer* target);
+    static GLFramebuffer* popRenderTarget();
     /**
      * Whether the GL_EXT_framebuffer_blit extension is supported.
      * This functionality is not available in OpenGL ES 2.0.
@@ -438,7 +434,7 @@ private:
 
     static bool sSupported;
     static bool s_blitSupported;
-    static QStack<GLRenderTarget*> s_renderTargets;
+    static QStack<GLFramebuffer*> s_renderTargets;
 
     GLuint mFramebuffer{0};
 

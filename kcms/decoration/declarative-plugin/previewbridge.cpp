@@ -12,6 +12,7 @@
 #include <KDecoration2/Decoration>
 
 #include <KCModule>
+#include <KCMultiDialog>
 #include <KPluginFactory>
 #include <KPluginMetaData>
 
@@ -33,6 +34,7 @@ namespace Preview
 {
 
 static const QString s_pluginName = QStringLiteral("org.kde.kdecoration2");
+static const QString s_kcmName = QStringLiteral("org.kde.kdecoration2.kcm");
 
 PreviewBridge::PreviewBridge(QObject *parent)
     : DecorationBridge(parent)
@@ -89,6 +91,20 @@ void PreviewBridge::setTheme(const QString &theme)
         return;
     }
     m_theme = theme;
+    Q_EMIT themeChanged();
+}
+
+QString PreviewBridge::kcmoduleName() const
+{
+    return m_kcmoduleName;
+}
+
+void PreviewBridge::setKcmoduleName(const QString &kcmoduleName)
+{
+    if (m_kcmoduleName == kcmoduleName) {
+        return;
+    }
+    m_kcmoduleName = kcmoduleName;
     Q_EMIT themeChanged();
 }
 
@@ -153,29 +169,26 @@ DecorationButton *PreviewBridge::createButton(KDecoration2::Decoration *decorati
 void PreviewBridge::configure(QQuickItem *ctx)
 {
     if (!m_valid) {
+        qWarning() << "Cannot show an invalid decoration's configuration dialog";
         return;
     }
-    //setup the UI
-    QDialog *dialog = new QDialog();
+
+    KCMultiDialog *dialog = new KCMultiDialog;
     dialog->setAttribute(Qt::WA_DeleteOnClose);
+
     if (m_lastCreatedClient) {
         dialog->setWindowTitle(m_lastCreatedClient->caption());
     }
 
-    // create the KCModule through the plugintrader
     QVariantMap args;
     if (!m_theme.isNull()) {
         args.insert(QStringLiteral("theme"), m_theme);
     }
+    Q_ASSERT(!m_kcmoduleName.isEmpty());
 
-    KCModule *kcm = m_factory->create<KCModule>(dialog, QVariantList({args}));
+    dialog->addModule(KPluginMetaData(s_kcmName + QLatin1Char('/') + m_kcmoduleName), {args});
 
-    if (!kcm) {
-        return;
-    }
-
-    auto save = [this,kcm] {
-        kcm->save();
+    connect(dialog, &KCMultiDialog::configCommitted, this, [this] {
         if (m_lastCreatedSettings) {
             Q_EMIT m_lastCreatedSettings->decorationSettings()->reconfigured();
         }
@@ -184,29 +197,7 @@ void PreviewBridge::configure(QQuickItem *ctx)
                                                           QStringLiteral("org.kde.KWin"),
                                                           QStringLiteral("reloadConfig"));
         QDBusConnection::sessionBus().send(message);
-    };
-    connect(dialog, &QDialog::accepted, this, save);
-
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok |
-                                                     QDialogButtonBox::Cancel |
-                                                     QDialogButtonBox::RestoreDefaults |
-                                                     QDialogButtonBox::Reset,
-                                                     dialog);
-
-    QPushButton *reset = buttons->button(QDialogButtonBox::Reset);
-    reset->setEnabled(false);
-    // Here we connect our buttons with the dialog
-    connect(buttons, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-    connect(reset, &QPushButton::clicked, kcm, &KCModule::load);
-    connect(kcm, &KCModule::needsSaveChanged, reset, [reset, kcm]() {
-        reset->setEnabled(kcm->needsSave());
     });
-    connect(buttons->button(QDialogButtonBox::RestoreDefaults), &QPushButton::clicked, kcm, &KCModule::defaults);
-
-    QVBoxLayout *layout = new QVBoxLayout(dialog);
-    layout->addWidget(kcm->widget());
-    layout->addWidget(buttons);
 
     if (ctx->window()) {
         dialog->winId(); // so it creates windowHandle
@@ -224,6 +215,7 @@ BridgeItem::BridgeItem(QObject *parent)
     connect(m_bridge, &PreviewBridge::themeChanged, this, &BridgeItem::themeChanged);
     connect(m_bridge, &PreviewBridge::pluginChanged, this, &BridgeItem::pluginChanged);
     connect(m_bridge, &PreviewBridge::validChanged, this, &BridgeItem::validChanged);
+    connect(m_bridge, &PreviewBridge::kcmoduleNameChanged, this, &BridgeItem::kcmoduleNameChanged);
 }
 
 BridgeItem::~BridgeItem()

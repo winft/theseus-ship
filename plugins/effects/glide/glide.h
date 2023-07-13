@@ -10,12 +10,16 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_GLIDE_H
 
 #include <kwineffects/effect.h>
+#include <kwineffects/effect_window_deleted_ref.h>
+#include <kwineffects/effect_window_visible_ref.h>
 #include <kwineffects/time_line.h>
 
 namespace KWin
 {
 
 struct GlideAnimation {
+    EffectWindowDeletedRef deletedRef;
+    EffectWindowVisibleRef visibleRef;
     TimeLine timeLine;
 };
 
@@ -38,11 +42,10 @@ public:
 
     void reconfigure(ReconfigureFlags flags) override;
 
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow* w,
-                        WindowPrePaintData& data,
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(effect::window_prepaint_data& data,
                         std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
+    void paintWindow(effect::window_paint_data& data) override;
     void postPaintScreen() override;
 
     bool isActive() const override;

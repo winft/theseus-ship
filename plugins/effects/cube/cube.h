@@ -7,14 +7,16 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_CUBE_H
 
 #include <kwineffects/effect.h>
+#include <kwineffects/effect_screen.h>
+#include <kwineffects/effect_window_visible_ref.h>
 #include <kwineffects/time_line.h>
 #include <kwingl/utils.h>
 
-#include "kwineffects/effect_screen.h"
 #include <QFont>
 #include <QMatrix4x4>
 #include <QObject>
 #include <QQueue>
+#include <unordered_map>
 
 namespace KWin
 {
@@ -43,13 +45,12 @@ public:
     CubeEffect();
     ~CubeEffect() override;
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(EffectWindow* w,
-                        WindowPrePaintData& data,
+    void prePaintWindow(effect::window_prepaint_data& data,
                         std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
+    void paintWindow(effect::window_paint_data& data) override;
     bool borderActivated(ElectricBorder border) override;
     void grabbedKeyboardEvent(QKeyEvent* e) override;
     void windowInputMouseEvent(QEvent* e) override;
@@ -145,7 +146,7 @@ private:
     enum class VerticalAnimationState { None, Upwards, Downwards };
     enum CubeMode { Cube, Cylinder, Sphere };
     void toggle(CubeMode newMode = Cube);
-    void paintCube(int mask, QRegion region, ScreenPaintData& data);
+    void paintCube(effect::screen_paint_data& data);
     void paintCap(bool frontFirst, float zOffset, const QMatrix4x4& projection);
     void paintCubeCap();
     void paintCylinderCap();
@@ -158,6 +159,8 @@ private:
     QImage loadWallPaper(const QString& file);
     void startAnimation(AnimationState state);
     void startVerticalAnimation(VerticalAnimationState state);
+
+    void window_added(EffectWindow* win);
 
     bool activated;
     bool cube_painting;
@@ -238,6 +241,8 @@ private:
     QAction* m_cubeAction;
     QAction* m_cylinderAction;
     QAction* m_sphereAction;
+
+    std::unordered_map<EffectWindow*, EffectWindowVisibleRef> window_refs;
 };
 
 } // namespace

@@ -55,7 +55,7 @@ public:
     }
 
     // perform the actual painting of the window
-    virtual void performPaint(paint_type mask, const QRegion& region, WindowPaintData& data) = 0;
+    virtual void performPaint(paint_type mask, effect::window_paint_data& data) = 0;
 
     // do any cleanup needed when the window's buffer is discarded
     void discard_buffer()
@@ -90,42 +90,21 @@ public:
     // should the window be painted
     bool isPaintingEnabled() const
     {
-        return disable_painting == window_paint_disable_type::none;
-    }
+        if (effect->is_forced_visible()) {
+            return true;
+        }
 
-    void resetPaintingEnabled()
-    {
-        disable_painting = window_paint_disable_type::none;
-
-        std::visit(overload{[this](auto&& ref_win) {
-                       if (ref_win->remnant) {
-                           disable_painting |= window_paint_disable_type::by_delete;
-                       }
-
-                       if (!win::on_current_desktop(ref_win)) {
-                           disable_painting |= window_paint_disable_type::by_desktop;
-                       }
-
-                       if (ref_win->control) {
-                           if (ref_win->control->minimized) {
-                               disable_painting |= window_paint_disable_type::by_minimize;
-                           }
-                           if (ref_win->isHiddenInternal()) {
-                               disable_painting |= window_paint_disable_type::unspecified;
-                           }
-                       }
-                   }},
-                   *ref_win);
-    }
-
-    void enablePainting(window_paint_disable_type reason)
-    {
-        disable_painting &= ~reason;
-    }
-
-    void disablePainting(window_paint_disable_type reason)
-    {
-        disable_painting |= reason;
+        return std::visit(overload{[this](auto&& ref_win) {
+                              if (ref_win->remnant || !win::on_current_desktop(ref_win)) {
+                                  return false;
+                              }
+                              if (ref_win->control
+                                  && (ref_win->control->minimized || ref_win->isHiddenInternal())) {
+                                  return false;
+                              }
+                              return true;
+                          }},
+                          *ref_win);
     }
 
     // is the window visible at all
@@ -497,7 +476,6 @@ private:
         std::unique_ptr<buffer<type>> previous;
         int previous_refs{0};
     } buffers;
-    window_paint_disable_type disable_painting{window_paint_disable_type::none};
     mutable std::unique_ptr<WindowQuadList> cached_quad_list;
     uint32_t const m_id;
 };

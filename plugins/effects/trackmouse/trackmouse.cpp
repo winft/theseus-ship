@@ -73,21 +73,21 @@ void TrackMouseEffect::reconfigure(ReconfigureFlags)
     }
 }
 
-void TrackMouseEffect::prePaintScreen(ScreenPrePaintData& data,
+void TrackMouseEffect::prePaintScreen(effect::paint_data& data,
                                       std::chrono::milliseconds presentTime)
 {
     QTime t = QTime::currentTime();
     m_angle = ((t.second() % 4) * m_angleBase) + (t.msec() / 1000.0 * m_angleBase);
     m_lastRect[0].moveCenter(cursorPos());
     m_lastRect[1].moveCenter(cursorPos());
-    data.paint |= m_lastRect[0].adjusted(-1, -1, 1, 1);
+    data.region |= m_lastRect[0].adjusted(-1, -1, 1, 1);
 
     effects->prePaintScreen(data, presentTime);
 }
 
-void TrackMouseEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void TrackMouseEffect::paintScreen(effect::screen_paint_data& data)
 {
-    effects->paintScreen(mask, region, data); // paint normal screen
+    effects->paintScreen(data);
 
     if (effects->isOpenGLCompositing() && m_texture[0] && m_texture[1]) {
         ShaderBinder binder(ShaderTrait::MapTexture);
@@ -97,11 +97,12 @@ void TrackMouseEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
         }
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        QMatrix4x4 matrix(data.projectionMatrix());
+        QMatrix4x4 matrix(data.paint.projection_matrix);
         const QPointF p = m_lastRect[0].topLeft()
             + QPoint(m_lastRect[0].width() / 2.0, m_lastRect[0].height() / 2.0);
-        const float x = p.x() * data.xScale() + data.xTranslation();
-        const float y = p.y() * data.yScale() + data.yTranslation();
+        auto const x = p.x() * data.paint.geo.scale.x() + data.paint.geo.translation.x();
+        auto const y = p.y() * data.paint.geo.scale.y() + data.paint.geo.translation.y();
+
         for (int i = 0; i < 2; ++i) {
             matrix.translate(x, y, 0.0);
             matrix.rotate(i ? -2 * m_angle : m_angle, 0, 0, 1.0);
@@ -110,7 +111,7 @@ void TrackMouseEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
             mvp.translate(m_lastRect[i].x(), m_lastRect[i].y());
             shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
             m_texture[i]->bind();
-            m_texture[i]->render(m_lastRect[i]);
+            m_texture[i]->render(m_lastRect[i].size());
             m_texture[i]->unbind();
         }
         glDisable(GL_BLEND);

@@ -132,20 +132,16 @@ public:
         // TODO, create new buffer?
     }
 
-    typename abstract_type::texture_priv_t*
+    std::unique_ptr<typename abstract_type::texture_priv_t>
     createBackendTexture(typename abstract_type::texture_t* texture) override
     {
-        return new egl_texture<type>(texture, this);
+        return std::make_unique<egl_texture<type>>(texture, this);
     }
 
     QRegion prepareRenderingFrame() override
     {
         this->startRenderTimer();
         return QRegion();
-    }
-
-    void endRenderingFrame(QRegion const& /*rendered*/, QRegion const& /*damaged*/) override
-    {
     }
 
     QRegion prepareRenderingForScreen(base::output* output) override
@@ -202,7 +198,7 @@ public:
             out->out->last_timer_queries.emplace_back();
         }
 
-        GLRenderTarget::popRenderTarget();
+        GLFramebuffer::popRenderTarget();
         wlr_renderer_end(platform.renderer);
 
         if (damagedRegion.intersected(output->geometry()).isEmpty()) {
@@ -253,7 +249,7 @@ public:
     std::unique_ptr<Wrapland::Server::linux_dmabuf_v1> dmabuf;
     wayland::egl_data data;
 
-    GLRenderTarget native_fbo;
+    GLFramebuffer native_fbo;
     wlr_egl* native{nullptr};
 
 protected:
@@ -329,14 +325,14 @@ private:
             auto geo = egl_out.out->base.geometry();
             geo.moveTopLeft({});
 
-            native_fbo = GLRenderTarget(wlr_fbo, geo);
-            GLRenderTarget::pushRenderTarget(&native_fbo);
+            native_fbo = GLFramebuffer(wlr_fbo, geo);
+            GLFramebuffer::pushRenderTarget(&native_fbo);
 
-            GLRenderTarget::pushRenderTarget(&egl_out.render.fbo);
+            GLFramebuffer::pushRenderTarget(&egl_out.render.fbo);
             glViewport(vp.x(), vp.y(), vp.width(), vp.height());
         } else {
-            native_fbo = GLRenderTarget(wlr_fbo, vp);
-            GLRenderTarget::pushRenderTarget(&native_fbo);
+            native_fbo = GLFramebuffer(wlr_fbo, vp);
+            GLFramebuffer::pushRenderTarget(&native_fbo);
         }
     }
 
@@ -348,7 +344,7 @@ private:
         }
         initRenderTarget(egl_out);
 
-        GLRenderTarget::popRenderTarget();
+        GLFramebuffer::popRenderTarget();
 
         glClear(GL_COLOR_BUFFER_BIT);
 

@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin
 {
 
-class GLRenderTarget;
+class GLFramebuffer;
 class GLTexture;
 
 class MagnifierEffect : public Effect
@@ -25,8 +25,8 @@ public:
     MagnifierEffect();
     ~MagnifierEffect() override;
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
     static bool supported();
@@ -54,7 +54,7 @@ private:
     std::chrono::milliseconds m_lastPresentTime;
     QSize m_magnifierSize;
     std::unique_ptr<GLTexture> m_texture;
-    std::unique_ptr<GLRenderTarget> m_fbo;
+    std::unique_ptr<GLFramebuffer> m_fbo;
 };
 
 } // namespace

@@ -28,10 +28,8 @@ MouseClickEffectConfigForm::MouseClickEffectConfigForm(QWidget* parent)
     setupUi(this);
 }
 
-MouseClickEffectConfig::MouseClickEffectConfig(QObject* parent,
-                                               const KPluginMetaData& data,
-                                               const QVariantList& args)
-    : KCModule(parent, data, args)
+MouseClickEffectConfig::MouseClickEffectConfig(QObject* parent, const KPluginMetaData& data)
+    : KCModule(parent, data)
     , m_ui(widget())
 {
     QVBoxLayout* layout = new QVBoxLayout(widget());

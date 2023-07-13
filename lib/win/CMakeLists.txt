@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+add_subdirectory(tabbox/switchers)
 add_library(win SHARED)
 
 target_link_libraries(win

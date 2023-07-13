@@ -41,7 +41,7 @@ void SheetEffect::reconfigure(ReconfigureFlags flags)
     m_duration = std::chrono::milliseconds(static_cast<int>(d));
 }
 
-void SheetEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void SheetEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
     auto animationIt = m_animations.begin();
     while (animationIt != m_animations.end()) {
@@ -54,23 +54,21 @@ void SheetEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::millisec
     effects->prePaintScreen(data, presentTime);
 }
 
-void SheetEffect::prePaintWindow(EffectWindow* w,
-                                 WindowPrePaintData& data,
+void SheetEffect::prePaintWindow(effect::window_prepaint_data& data,
                                  std::chrono::milliseconds presentTime)
 {
-    if (m_animations.contains(w)) {
-        data.setTransformed();
-        w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DELETE);
+    if (m_animations.contains(&data.window)) {
+        data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
     }
 
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void SheetEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void SheetEffect::paintWindow(effect::window_paint_data& data)
 {
-    auto animationIt = m_animations.constFind(w);
+    auto animationIt = m_animations.constFind(&data.window);
     if (animationIt == m_animations.constEnd()) {
-        effects->paintWindow(w, mask, region, data);
+        effects->paintWindow(data);
         return;
     }
 
@@ -81,27 +79,29 @@ void SheetEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowP
     // this is how the window will be transformed:
     //  [move to the origin] -> [scale] -> [rotate] -> [translate] ->
     //    -> [perspective projection] -> [reverse "move to the origin"]
-    const QMatrix4x4 oldProjMatrix = data.screenProjectionMatrix();
-    const QRectF windowGeo = w->frameGeometry();
+    auto const oldProjMatrix = data.paint.projection_matrix;
+    auto const windowGeo = data.window.frameGeometry();
     const QVector3D invOffset = oldProjMatrix.map(QVector3D(windowGeo.center()));
+
     QMatrix4x4 invOffsetMatrix;
     invOffsetMatrix.translate(invOffset.x(), invOffset.y());
-    data.setProjectionMatrix(invOffsetMatrix * oldProjMatrix);
+    data.paint.projection_matrix = invOffsetMatrix * oldProjMatrix;
 
     // Move the center of the window to the origin.
     const QRectF screenGeo = effects->virtualScreenGeometry();
     const QPointF offset = screenGeo.center() - windowGeo.center();
-    data.translate(offset.x(), offset.y());
+    data.paint.geo.translation += QVector3D(offset.x(), offset.y(), 0);
 
     const qreal t = (*animationIt).timeLine.value();
-    data.setRotationAxis(Qt::XAxis);
-    data.setRotationAngle(interpolate(60.0, 0.0, t));
-    data *= QVector3D(1.0, t, t);
-    data.translate(0.0, -interpolate(w->y() - (*animationIt).parentY, 0.0, t));
+    data.paint.geo.rotation.axis = {1, 0, 0};
+    data.paint.geo.rotation.angle = interpolate(60.0, 0.0, t);
+    data.paint.geo.scale *= QVector3D(1.0, t, t);
+    data.paint.geo.translation
+        += QVector3D(0.0, -interpolate(data.window.y() - (*animationIt).parentY, 0.0, t), 0);
 
-    data.multiplyOpacity(t);
+    data.paint.opacity *= t;
 
-    effects->paintWindow(w, mask, region, data);
+    effects->paintWindow(data);
 }
 
 void SheetEffect::postPaintWindow(EffectWindow* w)
@@ -111,9 +111,6 @@ void SheetEffect::postPaintWindow(EffectWindow* w)
         EffectWindow* w = animationIt.key();
         w->addRepaintFull();
         if ((*animationIt).timeLine.done()) {
-            if (w->isDeleted()) {
-                w->unrefWindow();
-            }
             animationIt = m_animations.erase(animationIt);
         } else {
             ++animationIt;
@@ -177,10 +174,10 @@ void SheetEffect::slotWindowClosed(EffectWindow* w)
         return;
     }
 
-    w->refWindow();
-
     Animation& animation = m_animations[w];
 
+    animation.deletedRef = EffectWindowDeletedRef(w);
+    animation.visibleRef = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_DELETE);
     animation.timeLine.reset();
     animation.parentY = 0;
     animation.timeLine.setDuration(m_duration);

@@ -22,12 +22,11 @@ public:
     KscreenEffect();
     ~KscreenEffect() override;
 
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
     void postPaintScreen() override;
-    void prePaintWindow(EffectWindow* w,
-                        WindowPrePaintData& data,
+    void prePaintWindow(effect::window_prepaint_data& data,
                         std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
+    void paintWindow(effect::window_paint_data& data) override;
 
     void reconfigure(ReconfigureFlags flags) override;
     bool isActive() const override;

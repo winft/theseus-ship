@@ -45,10 +45,7 @@ public:
     void setLive(bool live);
 
 protected:
-    void drawWindow(EffectWindow* window,
-                    int mask,
-                    const QRegion& region,
-                    WindowPaintData& data) override;
+    void drawWindow(effect::window_paint_data& data) override;
 
     /**
      * This function must be called when the effect wants to animate the specified
@@ -59,20 +56,19 @@ protected:
      * This function must be called when the effect is done animating the specified
      * @a window. The window will be automatically unredirected if it's deleted.
      */
-    void unredirect(EffectWindow* window);
+    void unredirect(EffectWindow const* window);
 
     /**
      * Override this function to transform the window.
      */
-    virtual void
-    apply(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads);
+    virtual void apply(effect::window_paint_data& data, WindowQuadList& quads);
 
     /**
      * Allows to specify a @p shader to draw the redirected texture for @p window.
      * Can only be called once the window is redirected.
      * @since 5.25
      **/
-    void setShader(EffectWindow* window, GLShader* shader);
+    void setShader(EffectWindow const& window, GLShader* shader);
 
 private Q_SLOTS:
     void handleWindowGeometryChanged(EffectWindow* window);

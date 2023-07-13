@@ -26,6 +26,9 @@ static const QSet<QString> s_blacklist{
     QStringLiteral("ksmserver ksmserver"),
     QStringLiteral("ksmserver-logout-greeter ksmserver-logout-greeter"),
     QStringLiteral("ksplashqml ksplashqml"),
+    // Spectacle needs to be blacklisted in order to stay out of its own screenshots.
+    QStringLiteral("spectacle spectacle"),         // x11
+    QStringLiteral("spectacle org.kde.spectacle"), // wayland
 };
 
 GlideEffect::GlideEffect()
@@ -65,7 +68,7 @@ void GlideEffect::reconfigure(ReconfigureFlags flags)
     m_outParams.opacity.to = GlideConfig::outOpacity();
 }
 
-void GlideEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void GlideEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
     auto animationIt = m_animations.begin();
     while (animationIt != m_animations.end()) {
@@ -78,23 +81,21 @@ void GlideEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::millisec
     effects->prePaintScreen(data, presentTime);
 }
 
-void GlideEffect::prePaintWindow(EffectWindow* w,
-                                 WindowPrePaintData& data,
+void GlideEffect::prePaintWindow(effect::window_prepaint_data& data,
                                  std::chrono::milliseconds presentTime)
 {
-    if (m_animations.contains(w)) {
-        data.setTransformed();
-        w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DELETE);
+    if (m_animations.contains(&data.window)) {
+        data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
     }
 
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void GlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void GlideEffect::paintWindow(effect::window_paint_data& data)
 {
-    auto animationIt = m_animations.constFind(w);
+    auto animationIt = m_animations.constFind(&data.window);
     if (animationIt == m_animations.constEnd()) {
-        effects->paintWindow(w, mask, region, data);
+        effects->paintWindow(data);
         return;
     }
 
@@ -107,57 +108,61 @@ void GlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowP
     // will be transformed:
     //  [move to the origin] -> [rotate] -> [translate] ->
     //    -> [perspective projection] -> [reverse "move to the origin"]
-    const QMatrix4x4 oldProjMatrix = data.screenProjectionMatrix();
-    const QRectF windowGeo = w->frameGeometry();
+    auto const oldProjMatrix = data.paint.screen_projection_matrix;
+    auto const windowGeo = data.window.frameGeometry();
     const QVector3D invOffset = oldProjMatrix.map(QVector3D(windowGeo.center()));
     QMatrix4x4 invOffsetMatrix;
     invOffsetMatrix.translate(invOffset.x(), invOffset.y());
-    data.setProjectionMatrix(invOffsetMatrix * oldProjMatrix);
+    data.paint.projection_matrix = invOffsetMatrix * oldProjMatrix;
 
     // Move the center of the window to the origin.
-    QPointF const offset = effects->renderTargetRect().center() - w->frameGeometry().center();
-    data.translate(offset.x(), offset.y());
+    QPointF const offset
+        = effects->renderTargetRect().center() - data.window.frameGeometry().center();
+    data.paint.geo.translation += QVector3D(offset.x(), offset.y(), 0);
 
-    const GlideParams params = w->isDeleted() ? m_outParams : m_inParams;
+    auto const params = data.window.isDeleted() ? m_outParams : m_inParams;
     const qreal t = (*animationIt).timeLine.value();
+
+    QVector3D const x_axis{1, 0, 0};
+    QVector3D const y_axis{0, 1, 0};
 
     switch (params.edge) {
     case RotationEdge::Top:
-        data.setRotationAxis(Qt::XAxis);
-        data.setRotationOrigin(QVector3D(0, 0, 0));
-        data.setRotationAngle(-interpolate(params.angle.from, params.angle.to, t));
+        data.paint.geo.rotation.axis = x_axis;
+        data.paint.geo.rotation.origin = QVector3D(0, 0, 0);
+        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, t);
         break;
 
     case RotationEdge::Right:
-        data.setRotationAxis(Qt::YAxis);
-        data.setRotationOrigin(QVector3D(w->width(), 0, 0));
-        data.setRotationAngle(-interpolate(params.angle.from, params.angle.to, t));
+        data.paint.geo.rotation.axis = y_axis;
+        data.paint.geo.rotation.origin = QVector3D(data.window.width(), 0, 0);
+        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, t);
         break;
 
     case RotationEdge::Bottom:
-        data.setRotationAxis(Qt::XAxis);
-        data.setRotationOrigin(QVector3D(0, w->height(), 0));
-        data.setRotationAngle(interpolate(params.angle.from, params.angle.to, t));
+        data.paint.geo.rotation.axis = x_axis;
+        data.paint.geo.rotation.origin = QVector3D(0, data.window.height(), 0);
+        data.paint.geo.rotation.angle = interpolate(params.angle.from, params.angle.to, t);
         break;
 
     case RotationEdge::Left:
-        data.setRotationAxis(Qt::YAxis);
-        data.setRotationOrigin(QVector3D(0, 0, 0));
-        data.setRotationAngle(interpolate(params.angle.from, params.angle.to, t));
+        data.paint.geo.rotation.axis = y_axis;
+        data.paint.geo.rotation.origin = QVector3D(0, 0, 0);
+        data.paint.geo.rotation.angle = interpolate(params.angle.from, params.angle.to, t);
         break;
 
     default:
         // Fallback to Top.
-        data.setRotationAxis(Qt::XAxis);
-        data.setRotationOrigin(QVector3D(0, 0, 0));
-        data.setRotationAngle(-interpolate(params.angle.from, params.angle.to, t));
+        data.paint.geo.rotation.axis = x_axis;
+        data.paint.geo.rotation.origin = QVector3D(0, 0, 0);
+        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, t);
         break;
     }
 
-    data.setZTranslation(-interpolate(params.distance.from, params.distance.to, t));
-    data.multiplyOpacity(interpolate(params.opacity.from, params.opacity.to, t));
+    data.paint.geo.translation.setZ(-interpolate(params.distance.from, params.distance.to, t));
+    data.paint.opacity *= interpolate(params.opacity.from, params.opacity.to, t);
 
-    effects->paintWindow(w, mask, region, data);
+    effects->paintWindow(data);
 }
 
 void GlideEffect::postPaintScreen()
@@ -165,10 +170,6 @@ void GlideEffect::postPaintScreen()
     auto animationIt = m_animations.begin();
     while (animationIt != m_animations.end()) {
         if ((*animationIt).timeLine.done()) {
-            EffectWindow* w = animationIt.key();
-            if (w->isDeleted()) {
-                w->unrefWindow();
-            }
             animationIt = m_animations.erase(animationIt);
         } else {
             ++animationIt;
@@ -238,10 +239,11 @@ void GlideEffect::windowClosed(EffectWindow* w)
         return;
     }
 
-    w->refWindow();
     w->setData(WindowClosedGrabRole, QVariant::fromValue(static_cast<void*>(this)));
 
     GlideAnimation& animation = m_animations[w];
+    animation.deletedRef = EffectWindowDeletedRef(w);
+    animation.visibleRef = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_DELETE);
     animation.timeLine.reset();
     animation.timeLine.setDirection(TimeLine::Forward);
     animation.timeLine.setDuration(m_duration);
@@ -268,10 +270,6 @@ void GlideEffect::windowDataChanged(EffectWindow* w, int role)
     auto animationIt = m_animations.find(w);
     if (animationIt == m_animations.end()) {
         return;
-    }
-
-    if (w->isDeleted() && role == WindowClosedGrabRole) {
-        w->unrefWindow();
     }
 
     m_animations.erase(animationIt);

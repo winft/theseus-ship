@@ -100,7 +100,7 @@ bool ContrastEffect::enabledByDefault()
 
 bool ContrastEffect::supported()
 {
-    bool supported = effects->isOpenGLCompositing() && GLRenderTarget::supported();
+    bool supported = effects->isOpenGLCompositing() && GLFramebuffer::supported();
 
     if (supported) {
         int maxTexSize;
@@ -134,10 +134,10 @@ QRegion ContrastEffect::contrastRegion(const EffectWindow* w) const
 void ContrastEffect::uploadRegion(QVector2D*& map, const QRegion& region)
 {
     for (const QRect& r : region) {
-        const QVector2D topLeft(r.x(), r.y());
-        const QVector2D topRight(r.x() + r.width(), r.y());
-        const QVector2D bottomLeft(r.x(), r.y() + r.height());
-        const QVector2D bottomRight(r.x() + r.width(), r.y() + r.height());
+        QVector2D const topLeft(r.x(), r.y());
+        QVector2D const topRight(r.x() + r.width(), r.y());
+        QVector2D const bottomLeft(r.x(), r.y() + r.height());
+        QVector2D const bottomRight(r.x() + r.width(), r.y() + r.height());
 
         // First triangle
         *(map++) = topRight;
@@ -153,94 +153,97 @@ void ContrastEffect::uploadRegion(QVector2D*& map, const QRegion& region)
 
 void ContrastEffect::uploadGeometry(GLVertexBuffer* vbo, const QRegion& region)
 {
-    const int vertexCount = region.rectCount() * 6;
-    if (!vertexCount)
+    auto const vertexCount = region.rectCount() * 6;
+    if (!vertexCount) {
         return;
+    }
 
-    QVector2D* map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
+    auto map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
     uploadRegion(map, region);
     vbo->unmap();
 
-    const GLVertexAttrib layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};
+    GLVertexAttrib const layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};
 
     vbo->setAttribLayout(layout, 2, sizeof(QVector2D));
 }
 
-bool ContrastEffect::shouldContrast(const EffectWindow* w,
-                                    int mask,
-                                    const WindowPaintData& data) const
+bool ContrastEffect::shouldContrast(effect::window_paint_data const& data) const
 {
-    if (!shader || !shader->isValid())
+    if (!shader || !shader->isValid()) {
         return false;
-
-    if (effects->activeFullScreenEffect() && !w->data(WindowForceBackgroundContrastRole).toBool())
+    }
+    if (effects->activeFullScreenEffect()
+        && !data.window.data(WindowForceBackgroundContrastRole).toBool()) {
         return false;
-
-    if (w->isDesktop())
+    }
+    if (data.window.isDesktop()) {
         return false;
+    }
 
-    bool scaled = !qFuzzyCompare(data.xScale(), 1.0) && !qFuzzyCompare(data.yScale(), 1.0);
-    bool translated = data.xTranslation() || data.yTranslation();
+    auto const scaled = !qFuzzyCompare(data.paint.geo.scale.x(), float(1.0))
+        && !qFuzzyCompare(data.paint.geo.scale.y(), float(1.0));
+    auto const translated = data.paint.geo.translation.x() || data.paint.geo.translation.y();
 
-    if ((scaled || (translated || (mask & PAINT_WINDOW_TRANSFORMED)))
-        && !w->data(WindowForceBackgroundContrastRole).toBool())
+    if ((scaled || (translated || (data.paint.mask & PAINT_WINDOW_TRANSFORMED)))
+        && !data.window.data(WindowForceBackgroundContrastRole).toBool()) {
         return false;
+    }
 
     return true;
 }
 
-void ContrastEffect::drawWindow(EffectWindow* w,
-                                int mask,
-                                const QRegion& region,
-                                WindowPaintData& data)
+void ContrastEffect::drawWindow(effect::window_paint_data& data)
 {
-    if (shouldContrast(w, mask, data)) {
+    if (shouldContrast(data)) {
         auto const screen = effects->renderTargetRect();
-        QRegion shape = region & contrastRegion(w).translated(w->pos()) & screen;
+        auto shape = data.paint.region & contrastRegion(&data.window).translated(data.window.pos())
+            & screen;
 
         // let's do the evil parts - someone wants to blur behind a transformed window
-        const bool translated = data.xTranslation() || data.yTranslation();
-        const bool scaled = data.xScale() != 1 || data.yScale() != 1;
+        auto const translated = data.paint.geo.translation.x() || data.paint.geo.translation.y();
+        auto const scaled = !qFuzzyCompare(data.paint.geo.scale.x(), float(1.0))
+            && !qFuzzyCompare(data.paint.geo.scale.y(), float(1.0));
+
         if (scaled) {
             QPoint pt = shape.boundingRect().topLeft();
             QRegion scaledShape;
             for (QRect r : shape) {
-                r.moveTo(pt.x() + (r.x() - pt.x()) * data.xScale() + data.xTranslation(),
-                         pt.y() + (r.y() - pt.y()) * data.yScale() + data.yTranslation());
-                r.setWidth(r.width() * data.xScale());
-                r.setHeight(r.height() * data.yScale());
+                r.moveTo(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
+                             + data.paint.geo.translation.x(),
+                         pt.y() + (r.y() - pt.y()) * data.paint.geo.scale.y()
+                             + data.paint.geo.translation.y());
+                r.setWidth(r.width() * data.paint.geo.scale.x());
+                r.setHeight(r.height() * data.paint.geo.scale.y());
                 scaledShape |= r;
             }
-            shape = scaledShape & region;
-
-            // Only translated, not scaled
+            shape = scaledShape & data.paint.region;
         } else if (translated) {
-            shape = shape.translated(data.xTranslation(), data.yTranslation());
-            shape = shape & region;
+            // Only translated, not scaled
+            shape
+                = shape.translated(data.paint.geo.translation.x(), data.paint.geo.translation.y());
+            shape = shape & data.paint.region;
         }
 
         if (!shape.isEmpty()) {
-            doContrast(w, shape, screen, data.opacity(), data.screenProjectionMatrix());
+            doContrast(data, shape, screen);
         }
     }
 
     // Draw the window over the contrast area
-    effects->drawWindow(w, mask, region, data);
+    effects->drawWindow(data);
 }
 
-void ContrastEffect::doContrast(EffectWindow* w,
-                                const QRegion& shape,
-                                const QRect& screen,
-                                const float opacity,
-                                const QMatrix4x4& screenProjection)
+void ContrastEffect::doContrast(effect::window_paint_data const& data,
+                                QRegion const& shape,
+                                QRect const& screen)
 {
-    const QRegion actualShape = shape & screen;
-    const QRect r = actualShape.boundingRect();
+    auto const actualShape = shape & screen;
+    auto const r = actualShape.boundingRect();
 
     auto const scale = effects->renderTargetScale();
 
     // Upload geometry for the horizontal and vertical passes
-    GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
+    auto vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
     uploadGeometry(vbo, actualShape);
     vbo->bindArrays();
@@ -264,17 +267,18 @@ void ContrastEffect::doContrast(EffectWindow* w,
 
     // Draw the texture on the offscreen framebuffer object, while blurring it horizontally
 
-    shader->setColorMatrix(m_windowData.value(w).colorMatrix);
+    shader->setColorMatrix(m_windowData.value(&data.window).colorMatrix);
     shader->bind();
 
-    shader->setOpacity(opacity);
+    shader->setOpacity(data.paint.opacity);
+
     // Set up the texture matrix to transform from screen coordinates
     // to texture coordinates.
     QMatrix4x4 textureMatrix;
     textureMatrix.scale(1.0 / r.width(), -1.0 / r.height(), 1);
     textureMatrix.translate(-r.x(), -r.height() - r.y(), 0);
     shader->setTextureMatrix(textureMatrix);
-    shader->setModelViewProjectionMatrix(screenProjection);
+    shader->setModelViewProjectionMatrix(data.paint.screen_projection_matrix);
 
     vbo->draw(GL_TRIANGLES, 0, actualShape.rectCount() * 6);
 
@@ -283,7 +287,7 @@ void ContrastEffect::doContrast(EffectWindow* w,
 
     vbo->unbindArrays();
 
-    if (opacity < 1.0) {
+    if (data.paint.opacity < 1.0) {
         glDisable(GL_BLEND);
     }
 

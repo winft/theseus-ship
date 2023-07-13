@@ -15,7 +15,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef AURORAE_H
 #define AURORAE_H
 
-#include <KCModule>
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationThemeProvider>
@@ -97,7 +96,7 @@ class ThemeProvider : public KDecoration2::DecorationThemeProvider
 {
     Q_OBJECT
 public:
-    explicit ThemeProvider(QObject* parent, const KPluginMetaData& data, const QVariantList& args);
+    explicit ThemeProvider(QObject* parent, const KPluginMetaData& data);
 
     QList<KDecoration2::DecorationThemeMetaData> themes() const override
     {
@@ -111,21 +110,6 @@ private:
     bool hasConfiguration(const QString& theme);
     QList<KDecoration2::DecorationThemeMetaData> m_themes;
     const KPluginMetaData m_data;
-};
-
-class ConfigurationModule : public KCModule
-{
-    Q_OBJECT
-public:
-    ConfigurationModule(QObject* parent, const KPluginMetaData& data, const QVariantList& args);
-
-private:
-    void init();
-    void initSvg();
-    void initQml();
-    QString m_theme;
-    KConfigLoader* m_skeleton = nullptr;
-    int m_buttonSize;
 };
 
 }

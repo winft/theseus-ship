@@ -40,14 +40,14 @@ bool Effect::borderActivated(ElectricBorder)
     return false;
 }
 
-void Effect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void Effect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
     effects->prePaintScreen(data, presentTime);
 }
 
-void Effect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void Effect::paintScreen(effect::screen_paint_data& data)
 {
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
 }
 
 void Effect::postPaintScreen()
@@ -55,16 +55,15 @@ void Effect::postPaintScreen()
     effects->postPaintScreen();
 }
 
-void Effect::prePaintWindow(EffectWindow* w,
-                            WindowPrePaintData& data,
+void Effect::prePaintWindow(effect::window_prepaint_data& data,
                             std::chrono::milliseconds presentTime)
 {
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void Effect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void Effect::paintWindow(effect::window_paint_data& data)
 {
-    effects->paintWindow(w, mask, region, data);
+    effects->paintWindow(data);
 }
 
 void Effect::postPaintWindow(EffectWindow* w)
@@ -87,33 +86,14 @@ QString Effect::debug(const QString&) const
     return QString();
 }
 
-void Effect::drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data)
+void Effect::drawWindow(effect::window_paint_data& data)
 {
-    effects->drawWindow(w, mask, region, data);
+    effects->drawWindow(data);
 }
 
 void Effect::buildQuads(EffectWindow* w, WindowQuadList& quadList)
 {
     effects->buildQuads(w, quadList);
-}
-
-void Effect::setPositionTransformations(WindowPaintData& data,
-                                        QRect& region,
-                                        EffectWindow* w,
-                                        const QRect& r,
-                                        Qt::AspectRatioMode aspect)
-{
-    QSize size = w->size();
-    size.scale(r.size(), aspect);
-    data.setXScale(size.width() / double(w->width()));
-    data.setYScale(size.height() / double(w->height()));
-    int width = int(w->width() * data.xScale());
-    int height = int(w->height() * data.yScale());
-    int x = r.x() + (r.width() - width) / 2;
-    int y = r.y() + (r.height() - height) / 2;
-    region = QRect(x, y, width, height);
-    data.setXTranslation(x - w->x());
-    data.setYTranslation(y - w->y());
 }
 
 QPoint Effect::cursorPos()

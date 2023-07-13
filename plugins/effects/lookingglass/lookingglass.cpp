@@ -95,7 +95,7 @@ bool LookingGlassEffect::loadData()
     m_texture->setFilter(GL_LINEAR_MIPMAP_LINEAR);
     m_texture->setWrapMode(GL_CLAMP_TO_EDGE);
 
-    m_fbo = std::make_unique<GLRenderTarget>(m_texture.get());
+    m_fbo = std::make_unique<GLFramebuffer>(m_texture.get());
     if (!m_fbo->valid()) {
         return false;
     }
@@ -185,7 +185,7 @@ QRect LookingGlassEffect::magnifierArea() const
     return QRect(cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
 }
 
-void LookingGlassEffect::prePaintScreen(ScreenPrePaintData& data,
+void LookingGlassEffect::prePaintScreen(effect::paint_data& data,
                                         std::chrono::milliseconds presentTime)
 {
     const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
@@ -214,7 +214,7 @@ void LookingGlassEffect::prePaintScreen(ScreenPrePaintData& data,
     if (m_valid && m_enabled) {
         data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
         // Start rendering to texture
-        GLRenderTarget::pushRenderTarget(m_fbo.get());
+        GLFramebuffer::pushRenderTarget(m_fbo.get());
     }
 
     effects->prePaintScreen(data, presentTime);
@@ -240,13 +240,13 @@ void LookingGlassEffect::slotWindowDamaged()
     }
 }
 
-void LookingGlassEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void LookingGlassEffect::paintScreen(effect::screen_paint_data& data)
 {
     // Call the next effect.
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
     if (m_valid && m_enabled) {
         // Disable render texture
-        GLRenderTarget* target = GLRenderTarget::popRenderTarget();
+        GLFramebuffer* target = GLFramebuffer::popRenderTarget();
         Q_ASSERT(target == m_fbo.get());
         Q_UNUSED(target);
         m_texture->bind();
@@ -257,7 +257,7 @@ void LookingGlassEffect::paintScreen(int mask, const QRegion& region, ScreenPain
         m_shader->setUniform("u_zoom", static_cast<float>(zoom));
         m_shader->setUniform("u_radius", static_cast<float>(radius));
         m_shader->setUniform("u_cursor", QVector2D(cursorPos().x(), cursorPos().y()));
-        m_shader->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
+        m_shader->setUniform(GLShader::ModelViewProjectionMatrix, data.paint.projection_matrix);
         m_vbo->render(GL_TRIANGLES);
         m_texture->unbind();
     }

@@ -76,31 +76,34 @@ public:
         return new buffer_t(this, scene);
     }
 
-    void performPaint(paint_type mask, const QRegion& region, WindowPaintData& data) override
+    void performPaint(paint_type mask, effect::window_paint_data& data) override
     {
-        if (!beginRenderWindow(mask, region, data))
+        if (!beginRenderWindow(mask, data)) {
             return;
+        }
 
         QMatrix4x4 windowMatrix = transformation(mask, data);
         const QMatrix4x4 modelViewProjection = modelViewProjectionMatrix(mask, data);
         const QMatrix4x4 mvpMatrix = modelViewProjection * windowMatrix;
 
-        GLShader* shader = data.shader;
+        auto shader = data.shader;
         if (!shader) {
             ShaderTraits traits = ShaderTrait::MapTexture;
 
-            if (data.opacity() != 1.0 || data.brightness() != 1.0
-                || data.crossFadeProgress() != 1.0)
+            if (data.paint.opacity != 1.0 || data.paint.brightness != 1.0
+                || data.cross_fade_progress != 1.0) {
                 traits |= ShaderTrait::Modulate;
+            }
 
-            if (data.saturation() != 1.0)
+            if (data.paint.saturation != 1.0) {
                 traits |= ShaderTrait::AdjustSaturation;
+            }
 
             shader = ShaderManager::instance()->pushShader(traits);
         }
-        shader->setUniform(GLShader::ModelViewProjectionMatrix, mvpMatrix);
 
-        shader->setUniform(GLShader::Saturation, data.saturation());
+        shader->setUniform(GLShader::ModelViewProjectionMatrix, mvpMatrix);
+        shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
         std::vector<WindowQuadList> quads;
         quads.resize(ContentLeaf + 1);
@@ -136,7 +139,7 @@ public:
         }
 
         bool has_previous_content = false;
-        if (data.crossFadeProgress() != 1.0) {
+        if (data.cross_fade_progress != 1.0) {
             auto previous = this->template previous_buffer<buffer_t>();
             if (previous) {
                 has_previous_content = true;
@@ -229,7 +232,7 @@ public:
         // The scissor region must be in the render target local coordinate system.
         QRegion scissorRegion = infiniteRegion();
         if (m_hardwareClipping) {
-            scissorRegion = this->scene.mapToRenderTarget(region);
+            scissorRegion = this->scene.mapToRenderTarget(data.paint.region);
         }
 
         for (size_t i = 0; i < quads.size(); i++) {
@@ -240,7 +243,7 @@ public:
 
             if (opacity != nodes[i].opacity) {
                 shader->setUniform(GLShader::ModulationConstant,
-                                   modulate(nodes[i].opacity, data.brightness()));
+                                   modulate(nodes[i].opacity, data.paint.brightness));
                 opacity = nodes[i].opacity;
             }
 
@@ -266,7 +269,7 @@ public:
     }
 
 private:
-    QMatrix4x4 transformation(paint_type mask, const WindowPaintData& data) const
+    QMatrix4x4 transformation(paint_type mask, effect::window_paint_data const& data) const
     {
         QMatrix4x4 matrix;
         auto const win_pos = std::visit(
@@ -277,20 +280,20 @@ private:
             return matrix;
         }
 
-        matrix.translate(data.translation());
-        const QVector3D scale = data.scale();
-        matrix.scale(scale.x(), scale.y(), scale.z());
+        matrix.translate(data.paint.geo.translation);
+        matrix.scale(data.paint.geo.scale.x(), data.paint.geo.scale.y(), data.paint.geo.scale.z());
 
-        if (data.rotationAngle() == 0.0)
+        if (data.paint.geo.rotation.angle == 0.0) {
             return matrix;
+        }
 
         // Apply the rotation
         // cannot use data.rotation.applyTo(&matrix) as QGraphicsRotation uses projectedRotate to
         // map back to 2D
-        matrix.translate(data.rotationOrigin());
-        const QVector3D axis = data.rotationAxis();
-        matrix.rotate(data.rotationAngle(), axis.x(), axis.y(), axis.z());
-        matrix.translate(-data.rotationOrigin());
+        matrix.translate(data.paint.geo.rotation.origin);
+        auto const axis = data.paint.geo.rotation.axis;
+        matrix.rotate(data.paint.geo.rotation.angle, axis.x(), axis.y(), axis.z());
+        matrix.translate(-data.paint.geo.rotation.origin);
 
         return matrix;
     }
@@ -326,18 +329,20 @@ private:
             *this->ref_win);
     }
 
-    QMatrix4x4 modelViewProjectionMatrix(paint_type mask, const WindowPaintData& data) const
+    QMatrix4x4 modelViewProjectionMatrix(paint_type mask,
+                                         effect::window_paint_data const& data) const
     {
-        const QMatrix4x4 pMatrix = data.projectionMatrix();
-        const QMatrix4x4 mvMatrix = data.modelViewMatrix();
+        auto const pMatrix = data.paint.projection_matrix;
+        auto const mvMatrix = data.paint.model_view_matrix;
 
         // An effect may want to override the default projection matrix in some cases,
         // such as when it is rendering a window on a render target that doesn't have
         // the same dimensions as the default framebuffer.
         //
         // Note that the screen transformation is not applied here.
-        if (!pMatrix.isIdentity())
+        if (!pMatrix.isIdentity()) {
             return pMatrix * mvMatrix;
+        }
 
         // If an effect has specified a model-view matrix, we multiply that matrix
         // with the default projection matrix.  If the effect hasn't specified a
@@ -370,21 +375,21 @@ private:
     void setupLeafNodes(std::vector<LeafNode>& nodes,
                         std::vector<WindowQuadList> const& quads,
                         bool has_previous_content,
-                        WindowPaintData const& data)
+                        effect::window_paint_data const& data)
     {
         nodes.resize(quads.size());
 
         if (!quads[ShadowLeaf].isEmpty()) {
             nodes[ShadowLeaf].texture
                 = static_cast<gl::shadow<window_t, Scene>*>(this->m_shadow.get())->shadowTexture();
-            nodes[ShadowLeaf].opacity = data.opacity();
+            nodes[ShadowLeaf].opacity = data.paint.opacity;
             nodes[ShadowLeaf].hasAlpha = true;
             nodes[ShadowLeaf].coordinateType = NormalizedCoordinates;
         }
 
         if (!quads[DecorationLeaf].isEmpty()) {
             nodes[DecorationLeaf].texture = getDecorationTexture();
-            nodes[DecorationLeaf].opacity = data.opacity();
+            nodes[DecorationLeaf].opacity = data.paint.opacity;
             nodes[DecorationLeaf].hasAlpha = true;
             nodes[DecorationLeaf].coordinateType = UnnormalizedCoordinates;
         }
@@ -395,14 +400,15 @@ private:
             node.hasAlpha = !window->isOpaque();
             // TODO: ARGB crsoofading is atm. a hack, playing on opacities for two dumb SrcOver
             // operations Should be a shader
-            if (data.crossFadeProgress() != 1.0
-                && (data.opacity() < 0.95
+            if (data.cross_fade_progress != 1.0
+                && (data.paint.opacity < 0.95
                     || std::visit(overload{[&](auto&& win) { return win::has_alpha(*win); }},
                                   *window->ref_win))) {
-                const float opacity = 1.0 - data.crossFadeProgress();
-                node.opacity = data.opacity() * (1 - pow(opacity, 1.0f + 2.0f * data.opacity()));
+                float const opacity = 1.0 - data.cross_fade_progress;
+                node.opacity
+                    = data.paint.opacity * (1 - pow(opacity, 1.0f + 2.0f * data.paint.opacity));
             } else {
-                node.opacity = data.opacity();
+                node.opacity = data.paint.opacity;
             }
             node.coordinateType = UnnormalizedCoordinates;
         };
@@ -432,26 +438,28 @@ private:
             auto const last = quads.size() - 1;
             nodes[last].texture = previous ? previous->texture.get() : nullptr;
             nodes[last].hasAlpha = !this->isOpaque();
-            nodes[last].opacity = data.opacity() * (1.0 - data.crossFadeProgress());
+            nodes[last].opacity = data.paint.opacity * (1.0 - data.cross_fade_progress);
             nodes[last].coordinateType = NormalizedCoordinates;
         }
     }
 
-    bool beginRenderWindow(paint_type mask, const QRegion& region, WindowPaintData& data)
+    bool beginRenderWindow(paint_type mask, effect::window_paint_data& data)
     {
-        if (region.isEmpty())
+        if (data.paint.region.isEmpty()) {
             return false;
+        }
 
-        m_hardwareClipping = region != infiniteRegion()
+        m_hardwareClipping = data.paint.region != infiniteRegion()
             && flags(mask & paint_type::window_transformed)
             && !(mask & paint_type::screen_transformed);
-        if (region != infiniteRegion() && !m_hardwareClipping) {
+
+        if (data.paint.region != infiniteRegion() && !m_hardwareClipping) {
             WindowQuadList quads;
             quads.reserve(data.quads.count());
 
             auto const win_pos
                 = std::visit(overload{[&](auto&& win) { return win->geo.pos(); }}, *this->ref_win);
-            auto const filterRegion = region.translated(-win_pos.x(), -win_pos.y());
+            auto const filterRegion = data.paint.region.translated(-win_pos.x(), -win_pos.y());
 
             // split all quads in bounding rect with the actual rects in the region
             for (auto const& quad : qAsConst(data.quads)) {

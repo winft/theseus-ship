@@ -25,9 +25,7 @@ class CubeEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit CubeEffectConfig(QObject* parent,
-                              const KPluginMetaData& data,
-                              const QVariantList& args);
+    explicit CubeEffectConfig(QObject* parent, const KPluginMetaData& data);
 
 public Q_SLOTS:
     void save() override;

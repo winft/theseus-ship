@@ -11,6 +11,7 @@ Files:
   lib/data/org_kde_kwin.categories
   lib/desktop/kde/dbus/org.kde.KWin.xml
   lib/desktop/kde/org.kde.kwin.VirtualKeyboard.xml
+  lib/win/tabbox/switchers/thumbnail_grid/metadata.json
   docs/*
   plugins/effects/backgroundcontrast/metadata.json
   plugins/effects/blendchanges/metadata.json
@@ -67,6 +68,7 @@ Files:
   plugins/effects/windowview/metadata.json
   plugins/effects/wobblywindows/metadata.json
   plugins/effects/zoom/metadata.json
+  kcms/common/generic_scripted_config.json
   kcms/compositing/kwincompositing.json
   kcms/decoration/declarative-plugin/qmldir
   kcms/decoration/kcm_kwindecoration.json
@@ -81,6 +83,7 @@ Files:
   kcms/tabbox/thumbnails/*
   plugins/idletime/kwin.json
   plugins/kdecorations/aurorae/src/aurorae.json
+  plugins/kdecorations/aurorae/src/config/kcm_auroraeconfig.json
   plugins/kdecorations/aurorae/src/qml/qmldir
   plugins/kdecorations/aurorae/themes/plastik/code/qmldir
   plugins/kdecorations/aurorae/themes/plastik/package/metadata.json
@@ -95,12 +98,11 @@ Files:
   lib/effect/org.kde.kwin.Effects.xml
   lib/render/dbus/org.kde.kwin.ColorCorrect.xml
   lib/render/dbus/org.kde.kwin.Compositing.xml
-  lib/script/generic_scripted_config.json
   lib/script/org.kde.kwin.Script.xml
-  plugins/scripts/desktopchangeosd/metadata.json
-  plugins/scripts/minimizeall/metadata.json
-  plugins/scripts/synchronizeskipswitcher/metadata.json
-  plugins/scripts/videowall/metadata.json
+  plugins/scripts/desktopchangeosd/package/metadata.json
+  plugins/scripts/minimizeall/package/metadata.json
+  plugins/scripts/synchronizeskipswitcher/package/metadata.json
+  plugins/scripts/videowall/package/metadata.json
   lib/win/dbus/org.kde.KWin.Session.xml
   lib/win/dbus/org.kde.KWin.VirtualDesktopManager.xml
   lib/win/dbus/org.kde.kappmenu.xml

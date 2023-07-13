@@ -70,9 +70,10 @@ void MouseMarkEffect::reconfigure(ReconfigureFlags)
     color.setAlphaF(1.0);
 }
 
-void MouseMarkEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void MouseMarkEffect::paintScreen(effect::screen_paint_data& data)
 {
-    effects->paintScreen(mask, region, data); // paint normal screen
+    effects->paintScreen(data);
+
     if (marks.isEmpty() && drawing.isEmpty())
         return;
     if (effects->isOpenGLCompositing()) {
@@ -89,7 +90,8 @@ void MouseMarkEffect::paintScreen(int mask, const QRegion& region, ScreenPaintDa
         vbo->setUseColor(true);
         vbo->setColor(color);
         ShaderBinder binder(ShaderTrait::UniformColor);
-        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
+        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
+                                    data.paint.projection_matrix);
         QVector<float> verts;
         for (auto const& mark : qAsConst(marks)) {
             verts.clear();

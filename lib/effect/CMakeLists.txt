@@ -54,12 +54,12 @@ set(kwin_EFFECTSLIB_SRCS
     kwineffects/effect_plugin_factory.cpp
     kwineffects/effect_quick_view.cpp
     kwineffects/effect_screen.cpp
+    kwineffects/effect_togglable_state.cpp
     kwineffects/effect_window.cpp
     kwineffects/effects_handler.cpp
     kwineffects/quick_scene.cpp
     kwineffects/motions.cpp
     kwineffects/paint_clipper.cpp
-    kwineffects/paint_data.cpp
     kwineffects/time_line.cpp
     kwineffects/window_quad.cpp
 )
@@ -143,6 +143,7 @@ install(FILES
     kwineffects/effect_plugin_factory.h
     kwineffects/effect_quick_view.h
     kwineffects/effect_screen.h
+    kwineffects/effect_togglable_state.h
     kwineffects/effect_window.h
     kwineffects/effects_handler.h
     kwineffects/motions.h

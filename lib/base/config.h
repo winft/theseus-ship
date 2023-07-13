@@ -6,6 +6,7 @@
 #pragma once
 
 #include <KSharedConfig>
+#include <string>
 
 namespace KWin::base
 {
@@ -13,8 +14,8 @@ namespace KWin::base
 class config
 {
 public:
-    config(KConfig::OpenFlag open_mode)
-        : main{KSharedConfig::openConfig({}, open_mode)}
+    config(KConfig::OpenFlag open_mode, std::string const& file_name)
+        : main{KSharedConfig::openConfig(QString::fromStdString(file_name), open_mode)}
     {
     }
 

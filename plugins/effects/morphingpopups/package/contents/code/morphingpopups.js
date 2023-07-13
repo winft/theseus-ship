@@ -13,7 +13,7 @@ var morphingEffect = {
         morphingEffect.duration = animationTime(150);
     },
 
-    geometryChange: function (window, oldGeometry) {
+    handleFrameGeometryChanged: function (window, oldGeometry) {
         //only tooltips and notifications
         if (!window.tooltip && !window.notification && !window.criticalNotification) {
             return;
@@ -24,13 +24,6 @@ var morphingEffect = {
         //only do the transition for near enough tooltips,
         //don't cross the whole screen: ugly
         var distance = Math.abs(oldGeometry.x - newGeometry.x) + Math.abs(oldGeometry.y - newGeometry.y);
-
-        if (newGeometry.x == oldGeometry.x &&
-                newGeometry.y == oldGeometry.y &&
-                newGeometry.width == oldGeometry.width &&
-                newGeometry.height == oldGeometry.height) {
-            return;
-        }
 
         if (distance > (newGeometry.width + newGeometry.height) * 2) {
             if (window.moveAnimation) {
@@ -124,7 +117,7 @@ var morphingEffect = {
 
     init: function () {
         effect.configChanged.connect(morphingEffect.loadConfig);
-        effects.windowGeometryShapeChanged.connect(morphingEffect.geometryChange);
+        effects.windowFrameGeometryChanged.connect(morphingEffect.handleFrameGeometryChanged);
     }
 };
 morphingEffect.init();

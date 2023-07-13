@@ -165,9 +165,10 @@ void ApplicationWayland::start(base::operation_mode mode,
     assert(mode != base::operation_mode::x11);
 
     setQuitOnLastWindowClosed(false);
+    setQuitLockEnabled(false);
 
     using base_t = base::backend::wlroots::platform;
-    base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::FullConfig),
+    base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::FullConfig, "kwinrc"),
                                     socket_name,
                                     flags,
                                     base::backend::wlroots::start_options::none);

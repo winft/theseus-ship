@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin
 {
 
-class GLRenderTarget;
+class GLFramebuffer;
 class GLShader;
 class GLTexture;
 class GLVertexBuffer;
@@ -31,8 +31,8 @@ public:
 
     void reconfigure(ReconfigureFlags) override;
 
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(effect::screen_paint_data& data) override;
     bool isActive() const override;
 
     static bool supported();
@@ -64,7 +64,7 @@ private:
     int radius;
     int initialradius;
     std::unique_ptr<GLTexture> m_texture;
-    std::unique_ptr<GLRenderTarget> m_fbo;
+    std::unique_ptr<GLFramebuffer> m_fbo;
     std::unique_ptr<GLVertexBuffer> m_vbo;
     std::unique_ptr<GLShader> m_shader;
     std::chrono::milliseconds m_lastPresentTime;

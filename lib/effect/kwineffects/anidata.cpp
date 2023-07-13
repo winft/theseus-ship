@@ -28,17 +28,6 @@ FullScreenEffectLock::~FullScreenEffectLock()
     effects->setActiveFullScreenEffect(nullptr);
 }
 
-KeepAliveLock::KeepAliveLock(EffectWindow* w)
-    : m_window(w)
-{
-    m_window->refWindow();
-}
-
-KeepAliveLock::~KeepAliveLock()
-{
-    m_window->unrefWindow();
-}
-
 PreviousWindowPixmapLock::PreviousWindowPixmapLock(EffectWindow* w)
     : m_window(w)
 {

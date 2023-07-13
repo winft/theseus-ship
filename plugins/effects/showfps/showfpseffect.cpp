@@ -49,7 +49,7 @@ QColor ShowFpsEffect::paintColor() const
     return QColor::fromHsvF(0.3 - (0.3 * normalizedDuration), 1.0, 1.0);
 }
 
-void ShowFpsEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void ShowFpsEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
     effects->prePaintScreen(data, presentTime);
 
@@ -83,9 +83,9 @@ void ShowFpsEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::millis
     m_scene->setGeometry(QRect(rect.x() + rect.width() - 300, 0, 300, 150));
 }
 
-void ShowFpsEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void ShowFpsEffect::paintScreen(effect::screen_paint_data& data)
 {
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
 
     auto now = std::chrono::steady_clock::now();
     if ((now - m_lastFpsTime) >= std::chrono::milliseconds(1000)) {
@@ -98,13 +98,13 @@ void ShowFpsEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData
     effects->renderEffectQuickView(m_scene.get());
 }
 
-void ShowFpsEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void ShowFpsEffect::paintWindow(effect::window_paint_data& data)
 {
-    effects->paintWindow(w, mask, region, data);
+    effects->paintWindow(data);
 
     // Take intersection of region and actual window's rect, minus the fps area
     //  (since we keep repainting it) and count the pixels.
-    QRegion repaintRegion = region & w->frameGeometry();
+    auto repaintRegion = data.paint.region & data.window.frameGeometry();
     repaintRegion -= m_scene->geometry();
     for (const QRect& rect : repaintRegion) {
         m_paintAmount += rect.width() * rect.height();

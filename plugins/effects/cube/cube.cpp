@@ -112,6 +112,7 @@ CubeEffect::CubeEffect()
             keyboard_grab = false;
         }
     });
+    connect(effects, &EffectsHandler::windowAdded, this, &CubeEffect::window_added);
 
     reconfigure(ReconfigureAll);
 }
@@ -376,7 +377,16 @@ void CubeEffect::startVerticalAnimation(VerticalAnimationState state)
     verticalAnimationState = state;
 }
 
-void CubeEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void CubeEffect::window_added(EffectWindow* win)
+{
+    if (!activated) {
+        return;
+    }
+
+    window_refs[win] = EffectWindowVisibleRef(win, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
+}
+
+void CubeEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
     if (activated) {
         data.mask |= PAINT_SCREEN_TRANSFORMED | Effect::PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS
@@ -402,7 +412,7 @@ void CubeEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseco
     effects->prePaintScreen(data, presentTime);
 }
 
-void CubeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void CubeEffect::paintScreen(effect::screen_paint_data& data)
 {
     if (activated) {
         QRect rect = effects->clientArea(FullArea, activeScreen, effects->currentDesktop());
@@ -419,9 +429,9 @@ void CubeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& d
         if (wallpaper) {
             ShaderBinder binder(ShaderTrait::MapTexture);
             binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
-                                        data.projectionMatrix());
+                                        data.paint.projection_matrix);
             wallpaper->bind();
-            wallpaper->render(region, rect);
+            wallpaper->render(data.paint.region, rect.size());
             wallpaper->unbind();
         }
 
@@ -477,16 +487,16 @@ void CubeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& d
 
             reflectionPainting = true;
             glEnable(GL_CULL_FACE);
-            paintCap(true, -point - zTranslate, data.projectionMatrix());
+            paintCap(true, -point - zTranslate, data.paint.projection_matrix);
 
             // cube
             glCullFace(GL_BACK);
-            paintCube(mask, region, data);
+            paintCube(data);
 
             glCullFace(GL_FRONT);
-            paintCube(mask, region, data);
+            paintCube(data);
 
-            paintCap(false, -point - zTranslate, data.projectionMatrix());
+            paintCap(false, -point - zTranslate, data.paint.projection_matrix);
             glDisable(GL_CULL_FACE);
             reflectionPainting = false;
 
@@ -516,7 +526,7 @@ void CubeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& d
             if (m_reflectionShader && m_reflectionShader->isValid()) {
                 // ensure blending is enabled - no attribute stack
                 ShaderBinder binder(m_reflectionShader.get());
-                QMatrix4x4 windowTransformation = data.projectionMatrix();
+                auto windowTransformation = data.paint.projection_matrix;
                 windowTransformation.translate(rect.x() + rect.width() * 0.5f, 0.0, 0.0);
                 m_reflectionShader->setUniform(GLShader::ModelViewProjectionMatrix,
                                                windowTransformation);
@@ -546,17 +556,17 @@ void CubeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& d
         }
         glEnable(GL_CULL_FACE);
         // caps
-        paintCap(false, -point - zTranslate, data.projectionMatrix());
+        paintCap(false, -point - zTranslate, data.paint.projection_matrix);
 
         // cube
         glCullFace(GL_FRONT);
-        paintCube(mask, region, data);
+        paintCube(data);
 
         glCullFace(GL_BACK);
-        paintCube(mask, region, data);
+        paintCube(data);
 
         // cap
-        paintCap(true, -point - zTranslate, data.projectionMatrix());
+        paintCap(true, -point - zTranslate, data.paint.projection_matrix);
         glDisable(GL_CULL_FACE);
 
         glDisable(GL_BLEND);
@@ -581,11 +591,11 @@ void CubeEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& d
             }
 
             desktopNameFrame->setText(effects->desktopName(frontDesktop));
-            desktopNameFrame->render(region, opacity);
+            desktopNameFrame->render(data.paint.region, opacity);
             effects->makeOpenGLContextCurrent();
         }
     } else {
-        effects->paintScreen(mask, region, data);
+        effects->paintScreen(data);
     }
 }
 
@@ -656,7 +666,7 @@ void CubeEffect::rotateCube()
     }
 }
 
-void CubeEffect::paintCube(int mask, QRegion region, ScreenPaintData& data)
+void CubeEffect::paintCube(effect::screen_paint_data& data)
 {
     QRect rect = effects->clientArea(FullArea, activeScreen, effects->currentDesktop());
     float internalCubeAngle = 360.0f / effects->numberOfDesktops();
@@ -687,7 +697,7 @@ void CubeEffect::paintCube(int mask, QRegion region, ScreenPaintData& data)
         matrix.rotate(internalCubeAngle * i, 0, 1, 0);
         matrix.translate(-origin);
         m_currentFaceMatrix = matrix;
-        effects->paintScreen(mask, region, data);
+        effects->paintScreen(data);
     }
     cube_painting = false;
     painting_desktop = effects->currentDesktop();
@@ -1067,8 +1077,7 @@ void CubeEffect::postPaintScreen()
     }
 }
 
-void CubeEffect::prePaintWindow(EffectWindow* w,
-                                WindowPrePaintData& data,
+void CubeEffect::prePaintWindow(effect::window_prepaint_data& data,
                                 std::chrono::milliseconds presentTime)
 {
     if (activated) {
@@ -1087,41 +1096,41 @@ void CubeEffect::prePaintWindow(EffectWindow* w,
                 else
                     data.quads = data.quads.makeGrid(250);
             }
-            if (w->isOnDesktop(painting_desktop)) {
+            if (data.window.isOnDesktop(painting_desktop)) {
                 QRect rect = effects->clientArea(FullArea, activeScreen, painting_desktop);
-                if (w->x() < rect.x()) {
-                    data.quads = data.quads.splitAtX(-w->x());
+                if (data.window.x() < rect.x()) {
+                    data.quads = data.quads.splitAtX(-data.window.x());
                 }
-                if (w->x() + w->width() > rect.x() + rect.width()) {
-                    data.quads = data.quads.splitAtX(rect.width() - w->x());
+                if (data.window.x() + data.window.width() > rect.x() + rect.width()) {
+                    data.quads = data.quads.splitAtX(rect.width() - data.window.x());
                 }
-                if (w->y() < rect.y()) {
-                    data.quads = data.quads.splitAtY(-w->y());
+                if (data.window.y() < rect.y()) {
+                    data.quads = data.quads.splitAtY(-data.window.y());
                 }
-                if (w->y() + w->height() > rect.y() + rect.height()) {
-                    data.quads = data.quads.splitAtY(rect.height() - w->y());
+                if (data.window.y() + data.window.height() > rect.y() + rect.height()) {
+                    data.quads = data.quads.splitAtY(rect.height() - data.window.y());
                 }
-                if (useZOrdering && !w->isDesktop() && !w->isDock() && !w->isOnAllDesktops())
-                    data.setTransformed();
-                w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
+                if (useZOrdering && !data.window.isDesktop() && !data.window.isDock()
+                    && !data.window.isOnAllDesktops()) {
+                    data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
+                }
             } else {
                 // check for windows belonging to the previous desktop
                 int prev_desktop = painting_desktop - 1;
                 if (prev_desktop == 0)
                     prev_desktop = effects->numberOfDesktops();
-                if (w->isOnDesktop(prev_desktop) && mode == Cube && !useZOrdering) {
+                if (data.window.isOnDesktop(prev_desktop) && mode == Cube && !useZOrdering) {
                     QRect rect = effects->clientArea(FullArea, activeScreen, prev_desktop);
-                    if (w->x() + w->width() > rect.x() + rect.width()) {
-                        w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
-                        data.quads = data.quads.splitAtX(rect.width() - w->x());
-                        if (w->y() < rect.y()) {
-                            data.quads = data.quads.splitAtY(-w->y());
+                    if (data.window.x() + data.window.width() > rect.x() + rect.width()) {
+                        data.quads = data.quads.splitAtX(rect.width() - data.window.x());
+                        if (data.window.y() < rect.y()) {
+                            data.quads = data.quads.splitAtY(-data.window.y());
                         }
-                        if (w->y() + w->height() > rect.y() + rect.height()) {
-                            data.quads = data.quads.splitAtY(rect.height() - w->y());
+                        if (data.window.y() + data.window.height() > rect.y() + rect.height()) {
+                            data.quads = data.quads.splitAtY(rect.height() - data.window.y());
                         }
-                        data.setTransformed();
-                        effects->prePaintWindow(w, data, presentTime);
+                        data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
+                        effects->prePaintWindow(data, presentTime);
                         return;
                     }
                 }
@@ -1129,35 +1138,33 @@ void CubeEffect::prePaintWindow(EffectWindow* w,
                 int next_desktop = painting_desktop + 1;
                 if (next_desktop > effects->numberOfDesktops())
                     next_desktop = 1;
-                if (w->isOnDesktop(next_desktop) && mode == Cube && !useZOrdering) {
+                if (data.window.isOnDesktop(next_desktop) && mode == Cube && !useZOrdering) {
                     QRect rect = effects->clientArea(FullArea, activeScreen, next_desktop);
-                    if (w->x() < rect.x()) {
-                        w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
-                        data.quads = data.quads.splitAtX(-w->x());
-                        if (w->y() < rect.y()) {
-                            data.quads = data.quads.splitAtY(-w->y());
+                    if (data.window.x() < rect.x()) {
+                        data.quads = data.quads.splitAtX(-data.window.x());
+                        if (data.window.y() < rect.y()) {
+                            data.quads = data.quads.splitAtY(-data.window.y());
                         }
-                        if (w->y() + w->height() > rect.y() + rect.height()) {
-                            data.quads = data.quads.splitAtY(rect.height() - w->y());
+                        if (data.window.y() + data.window.height() > rect.y() + rect.height()) {
+                            data.quads = data.quads.splitAtY(rect.height() - data.window.y());
                         }
-                        data.setTransformed();
-                        effects->prePaintWindow(w, data, presentTime);
+                        data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
+                        effects->prePaintWindow(data, presentTime);
                         return;
                     }
                 }
-                w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
             }
         }
     }
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void CubeEffect::paintWindow(effect::window_paint_data& data)
 {
     ShaderManager* shaderManager = ShaderManager::instance();
     if (activated && cube_painting) {
-        region = infiniteRegion(); // we need to explicitly prevent any clipping, bug #325432
-        // qCDebug(KWIN_CUBE) << w->caption();
+        // we need to explicitly prevent any clipping, bug #325432
+        data.paint.region = infiniteRegion();
         float opacity = cubeOpacity;
         if (animationState == AnimationState::Start) {
             opacity = 1.0 - (1.0 - opacity) * timeLine.value();
@@ -1165,7 +1172,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
                 opacity = 0.5 + (cubeOpacity - 0.5) * timeLine.value();
             // fade in windows belonging to different desktops
             if (painting_desktop == effects->currentDesktop()
-                && (!w->isOnDesktop(painting_desktop)))
+                && (!data.window.isOnDesktop(painting_desktop)))
                 opacity = timeLine.value() * cubeOpacity;
         } else if (animationState == AnimationState::Stop) {
             opacity = 1.0 - (1.0 - opacity) * (1.0 - timeLine.value());
@@ -1173,54 +1180,61 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
                 opacity = 0.5 + (cubeOpacity - 0.5) * (1.0 - timeLine.value());
             // fade out windows belonging to different desktops
             if (painting_desktop == effects->currentDesktop()
-                && (!w->isOnDesktop(painting_desktop)))
+                && (!data.window.isOnDesktop(painting_desktop)))
                 opacity = cubeOpacity * (1.0 - timeLine.value());
         }
         // z-Ordering
-        if (!w->isDesktop() && !w->isDock() && useZOrdering && !w->isOnAllDesktops()) {
-            float zOrdering = (effects->stackingOrder().indexOf(w) + 1) * zOrderingFactor;
+        if (!data.window.isDesktop() && !data.window.isDock() && useZOrdering
+            && !data.window.isOnAllDesktops()) {
+            float zOrdering
+                = (effects->stackingOrder().indexOf(&data.window) + 1) * zOrderingFactor;
             if (animationState == AnimationState::Start) {
                 zOrdering *= timeLine.value();
             } else if (animationState == AnimationState::Stop) {
                 zOrdering *= (1.0 - timeLine.value());
             }
-            data.translate(0.0, 0.0, zOrdering);
+            data.paint.geo.translation += QVector3D(0.0, 0.0, zOrdering);
         }
         // check for windows belonging to the previous desktop
         int prev_desktop = painting_desktop - 1;
-        if (prev_desktop == 0)
+        if (prev_desktop == 0) {
             prev_desktop = effects->numberOfDesktops();
+        }
+
         int next_desktop = painting_desktop + 1;
-        if (next_desktop > effects->numberOfDesktops())
+        if (next_desktop > effects->numberOfDesktops()) {
             next_desktop = 1;
-        if (w->isOnDesktop(prev_desktop) && (mask & PAINT_WINDOW_TRANSFORMED)) {
-            QRect rect = effects->clientArea(FullArea, activeScreen, prev_desktop);
+        }
+
+        if (data.window.isOnDesktop(prev_desktop) && (data.paint.mask & PAINT_WINDOW_TRANSFORMED)) {
+            auto rect = effects->clientArea(FullArea, activeScreen, prev_desktop);
             WindowQuadList new_quads;
             for (auto const& quad : qAsConst(data.quads)) {
-                if (quad.right() > rect.width() - w->x()) {
+                if (quad.right() > rect.width() - data.window.x()) {
                     new_quads.append(quad);
                 }
             }
             data.quads = new_quads;
-            data.setXTranslation(-rect.width());
+            data.paint.geo.translation.setX(-rect.width());
         }
-        if (w->isOnDesktop(next_desktop) && (mask & PAINT_WINDOW_TRANSFORMED)) {
+
+        if (data.window.isOnDesktop(next_desktop) && (data.paint.mask & PAINT_WINDOW_TRANSFORMED)) {
             QRect rect = effects->clientArea(FullArea, activeScreen, next_desktop);
             WindowQuadList new_quads;
             for (auto const& quad : qAsConst(data.quads)) {
-                if (w->x() + quad.right() <= rect.x()) {
+                if (data.window.x() + quad.right() <= rect.x()) {
                     new_quads.append(quad);
                 }
             }
             data.quads = new_quads;
-            data.setXTranslation(rect.width());
+            data.paint.geo.translation.setX(rect.width());
         }
         QRect rect = effects->clientArea(FullArea, activeScreen, painting_desktop);
 
         if (animationState == AnimationState::Start || animationState == AnimationState::Stop) {
             // we have to change opacity values for fade in/out of windows which are shown on
             // front-desktop
-            if (prev_desktop == effects->currentDesktop() && w->x() < rect.x()) {
+            if (prev_desktop == effects->currentDesktop() && data.window.x() < rect.x()) {
                 if (animationState == AnimationState::Start) {
                     opacity = timeLine.value() * cubeOpacity;
                 } else if (animationState == AnimationState::Stop) {
@@ -1228,7 +1242,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
                 }
             }
             if (next_desktop == effects->currentDesktop()
-                && w->x() + w->width() > rect.x() + rect.width()) {
+                && data.window.x() + data.window.width() > rect.x() + rect.width()) {
                 if (animationState == AnimationState::Start) {
                     opacity = timeLine.value() * cubeOpacity;
                 } else if (animationState == AnimationState::Stop) {
@@ -1238,43 +1252,46 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         }
         // HACK set opacity to 0.99 in case of fully opaque to ensure that windows are painted in
         // correct sequence bug #173214
-        if (opacity > 0.99f)
+        if (opacity > 0.99f) {
             opacity = 0.99f;
-        if (opacityDesktopOnly && !w->isDesktop())
+        }
+        if (opacityDesktopOnly && !data.window.isDesktop()) {
             opacity = 0.99f;
-        data.multiplyOpacity(opacity);
+        }
+        data.paint.opacity *= opacity;
 
-        if (w->isOnDesktop(painting_desktop) && w->x() < rect.x()) {
+        if (data.window.isOnDesktop(painting_desktop) && data.window.x() < rect.x()) {
             WindowQuadList new_quads;
             for (auto const& quad : qAsConst(data.quads)) {
-                if (quad.right() > -w->x()) {
+                if (quad.right() > -data.window.x()) {
                     new_quads.append(quad);
                 }
             }
             data.quads = new_quads;
         }
-        if (w->isOnDesktop(painting_desktop) && w->x() + w->width() > rect.x() + rect.width()) {
+        if (data.window.isOnDesktop(painting_desktop)
+            && data.window.x() + data.window.width() > rect.x() + rect.width()) {
             WindowQuadList new_quads;
             for (auto const& quad : qAsConst(data.quads)) {
-                if (quad.right() <= rect.width() - w->x()) {
+                if (quad.right() <= rect.width() - data.window.x()) {
                     new_quads.append(quad);
                 }
             }
             data.quads = new_quads;
         }
-        if (w->y() < rect.y()) {
+        if (data.window.y() < rect.y()) {
             WindowQuadList new_quads;
             for (auto const& quad : qAsConst(data.quads)) {
-                if (quad.bottom() > -w->y()) {
+                if (quad.bottom() > -data.window.y()) {
                     new_quads.append(quad);
                 }
             }
             data.quads = new_quads;
         }
-        if (w->y() + w->height() > rect.y() + rect.height()) {
+        if (data.window.y() + data.window.height() > rect.y() + rect.height()) {
             WindowQuadList new_quads;
             for (auto const& quad : qAsConst(data.quads)) {
-                if (quad.bottom() <= rect.height() - w->y()) {
+                if (quad.bottom() <= rect.height() - data.window.y()) {
                     new_quads.append(quad);
                 }
             }
@@ -1283,7 +1300,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         GLShader* currentShader = nullptr;
         if (mode == Cylinder) {
             shaderManager->pushShader(cylinderShader.get());
-            cylinderShader->setUniform("xCoord", static_cast<float>(w->x()));
+            cylinderShader->setUniform("xCoord", static_cast<float>(data.window.x()));
             cylinderShader->setUniform("cubeAngle",
                                        (effects->numberOfDesktops() - 2)
                                            / static_cast<float>(effects->numberOfDesktops())
@@ -1299,7 +1316,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         }
         if (mode == Sphere) {
             shaderManager->pushShader(sphereShader.get());
-            sphereShader->setUniform("u_offset", QVector2D(w->x(), w->y()));
+            sphereShader->setUniform("u_offset", QVector2D(data.window.x(), data.window.y()));
             sphereShader->setUniform("cubeAngle",
                                      (effects->numberOfDesktops() - 2)
                                          / static_cast<float>(effects->numberOfDesktops()) * 90.0f);
@@ -1315,30 +1332,34 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         if (currentShader) {
             data.shader = currentShader;
         }
-        data.setProjectionMatrix(data.screenProjectionMatrix());
+
+        data.paint.projection_matrix = data.paint.screen_projection_matrix;
         if (reflectionPainting) {
-            data.setModelViewMatrix(m_reflectionMatrix * m_rotationMatrix * m_currentFaceMatrix);
+            data.paint.model_view_matrix
+                = m_reflectionMatrix * m_rotationMatrix * m_currentFaceMatrix;
         } else {
-            data.setModelViewMatrix(m_rotationMatrix * m_currentFaceMatrix);
+            data.paint.model_view_matrix = m_rotationMatrix * m_currentFaceMatrix;
         }
     }
-    effects->paintWindow(w, mask, region, data);
+
+    effects->paintWindow(data);
+
     if (activated && cube_painting) {
         if (mode == Cylinder || mode == Sphere) {
             shaderManager->popShader();
         }
-        if (w->isDesktop() && effects->screens().size() > 1 && paintCaps) {
+        if (data.window.isDesktop() && effects->screens().size() > 1 && paintCaps) {
             QRect rect = effects->clientArea(FullArea, activeScreen, painting_desktop);
             QRegion paint = QRegion(rect);
             auto const screens = effects->screens();
             for (auto screen : screens) {
-                if (screen == w->screen()) {
+                if (screen == data.window.screen()) {
                     continue;
                 }
                 paint = paint.subtracted(
                     QRegion(effects->clientArea(ScreenArea, screen, painting_desktop)));
             }
-            paint = paint.subtracted(QRegion(w->frameGeometry()));
+            paint = paint.subtracted(QRegion(data.window.frameGeometry()));
             // in case of free area in multiscreen setup fill it with cap color
             if (!paint.isEmpty()) {
                 glEnable(GL_BLEND);
@@ -1386,7 +1407,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
                     ShaderManager::instance()->pushShader(m_capShader.get());
                     m_capShader->setUniform("u_mirror", 0);
                     m_capShader->setUniform("u_untextured", 1);
-                    QMatrix4x4 mvp = data.screenProjectionMatrix();
+                    auto mvp = data.paint.screen_projection_matrix;
                     if (reflectionPainting) {
                         mvp = mvp * m_reflectionMatrix * m_rotationMatrix * m_currentFaceMatrix;
                     } else {
@@ -1642,13 +1663,15 @@ void CubeEffect::setActive(bool active)
             watcher->setFuture(
                 QtConcurrent::run([this, wallpaperPath] { return loadWallPaper(wallpaperPath); }));
         }
+
+        auto const windows = effects->stackingOrder();
         activated = true;
         activeScreen = effects->activeScreen();
         keyboard_grab = effects->grabKeyboard(this);
         effects->startMouseInterception(this, Qt::OpenHandCursor);
         frontDesktop = effects->currentDesktop();
         zoom = 0.0;
-        zOrderingFactor = zPosition / (effects->stackingOrder().count() - 1);
+        zOrderingFactor = zPosition / (windows.size() - 1);
         animations.enqueue(AnimationState::Start);
         animationState = AnimationState::None;
         verticalAnimationState = VerticalAnimationState::None;
@@ -1667,8 +1690,15 @@ void CubeEffect::setActive(bool active)
                                       + temporaryCoeff * temporaryCoeff);
         }
         m_rotationMatrix.setToIdentity();
+
+        window_refs.reserve(windows.size());
+
+        for (auto win : windows) {
+            window_refs[win] = EffectWindowVisibleRef(win, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
+        }
     } else {
         animations.enqueue(AnimationState::Stop);
+        window_refs.clear();
     }
     effects->addRepaintFull();
 }

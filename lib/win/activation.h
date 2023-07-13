@@ -689,6 +689,10 @@ void process_window_hidden(Space& space, Win& window)
     assert(!window.isShown() || !on_current_desktop(&window));
     if (most_recently_activated_window(space) == var_win(&window)) {
         activate_next_window(space);
+    } else if (space.stacking.active == var_win(&window)) {
+        // The active window is hidden while another one already was activated but without a focus
+        // in event. In this case deactivate the current one explicitly.
+        deactivate_window(space);
     }
 }
 

@@ -23,8 +23,8 @@ public:
 
     void reconfigure(ReconfigureFlags flags) override;
 
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
 
     bool isActive() const override;
@@ -33,7 +33,7 @@ private Q_SLOTS:
     void slotWindowClosed(EffectWindow* w);
     void slotWindowStartUserMovedResized(EffectWindow* w);
     void slotWindowFinishUserMovedResized(EffectWindow* w);
-    void slotWindowGeometryShapeChanged(EffectWindow* w, const QRect& old);
+    void slotWindowFrameGeometryChanged(EffectWindow* w, const QRect& old);
 
 private:
     QRect m_geometry;

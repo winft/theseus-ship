@@ -42,20 +42,20 @@ void FallApartEffect::reconfigure(ReconfigureFlags)
     blockSize = FallApartConfig::blockSize();
 }
 
-void FallApartEffect::prePaintScreen(ScreenPrePaintData& data,
+void FallApartEffect::prePaintScreen(effect::paint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
-    if (!windows.isEmpty())
+    if (!windows.isEmpty()) {
         data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
+    }
     effects->prePaintScreen(data, presentTime);
 }
 
-void FallApartEffect::prePaintWindow(EffectWindow* w,
-                                     WindowPrePaintData& data,
+void FallApartEffect::prePaintWindow(effect::window_prepaint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
-    auto animationIt = windows.find(w);
-    if (animationIt != windows.end() && isRealWindow(w)) {
+    auto animationIt = windows.find(&data.window);
+    if (animationIt != windows.end() && isRealWindow(&data.window)) {
         int time = 0;
         if (animationIt->lastPresentTime.count()) {
             time = (presentTime - animationIt->lastPresentTime).count();
@@ -63,46 +63,57 @@ void FallApartEffect::prePaintWindow(EffectWindow* w,
         animationIt->lastPresentTime = presentTime;
 
         animationIt->progress += time / animationTime(1000.);
-        data.setTransformed();
+        data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
     }
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void FallApartEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, WindowQuadList& quads)
+void FallApartEffect::apply(effect::window_paint_data& data, WindowQuadList& quads)
 {
-    Q_UNUSED(w)
-    Q_UNUSED(mask)
-    auto animationIt = windows.constFind(w);
-    if (animationIt != windows.constEnd() && isRealWindow(w)) {
+    auto animationIt = windows.constFind(&data.window);
+    if (animationIt != windows.constEnd() && isRealWindow(&data.window)) {
         const qreal t = animationIt->progress;
+
         // Request the window to be divided into cells
         quads = quads.makeGrid(blockSize);
         int cnt = 0;
+
         for (WindowQuad& quad : quads) {
             // make fragments move in various directions, based on where
             // they are (left pieces generally move to the left, etc.)
             QPointF p1(quad[0].x(), quad[0].y());
             double xdiff = 0;
-            if (p1.x() < w->width() / 2)
-                xdiff = -(w->width() / 2 - p1.x()) / w->width() * 100;
-            if (p1.x() > w->width() / 2)
-                xdiff = (p1.x() - w->width() / 2) / w->width() * 100;
+
+            if (p1.x() < data.window.width() / 2) {
+                xdiff = -(data.window.width() / 2 - p1.x()) / data.window.width() * 100;
+            }
+            if (p1.x() > data.window.width() / 2) {
+                xdiff = (p1.x() - data.window.width() / 2) / data.window.width() * 100;
+            }
             double ydiff = 0;
-            if (p1.y() < w->height() / 2)
-                ydiff = -(w->height() / 2 - p1.y()) / w->height() * 100;
-            if (p1.y() > w->height() / 2)
-                ydiff = (p1.y() - w->height() / 2) / w->height() * 100;
+            if (p1.y() < data.window.height() / 2) {
+                ydiff = -(data.window.height() / 2 - p1.y()) / data.window.height() * 100;
+            }
+            if (p1.y() > data.window.height() / 2) {
+                ydiff = (p1.y() - data.window.height() / 2) / data.window.height() * 100;
+            }
+
             double modif = t * t * 64;
             srandom(cnt); // change direction randomly but consistently
             xdiff += (rand() % 21 - 10);
             ydiff += (rand() % 21 - 10);
+
             for (int j = 0; j < 4; ++j) {
                 quad[j].move(quad[j].x() + xdiff * modif, quad[j].y() + ydiff * modif);
             }
+
             // also make the fragments rotate around their center
             QPointF center((quad[0].x() + quad[1].x() + quad[2].x() + quad[3].x()) / 4,
                            (quad[0].y() + quad[1].y() + quad[2].y() + quad[3].y()) / 4);
-            double adiff = (rand() % 720 - 360) / 360. * 2 * M_PI; // spin randomly
+
+            // spin randomly
+            double adiff = (rand() % 720 - 360) / 360. * 2 * M_PI;
+
             for (int j = 0; j < 4; ++j) {
                 double x = quad[j].x() - center.x();
                 double y = quad[j].y() - center.y();
@@ -115,7 +126,8 @@ void FallApartEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, Wi
             }
             ++cnt;
         }
-        data.multiplyOpacity(interpolate(1.0, 0.0, t));
+
+        data.paint.opacity *= interpolate(1.0, 0.0, t);
     }
 }
 
@@ -126,7 +138,6 @@ void FallApartEffect::postPaintScreen()
             ++it;
         } else {
             unredirect(it.key());
-            it.key()->unrefWindow();
             it = windows.erase(it);
         }
     }
@@ -172,8 +183,12 @@ void FallApartEffect::slotWindowClosed(EffectWindow* c)
     if (e && e != this)
         return;
     c->setData(WindowClosedGrabRole, QVariant::fromValue(static_cast<void*>(this)));
-    windows[c].progress = 0;
-    c->refWindow();
+
+    auto& animation = windows[c];
+    animation.progress = 0;
+    animation.deletedRef = EffectWindowDeletedRef(c);
+    animation.visibleRef = EffectWindowVisibleRef(c, EffectWindow::PAINT_DISABLED_BY_DELETE);
+
     redirect(c);
 }
 
@@ -198,7 +213,6 @@ void FallApartEffect::slotWindowDataChanged(EffectWindow* w, int role)
     }
 
     unredirect(it.key());
-    it.key()->unrefWindow();
     windows.erase(it);
 }
 

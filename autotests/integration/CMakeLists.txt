@@ -102,8 +102,6 @@ add_executable(tests
   ../tabbox/tabbox_config.cpp
   ../tabbox/tabbox_handler.cpp
   ../gestures.cpp
-  ../screen_paint_data.cpp
-  ../window_paint_data.cpp
   ../xcb_window.cpp
   ../xkb.cpp
   # unit tests support

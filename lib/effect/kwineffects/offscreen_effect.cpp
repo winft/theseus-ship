@@ -18,7 +18,7 @@ namespace KWin
 
 struct OffscreenData {
     QScopedPointer<GLTexture> texture;
-    QScopedPointer<GLRenderTarget> renderTarget;
+    QScopedPointer<GLFramebuffer> renderTarget;
     bool isDirty = true;
     GLShader* shader = nullptr;
 };
@@ -26,18 +26,16 @@ struct OffscreenData {
 class OffscreenEffectPrivate
 {
 public:
-    QHash<EffectWindow*, OffscreenData*> windows;
+    QHash<EffectWindow const*, OffscreenData*> windows;
     QMetaObject::Connection windowExpandedGeometryChangedConnection;
     QMetaObject::Connection windowDamagedConnection;
     QMetaObject::Connection windowDeletedConnection;
 
-    void paint(EffectWindow* window,
-               GLTexture* texture,
-               const QRegion& region,
-               const WindowPaintData& data,
-               const WindowQuadList& quads,
+    void paint(GLTexture* texture,
+               effect::window_paint_data const& data,
+               WindowQuadList const& quads,
                GLShader* offscreenShader);
-    GLTexture* maybeRender(EffectWindow* window, OffscreenData* offscreenData);
+    GLTexture* maybeRender(EffectWindow& window, OffscreenData* offscreenData);
 
     bool live = true;
 };
@@ -70,13 +68,13 @@ static void allocateOffscreenData(EffectWindow* window, OffscreenData* offscreen
     offscreenData->texture.reset(new GLTexture(GL_RGBA8, geometry.size()));
     offscreenData->texture->setFilter(GL_LINEAR);
     offscreenData->texture->setWrapMode(GL_CLAMP_TO_EDGE);
-    offscreenData->renderTarget.reset(new GLRenderTarget(offscreenData->texture.data()));
+    offscreenData->renderTarget.reset(new GLFramebuffer(offscreenData->texture.data()));
     offscreenData->isDirty = true;
 }
 
 void OffscreenEffect::redirect(EffectWindow* window)
 {
-    OffscreenData*& offscreenData = d->windows[window];
+    auto& offscreenData = d->windows[window];
     if (offscreenData) {
         return;
     }
@@ -91,11 +89,11 @@ void OffscreenEffect::redirect(EffectWindow* window)
 
     if (!d->live) {
         effects->makeOpenGLContextCurrent();
-        d->maybeRender(window, offscreenData);
+        d->maybeRender(*window, offscreenData);
     }
 }
 
-void OffscreenEffect::unredirect(EffectWindow* window)
+void OffscreenEffect::unredirect(EffectWindow const* window)
 {
     delete d->windows.take(window);
     if (d->windows.isEmpty()) {
@@ -103,52 +101,49 @@ void OffscreenEffect::unredirect(EffectWindow* window)
     }
 }
 
-void OffscreenEffect::apply(EffectWindow* window,
-                            int mask,
-                            WindowPaintData& data,
-                            WindowQuadList& quads)
+void OffscreenEffect::apply(effect::window_paint_data& /*data*/, WindowQuadList& /*quads*/)
 {
-    Q_UNUSED(window)
-    Q_UNUSED(mask)
-    Q_UNUSED(data)
-    Q_UNUSED(quads)
 }
 
-GLTexture* OffscreenEffectPrivate::maybeRender(EffectWindow* window, OffscreenData* offscreenData)
+GLTexture* OffscreenEffectPrivate::maybeRender(EffectWindow& window, OffscreenData* offscreenData)
 {
     if (offscreenData->isDirty) {
-        GLRenderTarget::pushRenderTarget(offscreenData->renderTarget.data());
+        GLFramebuffer::pushRenderTarget(offscreenData->renderTarget.data());
         glClearColor(0.0, 0.0, 0.0, 0.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        const QRect geometry = window->expandedGeometry();
+        auto const geometry = window.expandedGeometry();
         QMatrix4x4 projectionMatrix;
         projectionMatrix.ortho(QRect(0, 0, geometry.width(), geometry.height()));
 
-        WindowPaintData data(window);
-        data.setXTranslation(-geometry.x());
-        data.setYTranslation(-geometry.y());
-        data.setOpacity(1.0);
-        data.setProjectionMatrix(projectionMatrix);
+        effect::window_paint_data data{
+            window,
+            {
+                .mask = Effect::PAINT_WINDOW_TRANSFORMED | Effect::PAINT_WINDOW_TRANSLUCENT,
+                .region = infiniteRegion(),
+                .geo
+                = {.translation
+                   = {static_cast<float>(-geometry.x()), static_cast<float>(-geometry.y()), 0}},
+                .opacity = 1.,
+                .projection_matrix = projectionMatrix,
+            },
+        };
 
-        const int mask = Effect::PAINT_WINDOW_TRANSFORMED | Effect::PAINT_WINDOW_TRANSLUCENT;
-        effects->drawWindow(window, mask, infiniteRegion(), data);
+        effects->drawWindow(data);
 
-        GLRenderTarget::popRenderTarget();
+        GLFramebuffer::popRenderTarget();
         offscreenData->isDirty = false;
     }
 
     return offscreenData->texture.data();
 }
 
-void OffscreenEffectPrivate::paint(EffectWindow* window,
-                                   GLTexture* texture,
-                                   const QRegion& region,
-                                   const WindowPaintData& data,
-                                   const WindowQuadList& quads,
+void OffscreenEffectPrivate::paint(GLTexture* texture,
+                                   effect::window_paint_data const& data,
+                                   WindowQuadList const& quads,
                                    GLShader* offscreenShader)
 {
-    GLShader* shader = offscreenShader
+    auto shader = offscreenShader
         ? offscreenShader
         : ShaderManager::instance()->shader(ShaderTrait::MapTexture | ShaderTrait::Modulate
                                             | ShaderTrait::AdjustSaturation);
@@ -173,19 +168,20 @@ void OffscreenEffectPrivate::paint(EffectWindow* window,
     vbo->unmap();
     vbo->bindArrays();
 
-    const qreal rgb = data.brightness() * data.opacity();
-    const qreal a = data.opacity();
+    auto const rgb = data.paint.brightness * data.paint.opacity;
+    auto const a = data.paint.opacity;
 
-    QMatrix4x4 mvp = data.screenProjectionMatrix();
-    mvp.translate(window->x(), window->y());
+    auto mvp = data.paint.screen_projection_matrix;
+    mvp.translate(data.window.x(), data.window.y());
     shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
     shader->setUniform(GLShader::ModulationConstant, QVector4D(rgb, rgb, rgb, a));
-    shader->setUniform(GLShader::Saturation, data.saturation());
+    shader->setUniform(GLShader::Saturation, data.paint.saturation);
     shader->setUniform(GLShader::TextureWidth, texture->width());
     shader->setUniform(GLShader::TextureHeight, texture->height());
 
-    const bool clipping = region != infiniteRegion();
-    const QRegion clipRegion = clipping ? effects->mapToRenderTarget(region) : infiniteRegion();
+    auto const clipping = data.paint.region != infiniteRegion();
+    auto const clipRegion
+        = clipping ? effects->mapToRenderTarget(data.paint.region) : infiniteRegion();
 
     if (clipping) {
         glEnable(GL_SCISSOR_TEST);
@@ -205,19 +201,16 @@ void OffscreenEffectPrivate::paint(EffectWindow* window,
     vbo->unbindArrays();
 }
 
-void OffscreenEffect::drawWindow(EffectWindow* window,
-                                 int mask,
-                                 const QRegion& region,
-                                 WindowPaintData& data)
+void OffscreenEffect::drawWindow(effect::window_paint_data& data)
 {
-    auto offscreenData = d->windows.value(window);
+    auto offscreenData = d->windows.value(&data.window);
     if (!offscreenData) {
-        effects->drawWindow(window, mask, region, data);
+        effects->drawWindow(data);
         return;
     }
 
-    const QRect expandedGeometry = window->expandedGeometry();
-    const QRect frameGeometry = window->frameGeometry();
+    auto const expandedGeometry = data.window.expandedGeometry();
+    auto const frameGeometry = data.window.frameGeometry();
 
     QRectF visibleRect = expandedGeometry;
     visibleRect.moveTopLeft(expandedGeometry.topLeft() - frameGeometry.topLeft());
@@ -229,10 +222,10 @@ void OffscreenEffect::drawWindow(EffectWindow* window,
 
     WindowQuadList quads;
     quads.append(quad);
-    apply(window, mask, data, quads);
+    apply(data, quads);
 
-    GLTexture* texture = d->maybeRender(window, offscreenData);
-    d->paint(window, texture, region, data, quads, offscreenData->shader);
+    auto texture = d->maybeRender(data.window, offscreenData);
+    d->paint(texture, data, quads, offscreenData->shader);
 }
 
 void OffscreenEffect::handleWindowGeometryChanged(EffectWindow* window)
@@ -254,9 +247,9 @@ void OffscreenEffect::handleWindowDamaged(EffectWindow* window)
     }
 }
 
-void OffscreenEffect::setShader(EffectWindow* window, GLShader* shader)
+void OffscreenEffect::setShader(EffectWindow const& window, GLShader* shader)
 {
-    OffscreenData* offscreenData = d->windows.value(window);
+    auto offscreenData = d->windows.value(&window);
     if (offscreenData) {
         offscreenData->shader = shader;
     }

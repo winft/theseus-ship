@@ -18,55 +18,43 @@ namespace KWin
 {
 
 OverviewEffect::OverviewEffect()
-    : m_shutdownTimer(new QTimer(this))
+    : m_state(new EffectTogglableState(this))
+    , m_border(new EffectTogglableTouchBorder(m_state))
+    , m_shutdownTimer(new QTimer(this))
 {
+    auto gesture = new EffectTogglableGesture(m_state);
+    gesture->addTouchpadPinchGesture(PinchDirection::Contracting, 4);
+    gesture->addTouchscreenSwipeGesture(SwipeDirection::Up, 3);
+
+    connect(m_state, &EffectTogglableState::activated, this, &OverviewEffect::activate);
+    connect(m_state, &EffectTogglableState::deactivated, this, &OverviewEffect::deactivate);
+    connect(m_state,
+            &EffectTogglableState::inProgressChanged,
+            this,
+            &OverviewEffect::gestureInProgressChanged);
+    connect(m_state,
+            &EffectTogglableState::partialActivationFactorChanged,
+            this,
+            &OverviewEffect::partialActivationFactorChanged);
+    connect(m_state,
+            &EffectTogglableState::statusChanged,
+            this,
+            [this](EffectTogglableState::Status status) {
+                if (status == EffectTogglableState::Status::Activating) {
+                    m_searchText = QString();
+                }
+                setRunning(status != EffectTogglableState::Status::Inactive);
+            });
+
     m_shutdownTimer->setSingleShot(true);
     connect(m_shutdownTimer, &QTimer::timeout, this, &OverviewEffect::realDeactivate);
 
     const QKeySequence defaultToggleShortcut = Qt::META | Qt::Key_W;
-    m_toggleAction = new QAction(this);
-    connect(m_toggleAction, &QAction::triggered, this, &OverviewEffect::toggle);
-    m_toggleAction->setObjectName(QStringLiteral("Overview"));
-    m_toggleAction->setText(i18n("Toggle Overview"));
+    auto toggleAction = m_state->toggleAction();
+    toggleAction->setObjectName(QStringLiteral("Overview"));
+    toggleAction->setText(i18n("Toggle Overview"));
     m_toggleShortcut
-        = effects->registerGlobalShortcutAndDefault({defaultToggleShortcut}, m_toggleAction);
-
-    m_realtimeToggleAction = new QAction(this);
-    connect(m_realtimeToggleAction, &QAction::triggered, this, [this]() {
-        if (m_status == Status::Deactivating) {
-            if (m_partialActivationFactor < 0.5) {
-                deactivate();
-            } else {
-                cancelPartialDeactivate();
-            }
-        } else if (m_status == Status::Activating) {
-            if (m_partialActivationFactor > 0.5) {
-                activate();
-            } else {
-                cancelPartialActivate();
-            }
-        }
-    });
-
-    auto progressCallback = [this](qreal progress) {
-        if (!effects->hasActiveFullScreenEffect() || effects->activeFullScreenEffect() == this) {
-            switch (m_status) {
-            case Status::Inactive:
-            case Status::Activating:
-                partialActivate(progress);
-                break;
-            case Status::Active:
-            case Status::Deactivating:
-                partialDeactivate(progress);
-                break;
-            }
-        }
-    };
-
-    effects->registerTouchpadPinchShortcut(
-        PinchDirection::Contracting, 4, m_realtimeToggleAction, progressCallback);
-    effects->registerTouchscreenSwipeShortcut(
-        SwipeDirection::Up, 3, m_realtimeToggleAction, progressCallback);
+        = effects->registerGlobalShortcutAndDefault({defaultToggleShortcut}, toggleAction);
 
     connect(effects, &EffectsHandler::screenAboutToLock, this, &OverviewEffect::realDeactivate);
 
@@ -75,7 +63,7 @@ OverviewEffect::OverviewEffect()
 
     setSource(QUrl::fromLocalFile(
         QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                               QStringLiteral("kwin/effects/overview/qml/ScreenView.qml"))));
+                               QStringLiteral("kwin/effects/overview/qml/main.qml"))));
 }
 
 OverviewEffect::~OverviewEffect()
@@ -92,12 +80,7 @@ void OverviewEffect::reconfigure(ReconfigureFlags)
         effects->unreserveElectricBorder(border, this);
     }
 
-    for (const ElectricBorder& border : qAsConst(m_touchBorderActivate)) {
-        effects->unregisterTouchBorder(border, m_toggleAction);
-    }
-
     m_borderActivate.clear();
-    m_touchBorderActivate.clear();
 
     const QList<int> activateBorders = OverviewConfig::borderActivate();
     for (const int& border : activateBorders) {
@@ -105,26 +88,7 @@ void OverviewEffect::reconfigure(ReconfigureFlags)
         effects->reserveElectricBorder(ElectricBorder(border), this);
     }
 
-    const QList<int> touchActivateBorders = OverviewConfig::touchBorderActivate();
-    for (const int& border : touchActivateBorders) {
-        m_touchBorderActivate.append(ElectricBorder(border));
-        effects->registerRealtimeTouchBorder(
-            ElectricBorder(border),
-            m_realtimeToggleAction,
-            [this](ElectricBorder border, const QSizeF& deltaProgress, const EffectScreen* screen) {
-                Q_UNUSED(screen)
-                if (m_status == Status::Active) {
-                    return;
-                }
-                const int maxDelta = 500; // Arbitrary logical pixels value seems to behave better
-                                          // than scaledScreenSize
-                if (border == ElectricTop || border == ElectricBottom) {
-                    partialActivate(std::min(1.0, qAbs(deltaProgress.height()) / maxDelta));
-                } else {
-                    partialActivate(std::min(1.0, qAbs(deltaProgress.width()) / maxDelta));
-                }
-            });
-    }
+    m_border->setBorders(OverviewConfig::touchBorderActivate());
 }
 
 int OverviewEffect::animationDuration() const
@@ -158,32 +122,6 @@ void OverviewEffect::setLayout(int layout)
     }
 }
 
-qreal OverviewEffect::partialActivationFactor() const
-{
-    return m_partialActivationFactor;
-}
-
-void OverviewEffect::setPartialActivationFactor(qreal factor)
-{
-    if (m_partialActivationFactor != factor) {
-        m_partialActivationFactor = factor;
-        Q_EMIT partialActivationFactorChanged();
-    }
-}
-
-bool OverviewEffect::gestureInProgress() const
-{
-    return m_gestureInProgress;
-}
-
-void OverviewEffect::setGestureInProgress(bool gesture)
-{
-    if (m_gestureInProgress != gesture) {
-        m_gestureInProgress = gesture;
-        Q_EMIT gestureInProgressChanged();
-    }
-}
-
 int OverviewEffect::requestedEffectChainPosition() const
 {
     return 70;
@@ -192,19 +130,10 @@ int OverviewEffect::requestedEffectChainPosition() const
 bool OverviewEffect::borderActivated(ElectricBorder border)
 {
     if (m_borderActivate.contains(border)) {
-        toggle();
+        m_state->toggle();
         return true;
     }
     return false;
-}
-
-void OverviewEffect::toggle()
-{
-    if (!isRunning() || m_partialActivationFactor > 0.5) {
-        activate();
-    } else {
-        deactivate();
-    }
 }
 
 void OverviewEffect::activate()
@@ -213,35 +142,7 @@ void OverviewEffect::activate()
         return;
     }
 
-    m_status = Status::Active;
-
-    setGestureInProgress(false);
-    setPartialActivationFactor(0.0);
-
-    // This one should be the last.
-    m_searchText = QString();
-    setRunning(true);
-}
-
-void OverviewEffect::partialActivate(qreal factor)
-{
-    if (effects->isScreenLocked()) {
-        return;
-    }
-
-    m_status = Status::Activating;
-
-    setPartialActivationFactor(factor);
-    setGestureInProgress(true);
-
-    // This one should be the last.
-    m_searchText = QString();
-    setRunning(true);
-}
-
-void OverviewEffect::cancelPartialActivate()
-{
-    deactivate();
+    m_state->activate();
 }
 
 void OverviewEffect::deactivate()
@@ -254,39 +155,19 @@ void OverviewEffect::deactivate()
     }
     m_shutdownTimer->start(animationDuration());
 
-    setGestureInProgress(false);
-    setPartialActivationFactor(0.0);
-}
-
-void OverviewEffect::partialDeactivate(qreal factor)
-{
-    m_status = Status::Deactivating;
-
-    setPartialActivationFactor(1.0 - factor);
-    setGestureInProgress(true);
-}
-
-void OverviewEffect::cancelPartialDeactivate()
-{
-    activate();
+    m_state->deactivate();
 }
 
 void OverviewEffect::realDeactivate()
 {
-    setRunning(false);
-    m_status = Status::Inactive;
-}
-
-void OverviewEffect::quickDeactivate()
-{
-    m_shutdownTimer->start(0);
+    m_state->setStatus(EffectTogglableState::Status::Inactive);
 }
 
 void OverviewEffect::grabbedKeyboardEvent(QKeyEvent* keyEvent)
 {
     if (m_toggleShortcut.contains(keyEvent->key() | keyEvent->modifiers())) {
         if (keyEvent->type() == QEvent::KeyPress) {
-            toggle();
+            m_state->toggle();
         }
         return;
     }

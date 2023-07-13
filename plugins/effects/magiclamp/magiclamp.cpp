@@ -42,7 +42,7 @@ void MagicLampEffect::reconfigure(ReconfigureFlags)
     m_duration = std::chrono::milliseconds(static_cast<int>(animationTime(d)));
 }
 
-void MagicLampEffect::prePaintScreen(ScreenPrePaintData& data,
+void MagicLampEffect::prePaintScreen(effect::paint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
     auto animationIt = m_animations.begin();
@@ -58,32 +58,28 @@ void MagicLampEffect::prePaintScreen(ScreenPrePaintData& data,
     effects->prePaintScreen(data, presentTime);
 }
 
-void MagicLampEffect::prePaintWindow(EffectWindow* w,
-                                     WindowPrePaintData& data,
+void MagicLampEffect::prePaintWindow(effect::window_prepaint_data& data,
                                      std::chrono::milliseconds presentTime)
 {
     // Schedule window for transformation if the animation is still in
     //  progress
-    if (m_animations.contains(w)) {
+    if (m_animations.contains(&data.window)) {
         // We'll transform this window
-        data.setTransformed();
-        w->enablePainting(EffectWindow::PAINT_DISABLED_BY_MINIMIZE);
+        data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
     }
 
-    effects->prePaintWindow(w, data, presentTime);
+    effects->prePaintWindow(data, presentTime);
 }
 
-void MagicLampEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, WindowQuadList& quads)
+void MagicLampEffect::apply(effect::window_paint_data& data, WindowQuadList& quads)
 {
-    Q_UNUSED(mask)
-    Q_UNUSED(data)
-    auto animationIt = m_animations.constFind(w);
+    auto animationIt = m_animations.constFind(&data.window);
     if (animationIt != m_animations.constEnd()) {
         // 0 = not minimized, 1 = fully minimized
         const qreal progress = (*animationIt).timeLine.value();
 
-        QRect geo = w->frameGeometry();
-        QRect icon = w->iconGeometry();
+        auto geo = data.window.frameGeometry();
+        auto icon = data.window.iconGeometry();
         IconPosition position = Top;
         // If there's no icon geometry, minimize to the center of the screen
         if (!icon.isValid()) {
@@ -146,20 +142,41 @@ void MagicLampEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, Wi
             }
             if (panel) {
                 // Assumption: width of horizonal panel is greater than its height and vice versa
-                // The panel has to border one screen edge, so get it's screen area
-                QRect panelScreen = effects->clientArea(ScreenArea, panel);
+                auto const windowScreen = effects->clientArea(ScreenArea, &data.window);
+
                 if (panel->width() >= panel->height()) {
                     // horizontal panel
-                    if (panel->y() <= panelScreen.height() / 2)
+                    if (icon.center().y() <= windowScreen.center().y()) {
                         position = Top;
-                    else
+                    } else {
                         position = Bottom;
+                    }
                 } else {
                     // vertical panel
-                    if (panel->x() <= panelScreen.width() / 2)
+                    if (icon.center().x() <= windowScreen.center().x()) {
                         position = Left;
-                    else
+                    } else {
                         position = Right;
+                    }
+                }
+
+                // If the panel is hidden, move the icon offscreen so the animation looks correct.
+                if (panel->isHidden()) {
+                    const QRectF panelScreen = effects->clientArea(ScreenArea, panel);
+                    switch (position) {
+                    case Bottom:
+                        icon.moveTop(panelScreen.y() + panelScreen.height());
+                        break;
+                    case Top:
+                        icon.moveTop(panelScreen.y() - icon.height());
+                        break;
+                    case Left:
+                        icon.moveLeft(panelScreen.x() - icon.width());
+                        break;
+                    case Right:
+                        icon.moveLeft(panelScreen.x() + panelScreen.width());
+                        break;
+                    }
                 }
             } else {
                 // we did not find a panel, so it might be autohidden
@@ -183,29 +200,6 @@ void MagicLampEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, Wi
             }
         }
 
-#define SET_QUADS(_SET_A_, _A_, _DA_, _SET_B_, _B_, _O0_, _O1_, _O2_, _O3_)                        \
-    quad[0]._SET_A_(                                                                               \
-        (icon._A_() + icon._DA_() * (quad[0]._A_() / geo._DA_()) - (quad[0]._A_() + geo._A_()))    \
-            * p_progress[_O0_]                                                                     \
-        + quad[0]._A_());                                                                          \
-    quad[1]._SET_A_(                                                                               \
-        (icon._A_() + icon._DA_() * (quad[1]._A_() / geo._DA_()) - (quad[1]._A_() + geo._A_()))    \
-            * p_progress[_O1_]                                                                     \
-        + quad[1]._A_());                                                                          \
-    quad[2]._SET_A_(                                                                               \
-        (icon._A_() + icon._DA_() * (quad[2]._A_() / geo._DA_()) - (quad[2]._A_() + geo._A_()))    \
-            * p_progress[_O2_]                                                                     \
-        + quad[2]._A_());                                                                          \
-    quad[3]._SET_A_(                                                                               \
-        (icon._A_() + icon._DA_() * (quad[3]._A_() / geo._DA_()) - (quad[3]._A_() + geo._A_()))    \
-            * p_progress[_O3_]                                                                     \
-        + quad[3]._A_());                                                                          \
-                                                                                                   \
-    quad[0]._SET_B_(quad[0]._B_() + offset[_O0_]);                                                 \
-    quad[1]._SET_B_(quad[1]._B_() + offset[_O1_]);                                                 \
-    quad[2]._SET_B_(quad[2]._B_() + offset[_O2_]);                                                 \
-    quad[3]._SET_B_(quad[3]._B_() + offset[_O3_])
-
         quads = quads.makeGrid(40);
         float quadFactor; // defines how fast a quad is vertically moved: y coordinates near to
                           // window top are slowed down it is used as quadFactor^3/windowHeight^3
@@ -226,7 +220,10 @@ void MagicLampEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, Wi
         lastQuad[2].setY(-1);
 
         if (position == Bottom) {
-            float height_cube = float(geo.height()) * float(geo.height()) * float(geo.height());
+            const float height_cube
+                = float(geo.height()) * float(geo.height()) * float(geo.height());
+            const float maxY = icon.y() - geo.y();
+
             for (WindowQuad& quad : quads) {
 
                 if (quad[0].y() != lastQuad[0].y() || quad[2].y() != lastQuad[2].y()) {
@@ -236,22 +233,45 @@ void MagicLampEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, Wi
                     quadFactor = quad[2].y() + (geo.height() - quad[2].y()) * progress;
                     offset[1] = (icon.y() + quad[2].y() - geo.y()) * progress
                         * ((quadFactor * quadFactor * quadFactor) / height_cube);
-                    p_progress[1] = qMin(
-                        offset[1] / (icon.y() + icon.height() - geo.y() - float(quad[2].y())),
-                        1.0f);
-                    p_progress[0] = qMin(
-                        offset[0] / (icon.y() + icon.height() - geo.y() - float(quad[0].y())),
-                        1.0f);
-                } else
+                    p_progress[1]
+                        = std::min(offset[1] / (icon.y() - geo.y() - float(quad[2].y())), 1.0f);
+                    p_progress[0]
+                        = std::min(offset[0] / (icon.y() - geo.y() - float(quad[0].y())), 1.0f);
+                } else {
                     lastQuad = quad;
+                }
 
                 p_progress[0] = std::abs(p_progress[0]);
                 p_progress[1] = std::abs(p_progress[1]);
+
                 // x values are moved towards the center of the icon
-                SET_QUADS(setX, x, width, setY, y, 0, 0, 1, 1);
+                quad[0].setX((icon.x() + icon.width() * (quad[0].x() / geo.width())
+                              - (quad[0].x() + geo.x()))
+                                 * p_progress[0]
+                             + quad[0].x());
+                quad[1].setX((icon.x() + icon.width() * (quad[1].x() / geo.width())
+                              - (quad[1].x() + geo.x()))
+                                 * p_progress[0]
+                             + quad[1].x());
+                quad[2].setX((icon.x() + icon.width() * (quad[2].x() / geo.width())
+                              - (quad[2].x() + geo.x()))
+                                 * p_progress[1]
+                             + quad[2].x());
+                quad[3].setX((icon.x() + icon.width() * (quad[3].x() / geo.width())
+                              - (quad[3].x() + geo.x()))
+                                 * p_progress[1]
+                             + quad[3].x());
+
+                quad[0].setY(std::min(maxY, float(quad[0].y()) + offset[0]));
+                quad[1].setY(std::min(maxY, float(quad[1].y()) + offset[0]));
+                quad[2].setY(std::min(maxY, float(quad[2].y()) + offset[1]));
+                quad[3].setY(std::min(maxY, float(quad[3].y()) + offset[1]));
             }
         } else if (position == Top) {
-            float height_cube = float(geo.height()) * float(geo.height()) * float(geo.height());
+            const float height_cube
+                = float(geo.height()) * float(geo.height()) * float(geo.height());
+            const float minY = icon.y() + icon.height() - geo.y();
+
             for (WindowQuad& quad : quads) {
 
                 if (quad[0].y() != lastQuad[0].y() || quad[2].y() != lastQuad[2].y()) {
@@ -277,11 +297,34 @@ void MagicLampEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, Wi
 
                 p_progress[0] = std::abs(p_progress[0]);
                 p_progress[1] = std::abs(p_progress[1]);
+
                 // x values are moved towards the center of the icon
-                SET_QUADS(setX, x, width, setY, y, 0, 0, 1, 1);
+                quad[0].setX((icon.x() + icon.width() * (quad[0].x() / geo.width())
+                              - (quad[0].x() + geo.x()))
+                                 * p_progress[0]
+                             + quad[0].x());
+                quad[1].setX((icon.x() + icon.width() * (quad[1].x() / geo.width())
+                              - (quad[1].x() + geo.x()))
+                                 * p_progress[0]
+                             + quad[1].x());
+                quad[2].setX((icon.x() + icon.width() * (quad[2].x() / geo.width())
+                              - (quad[2].x() + geo.x()))
+                                 * p_progress[1]
+                             + quad[2].x());
+                quad[3].setX((icon.x() + icon.width() * (quad[3].x() / geo.width())
+                              - (quad[3].x() + geo.x()))
+                                 * p_progress[1]
+                             + quad[3].x());
+
+                quad[0].setY(std::max(minY, float(quad[0].y()) + offset[0]));
+                quad[1].setY(std::max(minY, float(quad[1].y()) + offset[0]));
+                quad[2].setY(std::max(minY, float(quad[2].y()) + offset[1]));
+                quad[3].setY(std::max(minY, float(quad[3].y()) + offset[1]));
             }
         } else if (position == Left) {
-            float width_cube = float(geo.width()) * float(geo.width()) * float(geo.width());
+            const float width_cube = float(geo.width()) * float(geo.width()) * float(geo.width());
+            const float minX = icon.x() + icon.width() - geo.x();
+
             for (WindowQuad& quad : quads) {
 
                 if (quad[0].x() != lastQuad[0].x() || quad[1].x() != lastQuad[1].x()) {
@@ -307,11 +350,34 @@ void MagicLampEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, Wi
 
                 p_progress[0] = std::abs(p_progress[0]);
                 p_progress[1] = std::abs(p_progress[1]);
+
                 // y values are moved towards the center of the icon
-                SET_QUADS(setY, y, height, setX, x, 0, 1, 1, 0);
+                quad[0].setY((icon.y() + icon.height() * (quad[0].y() / geo.height())
+                              - (quad[0].y() + geo.y()))
+                                 * p_progress[0]
+                             + quad[0].y());
+                quad[1].setY((icon.y() + icon.height() * (quad[1].y() / geo.height())
+                              - (quad[1].y() + geo.y()))
+                                 * p_progress[1]
+                             + quad[1].y());
+                quad[2].setY((icon.y() + icon.height() * (quad[2].y() / geo.height())
+                              - (quad[2].y() + geo.y()))
+                                 * p_progress[1]
+                             + quad[2].y());
+                quad[3].setY((icon.y() + icon.height() * (quad[3].y() / geo.height())
+                              - (quad[3].y() + geo.y()))
+                                 * p_progress[0]
+                             + quad[3].y());
+
+                quad[0].setX(std::max(minX, float(quad[0].x()) + offset[0]));
+                quad[1].setX(std::max(minX, float(quad[1].x()) + offset[1]));
+                quad[2].setX(std::max(minX, float(quad[2].x()) + offset[1]));
+                quad[3].setX(std::max(minX, float(quad[3].x()) + offset[0]));
             }
         } else if (position == Right) {
-            float width_cube = float(geo.width()) * float(geo.width()) * float(geo.width());
+            const float width_cube = float(geo.width()) * float(geo.width()) * float(geo.width());
+            const float maxX = icon.x() - geo.x();
+
             for (WindowQuad& quad : quads) {
 
                 if (quad[0].x() != lastQuad[0].x() || quad[1].x() != lastQuad[1].x()) {
@@ -321,17 +387,39 @@ void MagicLampEffect::apply(EffectWindow* w, int mask, WindowPaintData& data, Wi
                     quadFactor = quad[1].x() + (geo.width() - quad[1].x()) * progress;
                     offset[1] = (icon.x() + quad[1].x() - geo.x()) * progress
                         * ((quadFactor * quadFactor * quadFactor) / width_cube);
-                    p_progress[0] = qMin(
-                        offset[0] / (icon.x() + icon.width() - geo.x() - float(quad[0].x())), 1.0f);
-                    p_progress[1] = qMin(
-                        offset[1] / (icon.x() + icon.width() - geo.x() - float(quad[1].x())), 1.0f);
-                } else
+                    p_progress[0]
+                        = std::min(offset[0] / (icon.x() - geo.x() - float(quad[0].x())), 1.0f);
+                    p_progress[1]
+                        = std::min(offset[1] / (icon.x() - geo.x() - float(quad[1].x())), 1.0f);
+                } else {
                     lastQuad = quad;
+                }
 
                 p_progress[0] = std::abs(p_progress[0]);
                 p_progress[1] = std::abs(p_progress[1]);
+
                 // y values are moved towards the center of the icon
-                SET_QUADS(setY, y, height, setX, x, 0, 1, 1, 0);
+                quad[0].setY((icon.y() + icon.height() * (quad[0].y() / geo.height())
+                              - (quad[0].y() + geo.y()))
+                                 * p_progress[0]
+                             + quad[0].y());
+                quad[1].setY((icon.y() + icon.height() * (quad[1].y() / geo.height())
+                              - (quad[1].y() + geo.y()))
+                                 * p_progress[1]
+                             + quad[1].y());
+                quad[2].setY((icon.y() + icon.height() * (quad[2].y() / geo.height())
+                              - (quad[2].y() + geo.y()))
+                                 * p_progress[1]
+                             + quad[2].y());
+                quad[3].setY((icon.y() + icon.height() * (quad[3].y() / geo.height())
+                              - (quad[3].y() + geo.y()))
+                                 * p_progress[0]
+                             + quad[3].y());
+
+                quad[0].setX(std::min(maxX, float(quad[0].x()) + offset[0]));
+                quad[1].setX(std::min(maxX, float(quad[1].x()) + offset[1]));
+                quad[2].setX(std::min(maxX, float(quad[2].x()) + offset[1]));
+                quad[3].setX(std::min(maxX, float(quad[3].x()) + offset[0]));
             }
         }
     }
@@ -370,6 +458,7 @@ void MagicLampEffect::slotWindowMinimized(EffectWindow* w)
     if (animation.timeLine.running()) {
         animation.timeLine.toggleDirection();
     } else {
+        animation.visibleRef = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_MINIMIZE);
         animation.timeLine.setDirection(TimeLine::Forward);
         animation.timeLine.setDuration(m_duration);
         animation.timeLine.setEasingCurve(QEasingCurve::Linear);

@@ -82,7 +82,7 @@ inline QRegion buildClipRegion(const QPoint& pos, int w, int h)
     return r;
 }
 
-void SlideEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void SlideEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
     std::chrono::milliseconds timeDelta = std::chrono::milliseconds::zero();
     if (m_lastPresentTime.count()) {
@@ -130,10 +130,10 @@ void SlideEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::millisec
     effects->prePaintScreen(data, presentTime);
 }
 
-void SlideEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void SlideEffect::paintScreen(effect::screen_paint_data& data)
 {
     m_paintCtx.wrap = effects->optionRollOverDesktops();
-    effects->paintScreen(mask, region, data);
+    effects->paintScreen(data);
 }
 
 QPoint SlideEffect::getDrawCoords(QPointF pos, EffectScreen* screen)
@@ -180,29 +180,21 @@ bool SlideEffect::willBePainted(const EffectWindow* w) const
     return false;
 }
 
-void SlideEffect::prePaintWindow(EffectWindow* w,
-                                 WindowPrePaintData& data,
+void SlideEffect::prePaintWindow(effect::window_prepaint_data& data,
                                  std::chrono::milliseconds presentTime)
 {
-    for (const auto& desktop : std::as_const(m_paintCtx.visibleDesktops)) {
-        if (w->isOnDesktop(desktop)) {
-            w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
-            data.setTransformed();
-            break;
-        }
-    }
-
-    effects->prePaintWindow(w, data, presentTime);
+    data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
+    effects->prePaintWindow(data, presentTime);
 }
 
-void SlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void SlideEffect::paintWindow(effect::window_paint_data& data)
 {
-    if (!willBePainted(w)) {
+    if (!willBePainted(&data.window)) {
         return;
     }
 
-    if (!isTranslated(w)) {
-        effects->paintWindow(w, mask, region, data);
+    if (!isTranslated(&data.window)) {
+        effects->paintWindow(data);
         return;
     }
 
@@ -219,7 +211,7 @@ void SlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowP
     const auto screens = effects->screens();
 
     for (int desktop : qAsConst(m_paintCtx.visibleDesktops)) {
-        if (!w->isOnDesktop(desktop)) {
+        if (!data.window.isOnDesktop(desktop)) {
             continue;
         }
         QPointF desktopTranslation = QPointF(effects->desktopGridCoords(desktop)) - drawPosition;
@@ -235,21 +227,12 @@ void SlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowP
         }
 
         for (EffectScreen* screen : screens) {
-            QPoint drawTranslation = getDrawCoords(desktopTranslation, screen);
-            data += drawTranslation;
-
-            const QRect screenArea = screen->geometry();
-            const QRect damage = screenArea.translated(drawTranslation).intersected(screenArea);
-
-            effects->paintWindow(
-                w,
-                mask,
-                // Only paint the region that intersects the current screen and desktop.
-                region.intersected(damage),
-                data);
+            auto drawTranslation = getDrawCoords(desktopTranslation, screen);
+            data.paint.geo.translation += QVector3D(drawTranslation);
+            effects->paintWindow(data);
 
             // Undo the translation for the next screen. I know, it hurts me too.
-            data += QPoint(-drawTranslation.x(), -drawTranslation.y());
+            data.paint.geo.translation += QVector3D(-drawTranslation.x(), -drawTranslation.y(), 0);
         }
     }
 }
@@ -323,7 +306,11 @@ void SlideEffect::startAnimation(int old, int current, EffectWindow* movingWindo
 void SlideEffect::prepareSwitching()
 {
     const auto windows = effects->stackingOrder();
+    window_refs.reserve(windows.count());
+
     for (EffectWindow* w : windows) {
+        window_refs[w] = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
+
         if (shouldElevate(w)) {
             effects->setElevatedWindow(w, true);
             m_elevatedWindows << w;
@@ -349,6 +336,7 @@ void SlideEffect::finishedSwitching()
     }
 
     m_elevatedWindows.clear();
+    window_refs.clear();
     m_movingWindow = nullptr;
     m_state = State::Inactive;
     m_lastPresentTime = std::chrono::milliseconds::zero();
@@ -431,6 +419,8 @@ void SlideEffect::windowAdded(EffectWindow* w)
     }
     w->setData(WindowForceBackgroundContrastRole, QVariant(true));
     w->setData(WindowForceBlurRole, QVariant(true));
+
+    window_refs[w] = EffectWindowVisibleRef(w, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
 }
 
 void SlideEffect::windowDeleted(EffectWindow* w)
@@ -442,6 +432,7 @@ void SlideEffect::windowDeleted(EffectWindow* w)
         m_movingWindow = nullptr;
     }
     m_elevatedWindows.removeAll(w);
+    window_refs.erase(w);
 }
 
 /*

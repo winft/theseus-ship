@@ -22,14 +22,17 @@ set_target_properties(kwin5_aurorae PROPERTIES
     LIBRARY_OUTPUT_NAME "org.kde.kwin.aurorae"
 )
 
+target_compile_definitions(kwin5_aurorae PRIVATE
+    -DTRANSLATION_DOMAIN=\"kwin\"
+)
+
 target_link_libraries(kwin5_aurorae
   KDecoration2::KDecoration
+  KF6::ConfigGui
   KF6::I18n
-  KF6::KCMUtils
   KF6::Package
   kwineffects
   Qt::Quick
-  Qt::UiTools
   base
 )
 
@@ -43,6 +46,9 @@ set(decoration_plugin_SRCS
 
 add_library(decorationplugin SHARED ${decoration_plugin_SRCS})
 set_target_properties(decorationplugin PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/org/kde/kwin/decoration/")
+target_compile_definitions(decorationplugin PRIVATE
+    -DTRANSLATION_DOMAIN=\"kwin\"
+)
 target_link_libraries(decorationplugin
   KDecoration2::KDecoration
   KF6::KCMUtils
@@ -54,7 +60,11 @@ configure_file(aurorae.knsrc.cmake ${CMAKE_CURRENT_BINARY_DIR}/aurorae.knsrc)
 
 ########### install files ###############
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/aurorae.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})
+if (KWIN_BUILD_KCMS)
+    add_subdirectory(config)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/aurorae.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})
+endif()
+
 install(
     FILES
         qml/AppMenuButton.qml

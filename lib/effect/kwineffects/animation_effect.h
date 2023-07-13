@@ -326,11 +326,10 @@ public:
 
     // Reimplemented from KWin::Effect.
     QString debug(const QString& parameter) const override;
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow* w,
-                        WindowPrePaintData& data,
+    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(effect::window_prepaint_data& data,
                         std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
+    void paintWindow(effect::window_paint_data& data) override;
     void postPaintScreen() override;
 
     /**
@@ -493,11 +492,8 @@ protected:
      * @param meta Originally supplied metadata to animate() or set().
      * @since 4.8
      */
-    virtual void animationEnded(EffectWindow* w, Attribute a, uint meta)
+    virtual void animationEnded(EffectWindow const* /*w*/, Attribute /*a*/, uint /*meta*/)
     {
-        Q_UNUSED(w);
-        Q_UNUSED(a);
-        Q_UNUSED(meta);
     }
 
     /**
@@ -526,12 +522,9 @@ protected:
      * @param meta The metadata.
      * @since 4.8
      */
-    virtual void genericAnimation(EffectWindow* w, WindowPaintData& data, float progress, uint meta)
+    virtual void
+    genericAnimation(effect::window_paint_data& /*data*/, float /*progress*/, uint /*meta*/)
     {
-        Q_UNUSED(w);
-        Q_UNUSED(data);
-        Q_UNUSED(progress);
-        Q_UNUSED(meta);
     }
 
     /**

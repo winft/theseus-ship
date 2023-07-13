@@ -51,7 +51,7 @@ void effects_handler_wrap::reconfigure()
 }
 
 // the idea is that effects call this function again which calls the next one
-void effects_handler_wrap::prePaintScreen(ScreenPrePaintData& data,
+void effects_handler_wrap::prePaintScreen(effect::paint_data& data,
                                           std::chrono::milliseconds presentTime)
 {
     if (m_currentPaintScreenIterator != m_activeEffects.constEnd()) {
@@ -61,13 +61,13 @@ void effects_handler_wrap::prePaintScreen(ScreenPrePaintData& data,
     // no special final code
 }
 
-void effects_handler_wrap::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
+void effects_handler_wrap::paintScreen(effect::screen_paint_data& data)
 {
     if (m_currentPaintScreenIterator != m_activeEffects.constEnd()) {
-        (*m_currentPaintScreenIterator++)->paintScreen(mask, region, data);
+        (*m_currentPaintScreenIterator++)->paintScreen(data);
         --m_currentPaintScreenIterator;
     } else {
-        final_paint_screen(static_cast<render::paint_type>(mask), region, data);
+        final_paint_screen(static_cast<render::paint_type>(data.paint.mask), data);
     }
 }
 
@@ -80,27 +80,23 @@ void effects_handler_wrap::postPaintScreen()
     // no special final code
 }
 
-void effects_handler_wrap::prePaintWindow(EffectWindow* w,
-                                          WindowPrePaintData& data,
+void effects_handler_wrap::prePaintWindow(effect::window_prepaint_data& data,
                                           std::chrono::milliseconds presentTime)
 {
     if (m_currentPaintWindowIterator != m_activeEffects.constEnd()) {
-        (*m_currentPaintWindowIterator++)->prePaintWindow(w, data, presentTime);
+        (*m_currentPaintWindowIterator++)->prePaintWindow(data, presentTime);
         --m_currentPaintWindowIterator;
     }
     // no special final code
 }
 
-void effects_handler_wrap::paintWindow(EffectWindow* w,
-                                       int mask,
-                                       const QRegion& region,
-                                       WindowPaintData& data)
+void effects_handler_wrap::paintWindow(effect::window_paint_data& data)
 {
     if (m_currentPaintWindowIterator != m_activeEffects.constEnd()) {
-        (*m_currentPaintWindowIterator++)->paintWindow(w, mask, region, data);
+        (*m_currentPaintWindowIterator++)->paintWindow(data);
         --m_currentPaintWindowIterator;
     } else {
-        final_paint_window(w, static_cast<render::paint_type>(mask), region, data);
+        final_paint_window(data);
     }
 }
 
@@ -121,16 +117,13 @@ Effect* effects_handler_wrap::provides(Effect::Feature ef)
     return nullptr;
 }
 
-void effects_handler_wrap::drawWindow(EffectWindow* w,
-                                      int mask,
-                                      const QRegion& region,
-                                      WindowPaintData& data)
+void effects_handler_wrap::drawWindow(effect::window_paint_data& data)
 {
     if (m_currentDrawWindowIterator != m_activeEffects.constEnd()) {
-        (*m_currentDrawWindowIterator++)->drawWindow(w, mask, region, data);
+        (*m_currentDrawWindowIterator++)->drawWindow(data);
         --m_currentDrawWindowIterator;
     } else {
-        final_draw_window(w, static_cast<render::paint_type>(mask), region, data);
+        final_draw_window(data);
     }
 }
 
@@ -598,11 +591,11 @@ QImage effects_handler_wrap::blit_from_framebuffer(QRect const& geometry, double
     QImage image;
     auto const nativeSize = geometry.size() * scale;
 
-    if (GLRenderTarget::blitSupported() && !GLPlatform::instance()->isGLES()) {
+    if (GLFramebuffer::blitSupported() && !GLPlatform::instance()->isGLES()) {
         image = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_ARGB32);
 
         GLTexture texture(GL_RGBA8, nativeSize.width(), nativeSize.height());
-        GLRenderTarget target(&texture);
+        GLFramebuffer target(&texture);
         target.blitFromFramebuffer(mapToRenderTarget(geometry));
 
         // Copy content from framebuffer into image.
