@@ -148,7 +148,7 @@ KWin.TabBoxSwitcher {
                                 wId: windowId
                             }
 
-                            PlasmaCore.IconItem {
+                            Kirigami.Icon {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.verticalCenter: parent.bottom
                                 anchors.verticalCenterOffset: Math.round(-columnLayout.spacing/2)
@@ -156,7 +156,6 @@ KWin.TabBoxSwitcher {
                                 height: thumbnailGridView.iconSize
 
                                 source: model.icon
-                                usesPlasmaTheme: false
                             }
 
                             PlasmaComponents3.ToolButton {
