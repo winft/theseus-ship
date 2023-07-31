@@ -694,7 +694,16 @@ protected:
             verts << r.x() + r.width() << r.y() + r.height();
             verts << r.x() + r.width() << r.y();
         }
-        doPaintBackground(verts);
+
+        auto vbo = GLVertexBuffer::streamingBuffer();
+        vbo->reset();
+        vbo->setColor(QColor(0, 0, 0, 0));
+        vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
+
+        ShaderBinder binder(ShaderTrait::UniformColor);
+        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, m_projectionMatrix);
+
+        vbo->render(GL_TRIANGLES);
     }
 
     void extendPaintRegion(QRegion& region, bool opaqueFullscreen) override
@@ -828,19 +837,6 @@ protected:
 
         KNotification::event(QStringLiteral("graphicsreset"),
                              i18n("Desktop effects were restarted due to a graphics reset"));
-    }
-
-    void doPaintBackground(QVector<float> const& vertices)
-    {
-        GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
-        vbo->reset();
-        vbo->setColor(QColor(0, 0, 0, 0));
-        vbo->setData(vertices.count() / 2, 2, vertices.data(), nullptr);
-
-        ShaderBinder binder(ShaderTrait::UniformColor);
-        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, m_projectionMatrix);
-
-        vbo->render(GL_TRIANGLES);
     }
 
 private:
