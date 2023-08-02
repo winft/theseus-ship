@@ -142,16 +142,32 @@ public:
     {
         auto const& out = get_egl_out(&output);
         auto const geo = output.geometry();
+        auto view = out->out->base.view_geometry();
+        auto res = out->out->base.mode_size();
+        auto is_portrait = has_portrait_transform(out->out->base);
+
+        if (is_portrait) {
+            // The wlroots buffer is always sideways.
+            view = view.transposed();
+        }
 
         auto native_out = static_cast<base::backend::wlroots::output const&>(output).native;
         wlr_output_attach_render(native_out, &out->bufferAge);
-        wlr_renderer_begin(platform.renderer, geo.width(), geo.height());
+        wlr_renderer_begin(platform.renderer, view.width(), view.height());
 
-        prepare_render_targets(*out);
+        native_fbo
+            = GLFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer), res, view);
+        GLFramebuffer::pushRenderTarget(&native_fbo);
+
+        auto transform = static_cast<effect::transform_type>(
+            get_transform(static_cast<base::backend::wlroots::output const&>(output)));
 
         auto data = gl::create_view_projection(geo);
-        data.viewport = {{}, geo.size()};
-        data.flip_y = false;
+        data.projection = effect::get_transform_matrix(transform) * data.projection;
+        data.viewport = view;
+        data.transform = transform;
+        data.flip_y = true;
+
         return data;
     }
 
@@ -162,11 +178,6 @@ public:
         if (!this->supportsBufferAge()) {
             // If buffer age exenstion is not supported we always repaint the whole output as we
             // don't know the status of the back buffer we render to.
-            return output.geometry();
-        }
-        if (out->render.fbo.valid()) {
-            // If we render to the extra frame buffer, do not use buffer age. It leads to artifacts.
-            // TODO(romangg): Can we make use of buffer age even in this case somehow?
             return output.geometry();
         }
         if (out->bufferAge == 0) {
@@ -195,8 +206,6 @@ public:
     {
         auto& out = get_egl_out(output);
         auto impl_out = static_cast<base::backend::wlroots::output*>(output);
-
-        renderFramebufferToSurface(*out);
 
         if (GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
             out->out->last_timer_queries.emplace_back();
@@ -294,93 +303,6 @@ private:
         wlr_output_set_damage(output->native, &damage);
         pixman_region32_fini(&damage);
     }
-
-    void initRenderTarget(egl_output_t& egl_out)
-    {
-        if (egl_out.render.vbo) {
-            // Already initialized.
-            return;
-        }
-        std::shared_ptr<GLVertexBuffer> vbo(new GLVertexBuffer(KWin::GLVertexBuffer::Static));
-        vbo->setData(6, 2, vertices, texCoords);
-        egl_out.render.vbo = vbo;
-    }
-
-    void prepare_render_targets(egl_output_t& egl_out)
-    {
-        auto wlr_fbo = wlr_gles2_renderer_get_current_fbo(platform.renderer);
-
-        auto geo = egl_out.out->base.view_geometry();
-        if (has_portrait_transform(egl_out.out->base)) {
-            geo = geo.transposed();
-        }
-
-        native_fbo = GLFramebuffer(wlr_fbo, geo.size(), geo);
-        GLFramebuffer::pushRenderTarget(&native_fbo);
-
-        if (egl_out.render.fbo.valid()) {
-            GLFramebuffer::pushRenderTarget(&egl_out.render.fbo);
-        }
-    }
-
-    void renderFramebufferToSurface(egl_output_t& egl_out)
-    {
-        if (!egl_out.render.fbo.valid()) {
-            // No additional render target.
-            return;
-        }
-        initRenderTarget(egl_out);
-
-        GLFramebuffer::popRenderTarget();
-
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
-
-        QMatrix4x4 rotationMatrix;
-        rotationMatrix.rotate(
-            rotation_in_degree(static_cast<base::backend::wlroots::output&>(egl_out.out->base)),
-            0,
-            0,
-            1);
-        shader->setUniform(GLShader::ModelViewProjectionMatrix, rotationMatrix);
-
-        egl_out.render.texture->bind();
-        egl_out.render.vbo->render(GL_TRIANGLES);
-        ShaderManager::instance()->popShader();
-    }
-
-    static constexpr float vertices[] = {
-        -1.0f,
-        1.0f,
-        -1.0f,
-        -1.0f,
-        1.0f,
-        -1.0f,
-
-        -1.0f,
-        1.0f,
-        1.0f,
-        -1.0f,
-        1.0f,
-        1.0f,
-    };
-
-    static constexpr float texCoords[] = {
-        0.0f,
-        1.0f,
-        0.0f,
-        0.0f,
-        1.0f,
-        0.0f,
-
-        0.0f,
-        1.0f,
-        1.0f,
-        0.0f,
-        1.0f,
-        1.0f,
-    };
 };
 
 }
