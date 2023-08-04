@@ -302,24 +302,25 @@ QRegion BlurEffect::expand(const QRegion& region) const
 
 QRegion BlurEffect::blurRegion(const EffectWindow* w) const
 {
-    QRegion region;
+    auto it = blurRegions.find(w);
 
-    if (auto it = blurRegions.find(w); it != blurRegions.end()) {
-        const QRegion& appRegion = *it;
-        if (!appRegion.isEmpty()) {
-            if (w->decorationHasAlpha() && decorationSupportsBlurBehind(w)) {
-                region = decorationBlurRegion(w);
-            }
-            region |= appRegion.translated(w->contentsRect().topLeft()) & w->decorationInnerRect();
-        } else {
-            // An empty region means that the blur effect should be enabled
-            // for the whole window.
-            region = w->rect();
-        }
-    } else if (w->decorationHasAlpha() && decorationSupportsBlurBehind(w)) {
+    if (it == blurRegions.end()) {
         // If the client hasn't specified a blur region, we'll only enable
         // the effect behind the decoration.
-        region = decorationBlurRegion(w);
+        return w->decorationHasAlpha() && decorationSupportsBlurBehind(w) ? decorationBlurRegion(w)
+                                                                          : QRegion{};
+    }
+
+    auto const& app_region = *it;
+    if (app_region.isEmpty()) {
+        // An empty region means that the blur effect should be enabled
+        // for the whole window.
+        return w->rect();
+    }
+
+    auto region = app_region.translated(w->contentsRect().topLeft()) & w->decorationInnerRect();
+    if (w->decorationHasAlpha() && decorationSupportsBlurBehind(w)) {
+        region |= decorationBlurRegion(w);
     }
 
     return region;
