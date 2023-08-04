@@ -2,6 +2,7 @@
     SPDX-FileCopyrightText: 2010 Fredrik Höglund <fredrik@kde.org>
     SPDX-FileCopyrightText: 2011 Philipp Knechtges <philipp-dev@knechtges.com>
     SPDX-FileCopyrightText: 2018 Alex Nemeth <alex.nemeth329@gmail.com>
+    SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -40,21 +41,21 @@ void update_function(BlurEffect& effect, KWin::effect::region_update const& upda
     }
 
     if (update.base.valid) {
-        effect.blurRegions[update.base.window] = update.value;
+        effect.blur_regions[update.base.window] = update.value;
     } else {
-        effect.blurRegions.remove(update.base.window);
+        effect.blur_regions.remove(update.base.window);
     }
 }
 
 BlurEffect::BlurEffect()
 {
     initConfig<BlurConfig>();
-    m_shader = new BlurShader(this);
+    shader = new BlurShader(this);
 
-    initBlurStrengthValues();
+    init_blur_strength_values();
     reconfigure(ReconfigureAll);
 
-    if (m_shader && m_shader->isValid() && m_renderTargetsValid) {
+    if (shader && shader->isValid() && render_targets_are_valid) {
         auto& blur_integration = effects->get_blur_integration();
         auto update = [this](auto&& data) { update_function(*this, data); };
         blur_integration.add(*this, update);
@@ -66,28 +67,27 @@ BlurEffect::~BlurEffect() = default;
 void BlurEffect::reset()
 {
     effects->makeOpenGLContextCurrent();
-    updateTexture();
+    update_texture();
     effects->doneOpenGLContextCurrent();
 }
 
-bool BlurEffect::renderTargetsValid() const
+static bool check_render_targets_are_valid(std::vector<blur_render_target> const& targets)
 {
-    return !render_targets.empty()
-        && std::all_of(render_targets.cbegin(), render_targets.cend(), [](auto&& target) {
-               return target.fbo->valid();
-           });
+    return !targets.empty() && std::all_of(targets.cbegin(), targets.cend(), [](auto&& target) {
+        return target.fbo->valid();
+    });
 }
 
-void BlurEffect::updateTexture()
+void BlurEffect::update_texture()
 {
     render_targets.clear();
 
     /* Reserve memory for:
      *  - The original sized texture (1)
-     *  - The downsized textures (m_downSampleIterations)
+     *  - The downsized textures (downsample_count)
      *  - The helper texture (1)
      */
-    render_targets.reserve(m_downSampleIterations + 2);
+    render_targets.reserve(downsample_count + 2);
 
     GLenum textureFormat = GL_RGBA8;
 
@@ -115,7 +115,7 @@ void BlurEffect::updateTexture()
         }
     }
 
-    for (int i = 0; i <= m_downSampleIterations; i++) {
+    for (int i = 0; i <= downsample_count; i++) {
         render_targets.emplace_back(
             std::make_unique<GLTexture>(textureFormat, effects->virtualScreenSize() / (1 << i)));
     }
@@ -124,32 +124,30 @@ void BlurEffect::updateTexture()
     render_targets.emplace_back(
         std::make_unique<GLTexture>(textureFormat, effects->virtualScreenSize()));
 
-    m_renderTargetsValid = renderTargetsValid();
-
-    // Prepare the stack for the rendering
-    m_renderTargetStack.clear();
-    m_renderTargetStack.reserve(m_downSampleIterations * 2);
+    render_targets_are_valid = check_render_targets_are_valid(render_targets);
+    render_target_stack.clear();
+    render_target_stack.reserve(downsample_count * 2);
 
     // Upsample
-    for (int i = 1; i < m_downSampleIterations; i++) {
-        m_renderTargetStack.push(render_targets.at(i).fbo.get());
+    for (int i = 1; i < downsample_count; i++) {
+        render_target_stack.push(render_targets.at(i).fbo.get());
     }
 
     // Downsample
-    for (int i = m_downSampleIterations; i > 0; i--) {
-        m_renderTargetStack.push(render_targets.at(i).fbo.get());
+    for (int i = downsample_count; i > 0; i--) {
+        render_target_stack.push(render_targets.at(i).fbo.get());
     }
 
-    // Copysample
-    m_renderTargetStack.push(render_targets.front().fbo.get());
+    // Copysample (with the original sized target)
+    render_target_stack.push(render_targets.front().fbo.get());
 
     // Invalidate noise texture
-    m_noiseTexture = {};
+    noise_texture = {};
 }
 
-void BlurEffect::initBlurStrengthValues()
+void BlurEffect::init_blur_strength_values()
 {
-    // This function creates an array of blur strength values that are evenly distributed
+    // This function creates an array of blur strength values that are evenly distributed.
 
     // The range of the slider on the blur settings UI
     int numOfBlurSteps = 15;
@@ -163,46 +161,46 @@ void BlurEffect::initBlurStrengthValues()
      * But there is a minimum and maximum value of offset per downsample iteration before we
      * get artifacts.
      *
-     * The minOffset variable is the minimum offset value for an iteration before we
+     * The offset min variable is the minimum offset value for an iteration before we
      * get blocky artifacts because of the downsampling.
      *
-     * The maxOffset value is the maximum offset value for an iteration before we
+     * The offset max value is the maximum offset value for an iteration before we
      * get diagonal line artifacts because of the nature of the dual kawase blur algorithm.
      *
-     * The expandSize value is the minimum value for an iteration before we reach the end
+     * The expand value is the minimum value for an iteration before we reach the end
      * of a texture in the shader and sample outside of the area that was copied into the
      * texture from the screen.
      */
 
-    // {minOffset, maxOffset, expandSize}
-    blurOffsets.append({1.0, 2.0, 10});  // Down sample size / 2
-    blurOffsets.append({2.0, 3.0, 20});  // Down sample size / 4
-    blurOffsets.append({2.0, 5.0, 50});  // Down sample size / 8
-    blurOffsets.append({3.0, 8.0, 150}); // Down sample size / 16
-    // blurOffsets.append({5.0, 10.0, 400}); // Down sample size / 32
-    // blurOffsets.append({7.0, ?.0});       // Down sample size / 64
+    // {min, max, expand}
+    blur_offsets.append({1.0, 2.0, 10});  // Down sample size / 2
+    blur_offsets.append({2.0, 3.0, 20});  // Down sample size / 4
+    blur_offsets.append({2.0, 5.0, 50});  // Down sample size / 8
+    blur_offsets.append({3.0, 8.0, 150}); // Down sample size / 16
+    // blur_offsets.append({5.0, 10.0, 400}); // Down sample size / 32
+    // blur_offsets.append({7.0, ?.0});       // Down sample size / 64
 
     float offsetSum = 0;
 
-    for (int i = 0; i < blurOffsets.size(); i++) {
-        offsetSum += blurOffsets[i].maxOffset - blurOffsets[i].minOffset;
+    for (int i = 0; i < blur_offsets.size(); i++) {
+        offsetSum += blur_offsets[i].max - blur_offsets[i].min;
     }
 
-    for (int i = 0; i < blurOffsets.size(); i++) {
-        int iterationNumber = std::ceil((blurOffsets[i].maxOffset - blurOffsets[i].minOffset)
-                                        / offsetSum * numOfBlurSteps);
+    for (int i = 0; i < blur_offsets.size(); i++) {
+        int iterationNumber
+            = std::ceil((blur_offsets[i].max - blur_offsets[i].min) / offsetSum * numOfBlurSteps);
         remainingSteps -= iterationNumber;
 
         if (remainingSteps < 0) {
             iterationNumber += remainingSteps;
         }
 
-        float offsetDifference = blurOffsets[i].maxOffset - blurOffsets[i].minOffset;
+        auto offsetDifference = blur_offsets[i].max - blur_offsets[i].min;
 
         for (int j = 1; j <= iterationNumber; j++) {
             // {iteration, offset}
-            blurStrengthValues.append(
-                {i + 1, blurOffsets[i].minOffset + (offsetDifference / iterationNumber) * j});
+            blur_strength_values.append(
+                {i + 1, blur_offsets[i].min + (offsetDifference / iterationNumber) * j});
         }
     }
 }
@@ -213,21 +211,21 @@ void BlurEffect::reconfigure(ReconfigureFlags flags)
 
     BlurConfig::self()->read();
 
-    int blurStrength = BlurConfig::blurStrength() - 1;
-    m_downSampleIterations = blurStrengthValues[blurStrength].iteration;
-    m_offset = blurStrengthValues[blurStrength].offset;
-    m_expandSize = blurOffsets[m_downSampleIterations - 1].expandSize;
-    m_noiseStrength = BlurConfig::noiseStrength();
+    auto blur_strength = BlurConfig::blurStrength() - 1;
+    downsample_count = blur_strength_values[blur_strength].iteration;
+    offset = blur_strength_values[blur_strength].offset;
+    expand_limit = blur_offsets[downsample_count - 1].expand;
+    noise_strength = BlurConfig::noiseStrength();
 
-    m_scalingFactor = qMax(1.0, QGuiApplication::primaryScreen()->logicalDotsPerInch() / 96.0);
+    scaling_factor = qMax(1.0, QGuiApplication::primaryScreen()->logicalDotsPerInch() / 96.0);
 
-    updateTexture();
+    update_texture();
 
-    if (!m_shader || !m_shader->isValid()) {
+    if (!shader || !shader->isValid()) {
         effects->get_blur_integration().remove(*this);
     }
 
-    // Update all windows for the blur to take effect
+    // Update all windows for the blur to take effect.
     effects->addRepaintFull();
 }
 
@@ -267,73 +265,71 @@ bool BlurEffect::supported()
     return supported;
 }
 
-bool BlurEffect::decorationSupportsBlurBehind(const EffectWindow* w) const
+bool BlurEffect::deco_supports_blur_behind(EffectWindow const* win) const
 {
-    return w->decoration() && !w->decoration()->blurRegion().isNull();
+    return win->decoration() && !win->decoration()->blurRegion().isNull();
 }
 
-QRegion BlurEffect::decorationBlurRegion(const EffectWindow* w) const
+QRegion BlurEffect::deco_blur_region(EffectWindow const* win) const
 {
-    if (!decorationSupportsBlurBehind(w)) {
+    if (!deco_supports_blur_behind(win)) {
         return QRegion();
     }
 
-    QRegion decorationRegion = QRegion(w->decoration()->rect()) - w->decorationInnerRect();
+    auto const decorationRegion = QRegion(win->decoration()->rect()) - win->decorationInnerRect();
 
-    // we return only blurred regions that belong to decoration region
-    return decorationRegion.intersected(w->decoration()->blurRegion());
+    // We return only blurred regions that belong to decoration region.
+    return decorationRegion.intersected(win->decoration()->blurRegion());
 }
 
-QRect BlurEffect::expand(const QRect& rect) const
+QRect BlurEffect::expand(QRect const& rect) const
 {
-    return rect.adjusted(-m_expandSize, -m_expandSize, m_expandSize, m_expandSize);
+    return rect.adjusted(-expand_limit, -expand_limit, expand_limit, expand_limit);
 }
 
-QRegion BlurEffect::expand(const QRegion& region) const
+QRegion BlurEffect::expand(QRegion const& region) const
 {
     QRegion expanded;
 
-    for (const QRect& rect : region) {
+    for (auto const& rect : region) {
         expanded += expand(rect);
     }
 
     return expanded;
 }
 
-QRegion BlurEffect::blurRegion(const EffectWindow* w) const
+QRegion BlurEffect::blur_region(EffectWindow const* win) const
 {
-    auto it = blurRegions.find(w);
+    auto it = blur_regions.find(win);
 
-    if (it == blurRegions.end()) {
-        // If the client hasn't specified a blur region, we'll only enable
-        // the effect behind the decoration.
-        return w->decorationHasAlpha() && decorationSupportsBlurBehind(w) ? decorationBlurRegion(w)
-                                                                          : QRegion{};
+    if (it == blur_regions.end()) {
+        // If the client hasn't specified a blur region, we'll only enable the effect behind deco.
+        return win->decorationHasAlpha() && deco_supports_blur_behind(win) ? deco_blur_region(win)
+                                                                           : QRegion{};
     }
 
     auto const& app_region = *it;
     if (app_region.isEmpty()) {
-        // An empty region means that the blur effect should be enabled
-        // for the whole window.
-        return w->rect();
+        // An empty region means that the blur effect should be enabled for the whole window.
+        return win->rect();
     }
 
-    auto region = app_region.translated(w->contentsRect().topLeft()) & w->decorationInnerRect();
-    if (w->decorationHasAlpha() && decorationSupportsBlurBehind(w)) {
-        region |= decorationBlurRegion(w);
+    auto region = app_region.translated(win->contentsRect().topLeft()) & win->decorationInnerRect();
+    if (win->decorationHasAlpha() && deco_supports_blur_behind(win)) {
+        region |= deco_blur_region(win);
     }
 
     return region;
 }
 
-void BlurEffect::uploadRegion(QVector2D*& map,
-                              QRegion const& region,
-                              int const downSampleIterations)
+void BlurEffect::upload_region(QVector2D*& map,
+                               QRegion const& region,
+                               int const downSampleIterations)
 {
     for (int i = 0; i <= downSampleIterations; i++) {
         auto const divisionRatio = (1 << i);
 
-        for (const QRect& r : region) {
+        for (auto const& r : region) {
             QVector2D const topLeft(r.x() / divisionRatio, r.y() / divisionRatio);
             QVector2D const topRight((r.x() + r.width()) / divisionRatio, r.y() / divisionRatio);
             QVector2D const bottomLeft(r.x() / divisionRatio, (r.y() + r.height()) / divisionRatio);
@@ -353,20 +349,20 @@ void BlurEffect::uploadRegion(QVector2D*& map,
     }
 }
 
-void BlurEffect::uploadGeometry(GLVertexBuffer* vbo,
-                                const QRegion& blurRegion,
-                                const QRegion& windowRegion)
+void BlurEffect::upload_geometry(GLVertexBuffer* vbo,
+                                 QRegion const& blur_region,
+                                 QRegion const& windowRegion)
 {
     auto const vertexCount
-        = ((blurRegion.rectCount() * (m_downSampleIterations + 1)) + windowRegion.rectCount()) * 6;
+        = ((blur_region.rectCount() * (downsample_count + 1)) + windowRegion.rectCount()) * 6;
     if (!vertexCount) {
         return;
     }
 
     auto map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
 
-    uploadRegion(map, blurRegion, m_downSampleIterations);
-    uploadRegion(map, windowRegion, 0);
+    upload_region(map, blur_region, downsample_count);
+    upload_region(map, windowRegion, 0);
 
     vbo->unmap();
 
@@ -377,8 +373,8 @@ void BlurEffect::uploadGeometry(GLVertexBuffer* vbo,
 
 void BlurEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
 {
-    m_paintedArea = QRegion();
-    m_currentBlur = QRegion();
+    painted_area = {};
+    current_blur_area = {};
 
     effects->prePaintScreen(data, presentTime);
 }
@@ -386,58 +382,58 @@ void BlurEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseco
 void BlurEffect::prePaintWindow(effect::window_prepaint_data& data,
                                 std::chrono::milliseconds presentTime)
 {
-    // this effect relies on prePaintWindow being called in the bottom to top order
+    // This effect relies on prePaintWindow being called in the bottom to top order.
 
     effects->prePaintWindow(data, presentTime);
 
-    if (!m_shader || !m_shader->isValid()) {
+    if (!shader || !shader->isValid()) {
         return;
     }
 
-    const QRegion oldClip = data.clip;
-    if (data.clip.intersects(m_currentBlur)) {
+    auto const oldClip = data.clip;
+    if (data.clip.intersects(current_blur_area)) {
         // to blur an area partially we have to shrink the opaque area of a window
         QRegion newClip;
-        for (const QRect& rect : data.clip) {
-            newClip |= rect.adjusted(m_expandSize, m_expandSize, -m_expandSize, -m_expandSize);
+        for (auto const& rect : data.clip) {
+            newClip |= rect.adjusted(expand_limit, expand_limit, -expand_limit, -expand_limit);
         }
         data.clip = newClip;
 
         // we don't have to blur a region we don't see
-        m_currentBlur -= newClip;
+        current_blur_area -= newClip;
     }
 
-    // if we have to paint a non-opaque part of this window that intersects with the
-    // currently blurred region we have to redraw the whole region
-    if ((data.paint.region - oldClip).intersects(m_currentBlur)) {
-        data.paint.region |= m_currentBlur;
+    // If we have to paint a non-opaque part of this window that intersects with the currently
+    // blurred region we have to redraw the whole region.
+    if ((data.paint.region - oldClip).intersects(current_blur_area)) {
+        data.paint.region |= current_blur_area;
     }
 
     // in case this window has regions to be blurred
     auto const screen = effects->virtualScreenGeometry();
-    auto const blurArea = blurRegion(&data.window).translated(data.window.pos()) & screen;
+    auto const blurArea = blur_region(&data.window).translated(data.window.pos()) & screen;
     auto const expandedBlur = (data.window.isDock() ? blurArea : expand(blurArea)) & screen;
 
     // if this window or a window underneath the blurred area is painted again we have to
     // blur everything
-    if (m_paintedArea.intersects(expandedBlur) || data.paint.region.intersects(blurArea)) {
+    if (painted_area.intersects(expandedBlur) || data.paint.region.intersects(blurArea)) {
         data.paint.region |= expandedBlur;
         // we have to check again whether we do not damage a blurred area
         // of a window
-        if (expandedBlur.intersects(m_currentBlur)) {
-            data.paint.region |= m_currentBlur;
+        if (expandedBlur.intersects(current_blur_area)) {
+            data.paint.region |= current_blur_area;
         }
     }
 
-    m_currentBlur |= expandedBlur;
+    current_blur_area |= expandedBlur;
 
-    m_paintedArea -= data.clip;
-    m_paintedArea |= data.paint.region;
+    painted_area -= data.clip;
+    painted_area |= data.paint.region;
 }
 
-bool BlurEffect::shouldBlur(effect::window_paint_data const& data) const
+bool BlurEffect::should_blur(effect::window_paint_data const& data) const
 {
-    if (!m_renderTargetsValid || !m_shader || !m_shader->isValid()) {
+    if (!render_targets_are_valid || !shader || !shader->isValid()) {
         return false;
     }
     if (effects->activeFullScreenEffect() && !data.window.data(WindowForceBlurRole).toBool()) {
@@ -461,19 +457,19 @@ bool BlurEffect::shouldBlur(effect::window_paint_data const& data) const
 
 void BlurEffect::drawWindow(effect::window_paint_data& data)
 {
-    if (!shouldBlur(data)) {
+    if (!should_blur(data)) {
         effects->drawWindow(data);
         return;
     }
 
     auto const screen = effects->renderTargetRect();
-    auto shape = blurRegion(&data.window).translated(data.window.pos());
+    auto shape = blur_region(&data.window).translated(data.window.pos());
 
     // let's do the evil parts - someone wants to blur behind a transformed window
     if (!qFuzzyCompare(data.paint.geo.scale.x(), 1.f)
         || !qFuzzyCompare(data.paint.geo.scale.y(), 1.f)) {
         auto pt = shape.boundingRect().topLeft();
-        QRegion scaledShape;
+        QRegion scaled_shape;
 
         for (auto r : shape) {
             r.moveTo(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
@@ -482,10 +478,11 @@ void BlurEffect::drawWindow(effect::window_paint_data& data)
                          + data.paint.geo.translation.y());
             r.setWidth(r.width() * data.paint.geo.scale.x());
             r.setHeight(r.height() * data.paint.geo.scale.y());
-            scaledShape |= r;
+            scaled_shape |= r;
         }
 
-        shape = scaledShape;
+        shape = scaled_shape;
+
     } else if (data.paint.geo.translation.x() || data.paint.geo.translation.y()) {
         // Only translated, not scaled
         shape = shape.translated(data.paint.geo.translation.x(), data.paint.geo.translation.y());
@@ -494,43 +491,43 @@ void BlurEffect::drawWindow(effect::window_paint_data& data)
     auto modal = data.window.transientFor();
     auto const transientForIsDock = (modal ? modal->isDock() : false);
 
-    doBlur(data, shape & data.paint.region, screen, data.window.isDock() || transientForIsDock);
+    do_blur(data, shape & data.paint.region, screen, data.window.isDock() || transientForIsDock);
 
     // Draw the window over the blurred area
     effects->drawWindow(data);
 }
 
-void BlurEffect::generateNoiseTexture()
+void BlurEffect::generate_noise_texture()
 {
-    if (m_noiseStrength == 0) {
+    if (noise_strength == 0) {
         return;
     }
 
     // Init randomness based on time
     std::srand(static_cast<uint>(QTime::currentTime().msec()));
 
-    QImage noiseImage(QSize(256, 256), QImage::Format_Grayscale8);
+    QImage noise_image(QSize(256, 256), QImage::Format_Grayscale8);
 
-    for (int y = 0; y < noiseImage.height(); y++) {
-        uint8_t* noiseImageLine = static_cast<uint8_t*>(noiseImage.scanLine(y));
+    for (int y = 0; y < noise_image.height(); y++) {
+        uint8_t* noise_imageLine = static_cast<uint8_t*>(noise_image.scanLine(y));
 
-        for (int x = 0; x < noiseImage.width(); x++) {
-            noiseImageLine[x] = std::rand() % m_noiseStrength;
+        for (int x = 0; x < noise_image.width(); x++) {
+            noise_imageLine[x] = std::rand() % noise_strength;
         }
     }
 
     // The noise texture looks distorted when not scaled with integer
-    noiseImage = noiseImage.scaled(noiseImage.size() * m_scalingFactor);
+    noise_image = noise_image.scaled(noise_image.size() * scaling_factor);
 
-    m_noiseTexture = GLTexture(noiseImage);
-    m_noiseTexture.setFilter(GL_NEAREST);
-    m_noiseTexture.setWrapMode(GL_REPEAT);
+    noise_texture = GLTexture(noise_image);
+    noise_texture.setFilter(GL_NEAREST);
+    noise_texture.setWrapMode(GL_REPEAT);
 }
 
-void BlurEffect::doBlur(effect::window_paint_data const& data,
-                        const QRegion& shape,
-                        const QRect& screen,
-                        bool isDock)
+void BlurEffect::do_blur(effect::window_paint_data const& data,
+                         QRegion const& shape,
+                         QRect const& screen,
+                         bool isDock)
 {
     if (shape.isEmpty()) {
         return;
@@ -544,19 +541,19 @@ void BlurEffect::doBlur(effect::window_paint_data const& data,
     auto const xTranslate = -screen.x();
     auto const yTranslate = effects->virtualScreenSize().height() - screen.height() - screen.y();
 
-    auto const expandedBlurRegion = expand(shape) & expand(screen);
-    auto const useSRGB = render_targets.front().texture->internalFormat() == GL_SRGB8_ALPHA8;
+    auto const expanded_blur_region = expand(shape) & expand(screen);
+    auto const use_srgb = render_targets.front().texture->internalFormat() == GL_SRGB8_ALPHA8;
 
     // Upload geometry for the down and upsample iterations
-    GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
+    auto vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
 
-    uploadGeometry(vbo, expandedBlurRegion.translated(xTranslate, yTranslate), shape);
+    upload_geometry(vbo, expanded_blur_region.translated(xTranslate, yTranslate), shape);
     vbo->bindArrays();
 
-    const QRect sourceRect = expandedBlurRegion.boundingRect() & screen;
-    const QRect destRect = sourceRect.translated(xTranslate, yTranslate);
-    int blurRectCount = expandedBlurRegion.rectCount() * 6;
+    auto const sourceRect = expanded_blur_region.boundingRect() & screen;
+    auto const destRect = sourceRect.translated(xTranslate, yTranslate);
+    int blurRectCount = expanded_blur_region.rectCount() * 6;
 
     /*
      * If the window is a dock or panel we avoid the "extended blur" effect.
@@ -568,31 +565,32 @@ void BlurEffect::doBlur(effect::window_paint_data const& data,
     if (isDock) {
         render_targets.back().fbo->blitFromFramebuffer(effects->mapToRenderTarget(sourceRect),
                                                        destRect);
-        GLFramebuffer::pushRenderTargets(m_renderTargetStack);
+        GLFramebuffer::pushRenderTargets(render_target_stack);
 
-        if (useSRGB) {
+        if (use_srgb) {
             glEnable(GL_FRAMEBUFFER_SRGB);
         }
 
-        const QRect screenRect = effects->virtualScreenGeometry();
+        auto const screenRect = effects->virtualScreenGeometry();
         QMatrix4x4 mvp;
         mvp.ortho(0, screenRect.width(), screenRect.height(), 0, 0, 65535);
-        copyScreenSampleTexture(vbo, blurRectCount, shape.translated(xTranslate, yTranslate), mvp);
+        copy_screen_sample_texture(
+            vbo, blurRectCount, shape.translated(xTranslate, yTranslate), mvp);
     } else {
         render_targets.front().fbo->blitFromFramebuffer(effects->mapToRenderTarget(sourceRect),
                                                         destRect);
-        GLFramebuffer::pushRenderTargets(m_renderTargetStack);
+        GLFramebuffer::pushRenderTargets(render_target_stack);
 
-        if (useSRGB) {
+        if (use_srgb) {
             glEnable(GL_FRAMEBUFFER_SRGB);
         }
 
-        // Remove the m_renderTargets[0] from the top of the stack that we will not use
+        // Remove the render_targets.front() from the top of the stack that we will not use.
         GLFramebuffer::popRenderTarget();
     }
 
-    downSampleTexture(vbo, blurRectCount);
-    upSampleTexture(vbo, blurRectCount);
+    downsample_texture(vbo, blurRectCount);
+    upsample_texture(vbo, blurRectCount);
 
     // Modulate the blurred texture with the window opacity if the window isn't opaque
     if (opacity < 1.0) {
@@ -608,12 +606,12 @@ void BlurEffect::doBlur(effect::window_paint_data const& data,
         glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
     }
 
-    upscaleRenderToScreen(vbo,
-                          blurRectCount * (m_downSampleIterations + 1),
-                          shape.rectCount() * 6,
-                          data.paint.screen_projection_matrix);
+    upsample_to_screen(vbo,
+                       blurRectCount * (downsample_count + 1),
+                       shape.rectCount() * 6,
+                       data.paint.screen_projection_matrix);
 
-    if (useSRGB) {
+    if (use_srgb) {
         glDisable(GL_FRAMEBUFFER_SRGB);
     }
 
@@ -621,7 +619,7 @@ void BlurEffect::doBlur(effect::window_paint_data const& data,
         glDisable(GL_BLEND);
     }
 
-    if (m_noiseStrength > 0) {
+    if (noise_strength > 0) {
         // Apply an additive noise onto the blurred image.
         // The noise is useful to mask banding artifacts, which often happens due to the smooth
         // color transitions in the blurred image. The noise is applied in perceptual space (i.e.
@@ -637,69 +635,67 @@ void BlurEffect::doBlur(effect::window_paint_data const& data,
             // Add the shader's output directly to the pixels in framebuffer.
             glBlendFunc(GL_ONE, GL_ONE);
         }
-        applyNoise(vbo,
-                   blurRectCount * (m_downSampleIterations + 1),
-                   shape.rectCount() * 6,
-                   data.paint.screen_projection_matrix,
-                   windowRect.topLeft());
+        apply_noise(vbo,
+                    blurRectCount * (downsample_count + 1),
+                    shape.rectCount() * 6,
+                    data.paint.screen_projection_matrix,
+                    windowRect.topLeft());
         glDisable(GL_BLEND);
     }
 
     vbo->unbindArrays();
 }
 
-void BlurEffect::upscaleRenderToScreen(GLVertexBuffer* vbo,
-                                       int vboStart,
-                                       int blurRectCount,
-                                       const QMatrix4x4& screenProjection)
+void BlurEffect::upsample_to_screen(GLVertexBuffer* vbo,
+                                    int vboStart,
+                                    int blurRectCount,
+                                    const QMatrix4x4& screenProjection)
 {
     render_targets[1].texture->bind();
 
-    m_shader->bind(BlurShader::UpSampleType);
-    m_shader->setTargetTextureSize(render_targets[0].texture->size()
-                                   * effects->renderTargetScale());
+    shader->bind(BlurShader::UpSampleType);
+    shader->setTargetTextureSize(render_targets[0].texture->size() * effects->renderTargetScale());
 
-    m_shader->setOffset(m_offset);
-    m_shader->setModelViewProjectionMatrix(screenProjection);
+    shader->setOffset(offset);
+    shader->setModelViewProjectionMatrix(screenProjection);
 
     // Render to the screen
     vbo->draw(GL_TRIANGLES, vboStart, blurRectCount);
-    m_shader->unbind();
+    shader->unbind();
 }
 
-void BlurEffect::applyNoise(GLVertexBuffer* vbo,
-                            int vboStart,
-                            int blurRectCount,
-                            const QMatrix4x4& screenProjection,
-                            QPoint windowPosition)
+void BlurEffect::apply_noise(GLVertexBuffer* vbo,
+                             int vboStart,
+                             int blurRectCount,
+                             const QMatrix4x4& screenProjection,
+                             QPoint windowPosition)
 {
-    if (m_noiseTexture.isNull()) {
-        generateNoiseTexture();
+    if (noise_texture.isNull()) {
+        generate_noise_texture();
     }
 
-    m_shader->bind(BlurShader::NoiseSampleType);
-    m_shader->setTargetTextureSize(render_targets[0].texture->size()
-                                   * effects->renderTargetScale());
-    m_shader->setNoiseTextureSize(m_noiseTexture.size() * effects->renderTargetScale());
-    m_shader->setTexturePosition(windowPosition * effects->renderTargetScale());
+    shader->bind(BlurShader::NoiseSampleType);
+    shader->setTargetTextureSize(render_targets[0].texture->size() * effects->renderTargetScale());
+    shader->setNoiseTextureSize(noise_texture.size() * effects->renderTargetScale());
+    shader->setTexturePosition(windowPosition * effects->renderTargetScale());
 
-    m_noiseTexture.bind();
+    noise_texture.bind();
 
-    m_shader->setOffset(m_offset);
-    m_shader->setModelViewProjectionMatrix(screenProjection);
+    shader->setOffset(offset);
+    shader->setModelViewProjectionMatrix(screenProjection);
 
     vbo->draw(GL_TRIANGLES, vboStart, blurRectCount);
-    m_shader->unbind();
+    shader->unbind();
 }
 
-void BlurEffect::downSampleTexture(GLVertexBuffer* vbo, int blurRectCount)
+void BlurEffect::downsample_texture(GLVertexBuffer* vbo, int blurRectCount)
 {
     QMatrix4x4 modelViewProjectionMatrix;
 
-    m_shader->bind(BlurShader::DownSampleType);
-    m_shader->setOffset(m_offset);
+    shader->bind(BlurShader::DownSampleType);
+    shader->setOffset(offset);
 
-    for (int i = 1; i <= m_downSampleIterations; i++) {
+    for (int i = 1; i <= downsample_count; i++) {
         modelViewProjectionMatrix.setToIdentity();
         modelViewProjectionMatrix.ortho(0,
                                         render_targets[i].texture->width(),
@@ -708,8 +704,8 @@ void BlurEffect::downSampleTexture(GLVertexBuffer* vbo, int blurRectCount)
                                         0,
                                         65535);
 
-        m_shader->setModelViewProjectionMatrix(modelViewProjectionMatrix);
-        m_shader->setTargetTextureSize(render_targets[i].texture->size());
+        shader->setModelViewProjectionMatrix(modelViewProjectionMatrix);
+        shader->setTargetTextureSize(render_targets[i].texture->size());
 
         // Copy the image from this texture
         render_targets[i - 1].texture->bind();
@@ -718,17 +714,17 @@ void BlurEffect::downSampleTexture(GLVertexBuffer* vbo, int blurRectCount)
         GLFramebuffer::popRenderTarget();
     }
 
-    m_shader->unbind();
+    shader->unbind();
 }
 
-void BlurEffect::upSampleTexture(GLVertexBuffer* vbo, int blurRectCount)
+void BlurEffect::upsample_texture(GLVertexBuffer* vbo, int blurRectCount)
 {
     QMatrix4x4 modelViewProjectionMatrix;
 
-    m_shader->bind(BlurShader::UpSampleType);
-    m_shader->setOffset(m_offset);
+    shader->bind(BlurShader::UpSampleType);
+    shader->setOffset(offset);
 
-    for (int i = m_downSampleIterations - 1; i >= 1; i--) {
+    for (int i = downsample_count - 1; i >= 1; i--) {
         modelViewProjectionMatrix.setToIdentity();
         modelViewProjectionMatrix.ortho(0,
                                         render_targets[i].texture->width(),
@@ -737,8 +733,8 @@ void BlurEffect::upSampleTexture(GLVertexBuffer* vbo, int blurRectCount)
                                         0,
                                         65535);
 
-        m_shader->setModelViewProjectionMatrix(modelViewProjectionMatrix);
-        m_shader->setTargetTextureSize(render_targets[i].texture->size());
+        shader->setModelViewProjectionMatrix(modelViewProjectionMatrix);
+        shader->setTargetTextureSize(render_targets[i].texture->size());
 
         // Copy the image from this texture
         render_targets[i + 1].texture->bind();
@@ -747,31 +743,39 @@ void BlurEffect::upSampleTexture(GLVertexBuffer* vbo, int blurRectCount)
         GLFramebuffer::popRenderTarget();
     }
 
-    m_shader->unbind();
+    shader->unbind();
 }
 
-void BlurEffect::copyScreenSampleTexture(GLVertexBuffer* vbo,
-                                         int blurRectCount,
-                                         QRegion blurShape,
-                                         const QMatrix4x4& screenProjection)
+void BlurEffect::copy_screen_sample_texture(GLVertexBuffer* vbo,
+                                            int blurRectCount,
+                                            QRegion blurShape,
+                                            const QMatrix4x4& screenProjection)
 {
-    m_shader->bind(BlurShader::CopySampleType);
+    shader->bind(BlurShader::CopySampleType);
 
-    m_shader->setModelViewProjectionMatrix(screenProjection);
-    m_shader->setTargetTextureSize(effects->virtualScreenSize());
+    shader->setModelViewProjectionMatrix(screenProjection);
+    shader->setTargetTextureSize(effects->virtualScreenSize());
 
     /*
      * This '1' sized adjustment is necessary do avoid windows affecting the blur that are
      * right next to this window.
      */
-    m_shader->setBlurRect(blurShape.boundingRect().adjusted(1, 1, -1, -1),
-                          effects->virtualScreenSize());
+    shader->setBlurRect(blurShape.boundingRect().adjusted(1, 1, -1, -1),
+                        effects->virtualScreenSize());
     render_targets.back().texture->bind();
 
     vbo->draw(GL_TRIANGLES, 0, blurRectCount);
     GLFramebuffer::popRenderTarget();
 
-    m_shader->unbind();
+    shader->unbind();
+}
+
+bool BlurEffect::provides(Effect::Feature feature)
+{
+    if (feature == Blur) {
+        return true;
+    }
+    return KWin::Effect::provides(feature);
 }
 
 bool BlurEffect::isActive() const
@@ -779,4 +783,4 @@ bool BlurEffect::isActive() const
     return !effects->isScreenLocked();
 }
 
-} // namespace KWin
+}
