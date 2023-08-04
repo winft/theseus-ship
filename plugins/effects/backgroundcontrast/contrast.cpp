@@ -194,39 +194,41 @@ bool ContrastEffect::shouldContrast(effect::window_paint_data const& data) const
 
 void ContrastEffect::drawWindow(effect::window_paint_data& data)
 {
-    if (shouldContrast(data)) {
-        auto const screen = effects->renderTargetRect();
-        auto shape = data.paint.region & contrastRegion(&data.window).translated(data.window.pos())
-            & screen;
+    if (!shouldContrast(data)) {
+        effects->drawWindow(data);
+        return;
+    }
 
-        // let's do the evil parts - someone wants to blur behind a transformed window
-        auto const translated = data.paint.geo.translation.x() || data.paint.geo.translation.y();
-        auto const scaled = !qFuzzyCompare(data.paint.geo.scale.x(), float(1.0))
-            && !qFuzzyCompare(data.paint.geo.scale.y(), float(1.0));
+    auto const screen = effects->renderTargetRect();
+    auto shape
+        = data.paint.region & contrastRegion(&data.window).translated(data.window.pos()) & screen;
 
-        if (scaled) {
-            QPoint pt = shape.boundingRect().topLeft();
-            QRegion scaledShape;
-            for (QRect r : shape) {
-                r.moveTo(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
-                             + data.paint.geo.translation.x(),
-                         pt.y() + (r.y() - pt.y()) * data.paint.geo.scale.y()
-                             + data.paint.geo.translation.y());
-                r.setWidth(r.width() * data.paint.geo.scale.x());
-                r.setHeight(r.height() * data.paint.geo.scale.y());
-                scaledShape |= r;
-            }
-            shape = scaledShape & data.paint.region;
-        } else if (translated) {
-            // Only translated, not scaled
-            shape
-                = shape.translated(data.paint.geo.translation.x(), data.paint.geo.translation.y());
-            shape = shape & data.paint.region;
+    // let's do the evil parts - someone wants to blur behind a transformed window
+    auto const translated = data.paint.geo.translation.x() || data.paint.geo.translation.y();
+    auto const scaled = !qFuzzyCompare(data.paint.geo.scale.x(), float(1.0))
+        && !qFuzzyCompare(data.paint.geo.scale.y(), float(1.0));
+
+    if (scaled) {
+        QPoint pt = shape.boundingRect().topLeft();
+        QRegion scaledShape;
+        for (QRect r : shape) {
+            r.moveTo(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
+                         + data.paint.geo.translation.x(),
+                     pt.y() + (r.y() - pt.y()) * data.paint.geo.scale.y()
+                         + data.paint.geo.translation.y());
+            r.setWidth(r.width() * data.paint.geo.scale.x());
+            r.setHeight(r.height() * data.paint.geo.scale.y());
+            scaledShape |= r;
         }
+        shape = scaledShape & data.paint.region;
+    } else if (translated) {
+        // Only translated, not scaled
+        shape = shape.translated(data.paint.geo.translation.x(), data.paint.geo.translation.y());
+        shape = shape & data.paint.region;
+    }
 
-        if (!shape.isEmpty()) {
-            doContrast(data, shape, screen);
-        }
+    if (!shape.isEmpty()) {
+        doContrast(data, shape, screen);
     }
 
     // Draw the window over the contrast area
