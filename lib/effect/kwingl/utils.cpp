@@ -1147,9 +1147,9 @@ void GLFramebuffer::initFBO(GLTexture* texture)
     mValid = true;
 }
 
-void GLFramebuffer::blitFromFramebuffer(const QRect& source,
-                                        const QRect& destination,
-                                        GLenum filter)
+void GLFramebuffer::blit_from_current_render_target(const QRect& source,
+                                                    const QRect& destination,
+                                                    GLenum filter)
 {
     if (!valid()) {
         return;

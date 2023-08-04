@@ -596,7 +596,7 @@ QImage effects_handler_wrap::blit_from_framebuffer(QRect const& geometry, double
 
         GLTexture texture(GL_RGBA8, nativeSize.width(), nativeSize.height());
         GLFramebuffer target(&texture);
-        target.blitFromFramebuffer(mapToRenderTarget(geometry));
+        target.blit_from_current_render_target(mapToRenderTarget(geometry));
 
         // Copy content from framebuffer into image.
         texture.bind();

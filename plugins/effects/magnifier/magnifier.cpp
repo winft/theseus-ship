@@ -122,7 +122,7 @@ void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
                   static_cast<double>(area.width()) / m_zoom,
                   static_cast<double>(area.height()) / m_zoom);
 
-    m_fbo->blitFromFramebuffer(srcArea);
+    m_fbo->blit_from_current_render_target(srcArea);
 
     // paint magnifier
     m_texture->bind();

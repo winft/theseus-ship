@@ -563,8 +563,8 @@ void BlurEffect::do_blur(effect::window_paint_data const& data,
      * when maximized windows or windows near the panel affect the dock blur.
      */
     if (isDock) {
-        render_targets.back().fbo->blitFromFramebuffer(effects->mapToRenderTarget(sourceRect),
-                                                       destRect);
+        render_targets.back().fbo->blit_from_current_render_target(
+            effects->mapToRenderTarget(sourceRect), destRect);
         GLFramebuffer::pushRenderTargets(render_target_stack);
 
         if (use_srgb) {
@@ -577,8 +577,8 @@ void BlurEffect::do_blur(effect::window_paint_data const& data,
         copy_screen_sample_texture(
             vbo, blurRectCount, shape.translated(xTranslate, yTranslate), mvp);
     } else {
-        render_targets.front().fbo->blitFromFramebuffer(effects->mapToRenderTarget(sourceRect),
-                                                        destRect);
+        render_targets.front().fbo->blit_from_current_render_target(
+            effects->mapToRenderTarget(sourceRect), destRect);
         GLFramebuffer::pushRenderTargets(render_target_stack);
 
         if (use_srgb) {

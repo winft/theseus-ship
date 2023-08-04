@@ -415,9 +415,9 @@ public:
      * @see blitSupported
      * @since 4.8
      */
-    void blitFromFramebuffer(const QRect& source = QRect(),
-                             const QRect& destination = QRect(),
-                             GLenum filter = GL_LINEAR);
+    void blit_from_current_render_target(const QRect& source = QRect(),
+                                         const QRect& destination = QRect(),
+                                         GLenum filter = GL_LINEAR);
 
 protected:
     void initFBO(GLTexture* texture);
