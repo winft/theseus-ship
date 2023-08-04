@@ -448,7 +448,7 @@ bool BlurEffect::shouldBlur(effect::window_paint_data const& data) const
     }
 
     auto const scaled = !qFuzzyCompare(data.paint.geo.scale.x(), 1.f)
-        && !qFuzzyCompare(data.paint.geo.scale.y(), 1.f);
+        || !qFuzzyCompare(data.paint.geo.scale.y(), 1.f);
     auto const translated = data.paint.geo.translation.x() || data.paint.geo.translation.y();
 
     if ((scaled || (translated || (data.paint.mask & PAINT_WINDOW_TRANSFORMED)))
@@ -470,10 +470,8 @@ void BlurEffect::drawWindow(effect::window_paint_data& data)
     auto shape = blurRegion(&data.window).translated(data.window.pos());
 
     // let's do the evil parts - someone wants to blur behind a transformed window
-    auto const scaled = !qFuzzyCompare(data.paint.geo.scale.x(), 1.f)
-        && !qFuzzyCompare(data.paint.geo.scale.y(), 1.f);
-
-    if (scaled) {
+    if (!qFuzzyCompare(data.paint.geo.scale.x(), 1.f)
+        || !qFuzzyCompare(data.paint.geo.scale.y(), 1.f)) {
         auto pt = shape.boundingRect().topLeft();
         QRegion scaledShape;
 

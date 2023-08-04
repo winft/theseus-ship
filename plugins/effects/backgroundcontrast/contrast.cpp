@@ -181,7 +181,7 @@ bool ContrastEffect::shouldContrast(effect::window_paint_data const& data) const
     }
 
     auto const scaled = !qFuzzyCompare(data.paint.geo.scale.x(), float(1.0))
-        && !qFuzzyCompare(data.paint.geo.scale.y(), float(1.0));
+        || !qFuzzyCompare(data.paint.geo.scale.y(), float(1.0));
     auto const translated = data.paint.geo.translation.x() || data.paint.geo.translation.y();
 
     if ((scaled || (translated || (data.paint.mask & PAINT_WINDOW_TRANSFORMED)))
@@ -204,11 +204,8 @@ void ContrastEffect::drawWindow(effect::window_paint_data& data)
         = data.paint.region & contrastRegion(&data.window).translated(data.window.pos()) & screen;
 
     // let's do the evil parts - someone wants to blur behind a transformed window
-    auto const translated = data.paint.geo.translation.x() || data.paint.geo.translation.y();
-    auto const scaled = !qFuzzyCompare(data.paint.geo.scale.x(), float(1.0))
-        && !qFuzzyCompare(data.paint.geo.scale.y(), float(1.0));
-
-    if (scaled) {
+    if (!qFuzzyCompare(data.paint.geo.scale.x(), 1.f)
+        || !qFuzzyCompare(data.paint.geo.scale.y(), 1.f)) {
         QPoint pt = shape.boundingRect().topLeft();
         QRegion scaledShape;
         for (QRect r : shape) {
@@ -221,7 +218,7 @@ void ContrastEffect::drawWindow(effect::window_paint_data& data)
             scaledShape |= r;
         }
         shape = scaledShape & data.paint.region;
-    } else if (translated) {
+    } else if (data.paint.geo.translation.x() || data.paint.geo.translation.y()) {
         // Only translated, not scaled
         shape = shape.translated(data.paint.geo.translation.x(), data.paint.geo.translation.y());
         shape = shape & data.paint.region;
