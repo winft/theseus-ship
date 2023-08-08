@@ -596,9 +596,11 @@ private:
             has_pending_repaints |= win->has_pending_repaints();
         }
 
-        // If no repaint regions got added and no window has pending repaints, return and skip this
-        // paint cycle
-        if (this->repaints_region.isEmpty() && !has_pending_repaints) {
+        repaints = this->repaints_region;
+
+        if (repaints.isEmpty() && !has_pending_repaints) {
+            // If no repaint regions got added and no window has pending repaints, return and skip
+            // this paint cycle.
             this->scene->idle();
 
             // This means the next time we composite it is done without timer delay.
@@ -606,11 +608,8 @@ private:
             return false;
         }
 
-        repaints = this->repaints_region;
-
         // Clear all repaints, so that post-pass can add repaints for the next repaint
-        this->repaints_region = QRegion();
-
+        this->repaints_region = {};
         return true;
     }
 
