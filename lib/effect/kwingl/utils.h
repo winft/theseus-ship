@@ -573,11 +573,7 @@ public:
     /**
      * Draws count vertices beginning with first.
      */
-    void draw(const QRegion& region,
-              GLenum primitiveMode,
-              int first,
-              int count,
-              bool hardwareClipping = false);
+    void draw(QRegion const& region, GLenum primitiveMode, int first, int count);
 
     /**
      * Renders the vertex data in given @a primitiveMode.
@@ -587,10 +583,9 @@ public:
      */
     void render(GLenum primitiveMode);
     /**
-     * Same as above restricting painting to @a region if @a hardwareClipping is true.
-     * It's within the caller's responsibility to enable GL_SCISSOR_TEST.
+     * Same as above restricting painting to @a region.
      */
-    void render(const QRegion& region, GLenum primitiveMode, bool hardwareClipping = false);
+    void render(QRegion const& region, GLenum primitiveMode);
     /**
      * Sets the color the geometry will be rendered with.
      * For legacy rendering glColor is used before rendering the geometry.

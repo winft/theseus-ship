@@ -647,8 +647,6 @@ protected:
             // get cursor position in projection coordinates
             auto const cursorPos
                 = this->platform.base.space->input->cursor->pos() - cursor->hotspot();
-            auto const cursorRect
-                = QRect(0, 0, sw_cursor.texture->width(), sw_cursor.texture->height());
             QMatrix4x4 mvp = m_projectionMatrix;
             mvp.translate(cursorPos.x(), cursorPos.y());
 
@@ -660,7 +658,7 @@ protected:
             sw_cursor.texture->bind();
             ShaderBinder binder(ShaderTrait::MapTexture);
             binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-            sw_cursor.texture->render(QRegion(cursorRect), cursorRect.size());
+            sw_cursor.texture->render(sw_cursor.texture->size());
             sw_cursor.texture->unbind();
 
             cursor->mark_as_rendered();

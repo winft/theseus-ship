@@ -89,13 +89,12 @@ public:
         auto tw = width * data.paint.geo.scale.x();
         auto th = height * data.paint.geo.scale.y();
         QRect const textureRect(tx, ty, tw, th);
-        auto const hardwareClipping = !(QRegion(textureRect) - data.paint.region).isEmpty();
 
         auto sw = width;
         auto sh = height;
 
         QRegion scissor = infiniteRegion();
-        if (hardwareClipping) {
+        if (!(QRegion(textureRect) - data.paint.region).isEmpty()) {
             scissor = m_scene->mapToRenderTarget(data.paint.region);
         }
 
@@ -105,10 +104,6 @@ public:
         if (cachedTexture) {
             if (cachedTexture->width() == tw && cachedTexture->height() == th) {
                 cachedTexture->bind();
-                if (hardwareClipping) {
-                    glEnable(GL_SCISSOR_TEST);
-                }
-
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -125,12 +120,9 @@ public:
                                    QVector4D(rgb, rgb, rgb, data.paint.opacity));
                 shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
-                cachedTexture->render(scissor, textureRect.size(), hardwareClipping);
+                cachedTexture->render(scissor, textureRect.size());
 
                 glDisable(GL_BLEND);
-                if (hardwareClipping) {
-                    glDisable(GL_SCISSOR_TEST);
-                }
                 cachedTexture->unbind();
                 m_timer.start(5000, this);
                 return;
@@ -253,10 +245,6 @@ public:
         glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, m_offscreenTex->height() - th, tw, th);
         GLFramebuffer::popRenderTarget();
 
-        if (hardwareClipping) {
-            glEnable(GL_SCISSOR_TEST);
-        }
-
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -272,13 +260,9 @@ public:
                            QVector4D(rgb, rgb, rgb, data.paint.opacity));
         shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
-        cache->render(scissor, textureRect.size(), hardwareClipping);
+        cache->render(scissor, textureRect.size());
 
         glDisable(GL_BLEND);
-
-        if (hardwareClipping) {
-            glDisable(GL_SCISSOR_TEST);
-        }
 
         cache->unbind();
         eff_win.setData(LanczosCacheRole, QVariant::fromValue(static_cast<void*>(cache)));

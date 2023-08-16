@@ -178,25 +178,17 @@ void OffscreenEffectPrivate::paint(GLTexture* texture,
     shader->setUniform(GLShader::TextureWidth, texture->width());
     shader->setUniform(GLShader::TextureHeight, texture->height());
 
-    auto const clipping = data.paint.region != infiniteRegion();
-    auto const clipRegion
-        = clipping ? effects->mapToRenderTarget(data.paint.region) : infiniteRegion();
-
-    if (clipping) {
-        glEnable(GL_SCISSOR_TEST);
-    }
-
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     texture->bind();
-    vbo->draw(clipRegion, primitiveType, 0, verticesPerQuad * quads.count(), clipping);
+    auto const clipRegion = data.paint.region != infiniteRegion()
+        ? effects->mapToRenderTarget(data.paint.region)
+        : infiniteRegion();
+    vbo->draw(clipRegion, primitiveType, 0, verticesPerQuad * quads.count());
     texture->unbind();
 
     glDisable(GL_BLEND);
-    if (clipping) {
-        glDisable(GL_SCISSOR_TEST);
-    }
     vbo->unbindArrays();
 }
 

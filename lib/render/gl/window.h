@@ -251,11 +251,7 @@ public:
             nodes[i].texture->setWrapMode(GL_CLAMP_TO_EDGE);
             nodes[i].texture->bind();
 
-            vbo->draw(scissorRegion,
-                      primitiveType,
-                      nodes[i].firstVertex,
-                      nodes[i].vertexCount,
-                      m_hardwareClipping);
+            vbo->draw(scissorRegion, primitiveType, nodes[i].firstVertex, nodes[i].vertexCount);
         }
 
         vbo->unbindArrays();
@@ -265,8 +261,6 @@ public:
         if (!data.shader) {
             ShaderManager::instance()->popShader();
         }
-
-        endRenderWindow();
     }
 
 private:
@@ -495,10 +489,6 @@ private:
             return false;
         }
 
-        if (m_hardwareClipping) {
-            glEnable(GL_SCISSOR_TEST);
-        }
-
         // Update the texture filter
         if (scene.platform.base.operation_mode == base::operation_mode::x11) {
             if (flags(mask & (paint_type::window_transformed | paint_type::screen_transformed))) {
@@ -522,13 +512,6 @@ private:
         vbo->setAttribLayout(attribs, 2, sizeof(GLVertex2D));
 
         return true;
-    }
-
-    void endRenderWindow()
-    {
-        if (m_hardwareClipping) {
-            glDisable(GL_SCISSOR_TEST);
-        }
     }
 
     typename Scene::texture_t* bindTexture()

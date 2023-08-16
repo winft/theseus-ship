@@ -94,7 +94,7 @@ public:
     void bind();
     void unbind();
     void render(QSize const& size);
-    void render(QRegion const& region, QSize const& size, bool hardwareClipping = false);
+    void render(QRegion const& region, QSize const& size);
 
     GLuint texture() const;
     GLenum target() const;
