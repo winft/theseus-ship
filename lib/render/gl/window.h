@@ -232,7 +232,7 @@ public:
         // The scissor region must be in the render target local coordinate system.
         QRegion scissorRegion = infiniteRegion();
         if (m_hardwareClipping) {
-            scissorRegion = this->scene.mapToRenderTarget(data.paint.region);
+            scissorRegion = data.paint.region;
         }
 
         for (size_t i = 0; i < quads.size(); i++) {
@@ -251,7 +251,11 @@ public:
             nodes[i].texture->setWrapMode(GL_CLAMP_TO_EDGE);
             nodes[i].texture->bind();
 
-            vbo->draw(scissorRegion, primitiveType, nodes[i].firstVertex, nodes[i].vertexCount);
+            vbo->draw([this](auto r) { return this->scene.mapToRenderTarget(r); },
+                      scissorRegion,
+                      primitiveType,
+                      nodes[i].firstVertex,
+                      nodes[i].vertexCount);
         }
 
         vbo->unbindArrays();

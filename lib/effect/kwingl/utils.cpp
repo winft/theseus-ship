@@ -2030,13 +2030,15 @@ void GLVertexBuffer::setAttribLayout(const GLVertexAttrib* attribs, int count, i
 
 void GLVertexBuffer::render(GLenum primitiveMode)
 {
-    render(infiniteRegion(), primitiveMode);
+    render({}, infiniteRegion(), primitiveMode);
 }
 
-void GLVertexBuffer::render(QRegion const& region, GLenum primitiveMode)
+void GLVertexBuffer::render(std::function<QRegion(QRegion const&)> vp_transform,
+                            QRegion const& region,
+                            GLenum primitiveMode)
 {
     d->bindArrays();
-    draw(region, primitiveMode, 0, d->vertexCount);
+    draw(vp_transform, region, primitiveMode, 0, d->vertexCount);
     d->unbindArrays();
 }
 
@@ -2052,10 +2054,14 @@ void GLVertexBuffer::unbindArrays()
 
 void GLVertexBuffer::draw(GLenum primitiveMode, int first, int count)
 {
-    draw(infiniteRegion(), primitiveMode, first, count);
+    draw({}, infiniteRegion(), primitiveMode, first, count);
 }
 
-void GLVertexBuffer::draw(QRegion const& region, GLenum primitiveMode, int first, int count)
+void GLVertexBuffer::draw(std::function<QRegion(QRegion const&)> vp_transform,
+                          QRegion const& region,
+                          GLenum primitiveMode,
+                          int first,
+                          int count)
 {
     auto const hardwareClipping = region != infiniteRegion();
 
@@ -2075,8 +2081,9 @@ void GLVertexBuffer::draw(QRegion const& region, GLenum primitiveMode, int first
         } else {
             // Clip using scissoring
             auto renderTarget = GLFramebuffer::currentRenderTarget();
+            auto const vp_region = vp_transform(region);
             glEnable(GL_SCISSOR_TEST);
-            for (auto const& r : region) {
+            for (auto const& r : vp_region) {
                 glScissor(r.x(),
                           renderTarget->size().height() - (r.y() + r.height()),
                           r.width(),

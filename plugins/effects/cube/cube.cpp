@@ -433,7 +433,7 @@ void CubeEffect::paintScreen(effect::screen_paint_data& data)
             wallpaper->bind();
 
             // TODO(romangg): Should we restrict to data.paint.region?
-            wallpaper->render(infiniteRegion(), rect.size());
+            wallpaper->render({}, infiniteRegion(), rect.size());
             wallpaper->unbind();
         }
 

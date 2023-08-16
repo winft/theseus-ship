@@ -182,10 +182,11 @@ void OffscreenEffectPrivate::paint(GLTexture* texture,
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     texture->bind();
-    auto const clipRegion = data.paint.region != infiniteRegion()
-        ? effects->mapToRenderTarget(data.paint.region)
-        : infiniteRegion();
-    vbo->draw(clipRegion, primitiveType, 0, verticesPerQuad * quads.count());
+    vbo->draw([](auto r) { return effects->mapToRenderTarget(r); },
+              data.paint.region,
+              primitiveType,
+              0,
+              verticesPerQuad * quads.count());
     texture->unbind();
 
     glDisable(GL_BLEND);

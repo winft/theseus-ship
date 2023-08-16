@@ -94,7 +94,9 @@ public:
     void bind();
     void unbind();
     void render(QSize const& size);
-    void render(QRegion const& region, QSize const& size);
+    void render(std::function<QRegion(QRegion const&)> vp_transform,
+                QRegion const& region,
+                QSize const& size);
 
     GLuint texture() const;
     GLenum target() const;

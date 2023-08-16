@@ -504,10 +504,12 @@ void GLTexture::unbind()
 
 void GLTexture::render(QSize const& size)
 {
-    render(infiniteRegion(), size);
+    render({}, infiniteRegion(), size);
 }
 
-void GLTexture::render(QRegion const& region, QSize const& size)
+void GLTexture::render(std::function<QRegion(QRegion const&)> vp_transform,
+                       QRegion const& region,
+                       QSize const& size)
 {
     if (size.isEmpty()) {
         // nothing to paint. m_vbo is likely nullptr and d_ptr->m_cachedSize empty as well, #337090
@@ -548,7 +550,7 @@ void GLTexture::render(QRegion const& region, QSize const& size)
         d_ptr->m_vbo->setData(4, 2, verts, texcoords);
     }
 
-    d_ptr->m_vbo->render(region, GL_TRIANGLE_STRIP);
+    d_ptr->m_vbo->render(vp_transform, region, GL_TRIANGLE_STRIP);
 }
 
 GLuint GLTexture::texture() const

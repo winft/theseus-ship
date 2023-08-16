@@ -95,7 +95,7 @@ public:
 
         QRegion scissor = infiniteRegion();
         if (!(QRegion(textureRect) - data.paint.region).isEmpty()) {
-            scissor = m_scene->mapToRenderTarget(data.paint.region);
+            scissor = data.paint.region;
         }
 
         auto cachedTexture
@@ -120,7 +120,9 @@ public:
                                    QVector4D(rgb, rgb, rgb, data.paint.opacity));
                 shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
-                cachedTexture->render(scissor, textureRect.size());
+                cachedTexture->render([this](auto r) { return m_scene->mapToRenderTarget(r); },
+                                      scissor,
+                                      textureRect.size());
 
                 glDisable(GL_BLEND);
                 cachedTexture->unbind();
@@ -260,7 +262,8 @@ public:
                            QVector4D(rgb, rgb, rgb, data.paint.opacity));
         shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
-        cache->render(scissor, textureRect.size());
+        cache->render(
+            [this](auto r) { return m_scene->mapToRenderTarget(r); }, scissor, textureRect.size());
 
         glDisable(GL_BLEND);
 

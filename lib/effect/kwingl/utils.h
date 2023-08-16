@@ -573,7 +573,11 @@ public:
     /**
      * Draws count vertices beginning with first.
      */
-    void draw(QRegion const& region, GLenum primitiveMode, int first, int count);
+    void draw(std::function<QRegion(QRegion const&)> vp_transform,
+              QRegion const& region,
+              GLenum primitiveMode,
+              int first,
+              int count);
 
     /**
      * Renders the vertex data in given @a primitiveMode.
@@ -585,7 +589,9 @@ public:
     /**
      * Same as above restricting painting to @a region.
      */
-    void render(QRegion const& region, GLenum primitiveMode);
+    void render(std::function<QRegion(QRegion const&)> vp_transform,
+                QRegion const& region,
+                GLenum primitiveMode);
     /**
      * Sets the color the geometry will be rendered with.
      * For legacy rendering glColor is used before rendering the geometry.
