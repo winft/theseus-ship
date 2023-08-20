@@ -36,6 +36,12 @@ struct blur_render_target {
     std::unique_ptr<GLFramebuffer> fbo;
 };
 
+struct blur_render_data {
+    EffectScreen const& screen;
+    std::vector<blur_render_target> targets;
+    QStack<GLFramebuffer*> stack;
+};
+
 class BlurEffect : public KWin::Effect
 {
     Q_OBJECT
@@ -49,6 +55,8 @@ public:
 
     void reconfigure(ReconfigureFlags flags) override;
     void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(effect::screen_paint_data& data) override;
+    void postPaintScreen() override;
     void prePaintWindow(effect::window_prepaint_data& data,
                         std::chrono::milliseconds presentTime) override;
     void drawWindow(effect::window_paint_data& data) override;
@@ -66,10 +74,13 @@ public:
     QMap<EffectWindow const*, QRegion> blur_regions;
 
 private:
+    void handle_screen_added(EffectScreen const* screen);
+    void handle_screen_removed(EffectScreen const* screen);
     QRect expand(QRect const& rect) const;
     QRegion expand(QRegion const& region) const;
     void init_blur_strength_values();
     void update_texture();
+    void update_texture(blur_render_data& data);
     QRegion blur_region(EffectWindow const* win) const;
     QRegion deco_blur_region(EffectWindow const* win) const;
     bool deco_supports_blur_behind(EffectWindow const* win) const;
@@ -81,7 +92,8 @@ private:
                          QRegion const& blur_region);
     void generate_noise_texture();
 
-    void upsample_to_screen(effect::window_paint_data const& data,
+    void upsample_to_screen(blur_render_data const& data,
+                            effect::window_paint_data const& win_data,
                             GLVertexBuffer* vbo,
                             int vboStart,
                             int blurRectCount);
@@ -89,20 +101,20 @@ private:
                      GLVertexBuffer* vbo,
                      int vboStart,
                      int blurRectCount);
-    void downsample_texture(GLVertexBuffer* vbo, int blurRectCount, QMatrix4x4 const& mvp);
-    void upsample_texture(GLVertexBuffer* vbo, int blurRectCount, QMatrix4x4 const& mvp);
-    void copy_screen_sample_texture(QSize const& viewport,
-                                    QSize const& fboSize,
+
+    void downsample_texture(blur_render_data const& data, GLVertexBuffer* vbo, int blurRectCount);
+    void upsample_texture(blur_render_data const& data, GLVertexBuffer* vbo, int blurRectCount);
+    void copy_screen_sample_texture(blur_render_data const& data,
                                     GLVertexBuffer* vbo,
                                     int blurRectCount,
-                                    QRect const& boundingRect,
-                                    QMatrix4x4 const& mvp);
+                                    QRect const& boundingRect);
 
-private:
     BlurShader* shader;
-    std::vector<blur_render_target> render_targets;
-    QStack<GLFramebuffer*> render_target_stack;
+
+    std::unordered_map<EffectScreen const*, blur_render_data> render_screens;
     bool render_targets_are_valid{false};
+
+    EffectScreen const* current_screen{nullptr};
 
     GLTexture noise_texture;
 
