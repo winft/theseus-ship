@@ -109,7 +109,7 @@ private:
             delete old_out;
         }
 
-        // Second check for added outputs.
+        // Second check for added and changed outputs.
         for (auto& out : res_outs) {
             auto it = std::find_if(
                 this->outputs.begin(), this->outputs.end(), [&out](auto const& old_out) {
@@ -117,10 +117,14 @@ private:
                     return old_x11_out->data.crtc == out->data.crtc
                         && old_x11_out->data.name == out->data.name;
                 });
+
             if (it == this->outputs.end()) {
                 qCDebug(KWIN_CORE) << "  added:" << out->name();
                 this->outputs.push_back(out.release());
                 Q_EMIT output_added(this->outputs.back());
+            } else {
+                // Update data of lasting output.
+                (*it)->data = out->data;
             }
         }
 
