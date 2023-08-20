@@ -104,6 +104,10 @@ public:
                          &compositor_qobject::aboutToToggleCompositing,
                          this->qobject.get(),
                          [this] { overlay_window = nullptr; });
+        QObject::connect(&platform.base,
+                         &base::platform::topology_changed,
+                         this->qobject.get(),
+                         [this] { full_repaint(*this); });
     }
 
     ~compositor()

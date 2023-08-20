@@ -89,20 +89,6 @@ public:
                 }
             });
 
-        QObject::connect(&base, &base::platform::topology_changed, qobject.get(), [this] {
-            auto& comp = this->base.render->compositor;
-            if (!comp->scene) {
-                return;
-            }
-            // desktopResized() should take care of when the size or
-            // shape of the desktop has changed, but we also want to
-            // catch refresh rate changes
-            //
-            // TODO: is this still necessary since we get the maximal refresh rate now
-            // dynamically?
-            comp->reinitialize();
-        });
-
         x11::init_space(*this);
     }
 
