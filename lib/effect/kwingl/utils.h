@@ -365,7 +365,7 @@ public:
     GLFramebuffer() = default;
     GLFramebuffer(GLFramebuffer&& other) noexcept;
     GLFramebuffer& operator=(GLFramebuffer&& other) noexcept;
-    explicit GLFramebuffer(GLuint framebuffer, QRect const& viewport);
+    GLFramebuffer(GLuint framebuffer, QSize const& size, QRect const& viewport);
     explicit GLFramebuffer(GLTexture* texture);
 
     ~GLFramebuffer();
@@ -433,6 +433,7 @@ private:
 
     GLuint mFramebuffer{0};
 
+    QSize mSize;
     QRect mViewport;
     bool mValid{false};
     bool mForeign{false};

@@ -326,13 +326,13 @@ private:
             auto geo = egl_out.out->base.geometry();
             geo.moveTopLeft({});
 
-            native_fbo = GLFramebuffer(wlr_fbo, geo);
+            native_fbo = GLFramebuffer(wlr_fbo, geo.size(), geo);
             GLFramebuffer::pushRenderTarget(&native_fbo);
 
             GLFramebuffer::pushRenderTarget(&egl_out.render.fbo);
             glViewport(vp.x(), vp.y(), vp.width(), vp.height());
         } else {
-            native_fbo = GLFramebuffer(wlr_fbo, vp);
+            native_fbo = GLFramebuffer(wlr_fbo, vp.size(), vp);
             GLFramebuffer::pushRenderTarget(&native_fbo);
         }
     }

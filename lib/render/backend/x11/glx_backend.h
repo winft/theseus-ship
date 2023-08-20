@@ -86,7 +86,8 @@ public:
 
         this->startRenderTimer();
 
-        native_fbo = GLFramebuffer(0, QRect({}, platform.base.topology.size));
+        native_fbo
+            = GLFramebuffer(0, platform.base.topology.size, QRect({}, platform.base.topology.size));
         GLFramebuffer::pushRenderTarget(&native_fbo);
 
         return repaint;

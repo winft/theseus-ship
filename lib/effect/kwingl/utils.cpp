@@ -993,8 +993,9 @@ GLFramebuffer* GLFramebuffer::popRenderTarget()
     return target;
 }
 
-GLFramebuffer::GLFramebuffer(GLuint framebuffer, QRect const& viewport)
+GLFramebuffer::GLFramebuffer(GLuint framebuffer, QSize const& size, QRect const& viewport)
     : mFramebuffer{framebuffer}
+    , mSize{size}
     , mViewport{viewport}
     , mValid{true}
     , mForeign{true}
@@ -1002,7 +1003,8 @@ GLFramebuffer::GLFramebuffer(GLuint framebuffer, QRect const& viewport)
 }
 
 GLFramebuffer::GLFramebuffer(GLTexture* texture)
-    : mViewport{QRect(QPoint(0, 0), texture->size())}
+    : mSize{texture->size()}
+    , mViewport{QRect(QPoint(0, 0), mSize)}
 {
     // Make sure FBO is supported
     if (sSupported && !texture->isNull()) {
@@ -1019,6 +1021,7 @@ GLFramebuffer::GLFramebuffer(GLFramebuffer&& other) noexcept
 GLFramebuffer& GLFramebuffer::operator=(GLFramebuffer&& other) noexcept
 {
     mFramebuffer = other.mFramebuffer;
+    mSize = other.mSize;
     mViewport = other.mViewport;
     mValid = other.mValid;
     mForeign = other.mForeign;
@@ -1036,7 +1039,7 @@ GLFramebuffer::~GLFramebuffer()
 
 QSize GLFramebuffer::size() const
 {
-    return mViewport.size();
+    return mSize;
 }
 
 void GLFramebuffer::bind()
