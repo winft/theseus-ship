@@ -358,6 +358,8 @@ if (HAVE_LIBCAP)
     )
 endif()
 
+kcoreaddons_target_static_plugins(kwin_wayland "kwin/effects/plugins")
+
 # Required for Plasma Wayland session. It expects a binary with this name to launch on startup.
 add_custom_target(kwin_wayland_wrapper ALL COMMAND
     ${CMAKE_COMMAND} -E create_symlink
