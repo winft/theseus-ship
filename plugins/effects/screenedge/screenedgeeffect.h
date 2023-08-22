@@ -8,10 +8,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <render/effect/interface/effect.h>
 
+#include <KConfigWatcher>
 #include <memory>
 
 class QTimer;
-namespace Plasma
+namespace KSvg
 {
 class Svg;
 }
@@ -48,7 +49,8 @@ private:
     template<typename T>
     T* createEdgeGlow(ElectricBorder border, const QSize& size);
     QSize cornerGlowSize(ElectricBorder border);
-    Plasma::Svg* m_glow = nullptr;
+    KConfigWatcher::Ptr m_configWatcher;
+    KSvg::Svg* m_glow = nullptr;
     std::map<ElectricBorder, std::unique_ptr<Glow>> m_borders;
     QTimer* m_cleanupTimer;
 };
