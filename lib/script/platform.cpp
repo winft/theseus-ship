@@ -10,8 +10,8 @@
 #include "scripting_logging.h"
 
 #include <KConfigGroup>
+#include <KLocalizedContext>
 #include <KPackage/PackageLoader>
-
 #include <QDBusConnection>
 #include <QFutureWatcher>
 #include <QMenu>
@@ -34,6 +34,7 @@ platform_wrap::platform_wrap(base::options& options,
     qRegisterMetaType<KWin::SessionState>();
 
     qml_engine->setProperty("_kirigamiTheme", QStringLiteral("KirigamiPlasmaStyle"));
+    qml_engine->rootContext()->setContextObject(new KLocalizedContext(qml_engine));
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
                                                  this,
                                                  QDBusConnection::ExportScriptableContents
