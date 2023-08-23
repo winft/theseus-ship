@@ -95,7 +95,7 @@ void desktop_background_item::updateWindow()
 
     scripting::window* clientCandidate = nullptr;
 
-    const auto clients = scripting::singleton_interface::qt_script_space->clientList();
+    const auto clients = scripting::singleton_interface::qt_script_space->windowList();
     for (auto client : clients) {
         if (client->isDesktop() && client->isOnOutput(m_output) && client->isOnDesktop(desktop)) {
             // In the unlikely event there are multiple desktop windows (e.g. conky's floating panel

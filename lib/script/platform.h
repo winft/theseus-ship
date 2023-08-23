@@ -220,7 +220,7 @@ public:
      */
     QList<QAction*> actionsForUserActionMenu(typename Space::window_t window, QMenu* parent)
     {
-        auto const w_wins = workspaceWrapper()->clientList();
+        auto const w_wins = workspaceWrapper()->windowList();
         auto const id
             = std::visit(overload{[](auto&& win) { return win->meta.internal_id; }}, window);
         auto window_it = std::find_if(

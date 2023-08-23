@@ -151,7 +151,7 @@ public:
     QSize virtualScreenSize() const;
     QRect virtualScreenGeometry() const;
 
-    virtual std::vector<window*> windows() const = 0;
+    virtual std::vector<window*> get_windows() const = 0;
 
     /**
      * Returns the geometry a Client can use with the specified option.
@@ -460,23 +460,21 @@ public:
     qt_script_space();
     ~qt_script_space() override;
 
-    /**
-     * List of Clients currently managed by KWin.
-     */
-    Q_INVOKABLE QList<KWin::scripting::window*> clientList() const;
+    /// List of windows managed by KWin.
+    Q_INVOKABLE QList<KWin::scripting::window*> windowList() const;
 };
 
 class KWIN_EXPORT declarative_script_space : public space
 {
     Q_OBJECT
-    Q_PROPERTY(QQmlListProperty<KWin::scripting::window> clients READ clients)
+    Q_PROPERTY(QQmlListProperty<KWin::scripting::window> windows READ windows)
 
 public:
     declarative_script_space() = default;
 
-    QQmlListProperty<window> clients();
-    static qsizetype countClientList(QQmlListProperty<window>* clients);
-    static window* atClientList(QQmlListProperty<window>* clients, qsizetype index);
+    QQmlListProperty<window> windows();
+    static qsizetype countWindowList(QQmlListProperty<window>* windows);
+    static window* atWindowList(QQmlListProperty<window>* windows, qsizetype index);
 };
 
 template<typename Space, typename RefSpace>
@@ -578,7 +576,7 @@ public:
         ref_space->virtual_desktop_manager->setCurrent(desktop);
     }
 
-    std::vector<window*> windows() const override
+    std::vector<window*> get_windows() const override
     {
         std::vector<window*> ret;
         for (auto const& [key, win] : windows_map) {
