@@ -18,8 +18,8 @@ window_model::window_model(QObject* parent)
 {
     auto ws_wrap = singleton_interface::qt_script_space;
 
-    connect(ws_wrap, &space::clientAdded, this, &window_model::handleWindowAdded);
-    connect(ws_wrap, &space::clientRemoved, this, &window_model::handleWindowRemoved);
+    connect(ws_wrap, &space::windowAdded, this, &window_model::handleWindowAdded);
+    connect(ws_wrap, &space::windowRemoved, this, &window_model::handleWindowRemoved);
 
     for (auto window : ws_wrap->windows()) {
         m_windows << window->internalId();

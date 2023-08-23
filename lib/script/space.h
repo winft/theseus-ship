@@ -364,9 +364,9 @@ public Q_SLOTS:
     virtual void hideOutline() = 0;
 
 Q_SIGNALS:
-    void clientAdded(KWin::scripting::window* client);
-    void clientRemoved(KWin::scripting::window* client);
-    void windowActivated(KWin::scripting::window* client);
+    void windowAdded(KWin::scripting::window*);
+    void windowRemoved(KWin::scripting::window*);
+    void windowActivated(KWin::scripting::window*);
 
     /// This signal is emitted when a virtual desktop is added or removed.
     void desktopsChanged();
@@ -1069,7 +1069,7 @@ protected:
         windows_map.insert({key, std::make_unique<window_t>(win, *this)});
 
         Space::windows_count++;
-        Q_EMIT Space::clientAdded(static_cast<window*>(windows_map.at(key).get()));
+        Q_EMIT Space::windowAdded(static_cast<window*>(windows_map.at(key).get()));
     }
 
     void handle_client_removed(uint32_t id)
@@ -1079,7 +1079,7 @@ protected:
         }
 
         Space::windows_count--;
-        Q_EMIT Space::clientRemoved(static_cast<window*>(windows_map.at(id).get()));
+        Q_EMIT Space::windowRemoved(static_cast<window*>(windows_map.at(id).get()));
         windows_map.erase(id);
     }
 
