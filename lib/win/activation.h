@@ -341,7 +341,6 @@ void set_demands_attention(Win* win, bool demand)
         win->space.stacking.attention_chain.push_front(win);
     }
 
-    Q_EMIT win->space.qobject->clientDemandsAttentionChanged(win->meta.signal_id, demand);
     Q_EMIT win->qobject->demandsAttentionChanged();
 }
 

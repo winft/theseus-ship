@@ -376,12 +376,6 @@ Q_SIGNALS:
      * @since 4.11
      */
     void desktopLayoutChanged();
-    /**
-     * The demands attention state for Client @p c changed to @p set.
-     * @param c The Client for which demands attention changed
-     * @param set New value of demands attention
-     */
-    void clientDemandsAttentionChanged(KWin::scripting::window* window, bool set);
     void screensChanged();
     /**
      * Signal emitted whenever the current activity changed.
@@ -513,15 +507,6 @@ public:
                 Q_EMIT Space::windowActivated(get_window(*act));
             }
         });
-
-        QObject::connect(ref_space->qobject.get(),
-                         &space_qobject::clientDemandsAttentionChanged,
-                         this,
-                         [this](auto win_id, auto set) {
-                             auto ref_win = this->ref_space->windows_map.at(win_id);
-                             auto window = get_window(ref_win);
-                             Q_EMIT Space::clientDemandsAttentionChanged(window, set);
-                         });
 
         auto& vds = ref_space->virtual_desktop_manager;
         QObject::connect(vds->qobject.get(),

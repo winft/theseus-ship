@@ -39,7 +39,6 @@ Q_SIGNALS:
     void remnant_created(quint32 remnant);
 
     void clientActivated();
-    void clientDemandsAttentionChanged(quint32, bool);
     void clientMinimizedChanged(quint32);
     void unmanagedAdded(quint32);
     void unmanagedRemoved(quint32);
