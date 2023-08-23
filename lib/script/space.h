@@ -41,8 +41,8 @@ class KWIN_EXPORT space : public QObject
     Q_PROPERTY(QVector<KWin::win::virtual_desktop*> desktops READ desktops NOTIFY desktopsChanged)
     Q_PROPERTY(KWin::win::virtual_desktop* currentDesktop READ currentDesktop WRITE
                    setCurrentDesktop NOTIFY currentDesktopChanged)
-    Q_PROPERTY(KWin::scripting::window* activeClient READ activeClient WRITE setActiveClient NOTIFY
-                   clientActivated)
+    Q_PROPERTY(KWin::scripting::window* activeWindow READ activeWindow WRITE setActiveWindow NOTIFY
+                   windowActivated)
     // TODO: write and notify?
     Q_PROPERTY(QSize desktopGridSize READ desktopGridSize NOTIFY desktopLayoutChanged)
     Q_PROPERTY(int desktopGridWidth READ desktopGridWidth NOTIFY desktopLayoutChanged)
@@ -132,9 +132,9 @@ public:
     {
     }
 
-    virtual window* activeClient() const = 0;
+    virtual window* activeWindow() const = 0;
 
-    virtual void setActiveClient(window* win) = 0;
+    virtual void setActiveWindow(window* win) = 0;
 
     virtual QSize desktopGridSize() const = 0;
     int desktopGridWidth() const;
@@ -366,7 +366,7 @@ public Q_SLOTS:
 Q_SIGNALS:
     void clientAdded(KWin::scripting::window* client);
     void clientRemoved(KWin::scripting::window* client);
-    void clientActivated(KWin::scripting::window* client);
+    void windowActivated(KWin::scripting::window* client);
 
     /// This signal is emitted when a virtual desktop is added or removed.
     void desktopsChanged();
@@ -512,7 +512,7 @@ public:
 
         QObject::connect(ref_space->qobject.get(), &space_qobject::clientActivated, this, [this] {
             if (auto act = this->ref_space->stacking.active) {
-                Q_EMIT Space::clientActivated(get_window(*act));
+                Q_EMIT Space::windowActivated(get_window(*act));
             }
         });
 
@@ -587,7 +587,7 @@ public:
         return ret;
     }
 
-    window* activeClient() const override
+    window* activeWindow() const override
     {
         auto active_client = ref_space->stacking.active;
         if (!active_client) {
@@ -596,7 +596,7 @@ public:
         return get_window(*active_client);
     }
 
-    void setActiveClient(window* win) override
+    void setActiveWindow(window* win) override
     {
         std::visit(overload{[this](auto&& ref_win) { win::activate_window(*ref_space, *ref_win); }},
                    static_cast<window_t*>(win)->client());
