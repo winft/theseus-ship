@@ -61,6 +61,8 @@ include(KDECompilerSettings NO_POLICY_SCOPE)
 include(ECMInstallIcons)
 include(ECMOptionalAddSubdirectory)
 include(ECMConfiguredInstall)
+include(ECMQmlModule)
+include(ECMGenerateQmlTypes)
 
 # required frameworks by Core
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS

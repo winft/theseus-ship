@@ -2,20 +2,26 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-add_library(effectsplugin
+ecm_add_qml_module(effectsplugin URI "org.kde.kwin.private.effects")
+
+ecm_target_qml_sources(effectsplugin
+  SOURCES
+    qml/WindowHeap.qml
+    qml/WindowHeapDelegate.qml
+)
+
+target_sources(effectsplugin PRIVATE
     expoarea.cpp
     expolayout.cpp
     plugin.cpp
 )
 
-target_link_libraries(effectsplugin
-    Qt::Core
-    Qt::Gui
-    Qt::Qml
-    Qt::Quick
-    render
+target_link_libraries(effectsplugin PRIVATE
+  Qt6::Quick
+  Qt6::Qml
+  KF6::I18n
+  render
 )
 
-install(DIRECTORY qml/ DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/kwin/private/effects)
-install(TARGETS effectsplugin DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/kwin/private/effects)
-install(FILES qmldir DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/kwin/private/effects)
+ecm_finalize_qml_module(effectsplugin DESTINATION ${KDE_INSTALL_QMLDIR})
+
