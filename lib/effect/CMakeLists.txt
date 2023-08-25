@@ -18,32 +18,6 @@ ecm_setup_version(${CMAKE_PROJECT_VERSION}
                   SOVERSION 14
 )
 
-### xrenderutils lib ###
-set(kwin_XRENDERUTILS_SRCS
-    kwinxrender/utils.cpp
-)
-
-add_library(kwinxrenderutils SHARED ${kwin_XRENDERUTILS_SRCS})
-generate_export_header(kwinxrenderutils EXPORT_FILE_NAME kwinxrender/export.h)
-target_link_libraries(kwinxrenderutils
-    PUBLIC
-        Qt::Core
-        Qt::Gui
-
-        XCB::IMAGE
-        XCB::RENDER
-        XCB::XCB
-        XCB::XFIXES
-)
-
-set_target_properties(kwinxrenderutils PROPERTIES
-    VERSION ${KWINEFFECTS_VERSION}
-    SOVERSION ${KWINEFFECTS_SOVERSION}
-)
-set_target_properties(kwinxrenderutils PROPERTIES OUTPUT_NAME ${KWIN_NAME}xrenderutils)
-
-install(TARGETS kwinxrenderutils EXPORT KWinEffectsTargets ${INSTALL_TARGETS_DEFAULT_ARGS})
-
 ###  effects lib  ###
 set(kwin_EFFECTSLIB_SRCS
     kwineffects/anidata.cpp
@@ -129,8 +103,6 @@ install(FILES
     kwingl/legacy/kwinglutils.h
     kwingl/legacy/kwinglutils_export.h
     kwingl/legacy/kwinglutils_funcs.h
-    kwinxrender/legacy/kwinxrenderutils.h
-    kwinxrender/legacy/kwinxrenderutils_export.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 install(FILES
@@ -161,11 +133,6 @@ install(FILES
     kwingl/utils.h
     kwingl/utils_funcs.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwingl COMPONENT Devel)
-
-install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/kwinxrender/export.h
-    kwinxrender/utils.h
-    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinxrender COMPONENT Devel)
 
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinEffects")
 

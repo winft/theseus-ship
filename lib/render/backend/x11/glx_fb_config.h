@@ -6,7 +6,7 @@
 #pragma once
 
 #include "base/logging.h"
-#include <kwinxrender/utils.h>
+#include "render/xrender/utils.h"
 
 #include <deque>
 #include <epoxy/glx.h>

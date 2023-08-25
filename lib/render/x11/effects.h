@@ -16,9 +16,8 @@
 
 #include "base/x11/xcb/window.h"
 #include "render/effects.h"
+#include "render/xrender/utils.h"
 #include "win/x11/space.h"
-
-#include <kwinxrender/utils.h>
 
 #include <memory.h>
 

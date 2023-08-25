@@ -120,8 +120,9 @@ add_library(render-x11 SHARED)
 target_link_libraries(render-x11
   PUBLIC
     base-x11
-    kwinxrenderutils
     render
+  PRIVATE
+    XCB::IMAGE
 )
 
 target_sources(render-x11
@@ -141,10 +142,12 @@ target_sources(render-x11
       x11/property_notify_filter.h
       x11/shadow.h
       x11/types.h
+      xrender/utils.h
   PRIVATE
     backend/x11/glx_context_attribute_builder.cpp
     backend/x11/non_composited_outline.cpp
     x11/compositor_selection_owner.cpp
+    xrender/utils.cpp
 )
 
 set_target_properties(render-x11 PROPERTIES
