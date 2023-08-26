@@ -32,10 +32,6 @@
 #include <vector>
 #include <xcb/xproto.h>
 
-#if HAVE_DL_LIBRARY
-#include <dlfcn.h>
-#endif
-
 namespace KWin::render::backend::x11
 {
 
@@ -365,11 +361,6 @@ static inline glXFuncPtr getProcAddress(const char* name)
     glXFuncPtr ret = nullptr;
 #if HAVE_EPOXY_GLX
     ret = glXGetProcAddress(reinterpret_cast<const GLubyte*>(name));
-#endif
-#if HAVE_DL_LIBRARY
-    if (ret == nullptr) {
-        ret = reinterpret_cast<glXFuncPtr>(dlsym(RTLD_DEFAULT, name));
-    }
 #endif
     return ret;
 }

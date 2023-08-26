@@ -64,7 +64,7 @@ class KWIN_EXPORT effects_handler_wrap : public EffectsHandler
 public:
     template<typename Scene>
     effects_handler_wrap(Scene& scene)
-        : loader(std::make_unique<effect_loader>(*this, scene.platform))
+        : loader(std::make_unique<effect_loader>(scene.platform))
         , options{*scene.platform.options}
     {
         qRegisterMetaType<QVector<KWin::EffectWindow*>>();
@@ -1396,7 +1396,7 @@ protected:
         QObject::connect(qtwin,
                          &win::window_qobject::opacityChanged,
                          this,
-                         [this, &window](auto old) { slotOpacityChanged(window, old); });
+                         [this, &window](auto old) { this->slotOpacityChanged(window, old); });
         QObject::connect(
             qtwin, &win::window_qobject::clientMinimized, this, [this, &window](auto animate) {
                 // TODO: notify effects even if it should not animate?
@@ -1418,11 +1418,11 @@ protected:
             qtwin,
             &win::window_qobject::frame_geometry_changed,
             this,
-            [this, &window](auto const& rect) { slotFrameGeometryChanged(window, rect); });
-        QObject::connect(qtwin,
-                         &win::window_qobject::damaged,
-                         this,
-                         [this, &window](auto const& rect) { slotWindowDamaged(window, rect); });
+            [this, &window](auto const& rect) { this->slotFrameGeometryChanged(window, rect); });
+        QObject::connect(
+            qtwin, &win::window_qobject::damaged, this, [this, &window](auto const& rect) {
+                this->slotWindowDamaged(window, rect);
+            });
         QObject::connect(qtwin,
                          &win::window_qobject::unresponsiveChanged,
                          this,

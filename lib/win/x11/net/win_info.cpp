@@ -949,7 +949,7 @@ void win_info::setVisibleIconName(const char* visibleIconName)
     }
 }
 
-void win_info::setDesktop(int desktop, bool ignore_viewport)
+void win_info::setDesktop(int desktop, bool /*ignore_viewport*/)
 {
     if (p->mapping_state_dirty) {
         updateWMState();

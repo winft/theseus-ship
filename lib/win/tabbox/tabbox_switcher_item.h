@@ -21,7 +21,6 @@ class tabbox_switcher_item : public QObject
     Q_OBJECT
     Q_PROPERTY(QAbstractItemModel* model READ model NOTIFY model_changed)
     Q_PROPERTY(QRect screenGeometry READ screen_geometry NOTIFY screen_geometry_changed)
-    Q_PROPERTY(bool visible READ is_visible NOTIFY visible_changed)
     Q_PROPERTY(bool visible READ is_visible WRITE set_visible NOTIFY visible_changed)
     Q_PROPERTY(bool allDesktops READ is_all_desktops NOTIFY all_desktops_changed)
     Q_PROPERTY(

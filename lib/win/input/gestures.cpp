@@ -171,6 +171,8 @@ int gesture_recognizer::startSwipeGesture(uint fingerCount,
                 continue;
             }
             break;
+        case swipe_direction::invalid:
+            continue;
         }
 
         m_activeSwipeGestures << gesture;

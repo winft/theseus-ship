@@ -20,7 +20,7 @@ TEST_CASE("tabbox desktop chain", "[unit],[win]")
         struct data {
             int size;
             int next;
-            int result;
+            unsigned int result;
         };
 
         auto test_data = GENERATE(data{0, 1, 1},
