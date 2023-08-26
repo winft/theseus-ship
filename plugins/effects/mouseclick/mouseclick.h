@@ -83,7 +83,7 @@ public:
     MouseClickEffect();
     ~MouseClickEffect() override;
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;

@@ -155,19 +155,18 @@ void SlidingPopupsEffect::reconfigure(ReconfigureFlags flags)
     }
 }
 
-void SlidingPopupsEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                         std::chrono::milliseconds presentTime)
+void SlidingPopupsEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     auto animationIt = animations.find(&data.window);
     if (animationIt == animations.end()) {
-        effects->prePaintWindow(data, presentTime);
+        effects->prePaintWindow(data);
         return;
     }
 
-    (*animationIt).timeline.advance(presentTime);
+    (*animationIt).timeline.advance(data.present_time);
     data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
 
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 }
 
 void SlidingPopupsEffect::paintWindow(effect::window_paint_data& data)

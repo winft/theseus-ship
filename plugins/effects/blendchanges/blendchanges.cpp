@@ -97,16 +97,16 @@ void BlendChanges::postPaintScreen()
     effects->addRepaintFull();
 }
 
-void BlendChanges::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void BlendChanges::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (m_state == Off) {
         return;
     }
     if (m_state == Blending) {
-        m_timeline.advance(presentTime);
+        m_timeline.advance(data.present_time);
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 } // namespace KWin

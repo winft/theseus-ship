@@ -82,13 +82,13 @@ inline QRegion buildClipRegion(const QPoint& pos, int w, int h)
     return r;
 }
 
-void SlideEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void SlideEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     std::chrono::milliseconds timeDelta = std::chrono::milliseconds::zero();
     if (m_lastPresentTime.count()) {
-        timeDelta = presentTime - m_lastPresentTime;
+        timeDelta = data.present_time - m_lastPresentTime;
     }
-    m_lastPresentTime = presentTime;
+    m_lastPresentTime = data.present_time;
 
     if (m_state == State::ActiveAnimation) {
         m_motionX.advance(timeDelta);
@@ -125,9 +125,9 @@ void SlideEffect::prePaintScreen(effect::paint_data& data, std::chrono::millisec
         }
     }
 
-    data.mask |= PAINT_SCREEN_TRANSFORMED | PAINT_SCREEN_BACKGROUND_FIRST;
+    data.paint.mask |= PAINT_SCREEN_TRANSFORMED | PAINT_SCREEN_BACKGROUND_FIRST;
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void SlideEffect::paintScreen(effect::screen_paint_data& data)
@@ -180,11 +180,10 @@ bool SlideEffect::willBePainted(const EffectWindow* w) const
     return false;
 }
 
-void SlideEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                 std::chrono::milliseconds presentTime)
+void SlideEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 }
 
 void SlideEffect::paintWindow(effect::window_paint_data& data)

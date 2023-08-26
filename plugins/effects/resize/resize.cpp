@@ -46,21 +46,20 @@ ResizeEffect::~ResizeEffect()
 {
 }
 
-void ResizeEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void ResizeEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (m_active) {
-        data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
+        data.paint.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
     }
-    AnimationEffect::prePaintScreen(data, presentTime);
+    AnimationEffect::prePaintScreen(data);
 }
 
-void ResizeEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                  std::chrono::milliseconds presentTime)
+void ResizeEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     if (m_active && &data.window == m_resizeWindow) {
         data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
     }
-    AnimationEffect::prePaintWindow(data, presentTime);
+    AnimationEffect::prePaintWindow(data);
 }
 
 void ResizeEffect::paintWindow(effect::window_paint_data& data)

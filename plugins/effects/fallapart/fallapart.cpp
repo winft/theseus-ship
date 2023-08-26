@@ -42,30 +42,28 @@ void FallApartEffect::reconfigure(ReconfigureFlags)
     blockSize = FallApartConfig::blockSize();
 }
 
-void FallApartEffect::prePaintScreen(effect::paint_data& data,
-                                     std::chrono::milliseconds presentTime)
+void FallApartEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (!windows.isEmpty()) {
-        data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
+        data.paint.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
     }
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
-void FallApartEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                     std::chrono::milliseconds presentTime)
+void FallApartEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     auto animationIt = windows.find(&data.window);
     if (animationIt != windows.end() && isRealWindow(&data.window)) {
         int time = 0;
         if (animationIt->lastPresentTime.count()) {
-            time = (presentTime - animationIt->lastPresentTime).count();
+            time = (data.present_time - animationIt->lastPresentTime).count();
         }
-        animationIt->lastPresentTime = presentTime;
+        animationIt->lastPresentTime = data.present_time;
 
         animationIt->progress += time / animationTime(1000.);
         data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
     }
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 }
 
 void FallApartEffect::apply(effect::window_paint_data& data, WindowQuadList& quads)

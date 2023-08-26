@@ -26,9 +26,8 @@ public:
     MagicLampEffect();
 
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(effect::window_prepaint_data& data,
-                        std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
+    void prePaintWindow(effect::window_prepaint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
 

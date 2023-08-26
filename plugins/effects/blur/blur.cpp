@@ -380,18 +380,13 @@ void BlurEffect::upload_geometry(GLVertexBuffer* vbo,
     vbo->setAttribLayout(layout, 2, sizeof(QVector2D));
 }
 
-void BlurEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void BlurEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     painted_area = {};
     current_blur_area = {};
 
-    effects->prePaintScreen(data, presentTime);
-}
-
-void BlurEffect::paintScreen(effect::screen_paint_data& data)
-{
-    current_screen = data.screen;
-    effects->paintScreen(data);
+    current_screen = &data.screen;
+    effects->prePaintScreen(data);
 }
 
 void BlurEffect::postPaintScreen()
@@ -400,12 +395,11 @@ void BlurEffect::postPaintScreen()
     effects->postPaintScreen();
 }
 
-void BlurEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                std::chrono::milliseconds presentTime)
+void BlurEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     // This effect relies on prePaintWindow being called in the bottom to top order.
 
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 
     if (!shader || !shader->isValid()) {
         return;

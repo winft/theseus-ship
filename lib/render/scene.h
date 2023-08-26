@@ -240,6 +240,10 @@ public:
         const QRegion displayRegion(0, 0, space_size.width(), space_size.height());
         mask = (damage == displayRegion) ? paint_type::none : paint_type::screen_region;
 
+        assert(repaint_output);
+        auto effect_screen = platform.compositor->effects->findScreen(repaint_output->name());
+        assert(effect_screen);
+
         if (Q_UNLIKELY(presentTime < m_expectedPresentTimestamp)) {
             qCDebug(KWIN_CORE,
                     "Provided presentation timestamp is invalid: %ld (current: %ld)",
@@ -254,14 +258,20 @@ public:
 
         QRegion region = damage;
 
-        effect::paint_data pdata;
-        pdata.mask = static_cast<int>(mask);
-        pdata.region = region;
+        effect::screen_prepaint_data pre_data {
+            .screen = *effect_screen,
+            .paint = {
+                .mask = static_cast<int>(mask),
+                .region = region,
+            },
+            .render = render,
+            .present_time = m_expectedPresentTimestamp,
+        };
 
-        platform.compositor->effects->prePaintScreen(pdata, m_expectedPresentTimestamp);
+        platform.compositor->effects->prePaintScreen(pre_data);
 
-        mask = static_cast<paint_type>(pdata.mask);
-        region = pdata.region;
+        mask = static_cast<paint_type>(pre_data.paint.mask);
+        region = pre_data.paint.region;
 
         if (flags(
                 mask
@@ -285,9 +295,8 @@ public:
             paintBackground(region, render.projection * render.view);
         }
 
-        assert(repaint_output);
         effect::screen_paint_data data{
-            .screen = platform.compositor->effects->findScreen(repaint_output->name()),
+            .screen = effect_screen,
             .paint = {
                 .mask = static_cast<int>(mask),
                 .region = region,
@@ -369,15 +378,18 @@ public:
                 },
                 .clip = {},
                 .quads = win->buildQuads(),
+                .present_time = m_expectedPresentTimestamp,
             };
 
             // preparation step
-            platform.compositor->effects->prePaintWindow(win_data, m_expectedPresentTimestamp);
+            platform.compositor->effects->prePaintWindow(win_data);
+
 #if !defined(QT_NO_DEBUG)
             if (win_data.quads.isTransformed()) {
                 qFatal("Pre-paint calls are not allowed to transform quads!");
             }
 #endif
+
             phase2.append({win,
                            infiniteRegion(),
                            win_data.clip,
@@ -413,6 +425,7 @@ public:
                                         | (win->isOpaque() ? paint_type::window_opaque
                                                            : paint_type::window_translucent)),
                .region = region | win::repaints(ref_win)},
+            .present_time = m_expectedPresentTimestamp,
         };
 
         // Reset the repaint_region.
@@ -451,7 +464,7 @@ public:
         data.quads = win->buildQuads();
 
         // preparation step
-        platform.compositor->effects->prePaintWindow(data, m_expectedPresentTimestamp);
+        platform.compositor->effects->prePaintWindow(data);
 
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {

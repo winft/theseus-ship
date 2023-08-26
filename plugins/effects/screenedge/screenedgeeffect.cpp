@@ -55,15 +55,15 @@ void ScreenEdgeEffect::cleanup()
     m_borders.clear();
 }
 
-void ScreenEdgeEffect::prePaintScreen(effect::paint_data& data,
-                                      std::chrono::milliseconds presentTime)
+void ScreenEdgeEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
+
     for (auto& [border, glow] : m_borders) {
         if (glow->strength == 0.0) {
             continue;
         }
-        data.region += glow->geometry;
+        data.paint.region += glow->geometry;
     }
 }
 

@@ -230,13 +230,15 @@ void ZoomEffect::reconfigure(ReconfigureFlags)
     }
 }
 
-void ZoomEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void ZoomEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (zoom != target_zoom) {
         int time = 0;
-        if (lastPresentTime.count())
-            time = (presentTime - lastPresentTime).count();
-        lastPresentTime = presentTime;
+        if (lastPresentTime.count()) {
+            time = (data.present_time - lastPresentTime).count();
+        }
+
+        lastPresentTime = data.present_time;
 
         const float zoomDist = qAbs(target_zoom - source_zoom);
         if (target_zoom > zoom)
@@ -249,10 +251,10 @@ void ZoomEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseco
         showCursor();
     } else {
         hideCursor();
-        data.mask |= PAINT_SCREEN_TRANSFORMED;
+        data.paint.mask |= PAINT_SCREEN_TRANSFORMED;
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(QRect const& viewport,

@@ -73,16 +73,15 @@ void TrackMouseEffect::reconfigure(ReconfigureFlags)
     }
 }
 
-void TrackMouseEffect::prePaintScreen(effect::paint_data& data,
-                                      std::chrono::milliseconds presentTime)
+void TrackMouseEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     QTime t = QTime::currentTime();
     m_angle = ((t.second() % 4) * m_angleBase) + (t.msec() / 1000.0 * m_angleBase);
     m_lastRect[0].moveCenter(cursorPos());
     m_lastRect[1].moveCenter(cursorPos());
-    data.region |= m_lastRect[0].adjusted(-1, -1, 1, 1);
+    data.paint.region |= m_lastRect[0].adjusted(-1, -1, 1, 1);
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void TrackMouseEffect::paintScreen(effect::screen_paint_data& data)

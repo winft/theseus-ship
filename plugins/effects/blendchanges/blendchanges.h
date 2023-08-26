@@ -24,7 +24,7 @@ public:
     static bool supported();
 
     // Effect interface
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void postPaintScreen() override;
     void drawWindow(effect::window_paint_data& data) override;
     void apply(effect::window_paint_data& data, WindowQuadList& quads) override;

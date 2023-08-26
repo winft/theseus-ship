@@ -10,6 +10,7 @@
 #include <render/effect/interface/window_quad.h>
 
 #include <QMatrix4x4>
+#include <chrono>
 
 namespace KWin
 {
@@ -51,6 +52,13 @@ struct render_data {
     bool flip_y{false};
 };
 
+struct screen_prepaint_data {
+    EffectScreen const& screen;
+    paint_data paint;
+    render_data render;
+    std::chrono::milliseconds const present_time;
+};
+
 struct screen_paint_data {
     EffectScreen const* screen;
     paint_data paint;
@@ -64,6 +72,7 @@ struct window_prepaint_data {
     /// Subtracted from paint region of following windows (window covers its clip region).
     QRegion clip;
     WindowQuadList quads;
+    std::chrono::milliseconds const present_time;
 
     void set_translucent()
     {

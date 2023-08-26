@@ -68,27 +68,26 @@ void GlideEffect::reconfigure(ReconfigureFlags flags)
     m_outParams.opacity.to = GlideConfig::outOpacity();
 }
 
-void GlideEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void GlideEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     auto animationIt = m_animations.begin();
     while (animationIt != m_animations.end()) {
-        (*animationIt).timeLine.advance(presentTime);
+        (*animationIt).timeLine.advance(data.present_time);
         ++animationIt;
     }
 
-    data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
+    data.paint.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
-void GlideEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                 std::chrono::milliseconds presentTime)
+void GlideEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     if (m_animations.contains(&data.window)) {
         data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
     }
 
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 }
 
 void GlideEffect::paintWindow(effect::window_paint_data& data)

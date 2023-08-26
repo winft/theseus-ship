@@ -451,12 +451,11 @@ bool AnimationEffect::cancel(quint64 animationId)
     return false;
 }
 
-void AnimationEffect::prePaintScreen(effect::paint_data& data,
-                                     std::chrono::milliseconds presentTime)
+void AnimationEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     Q_D(AnimationEffect);
     if (d->m_animations.isEmpty()) {
-        effects->prePaintScreen(data, presentTime);
+        effects->prePaintScreen(data);
         return;
     }
 
@@ -464,13 +463,13 @@ void AnimationEffect::prePaintScreen(effect::paint_data& data,
         for (auto anim = entry->first.begin(); anim != entry->first.end(); ++anim) {
             if (anim->startTime <= clock()) {
                 if (anim->frozenTime < 0) {
-                    anim->timeLine.advance(presentTime);
+                    anim->timeLine.advance(data.present_time);
                 }
             }
         }
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 static int xCoord(const QRect& r, int flag)
@@ -524,8 +523,7 @@ void AnimationEffect::disconnectGeometryChanges()
                &AnimationEffect::_windowExpandedGeometryChanged);
 }
 
-void AnimationEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                     std::chrono::milliseconds presentTime)
+void AnimationEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     Q_D(AnimationEffect);
     auto entry = d->m_animations.constFind(&data.window);
@@ -544,7 +542,7 @@ void AnimationEffect::prePaintWindow(effect::window_prepaint_data& data,
             }
         }
     }
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 }
 
 static inline float geometryCompensation(int flags, float v)

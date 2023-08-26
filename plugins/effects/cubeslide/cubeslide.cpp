@@ -72,17 +72,16 @@ void CubeSlideEffect::reconfigure(ReconfigureFlags)
     useWindowMoving = CubeSlideConfig::useWindowMoving();
 }
 
-void CubeSlideEffect::prePaintScreen(effect::paint_data& data,
-                                     std::chrono::milliseconds presentTime)
+void CubeSlideEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     std::chrono::milliseconds delta = std::chrono::milliseconds::zero();
     if (lastPresentTime.count()) {
-        delta = presentTime - lastPresentTime;
+        delta = data.present_time - lastPresentTime;
     }
-    lastPresentTime = presentTime;
+    lastPresentTime = data.present_time;
 
     if (isActive()) {
-        data.mask |= PAINT_SCREEN_TRANSFORMED | PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS
+        data.paint.mask |= PAINT_SCREEN_TRANSFORMED | PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS
             | PAINT_SCREEN_BACKGROUND_FIRST;
         timeLine.setCurrentTime(timeLine.currentTime() + delta.count());
         if (windowMoving
@@ -90,7 +89,7 @@ void CubeSlideEffect::prePaintScreen(effect::paint_data& data,
                 > progressRestriction * static_cast<qreal>(timeLine.duration()))
             timeLine.setCurrentTime(progressRestriction * static_cast<qreal>(timeLine.duration()));
     }
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void CubeSlideEffect::paintScreen(effect::screen_paint_data& data)
@@ -200,12 +199,11 @@ void CubeSlideEffect::paintSlideCube(effect::screen_paint_data const& data)
     painting_desktop = effects->currentDesktop();
 }
 
-void CubeSlideEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                     std::chrono::milliseconds presentTime)
+void CubeSlideEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     if (isActive() && !stickyPainting && cube_painting) {
         if (staticWindows.contains(&data.window)) {
-            effects->prePaintWindow(data, presentTime);
+            effects->prePaintWindow(data);
             return;
         }
 
@@ -251,7 +249,7 @@ void CubeSlideEffect::prePaintWindow(effect::window_prepaint_data& data,
         }
     }
 
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 }
 
 void CubeSlideEffect::paintWindow(effect::window_paint_data& data)

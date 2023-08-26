@@ -85,16 +85,16 @@ void KscreenEffect::reconfigure(ReconfigureFlags flags)
     m_timeLine.setDuration(std::chrono::milliseconds(animationTime<KscreenConfig>(250)));
 }
 
-void KscreenEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void KscreenEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (m_state == StateFadingIn || m_state == StateFadingOut) {
-        m_timeLine.advance(presentTime);
+        m_timeLine.advance(data.present_time);
         if (m_timeLine.done()) {
             switchState();
         }
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void KscreenEffect::postPaintScreen()
@@ -104,13 +104,12 @@ void KscreenEffect::postPaintScreen()
     }
 }
 
-void KscreenEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                   std::chrono::milliseconds presentTime)
+void KscreenEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     if (m_state != StateNormal) {
         data.set_translucent();
     }
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 }
 
 void KscreenEffect::paintWindow(effect::window_paint_data& data)

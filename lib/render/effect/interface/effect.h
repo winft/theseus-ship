@@ -17,7 +17,7 @@ namespace KWin
 
 namespace effect
 {
-struct paint_data;
+struct screen_prepaint_data;
 struct screen_paint_data;
 struct window_prepaint_data;
 struct window_paint_data;
@@ -192,7 +192,7 @@ public:
      * @a presentTime specifies the expected monotonic time when the rendered frame
      * will be displayed on the screen.
     */
-    virtual void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime);
+    virtual void prePaintScreen(effect::screen_prepaint_data& data);
     /**
      * In this method you can:
      * @li paint something on top of the windows (by painting after calling
@@ -229,8 +229,7 @@ public:
      * @a presentTime specifies the expected monotonic time when the rendered frame
      * will be displayed on the screen.
      */
-    virtual void prePaintWindow(effect::window_prepaint_data& data,
-                                std::chrono::milliseconds presentTime);
+    virtual void prePaintWindow(effect::window_prepaint_data& data);
     /**
      * This is the main method for painting windows.
      * In this method you can:

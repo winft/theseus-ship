@@ -54,11 +54,9 @@ public:
     static bool enabledByDefault();
 
     void reconfigure(ReconfigureFlags flags) override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(effect::screen_paint_data& data) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(effect::window_prepaint_data& data,
-                        std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(effect::window_prepaint_data& data) override;
     void drawWindow(effect::window_paint_data& data) override;
 
     bool provides(Feature feature) override;

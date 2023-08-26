@@ -73,10 +73,10 @@ void MagnifierEffect::reconfigure(ReconfigureFlags)
         toggle();
 }
 
-void MagnifierEffect::prePaintScreen(effect::paint_data& data,
-                                     std::chrono::milliseconds presentTime)
+void MagnifierEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
-    const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
+    const int time
+        = m_lastPresentTime.count() ? (data.present_time - m_lastPresentTime).count() : 0;
 
     if (m_zoom != m_targetZoom) {
         double diff = time / animationTime(500.0);
@@ -93,14 +93,14 @@ void MagnifierEffect::prePaintScreen(effect::paint_data& data,
     }
 
     if (m_zoom != m_targetZoom) {
-        m_lastPresentTime = presentTime;
+        m_lastPresentTime = data.present_time;
     } else {
         m_lastPresentTime = std::chrono::milliseconds::zero();
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
     if (m_zoom != 1.0)
-        data.region
+        data.paint.region
             |= magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
 }
 

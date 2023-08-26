@@ -40,9 +40,9 @@ bool Effect::borderActivated(ElectricBorder)
     return false;
 }
 
-void Effect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void Effect::prePaintScreen(effect::screen_prepaint_data& data)
 {
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void Effect::paintScreen(effect::screen_paint_data& data)
@@ -55,10 +55,9 @@ void Effect::postPaintScreen()
     effects->postPaintScreen();
 }
 
-void Effect::prePaintWindow(effect::window_prepaint_data& data,
-                            std::chrono::milliseconds presentTime)
+void Effect::prePaintWindow(effect::window_prepaint_data& data)
 {
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 }
 
 void Effect::paintWindow(effect::window_paint_data& data)

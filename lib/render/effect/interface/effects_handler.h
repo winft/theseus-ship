@@ -96,13 +96,10 @@ public:
     explicit EffectsHandler();
     ~EffectsHandler() override;
     // for use by effects
-    virtual void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
-        = 0;
+    virtual void prePaintScreen(effect::screen_prepaint_data& data) = 0;
     virtual void paintScreen(effect::screen_paint_data& data) = 0;
     virtual void postPaintScreen() = 0;
-    virtual void prePaintWindow(effect::window_prepaint_data& data,
-                                std::chrono::milliseconds presentTime)
-        = 0;
+    virtual void prePaintWindow(effect::window_prepaint_data& data) = 0;
     virtual void paintWindow(effect::window_paint_data& data) = 0;
     virtual void postPaintWindow(EffectWindow* w) = 0;
     virtual void drawWindow(effect::window_paint_data& data) = 0;

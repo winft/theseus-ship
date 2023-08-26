@@ -84,14 +84,13 @@ void SnapHelperEffect::reconfigure(ReconfigureFlags flags)
         std::chrono::milliseconds(static_cast<int>(animationTime(250))));
 }
 
-void SnapHelperEffect::prePaintScreen(effect::paint_data& data,
-                                      std::chrono::milliseconds presentTime)
+void SnapHelperEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (m_animation.active) {
-        m_animation.timeLine.advance(presentTime);
+        m_animation.timeLine.advance(data.present_time);
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void SnapHelperEffect::paintScreen(effect::screen_paint_data& data)

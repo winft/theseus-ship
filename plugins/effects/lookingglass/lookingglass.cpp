@@ -185,10 +185,10 @@ QRect LookingGlassEffect::magnifierArea() const
     return QRect(cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
 }
 
-void LookingGlassEffect::prePaintScreen(effect::paint_data& data,
-                                        std::chrono::milliseconds presentTime)
+void LookingGlassEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
-    const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
+    const int time
+        = m_lastPresentTime.count() ? (data.present_time - m_lastPresentTime).count() : 0;
     if (zoom != target_zoom) {
         double diff = time / animationTime(500.0);
         if (target_zoom > zoom)
@@ -207,17 +207,17 @@ void LookingGlassEffect::prePaintScreen(effect::paint_data& data,
             cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
     }
     if (zoom != target_zoom) {
-        m_lastPresentTime = presentTime;
+        m_lastPresentTime = data.present_time;
     } else {
         m_lastPresentTime = std::chrono::milliseconds::zero();
     }
     if (m_valid && m_enabled) {
-        data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
+        data.paint.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
         // Start rendering to texture
         GLFramebuffer::pushRenderTarget(m_fbo.get());
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void LookingGlassEffect::slotMouseChanged(const QPoint& pos,

@@ -27,9 +27,8 @@ public:
     {
         return m_active || AnimationEffect::isActive();
     }
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(effect::window_prepaint_data& data,
-                        std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
+    void prePaintWindow(effect::window_prepaint_data& data) override;
     void paintWindow(effect::window_paint_data& data) override;
     void reconfigure(ReconfigureFlags) override;
 
