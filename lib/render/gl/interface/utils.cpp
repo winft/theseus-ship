@@ -13,6 +13,7 @@
 #include "platform.h"
 
 #include <base/logging.h>
+#include <render/effect/interface/paint_data.h>
 #include <render/effect/interface/types.h>
 
 #include <QFile>
@@ -936,7 +937,6 @@ std::unique_ptr<GLShader> ShaderManager::loadShaderFromCode(const QByteArray& ve
 /***  GLFramebuffer  ***/
 bool GLFramebuffer::sSupported = false;
 bool GLFramebuffer::s_blitSupported = false;
-std::stack<GLFramebuffer*> GLFramebuffer::s_renderTargets = std::stack<GLFramebuffer*>();
 
 void GLFramebuffer::initStatic()
 {
@@ -956,7 +956,6 @@ void GLFramebuffer::initStatic()
 
 void GLFramebuffer::cleanup()
 {
-    Q_ASSERT(s_renderTargets.empty());
     sSupported = false;
     s_blitSupported = false;
 }
@@ -964,47 +963,6 @@ void GLFramebuffer::cleanup()
 bool GLFramebuffer::blitSupported()
 {
     return s_blitSupported;
-}
-
-GLFramebuffer* GLFramebuffer::currentRenderTarget()
-{
-    return s_renderTargets.empty() ? nullptr : s_renderTargets.top();
-}
-
-void GLFramebuffer::pushRenderTarget(GLFramebuffer* target)
-{
-    target->bind();
-    s_renderTargets.push(target);
-}
-
-void GLFramebuffer::pushRenderTargets(std::stack<GLFramebuffer*> targets)
-{
-    targets.top()->bind();
-
-    // TODO(romangg): With C++23 use push_range() instead.
-    std::stack<GLFramebuffer*> temp;
-    while (!targets.empty()) {
-        auto next = targets.top();
-        targets.pop();
-        temp.push(next);
-    }
-    while (!temp.empty()) {
-        auto next = temp.top();
-        temp.pop();
-        s_renderTargets.push(next);
-    }
-}
-
-GLFramebuffer* GLFramebuffer::popRenderTarget()
-{
-    auto target = s_renderTargets.top();
-    s_renderTargets.pop();
-
-    if (!s_renderTargets.empty()) {
-        s_renderTargets.top()->bind();
-    }
-
-    return target;
 }
 
 GLFramebuffer::GLFramebuffer(GLuint framebuffer, QSize const& size, QRect const& viewport)
@@ -1113,7 +1071,8 @@ void GLFramebuffer::initFBO(GLTexture* texture)
     assert(texture);
     assert(!mForeign);
 
-    GLuint const cur_fbo = currentRenderTarget() ? currentRenderTarget()->mFramebuffer : 0;
+    GLint cur_fbo;
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &cur_fbo);
 
 #if DEBUG_GLFRAMEBUFFER
     GLenum err = glGetError();
@@ -1172,13 +1131,13 @@ void GLFramebuffer::initFBO(GLTexture* texture)
     mValid = true;
 }
 
-void GLFramebuffer::blit_from_current_render_target_impl(effect::render_data const& data,
+void GLFramebuffer::blit_from_current_render_target_impl(effect::render_data& data,
                                                          QRect const& source,
                                                          QRect const& destination)
 {
-    auto top = currentRenderTarget();
+    auto top = static_cast<GLFramebuffer*>(data.targets.top());
 
-    GLFramebuffer::pushRenderTarget(this);
+    render::push_framebuffer(data, this);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFramebuffer);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, top->mFramebuffer);
 
@@ -1199,10 +1158,10 @@ void GLFramebuffer::blit_from_current_render_target_impl(effect::render_data con
     glBlitFramebuffer(
         srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
-    GLFramebuffer::popRenderTarget();
+    render::pop_framebuffer(data);
 }
 
-bool GLFramebuffer::blit_from_current_render_target(effect::render_data const& data,
+bool GLFramebuffer::blit_from_current_render_target(effect::render_data& data,
                                                     QRect const& source,
                                                     QRect const& destination)
 {
@@ -1215,8 +1174,7 @@ bool GLFramebuffer::blit_from_current_render_target(effect::render_data const& d
         return false;
     }
 
-    auto top = currentRenderTarget();
-    if (!top) {
+    if (data.targets.empty()) {
         qCWarning(KWIN_CORE) << "Abort blit from framebuffer due to no current render target.";
         return false;
     }
@@ -1230,6 +1188,7 @@ bool GLFramebuffer::blit_from_current_render_target(effect::render_data const& d
         return true;
     }
 
+    auto top = data.targets.top();
     if (!blit_helper_tex || blit_helper_tex->width() < top->size().width()
         || blit_helper_tex->height() < top->size().height()) {
         blit_helper_tex = std::make_unique<GLTexture>(
@@ -1243,7 +1202,7 @@ bool GLFramebuffer::blit_from_current_render_target(effect::render_data const& d
 
     helper_fbo.blit_from_current_render_target_impl(data, source, inter_rect);
 
-    GLFramebuffer::pushRenderTarget(this);
+    render::push_framebuffer(data, this);
 
     QMatrix4x4 mat;
     mat.ortho(QRectF({}, size()));
@@ -1256,10 +1215,10 @@ bool GLFramebuffer::blit_from_current_render_target(effect::render_data const& d
     binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mat);
 
     blit_helper_tex->bind();
-    blit_helper_tex->render({}, inter_rect, infiniteRegion(), destination.size());
+    blit_helper_tex->render(data, inter_rect, infiniteRegion(), destination.size());
     blit_helper_tex->unbind();
 
-    GLFramebuffer::popRenderTarget();
+    render::pop_framebuffer(data);
     return true;
 }
 
@@ -2170,7 +2129,7 @@ void GLVertexBuffer::draw_primitive(effect::render_data const& data,
     }
 
     // Clip using scissoring
-    auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
+    auto const vp = static_cast<GLFramebuffer*>(data.targets.top())->viewport();
     auto const vp_region = effect::map_to_viewport(data, region);
     for (auto const& rect : vp_region) {
         glScissor(rect.x(), rect.y(), rect.width(), rect.height());
@@ -2212,7 +2171,7 @@ void GLVertexBuffer::draw_primitive_quads(effect::render_data const& data,
     prepare_primitive_quads_buffer(count);
 
     // Clip using scissoring
-    auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
+    auto const vp = static_cast<GLFramebuffer*>(data.targets.top())->viewport();
     auto const vp_region = effect::map_to_viewport(data, region);
     for (auto const& rect : vp_region) {
         glScissor(rect.x(), rect.y(), rect.width(), rect.height());

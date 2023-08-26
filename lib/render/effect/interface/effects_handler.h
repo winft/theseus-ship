@@ -712,9 +712,8 @@ public:
     virtual effect::anim_integration& get_slide_integration() = 0;
     virtual effect::kscreen_integration& get_kscreen_integration() = 0;
 
-    virtual QImage blit_from_framebuffer(effect::render_data const& data,
-                                         QRect const& geometry,
-                                         double scale) const
+    virtual QImage
+    blit_from_framebuffer(effect::render_data& data, QRect const& geometry, double scale) const
         = 0;
 
     virtual QQmlEngine* qmlEngine() const = 0;
@@ -1186,7 +1185,7 @@ Q_SIGNALS:
      */
     void windowExpandedGeometryChanged(KWin::EffectWindow* window);
 
-    void frameRendered();
+    void frameRendered(KWin::effect::screen_paint_data& data);
 
     void globalShortcutChanged(QAction* action, QKeySequence const& seq);
 

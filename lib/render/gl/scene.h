@@ -344,6 +344,8 @@ public:
         this->paintScreen(render, mask, damage, repaint, &update, &valid, presentTime);
         paintCursor(render);
 
+        assert(render.targets.size() == 1);
+
         GLVertexBuffer::streamingBuffer()->endOfFrame();
         m_backend->endRenderingFrameForScreen(output, valid, update);
 

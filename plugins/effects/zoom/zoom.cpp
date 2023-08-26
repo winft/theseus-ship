@@ -309,12 +309,12 @@ void ZoomEffect::paintScreen(effect::screen_paint_data& data)
     // Render the scene in an offscreen texture and then upscale it.
     effect::screen_paint_data offscreen_data{
         .paint = {.mask = data.paint.mask, .region = data.paint.region},
-        .render = {.projection = projection},
+        .render = {.targets = data.render.targets, .projection = projection},
     };
 
-    GLFramebuffer::pushRenderTarget(offscreenData->framebuffer.get());
+    render::push_framebuffer(data.render, offscreenData->framebuffer.get());
     effects->paintScreen(offscreen_data);
-    GLFramebuffer::popRenderTarget();
+    render::pop_framebuffer(data.render);
 
     data.paint.geo.scale *= QVector3D(zoom, zoom, 1);
     const QSize screenSize = effects->virtualScreenSize();

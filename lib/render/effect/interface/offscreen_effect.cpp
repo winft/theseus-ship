@@ -34,7 +34,9 @@ public:
                effect::window_paint_data const& data,
                WindowQuadList const& quads,
                GLShader* offscreenShader);
-    void maybeRender(EffectWindow& window, OffscreenData* offscreenData);
+    void maybeRender(EffectWindow& window,
+                     effect::render_data* render_data,
+                     OffscreenData* offscreenData);
 
     bool live = true;
 };
@@ -88,7 +90,7 @@ void OffscreenEffect::redirect(EffectWindow* window)
 
     if (!d->live) {
         effects->makeOpenGLContextCurrent();
-        d->maybeRender(*window, offscreenData);
+        d->maybeRender(*window, nullptr, offscreenData);
     }
 }
 
@@ -104,15 +106,13 @@ void OffscreenEffect::apply(effect::window_paint_data& /*data*/, WindowQuadList&
 {
 }
 
-void OffscreenEffectPrivate::maybeRender(EffectWindow& window, OffscreenData* offscreenData)
+void OffscreenEffectPrivate::maybeRender(EffectWindow& window,
+                                         effect::render_data* render_data,
+                                         OffscreenData* offscreenData)
 {
     if (!offscreenData->isDirty) {
         return;
     }
-
-    GLFramebuffer::pushRenderTarget(offscreenData->renderTarget.data());
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     auto const geometry = window.expandedGeometry();
     assert(geometry.size() == offscreenData->renderTarget->size());
@@ -123,11 +123,19 @@ void OffscreenEffectPrivate::maybeRender(EffectWindow& window, OffscreenData* of
     QMatrix4x4 view;
     view.translate(-geometry.x(), -geometry.y());
 
+    std::stack<render::framebuffer*> temp_render_targets;
+
     effect::render_data render{
+        .targets = render_data ? render_data->targets : temp_render_targets,
         .view = view,
         .projection = projection,
         .viewport = {{}, geometry.size()},
     };
+
+    render::push_framebuffer(render, offscreenData->renderTarget.data());
+
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     effect::window_paint_data data{
         window,
@@ -141,7 +149,7 @@ void OffscreenEffectPrivate::maybeRender(EffectWindow& window, OffscreenData* of
 
     effects->drawWindow(data);
 
-    GLFramebuffer::popRenderTarget();
+    render::pop_framebuffer(data.render);
     offscreenData->isDirty = false;
 }
 
@@ -222,7 +230,7 @@ void OffscreenEffect::drawWindow(effect::window_paint_data& data)
     quads.append(quad);
     apply(data, quads);
 
-    d->maybeRender(data.window, offscreenData);
+    d->maybeRender(data.window, &data.render, offscreenData);
     d->paint(offscreenData->texture.data(), data, quads, offscreenData->shader);
 }
 

@@ -8,7 +8,6 @@
 #pragma once
 
 #include <kwin_export.h>
-#include <render/effect/interface/paint_data.h>
 #include <render/effect/interface/types.h>
 
 #include <QMatrix4x4>
@@ -23,6 +22,11 @@ class QPixmap;
 
 namespace KWin
 {
+
+namespace effect
+{
+struct render_data;
+}
 
 class GLVertexBuffer;
 class GLTexturePrivate;

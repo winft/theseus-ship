@@ -14,6 +14,7 @@
 
 #include "texture_p.h"
 
+#include <render/effect/interface/paint_data.h>
 #include <render/effect/interface/types.h>
 
 #include <QImage>

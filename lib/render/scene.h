@@ -228,7 +228,7 @@ public:
     }
 
     // shared implementation, starts painting the screen
-    void paintScreen(effect::render_data const& render,
+    void paintScreen(effect::render_data& render,
                      paint_type& mask,
                      const QRegion& damage,
                      const QRegion& repaint,
@@ -272,6 +272,7 @@ public:
 
         mask = static_cast<paint_type>(pre_data.paint.mask);
         region = pre_data.paint.region;
+        render.targets = pre_data.render.targets;
 
         if (flags(
                 mask
@@ -303,7 +304,9 @@ public:
             },
             .render = render,
         };
+
         platform.compositor->effects->paintScreen(data);
+        render.targets = data.render.targets;
 
         for (auto const& w : stacking_order) {
             platform.compositor->effects->postPaintWindow(w->effect.get());
@@ -345,7 +348,7 @@ public:
 
     // The generic (unoptimized) painting code that can handle even transformations. It simply
     // paints bottom-to-top.
-    virtual void paintGenericScreen(paint_type mask, effect::screen_paint_data const& data)
+    virtual void paintGenericScreen(paint_type mask, effect::screen_paint_data& data)
     {
         if (!(mask & paint_type::screen_background_first)) {
             paintBackground(infiniteRegion(), data.render.projection * data.render.view);
@@ -484,9 +487,8 @@ public:
 
     // The optimized case without any transformations at all. It can paint only the requested region
     // and can use clipping to reduce painting and improve performance.
-    virtual void paintSimpleScreen(paint_type orig_mask,
-                                   QRegion const& region,
-                                   effect::render_data const& render_data)
+    void
+    paintSimpleScreen(paint_type orig_mask, QRegion const& region, effect::render_data& render_data)
     {
         Q_ASSERT((orig_mask
                   & (paint_type::screen_transformed | paint_type::screen_with_transformed_windows))
@@ -597,7 +599,7 @@ public:
     }
 
     // shared implementation, starts painting the window
-    void paintWindow(effect::render_data const& render_data,
+    void paintWindow(effect::render_data& render_data,
                      window_t* win,
                      paint_type mask,
                      QRegion region,
@@ -619,7 +621,9 @@ public:
             quads,
             render_data,
         };
+
         platform.compositor->effects->paintWindow(data);
+        render_data.targets = data.render.targets;
     }
 
     // called after all effects had their drawWindow() called, eventually called from drawWindow()

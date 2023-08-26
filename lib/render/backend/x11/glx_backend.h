@@ -81,8 +81,6 @@ public:
             out_geo.size());
 
         makeCurrent();
-        native_fbo = GLFramebuffer(0, platform.base.topology.size, viewport);
-        GLFramebuffer::pushRenderTarget(&native_fbo);
 
         QMatrix4x4 view;
         QMatrix4x4 projection;
@@ -90,11 +88,15 @@ public:
         projection.scale(1, -1);
 
         effect::render_data data{
+            .targets = render_targets,
             .view = view,
             .projection = projection,
             .viewport = viewport,
             .flip_y = false,
         };
+
+        native_fbo = GLFramebuffer(0, platform.base.topology.size, viewport);
+        push_framebuffer(data, &native_fbo);
 
         return data;
     }
@@ -112,7 +114,8 @@ public:
                                     QRegion const& renderedRegion,
                                     QRegion const& damagedRegion) override
     {
-        GLFramebuffer::popRenderTarget();
+        render_targets.pop();
+        assert(render_targets.empty());
 
         output_render_count++;
         accum_render |= renderedRegion;
@@ -263,6 +266,7 @@ private:
         return static_cast<bool>(swap_filter);
     }
 
+    std::stack<framebuffer*> render_targets;
     GLFramebuffer native_fbo;
     int m_bufferAge{0};
     bool m_needsCompositeTimerStart = false;

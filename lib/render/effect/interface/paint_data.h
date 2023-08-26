@@ -8,9 +8,11 @@
 #include <render/effect/interface/effect.h>
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/window_quad.h>
+#include <render/interface/framebuffer.h>
 
 #include <QMatrix4x4>
 #include <chrono>
+#include <stack>
 
 namespace KWin
 {
@@ -42,6 +44,8 @@ struct paint_data {
 };
 
 struct render_data {
+    std::stack<render::framebuffer*>& targets;
+
     QMatrix4x4 const view;
     QMatrix4x4 const projection;
 

@@ -83,16 +83,16 @@ private Q_SLOTS:
     void handleScreenRemoved(EffectScreen* screen);
 
 private:
-    void takeScreenShot(ScreenShotWindowData* screenshot);
-    bool takeScreenShot(effect::render_data const& render_data, ScreenShotAreaData* screenshot);
-    bool takeScreenShot(effect::render_data const& render_data, ScreenShotScreenData* screenshot);
+    void takeScreenShot(effect::render_data& data, ScreenShotWindowData* screenshot);
+    bool takeScreenShot(effect::render_data& render_data, ScreenShotAreaData* screenshot);
+    bool takeScreenShot(effect::render_data& render_data, ScreenShotScreenData* screenshot);
 
     void cancelWindowScreenShots();
     void cancelAreaScreenShots();
     void cancelScreenScreenShots();
 
     void grabPointerImage(QImage& snapshot, int xOffset, int yOffset) const;
-    QImage blitScreenshot(effect::render_data const& viewport,
+    QImage blitScreenshot(effect::render_data& viewport,
                           const QRect& geometry,
                           qreal devicePixelRatio = 1.0) const;
 

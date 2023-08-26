@@ -385,7 +385,7 @@ void window_thumbnail_item::invalidateOffscreenTexture()
     update();
 }
 
-void window_thumbnail_item::updateOffscreenTexture()
+void window_thumbnail_item::updateOffscreenTexture(effect::screen_paint_data& data)
 {
     if (m_acquireFence || !m_dirty || !m_client) {
         return;
@@ -411,10 +411,6 @@ void window_thumbnail_item::updateOffscreenTexture()
         m_offscreenTarget.reset(new GLFramebuffer(m_offscreenTexture.data()));
     }
 
-    GLFramebuffer::pushRenderTarget(m_offscreenTarget.data());
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-
     QMatrix4x4 view;
     view.ortho(geometry.x(),
                geometry.x() + geometry.width(),
@@ -428,24 +424,29 @@ void window_thumbnail_item::updateOffscreenTexture()
 
     auto effectWindow = effects->findWindow(m_wId);
 
-    effect::window_paint_data data{
+    effect::window_paint_data win_data{
         *effectWindow,
         {
             .mask = Effect::PAINT_WINDOW_TRANSFORMED,
             .region = infiniteRegion(),
         },
         {
+            .targets = data.render.targets,
             .view = view,
             .projection = proj,
             .viewport = geometry,
         },
     };
 
+    render::push_framebuffer(win_data.render, m_offscreenTarget.data());
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     // The thumbnail must be rendered using kwin's opengl context as VAOs are not
     // shared across contexts. Unfortunately, this also introduces a latency of 1
     // frame, which is not ideal, but it is acceptable for things such as thumbnails.
-    effects->drawWindow(data);
-    GLFramebuffer::popRenderTarget();
+    effects->drawWindow(win_data);
+    render::pop_framebuffer(win_data.render);
 
     // The fence is needed to avoid the case where qtquick renderer starts using
     // the texture while all rendering commands to it haven't completed yet.

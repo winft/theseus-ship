@@ -580,7 +580,7 @@ Effect* effects_handler_wrap::findEffect(const QString& name) const
     return (*it).second;
 }
 
-QImage effects_handler_wrap::blit_from_framebuffer(effect::render_data const& data,
+QImage effects_handler_wrap::blit_from_framebuffer(effect::render_data& data,
                                                    QRect const& geometry,
                                                    double scale) const
 {

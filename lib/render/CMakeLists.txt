@@ -73,6 +73,7 @@ target_sources(render
       gl/texture.h
       gl/timer_query.h
       gl/window.h
+      interface/framebuffer.h
       post/color_correct_dbus_interface.h
       post/constants.h
       post/night_color_data.h

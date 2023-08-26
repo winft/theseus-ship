@@ -8,11 +8,13 @@
 #pragma once
 
 #include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_screen.h>
 #include <render/gl/interface/platform.h>
 #include <render/gl/interface/utils.h>
 
 #include <QVector2D>
 #include <QVector>
+#include <stack>
 #include <vector>
 
 namespace KWin
@@ -82,7 +84,7 @@ private:
     QRegion deco_blur_region(EffectWindow const* win) const;
     bool deco_supports_blur_behind(EffectWindow const* win) const;
     bool should_blur(effect::window_paint_data const& data) const;
-    void do_blur(effect::window_paint_data const& data, QRegion const& shape, bool isDock);
+    void do_blur(effect::window_paint_data& data, QRegion const& shape, bool isDock);
     void upload_region(QVector2D*& map, QRegion const& region);
     void upload_geometry(GLVertexBuffer* vbo,
                          QRegion const& expanded_blur_region,
@@ -99,9 +101,16 @@ private:
                      int vboStart,
                      int blurRectCount);
 
-    void downsample_texture(blur_render_data const& data, GLVertexBuffer* vbo, int blurRectCount);
-    void upsample_texture(blur_render_data const& data, GLVertexBuffer* vbo, int blurRectCount);
-    void copy_screen_sample_texture(blur_render_data const& data,
+    void downsample_texture(effect::render_data& eff_data,
+                            blur_render_data const& data,
+                            GLVertexBuffer* vbo,
+                            int blurRectCount);
+    void upsample_texture(effect::render_data& eff_data,
+                          blur_render_data const& data,
+                          GLVertexBuffer* vbo,
+                          int blurRectCount);
+    void copy_screen_sample_texture(effect::render_data& eff_data,
+                                    blur_render_data const& data,
                                     GLVertexBuffer* vbo,
                                     int blurRectCount,
                                     QRect const& boundingRect);

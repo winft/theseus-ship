@@ -174,7 +174,7 @@ public:
      */
     Effect* findEffect(const QString& name) const;
 
-    QImage blit_from_framebuffer(effect::render_data const& data,
+    QImage blit_from_framebuffer(effect::render_data& data,
                                  QRect const& geometry,
                                  double scale) const override;
     bool invert_screen();
@@ -594,7 +594,7 @@ public:
     void final_paint_screen(paint_type mask, effect::screen_paint_data& data) override
     {
         scene.finalPaintScreen(mask, data);
-        Q_EMIT frameRendered();
+        Q_EMIT frameRendered(data);
     }
 
     void final_paint_window(effect::window_paint_data& data) override

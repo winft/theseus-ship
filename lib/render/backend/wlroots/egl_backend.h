@@ -155,10 +155,6 @@ public:
         wlr_output_attach_render(native_out, &out->bufferAge);
         wlr_renderer_begin(platform.renderer, viewport.width(), viewport.height());
 
-        native_fbo
-            = GLFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer), res, viewport);
-        GLFramebuffer::pushRenderTarget(&native_fbo);
-
         auto transform = static_cast<effect::transform_type>(
             get_transform(static_cast<base::backend::wlroots::output const&>(output)));
 
@@ -167,12 +163,17 @@ public:
         gl::create_view_projection(output.geometry(), view, projection);
 
         effect::render_data data{
+            .targets = render_targets,
             .view = view,
             .projection = effect::get_transform_matrix(transform) * projection,
             .viewport = viewport,
             .transform = transform,
             .flip_y = true,
         };
+
+        native_fbo
+            = GLFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer), res, viewport);
+        push_framebuffer(data, &native_fbo);
 
         return data;
     }
@@ -217,7 +218,8 @@ public:
             out->out->last_timer_queries.emplace_back();
         }
 
-        GLFramebuffer::popRenderTarget();
+        render_targets.pop();
+        assert(render_targets.empty());
         wlr_renderer_end(platform.renderer);
 
         if (damagedRegion.intersected(output->geometry()).isEmpty()) {
@@ -269,6 +271,7 @@ public:
     std::unique_ptr<Wrapland::Server::linux_dmabuf_v1> dmabuf;
     wayland::egl_data data;
 
+    std::stack<framebuffer*> render_targets;
     GLFramebuffer native_fbo;
     wlr_egl* native{nullptr};
 

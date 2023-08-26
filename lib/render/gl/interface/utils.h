@@ -8,9 +8,9 @@
 #pragma once
 
 #include <kwin_export.h>
-#include <render/effect/interface/paint_data.h>
 #include <render/gl/interface/texture.h>
 #include <render/gl/interface/utils_funcs.h>
+#include <render/interface/framebuffer.h>
 
 #include <QSize>
 #include <optional>
@@ -26,6 +26,11 @@ class QHash;
 
 namespace KWin
 {
+
+namespace effect
+{
+struct render_data;
+}
 
 class GLVertexBuffer;
 class GLVertexBufferPrivate;
@@ -360,7 +365,7 @@ inline GLShader* ShaderBinder::shader()
  * Framebuffer object enables you to render onto a texture. This texture can later be used to e.g.
  * do post-processing of the scene.
  */
-class KWIN_EXPORT GLFramebuffer
+class KWIN_EXPORT GLFramebuffer : public render::framebuffer
 {
 public:
     GLFramebuffer() = default;
@@ -369,10 +374,10 @@ public:
     GLFramebuffer(GLuint framebuffer, QSize const& size, QRect const& viewport);
     explicit GLFramebuffer(GLTexture* texture);
 
-    ~GLFramebuffer();
+    ~GLFramebuffer() override;
 
     QRect viewport() const;
-    QSize size() const;
+    QSize size() const override;
 
     bool valid() const
     {
@@ -385,17 +390,6 @@ public:
         return sSupported;
     }
 
-    static GLFramebuffer* currentRenderTarget();
-
-    /**
-     * Pushes the render target stack of the input parameter in reverse order.
-     * @param targets The stack of GLFramebuffers
-     * @since 5.13
-     */
-    static void pushRenderTargets(std::stack<GLFramebuffer*> targets);
-
-    static void pushRenderTarget(GLFramebuffer* target);
-    static GLFramebuffer* popRenderTarget();
     /**
      * Whether the GL_EXT_framebuffer_blit extension is supported.
      * This functionality is not available in OpenGL ES 2.0.
@@ -413,9 +407,11 @@ public:
      * Be aware that framebuffer blitting may not be supported on all hardware. Use blitSupported()
      * to check whether it is supported.
      */
-    bool blit_from_current_render_target(effect::render_data const& data,
+    bool blit_from_current_render_target(effect::render_data& data,
                                          QRect const& source,
                                          QRect const& destination);
+
+    void bind() override;
 
     GLTexture* const texture{nullptr};
 
@@ -425,15 +421,13 @@ protected:
 private:
     friend void KWin::cleanupGL();
     static void cleanup();
-    void bind();
 
-    void blit_from_current_render_target_impl(effect::render_data const& data,
+    void blit_from_current_render_target_impl(effect::render_data& data,
                                               QRect const& source,
                                               QRect const& destination);
 
     static bool sSupported;
     static bool s_blitSupported;
-    static std::stack<GLFramebuffer*> s_renderTargets;
 
     GLuint mFramebuffer{0};
     std::unique_ptr<GLTexture> blit_helper_tex;
