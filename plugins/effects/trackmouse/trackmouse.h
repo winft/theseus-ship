@@ -8,7 +8,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_TRACKMOUSE_H
 #define KWIN_TRACKMOUSE_H
 
-#include <kwineffects/effect.h>
+#include <render/effect/interface/effect.h>
+
 #include <memory>
 
 class QAction;

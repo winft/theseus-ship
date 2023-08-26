@@ -19,9 +19,9 @@ kwin_add_builtin_effect(overview ${overview_SOURCES})
 target_link_libraries(overview PRIVATE
   KF6::ConfigGui
   KF6::I18n
-  kwineffects
   Qt::Quick
   Qt::Widgets
+  render
 )
 
 install(DIRECTORY qml DESTINATION ${KDE_INSTALL_DATADIR}/kwin/effects/overview)

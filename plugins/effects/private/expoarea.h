@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "kwineffects/effect_screen.h"
-#include <kwineffects/effect.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_screen.h>
 
 namespace KWin
 {

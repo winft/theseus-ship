@@ -7,7 +7,7 @@
 
 #include "win/types.h"
 
-#include <kwineffects/effect_window.h>
+#include <render/effect/interface/effect_window.h>
 
 namespace KWin::render
 {

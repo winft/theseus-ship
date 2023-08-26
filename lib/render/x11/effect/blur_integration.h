@@ -8,9 +8,8 @@
 #include "blur_update.h"
 #include "update.h"
 
-#include "render/x11//effect.h"
-
-#include <kwineffects/effect_integration.h>
+#include <render/effect/interface/effect_integration.h>
+#include <render/x11/effect.h>
 
 #include <map>
 #include <string_view>

@@ -7,9 +7,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_MOUSECLICK_H
 
 #include <deque>
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_frame.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_frame.h>
+#include <render/gl/interface/utils.h>
 
 #include <KLocalizedString>
 #include <QFont>

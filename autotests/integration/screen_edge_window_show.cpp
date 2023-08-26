@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
 
-#include <kwineffects/effects_handler.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <catch2/generators/catch_generators.hpp>
 #include <xcb/xcb_icccm.h>

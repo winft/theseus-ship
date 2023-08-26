@@ -6,9 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_CUBESLIDE_H
 #define KWIN_CUBESLIDE_H
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_window_visible_ref.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_window_visible_ref.h>
+#include <render/gl/interface/utils.h>
 
 #include <QQueue>
 #include <QSet>

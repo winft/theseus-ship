@@ -9,8 +9,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 // KConfigSkeleton
 #include "diminactiveconfig.h"
-#include <kwinconfig.h>
 
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
 
 #include <KPluginFactory>

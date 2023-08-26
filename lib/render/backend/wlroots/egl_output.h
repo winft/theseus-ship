@@ -12,8 +12,8 @@
 #include "base/logging.h"
 #include "render/wayland/egl_data.h"
 
-#include <kwingl/texture.h>
-#include <kwingl/utils.h>
+#include <render/gl/interface/texture.h>
+#include <render/gl/interface/utils.h>
 
 #include <QRegion>
 #include <deque>

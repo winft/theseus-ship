@@ -14,7 +14,7 @@ kconfig_add_kcfg_files(cubeslide_SOURCES
 kwin_add_builtin_effect(cubeslide ${cubeslide_SOURCES})
 target_link_libraries(cubeslide PRIVATE
   KF6::KCMUtils
-  kwineffects
+  render
 )
 
 #######################################

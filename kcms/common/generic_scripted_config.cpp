@@ -5,8 +5,9 @@
 */
 #include "generic_scripted_config.h"
 
-#include "config-kwin.h"
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
+
 #include <KLocalizedString>
 #include <KLocalizedTranslator>
 #include <kconfigloader.h>

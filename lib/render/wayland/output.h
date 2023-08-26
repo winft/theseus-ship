@@ -16,7 +16,7 @@
 #include "win/remnant.h"
 #include "win/space_window_release.h"
 
-#include <kwingl/platform.h>
+#include <render/gl/interface/platform.h>
 
 #include <QBasicTimer>
 #include <QRegion>

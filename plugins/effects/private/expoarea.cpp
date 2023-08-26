@@ -5,7 +5,7 @@
 */
 
 #include "expoarea.h"
-#include "kwineffects/effects_handler.h"
+#include "render/effect/interface/effects_handler.h"
 
 namespace KWin
 {

@@ -18,7 +18,7 @@ set(kcm_kwintabbox_PART_SRCS
 
 ki18n_wrap_ui(kcm_kwintabbox_PART_SRCS main.ui)
 qt_add_dbus_interface(kcm_kwintabbox_PART_SRCS
-  ${KWIN_SOURCE_DIR}/lib/effect/org.kde.kwin.Effects.xml
+  ${KWIN_SOURCE_DIR}/lib/render/effect/interface/org.kde.kwin.Effects.xml
   kwin_effects_interface
 )
 

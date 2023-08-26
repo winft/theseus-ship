@@ -5,9 +5,10 @@
 */
 #pragma once
 
+#include <render/effect/interface/offscreen_effect.h>
+#include <render/effect/interface/time_line.h>
+
 #include <chrono>
-#include <kwineffects/offscreen_effect.h>
-#include <kwineffects/time_line.h>
 
 namespace KWin
 {

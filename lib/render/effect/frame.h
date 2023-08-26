@@ -7,8 +7,8 @@
 
 #include "kwin_export.h"
 
-#include <kwineffects/effect_frame.h>
-#include <kwineffects/effect_quick_view.h>
+#include <render/effect/interface/effect_frame.h>
+#include <render/effect/interface/effect_quick_view.h>
 
 #include <QFont>
 #include <QIcon>

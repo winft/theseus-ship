@@ -10,8 +10,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "kwin_export.h"
 
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <QAbstractItemModel>
 #include <QStyledItemDelegate>

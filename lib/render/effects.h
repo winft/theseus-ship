@@ -32,12 +32,12 @@
 
 #include "config-kwin.h"
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_frame.h>
-#include <kwineffects/effect_quick_view.h>
-#include <kwineffects/effect_screen.h>
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_frame.h>
+#include <render/effect/interface/effect_quick_view.h>
+#include <render/effect/interface/effect_screen.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <Plasma/FrameSvg>
 #include <QHash>
@@ -100,6 +100,12 @@ public:
     void postPaintWindow(EffectWindow* w) override;
 
     Effect* provides(Effect::Feature ef);
+
+    // TODO(romangg): Remove once we replaced the call from win/control.h.
+    bool provides_comp(int feat)
+    {
+        return provides(static_cast<Effect::Feature>(feat));
+    }
 
     void drawWindow(effect::window_paint_data& data) override;
 

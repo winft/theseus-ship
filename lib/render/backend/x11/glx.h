@@ -18,8 +18,8 @@
 #include "glx_fb_config.h"
 #include "swap_event_filter.h"
 
-#include <kwineffects/effect_quick_view.h>
-#include <kwingl/platform.h>
+#include <render/effect/interface/effect_quick_view.h>
+#include <render/gl/interface/platform.h>
 
 #include <QOpenGLContext>
 #include <QVariant>

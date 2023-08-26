@@ -15,7 +15,7 @@
 #include "win/desktop_get.h"
 #include "win/geo.h"
 
-#include <kwineffects/paint_data.h>
+#include <render/effect/interface/paint_data.h>
 
 #include <functional>
 #include <memory>

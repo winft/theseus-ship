@@ -10,10 +10,10 @@
 #include "render/types.h"
 #include "win/window_area.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <QObject>
 #include <QVector2D>

@@ -17,7 +17,7 @@ kconfig_add_kcfg_files(wobblywindows_SOURCES
 kwin_add_builtin_effect(wobblywindows ${wobblywindows_SOURCES})
 target_link_libraries(wobblywindows PRIVATE
   KF6::ConfigGui
-  kwineffects
+  render
 )
 
 #######################################

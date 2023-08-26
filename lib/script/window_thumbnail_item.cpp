@@ -13,10 +13,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/compositor_qobject.h"
 #include "render/singleton_interface.h"
 
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/texture.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/texture.h>
+#include <render/gl/interface/utils.h>
 
 #include <QQuickWindow>
 #include <QRunnable>

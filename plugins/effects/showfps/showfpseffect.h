@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_quick_view.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_quick_view.h>
 
 #include <QElapsedTimer>
 

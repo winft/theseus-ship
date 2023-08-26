@@ -31,9 +31,8 @@ target_link_libraries(kwin5_aurorae
   KF6::ConfigGui
   KF6::I18n
   KF6::Package
-  kwineffects
   Qt::Quick
-  base
+  render
 )
 
 install(TARGETS kwin5_aurorae DESTINATION ${KDE_INSTALL_PLUGINDIR}/org.kde.kdecoration2)

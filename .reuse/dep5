@@ -95,9 +95,9 @@ Files:
   plugins/kpackage/windowswitcher/windowswitcher.json
   plugins/qpa/kwin.json
   plugins/windowsystem/kwindowsystem.json
-  lib/effect/org.kde.kwin.Effects.xml
   lib/render/dbus/org.kde.kwin.ColorCorrect.xml
   lib/render/dbus/org.kde.kwin.Compositing.xml
+  lib/render/effect/interface/org.kde.kwin.Effects.xml
   lib/script/org.kde.kwin.Script.xml
   plugins/scripts/desktopchangeosd/package/metadata.json
   plugins/scripts/minimizeall/package/metadata.json

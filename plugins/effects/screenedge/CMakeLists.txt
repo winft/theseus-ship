@@ -14,6 +14,5 @@ set(screenedge_SOURCES
 kwin_add_builtin_effect(screenedge ${screenedge_SOURCES})
 target_link_libraries(screenedge PRIVATE
   KF6::Plasma
-  kwineffects
-  kwinglutils
+  render
 )

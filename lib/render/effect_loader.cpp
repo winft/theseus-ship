@@ -5,11 +5,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "effect_loader.h"
 
-#include "base/logging.h"
-#include "kwineffects/effect.h"
-#include "kwineffects/effect_plugin_factory.h"
-#include "kwineffects/effects_handler.h"
-#include <kwinconfig.h>
+#include "render/effect/interface/effect.h"
+#include "render/effect/interface/effect_plugin_factory.h"
+#include "render/effect/interface/effects_handler.h"
+#include <base/logging.h>
 
 #include <QPluginLoader>
 #include <QStringList>

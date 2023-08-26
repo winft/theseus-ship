@@ -6,7 +6,7 @@
 #ifndef KWIN_WOBBLYWINDOWS_H
 #define KWIN_WOBBLYWINDOWS_H
 
-#include <kwineffects/offscreen_effect.h>
+#include <render/effect/interface/offscreen_effect.h>
 
 namespace KWin
 {

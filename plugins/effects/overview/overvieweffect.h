@@ -3,11 +3,10 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #pragma once
 
-#include <kwineffects/effect_togglable_state.h>
-#include <kwineffects/quick_scene.h>
+#include <render/effect/interface/effect_togglable_state.h>
+#include <render/effect/interface/quick_scene.h>
 
 namespace KWin
 {

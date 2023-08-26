@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include <config-kwin.h>
+#include <base/config-kwin.h>
 
 #include "bridge_qobject.h"
 #include "client_impl.h"
@@ -16,12 +16,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "win/deco.h"
 
-#include <kwineffects/effect_plugin_factory.h>
-
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
 #include <KDecoration2/Private/DecorationBridge>
+#include <KPluginFactory>
 #include <KPluginMetaData>
 #include <QMetaProperty>
 

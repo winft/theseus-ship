@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "../integration/lib/catch_macros.h"
 #include "mock_gl.h"
 
-#include <kwingl/platform.h>
+#include <render/gl/interface/platform.h>
 
 #include <KConfig>
 #include <KConfigGroup>

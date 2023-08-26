@@ -18,9 +18,8 @@ kwin_add_builtin_effect(mousemark ${mousemark_SOURCES})
 target_link_libraries(mousemark PRIVATE
   KF6::ConfigGui
   KF6::I18n
-  kwineffects
-  kwinglutils
   Qt::Widgets
+  render
 )
 
 #######################################

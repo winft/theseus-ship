@@ -13,7 +13,7 @@
 #include "render/gl/window.h"
 #include "render/wayland/buffer.h"
 
-#include <kwingl/platform.h>
+#include <render/gl/interface/platform.h>
 
 #include <QImage>
 #include <QOpenGLFramebufferObject>

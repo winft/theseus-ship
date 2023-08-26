@@ -9,10 +9,8 @@
 #include "base/platform.h"
 #include "base/x11/xcb/extensions.h"
 #include "win/deco/bridge.h"
-
-#include <config-kwin.h>
-#include <kwinconfig.h>
-#include <kwingl/platform.h>
+#include <base/config-kwin.h>
+#include <render/gl/interface/platform.h>
 
 #include <KLocalizedString>
 #include <QMetaProperty>

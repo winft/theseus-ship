@@ -6,7 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_SCREEN_EDGE_EFFECT_H
 #define KWIN_SCREEN_EDGE_EFFECT_H
 
-#include <kwineffects/effect.h>
+#include <render/effect/interface/effect.h>
+
 #include <memory>
 
 class QTimer;

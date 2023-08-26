@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include <kwineffects/effect_screen.h>
+#include <render/effect/interface/effect_screen.h>
 
 #include <QRect>
 

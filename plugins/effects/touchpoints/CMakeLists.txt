@@ -12,7 +12,6 @@ set(touchpoints_SOURCES
 
 kwin_add_builtin_effect(touchpoints ${touchpoints_SOURCES})
 target_link_libraries(touchpoints PRIVATE
-    kwineffects
-    kwinglutils
-    Qt::Widgets
+  Qt::Widgets
+  render
 )

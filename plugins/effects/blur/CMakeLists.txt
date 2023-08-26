@@ -20,8 +20,7 @@ kwin_add_builtin_effect(blur ${blur_SOURCES})
 target_link_libraries(blur PRIVATE
   KDecoration2::KDecoration
   KF6::ConfigGui
-  kwineffects
-  kwinglutils
+  render
 )
 
 #######################################

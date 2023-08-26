@@ -5,8 +5,8 @@
 */
 #pragma once
 
-#include <kwineffects/effect_integration.h>
-#include <kwineffects/effect_window.h>
+#include <render/effect/interface/effect_integration.h>
+#include <render/effect/interface/effect_window.h>
 
 #include <Wrapland/Server/blur.h>
 #include <Wrapland/Server/surface.h>

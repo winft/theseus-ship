@@ -4,11 +4,12 @@
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #include "wobblywindows_config.h"
+
 // KConfigSkeleton
 #include "wobblywindowsconfig.h"
-#include <kwinconfig.h>
+
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
 
 #include <KLocalizedString>

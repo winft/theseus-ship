@@ -13,7 +13,7 @@
 #include "win/deco.h"
 #include "win/window_qobject.h"
 
-#include <kwineffects/window_quad.h>
+#include <render/effect/interface/window_quad.h>
 
 #include <KDecoration2/DecorationShadow>
 #include <QObject>

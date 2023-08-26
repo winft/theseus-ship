@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <kwineffects/quick_scene.h>
+#include <render/effect/interface/quick_scene.h>
 
 #include <QKeySequence>
 #include <QUuid>

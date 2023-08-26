@@ -7,8 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_ZOOM_H
 #define KWIN_ZOOM_H
 
-#include <config-kwin.h>
-#include <kwineffects/effect.h>
+#include <base/config-kwin.h>
+#include <render/effect/interface/effect.h>
 
 #include <QTime>
 #include <QTimeLine>

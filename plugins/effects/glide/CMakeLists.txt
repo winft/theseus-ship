@@ -17,7 +17,7 @@ kconfig_add_kcfg_files(glide_SOURCES
 kwin_add_builtin_effect(glide ${glide_SOURCES})
 target_link_libraries(glide PRIVATE
   KF6::ConfigGui
-  kwineffects
+  render
 )
 
 #######################################

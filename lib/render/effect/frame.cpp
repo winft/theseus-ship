@@ -5,9 +5,8 @@
 */
 #include "frame.h"
 
-#include "config-kwin.h"
-
-#include <kwineffects/effects_handler.h>
+#include <base/config-kwin.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <QQuickItem>
 #include <QStandardPaths>

@@ -6,8 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include <kwingl/texture_p.h>
-#include <kwingl/utils.h>
+#include <render/gl/interface/texture_p.h>
+#include <render/gl/interface/utils.h>
 
 namespace KWin::render::gl
 {

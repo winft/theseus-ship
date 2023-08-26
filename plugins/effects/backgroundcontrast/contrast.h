@@ -7,9 +7,9 @@
 #ifndef CONTRAST_H
 #define CONTRAST_H
 
-#include <kwineffects/effect.h>
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <QVector2D>
 #include <QVector>

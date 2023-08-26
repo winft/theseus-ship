@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "../integration/lib/catch_macros.h"
 
-#include <kwineffects/window_quad.h>
+#include <render/effect/interface/window_quad.h>
 
 #include <catch2/generators/catch_generators.hpp>
 

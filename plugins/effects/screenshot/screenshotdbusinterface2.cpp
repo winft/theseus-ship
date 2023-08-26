@@ -12,8 +12,8 @@
 
 #include "screenshot2adaptor.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <KLocalizedString>
 #include <QDBusConnection>

@@ -18,11 +18,11 @@
 #include "win/scene.h"
 #include "win/types.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effect_window_visible_ref.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/window_quad.h>
-#include <kwingl/texture.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effect_window_visible_ref.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/window_quad.h>
+#include <render/gl/interface/texture.h>
 
 #include <QHash>
 

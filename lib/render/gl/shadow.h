@@ -7,8 +7,8 @@
 
 #include "render/shadow.h"
 
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <QPainter>
 #include <QSharedPointer>

@@ -17,9 +17,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/geo.h"
 #include "win/space_qobject.h"
 
-#include <kwineffects/effect_quick_view.h>
-#include <kwineffects/paint_clipper.h>
-#include <kwineffects/paint_data.h>
+#include <render/effect/interface/effect_quick_view.h>
+#include <render/effect/interface/paint_clipper.h>
+#include <render/effect/interface/paint_data.h>
 
 #include <QMatrix4x4>
 #include <QQuickWindow>

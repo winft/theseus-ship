@@ -10,7 +10,7 @@
 #include "scripting_logging.h"
 
 #include <config-kwin.h>
-#include <kwineffects/animation_effect.h>
+#include <render/effect/interface/animation_effect.h>
 
 #include <KPluginMetaData>
 #include <QJSEngine>
@@ -50,7 +50,7 @@ class KWIN_EXPORT effect : public KWin::AnimationEffect
                    isActiveFullScreenEffectChanged)
 
 public:
-    // copied from kwineffects.h
+    // copied from render/effect/interface.h
     enum DataRole {
         // Grab roles are used to force all other animations to ignore the window.
         // The value of the data is set to the Effect's `this` value.

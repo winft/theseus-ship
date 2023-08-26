@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // KConfigSkeleton
 #include "kscreenconfig.h"
 
-#include <kwineffects/effects_handler.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <QLoggingCategory>
 

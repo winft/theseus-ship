@@ -10,10 +10,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // KConfigSkeleton
 #include "slideconfig.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_clipper.h>
-#include <kwineffects/paint_data.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_clipper.h>
+#include <render/effect/interface/paint_data.h>
 
 #include <cmath>
 

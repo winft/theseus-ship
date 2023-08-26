@@ -3,12 +3,12 @@ SPDX-FileCopyrightText: 2007 Christian Nitschkowski <christian.nitschkowski@kdem
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #include "mousemark_config.h"
 
 // KConfigSkeleton
 #include "mousemarkconfig.h"
-#include <kwinconfig.h>
+
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
 
 #include <QAction>

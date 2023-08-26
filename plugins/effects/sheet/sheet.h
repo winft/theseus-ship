@@ -8,10 +8,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_SHEET_H
 #define KWIN_SHEET_H
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_window_deleted_ref.h>
-#include <kwineffects/effect_window_visible_ref.h>
-#include <kwineffects/time_line.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_window_deleted_ref.h>
+#include <render/effect/interface/effect_window_visible_ref.h>
+#include <render/effect/interface/time_line.h>
 
 namespace KWin
 {

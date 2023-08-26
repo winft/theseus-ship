@@ -10,10 +10,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // KConfigSkeleton
 #include "trackmouseconfig.h"
 
-#include <kwinconfig.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/utils.h>
+#include <base/config-kwin.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/utils.h>
 
 #include <KLocalizedString>
 #include <QAction>

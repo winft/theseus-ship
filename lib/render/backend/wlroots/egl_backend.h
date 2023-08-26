@@ -19,8 +19,8 @@
 #include "render/wayland/egl.h"
 #include "render/wayland/egl_data.h"
 
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <QOpenGLContext>
 #include <Wrapland/Server/linux_dmabuf_v1.h>

@@ -10,11 +10,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "springmotion.h"
 
-#include "kwineffects/effect_screen.h"
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_window_visible_ref.h>
-#include <kwineffects/time_line.h>
-#include <kwineffects/types.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_screen.h>
+#include <render/effect/interface/effect_window_visible_ref.h>
+#include <render/effect/interface/time_line.h>
+#include <render/effect/interface/types.h>
 
 #include <unordered_map>
 

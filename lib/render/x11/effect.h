@@ -10,7 +10,7 @@
 #include "render/support_properties.h"
 #include "utils/memory.h"
 
-#include <kwineffects/effect.h>
+#include <render/effect/interface/effect.h>
 
 #include <xcb/xcb.h>
 

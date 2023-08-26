@@ -6,9 +6,9 @@
 */
 #pragma once
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_screen.h>
-#include <kwineffects/paint_data.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_screen.h>
+#include <render/effect/interface/paint_data.h>
 
 #include <QFuture>
 #include <QImage>

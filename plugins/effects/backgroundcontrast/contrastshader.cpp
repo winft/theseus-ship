@@ -6,8 +6,8 @@
 */
 #include "contrastshader.h"
 
-#include <kwineffects/effects_handler.h>
-#include <kwingl/platform.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/gl/interface/platform.h>
 
 #include <QByteArray>
 #include <QMatrix4x4>

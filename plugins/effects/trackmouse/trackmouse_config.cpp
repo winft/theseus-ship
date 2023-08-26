@@ -4,23 +4,21 @@ SPDX-FileCopyrightText: 2010 Jorge Mata <matamax123@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
+#include "trackmouse_config.h"
 
-#include <QAction>
-#include <kwinconfig.h>
+// KConfigSkeleton
+#include "trackmouseconfig.h"
+
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
 
 #include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KPluginFactory>
-
+#include <QAction>
 #include <QLabel>
 #include <QVBoxLayout>
-
-#include "trackmouse_config.h"
-
-// KConfigSkeleton
-#include "trackmouseconfig.h"
 
 K_PLUGIN_CLASS(KWin::TrackMouseEffectConfig)
 

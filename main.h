@@ -11,8 +11,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "debug/perf/ftrace.h"
 #include "input/platform.h"
 
-#include <config-kwin.h>
-#include <kwineffects/effect_window.h>
+#include <base/config-kwin.h>
+#include <render/effect/interface/effect_window.h>
 
 #include <KAboutData>
 #include <KLocalizedString>

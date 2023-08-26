@@ -6,8 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_MOUSEMARK_H
 #define KWIN_MOUSEMARK_H
 
-#include <kwineffects/effect.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect.h>
+#include <render/gl/interface/utils.h>
 
 namespace KWin
 {

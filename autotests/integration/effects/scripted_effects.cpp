@@ -7,8 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "lib/setup.h"
 
 #include "base/wayland/server.h"
-#include "kwineffects/anidata_p.h"
 #include "render/compositor.h"
+#include "render/effect/interface/anidata_p.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "script/effect.h"

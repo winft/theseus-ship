@@ -13,9 +13,8 @@ set(showpaint_SOURCES
 kwin_add_builtin_effect(showpaint ${showpaint_SOURCES})
 target_link_libraries(showpaint PRIVATE
   KF6::I18n
-  kwineffects
-  kwinglutils
   Qt::Widgets
+  render
 )
 
 #######################################

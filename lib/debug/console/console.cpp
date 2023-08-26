@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/property_window.h"
 #include "win/space.h"
 
-#include <kwingl/platform.h>
+#include <render/gl/interface/platform.h>
 
 #include <KLocalizedString>
 #include <QMetaProperty>

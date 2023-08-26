@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/space.h"
 #include "win/x11/window.h"
 
-#include <kwineffects/effects_handler.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <KConfigGroup>
 #include <QPainter>

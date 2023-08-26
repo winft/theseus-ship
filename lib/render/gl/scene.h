@@ -18,8 +18,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/scene.h"
 #include "render/shadow.h"
 
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <KNotification>
 #include <memory>

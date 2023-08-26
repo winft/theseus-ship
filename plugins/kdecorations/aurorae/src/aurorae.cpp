@@ -13,14 +13,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "aurorae.h"
 
-#include "config-kwin.h"
-
 #include "auroraeshared.h"
 #include "auroraetheme.h"
 #include "decorationoptions.h"
 
-#include <kwineffects/effect_quick_view.h>
-#include <kwineffects/effects_handler.h>
+#include <base/config-kwin.h>
+#include <render/effect/interface/effect_quick_view.h>
+#include <render/effect/interface/effects_handler.h>
 
 // KDecoration2
 #include <KDecoration2/DecoratedClient>

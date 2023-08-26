@@ -7,11 +7,11 @@
 */
 #pragma once
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_integration.h>
-#include <kwineffects/effect_window_deleted_ref.h>
-#include <kwineffects/effect_window_visible_ref.h>
-#include <kwineffects/time_line.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_integration.h>
+#include <render/effect/interface/effect_window_deleted_ref.h>
+#include <render/effect/interface/effect_window_visible_ref.h>
+#include <render/effect/interface/time_line.h>
 
 #include <memory>
 

@@ -7,7 +7,8 @@
 #include "blur_config.h"
 // KConfigSkeleton
 #include "blurconfig.h"
-#include <kwinconfig.h>
+
+#include <base/config-kwin.h>
 
 #include <KPluginFactory>
 #include <kwineffects_interface.h>

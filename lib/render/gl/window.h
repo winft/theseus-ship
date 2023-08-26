@@ -14,8 +14,8 @@
 #include "render/window.h"
 #include "win/deco/client_impl.h"
 
-#include <kwineffects/paint_data.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/utils.h>
 
 #include <QMatrix4x4>
 #include <QVector4D>

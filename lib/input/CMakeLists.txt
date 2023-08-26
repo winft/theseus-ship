@@ -6,8 +6,9 @@ add_library(input SHARED)
 
 target_link_libraries(input
   PUBLIC
-    win
+    WraplandServer
     XCB::CURSOR
+    win
 )
 
 target_sources(input

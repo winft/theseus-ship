@@ -11,7 +11,7 @@
 #include "render/x11/effect.h"
 #include "render/x11/effect/contrast_update.h"
 
-#include <kwineffects/effect_integration.h>
+#include <render/effect/interface/effect_integration.h>
 
 #include <Wrapland/Server/contrast.h>
 #include <Wrapland/Server/display.h>

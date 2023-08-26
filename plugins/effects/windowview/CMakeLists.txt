@@ -22,9 +22,9 @@ kwin_add_builtin_effect(windowview ${windowview_SOURCES})
 target_link_libraries(windowview PRIVATE
   KF6::ConfigGui
   KF6::I18n
-  kwineffects
   Qt::Quick
   Qt::Widgets
+  render
 )
 
 install(DIRECTORY qml DESTINATION ${KDE_INSTALL_DATADIR}/kwin/effects/windowview)

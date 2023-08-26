@@ -19,8 +19,7 @@ target_link_libraries(magnifier PRIVATE
   KF6::ConfigGui
   KF6::I18n
   KF6::KCMUtils
-  kwineffects
-  kwinglutils
+  render
 )
 
 #######################################

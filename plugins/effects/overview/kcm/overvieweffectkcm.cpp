@@ -5,10 +5,9 @@
 */
 #include "overvieweffectkcm.h"
 
-#include <kwinconfig.h>
-
 #include "overviewconfig.h"
 
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
 
 #include <KActionCollection>
