@@ -42,14 +42,14 @@ struct paint_data {
 };
 
 struct render_data {
-    QMatrix4x4 view;
-    QMatrix4x4 projection;
+    QMatrix4x4 const view;
+    QMatrix4x4 const projection;
 
-    QRect viewport;
-    transform_type transform{transform_type::normal};
+    QRect const viewport;
+    transform_type const transform{transform_type::normal};
 
     // If the render backend requires an additional flip of the y-axis.
-    bool flip_y{false};
+    bool const flip_y{false};
 };
 
 struct screen_prepaint_data {
@@ -109,7 +109,7 @@ struct window_paint_data {
 
     paint_data paint;
     WindowQuadList quads;
-    render_data const render;
+    render_data render;
 
     double cross_fade_progress{1.};
     GLShader* shader{nullptr};

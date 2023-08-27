@@ -10,6 +10,7 @@
 #include "texture.h"
 
 #include "base/output.h"
+#include <render/effect/interface/paint_data.h>
 
 #include <QElapsedTimer>
 #include <QMatrix4x4>
@@ -18,7 +19,7 @@
 namespace KWin::render::gl
 {
 
-inline effect::render_data create_view_projection(QRect const& world_geo)
+inline void create_view_projection(QRect const& world_geo, QMatrix4x4& view, QMatrix4x4& projection)
 {
     // Can't use world_geo.center() because of QRect bottom-right offset.
     auto const view_center = QPoint(world_geo.left() + world_geo.width() / 2.,
@@ -26,12 +27,8 @@ inline effect::render_data create_view_projection(QRect const& world_geo)
     auto y_fov = 60.;
     auto distance = world_geo.height() / (2. * std::tan(y_fov * M_PI / 360.0f));
 
-    effect::render_data data;
-    data.view.translate(-view_center.x(), -view_center.y(), -distance);
-    data.projection.perspective(
-        60, world_geo.width() / (double)world_geo.height(), 0.1, distance * 2);
-
-    return data;
+    view.translate(-view_center.x(), -view_center.y(), -distance);
+    projection.perspective(60, world_geo.width() / (double)world_geo.height(), 0.1, distance * 2);
 }
 
 /**

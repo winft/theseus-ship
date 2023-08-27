@@ -123,10 +123,11 @@ void OffscreenEffectPrivate::maybeRender(EffectWindow& window, OffscreenData* of
     QMatrix4x4 view;
     view.translate(-geometry.x(), -geometry.y());
 
-    effect::render_data render;
-    render.view = view;
-    render.projection = projection;
-    render.viewport = {{}, geometry.size()};
+    effect::render_data render{
+        .view = view,
+        .projection = projection,
+        .viewport = {{}, geometry.size()},
+    };
 
     effect::window_paint_data data{
         window,

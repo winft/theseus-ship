@@ -142,31 +142,37 @@ public:
     {
         auto const& out = get_egl_out(&output);
         auto const geo = output.geometry();
-        auto view = out->out->base.view_geometry();
+        auto viewport = out->out->base.view_geometry();
         auto res = out->out->base.mode_size();
         auto is_portrait = has_portrait_transform(out->out->base);
 
         if (is_portrait) {
             // The wlroots buffer is always sideways.
-            view = view.transposed();
+            viewport = viewport.transposed();
         }
 
         auto native_out = static_cast<base::backend::wlroots::output const&>(output).native;
         wlr_output_attach_render(native_out, &out->bufferAge);
-        wlr_renderer_begin(platform.renderer, view.width(), view.height());
+        wlr_renderer_begin(platform.renderer, viewport.width(), viewport.height());
 
         native_fbo
-            = GLFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer), res, view);
+            = GLFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer), res, viewport);
         GLFramebuffer::pushRenderTarget(&native_fbo);
 
         auto transform = static_cast<effect::transform_type>(
             get_transform(static_cast<base::backend::wlroots::output const&>(output)));
 
-        auto data = gl::create_view_projection(geo);
-        data.projection = effect::get_transform_matrix(transform) * data.projection;
-        data.viewport = view;
-        data.transform = transform;
-        data.flip_y = true;
+        QMatrix4x4 view;
+        QMatrix4x4 projection;
+        gl::create_view_projection(output.geometry(), view, projection);
+
+        effect::render_data data{
+            .view = view,
+            .projection = effect::get_transform_matrix(transform) * projection,
+            .viewport = viewport,
+            .transform = transform,
+            .flip_y = true,
+        };
 
         return data;
     }

@@ -76,18 +76,25 @@ public:
     effect::render_data set_render_target_to_output(base::output const& output) override
     {
         auto const out_geo = output.geometry();
-        auto const view = QRect(
+        auto const viewport = QRect(
             {out_geo.x(), platform.base.topology.size.height() - out_geo.y() - out_geo.height()},
             out_geo.size());
 
         makeCurrent();
-        native_fbo = GLFramebuffer(0, platform.base.topology.size, view);
+        native_fbo = GLFramebuffer(0, platform.base.topology.size, viewport);
         GLFramebuffer::pushRenderTarget(&native_fbo);
 
-        auto data = gl::create_view_projection(output.geometry());
-        data.viewport = view;
-        data.projection.scale(1, -1);
-        data.flip_y = false;
+        QMatrix4x4 view;
+        QMatrix4x4 projection;
+        gl::create_view_projection(output.geometry(), view, projection);
+        projection.scale(1, -1);
+
+        effect::render_data data{
+            .view = view,
+            .projection = projection,
+            .viewport = viewport,
+            .flip_y = false,
+        };
 
         return data;
     }
