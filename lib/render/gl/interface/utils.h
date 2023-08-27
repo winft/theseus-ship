@@ -672,10 +672,15 @@ private:
                         GLenum mode,
                         int first,
                         int count);
+    void draw_primitive_unbounded(GLenum mode, int first, int count);
+
     void draw_primitive_quads(effect::render_data const& data,
                               QRegion const& region,
                               int first,
                               int count);
+    void draw_primitive_quads_unbounded(int first, int count);
+    void prepare_primitive_quads_buffer(int& count);
+
     GLVertexBufferPrivate* const d;
 };
 

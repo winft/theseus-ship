@@ -2107,7 +2107,9 @@ void GLVertexBuffer::setAttribLayout(const GLVertexAttrib* attribs, int count, i
 
 void GLVertexBuffer::render(GLenum primitiveMode)
 {
-    render({}, infiniteRegion(), primitiveMode);
+    d->bindArrays();
+    draw(primitiveMode, 0, d->vertexCount);
+    d->unbindArrays();
 }
 
 void GLVertexBuffer::render(effect::render_data const& data,
@@ -2131,7 +2133,11 @@ void GLVertexBuffer::unbindArrays()
 
 void GLVertexBuffer::draw(GLenum primitiveMode, int first, int count)
 {
-    draw({}, infiniteRegion(), primitiveMode, first, count);
+    if (primitiveMode == GL_QUADS) {
+        draw_primitive_quads_unbounded(first, count);
+        return;
+    }
+    draw_primitive_unbounded(primitiveMode, first, count);
 }
 
 void GLVertexBuffer::draw(effect::render_data const& data,
@@ -2147,6 +2153,11 @@ void GLVertexBuffer::draw(effect::render_data const& data,
     draw_primitive(data, region, primitiveMode, first, count);
 }
 
+void GLVertexBuffer::draw_primitive_unbounded(GLenum mode, int first, int count)
+{
+    glDrawArrays(mode, first, count);
+}
+
 void GLVertexBuffer::draw_primitive(effect::render_data const& data,
                                     QRegion const& region,
                                     GLenum mode,
@@ -2154,7 +2165,7 @@ void GLVertexBuffer::draw_primitive(effect::render_data const& data,
                                     int count)
 {
     if (region == infiniteRegion()) {
-        glDrawArrays(mode, first, count);
+        draw_primitive_unbounded(mode, first, count);
         return;
     }
 
@@ -2168,10 +2179,7 @@ void GLVertexBuffer::draw_primitive(effect::render_data const& data,
     glScissor(vp.x(), vp.y(), vp.width(), vp.height());
 }
 
-void GLVertexBuffer::draw_primitive_quads(effect::render_data const& data,
-                                          QRegion const& region,
-                                          int first,
-                                          int count)
+void GLVertexBuffer::prepare_primitive_quads_buffer(int& count)
 {
     auto& indexBuffer = GLVertexBufferPrivate::s_indexBuffer;
 
@@ -2183,11 +2191,25 @@ void GLVertexBuffer::draw_primitive_quads(effect::render_data const& data,
     indexBuffer->accommodate(count / 4);
 
     count = count * 6 / 4;
+}
 
+void GLVertexBuffer::draw_primitive_quads_unbounded(int first, int count)
+{
+    prepare_primitive_quads_buffer(count);
+    glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
+}
+
+void GLVertexBuffer::draw_primitive_quads(effect::render_data const& data,
+                                          QRegion const& region,
+                                          int first,
+                                          int count)
+{
     if (region == infiniteRegion()) {
-        glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
+        draw_primitive_quads_unbounded(first, count);
         return;
     }
+
+    prepare_primitive_quads_buffer(count);
 
     // Clip using scissoring
     auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
