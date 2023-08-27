@@ -140,8 +140,7 @@ void BlurEffect::update_texture(blur_render_data& screen)
     // This last set is used as a temporary helper texture
     screen.targets.emplace_back(std::make_unique<GLTexture>(textureFormat, screen_size));
 
-    screen.stack.clear();
-    screen.stack.reserve(downsample_count * 2);
+    screen.stack = {};
 
     // Upsample
     for (int i = 1; i < downsample_count; i++) {

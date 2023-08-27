@@ -11,7 +11,6 @@
 #include <render/gl/interface/platform.h>
 #include <render/gl/interface/utils.h>
 
-#include <QStack>
 #include <QVector2D>
 #include <QVector>
 #include <vector>
@@ -39,7 +38,7 @@ struct blur_render_target {
 struct blur_render_data {
     EffectScreen const& screen;
     std::vector<blur_render_target> targets;
-    QStack<GLFramebuffer*> stack;
+    std::stack<GLFramebuffer*> stack;
 };
 
 class BlurEffect : public KWin::Effect

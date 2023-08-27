@@ -644,7 +644,7 @@ ShaderManager::ShaderManager()
 
 ShaderManager::~ShaderManager()
 {
-    while (!m_boundShaders.isEmpty()) {
+    while (!m_boundShaders.empty()) {
         popShader();
     }
 }
@@ -866,16 +866,15 @@ GLShader* ShaderManager::shader(ShaderTraits traits)
 
 GLShader* ShaderManager::getBoundShader() const
 {
-    if (m_boundShaders.isEmpty()) {
+    if (m_boundShaders.empty()) {
         return nullptr;
-    } else {
-        return m_boundShaders.top();
     }
+    return m_boundShaders.top();
 }
 
 bool ShaderManager::isShaderBound() const
 {
-    return !m_boundShaders.isEmpty();
+    return !m_boundShaders.empty();
 }
 
 GLShader* ShaderManager::pushShader(ShaderTraits traits)
@@ -896,11 +895,14 @@ void ShaderManager::pushShader(GLShader* shader)
 
 void ShaderManager::popShader()
 {
-    if (m_boundShaders.isEmpty()) {
+    if (m_boundShaders.empty()) {
         return;
     }
-    GLShader* shader = m_boundShaders.pop();
-    if (m_boundShaders.isEmpty()) {
+
+    auto shader = m_boundShaders.top();
+    m_boundShaders.pop();
+
+    if (m_boundShaders.empty()) {
         // no more shader bound - unbind
         shader->unbind();
     } else if (shader != m_boundShaders.top()) {
@@ -934,7 +936,7 @@ std::unique_ptr<GLShader> ShaderManager::loadShaderFromCode(const QByteArray& ve
 /***  GLFramebuffer  ***/
 bool GLFramebuffer::sSupported = false;
 bool GLFramebuffer::s_blitSupported = false;
-QStack<GLFramebuffer*> GLFramebuffer::s_renderTargets = QStack<GLFramebuffer*>();
+std::stack<GLFramebuffer*> GLFramebuffer::s_renderTargets = std::stack<GLFramebuffer*>();
 
 void GLFramebuffer::initStatic()
 {
@@ -954,7 +956,7 @@ void GLFramebuffer::initStatic()
 
 void GLFramebuffer::cleanup()
 {
-    Q_ASSERT(s_renderTargets.isEmpty());
+    Q_ASSERT(s_renderTargets.empty());
     sSupported = false;
     s_blitSupported = false;
 }
@@ -966,7 +968,7 @@ bool GLFramebuffer::blitSupported()
 
 GLFramebuffer* GLFramebuffer::currentRenderTarget()
 {
-    return s_renderTargets.isEmpty() ? nullptr : s_renderTargets.top();
+    return s_renderTargets.empty() ? nullptr : s_renderTargets.top();
 }
 
 void GLFramebuffer::pushRenderTarget(GLFramebuffer* target)
@@ -975,16 +977,30 @@ void GLFramebuffer::pushRenderTarget(GLFramebuffer* target)
     s_renderTargets.push(target);
 }
 
-void GLFramebuffer::pushRenderTargets(QStack<GLFramebuffer*> targets)
+void GLFramebuffer::pushRenderTargets(std::stack<GLFramebuffer*> targets)
 {
     targets.top()->bind();
-    s_renderTargets.append(targets);
+
+    // TODO(romangg): With C++23 use push_range() instead.
+    std::stack<GLFramebuffer*> temp;
+    while (!targets.empty()) {
+        auto next = targets.top();
+        targets.pop();
+        temp.push(next);
+    }
+    while (!temp.empty()) {
+        auto next = temp.top();
+        temp.pop();
+        s_renderTargets.push(next);
+    }
 }
 
 GLFramebuffer* GLFramebuffer::popRenderTarget()
 {
-    auto target = s_renderTargets.pop();
-    if (!s_renderTargets.isEmpty()) {
+    auto target = s_renderTargets.top();
+    s_renderTargets.pop();
+
+    if (!s_renderTargets.empty()) {
         s_renderTargets.top()->bind();
     }
 

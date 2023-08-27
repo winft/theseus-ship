@@ -13,8 +13,8 @@
 #include <render/gl/interface/utils_funcs.h>
 
 #include <QSize>
-#include <QStack>
 #include <optional>
+#include <stack>
 
 class QVector2D;
 class QVector3D;
@@ -284,7 +284,7 @@ private:
     QByteArray generateFragmentSource(ShaderTraits traits) const;
     std::unique_ptr<GLShader> generateShader(ShaderTraits traits);
 
-    QStack<GLShader*> m_boundShaders;
+    std::stack<GLShader*> m_boundShaders;
     std::map<ShaderTraits, std::unique_ptr<GLShader>> m_shaderHash;
     static ShaderManager* s_shaderManager;
 };
@@ -392,7 +392,7 @@ public:
      * @param targets The stack of GLFramebuffers
      * @since 5.13
      */
-    static void pushRenderTargets(QStack<GLFramebuffer*> targets);
+    static void pushRenderTargets(std::stack<GLFramebuffer*> targets);
 
     static void pushRenderTarget(GLFramebuffer* target);
     static GLFramebuffer* popRenderTarget();
@@ -433,7 +433,7 @@ private:
 
     static bool sSupported;
     static bool s_blitSupported;
-    static QStack<GLFramebuffer*> s_renderTargets;
+    static std::stack<GLFramebuffer*> s_renderTargets;
 
     GLuint mFramebuffer{0};
     std::unique_ptr<GLTexture> blit_helper_tex;
