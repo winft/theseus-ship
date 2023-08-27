@@ -333,7 +333,7 @@ target_link_libraries(kwin_x11
 
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
 
-kcoreaddons_target_static_plugins(kwin_x11 "kwin/effects/plugins")
+kcoreaddons_target_static_plugins(kwin_x11 NAMESPACE "kwin/effects/plugins")
 
 add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
@@ -358,7 +358,7 @@ if (HAVE_LIBCAP)
     )
 endif()
 
-kcoreaddons_target_static_plugins(kwin_wayland "kwin/effects/plugins")
+kcoreaddons_target_static_plugins(kwin_wayland NAMESPACE "kwin/effects/plugins")
 
 # Required for Plasma Wayland session. It expects a binary with this name to launch on startup.
 add_custom_target(kwin_wayland_wrapper ALL COMMAND

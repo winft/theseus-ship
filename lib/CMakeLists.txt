@@ -83,9 +83,8 @@ set_target_properties(wlroots PROPERTIES
 
 target_compile_definitions(wlroots PUBLIC WLR_USE_UNSTABLE)
 
-kcoreaddons_target_static_plugins(
-  wlroots "kwin/effects/plugins"
-  LINK_OPTION "PRIVATE"
+kcoreaddons_target_static_plugins(wlroots
+  NAMESPACE "kwin/effects/plugins"
 )
 
 install(TARGETS wlroots
