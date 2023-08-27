@@ -616,9 +616,9 @@ public:
                 .mask = static_cast<int>(mask),
                 .region = region,
             },
+            quads,
             render_data,
         };
-        data.quads = quads;
         platform.compositor->effects->paintWindow(data);
     }
 

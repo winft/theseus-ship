@@ -86,11 +86,19 @@ struct window_prepaint_data {
 
 struct window_paint_data {
     window_paint_data(EffectWindow& window, paint_data paint, render_data render)
+        : window_paint_data(window, std::move(paint), window.buildQuads(), std::move(render))
+    {
+    }
+
+    window_paint_data(EffectWindow& window,
+                      paint_data paint,
+                      WindowQuadList const& quads,
+                      render_data render)
         : window{window}
         , paint{std::move(paint)}
+        , quads{quads}
         , render{std::move(render)}
     {
-        quads = window.buildQuads();
         paint.opacity = window.opacity();
     }
 
