@@ -501,16 +501,20 @@ void GLTexture::unbind()
 
 void GLTexture::render(QSize const& target_size)
 {
-    render({}, infiniteRegion(), target_size);
+    if (target_size.isEmpty()) {
+        // nothing to paint. m_vbo is likely nullptr and cacheed size empty as well, #337090
+        return;
+    }
+
+    d_ptr->update_cache({{}, d_ptr->get_buffer_size()}, target_size);
+    d_ptr->m_vbo->render(GL_TRIANGLE_STRIP);
 }
 
 void GLTexture::render(effect::render_data const& data,
                        QRegion const& region,
                        QSize const& target_size)
 {
-    auto const rotated_size
-        = d_ptr->m_textureToBufferMatrix.mapRect(QRect(QPoint(), size())).size();
-    render(data, QRect(QPoint(), rotated_size), region, target_size);
+    render(data, {{}, d_ptr->get_buffer_size()}, region, target_size);
 }
 
 void GLTexture::render(effect::render_data const& data,
@@ -618,6 +622,11 @@ void GLTexture::setWrapMode(GLenum mode)
     }
 }
 
+QSize GLTexturePrivate::get_buffer_size() const
+{
+    return m_textureToBufferMatrix.mapRect(QRect(QPoint(), m_size)).size();
+}
+
 void GLTexturePrivate::onDamage()
 {
     // No-op
@@ -710,7 +719,7 @@ void GLTexturePrivate::update_cache(QRect const& source, QSize const& size)
     float const texWidth = (m_target == GL_TEXTURE_RECTANGLE_ARB) ? m_size.width() : 1.0f;
     float const texHeight = (m_target == GL_TEXTURE_RECTANGLE_ARB) ? m_size.height() : 1.0f;
 
-    auto const rotated_size = m_textureToBufferMatrix.mapRect(QRect(QPoint(), m_size)).size();
+    auto const rotated_size = get_buffer_size();
 
     QMatrix4x4 textureMat;
     textureMat.translate(texWidth / 2, texHeight / 2);

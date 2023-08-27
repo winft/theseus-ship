@@ -27,6 +27,7 @@ public:
     GLTexturePrivate();
     virtual ~GLTexturePrivate();
 
+    QSize get_buffer_size() const;
     virtual void onDamage();
 
     void updateMatrix();
