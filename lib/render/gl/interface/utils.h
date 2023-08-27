@@ -667,6 +667,15 @@ public:
     static GLVertexBuffer* streamingBuffer();
 
 private:
+    void draw_primitive(effect::render_data const& data,
+                        QRegion const& region,
+                        GLenum mode,
+                        int first,
+                        int count);
+    void draw_primitive_quads(effect::render_data const& data,
+                              QRegion const& region,
+                              int first,
+                              int count);
     GLVertexBufferPrivate* const d;
 };
 

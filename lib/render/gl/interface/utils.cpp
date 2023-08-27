@@ -2140,46 +2140,63 @@ void GLVertexBuffer::draw(effect::render_data const& data,
                           int first,
                           int count)
 {
-    auto const hardwareClipping = region != infiniteRegion();
-
     if (primitiveMode == GL_QUADS) {
-        IndexBuffer*& indexBuffer = GLVertexBufferPrivate::s_indexBuffer;
+        draw_primitive_quads(data, region, first, count);
+        return;
+    }
+    draw_primitive(data, region, primitiveMode, first, count);
+}
 
-        if (!indexBuffer)
-            indexBuffer = new IndexBuffer;
-
-        indexBuffer->bind();
-        indexBuffer->accommodate(count / 4);
-
-        count = count * 6 / 4;
-
-        if (!hardwareClipping) {
-            glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
-        } else {
-            // Clip using scissoring
-            auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
-            auto const vp_region = effect::map_to_viewport(data, region);
-            for (auto const& rect : vp_region) {
-                glScissor(rect.x(), rect.y(), rect.width(), rect.height());
-                glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
-            }
-            glScissor(vp.x(), vp.y(), vp.width(), vp.height());
-        }
+void GLVertexBuffer::draw_primitive(effect::render_data const& data,
+                                    QRegion const& region,
+                                    GLenum mode,
+                                    int first,
+                                    int count)
+{
+    if (region == infiniteRegion()) {
+        glDrawArrays(mode, first, count);
         return;
     }
 
-    if (!hardwareClipping) {
-        glDrawArrays(primitiveMode, first, count);
-    } else {
-        // Clip using scissoring
-        auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
-        auto const vp_region = effect::map_to_viewport(data, region);
-        for (auto const& rect : vp_region) {
-            glScissor(rect.x(), rect.y(), rect.width(), rect.height());
-            glDrawArrays(primitiveMode, first, count);
-        }
-        glScissor(vp.x(), vp.y(), vp.width(), vp.height());
+    // Clip using scissoring
+    auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
+    auto const vp_region = effect::map_to_viewport(data, region);
+    for (auto const& rect : vp_region) {
+        glScissor(rect.x(), rect.y(), rect.width(), rect.height());
+        glDrawArrays(mode, first, count);
     }
+    glScissor(vp.x(), vp.y(), vp.width(), vp.height());
+}
+
+void GLVertexBuffer::draw_primitive_quads(effect::render_data const& data,
+                                          QRegion const& region,
+                                          int first,
+                                          int count)
+{
+    auto& indexBuffer = GLVertexBufferPrivate::s_indexBuffer;
+
+    if (!indexBuffer) {
+        indexBuffer = new IndexBuffer;
+    }
+
+    indexBuffer->bind();
+    indexBuffer->accommodate(count / 4);
+
+    count = count * 6 / 4;
+
+    if (region == infiniteRegion()) {
+        glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
+        return;
+    }
+
+    // Clip using scissoring
+    auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
+    auto const vp_region = effect::map_to_viewport(data, region);
+    for (auto const& rect : vp_region) {
+        glScissor(rect.x(), rect.y(), rect.width(), rect.height());
+        glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
+    }
+    glScissor(vp.x(), vp.y(), vp.width(), vp.height());
 }
 
 bool GLVertexBuffer::supportsIndexedQuads()
