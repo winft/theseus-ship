@@ -30,6 +30,7 @@ public:
     virtual void onDamage();
 
     void updateMatrix();
+    void update_cache(QRect const& source, QSize const& size);
 
     GLuint m_texture;
     GLenum m_target;

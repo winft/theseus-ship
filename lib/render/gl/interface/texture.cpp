@@ -523,56 +523,7 @@ void GLTexture::render(effect::render_data const& data,
         return;
     }
 
-    if (target_size != d_ptr->cache.size || d_ptr->cache.source != source) {
-        d_ptr->cache.size = target_size;
-        d_ptr->cache.source = source;
-
-        if (!d_ptr->m_vbo) {
-            d_ptr->m_vbo = std::make_unique<GLVertexBuffer>(KWin::GLVertexBuffer::Static);
-        }
-
-        float const verts[4 * 2] = {0.f,
-                                    0.f,
-                                    0.f,
-                                    static_cast<float>(target_size.height()),
-                                    static_cast<float>(target_size.width()),
-                                    0.f,
-                                    static_cast<float>(target_size.width()),
-                                    static_cast<float>(target_size.height())};
-
-        float const texWidth = (target() == GL_TEXTURE_RECTANGLE_ARB) ? width() : 1.0f;
-        float const texHeight = (target() == GL_TEXTURE_RECTANGLE_ARB) ? height() : 1.0f;
-
-        auto const rotated_size
-            = d_ptr->m_textureToBufferMatrix.mapRect(QRect(QPoint(), size())).size();
-
-        QMatrix4x4 textureMat;
-        textureMat.translate(texWidth / 2, texHeight / 2);
-        textureMat *= d_ptr->m_textureToBufferMatrix;
-
-        // our Y axis is flipped vs OpenGL
-        textureMat.scale(1, -1);
-        textureMat.translate(-texWidth / 2, -texHeight / 2);
-        textureMat.scale(texWidth / rotated_size.width(), texHeight / rotated_size.height());
-
-        auto const p1 = textureMat.map(QPointF(source.x(), source.y()));
-        auto const p2 = textureMat.map(QPointF(source.x(), source.y() + source.height()));
-        auto const p3 = textureMat.map(QPointF(source.x() + source.width(), source.y()));
-        auto const p4
-            = textureMat.map(QPointF(source.x() + source.width(), source.y() + source.height()));
-
-        float const texcoords[4 * 2] = {static_cast<float>(p1.x()),
-                                        static_cast<float>(p1.y()),
-                                        static_cast<float>(p2.x()),
-                                        static_cast<float>(p2.y()),
-                                        static_cast<float>(p3.x()),
-                                        static_cast<float>(p3.y()),
-                                        static_cast<float>(p4.x()),
-                                        static_cast<float>(p4.y())};
-
-        d_ptr->m_vbo->setData(4, 2, verts, texcoords);
-    }
-
+    d_ptr->update_cache(source, target_size);
     d_ptr->m_vbo->render(data, region, GL_TRIANGLE_STRIP);
 }
 
@@ -732,6 +683,60 @@ void GLTexturePrivate::updateMatrix()
     m_matrix[UnnormalizedCoordinates] *= m_textureToBufferMatrix;
     m_matrix[UnnormalizedCoordinates].scale(1, -1);
     m_matrix[UnnormalizedCoordinates].translate(-m_size.width() / 2, -m_size.height() / 2);
+}
+
+void GLTexturePrivate::update_cache(QRect const& source, QSize const& size)
+{
+    if (cache.size == size && cache.source != source) {
+        return;
+    }
+
+    cache.size = size;
+    cache.source = source;
+
+    if (!m_vbo) {
+        m_vbo = std::make_unique<GLVertexBuffer>(KWin::GLVertexBuffer::Static);
+    }
+
+    float const verts[4 * 2] = {0.f,
+                                0.f,
+                                0.f,
+                                static_cast<float>(size.height()),
+                                static_cast<float>(size.width()),
+                                0.f,
+                                static_cast<float>(size.width()),
+                                static_cast<float>(size.height())};
+
+    float const texWidth = (m_target == GL_TEXTURE_RECTANGLE_ARB) ? m_size.width() : 1.0f;
+    float const texHeight = (m_target == GL_TEXTURE_RECTANGLE_ARB) ? m_size.height() : 1.0f;
+
+    auto const rotated_size = m_textureToBufferMatrix.mapRect(QRect(QPoint(), m_size)).size();
+
+    QMatrix4x4 textureMat;
+    textureMat.translate(texWidth / 2, texHeight / 2);
+    textureMat *= m_textureToBufferMatrix;
+
+    // our Y axis is flipped vs OpenGL
+    textureMat.scale(1, -1);
+    textureMat.translate(-texWidth / 2, -texHeight / 2);
+    textureMat.scale(texWidth / rotated_size.width(), texHeight / rotated_size.height());
+
+    auto const p1 = textureMat.map(QPointF(source.x(), source.y()));
+    auto const p2 = textureMat.map(QPointF(source.x(), source.y() + source.height()));
+    auto const p3 = textureMat.map(QPointF(source.x() + source.width(), source.y()));
+    auto const p4
+        = textureMat.map(QPointF(source.x() + source.width(), source.y() + source.height()));
+
+    float const texcoords[4 * 2] = {static_cast<float>(p1.x()),
+                                    static_cast<float>(p1.y()),
+                                    static_cast<float>(p2.x()),
+                                    static_cast<float>(p2.y()),
+                                    static_cast<float>(p3.x()),
+                                    static_cast<float>(p3.y()),
+                                    static_cast<float>(p4.x()),
+                                    static_cast<float>(p4.y())};
+
+    m_vbo->setData(4, 2, verts, texcoords);
 }
 
 void GLTexture::set_content_transform(effect::transform_type transform)
