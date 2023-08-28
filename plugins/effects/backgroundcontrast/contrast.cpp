@@ -254,6 +254,7 @@ void ContrastEffect::doContrast(effect::window_paint_data& data, QRegion const& 
 {
     auto mvp = effect::get_mvp(data);
     auto const rect = effect::map_to_viewport(data.render, shape.boundingRect());
+    auto const opacity = data.paint.opacity * data.window.opacity();
 
     // Upload geometry for the horizontal and vertical passes
     auto vbo = GLVertexBuffer::streamingBuffer();
@@ -282,7 +283,7 @@ void ContrastEffect::doContrast(effect::window_paint_data& data, QRegion const& 
     shader->setColorMatrix(win_data.colorMatrix);
     shader->bind();
 
-    shader->setOpacity(data.paint.opacity);
+    shader->setOpacity(opacity);
 
     // Set up the texture matrix to transform from screen coordinates to texture coordinates.
     QMatrix4x4 textureMatrix;
@@ -297,7 +298,7 @@ void ContrastEffect::doContrast(effect::window_paint_data& data, QRegion const& 
     texture->unbind();
     vbo->unbindArrays();
 
-    if (data.paint.opacity < 1.0) {
+    if (opacity < 1.0) {
         glDisable(GL_BLEND);
     }
 

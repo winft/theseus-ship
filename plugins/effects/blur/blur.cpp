@@ -569,7 +569,7 @@ void BlurEffect::do_blur(effect::window_paint_data& data, QRegion const& shape, 
         return;
     }
 
-    auto const opacity = data.paint.opacity;
+    auto const opacity = data.paint.opacity * data.window.opacity();
 
     assert(current_screen);
     auto const& screen_data = render_screens.at(current_screen);
