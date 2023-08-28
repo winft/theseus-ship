@@ -35,7 +35,7 @@ public:
                effect::window_paint_data const& data,
                WindowQuadList const& quads,
                GLShader* offscreenShader);
-    GLTexture* maybeRender(EffectWindow& window, OffscreenData* offscreenData);
+    void maybeRender(EffectWindow& window, OffscreenData* offscreenData);
 
     bool live = true;
 };
@@ -105,37 +105,44 @@ void OffscreenEffect::apply(effect::window_paint_data& /*data*/, WindowQuadList&
 {
 }
 
-GLTexture* OffscreenEffectPrivate::maybeRender(EffectWindow& window, OffscreenData* offscreenData)
+void OffscreenEffectPrivate::maybeRender(EffectWindow& window, OffscreenData* offscreenData)
 {
-    if (offscreenData->isDirty) {
-        GLFramebuffer::pushRenderTarget(offscreenData->renderTarget.data());
-        glClearColor(0.0, 0.0, 0.0, 0.0);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        auto const geometry = window.expandedGeometry();
-        QMatrix4x4 projectionMatrix;
-        projectionMatrix.ortho(QRect(0, 0, geometry.width(), geometry.height()));
-
-        effect::window_paint_data data{
-            window,
-            {
-                .mask = Effect::PAINT_WINDOW_TRANSFORMED | Effect::PAINT_WINDOW_TRANSLUCENT,
-                .region = infiniteRegion(),
-                .geo
-                = {.translation
-                   = {static_cast<float>(-geometry.x()), static_cast<float>(-geometry.y()), 0}},
-                .opacity = 1.,
-                .projection_matrix = projectionMatrix,
-            },
-        };
-
-        effects->drawWindow(data);
-
-        GLFramebuffer::popRenderTarget();
-        offscreenData->isDirty = false;
+    if (!offscreenData->isDirty) {
+        return;
     }
 
-    return offscreenData->texture.data();
+    GLFramebuffer::pushRenderTarget(offscreenData->renderTarget.data());
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    auto const geometry = window.expandedGeometry();
+    assert(geometry.size() == offscreenData->renderTarget->size());
+
+    QMatrix4x4 projection;
+    projection.ortho(QRect({0, 0}, geometry.size()));
+
+    QMatrix4x4 view;
+    view.translate(-geometry.x(), -geometry.y());
+
+    effect::render_data render;
+    render.view = view;
+    render.projection = projection;
+    render.viewport = {{}, geometry.size()};
+
+    effect::window_paint_data data{
+        window,
+        {
+            .mask = Effect::PAINT_WINDOW_TRANSFORMED | Effect::PAINT_WINDOW_TRANSLUCENT,
+            .region = infiniteRegion(),
+            .opacity = 1.,
+        },
+        render,
+    };
+
+    effects->drawWindow(data);
+
+    GLFramebuffer::popRenderTarget();
+    offscreenData->isDirty = false;
 }
 
 void OffscreenEffectPrivate::paint(GLTexture* texture,
@@ -171,33 +178,24 @@ void OffscreenEffectPrivate::paint(GLTexture* texture,
     auto const rgb = data.paint.brightness * data.paint.opacity;
     auto const a = data.paint.opacity;
 
-    auto mvp = data.paint.screen_projection_matrix;
-    mvp.translate(data.window.x(), data.window.y());
-    shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+    auto mvp = effect::get_mvp(data);
+    QMatrix4x4 translate;
+    translate.translate(data.window.x(), data.window.y());
+
+    shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp * translate);
     shader->setUniform(GLShader::ModulationConstant, QVector4D(rgb, rgb, rgb, a));
     shader->setUniform(GLShader::Saturation, data.paint.saturation);
     shader->setUniform(GLShader::TextureWidth, texture->width());
     shader->setUniform(GLShader::TextureHeight, texture->height());
 
-    auto const clipping = data.paint.region != infiniteRegion();
-    auto const clipRegion
-        = clipping ? effects->mapToRenderTarget(data.paint.region) : infiniteRegion();
-
-    if (clipping) {
-        glEnable(GL_SCISSOR_TEST);
-    }
-
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     texture->bind();
-    vbo->draw(clipRegion, primitiveType, 0, verticesPerQuad * quads.count(), clipping);
+    vbo->draw(data.render, data.paint.region, primitiveType, 0, verticesPerQuad * quads.count());
     texture->unbind();
 
     glDisable(GL_BLEND);
-    if (clipping) {
-        glDisable(GL_SCISSOR_TEST);
-    }
     vbo->unbindArrays();
 }
 
@@ -224,8 +222,8 @@ void OffscreenEffect::drawWindow(effect::window_paint_data& data)
     quads.append(quad);
     apply(data, quads);
 
-    auto texture = d->maybeRender(data.window, offscreenData);
-    d->paint(texture, data, quads, offscreenData->shader);
+    d->maybeRender(data.window, offscreenData);
+    d->paint(offscreenData->texture.data(), data, quads, offscreenData->shader);
 }
 
 void OffscreenEffect::handleWindowGeometryChanged(EffectWindow* window)

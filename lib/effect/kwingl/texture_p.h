@@ -40,7 +40,10 @@ public:
     QSize m_size;
     QSizeF m_scale; // to un-normalize GL_TEXTURE_2D
     QMatrix4x4 m_matrix[2];
-    bool m_yInverted; // texture is y-inverted
+
+    QMatrix4x4 m_textureToBufferMatrix;
+    effect::transform_type m_textureToBufferTransform{effect::transform_type::normal};
+
     bool m_canUseMipmaps;
     bool m_markedDirty;
     bool m_filterChanged;
@@ -51,8 +54,13 @@ public:
 
     int m_unnormalizeActive; // 0 - no, otherwise refcount
     int m_normalizeActive;   // 0 - no, otherwise refcount
+
     std::unique_ptr<GLVertexBuffer> m_vbo;
-    QSize m_cachedSize;
+
+    struct {
+        QSize size;
+        QRect source;
+    } cache;
 
     static void initStatic();
 

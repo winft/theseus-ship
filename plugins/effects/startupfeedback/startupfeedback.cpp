@@ -264,7 +264,7 @@ void StartupFeedbackEffect::paintScreen(effect::screen_paint_data& data)
         ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
     }
 
-    auto mvp = data.paint.projection_matrix;
+    auto mvp = effect::get_mvp(data);
     mvp.translate(m_currentGeometry.x(), m_currentGeometry.y());
 
     ShaderManager::instance()->getBoundShader()->setUniform(GLShader::ModelViewProjectionMatrix,

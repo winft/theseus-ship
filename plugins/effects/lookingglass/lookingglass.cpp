@@ -257,7 +257,7 @@ void LookingGlassEffect::paintScreen(effect::screen_paint_data& data)
         m_shader->setUniform("u_zoom", static_cast<float>(zoom));
         m_shader->setUniform("u_radius", static_cast<float>(radius));
         m_shader->setUniform("u_cursor", QVector2D(cursorPos().x(), cursorPos().y()));
-        m_shader->setUniform(GLShader::ModelViewProjectionMatrix, data.paint.projection_matrix);
+        m_shader->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
         m_vbo->render(GL_TRIANGLES);
         m_texture->unbind();
     }

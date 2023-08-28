@@ -8,6 +8,7 @@
 
 #include <kwineffects/effect.h>
 #include <kwineffects/effect_screen.h>
+#include <kwineffects/paint_data.h>
 
 #include <QFuture>
 #include <QImage>
@@ -83,15 +84,17 @@ private Q_SLOTS:
 
 private:
     void takeScreenShot(ScreenShotWindowData* screenshot);
-    bool takeScreenShot(ScreenShotAreaData* screenshot);
-    bool takeScreenShot(ScreenShotScreenData* screenshot);
+    bool takeScreenShot(effect::render_data const& render_data, ScreenShotAreaData* screenshot);
+    bool takeScreenShot(effect::render_data const& render_data, ScreenShotScreenData* screenshot);
 
     void cancelWindowScreenShots();
     void cancelAreaScreenShots();
     void cancelScreenScreenShots();
 
     void grabPointerImage(QImage& snapshot, int xOffset, int yOffset) const;
-    QImage blitScreenshot(const QRect& geometry, qreal devicePixelRatio = 1.0) const;
+    QImage blitScreenshot(effect::render_data const& viewport,
+                          const QRect& geometry,
+                          qreal devicePixelRatio = 1.0) const;
 
     std::vector<ScreenShotWindowData> m_windowScreenShots;
     std::vector<ScreenShotAreaData> m_areaScreenShots;

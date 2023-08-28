@@ -80,7 +80,6 @@ void ThumbnailAsideEffect::paintScreen(effect::screen_paint_data& data)
     painted = QRegion();
     effects->paintScreen(data);
 
-    auto const projectionMatrix = data.paint.projection_matrix;
     for (auto const& d : qAsConst(windows)) {
         if (painted.intersects(d.rect)) {
             effect::window_paint_data win_data{
@@ -88,8 +87,8 @@ void ThumbnailAsideEffect::paintScreen(effect::screen_paint_data& data)
                 {
                     .mask = PAINT_WINDOW_OPAQUE | PAINT_WINDOW_TRANSLUCENT
                         | PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_LANCZOS,
-                    .projection_matrix = projectionMatrix,
-                }};
+                },
+                data.render};
             setPositionTransformations(win_data, d.rect, Qt::KeepAspectRatio);
             win_data.paint.opacity = d.window->opacity() * opacity;
             effects->drawWindow(win_data);

@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include <kwineffects/paint_data.h>
 #include <kwingl/export.h>
 #include <kwingl/texture.h>
 #include <kwingl/utils_funcs.h>
@@ -91,13 +92,8 @@ public:
     QMatrix4x4 getUniformMatrix4x4(const char* name);
 
     enum MatrixUniform {
-        TextureMatrix = 0,
-        ProjectionMatrix,
-        ModelViewMatrix,
         ModelViewProjectionMatrix,
-        WindowTransformation,
-        ScreenTransformation,
-        MatrixCount
+        MatrixCount,
     };
 
     enum Vec2Uniform { Offset, Vec2UniformCount };
@@ -370,12 +366,14 @@ public:
     GLFramebuffer() = default;
     GLFramebuffer(GLFramebuffer&& other) noexcept;
     GLFramebuffer& operator=(GLFramebuffer&& other) noexcept;
-    explicit GLFramebuffer(GLuint framebuffer, QRect const& viewport);
+    GLFramebuffer(GLuint framebuffer, QSize const& size, QRect const& viewport);
     explicit GLFramebuffer(GLTexture* texture);
 
     ~GLFramebuffer();
 
+    QRect viewport() const;
     QSize size() const;
+
     bool valid() const
     {
         return mValid;
@@ -408,21 +406,18 @@ public:
     static bool blitSupported();
 
     /**
-     * Blits from @a source rectangle in the current render target to the @a destination rectangle
-     * in this render target.
+     * Blits from @a source rectangle in logical coordinates in the current framebuffer to the @a
+     * destination rectangle in texture-local coordinates in this framebuffer, taking into account
+     * any transformations the source render target may have.
      *
      * Be aware that framebuffer blitting may not be supported on all hardware. Use blitSupported()
      * to check whether it is supported.
-     *
-     * The @a source and the @a destination rectangles can have different sizes. The @a filter
-     * indicates what filter will be used in case scaling needs to be performed.
-     *
-     * @see blitSupported
-     * @since 4.8
      */
-    void blitFromFramebuffer(const QRect& source = QRect(),
-                             const QRect& destination = QRect(),
-                             GLenum filter = GL_LINEAR);
+    bool blit_from_current_render_target(effect::render_data const& data,
+                                         QRect const& source,
+                                         QRect const& destination);
+
+    GLTexture* const texture{nullptr};
 
 protected:
     void initFBO(GLTexture* texture);
@@ -432,12 +427,18 @@ private:
     static void cleanup();
     void bind();
 
+    void blit_from_current_render_target_impl(effect::render_data const& data,
+                                              QRect const& source,
+                                              QRect const& destination);
+
     static bool sSupported;
     static bool s_blitSupported;
     static QStack<GLFramebuffer*> s_renderTargets;
 
     GLuint mFramebuffer{0};
+    std::unique_ptr<GLTexture> blit_helper_tex;
 
+    QSize mSize;
     QRect mViewport;
     bool mValid{false};
     bool mForeign{false};
@@ -578,11 +579,11 @@ public:
     /**
      * Draws count vertices beginning with first.
      */
-    void draw(const QRegion& region,
+    void draw(effect::render_data const& data,
+              QRegion const& region,
               GLenum primitiveMode,
               int first,
-              int count,
-              bool hardwareClipping = false);
+              int count);
 
     /**
      * Renders the vertex data in given @a primitiveMode.
@@ -592,10 +593,9 @@ public:
      */
     void render(GLenum primitiveMode);
     /**
-     * Same as above restricting painting to @a region if @a hardwareClipping is true.
-     * It's within the caller's responsibility to enable GL_SCISSOR_TEST.
+     * Same as above restricting painting to @a region.
      */
-    void render(const QRegion& region, GLenum primitiveMode, bool hardwareClipping = false);
+    void render(effect::render_data const& data, const QRegion& region, GLenum primitiveMode);
     /**
      * Sets the color the geometry will be rendered with.
      * For legacy rendering glColor is used before rendering the geometry.

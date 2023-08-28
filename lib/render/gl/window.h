@@ -82,10 +82,6 @@ public:
             return;
         }
 
-        QMatrix4x4 windowMatrix = transformation(mask, data);
-        const QMatrix4x4 modelViewProjection = modelViewProjectionMatrix(mask, data);
-        const QMatrix4x4 mvpMatrix = modelViewProjection * windowMatrix;
-
         auto shader = data.shader;
         if (!shader) {
             ShaderTraits traits = ShaderTrait::MapTexture;
@@ -102,7 +98,12 @@ public:
             shader = ShaderManager::instance()->pushShader(traits);
         }
 
-        shader->setUniform(GLShader::ModelViewProjectionMatrix, mvpMatrix);
+        QMatrix4x4 pos_matrix;
+        auto const win_pos = std::visit(overload{[](auto&& ref_win) { return ref_win->geo.pos(); }},
+                                        *this->ref_win);
+        pos_matrix.translate(win_pos.x(), win_pos.y());
+
+        shader->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data) * pos_matrix);
         shader->setUniform(GLShader::Saturation, data.paint.saturation);
 
         std::vector<WindowQuadList> quads;
@@ -232,7 +233,7 @@ public:
         // The scissor region must be in the render target local coordinate system.
         QRegion scissorRegion = infiniteRegion();
         if (m_hardwareClipping) {
-            scissorRegion = this->scene.mapToRenderTarget(data.paint.region);
+            scissorRegion = data.paint.region;
         }
 
         for (size_t i = 0; i < quads.size(); i++) {
@@ -251,53 +252,23 @@ public:
             nodes[i].texture->setWrapMode(GL_CLAMP_TO_EDGE);
             nodes[i].texture->bind();
 
-            vbo->draw(scissorRegion,
+            vbo->draw(data.render,
+                      scissorRegion,
                       primitiveType,
                       nodes[i].firstVertex,
-                      nodes[i].vertexCount,
-                      m_hardwareClipping);
+                      nodes[i].vertexCount);
         }
 
         vbo->unbindArrays();
 
         setBlendEnabled(false);
 
-        if (!data.shader)
+        if (!data.shader) {
             ShaderManager::instance()->popShader();
-
-        endRenderWindow();
+        }
     }
 
 private:
-    QMatrix4x4 transformation(paint_type mask, effect::window_paint_data const& data) const
-    {
-        QMatrix4x4 matrix;
-        auto const win_pos = std::visit(
-            overload{[&](auto&& ref_win) { return ref_win->geo.pos(); }}, *this->ref_win);
-        matrix.translate(win_pos.x(), win_pos.y());
-
-        if (!(mask & paint_type::window_transformed)) {
-            return matrix;
-        }
-
-        matrix.translate(data.paint.geo.translation);
-        matrix.scale(data.paint.geo.scale.x(), data.paint.geo.scale.y(), data.paint.geo.scale.z());
-
-        if (data.paint.geo.rotation.angle == 0.0) {
-            return matrix;
-        }
-
-        // Apply the rotation
-        // cannot use data.rotation.applyTo(&matrix) as QGraphicsRotation uses projectedRotate to
-        // map back to 2D
-        matrix.translate(data.paint.geo.rotation.origin);
-        auto const axis = data.paint.geo.rotation.axis;
-        matrix.rotate(data.paint.geo.rotation.angle, axis.x(), axis.y(), axis.z());
-        matrix.translate(-data.paint.geo.rotation.origin);
-
-        return matrix;
-    }
-
     GLTexture* getDecorationTexture() const
     {
         return std::visit(
@@ -327,31 +298,6 @@ private:
                 return nullptr;
             }},
             *this->ref_win);
-    }
-
-    QMatrix4x4 modelViewProjectionMatrix(paint_type mask,
-                                         effect::window_paint_data const& data) const
-    {
-        auto const pMatrix = data.paint.projection_matrix;
-        auto const mvMatrix = data.paint.model_view_matrix;
-
-        // An effect may want to override the default projection matrix in some cases,
-        // such as when it is rendering a window on a render target that doesn't have
-        // the same dimensions as the default framebuffer.
-        //
-        // Note that the screen transformation is not applied here.
-        if (!pMatrix.isIdentity()) {
-            return pMatrix * mvMatrix;
-        }
-
-        // If an effect has specified a model-view matrix, we multiply that matrix
-        // with the default projection matrix.  If the effect hasn't specified a
-        // model-view matrix, mvMatrix will be the identity matrix.
-        if (flags(mask & paint_type::screen_transformed)) {
-            return this->scene.screenProjectionMatrix() * mvMatrix;
-        }
-
-        return scene.projectionMatrix() * mvMatrix;
     }
 
     QVector4D modulate(float opacity, float brightness) const
@@ -485,16 +431,13 @@ private:
             data.quads = quads;
         }
 
-        if (data.quads.isEmpty())
+        if (data.quads.isEmpty()) {
             return false;
+        }
 
         auto texture = bindTexture();
         if (!texture) {
             return false;
-        }
-
-        if (m_hardwareClipping) {
-            glEnable(GL_SCISSOR_TEST);
         }
 
         // Update the texture filter
@@ -520,13 +463,6 @@ private:
         vbo->setAttribLayout(attribs, 2, sizeof(GLVertex2D));
 
         return true;
-    }
-
-    void endRenderWindow()
-    {
-        if (m_hardwareClipping) {
-            glDisable(GL_SCISSOR_TEST);
-        }
     }
 
     typename Scene::texture_t* bindTexture()

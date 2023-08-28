@@ -125,7 +125,6 @@ void output::update_dpms(base::dpms_mode mode)
 
     if (set_on) {
         wlr_output_commit(native);
-        get_render(render)->reset();
         base::wayland::output_set_dpms_on(*this, *platform);
         return;
     }
@@ -179,18 +178,12 @@ bool output::set_gamma_ramp(gamma_ramp const& gamma)
 {
     wlr_output_set_gamma(native, gamma.size(), gamma.red(), gamma.green(), gamma.blue());
 
-    if (wlr_output_test(native)) {
-        // Might come early before compositor is created.
-        // TODO(romangg): Remove the check once the compositor is guaranteed to exist at this point.
-        if (platform->render->compositor) {
-            get_render(render)->reset();
-        }
-        return true;
-    } else {
+    if (!wlr_output_test(native)) {
         qCWarning(KWIN_CORE) << "Failed test commit on set gamma ramp call.";
         // TODO(romangg): Set previous gamma.
         return false;
     }
+    return true;
 }
 
 }

@@ -36,7 +36,7 @@ void ShowPaintEffect::paintScreen(effect::screen_paint_data& data)
     m_painted = QRegion();
     effects->paintScreen(data);
     if (effects->isOpenGLCompositing()) {
-        paintGL(data.paint.projection_matrix);
+        paintGL(effect::get_mvp(data));
     } else {
         // Assume QPainter compositing.
         paintQPainter();

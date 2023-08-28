@@ -55,14 +55,6 @@ public:
         wl_signal_add(&base.native->events.frame, &frame_rec.event);
     }
 
-    void reset() override
-    {
-        if (egl) {
-            egl->reset();
-        }
-        abstract_type::reset();
-    }
-
     std::unique_ptr<egl_output_t> egl;
     std::unique_ptr<qpainter_output_t> qpainter;
 

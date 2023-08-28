@@ -169,7 +169,9 @@ public:
      */
     Effect* findEffect(const QString& name) const;
 
-    QImage blit_from_framebuffer(QRect const& geometry, double scale) const override;
+    QImage blit_from_framebuffer(effect::render_data const& data,
+                                 QRect const& geometry,
+                                 double scale) const override;
     bool invert_screen();
 
     using PropertyEffectMap = QHash<QByteArray, QList<Effect*>>;
@@ -791,16 +793,6 @@ public:
             internal_flags |= win::osd_hide_flags::skip_close_animation;
         }
         win::osd_hide(*scene.platform.base.space, internal_flags);
-    }
-
-    QRect renderTargetRect() const override
-    {
-        return scene.m_renderTargetRect;
-    }
-
-    qreal renderTargetScale() const override
-    {
-        return scene.m_renderTargetScale;
     }
 
     QQmlEngine* qmlEngine() const override

@@ -13,25 +13,53 @@
 namespace KWin::render::backend::wlroots
 {
 
-template<typename Output>
-int rotation_in_degree(Output&& out)
+inline int rotation_in_degree(base::wayland::output_transform transform)
 {
-    switch (out.native->transform) {
-    case WL_OUTPUT_TRANSFORM_NORMAL:
-    case WL_OUTPUT_TRANSFORM_FLIPPED:
+    using Tr = base::wayland::output_transform;
+
+    switch (transform) {
+    case Tr::normal:
+    case Tr::flipped:
         return 0;
-    case WL_OUTPUT_TRANSFORM_90:
-    case WL_OUTPUT_TRANSFORM_FLIPPED_90:
+    case Tr::rotated_90:
+    case Tr::flipped_90:
         return 90;
-    case WL_OUTPUT_TRANSFORM_180:
-    case WL_OUTPUT_TRANSFORM_FLIPPED_180:
+    case Tr::rotated_180:
+    case Tr::flipped_180:
         return 180;
-    case WL_OUTPUT_TRANSFORM_270:
-    case WL_OUTPUT_TRANSFORM_FLIPPED_270:
+    case Tr::rotated_270:
+    case Tr::flipped_270:
         return 270;
     }
     Q_UNREACHABLE();
     return 0;
+}
+
+template<typename Output>
+base::wayland::output_transform get_transform(Output&& out)
+{
+    using Tr = base::wayland::output_transform;
+
+    switch (out.native->transform) {
+    case WL_OUTPUT_TRANSFORM_NORMAL:
+        return Tr::normal;
+    case WL_OUTPUT_TRANSFORM_FLIPPED:
+        return Tr::flipped;
+    case WL_OUTPUT_TRANSFORM_90:
+        return Tr::rotated_90;
+    case WL_OUTPUT_TRANSFORM_FLIPPED_90:
+        return Tr::flipped_90;
+    case WL_OUTPUT_TRANSFORM_180:
+        return Tr::rotated_180;
+    case WL_OUTPUT_TRANSFORM_FLIPPED_180:
+        return Tr::flipped_180;
+    case WL_OUTPUT_TRANSFORM_270:
+        return Tr::rotated_270;
+    case WL_OUTPUT_TRANSFORM_FLIPPED_270:
+        return Tr::flipped_270;
+    }
+    Q_UNREACHABLE();
+    return Tr::normal;
 }
 
 template<typename Output>

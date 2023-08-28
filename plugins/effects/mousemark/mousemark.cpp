@@ -90,8 +90,7 @@ void MouseMarkEffect::paintScreen(effect::screen_paint_data& data)
         vbo->setUseColor(true);
         vbo->setColor(color);
         ShaderBinder binder(ShaderTrait::UniformColor);
-        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
-                                    data.paint.projection_matrix);
+        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
         QVector<float> verts;
         for (auto const& mark : qAsConst(marks)) {
             verts.clear();

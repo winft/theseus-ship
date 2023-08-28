@@ -238,12 +238,7 @@ QSGNode* window_thumbnail_item::updatePaintNode(QSGNode* oldNode, QQuickItem::Up
     }
     node->setTexture(m_provider->texture());
 
-    if (m_offscreenTexture && m_offscreenTexture->isYInverted()) {
-        node->setTextureCoordinatesTransform(QSGImageNode::MirrorVertically);
-    } else {
-        node->setTextureCoordinatesTransform(QSGImageNode::NoTransform);
-    }
-
+    node->setTextureCoordinatesTransform(QSGImageNode::NoTransform);
     node->setRect(paintedRect());
 
     return node;
@@ -420,21 +415,29 @@ void window_thumbnail_item::updateOffscreenTexture()
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    QMatrix4x4 projectionMatrix;
-    projectionMatrix.ortho(geometry.x(),
-                           geometry.x() + geometry.width(),
-                           geometry.y(),
-                           geometry.y() + geometry.height(),
-                           -1,
-                           1);
+    QMatrix4x4 view;
+    view.ortho(geometry.x(),
+               geometry.x() + geometry.width(),
+               geometry.y(),
+               geometry.y() + geometry.height(),
+               -1,
+               1);
+
+    QMatrix4x4 proj;
+    proj.scale(m_devicePixelRatio);
 
     auto effectWindow = effects->findWindow(m_wId);
+
     effect::window_paint_data data{
         *effectWindow,
         {
             .mask = Effect::PAINT_WINDOW_TRANSFORMED,
             .region = infiniteRegion(),
-            .projection_matrix = projectionMatrix,
+        },
+        {
+            .view = view,
+            .projection = proj,
+            .viewport = geometry,
         },
     };
 

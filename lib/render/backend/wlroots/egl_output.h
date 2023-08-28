@@ -32,7 +32,6 @@ public:
         : out{&out}
         , egl_data{egl_data}
     {
-        reset();
     }
 
     egl_output(egl_output const&) = delete;
@@ -50,45 +49,7 @@ public:
         egl_data = std::move(other.egl_data);
         damageHistory = std::move(other.damageHistory);
 
-        render = std::move(other.render);
-        other.render = {};
-
         return *this;
-    }
-
-    ~egl_output()
-    {
-        cleanup_framebuffer();
-    }
-
-    bool reset()
-    {
-        reset_framebuffer();
-        return true;
-    }
-
-    bool reset_framebuffer()
-    {
-        cleanup_framebuffer();
-
-        // TODO(romangg): Also return in case wlroots can rotate in hardware.
-
-        make_current();
-
-        auto const texSize = out->base.view_geometry().size();
-        render.texture = GLTexture(GL_TEXTURE_2D, texSize.width(), texSize.height());
-        render.fbo = GLFramebuffer(&render.texture.value());
-        return render.fbo.valid();
-    }
-
-    void cleanup_framebuffer()
-    {
-        if (!render.fbo.valid()) {
-            return;
-        }
-        make_current();
-        render.texture = {};
-        render.fbo = {};
     }
 
     void make_current() const
@@ -108,12 +69,10 @@ public:
         if (!wlr_output_test(base.native)) {
             qCWarning(KWIN_CORE) << "Atomic output test failed on present.";
             wlr_output_rollback(base.native);
-            reset();
             return false;
         }
         if (!wlr_output_commit(base.native)) {
             qCWarning(KWIN_CORE) << "Atomic output commit failed on present.";
-            reset();
             return false;
         }
         return true;
@@ -125,12 +84,6 @@ public:
 
     /** Damage history for the past 10 frames. */
     std::deque<QRegion> damageHistory;
-
-    struct {
-        GLFramebuffer fbo;
-        std::optional<GLTexture> texture;
-        std::shared_ptr<GLVertexBuffer> vbo;
-    } render;
 };
 
 }

@@ -8,6 +8,7 @@
 #include "kwineffects/export.h"
 
 #include <QImage>
+#include <QMatrix4x4>
 #include <QPair>
 #include <QRect>
 #include <climits>
@@ -166,6 +167,49 @@ struct cursor_image {
     QPoint hot_spot;
 };
 
+enum class transform_type {
+    normal,
+    rotated_90,
+    rotated_180,
+    rotated_270,
+    flipped,
+    flipped_90,
+    flipped_180,
+    flipped_270,
+};
+
+inline QMatrix4x4 get_transform_matrix(transform_type type)
+{
+    QMatrix4x4 matrix;
+
+    auto flip = [&] { matrix.scale(-1, 1); };
+    auto rot = [&](auto degree) { matrix.rotate(degree, 0, 0, 1); };
+
+    switch (type) {
+    case transform_type::normal:
+        break;
+    case transform_type::flipped:
+        flip();
+        break;
+    case transform_type::flipped_90:
+        flip();
+    case transform_type::rotated_90:
+        rot(90);
+        break;
+    case transform_type::flipped_180:
+        flip();
+    case transform_type::rotated_180:
+        rot(180);
+        break;
+    case transform_type::flipped_270:
+        flip();
+    case transform_type::rotated_270:
+        rot(270);
+        break;
+    }
+
+    return matrix;
 }
 
+}
 }

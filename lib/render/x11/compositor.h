@@ -104,6 +104,10 @@ public:
                          &compositor_qobject::aboutToToggleCompositing,
                          this->qobject.get(),
                          [this] { overlay_window = nullptr; });
+        QObject::connect(&platform.base,
+                         &base::platform::topology_changed,
+                         this->qobject.get(),
+                         [this] { full_repaint(*this); });
     }
 
     ~compositor()
@@ -129,6 +133,18 @@ public:
                              &space_t::qobject_t::currentDesktopChanged,
                              this->qobject.get(),
                              [this] { full_repaint(*this); });
+            QObject::connect(&this->platform.base,
+                             &base::platform::output_removed,
+                             this->qobject.get(),
+                             [this](auto output) {
+                                 for (auto& win : this->space->windows) {
+                                     std::visit(overload{[&](auto&& win) {
+                                                    remove_all(win->render_data.repaint_outputs,
+                                                               output);
+                                                }},
+                                                win);
+                                 }
+                             });
             this->space = &space;
         }
 
@@ -423,11 +439,17 @@ public:
         Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
         create_opengl_safepoint(opengl_safe_point::pre_frame);
 
-        auto now_ns = std::chrono::steady_clock::now().time_since_epoch();
-        auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
-
         // Start the actual painting process.
-        auto const duration = this->scene->paint(repaints, windows, now);
+        int64_t duration{0};
+        auto const now_ns = std::chrono::steady_clock::now().time_since_epoch();
+        auto const now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
+
+        for (auto output : platform.base.outputs) {
+            // TODO(romangg): Only paint windows that intersect output.
+            duration += scene->paint_output(output, repaints & output->geometry(), windows, now);
+        }
+
+        scene->end_paint();
 
         this->update_paint_periods(duration);
         create_opengl_safepoint(opengl_safe_point::post_frame);
@@ -589,12 +611,18 @@ private:
             auto win = std::get<x11_ref_window_t*>(vwin);
             discard_lanczos_texture(win);
             win::x11::damage_fetch_region_reply(*win);
-            has_pending_repaints |= win->has_pending_repaints();
+            if (win->has_pending_repaints()) {
+                // Add all outputs, since we paint over all in the backend.
+                win->render_data.repaint_outputs = platform.base.outputs;
+                has_pending_repaints = true;
+            }
         }
 
-        // If no repaint regions got added and no window has pending repaints, return and skip this
-        // paint cycle
-        if (this->repaints_region.isEmpty() && !has_pending_repaints) {
+        repaints = this->repaints_region;
+
+        if (repaints.isEmpty() && !has_pending_repaints) {
+            // If no repaint regions got added and no window has pending repaints, return and skip
+            // this paint cycle.
             this->scene->idle();
 
             // This means the next time we composite it is done without timer delay.
@@ -602,11 +630,8 @@ private:
             return false;
         }
 
-        repaints = this->repaints_region;
-
         // Clear all repaints, so that post-pass can add repaints for the next repaint
-        this->repaints_region = QRegion();
-
+        this->repaints_region = {};
         return true;
     }
 

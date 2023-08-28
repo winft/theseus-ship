@@ -107,8 +107,7 @@ void SnapHelperEffect::paintScreen(effect::screen_paint_data& data)
         vbo->reset();
         vbo->setUseColor(true);
         ShaderBinder binder(ShaderTrait::UniformColor);
-        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
-                                    data.paint.projection_matrix);
+        binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

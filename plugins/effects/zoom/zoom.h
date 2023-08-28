@@ -94,7 +94,7 @@ private:
     };
 
     GLTexture* ensureCursorTexture();
-    OffscreenData* ensureOffscreenData(EffectScreen const* screen);
+    OffscreenData* ensureOffscreenData(QRect const& viewport, EffectScreen const* screen);
     void markCursorTextureDirty();
 
 #if HAVE_ACCESSIBILITY

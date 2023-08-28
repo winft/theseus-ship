@@ -99,68 +99,38 @@ void GlideEffect::paintWindow(effect::window_paint_data& data)
         return;
     }
 
-    // Perspective projection distorts objects near edges
-    // of the viewport. This is critical because distortions
-    // near edges of the viewport are not desired with this effect.
-    // To fix this, the center of the window will be moved to the origin,
-    // after applying perspective projection, the center is moved back
-    // to its "original" projected position. Overall, this is how the window
-    // will be transformed:
-    //  [move to the origin] -> [rotate] -> [translate] ->
-    //    -> [perspective projection] -> [reverse "move to the origin"]
-    auto const oldProjMatrix = data.paint.screen_projection_matrix;
-    auto const windowGeo = data.window.frameGeometry();
-    const QVector3D invOffset = oldProjMatrix.map(QVector3D(windowGeo.center()));
-    QMatrix4x4 invOffsetMatrix;
-    invOffsetMatrix.translate(invOffset.x(), invOffset.y());
-    data.paint.projection_matrix = invOffsetMatrix * oldProjMatrix;
-
-    // Move the center of the window to the origin.
-    QPointF const offset
-        = effects->renderTargetRect().center() - data.window.frameGeometry().center();
-    data.paint.geo.translation += QVector3D(offset.x(), offset.y(), 0);
-
     auto const params = data.window.isDeleted() ? m_outParams : m_inParams;
-    const qreal t = (*animationIt).timeLine.value();
+    qreal const time = (*animationIt).timeLine.value();
 
     QVector3D const x_axis{1, 0, 0};
     QVector3D const y_axis{0, 1, 0};
 
     switch (params.edge) {
-    case RotationEdge::Top:
-        data.paint.geo.rotation.axis = x_axis;
-        data.paint.geo.rotation.origin = QVector3D(0, 0, 0);
-        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, t);
-        break;
-
     case RotationEdge::Right:
         data.paint.geo.rotation.axis = y_axis;
         data.paint.geo.rotation.origin = QVector3D(data.window.width(), 0, 0);
-        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, t);
+        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, time);
         break;
-
     case RotationEdge::Bottom:
         data.paint.geo.rotation.axis = x_axis;
         data.paint.geo.rotation.origin = QVector3D(0, data.window.height(), 0);
-        data.paint.geo.rotation.angle = interpolate(params.angle.from, params.angle.to, t);
+        data.paint.geo.rotation.angle = interpolate(params.angle.from, params.angle.to, time);
         break;
-
     case RotationEdge::Left:
         data.paint.geo.rotation.axis = y_axis;
         data.paint.geo.rotation.origin = QVector3D(0, 0, 0);
-        data.paint.geo.rotation.angle = interpolate(params.angle.from, params.angle.to, t);
+        data.paint.geo.rotation.angle = interpolate(params.angle.from, params.angle.to, time);
         break;
-
+    case RotationEdge::Top:
     default:
-        // Fallback to Top.
         data.paint.geo.rotation.axis = x_axis;
         data.paint.geo.rotation.origin = QVector3D(0, 0, 0);
-        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, t);
+        data.paint.geo.rotation.angle = -interpolate(params.angle.from, params.angle.to, time);
         break;
     }
 
-    data.paint.geo.translation.setZ(-interpolate(params.distance.from, params.distance.to, t));
-    data.paint.opacity *= interpolate(params.opacity.from, params.opacity.to, t);
+    data.paint.geo.translation.setZ(-interpolate(params.distance.from, params.distance.to, time));
+    data.paint.opacity *= interpolate(params.opacity.from, params.opacity.to, time);
 
     effects->paintWindow(data);
 }

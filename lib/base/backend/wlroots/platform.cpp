@@ -60,7 +60,8 @@ void add_new_output(wlroots::platform& platform, wlr_output* native)
         auto shifted_geo = output->geometry();
         auto screens_width = 0;
         for (auto out : platform.outputs) {
-            screens_width = std::max(out->geometry().right(), screens_width);
+            // +1 for QRect's bottom-right deviation
+            screens_width = std::max(out->geometry().right() + 1, screens_width);
         }
         shifted_geo.moveLeft(screens_width);
         output->force_geometry(shifted_geo);

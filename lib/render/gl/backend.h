@@ -18,6 +18,22 @@
 namespace KWin::render::gl
 {
 
+inline effect::render_data create_view_projection(QRect const& world_geo)
+{
+    // Can't use world_geo.center() because of QRect bottom-right offset.
+    auto const view_center = QPoint(world_geo.left() + world_geo.width() / 2.,
+                                    world_geo.top() + world_geo.height() / 2.);
+    auto y_fov = 60.;
+    auto distance = world_geo.height() / (2. * std::tan(y_fov * M_PI / 360.0f));
+
+    effect::render_data data;
+    data.view.translate(-view_center.x(), -view_center.y(), -distance);
+    data.projection.perspective(
+        60, world_geo.width() / (double)world_geo.height(), 0.1, distance * 2);
+
+    return data;
+}
+
 /**
  * @brief The backend creates and holds the OpenGL context and is responsible for Texture from
  * Pixmap.
@@ -57,27 +73,13 @@ public:
     {
         return m_renderTimer.nsecsElapsed();
     }
+    void startRenderTimer()
+    {
+        m_renderTimer.start();
+    }
+
     virtual void screenGeometryChanged(const QSize& size) = 0;
     virtual std::unique_ptr<texture_priv_t> createBackendTexture(texture_t* texture) = 0;
-
-    /**
-     * @brief Backend specific code to prepare the rendering of a frame including flushing the
-     * previously rendered frame to the screen if the backend works this way.
-     *
-     * @return A region that if not empty will be repainted in addition to the damaged region
-     */
-    virtual QRegion prepareRenderingFrame() = 0;
-
-    /**
-     * @brief Backend specific code to handle the end of rendering a frame.
-     *
-     * @param renderedRegion The possibly larger region that has been rendered
-     * @param damagedRegion The damaged region that should be posted
-     */
-    virtual void endRenderingFrame(QRegion const& /*damage*/, QRegion const& /*damagedRegion*/)
-    {
-        assert(false);
-    }
 
     virtual void endRenderingFrameForScreen(base::output* /*output*/,
                                             QRegion const& /*damage*/,
@@ -86,21 +88,20 @@ public:
         assert(false);
     }
 
-    /**
-     * @brief Backend specific flushing of frame to screen.
-     */
-    virtual void present() = 0;
+    virtual effect::render_data set_render_target_to_output(base::output const& /*output*/) = 0;
+
+    virtual QRegion get_output_render_region(base::output const& /*output*/) const = 0;
+
+    virtual void try_present()
+    {
+        assert(false);
+    }
 
     virtual bool makeCurrent() = 0;
     virtual void doneCurrent() = 0;
     virtual bool hasSwapEvent() const
     {
         return true;
-    }
-    virtual QRegion prepareRenderingForScreen(base::output* output)
-    {
-        // fallback to repaint complete screen
-        return output->geometry();
     }
 
     /**
@@ -232,11 +233,6 @@ public:
         }
     }
 
-    /**
-     * For final backend-specific corrections to the scene projection matrix. Defaults to identity.
-     */
-    QMatrix4x4 transformation;
-
     Platform& platform;
 
 protected:
@@ -250,15 +246,6 @@ protected:
     void setLastDamage(const QRegion& damage)
     {
         m_lastDamage = damage;
-    }
-    /**
-     * @brief Starts the timer for how long it takes to render the frame.
-     *
-     * @see renderTime
-     */
-    void startRenderTimer()
-    {
-        m_renderTimer.start();
     }
 
 private:

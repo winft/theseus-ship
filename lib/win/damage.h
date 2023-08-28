@@ -24,10 +24,6 @@ QRegion repaints(Win const& win)
 template<typename Win>
 void acquire_repaint_outputs(Win& win, QRegion const& region)
 {
-    if (win.space.base.operation_mode == base::operation_mode::x11) {
-        // On X11 we do not paint per output.
-        return;
-    }
     for (auto& out : win.space.base.outputs) {
         if (contains(win.render_data.repaint_outputs, out)) {
             continue;
@@ -85,11 +81,7 @@ void reset_repaints(Win& win, Output const* output)
         win.render_data.layer_repaints_region = {};
     };
 
-    if (!output) {
-        assert(!win.render_data.repaint_outputs.size());
-        reset_all();
-        return;
-    }
+    assert(output);
 
     remove_all(win.render_data.repaint_outputs, output);
 

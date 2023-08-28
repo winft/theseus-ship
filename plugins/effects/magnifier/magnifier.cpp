@@ -122,7 +122,7 @@ void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
                   static_cast<double>(area.width()) / m_zoom,
                   static_cast<double>(area.height()) / m_zoom);
 
-    m_fbo->blitFromFramebuffer(srcArea);
+    m_fbo->blit_from_current_render_target(data.render, srcArea, QRect(QPoint(), m_fbo->size()));
 
     // paint magnifier
     m_texture->bind();
@@ -176,7 +176,7 @@ void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
     vbo->setData(verts.size() / 2, 2, verts.constData(), nullptr);
 
     ShaderBinder binder(ShaderTrait::UniformColor);
-    binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, data.paint.projection_matrix);
+    binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
     vbo->render(GL_TRIANGLES);
 }
 
@@ -209,7 +209,7 @@ void MagnifierEffect::zoomIn()
         effects->makeOpenGLContextCurrent();
         m_texture = std::make_unique<GLTexture>(
             GL_RGBA8, m_magnifierSize.width(), m_magnifierSize.height());
-        m_texture->setYInverted(false);
+        m_texture->set_content_transform(effect::transform_type::normal);
         m_fbo = std::make_unique<GLFramebuffer>(m_texture.get());
     }
     effects->addRepaint(
@@ -249,7 +249,7 @@ void MagnifierEffect::toggle()
             effects->makeOpenGLContextCurrent();
             m_texture = std::make_unique<GLTexture>(
                 GL_RGBA8, m_magnifierSize.width(), m_magnifierSize.height());
-            m_texture->setYInverted(false);
+            m_texture->set_content_transform(effect::transform_type::normal);
             m_fbo = std::make_unique<GLFramebuffer>(m_texture.get());
         }
     } else {

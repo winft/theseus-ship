@@ -63,9 +63,6 @@ public:
         overlay_window->setup(window);
         base::x11::xcb::sync(platform.base.x11_data.connection);
 
-        makeCurrent();
-        glViewport(0, 0, size.width(), size.height());
-
         // The back buffer contents are now undefined
         m_bufferAge = 0;
     }
@@ -76,28 +73,64 @@ public:
         return std::make_unique<GlxTexture<type>>(texture, this);
     }
 
-    QRegion prepareRenderingFrame() override
+    effect::render_data set_render_target_to_output(base::output const& output) override
     {
-        QRegion repaint;
+        auto const out_geo = output.geometry();
+        auto const view = QRect(
+            {out_geo.x(), platform.base.topology.size.height() - out_geo.y() - out_geo.height()},
+            out_geo.size());
 
-        if (this->supportsBufferAge()) {
-            repaint = this->accumulatedDamageHistory(m_bufferAge);
-        }
-
-        this->startRenderTimer();
-
-        native_fbo = GLFramebuffer(0, QRect({}, platform.base.topology.size));
+        makeCurrent();
+        native_fbo = GLFramebuffer(0, platform.base.topology.size, view);
         GLFramebuffer::pushRenderTarget(&native_fbo);
 
-        return repaint;
+        auto data = gl::create_view_projection(output.geometry());
+        data.viewport = view;
+        data.projection.scale(1, -1);
+        data.flip_y = false;
+
+        return data;
     }
 
-    void endRenderingFrame(QRegion const& renderedRegion, QRegion const& damagedRegion) override
+    QRegion get_output_render_region(base::output const& output) const override
+    {
+        if (!this->supportsBufferAge()) {
+            return output.geometry();
+        }
+
+        return this->accumulatedDamageHistory(m_bufferAge) & output.geometry();
+    }
+
+    void endRenderingFrameForScreen(base::output* /*output*/,
+                                    QRegion const& renderedRegion,
+                                    QRegion const& damagedRegion) override
     {
         GLFramebuffer::popRenderTarget();
 
-        if (damagedRegion.isEmpty()) {
-            this->setLastDamage(QRegion());
+        output_render_count++;
+        accum_render |= renderedRegion;
+        accum_damage |= damagedRegion;
+
+        if (output_render_count != platform.base.outputs.size()) {
+            return;
+        }
+
+        output_render_count = 0;
+
+        if (GLPlatform::instance()->driver() == Driver_NVidia && !GLPlatform::instance()->isGLES()
+            && !this->supportsBufferAge()) {
+            if (auto const space = QRegion(QRect({}, platform.base.topology.size));
+                accum_render != space) {
+                // Copy dirty parts from front to backbuffer.
+                glReadBuffer(GL_FRONT);
+                this->copyPixels(space - accum_render);
+                glReadBuffer(GL_BACK);
+                this->setLastDamage(space);
+            }
+        }
+
+        if (accum_damage.isEmpty()) {
+            this->setLastDamage({});
 
             // If the damaged region of a window is fully occluded, the only
             // rendering done, if any, will have been to repair a reused back
@@ -106,24 +139,32 @@ public:
             // In this case we won't post the back buffer. Instead we'll just
             // set the buffer age to 1, so the repaired regions won't be
             // rendered again in the next frame.
-            if (!renderedRegion.isEmpty())
+            if (!accum_render.isEmpty()) {
+                accum_render = {};
                 glFlush();
+            }
 
             m_bufferAge = 1;
             return;
         }
 
-        this->setLastDamage(renderedRegion);
-        present();
+        this->setLastDamage(accum_render);
 
         // Show the window only after the first pass, since that pass may take long.
         if (overlay_window->window()) {
             overlay_window->show();
         }
 
-        // Save the damaged region to history
-        if (this->supportsBufferAge())
-            this->addToDamageHistory(damagedRegion);
+        if (this->supportsBufferAge()) {
+            this->addToDamageHistory(accum_damage);
+        }
+        accum_damage = {};
+        accum_render = {};
+    }
+
+    void try_present() override
+    {
+        present_buffer();
     }
 
     bool makeCurrent() override
@@ -162,8 +203,8 @@ public:
 
     Platform& platform;
 
-protected:
-    void present() override
+private:
+    void present_buffer()
     {
         if (this->lastDamage().isEmpty()) {
             return;
@@ -210,7 +251,6 @@ protected:
         }
     }
 
-private:
     bool supportsSwapEvents() const
     {
         return static_cast<bool>(swap_filter);
@@ -219,6 +259,9 @@ private:
     GLFramebuffer native_fbo;
     int m_bufferAge{0};
     bool m_needsCompositeTimerStart = false;
+    size_t output_render_count{0};
+    QRegion accum_render;
+    QRegion accum_damage;
 };
 
 }

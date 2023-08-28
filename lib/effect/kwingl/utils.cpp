@@ -425,12 +425,7 @@ void GLShader::resolveLocations()
     if (mLocationsResolved)
         return;
 
-    mMatrixLocation[TextureMatrix] = uniformLocation("textureMatrix");
-    mMatrixLocation[ProjectionMatrix] = uniformLocation("projection");
-    mMatrixLocation[ModelViewMatrix] = uniformLocation("modelview");
     mMatrixLocation[ModelViewProjectionMatrix] = uniformLocation("modelViewProjectionMatrix");
-    mMatrixLocation[WindowTransformation] = uniformLocation("windowTransformation");
-    mMatrixLocation[ScreenTransformation] = uniformLocation("screenTransformation");
 
     mVec2Location[Offset] = uniformLocation("offset");
 
@@ -998,8 +993,9 @@ GLFramebuffer* GLFramebuffer::popRenderTarget()
     return target;
 }
 
-GLFramebuffer::GLFramebuffer(GLuint framebuffer, QRect const& viewport)
+GLFramebuffer::GLFramebuffer(GLuint framebuffer, QSize const& size, QRect const& viewport)
     : mFramebuffer{framebuffer}
+    , mSize{size}
     , mViewport{viewport}
     , mValid{true}
     , mForeign{true}
@@ -1007,7 +1003,9 @@ GLFramebuffer::GLFramebuffer(GLuint framebuffer, QRect const& viewport)
 }
 
 GLFramebuffer::GLFramebuffer(GLTexture* texture)
-    : mViewport{QRect(QPoint(0, 0), texture->size())}
+    : texture{texture}
+    , mSize{texture->size()}
+    , mViewport{QRect(QPoint(0, 0), mSize)}
 {
     // Make sure FBO is supported
     if (sSupported && !texture->isNull()) {
@@ -1024,6 +1022,7 @@ GLFramebuffer::GLFramebuffer(GLFramebuffer&& other) noexcept
 GLFramebuffer& GLFramebuffer::operator=(GLFramebuffer&& other) noexcept
 {
     mFramebuffer = other.mFramebuffer;
+    mSize = other.mSize;
     mViewport = other.mViewport;
     mValid = other.mValid;
     mForeign = other.mForeign;
@@ -1039,9 +1038,14 @@ GLFramebuffer::~GLFramebuffer()
     }
 }
 
+QRect GLFramebuffer::viewport() const
+{
+    return mViewport;
+}
+
 QSize GLFramebuffer::size() const
 {
-    return mViewport.size();
+    return mSize;
 }
 
 void GLFramebuffer::bind()
@@ -1052,8 +1056,10 @@ void GLFramebuffer::bind()
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-
     glViewport(mViewport.x(), mViewport.y(), mViewport.width(), mViewport.height());
+
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(mViewport.x(), mViewport.y(), mViewport.width(), mViewport.height());
 }
 
 static QString formatFramebufferStatus(GLenum status)
@@ -1152,43 +1158,95 @@ void GLFramebuffer::initFBO(GLTexture* texture)
     mValid = true;
 }
 
-void GLFramebuffer::blitFromFramebuffer(const QRect& source,
-                                        const QRect& destination,
-                                        GLenum filter)
+void GLFramebuffer::blit_from_current_render_target_impl(effect::render_data const& data,
+                                                         QRect const& source,
+                                                         QRect const& destination)
 {
-    if (!valid()) {
-        return;
-    }
-
     auto top = currentRenderTarget();
-    if (!top) {
-        qCWarning(LIBKWINGLUTILS) << "Abort blit from framebuffer due to no current render target.";
-        return;
-    }
 
     GLFramebuffer::pushRenderTarget(this);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFramebuffer);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, top->mFramebuffer);
 
-    auto const ssize = top->size();
-    auto const dsize = size();
-    auto const s = source.isNull() ? QRect(QPoint(0, 0), ssize) : source;
-    auto const d = destination.isNull() ? QRect(QPoint(0, 0), dsize) : destination;
+    auto const s = source.isNull() ? QRect(QPoint(0, 0), top->size())
+                                   : effect::map_to_viewport(data, source);
+    auto const d = destination.isNull() ? QRect(QPoint(0, 0), size()) : destination;
 
-    const GLuint srcX0 = s.x();
-    const GLuint srcY0 = ssize.height() - (s.y() + s.height());
-    const GLuint srcX1 = s.x() + s.width();
-    const GLuint srcY1 = ssize.height() - s.y();
+    GLuint srcX0 = s.x();
+    GLuint srcY0 = s.y();
+    GLuint srcX1 = s.x() + s.width();
+    GLuint srcY1 = s.height() + s.y();
 
     const GLuint dstX0 = d.x();
-    const GLuint dstY0 = dsize.height() - (d.y() + d.height());
+    const GLuint dstY0 = size().height() - (d.y() + d.height());
     const GLuint dstX1 = d.x() + d.width();
-    const GLuint dstY1 = dsize.height() - d.y();
+    const GLuint dstY1 = size().height() - d.y();
 
     glBlitFramebuffer(
-        srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, GL_COLOR_BUFFER_BIT, filter);
+        srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
     GLFramebuffer::popRenderTarget();
+}
+
+bool GLFramebuffer::blit_from_current_render_target(effect::render_data const& data,
+                                                    QRect const& source,
+                                                    QRect const& destination)
+{
+    using tt = effect::transform_type;
+    auto const has_rotation = data.transform == tt::rotated_90 || data.transform == tt::rotated_270
+        || data.transform == tt::flipped_90 || data.transform == tt::flipped_270;
+
+    if (!valid()) {
+        qCWarning(LIBKWINGLUTILS) << "Draw fbo not valid. Abort blit from framebuffer.";
+        return false;
+    }
+
+    auto top = currentRenderTarget();
+    if (!top) {
+        qCWarning(LIBKWINGLUTILS) << "Abort blit from framebuffer due to no current render target.";
+        return false;
+    }
+    if (!blitSupported()) {
+        qCWarning(LIBKWINGLUTILS) << "Blitting not supported. Abort blit from framebuffer.";
+        return false;
+    }
+
+    if (!has_rotation) {
+        blit_from_current_render_target_impl(data, source, destination);
+        return true;
+    }
+
+    if (!blit_helper_tex || blit_helper_tex->width() < top->size().width()
+        || blit_helper_tex->height() < top->size().height()) {
+        blit_helper_tex = std::make_unique<GLTexture>(
+            texture ? texture->internalFormat() : GL_RGBA8, top->size());
+    }
+
+    GLFramebuffer helper_fbo(blit_helper_tex.get());
+
+    auto inter_rect = source.isNull() ? QRect(QPoint(0, 0), top->size())
+                                      : effect::map_to_viewport(data, source);
+
+    helper_fbo.blit_from_current_render_target_impl(data, source, inter_rect);
+
+    GLFramebuffer::pushRenderTarget(this);
+
+    QMatrix4x4 mat;
+    mat.ortho(QRectF({}, size()));
+    mat = effect::get_transform_matrix(data.transform) * mat;
+
+    // GLTexture::render renders with origin (0, 0), move it to the correct place
+    mat.translate(destination.x(), destination.y());
+
+    ShaderBinder binder(ShaderTrait::MapTexture);
+    binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mat);
+
+    blit_helper_tex->bind();
+    blit_helper_tex->render({}, inter_rect, infiniteRegion(), destination.size());
+    blit_helper_tex->unbind();
+
+    GLFramebuffer::popRenderTarget();
+    return true;
 }
 
 // ------------------------------------------------------------------
@@ -2035,13 +2093,15 @@ void GLVertexBuffer::setAttribLayout(const GLVertexAttrib* attribs, int count, i
 
 void GLVertexBuffer::render(GLenum primitiveMode)
 {
-    render(infiniteRegion(), primitiveMode, false);
+    render({}, infiniteRegion(), primitiveMode);
 }
 
-void GLVertexBuffer::render(const QRegion& region, GLenum primitiveMode, bool hardwareClipping)
+void GLVertexBuffer::render(effect::render_data const& data,
+                            QRegion const& region,
+                            GLenum primitiveMode)
 {
     d->bindArrays();
-    draw(region, primitiveMode, 0, d->vertexCount, hardwareClipping);
+    draw(data, region, primitiveMode, 0, d->vertexCount);
     d->unbindArrays();
 }
 
@@ -2057,15 +2117,17 @@ void GLVertexBuffer::unbindArrays()
 
 void GLVertexBuffer::draw(GLenum primitiveMode, int first, int count)
 {
-    draw(infiniteRegion(), primitiveMode, first, count, false);
+    draw({}, infiniteRegion(), primitiveMode, first, count);
 }
 
-void GLVertexBuffer::draw(const QRegion& region,
+void GLVertexBuffer::draw(effect::render_data const& data,
+                          QRegion const& region,
                           GLenum primitiveMode,
                           int first,
-                          int count,
-                          bool hardwareClipping)
+                          int count)
 {
+    auto const hardwareClipping = region != infiniteRegion();
+
     if (primitiveMode == GL_QUADS) {
         IndexBuffer*& indexBuffer = GLVertexBufferPrivate::s_indexBuffer;
 
@@ -2081,14 +2143,13 @@ void GLVertexBuffer::draw(const QRegion& region,
             glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
         } else {
             // Clip using scissoring
-            auto renderTarget = GLFramebuffer::currentRenderTarget();
-            for (auto const& r : region) {
-                glScissor(r.x(),
-                          renderTarget->size().height() - (r.y() + r.height()),
-                          r.width(),
-                          r.height());
+            auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
+            auto const vp_region = effect::map_to_viewport(data, region);
+            for (auto const& rect : vp_region) {
+                glScissor(rect.x(), rect.y(), rect.width(), rect.height());
                 glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
             }
+            glScissor(vp.x(), vp.y(), vp.width(), vp.height());
         }
         return;
     }
@@ -2097,12 +2158,13 @@ void GLVertexBuffer::draw(const QRegion& region,
         glDrawArrays(primitiveMode, first, count);
     } else {
         // Clip using scissoring
-        auto renderTarget = GLFramebuffer::currentRenderTarget();
-        for (auto const& r : region) {
-            glScissor(
-                r.x(), renderTarget->size().height() - (r.y() + r.height()), r.width(), r.height());
+        auto const vp = GLFramebuffer::currentRenderTarget()->viewport();
+        auto const vp_region = effect::map_to_viewport(data, region);
+        for (auto const& rect : vp_region) {
+            glScissor(rect.x(), rect.y(), rect.width(), rect.height());
             glDrawArrays(primitiveMode, first, count);
         }
+        glScissor(vp.x(), vp.y(), vp.width(), vp.height());
     }
 }
 

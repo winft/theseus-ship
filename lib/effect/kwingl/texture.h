@@ -7,6 +7,8 @@
 */
 #pragma once
 
+#include <kwineffects/paint_data.h>
+#include <kwineffects/types.h>
 #include <kwingl/export.h>
 
 #include <QMatrix4x4>
@@ -52,14 +54,21 @@ public:
     QSize size() const;
     int width() const;
     int height() const;
+
     /**
-     * @since 4.7
+     * sets the transform between the content and the buffer
      */
-    bool isYInverted() const;
+    void set_content_transform(effect::transform_type transform);
+
     /**
-     * @since 4.8
+     * @returns the transform between the content and the buffer
      */
-    void setYInverted(bool inverted);
+    effect::transform_type get_content_transform() const;
+
+    /**
+     * @returns the transform between the content and the buffer as a matrix
+     */
+    QMatrix4x4 get_content_transform_matrix() const;
 
     /**
      * Specifies which component of a texel is placed in each respective
@@ -85,8 +94,13 @@ public:
     virtual void discard();
     void bind();
     void unbind();
-    void render(QSize const& size);
-    void render(QRegion const& region, QSize const& size, bool hardwareClipping = false);
+
+    void render(QSize const& target_size);
+    void render(effect::render_data const& data, QRegion const& region, QSize const& target_size);
+    void render(effect::render_data const& data,
+                QRect const& source,
+                QRegion const& region,
+                QSize const& target_size);
 
     GLuint texture() const;
     GLenum target() const;

@@ -266,7 +266,7 @@ private:
         }
 
         data.texture = std::make_unique<GLTexture>(GL_RGBA8, size.width(), size.height());
-        data.texture->setYInverted(true);
+        data.texture->set_content_transform(effect::transform_type::flipped_180);
         data.texture->setWrapMode(GL_CLAMP_TO_EDGE);
         data.texture->clear();
     }

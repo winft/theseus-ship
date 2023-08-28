@@ -242,7 +242,7 @@ void TouchPointsEffect::drawCircleQPainter(const QColor& color, float cx, float 
 void TouchPointsEffect::paintScreenSetupGl(effect::screen_paint_data const& data)
 {
     auto shader = ShaderManager::instance()->pushShader(ShaderTrait::UniformColor);
-    shader->setUniform(GLShader::ModelViewProjectionMatrix, data.paint.projection_matrix);
+    shader->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
 
     glLineWidth(m_lineWidth);
     glEnable(GL_BLEND);

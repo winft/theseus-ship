@@ -582,21 +582,24 @@ Effect* effects_handler_wrap::findEffect(const QString& name) const
     return (*it).second;
 }
 
-QImage effects_handler_wrap::blit_from_framebuffer(QRect const& geometry, double scale) const
+QImage effects_handler_wrap::blit_from_framebuffer(effect::render_data const& data,
+                                                   QRect const& geometry,
+                                                   double scale) const
 {
     if (!isOpenGLCompositing()) {
         return {};
     }
 
-    QImage image;
-    auto const nativeSize = geometry.size() * scale;
+    auto const screen_geometry = effect::map_to_viewport(data, geometry);
+    auto const nativeSize = screen_geometry.size() * scale;
+    QImage image(nativeSize, QImage::Format_ARGB32);
 
     if (GLFramebuffer::blitSupported() && !GLPlatform::instance()->isGLES()) {
         image = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_ARGB32);
 
         GLTexture texture(GL_RGBA8, nativeSize.width(), nativeSize.height());
         GLFramebuffer target(&texture);
-        target.blitFromFramebuffer(mapToRenderTarget(geometry));
+        target.blit_from_current_render_target(data, geometry, QRect({}, geometry.size()));
 
         // Copy content from framebuffer into image.
         texture.bind();
@@ -615,11 +618,6 @@ QImage effects_handler_wrap::blit_from_framebuffer(QRect const& geometry, double
     }
 
     image.setDevicePixelRatio(scale);
-
-    if (waylandDisplay()) {
-        return image.mirrored();
-    }
-
     return image;
 }
 
