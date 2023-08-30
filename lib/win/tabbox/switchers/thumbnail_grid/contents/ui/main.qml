@@ -151,7 +151,7 @@ KWin.TabBoxSwitcher {
                             Kirigami.Icon {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.verticalCenter: parent.bottom
-                                anchors.verticalCenterOffset: Math.round(-columnLayout.spacing/2)
+                                anchors.verticalCenterOffset: Math.round(-thumbnailGridView.iconSize / 4)
                                 width: thumbnailGridView.iconSize
                                 height: thumbnailGridView.iconSize
 
