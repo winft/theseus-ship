@@ -48,4 +48,4 @@ ProvidersUrl=https://autoconfig.kde.org/ocs/providers.xml
 Categories=KWin Switching Layouts
 StandardResource=tmp
 Uncompress=kpackage
-KPackageType=KWin/WindowSwitcher
+KPackageStructure=KWin/WindowSwitcher
