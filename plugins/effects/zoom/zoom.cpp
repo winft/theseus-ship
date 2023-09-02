@@ -279,25 +279,35 @@ ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(QRect const& viewport
         data.vbo.reset(new GLVertexBuffer(GLVertexBuffer::Static));
         data.viewport = rect;
 
-        QVector<float> verts;
-        QVector<float> texcoords;
+        QVector<GLVertex2D> verts;
 
         // The v-coordinate is flipped because projection matrix is "flipped."
-        texcoords << 1.0 << 1.0;
-        verts << rect.x() + rect.width() << rect.y();
-        texcoords << 0.0 << 1.0;
-        verts << rect.x() << rect.y();
-        texcoords << 0.0 << 0.0;
-        verts << rect.x() << rect.y() + rect.height();
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x() + rect.width(), rect.y()),
+            .texcoord = QVector2D(1.0f, 1.0f),
+        });
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x(), rect.y()),
+            .texcoord = QVector2D(0.0, 1.0),
+        });
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x(), rect.y() + rect.height()),
+            .texcoord = QVector2D(0.0, 0.0),
+        });
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x() + rect.width(), rect.y() + rect.height()),
+            .texcoord = QVector2D(1.0, 0.0),
+        });
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x() + rect.width(), rect.y()),
+            .texcoord = QVector2D(1.0, 1.0),
+        });
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x(), rect.y() + rect.height()),
+            .texcoord = QVector2D(0.0, 0.0),
+        });
 
-        texcoords << 1.0 << 0.0;
-        verts << rect.x() + rect.width() << rect.y() + rect.height();
-        texcoords << 1.0 << 1.0;
-        verts << rect.x() + rect.width() << rect.y();
-        texcoords << 0.0 << 0.0;
-        verts << rect.x() << rect.y() + rect.height();
-
-        data.vbo->setData(6, 2, verts.constData(), texcoords.constData());
+        data.vbo->setVertices(verts);
     }
 
     return &data;

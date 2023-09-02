@@ -215,19 +215,19 @@ void TouchPointsEffect::drawCircleGl(const QColor& color, float cx, float cy, fl
     vbo->setUseColor(true);
     vbo->setColor(color);
 
-    QVector<float> verts;
-    verts.reserve(num_segments * 2);
+    QVector<QVector2D> verts;
+    verts.reserve(num_segments);
 
     for (int ii = 0; ii < num_segments; ++ii) {
         // output vertex
-        verts << x + cx << y + cy;
+        verts.push_back(QVector2D(x + cx, y + cy));
 
         // apply the rotation matrix
         t = x;
         x = c * x - s * y;
         y = s * t + c * y;
     }
-    vbo->setData(verts.size() / 2, 2, verts.data(), nullptr);
+    vbo->setVertices(verts);
     vbo->render(GL_LINE_LOOP);
 }
 

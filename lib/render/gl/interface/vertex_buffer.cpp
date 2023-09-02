@@ -414,11 +414,6 @@ public:
         }
     }
 
-    void interleaveArrays(float* array,
-                          int dim,
-                          const float* vertices,
-                          const float* texcoords,
-                          int count);
     void bindArrays();
     void unbindArrays();
     void reallocateBuffer(size_t size);
@@ -429,7 +424,6 @@ public:
 
     GLuint buffer;
     GLenum usage;
-    int stride;
     int vertexCount;
     static GLVertexBuffer* streamingBuffer;
     static bool haveBufferStorage;
@@ -449,7 +443,8 @@ public:
     uint8_t* map;
     std::deque<BufferFence> fences;
     FrameSizesArray<4> frameSizes;
-    VertexAttrib attrib[VertexAttributeCount];
+    std::array<VertexAttrib, VertexAttributeCount> attrib;
+    size_t attribStride = 0;
     std::bitset<32> enabledArrays;
     static std::unique_ptr<IndexBuffer> s_indexBuffer;
 };
@@ -460,48 +455,6 @@ GLVertexBuffer* GLVertexBufferPrivate::streamingBuffer = nullptr;
 bool GLVertexBufferPrivate::haveBufferStorage = false;
 bool GLVertexBufferPrivate::haveSyncFences = false;
 std::unique_ptr<IndexBuffer> GLVertexBufferPrivate::s_indexBuffer;
-
-void GLVertexBufferPrivate::interleaveArrays(float* dst,
-                                             int dim,
-                                             const float* vertices,
-                                             const float* texcoords,
-                                             int count)
-{
-    if (!texcoords) {
-        memcpy(static_cast<void*>(dst), vertices, dim * sizeof(float) * count);
-        return;
-    }
-
-    switch (dim) {
-    case 2:
-        for (int i = 0; i < count; i++) {
-            *(dst++) = *(vertices++);
-            *(dst++) = *(vertices++);
-            *(dst++) = *(texcoords++);
-            *(dst++) = *(texcoords++);
-        }
-        break;
-
-    case 3:
-        for (int i = 0; i < count; i++) {
-            *(dst++) = *(vertices++);
-            *(dst++) = *(vertices++);
-            *(dst++) = *(vertices++);
-            *(dst++) = *(texcoords++);
-            *(dst++) = *(texcoords++);
-        }
-        break;
-
-    default:
-        for (int i = 0; i < count; i++) {
-            for (int j = 0; j < dim; j++)
-                *(dst++) = *(vertices++);
-
-            *(dst++) = *(texcoords++);
-            *(dst++) = *(texcoords++);
-        }
-    }
-}
 
 void GLVertexBufferPrivate::bindArrays()
 {
@@ -518,7 +471,7 @@ void GLVertexBufferPrivate::bindArrays()
                                   attrib[i].size,
                                   attrib[i].type,
                                   GL_FALSE,
-                                  stride,
+                                  attribStride,
                                   (const GLvoid*)(baseAddress + attrib[i].offset));
             glEnableVertexAttribArray(i);
         }
@@ -673,25 +626,6 @@ void GLVertexBuffer::setData(const void* data, size_t size)
     unmap();
 }
 
-void GLVertexBuffer::setData(int vertexCount,
-                             int dim,
-                             const float* vertices,
-                             const float* texcoords)
-{
-    const GLVertexAttrib layout[]
-        = {{VA_Position, dim, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, int(dim * sizeof(float))}};
-
-    int stride = (texcoords ? dim + 2 : dim) * sizeof(float);
-    int attribCount = texcoords ? 2 : 1;
-
-    setAttribLayout(layout, attribCount, stride);
-    setVertexCount(vertexCount);
-
-    GLvoid* ptr = map(vertexCount * stride);
-    d->interleaveArrays(static_cast<float*>(ptr), dim, vertices, texcoords, vertexCount);
-    unmap();
-}
-
 GLvoid* GLVertexBuffer::map(size_t size)
 {
     d->mappedSize = size;
@@ -763,25 +697,17 @@ void GLVertexBuffer::setVertexCount(int count)
     d->vertexCount = count;
 }
 
-void GLVertexBuffer::setAttribLayout(const GLVertexAttrib* attribs, int count, int stride)
+void GLVertexBuffer::setAttribLayout(std::span<const GLVertexAttrib> attribs, size_t stride)
 {
-    // Start by disabling all arrays
     d->enabledArrays.reset();
-
-    for (int i = 0; i < count; i++) {
-        const int index = attribs[i].index;
-
-        Q_ASSERT(index >= 0 && index < VertexAttributeCount);
-        Q_ASSERT(!d->enabledArrays[index]);
-
-        d->attrib[index].size = attribs[i].size;
-        d->attrib[index].type = attribs[i].type;
-        d->attrib[index].offset = attribs[i].relativeOffset;
-
-        d->enabledArrays[index] = true;
+    for (const auto& attrib : attribs) {
+        Q_ASSERT(attrib.attributeIndex < d->attrib.size());
+        d->attrib[attrib.attributeIndex].size = attrib.componentCount;
+        d->attrib[attrib.attributeIndex].type = attrib.type;
+        d->attrib[attrib.attributeIndex].offset = attrib.relativeOffset;
+        d->enabledArrays[attrib.attributeIndex] = true;
     }
-
-    d->stride = stride;
+    d->attribStride = stride;
 }
 
 void GLVertexBuffer::render(GLenum primitiveMode)

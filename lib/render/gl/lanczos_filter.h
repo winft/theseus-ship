@@ -184,26 +184,43 @@ public:
 
         // Draw the window back into the FBO, this time scaled horizontally
         glClear(GL_COLOR_BUFFER_BIT);
-        QVector<float> verts;
-        QVector<float> texCoords;
-        verts.reserve(12);
-        texCoords.reserve(12);
+        QVector<GLVertex2D> gl_verts;
+        gl_verts.reserve(6);
 
-        texCoords << 1.0 << 0.0;
-        verts << tw << 0.0; // Top right
-        texCoords << 0.0 << 0.0;
-        verts << 0.0 << 0.0; // Top left
-        texCoords << 0.0 << 1.0;
-        verts << 0.0 << sh; // Bottom left
-        texCoords << 0.0 << 1.0;
-        verts << 0.0 << sh; // Bottom left
-        texCoords << 1.0 << 1.0;
-        verts << tw << sh; // Bottom right
-        texCoords << 1.0 << 0.0;
-        verts << tw << 0.0; // Top right
+        // Top right
+        gl_verts.push_back(GLVertex2D{
+            .position = QVector2D(tw, 0.0),
+            .texcoord = QVector2D(1.0, 0.0),
+        });
+        // Top left
+        gl_verts.push_back(GLVertex2D{
+            .position = QVector2D(0.0, 0.0),
+            .texcoord = QVector2D(0.0, 0.0),
+        });
+        // Bottom left
+        gl_verts.push_back(GLVertex2D{
+            .position = QVector2D(0.0, sh),
+            .texcoord = QVector2D(0.0, 1.0),
+        });
+        // Bottom left
+        gl_verts.push_back(GLVertex2D{
+            .position = QVector2D(0.0, sh),
+            .texcoord = QVector2D(0.0, 1.0),
+        });
+        // Bottom right
+        gl_verts.push_back(GLVertex2D{
+            .position = QVector2D(tw, sh),
+            .texcoord = QVector2D(1.0, 1.0),
+        });
+        // Top right
+        gl_verts.push_back(GLVertex2D{
+            .position = QVector2D(tw, 0.0),
+            .texcoord = QVector2D(1.0, 0.0),
+        });
+
         GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
         vbo->reset();
-        vbo->setData(6, 2, verts.constData(), texCoords.constData());
+        vbo->setVertices(gl_verts);
         vbo->render(GL_TRIANGLES);
 
         // At this point we don't need the scratch texture anymore
@@ -228,15 +245,27 @@ public:
         // coordinates on the screen, while scaling it vertically and blending it.
         glClear(GL_COLOR_BUFFER_BIT);
 
-        verts.clear();
+        QVector<QVector2D> verts;
 
-        verts << tw << 0.0;  // Top right
-        verts << 0.0 << 0.0; // Top left
-        verts << 0.0 << th;  // Bottom left
-        verts << 0.0 << th;  // Bottom left
-        verts << tw << th;   // Bottom right
-        verts << tw << 0.0;  // Top right
-        vbo->setData(6, 2, verts.constData(), texCoords.constData());
+        // Top right
+        verts.push_back(QVector2D(tw, 0.0));
+
+        // Top left
+        verts.push_back(QVector2D(0.0, 0.0));
+
+        // Bottom left
+        verts.push_back(QVector2D(0.0, th));
+
+        // Bottom left
+        verts.push_back(QVector2D(0.0, th));
+
+        // Bottom right
+        verts.push_back(QVector2D(tw, th));
+
+        // Top right
+        verts.push_back(QVector2D(tw, 0.0));
+
+        vbo->setVertices(verts);
         vbo->render(GL_TRIANGLES);
 
         tex2.unbind();

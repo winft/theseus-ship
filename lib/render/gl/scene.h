@@ -380,21 +380,22 @@ protected:
             return;
         }
 
-        QVector<float> verts;
+        QVector<QVector2D> verts;
         for (PaintClipper::Iterator iterator; !iterator.isDone(); iterator.next()) {
             QRect r = iterator.boundingRect();
-            verts << r.x() + r.width() << r.y();
-            verts << r.x() << r.y();
-            verts << r.x() << r.y() + r.height();
-            verts << r.x() << r.y() + r.height();
-            verts << r.x() + r.width() << r.y() + r.height();
-            verts << r.x() + r.width() << r.y();
+
+            verts.push_back(QVector2D(r.x() + r.width(), r.y()));
+            verts.push_back(QVector2D(r.x(), r.y()));
+            verts.push_back(QVector2D(r.x(), r.y() + r.height()));
+            verts.push_back(QVector2D(r.x(), r.y() + r.height()));
+            verts.push_back(QVector2D(r.x() + r.width(), r.y() + r.height()));
+            verts.push_back(QVector2D(r.x() + r.width(), r.y()));
         }
 
         auto vbo = GLVertexBuffer::streamingBuffer();
         vbo->reset();
         vbo->setColor(QColor(0, 0, 0, 0));
-        vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
+        vbo->setVertices(verts);
 
         ShaderBinder binder(ShaderTrait::UniformColor);
         binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, projection);

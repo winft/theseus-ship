@@ -142,41 +142,46 @@ void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
     ShaderManager::instance()->popShader();
     m_texture->unbind();
 
-    QVector<float> verts;
+    QVector<QVector2D> verts;
     auto vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
     vbo->setColor(QColor(0, 0, 0));
     QRectF const areaF = area;
+    auto const frame = area.adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
 
     // top frame
-    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.top();
-    verts << areaF.left() - FRAME_WIDTH << areaF.top();
-    verts << areaF.right() + FRAME_WIDTH << areaF.top();
-    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
+    verts.push_back(QVector2D(frame.right(), frame.top()));
+    verts.push_back(QVector2D(frame.left(), frame.top()));
+    verts.push_back(QVector2D(frame.left(), areaF.top()));
+    verts.push_back(QVector2D(frame.left(), areaF.top()));
+    verts.push_back(QVector2D(frame.right(), areaF.top()));
+    verts.push_back(QVector2D(frame.right(), frame.top()));
+
     // left frame
-    verts << areaF.left() << areaF.top() - FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.left() << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.left() << areaF.top() - FRAME_WIDTH;
+    verts.push_back(QVector2D(areaF.left(), frame.top()));
+    verts.push_back(QVector2D(frame.left(), frame.top()));
+    verts.push_back(QVector2D(frame.left(), frame.bottom()));
+    verts.push_back(QVector2D(frame.left(), frame.bottom()));
+    verts.push_back(QVector2D(areaF.left(), frame.bottom()));
+    verts.push_back(QVector2D(areaF.left(), frame.top()));
+
     // right frame
-    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-    verts << areaF.right() << areaF.top() - FRAME_WIDTH;
-    verts << areaF.right() << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.right() << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.right() + FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
+    verts.push_back(QVector2D(frame.right(), frame.top()));
+    verts.push_back(QVector2D(areaF.right(), frame.top()));
+    verts.push_back(QVector2D(areaF.right(), frame.bottom()));
+    verts.push_back(QVector2D(areaF.right(), frame.bottom()));
+    verts.push_back(QVector2D(frame.right(), frame.bottom()));
+    verts.push_back(QVector2D(frame.right(), frame.top()));
+
     // bottom frame
-    verts << areaF.right() + FRAME_WIDTH << areaF.bottom();
-    verts << areaF.left() - FRAME_WIDTH << areaF.bottom();
-    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.right() + FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.right() + FRAME_WIDTH << areaF.bottom();
-    vbo->setData(verts.size() / 2, 2, verts.constData(), nullptr);
+    verts.push_back(QVector2D(frame.right(), areaF.bottom()));
+    verts.push_back(QVector2D(frame.left(), areaF.bottom()));
+    verts.push_back(QVector2D(frame.left(), frame.bottom()));
+    verts.push_back(QVector2D(frame.left(), frame.bottom()));
+    verts.push_back(QVector2D(frame.right(), frame.bottom()));
+    verts.push_back(QVector2D(frame.right(), areaF.bottom()));
+
+    vbo->setVertices(verts);
 
     ShaderBinder binder(ShaderTrait::UniformColor);
     binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));

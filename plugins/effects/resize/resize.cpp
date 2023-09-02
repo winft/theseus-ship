@@ -99,17 +99,19 @@ void ResizeEffect::paintWindow(effect::window_paint_data& data)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             color.setAlphaF(alpha);
             vbo->setColor(color);
-            QVector<float> verts;
+            QVector<QVector2D> verts;
             verts.reserve(paintRegion.rectCount() * 12);
+
             for (const QRect& r : paintRegion) {
-                verts << r.x() + r.width() << r.y();
-                verts << r.x() << r.y();
-                verts << r.x() << r.y() + r.height();
-                verts << r.x() << r.y() + r.height();
-                verts << r.x() + r.width() << r.y() + r.height();
-                verts << r.x() + r.width() << r.y();
+                verts.push_back(QVector2D(r.x() + r.width(), r.y()));
+                verts.push_back(QVector2D(r.x(), r.y()));
+                verts.push_back(QVector2D(r.x(), r.y() + r.height()));
+                verts.push_back(QVector2D(r.x(), r.y() + r.height()));
+                verts.push_back(QVector2D(r.x() + r.width(), r.y() + r.height()));
+                verts.push_back(QVector2D(r.x() + r.width(), r.y()));
             }
-            vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
+
+            vbo->setVertices(verts);
             vbo->render(GL_TRIANGLES);
             glDisable(GL_BLEND);
         } else {

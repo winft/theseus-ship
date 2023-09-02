@@ -534,25 +534,28 @@ void CubeEffect::paintScreen(effect::screen_paint_data& data)
                 m_reflectionShader->setUniform(GLShader::ModelViewProjectionMatrix,
                                                windowTransformation);
                 m_reflectionShader->setUniform("u_alpha", alpha);
-                QVector<float> verts;
-                QVector<float> texcoords;
+
+                QVector<GLVertex3D> verts;
                 verts.reserve(18);
-                texcoords.reserve(12);
-                texcoords << 0.0 << 0.0;
-                verts << vertices[6] << vertices[7] << vertices[8];
-                texcoords << 0.0 << 0.0;
-                verts << vertices[9] << vertices[10] << vertices[11];
-                texcoords << 1.0 << 0.0;
-                verts << vertices[0] << vertices[1] << vertices[2];
-                texcoords << 1.0 << 0.0;
-                verts << vertices[0] << vertices[1] << vertices[2];
-                texcoords << 1.0 << 0.0;
-                verts << vertices[3] << vertices[4] << vertices[5];
-                texcoords << 0.0 << 0.0;
-                verts << vertices[6] << vertices[7] << vertices[8];
+
+                auto push_vertex = [&](int vert_index, double tex_x, double tex_y) {
+                    verts.push_back({QVector3D(vertices[vert_index],
+                                               vertices[vert_index + 1],
+                                               vertices[vert_index + 2]),
+                                     QVector2D(tex_x, tex_y)});
+                };
+
+                push_vertex(6, 0., 0.);
+                push_vertex(9, 0., 0.);
+                push_vertex(0, 1., 0.);
+                push_vertex(0, 1., 0.);
+                push_vertex(3, 1., 0.);
+                push_vertex(6, 0., 0.);
+
                 GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
                 vbo->reset();
-                vbo->setData(6, 3, verts.data(), texcoords.data());
+                vbo->setVertices(verts);
+
                 vbo->render(GL_TRIANGLES);
             }
             glDisable(GL_BLEND);
@@ -799,8 +802,8 @@ void CubeEffect::paintCubeCap()
     float zTexture = rect.width() / 2 * tan(45.0f * M_PI / 180.0f);
     float angle = 360.0f / effects->numberOfDesktops();
     bool texture = texturedCaps && effects->numberOfDesktops() > 3 && capTexture;
-    QVector<float> verts;
-    QVector<float> texCoords;
+    QVector<GLVertex3D> verts;
+
     for (int i = 0; i < effects->numberOfDesktops(); i++) {
         int triangleRows = effects->numberOfDesktops() * 5;
         float zTriangleDistance = z / static_cast<float>(triangleRows);
@@ -867,6 +870,10 @@ void CubeEffect::paintCubeCap()
                 float texY1 = 0.0;
                 float texY2 = 0.0;
                 float texY3 = 0.0;
+
+                GLVertex3D vertex;
+
+                vertex.position = {x1, 0., z1};
                 if (texture) {
                     if (capTexture->get_content_transform()
                         == effect::transform_type::flipped_180) {
@@ -876,7 +883,6 @@ void CubeEffect::paintCubeCap()
                         texY2 = 0.5 + z2 / zTexture * 0.5;
                         texX3 = x3 / (rect.width()) + 0.5;
                         texY3 = 0.5 + z3 / zTexture * 0.5;
-                        texCoords << texX1 << texY1;
                     } else {
                         texX1 = x1 / (rect.width()) + 0.5;
                         texY1 = 0.5 - z1 / zTexture * 0.5;
@@ -884,25 +890,30 @@ void CubeEffect::paintCubeCap()
                         texY2 = 0.5 - z2 / zTexture * 0.5;
                         texX3 = x3 / (rect.width()) + 0.5;
                         texY3 = 0.5 - z3 / zTexture * 0.5;
-                        texCoords << texX1 << texY1;
                     }
+                    vertex.texcoord = {texX1, texY1};
                 }
-                verts << x1 << 0.0 << z1;
+                verts.push_back(vertex);
+
+                vertex = {};
+                vertex.position = {x2, 0.0, z2};
                 if (texture) {
-                    texCoords << texX2 << texY2;
+                    vertex.texcoord = {texX2, texY2};
                 }
-                verts << x2 << 0.0 << z2;
+                verts.push_back(vertex);
+
+                vertex = {};
+                vertex.position = {x3, 0.0, z3};
                 if (texture) {
-                    texCoords << texX3 << texY3;
+                    vertex.texcoord = {texX3, texY3};
                 }
-                verts << x3 << 0.0 << z3;
+                verts.push_back(vertex);
             }
         }
     }
     delete m_cubeCapBuffer;
     m_cubeCapBuffer = new GLVertexBuffer(GLVertexBuffer::Static);
-    m_cubeCapBuffer->setData(
-        verts.count() / 3, 3, verts.constData(), texture ? texCoords.constData() : nullptr);
+    m_cubeCapBuffer->setVertices(verts);
 }
 
 void CubeEffect::paintCylinderCap()
@@ -917,8 +928,8 @@ void CubeEffect::paintCylinderCap()
     float segment = radius / 30.0f;
 
     bool texture = texturedCaps && effects->numberOfDesktops() > 3 && capTexture;
-    QVector<float> verts;
-    QVector<float> texCoords;
+    QVector<GLVertex3D> verts;
+
     for (int i = 1; i <= 30; i++) {
         int steps = 72;
         for (int j = 0; j <= steps; j++) {
@@ -932,41 +943,50 @@ void CubeEffect::paintCylinderCap()
             const float z2 = segment * i * cos(azimuthAngle);
             const float z3 = segment * (i - 1) * cos(azimuthAngle2);
             const float z4 = segment * i * cos(azimuthAngle2);
+
+            std::array<QVector2D, 6> tex_coords;
             if (texture) {
                 if (capTexture->get_content_transform() == effect::transform_type::flipped_180) {
-                    texCoords << (radius + x1) / (radius * 2.0f) << (z1 + radius) / (radius * 2.0f);
-                    texCoords << (radius + x2) / (radius * 2.0f) << (z2 + radius) / (radius * 2.0f);
-                    texCoords << (radius + x3) / (radius * 2.0f) << (z3 + radius) / (radius * 2.0f);
-                    texCoords << (radius + x4) / (radius * 2.0f) << (z4 + radius) / (radius * 2.0f);
-                    texCoords << (radius + x3) / (radius * 2.0f) << (z3 + radius) / (radius * 2.0f);
-                    texCoords << (radius + x2) / (radius * 2.0f) << (z2 + radius) / (radius * 2.0f);
+                    tex_coords.at(0)
+                        = {(radius + x1) / (radius * 2.0f), (z1 + radius) / (radius * 2.0f)};
+                    tex_coords.at(1)
+                        = {(radius + x2) / (radius * 2.0f), (z2 + radius) / (radius * 2.0f)};
+                    tex_coords.at(2)
+                        = {(radius + x3) / (radius * 2.0f), (z3 + radius) / (radius * 2.0f)};
+                    tex_coords.at(3)
+                        = {(radius + x4) / (radius * 2.0f), (z4 + radius) / (radius * 2.0f)};
+                    tex_coords.at(4)
+                        = {(radius + x3) / (radius * 2.0f), (z3 + radius) / (radius * 2.0f)};
+                    tex_coords.at(5)
+                        = {(radius + x2) / (radius * 2.0f), (z2 + radius) / (radius * 2.0f)};
                 } else {
-                    texCoords << (radius + x1) / (radius * 2.0f)
-                              << 1.0f - (z1 + radius) / (radius * 2.0f);
-                    texCoords << (radius + x2) / (radius * 2.0f)
-                              << 1.0f - (z2 + radius) / (radius * 2.0f);
-                    texCoords << (radius + x3) / (radius * 2.0f)
-                              << 1.0f - (z3 + radius) / (radius * 2.0f);
-                    texCoords << (radius + x4) / (radius * 2.0f)
-                              << 1.0f - (z4 + radius) / (radius * 2.0f);
-                    texCoords << (radius + x3) / (radius * 2.0f)
-                              << 1.0f - (z3 + radius) / (radius * 2.0f);
-                    texCoords << (radius + x2) / (radius * 2.0f)
-                              << 1.0f - (z2 + radius) / (radius * 2.0f);
+                    tex_coords.at(0)
+                        = {(radius + x1) / (radius * 2.0f), 1.0f - (z1 + radius) / (radius * 2.0f)};
+                    tex_coords.at(1)
+                        = {(radius + x2) / (radius * 2.0f), 1.0f - (z2 + radius) / (radius * 2.0f)};
+                    tex_coords.at(2)
+                        = {(radius + x3) / (radius * 2.0f), 1.0f - (z3 + radius) / (radius * 2.0f)};
+                    tex_coords.at(3)
+                        = {(radius + x4) / (radius * 2.0f), 1.0f - (z4 + radius) / (radius * 2.0f)};
+                    tex_coords.at(4)
+                        = {(radius + x3) / (radius * 2.0f), 1.0f - (z3 + radius) / (radius * 2.0f)};
+                    tex_coords.at(5)
+                        = {(radius + x2) / (radius * 2.0f), 1.0f - (z2 + radius) / (radius * 2.0f)};
                 }
             }
-            verts << x1 << 0.0 << z1;
-            verts << x2 << 0.0 << z2;
-            verts << x3 << 0.0 << z3;
-            verts << x4 << 0.0 << z4;
-            verts << x3 << 0.0 << z3;
-            verts << x2 << 0.0 << z2;
+
+            verts.push_back({QVector3D(x1, 0.0, z1), tex_coords.at(0)});
+            verts.push_back({QVector3D(x2, 0.0, z2), tex_coords.at(1)});
+            verts.push_back({QVector3D(x3, 0.0, z3), tex_coords.at(2)});
+            verts.push_back({QVector3D(x4, 0.0, z4), tex_coords.at(3)});
+            verts.push_back({QVector3D(x3, 0.0, z3), tex_coords.at(4)});
+            verts.push_back({QVector3D(x2, 0.0, z2), tex_coords.at(5)});
         }
     }
+
     delete m_cubeCapBuffer;
     m_cubeCapBuffer = new GLVertexBuffer(GLVertexBuffer::Static);
-    m_cubeCapBuffer->setData(
-        verts.count() / 3, 3, verts.constData(), texture ? texCoords.constData() : nullptr);
+    m_cubeCapBuffer->setVertices(verts);
 }
 
 void CubeEffect::paintSphereCap()
@@ -980,8 +1000,8 @@ void CubeEffect::paintSphereCap()
     float angle = acos((rect.height() * 0.5) / radius) * 180.0 / M_PI;
     angle /= 30;
     bool texture = texturedCaps && effects->numberOfDesktops() > 3 && capTexture;
-    QVector<float> verts;
-    QVector<float> texCoords;
+    QVector<GLVertex3D> verts;
+
     for (int i = 0; i < 30; i++) {
         float topAngle = angle * i * M_PI / 180.0;
         float bottomAngle = angle * (i + 1) * M_PI / 180.0;
@@ -1001,35 +1021,37 @@ void CubeEffect::paintSphereCap()
             const float x4 = radius * sin(topAngle) * sin((90.0 + (j + 1) * 10.0) * M_PI / 180.0);
             const float z4 = radius * sin(topAngle) * cos((90.0 + (j + 1) * 10.0) * M_PI / 180.0);
 
+            std::array<QVector2D, 6> tex_coords;
             if (texture) {
                 if (capTexture->get_content_transform() == effect::transform_type::flipped_180) {
-                    texCoords << x4 / (rect.width()) + 0.5 << 0.5 + z4 / zTexture * 0.5;
-                    texCoords << x1 / (rect.width()) + 0.5 << 0.5 + z1 / zTexture * 0.5;
-                    texCoords << x2 / (rect.width()) + 0.5 << 0.5 + z2 / zTexture * 0.5;
-                    texCoords << x2 / (rect.width()) + 0.5 << 0.5 + z2 / zTexture * 0.5;
-                    texCoords << x3 / (rect.width()) + 0.5 << 0.5 + z3 / zTexture * 0.5;
-                    texCoords << x4 / (rect.width()) + 0.5 << 0.5 + z4 / zTexture * 0.5;
+                    tex_coords.at(0) = {x4 / (rect.width()) + 0.5f, 0.5f + z4 / zTexture * 0.5f};
+                    tex_coords.at(1) = {x1 / (rect.width()) + 0.5f, 0.5f + z1 / zTexture * 0.5f};
+                    tex_coords.at(2) = {x2 / (rect.width()) + 0.5f, 0.5f + z2 / zTexture * 0.5f};
+                    tex_coords.at(3) = {x2 / (rect.width()) + 0.5f, 0.5f + z2 / zTexture * 0.5f};
+                    tex_coords.at(4) = {x3 / (rect.width()) + 0.5f, 0.5f + z3 / zTexture * 0.5f};
+                    tex_coords.at(5) = {x4 / (rect.width()) + 0.5f, 0.5f + z4 / zTexture * 0.5f};
                 } else {
-                    texCoords << x4 / (rect.width()) + 0.5 << 0.5 - z4 / zTexture * 0.5;
-                    texCoords << x1 / (rect.width()) + 0.5 << 0.5 - z1 / zTexture * 0.5;
-                    texCoords << x2 / (rect.width()) + 0.5 << 0.5 - z2 / zTexture * 0.5;
-                    texCoords << x2 / (rect.width()) + 0.5 << 0.5 - z2 / zTexture * 0.5;
-                    texCoords << x3 / (rect.width()) + 0.5 << 0.5 - z3 / zTexture * 0.5;
-                    texCoords << x4 / (rect.width()) + 0.5 << 0.5 - z4 / zTexture * 0.5;
+                    tex_coords.at(0) = {x4 / (rect.width()) + 0.5f, 0.5f - z4 / zTexture * 0.5f};
+                    tex_coords.at(1) = {x1 / (rect.width()) + 0.5f, 0.5f - z1 / zTexture * 0.5f};
+                    tex_coords.at(2) = {x2 / (rect.width()) + 0.5f, 0.5f - z2 / zTexture * 0.5f};
+                    tex_coords.at(3) = {x2 / (rect.width()) + 0.5f, 0.5f - z2 / zTexture * 0.5f};
+                    tex_coords.at(4) = {x3 / (rect.width()) + 0.5f, 0.5f - z3 / zTexture * 0.5f};
+                    tex_coords.at(5) = {x4 / (rect.width()) + 0.5f, 0.5f - z4 / zTexture * 0.5f};
                 }
             }
-            verts << x4 << yTop << z4;
-            verts << x1 << yTop << z1;
-            verts << x2 << yBottom << z2;
-            verts << x2 << yBottom << z2;
-            verts << x3 << yBottom << z3;
-            verts << x4 << yTop << z4;
+
+            verts.push_back({QVector3D(x4, yTop, z4), tex_coords.at(0)});
+            verts.push_back({QVector3D(x1, yTop, z1), tex_coords.at(1)});
+            verts.push_back({QVector3D(x2, yBottom, z2), tex_coords.at(2)});
+            verts.push_back({QVector3D(x2, yBottom, z2), tex_coords.at(3)});
+            verts.push_back({QVector3D(x3, yBottom, z3), tex_coords.at(4)});
+            verts.push_back({QVector3D(x4, yTop, z4), tex_coords.at(5)});
         }
     }
+
     delete m_cubeCapBuffer;
     m_cubeCapBuffer = new GLVertexBuffer(GLVertexBuffer::Static);
-    m_cubeCapBuffer->setData(
-        verts.count() / 3, 3, verts.constData(), texture ? texCoords.constData() : nullptr);
+    m_cubeCapBuffer->setVertices(verts);
 }
 
 void CubeEffect::postPaintScreen()
@@ -1366,7 +1388,8 @@ void CubeEffect::paintWindow(effect::window_paint_data& data)
             if (!paint.isEmpty()) {
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                QVector<float> verts;
+
+                QVector<QVector2D> verts;
                 float quadSize = 0.0f;
                 int leftDesktop = frontDesktop - 1;
                 int rightDesktop = frontDesktop + 1;
@@ -1380,29 +1403,37 @@ void CubeEffect::paintWindow(effect::window_paint_data& data)
                     quadSize = 150.0f;
                 else
                     quadSize = 250.0f;
+
                 for (const QRect& paintRect : paint) {
                     for (int i = 0; i <= (paintRect.height() / quadSize); i++) {
                         for (int j = 0; j <= (paintRect.width() / quadSize); j++) {
-                            verts << qMin(paintRect.x() + (j + 1) * quadSize,
-                                          static_cast<float>(paintRect.x()) + paintRect.width())
-                                  << paintRect.y() + i * quadSize;
-                            verts << paintRect.x() + j * quadSize << paintRect.y() + i * quadSize;
-                            verts << paintRect.x() + j * quadSize
-                                  << qMin(paintRect.y() + (i + 1) * quadSize,
-                                          static_cast<float>(paintRect.y()) + paintRect.height());
-                            verts << paintRect.x() + j * quadSize
-                                  << qMin(paintRect.y() + (i + 1) * quadSize,
-                                          static_cast<float>(paintRect.y()) + paintRect.height());
-                            verts << qMin(paintRect.x() + (j + 1) * quadSize,
-                                          static_cast<float>(paintRect.x()) + paintRect.width())
-                                  << qMin(paintRect.y() + (i + 1) * quadSize,
-                                          static_cast<float>(paintRect.y()) + paintRect.height());
-                            verts << qMin(paintRect.x() + (j + 1) * quadSize,
-                                          static_cast<float>(paintRect.x()) + paintRect.width())
-                                  << paintRect.y() + i * quadSize;
+                            verts.push_back(
+                                {qMin(paintRect.x() + (j + 1) * quadSize,
+                                      static_cast<float>(paintRect.x()) + paintRect.width()),
+                                 paintRect.y() + i * quadSize});
+                            verts.push_back(
+                                {paintRect.x() + j * quadSize, paintRect.y() + i * quadSize});
+                            verts.push_back(
+                                {paintRect.x() + j * quadSize,
+                                 qMin(paintRect.y() + (i + 1) * quadSize,
+                                      static_cast<float>(paintRect.y()) + paintRect.height())});
+                            verts.push_back(
+                                {paintRect.x() + j * quadSize,
+                                 qMin(paintRect.y() + (i + 1) * quadSize,
+                                      static_cast<float>(paintRect.y()) + paintRect.height())});
+                            verts.push_back(
+                                {qMin(paintRect.x() + (j + 1) * quadSize,
+                                      static_cast<float>(paintRect.x()) + paintRect.width()),
+                                 qMin(paintRect.y() + (i + 1) * quadSize,
+                                      static_cast<float>(paintRect.y()) + paintRect.height())});
+                            verts.push_back(
+                                {qMin(paintRect.x() + (j + 1) * quadSize,
+                                      static_cast<float>(paintRect.x()) + paintRect.width()),
+                                 paintRect.y() + i * quadSize});
                         }
                     }
                 }
+
                 bool capShader = false;
                 if (effects->isOpenGLCompositing() && m_capShader && m_capShader->isValid()) {
                     capShader = true;
@@ -1422,7 +1453,7 @@ void CubeEffect::paintWindow(effect::window_paint_data& data)
                 QColor color = capColor;
                 capColor.setAlphaF(cubeOpacity);
                 vbo->setColor(color);
-                vbo->setData(verts.size() / 2, 2, verts.constData(), nullptr);
+                vbo->setVertices(verts);
                 if (!capShader || mode == Cube) {
                     // TODO: use sphere and cylinder shaders
                     vbo->render(GL_TRIANGLES);

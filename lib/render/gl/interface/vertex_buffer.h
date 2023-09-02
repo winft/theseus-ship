@@ -8,10 +8,12 @@
 #pragma once
 
 #include <kwin_export.h>
+#include <render/effect/interface/window_quad.h>
 
 #include <QRegion>
 #include <epoxy/gl.h>
 #include <optional>
+#include <ranges>
 #include <span>
 
 namespace KWin
@@ -38,10 +40,10 @@ enum VertexAttributeType {
  * relative to the start of the vertex data.
  */
 struct GLVertexAttrib {
-    int index;          /** The attribute index */
-    int size;           /** The number of components [1..4] */
-    GLenum type;        /** The type (e.g. GL_FLOAT) */
-    int relativeOffset; /** The relative offset of the attribute */
+    size_t attributeIndex;
+    size_t componentCount;
+    GLenum type;           /** The type (e.g. GL_FLOAT) */
+    size_t relativeOffset; /** The relative offset of the attribute */
 };
 
 /**
@@ -89,16 +91,16 @@ public:
      *         QVector2D texcoord;
      *     };
      *
-     *     const GLVertexAttrib attribs[] = {
-     *         { VA_Position, 3, GL_FLOAT, offsetof(Vertex, position) },
-     *         { VA_TexCoord, 2, GL_FLOAT, offsetof(Vertex, texcoord) }
+     *     const std::array attribs = {
+     *         GLVertexAttrib{ VA_Position, 3, GL_FLOAT, offsetof(Vertex, position) },
+     *         GLVertexAttrib{ VA_TexCoord, 2, GL_FLOAT, offsetof(Vertex, texcoord) },
      *     };
      *
      *     Vertex vertices[6];
-     *     vbo->setAttribLayout(attribs, 2, sizeof(Vertex));
+     *     vbo->setAttribLayout(std::span(attribs), sizeof(Vertex));
      *     vbo->setData(vertices, sizeof(vertices));
      */
-    void setAttribLayout(const GLVertexAttrib* attribs, int count, int stride);
+    void setAttribLayout(std::span<const GLVertexAttrib> attribs, size_t stride);
 
     /**
      * Uploads data into the buffer object's data store.
@@ -110,15 +112,38 @@ public:
      */
     void setVertexCount(int count);
 
-    /**
-     * Sets the vertex data.
-     * @param numberVertices The number of vertices in the arrays
-     * @param dim The dimension of the vertices: 2 for x/y, 3 for x/y/z
-     * @param vertices The vertices, size must equal @a numberVertices * @a dim
-     * @param texcoords The texture coordinates for each vertex.
-     * Size must equal 2 * @a numberVertices.
-     */
-    void setData(int numberVertices, int dim, const float* vertices, const float* texcoords);
+    template<std::ranges::contiguous_range T>
+        requires std::is_same<std::ranges::range_value_t<T>, GLVertex2D>::value
+    void setVertices(const T& range)
+    {
+        setData(range.data(), range.size() * sizeof(GLVertex2D));
+        setVertexCount(range.size());
+        setAttribLayout(std::span(GLVertex2DLayout), sizeof(GLVertex2D));
+    }
+
+    template<std::ranges::contiguous_range T>
+        requires std::is_same<std::ranges::range_value_t<T>, GLVertex3D>::value
+    void setVertices(const T& range)
+    {
+        setData(range.data(), range.size() * sizeof(GLVertex3D));
+        setVertexCount(range.size());
+        setAttribLayout(std::span(GLVertex3DLayout), sizeof(GLVertex3D));
+    }
+
+    template<std::ranges::contiguous_range T>
+        requires std::is_same<std::ranges::range_value_t<T>, QVector2D>::value
+    void setVertices(const T& range)
+    {
+        setData(range.data(), range.size() * sizeof(QVector2D));
+        setVertexCount(range.size());
+        static constexpr GLVertexAttrib layout{
+            .attributeIndex = VA_Position,
+            .componentCount = 2,
+            .type = GL_FLOAT,
+            .relativeOffset = 0,
+        };
+        setAttribLayout(std::span(&layout, 1), sizeof(QVector2D));
+    }
 
     /**
      * Maps an unused range of the data store into the client's address space.
@@ -258,6 +283,35 @@ public:
      * @since 4.7
      */
     static GLVertexBuffer* streamingBuffer();
+
+    static constexpr std::array GLVertex2DLayout{
+        GLVertexAttrib{
+            .attributeIndex = VA_Position,
+            .componentCount = 2,
+            .type = GL_FLOAT,
+            .relativeOffset = offsetof(GLVertex2D, position),
+        },
+        GLVertexAttrib{
+            .attributeIndex = VA_TexCoord,
+            .componentCount = 2,
+            .type = GL_FLOAT,
+            .relativeOffset = offsetof(GLVertex2D, texcoord),
+        },
+    };
+    static constexpr std::array GLVertex3DLayout{
+        GLVertexAttrib{
+            .attributeIndex = VA_Position,
+            .componentCount = 3,
+            .type = GL_FLOAT,
+            .relativeOffset = offsetof(GLVertex3D, position),
+        },
+        GLVertexAttrib{
+            .attributeIndex = VA_TexCoord,
+            .componentCount = 2,
+            .type = GL_FLOAT,
+            .relativeOffset = offsetof(GLVertex3D, texcoord),
+        },
+    };
 
 private:
     GLvoid* map(size_t size);

@@ -66,17 +66,20 @@ void ShowPaintEffect::paintGL(const QMatrix4x4& projection)
     QColor color = s_colors[m_colorIndex];
     color.setAlphaF(s_alpha);
     vbo->setColor(color);
-    QVector<float> verts;
+
+    QVector<QVector2D> verts;
     verts.reserve(m_painted.rectCount() * 12);
+
     for (const QRect& r : m_painted) {
-        verts << r.x() + r.width() << r.y();
-        verts << r.x() << r.y();
-        verts << r.x() << r.y() + r.height();
-        verts << r.x() << r.y() + r.height();
-        verts << r.x() + r.width() << r.y() + r.height();
-        verts << r.x() + r.width() << r.y();
+        verts.push_back(QVector2D(r.x() + r.width(), r.y()));
+        verts.push_back(QVector2D(r.x(), r.y()));
+        verts.push_back(QVector2D(r.x(), r.y() + r.height()));
+        verts.push_back(QVector2D(r.x(), r.y() + r.height()));
+        verts.push_back(QVector2D(r.x() + r.width(), r.y() + r.height()));
+        verts.push_back(QVector2D(r.x() + r.width(), r.y()));
     }
-    vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
+
+    vbo->setVertices(verts);
     vbo->render(GL_TRIANGLES);
     glDisable(GL_BLEND);
 }

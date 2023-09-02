@@ -117,21 +117,34 @@ bool LookingGlassEffect::loadData()
     }
 
     m_vbo = std::make_unique<GLVertexBuffer>(GLVertexBuffer::Static);
-    QVector<float> verts;
-    QVector<float> texcoords;
-    texcoords << screenSize.width() << 0.0;
-    verts << screenSize.width() << 0.0;
-    texcoords << 0.0 << 0.0;
-    verts << 0.0 << 0.0;
-    texcoords << 0.0 << screenSize.height();
-    verts << 0.0 << screenSize.height();
-    texcoords << 0.0 << screenSize.height();
-    verts << 0.0 << screenSize.height();
-    texcoords << screenSize.width() << screenSize.height();
-    verts << screenSize.width() << screenSize.height();
-    texcoords << screenSize.width() << 0.0;
-    verts << screenSize.width() << 0.0;
-    m_vbo->setData(6, 2, verts.constData(), texcoords.constData());
+    QVector<GLVertex2D> verts;
+
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(screenSize.width(), 0.0),
+        .texcoord = QVector2D(screenSize.width(), 0.0),
+    });
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(0.0, 0.0),
+        .texcoord = QVector2D(0.0, 0.0),
+    });
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(0.0, screenSize.height()),
+        .texcoord = QVector2D(0.0, screenSize.height()),
+    });
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(0.0, screenSize.height()),
+        .texcoord = QVector2D(0.0, screenSize.height()),
+    });
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(screenSize.width(), screenSize.height()),
+        .texcoord = QVector2D(screenSize.width(), screenSize.height()),
+    });
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(screenSize.width(), 0.0),
+        .texcoord = QVector2D(screenSize.width(), 0.0),
+    });
+
+    m_vbo->setVertices(verts);
     return true;
 }
 

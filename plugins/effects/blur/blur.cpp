@@ -379,9 +379,21 @@ void BlurEffect::upload_geometry(GLVertexBuffer* vbo,
 
     vbo->unmap();
 
-    GLVertexAttrib const layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};
-
-    vbo->setAttribLayout(layout, 2, sizeof(QVector2D));
+    constexpr std::array layout{
+        GLVertexAttrib{
+            .attributeIndex = VA_Position,
+            .componentCount = 2,
+            .type = GL_FLOAT,
+            .relativeOffset = 0,
+        },
+        GLVertexAttrib{
+            .attributeIndex = VA_TexCoord,
+            .componentCount = 2,
+            .type = GL_FLOAT,
+            .relativeOffset = 0,
+        },
+    };
+    vbo->setAttribLayout(std::span(layout), sizeof(QVector2D));
 }
 
 void BlurEffect::prePaintScreen(effect::screen_prepaint_data& data)

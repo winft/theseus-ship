@@ -180,7 +180,7 @@ void OffscreenEffectPrivate::paint(GLTexture* texture,
 
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    vbo->setAttribLayout(attribs, 2, sizeof(GLVertex2D));
+    vbo->setAttribLayout(std::span(GLVertexBuffer::GLVertex2DLayout), sizeof(GLVertex2D));
 
     auto map = vbo->map<GLVertex2D>(verticesPerQuad * quads.count());
     if (!map) {
