@@ -622,6 +622,9 @@ GLVertexBuffer::~GLVertexBuffer()
 void GLVertexBuffer::setData(const void* data, size_t size)
 {
     GLvoid* ptr = map(size);
+    if (!ptr) {
+        return;
+    }
     memcpy(ptr, data, size);
     unmap();
 }
