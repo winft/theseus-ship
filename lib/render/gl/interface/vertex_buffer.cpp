@@ -379,8 +379,6 @@ public:
     GLVertexBufferPrivate(GLVertexBuffer::UsageHint usageHint)
         : vertexCount(0)
         , persistent(false)
-        , useColor(false)
-        , color(0, 0, 0, 255)
         , bufferSize(0)
         , bufferEnd(0)
         , mappedSize(0)
@@ -432,8 +430,6 @@ public:
     static bool supportsIndexedQuads;
     QByteArray dataStore;
     bool persistent;
-    bool useColor;
-    QVector4D color;
     size_t bufferSize;
     intptr_t bufferEnd;
     size_t mappedSize;
@@ -458,11 +454,6 @@ std::unique_ptr<IndexBuffer> GLVertexBufferPrivate::s_indexBuffer;
 
 void GLVertexBufferPrivate::bindArrays()
 {
-    if (useColor) {
-        GLShader* shader = ShaderManager::instance()->getBoundShader();
-        shader->setUniform(GLShader::Color, color);
-    }
-
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
 
     for (size_t i = 0; i < enabledArrays.size(); i++) {
@@ -834,26 +825,8 @@ bool GLVertexBuffer::supportsIndexedQuads()
     return GLVertexBufferPrivate::supportsIndexedQuads;
 }
 
-bool GLVertexBuffer::isUseColor() const
-{
-    return d->useColor;
-}
-
-void GLVertexBuffer::setUseColor(bool enable)
-{
-    d->useColor = enable;
-}
-
-void GLVertexBuffer::setColor(const QColor& color, bool enable)
-{
-    d->useColor = enable;
-    d->color = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-}
-
 void GLVertexBuffer::reset()
 {
-    d->useColor = false;
-    d->color = QVector4D(0, 0, 0, 1);
     d->vertexCount = 0;
 }
 

@@ -58,14 +58,13 @@ void ShowPaintEffect::paintGL(const QMatrix4x4& projection)
 {
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    vbo->setUseColor(true);
     ShaderBinder binder(ShaderTrait::UniformColor);
     binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, projection);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     QColor color = s_colors[m_colorIndex];
     color.setAlphaF(s_alpha);
-    vbo->setColor(color);
+    binder.shader()->setUniform(GLShader::ColorUniform::Color, color);
 
     QVector<QVector2D> verts;
     verts.reserve(m_painted.rectCount() * 12);

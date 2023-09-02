@@ -1447,12 +1447,13 @@ void CubeEffect::paintWindow(effect::window_paint_data& data)
                         mvp = mvp * m_rotationMatrix * m_currentFaceMatrix;
                     }
                     m_capShader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+
+                    auto color = capColor;
+                    capColor.setAlphaF(cubeOpacity);
+                    m_capShader->setUniform(GLShader::ColorUniform::Color, color);
                 }
                 GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
                 vbo->reset();
-                QColor color = capColor;
-                capColor.setAlphaF(cubeOpacity);
-                vbo->setColor(color);
                 vbo->setVertices(verts);
                 if (!capShader || mode == Cube) {
                     // TODO: use sphere and cylinder shaders

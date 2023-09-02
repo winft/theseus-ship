@@ -145,7 +145,6 @@ void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
     QVector<QVector2D> verts;
     auto vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    vbo->setColor(QColor(0, 0, 0));
     QRectF const areaF = area;
     auto const frame = area.adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
 
@@ -185,6 +184,7 @@ void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
 
     ShaderBinder binder(ShaderTrait::UniformColor);
     binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
+    binder.shader()->setUniform(GLShader::ColorUniform::Color, QColor(0, 0, 0));
     vbo->render(GL_TRIANGLES);
 }
 

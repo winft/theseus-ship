@@ -212,9 +212,7 @@ void TouchPointsEffect::drawCircleGl(const QColor& color, float cx, float cy, fl
 
     auto vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    vbo->setUseColor(true);
-    vbo->setColor(color);
-
+    ShaderManager::instance()->getBoundShader()->setUniform(GLShader::ColorUniform::Color, color);
     QVector<QVector2D> verts;
     verts.reserve(num_segments);
 

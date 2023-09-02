@@ -106,7 +106,6 @@ void SnapHelperEffect::paintScreen(effect::screen_paint_data& data)
     if (effects->isOpenGLCompositing()) {
         GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
         vbo->reset();
-        vbo->setUseColor(true);
         ShaderBinder binder(ShaderTrait::UniformColor);
         binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
         glEnable(GL_BLEND);
@@ -114,7 +113,7 @@ void SnapHelperEffect::paintScreen(effect::screen_paint_data& data)
 
         QColor color = s_lineColor;
         color.setAlphaF(color.alphaF() * opacityFactor);
-        vbo->setColor(color);
+        binder.shader()->setUniform(GLShader::ColorUniform::Color, color);
 
         glLineWidth(s_lineWidth);
         QVector<QVector2D> verts;

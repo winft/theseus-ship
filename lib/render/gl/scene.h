@@ -394,11 +394,11 @@ protected:
 
         auto vbo = GLVertexBuffer::streamingBuffer();
         vbo->reset();
-        vbo->setColor(QColor(0, 0, 0, 0));
         vbo->setVertices(verts);
 
         ShaderBinder binder(ShaderTrait::UniformColor);
         binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, projection);
+        binder.shader()->setUniform(GLShader::ColorUniform::Color, QColor(0, 0, 0, 0));
 
         vbo->render(GL_TRIANGLES);
     }
