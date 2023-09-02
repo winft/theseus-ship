@@ -29,11 +29,6 @@ static QList<QByteArray> glExtensions;
 
 static void initDebugOutput()
 {
-    static bool enabled = qEnvironmentVariableIntValue("KWIN_GL_DEBUG");
-    if (!enabled) {
-        return;
-    }
-
     const bool have_KHR_debug = hasGLExtension(QByteArrayLiteral("GL_KHR_debug"));
     const bool have_ARB_debug = hasGLExtension(QByteArrayLiteral("GL_ARB_debug_output"));
     if (!have_KHR_debug && !have_ARB_debug)
@@ -95,24 +90,23 @@ static void initDebugOutput()
     if (have_KHR_debug)
         glEnable(GL_DEBUG_OUTPUT);
 
-#if !defined(QT_NO_DEBUG)
-    // Enable all debug messages
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-#else
-    // Enable error messages
-    glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-    glDebugMessageControl(
-        GL_DONT_CARE, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-#endif
-
-    // Insert a test message
-    const QByteArray message = QByteArrayLiteral("OpenGL debug output initialized");
-    glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
-                         GL_DEBUG_TYPE_OTHER,
-                         0,
-                         GL_DEBUG_SEVERITY_LOW,
-                         message.length(),
-                         message.constData());
+    if (qEnvironmentVariableIntValue("KWIN_GL_DEBUG")) {
+        // Enable all debug messages
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+        // Insert a test message
+        const QByteArray message = QByteArrayLiteral("OpenGL debug output initialized");
+        glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
+                             GL_DEBUG_TYPE_OTHER,
+                             0,
+                             GL_DEBUG_SEVERITY_LOW,
+                             message.length(),
+                             message.constData());
+    } else {
+        // Only enable error messages
+        glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+        glDebugMessageControl(
+            GL_DONT_CARE, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    }
 }
 
 void initGL(const std::function<resolveFuncPtr(const char*)>& resolveFunction)
