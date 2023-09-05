@@ -35,8 +35,7 @@ TEST_CASE("minimize animation", "[effect]")
     test::setup setup("minimize-animation", operation_mode);
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames
-        = render::effect_loader(*effects, *setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);

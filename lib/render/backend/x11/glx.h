@@ -18,8 +18,8 @@
 #include "glx_fb_config.h"
 #include "swap_event_filter.h"
 
-#include <kwineffects/effect_quick_view.h>
-#include <kwingl/platform.h>
+#include <render/effect/interface/effect_quick_view.h>
+#include <render/gl/interface/platform.h>
 
 #include <QOpenGLContext>
 #include <QVariant>
@@ -31,10 +31,6 @@
 #include <stdexcept>
 #include <vector>
 #include <xcb/xproto.h>
-
-#if HAVE_DL_LIBRARY
-#include <dlfcn.h>
-#endif
 
 namespace KWin::render::backend::x11
 {
@@ -365,11 +361,6 @@ static inline glXFuncPtr getProcAddress(const char* name)
     glXFuncPtr ret = nullptr;
 #if HAVE_EPOXY_GLX
     ret = glXGetProcAddress(reinterpret_cast<const GLubyte*>(name));
-#endif
-#if HAVE_DL_LIBRARY
-    if (ret == nullptr) {
-        ret = reinterpret_cast<glXFuncPtr>(dlsym(RTLD_DEFAULT, name));
-    }
 #endif
     return ret;
 }

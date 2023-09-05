@@ -17,8 +17,6 @@
 
 #include "rules/window.h"
 
-#include <kwineffects/effect.h>
-
 #include <QIcon>
 #include <QKeySequence>
 #include <QRect>
@@ -32,6 +30,17 @@ class PlasmaWindow;
 
 namespace KWin::win
 {
+
+// TODO(romangg): Copied over temporarily for checking if the resize effect is provided. We need to
+//                get the call split out from win module instead.
+enum class effect_feature {
+    Nothing = 0,
+    Resize,
+    ScreenInversion,
+    Blur,
+    Contrast,
+    HighlightWindows,
+};
 
 template<typename Window>
 class control
@@ -169,7 +178,8 @@ public:
     void update_have_resize_effect()
     {
         auto& effects = m_win->space.base.render->compositor->effects;
-        have_resize_effect = effects && effects->provides(Effect::Resize);
+        have_resize_effect
+            = effects && effects->provides_comp(static_cast<int>(effect_feature::Resize));
     }
 
     virtual QSize adjusted_frame_size(QSize const& frame_size, size_mode /*mode*/)

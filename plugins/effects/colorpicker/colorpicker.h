@@ -6,8 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_COLORPICKER_H
 #define KWIN_COLORPICKER_H
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_screen.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_screen.h>
 
 #include <QColor>
 #include <QDBusContext>

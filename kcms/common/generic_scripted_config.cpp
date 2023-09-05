@@ -5,8 +5,9 @@
 */
 #include "generic_scripted_config.h"
 
-#include "config-kwin.h"
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
+
 #include <KLocalizedString>
 #include <KLocalizedTranslator>
 #include <kconfigloader.h>
@@ -35,9 +36,9 @@ QObject* generic_scripted_config_factory::create(const char* iface,
         const QString packageType = args.at(1).toString();
 
         if (packageType == QLatin1StringView("KWin/Effect")) {
-            return new scripted_effect_config(pluginId, parentWidget, args);
+            return new scripted_effect_config(pluginId, parentWidget);
         } else if (packageType == QLatin1StringView("KWin/Script")) {
-            return new scripting_config(pluginId, parentWidget, args);
+            return new scripting_config(pluginId, parentWidget);
         } else {
             qWarning() << Q_FUNC_INFO << "got unknown package type:" << packageType;
         }
@@ -46,9 +47,7 @@ QObject* generic_scripted_config_factory::create(const char* iface,
     return nullptr;
 }
 
-generic_scripted_config::generic_scripted_config(const QString& keyword,
-                                                 QWidget* parent,
-                                                 const QVariantList& args)
+generic_scripted_config::generic_scripted_config(const QString& keyword, QWidget* parent)
     : KCModule(parent, KPluginMetaData())
     , m_packageName(keyword)
     , m_translator(new KLocalizedTranslator(this))
@@ -134,10 +133,8 @@ void generic_scripted_config::reload()
 {
 }
 
-scripted_effect_config::scripted_effect_config(const QString& keyword,
-                                               QWidget* parent,
-                                               const QVariantList& args)
-    : generic_scripted_config(keyword, parent, args)
+scripted_effect_config::scripted_effect_config(const QString& keyword, QWidget* parent)
+    : generic_scripted_config(keyword, parent)
 {
     createUi();
 }
@@ -164,10 +161,8 @@ void scripted_effect_config::reload()
     interface.reconfigureEffect(packageName());
 }
 
-scripting_config::scripting_config(const QString& keyword,
-                                   QWidget* parent,
-                                   const QVariantList& args)
-    : generic_scripted_config(keyword, parent, args)
+scripting_config::scripting_config(const QString& keyword, QWidget* parent)
+    : generic_scripted_config(keyword, parent)
 {
     createUi();
 }

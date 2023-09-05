@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "shadow.h"
 #include "window.h"
 
+#include "render/interface/framebuffer.h"
 #include "render/scene.h"
 
 #include <QElapsedTimer>
@@ -69,7 +70,14 @@ public:
         proj.ortho(0, geometry.width(), 0, geometry.height(), 0.1, 65535);
         QMatrix4x4 view;
         view.translate(geometry.width() / 2, geometry.height() / 2);
-        effect::render_data{};
+
+        // For now we don't use framebuffer targets in the QPainter backend. Effects that rely on
+        // them are not supported.
+        // TODO(romangg): Introduce QPainter framebuffers (simply QImage based?).
+        std::stack<framebuffer*> targets;
+
+        effect::render_data render{
+            .targets = targets, .view = view, .projection = proj, .viewport = geometry};
 
         m_painter->begin(buffer);
         m_painter->save();
@@ -78,7 +86,7 @@ public:
         this->repaint_output = output;
         QRegion updateRegion, validRegion;
 
-        this->paintScreen({.view = view, .projection = proj, .viewport = geometry},
+        this->paintScreen(render,
                           mask,
                           damage.intersected(geometry),
                           QRegion(),
@@ -96,7 +104,7 @@ public:
         return renderTimer.nsecsElapsed();
     }
 
-    void paintGenericScreen(paint_type mask, effect::screen_paint_data const& data) override
+    void paintGenericScreen(paint_type mask, effect::screen_paint_data& data) override
     {
         m_painter->save();
         m_painter->translate(data.paint.geo.translation.x(), data.paint.geo.translation.y());

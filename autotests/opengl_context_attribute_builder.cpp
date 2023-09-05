@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/gl/context_attribute_builder.h"
 #include "render/gl/egl_context_attribute_builder.h"
 
-#include <kwinconfig.h>
+#include <base/config-kwin.h>
 
 #include <catch2/generators/catch_generators.hpp>
 #include <epoxy/egl.h>

@@ -18,9 +18,8 @@ kwin_add_builtin_effect(thumbnailaside ${thumbnailaside_SOURCES})
 target_link_libraries(thumbnailaside PRIVATE
   KF6::ConfigGui
   KF6::I18n
-  kwineffects
-  kwinglutils
   Qt::Widgets
+  render
 )
 
 #######################################

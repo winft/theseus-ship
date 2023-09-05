@@ -20,9 +20,8 @@ kwin_add_builtin_effect(trackmouse ${trackmouse_SOURCES})
 target_link_libraries(trackmouse PRIVATE
   KF6::ConfigGui
   KF6::I18n
-  kwineffects
-  kwinglutils
   Qt::Widgets
+  render
 )
 
 #######################################

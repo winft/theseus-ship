@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_TOUCHPOINTS_H
 #define KWIN_TOUCHPOINTS_H
 
-#include <kwineffects/effect.h>
+#include <render/effect/interface/effect.h>
 
 namespace KWin
 {
@@ -22,7 +22,7 @@ class TouchPointsEffect : public Effect
 public:
     TouchPointsEffect();
     ~TouchPointsEffect() override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;

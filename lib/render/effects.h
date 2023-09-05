@@ -32,12 +32,12 @@
 
 #include "config-kwin.h"
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_frame.h>
-#include <kwineffects/effect_quick_view.h>
-#include <kwineffects/effect_screen.h>
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_frame.h>
+#include <render/effect/interface/effect_quick_view.h>
+#include <render/effect/interface/effect_screen.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <Plasma/FrameSvg>
 #include <QHash>
@@ -64,7 +64,7 @@ class KWIN_EXPORT effects_handler_wrap : public EffectsHandler
 public:
     template<typename Scene>
     effects_handler_wrap(Scene& scene)
-        : loader(std::make_unique<effect_loader>(*this, scene.platform))
+        : loader(std::make_unique<effect_loader>(scene.platform))
         , options{*scene.platform.options}
     {
         qRegisterMetaType<QVector<KWin::EffectWindow*>>();
@@ -91,15 +91,20 @@ public:
 
     ~effects_handler_wrap() override;
 
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(effect::window_prepaint_data& data,
-                        std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(effect::window_prepaint_data& data) override;
     void paintWindow(effect::window_paint_data& data) override;
     void postPaintWindow(EffectWindow* w) override;
 
     Effect* provides(Effect::Feature ef);
+
+    // TODO(romangg): Remove once we replaced the call from win/control.h.
+    bool provides_comp(int feat)
+    {
+        return provides(static_cast<Effect::Feature>(feat));
+    }
 
     void drawWindow(effect::window_paint_data& data) override;
 
@@ -169,7 +174,7 @@ public:
      */
     Effect* findEffect(const QString& name) const;
 
-    QImage blit_from_framebuffer(effect::render_data const& data,
+    QImage blit_from_framebuffer(effect::render_data& data,
                                  QRect const& geometry,
                                  double scale) const override;
     bool invert_screen();
@@ -589,7 +594,7 @@ public:
     void final_paint_screen(paint_type mask, effect::screen_paint_data& data) override
     {
         scene.finalPaintScreen(mask, data);
-        Q_EMIT frameRendered();
+        Q_EMIT frameRendered(data);
     }
 
     void final_paint_window(effect::window_paint_data& data) override
@@ -1390,7 +1395,7 @@ protected:
         QObject::connect(qtwin,
                          &win::window_qobject::opacityChanged,
                          this,
-                         [this, &window](auto old) { slotOpacityChanged(window, old); });
+                         [this, &window](auto old) { this->slotOpacityChanged(window, old); });
         QObject::connect(
             qtwin, &win::window_qobject::clientMinimized, this, [this, &window](auto animate) {
                 // TODO: notify effects even if it should not animate?
@@ -1412,11 +1417,11 @@ protected:
             qtwin,
             &win::window_qobject::frame_geometry_changed,
             this,
-            [this, &window](auto const& rect) { slotFrameGeometryChanged(window, rect); });
-        QObject::connect(qtwin,
-                         &win::window_qobject::damaged,
-                         this,
-                         [this, &window](auto const& rect) { slotWindowDamaged(window, rect); });
+            [this, &window](auto const& rect) { this->slotFrameGeometryChanged(window, rect); });
+        QObject::connect(
+            qtwin, &win::window_qobject::damaged, this, [this, &window](auto const& rect) {
+                this->slotWindowDamaged(window, rect);
+            });
         QObject::connect(qtwin,
                          &win::window_qobject::unresponsiveChanged,
                          this,

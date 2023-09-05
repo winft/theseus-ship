@@ -6,8 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_SLIDEBACK_H
 #define KWIN_SLIDEBACK_H
 
-#include <kwineffects/effect.h>
-#include <kwineffects/motions.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/motions.h>
 
 namespace KWin
 {
@@ -18,12 +18,11 @@ class SlideBackEffect : public Effect
 public:
     SlideBackEffect();
 
-    void prePaintWindow(effect::window_prepaint_data& data,
-                        std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(effect::window_prepaint_data& data) override;
     void paintWindow(effect::window_paint_data& data) override;
     void postPaintWindow(EffectWindow* w) override;
 
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
 

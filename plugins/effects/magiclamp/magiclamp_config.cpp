@@ -6,8 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "magiclamp_config.h"
 // KConfigSkeleton
 #include "magiclampconfig.h"
-#include <kwinconfig.h>
 
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
 
 #include <KPluginFactory>

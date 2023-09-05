@@ -20,8 +20,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/window_area.h"
 #include "win/x11/window.h"
 
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <KDecoration2/DecorationSettings>
 
@@ -51,11 +51,10 @@ void effects_handler_wrap::reconfigure()
 }
 
 // the idea is that effects call this function again which calls the next one
-void effects_handler_wrap::prePaintScreen(effect::paint_data& data,
-                                          std::chrono::milliseconds presentTime)
+void effects_handler_wrap::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (m_currentPaintScreenIterator != m_activeEffects.constEnd()) {
-        (*m_currentPaintScreenIterator++)->prePaintScreen(data, presentTime);
+        (*m_currentPaintScreenIterator++)->prePaintScreen(data);
         --m_currentPaintScreenIterator;
     }
     // no special final code
@@ -80,11 +79,10 @@ void effects_handler_wrap::postPaintScreen()
     // no special final code
 }
 
-void effects_handler_wrap::prePaintWindow(effect::window_prepaint_data& data,
-                                          std::chrono::milliseconds presentTime)
+void effects_handler_wrap::prePaintWindow(effect::window_prepaint_data& data)
 {
     if (m_currentPaintWindowIterator != m_activeEffects.constEnd()) {
-        (*m_currentPaintWindowIterator++)->prePaintWindow(data, presentTime);
+        (*m_currentPaintWindowIterator++)->prePaintWindow(data);
         --m_currentPaintWindowIterator;
     }
     // no special final code
@@ -582,7 +580,7 @@ Effect* effects_handler_wrap::findEffect(const QString& name) const
     return (*it).second;
 }
 
-QImage effects_handler_wrap::blit_from_framebuffer(effect::render_data const& data,
+QImage effects_handler_wrap::blit_from_framebuffer(effect::render_data& data,
                                                    QRect const& geometry,
                                                    double scale) const
 {

@@ -7,8 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "lib/setup.h"
 
 #include "base/wayland/server.h"
-#include "kwineffects/anidata_p.h"
 #include "render/compositor.h"
+#include "render/effect/interface/anidata_p.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "script/effect.h"
@@ -117,8 +117,7 @@ TEST_CASE("scripted effects", "[effect]")
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
 
-    auto const builtinNames
-        = render::effect_loader(*effects, *setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }

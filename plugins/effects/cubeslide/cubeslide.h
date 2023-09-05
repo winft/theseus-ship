@@ -6,9 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_CUBESLIDE_H
 #define KWIN_CUBESLIDE_H
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_window_visible_ref.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_window_visible_ref.h>
+#include <render/gl/interface/utils.h>
 
 #include <QQueue>
 #include <QSet>
@@ -28,11 +28,10 @@ public:
     CubeSlideEffect();
     ~CubeSlideEffect() override;
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(effect::window_prepaint_data& data,
-                        std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(effect::window_prepaint_data& data) override;
     void paintWindow(effect::window_paint_data& data) override;
     bool isActive() const override;
 

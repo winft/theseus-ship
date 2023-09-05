@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_quick_view.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_quick_view.h>
 
 #include <QElapsedTimer>
 
@@ -35,7 +35,7 @@ public:
     int paintAmount() const;
     QColor paintColor() const;
 
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void paintScreen(effect::screen_paint_data& data) override;
     void paintWindow(effect::window_paint_data& data) override;
     void postPaintScreen() override;

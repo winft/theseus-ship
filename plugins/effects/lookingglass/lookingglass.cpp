@@ -10,11 +10,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // KConfigSkeleton
 #include "lookingglassconfig.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <KLocalizedString>
 #include <KStandardAction>
@@ -185,10 +185,10 @@ QRect LookingGlassEffect::magnifierArea() const
     return QRect(cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
 }
 
-void LookingGlassEffect::prePaintScreen(effect::paint_data& data,
-                                        std::chrono::milliseconds presentTime)
+void LookingGlassEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
-    const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
+    const int time
+        = m_lastPresentTime.count() ? (data.present_time - m_lastPresentTime).count() : 0;
     if (zoom != target_zoom) {
         double diff = time / animationTime(500.0);
         if (target_zoom > zoom)
@@ -207,17 +207,17 @@ void LookingGlassEffect::prePaintScreen(effect::paint_data& data,
             cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
     }
     if (zoom != target_zoom) {
-        m_lastPresentTime = presentTime;
+        m_lastPresentTime = data.present_time;
     } else {
         m_lastPresentTime = std::chrono::milliseconds::zero();
     }
     if (m_valid && m_enabled) {
-        data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
+        data.paint.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
         // Start rendering to texture
-        GLFramebuffer::pushRenderTarget(m_fbo.get());
+        render::push_framebuffer(data.render, m_fbo.get());
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void LookingGlassEffect::slotMouseChanged(const QPoint& pos,
@@ -246,7 +246,7 @@ void LookingGlassEffect::paintScreen(effect::screen_paint_data& data)
     effects->paintScreen(data);
     if (m_valid && m_enabled) {
         // Disable render texture
-        GLFramebuffer* target = GLFramebuffer::popRenderTarget();
+        auto target = render::pop_framebuffer(data.render);
         Q_ASSERT(target == m_fbo.get());
         Q_UNUSED(target);
         m_texture->bind();

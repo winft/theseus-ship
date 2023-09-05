@@ -13,6 +13,5 @@ set(contrast_SOURCES
 )
 kwin_add_builtin_effect(contrast ${contrast_SOURCES})
 target_link_libraries(contrast PRIVATE
-    kwineffects
-    kwinglutils
+  render
 )

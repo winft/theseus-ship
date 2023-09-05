@@ -22,8 +22,8 @@
 #include "window_model.h"
 #include "window_thumbnail_item.h"
 
-#include "kwin_export.h"
-#include <kwineffects/quick_scene.h>
+#include <base/kwin_export.h>
+#include <render/effect/interface/quick_scene.h>
 
 #include <QQmlContext>
 #include <QQmlEngine>

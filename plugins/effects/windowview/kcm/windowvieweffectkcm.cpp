@@ -6,10 +6,9 @@
 */
 #include "windowvieweffectkcm.h"
 
-#include <kwinconfig.h>
-
 #include "windowviewconfig.h"
 
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
 
 #include <KActionCollection>

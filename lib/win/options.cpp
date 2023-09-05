@@ -11,8 +11,6 @@
 #include "utils/algorithm.h"
 #include "win_settings.h"
 
-#include <kwingl/platform.h>
-
 #include <QOpenGLContext>
 #include <QProcess>
 

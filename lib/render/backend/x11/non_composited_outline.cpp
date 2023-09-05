@@ -6,7 +6,7 @@
 */
 #include "non_composited_outline.h"
 
-#include <kwinxrender/utils.h>
+#include "xrender/utils.h"
 
 #include <QColor>
 #include <xcb/render.h>

@@ -6,11 +6,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_CUBE_H
 #define KWIN_CUBE_H
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_screen.h>
-#include <kwineffects/effect_window_visible_ref.h>
-#include <kwineffects/time_line.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_screen.h>
+#include <render/effect/interface/effect_window_visible_ref.h>
+#include <render/effect/interface/time_line.h>
+#include <render/gl/interface/utils.h>
 
 #include <QFont>
 #include <QMatrix4x4>
@@ -45,11 +45,10 @@ public:
     CubeEffect();
     ~CubeEffect() override;
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(effect::window_prepaint_data& data,
-                        std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(effect::window_prepaint_data& data) override;
     void paintWindow(effect::window_paint_data& data) override;
     bool borderActivated(ElectricBorder border) override;
     void grabbedKeyboardEvent(QKeyEvent* e) override;

@@ -6,9 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "startupfeedback.h"
 
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/utils.h>
 
 #include <KConfigGroup>
 #include <KSelectionOwner>
@@ -190,16 +190,15 @@ void StartupFeedbackEffect::reconfigure(Effect::ReconfigureFlags flags)
     }
 }
 
-void StartupFeedbackEffect::prePaintScreen(effect::paint_data& data,
-                                           std::chrono::milliseconds presentTime)
+void StartupFeedbackEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     auto time = 0;
 
     if (m_lastPresentTime.count()) {
-        time = (presentTime - m_lastPresentTime).count();
+        time = (data.present_time - m_lastPresentTime).count();
     }
 
-    m_lastPresentTime = presentTime;
+    m_lastPresentTime = data.present_time;
 
     if (m_active) {
         if (effects->isCursorHidden()) {
@@ -214,7 +213,7 @@ void StartupFeedbackEffect::prePaintScreen(effect::paint_data& data,
                 = qRound(static_cast<qreal>(m_progress) / static_cast<qreal>(BOUNCE_FRAME_DURATION))
                 % BOUNCE_FRAMES;
             m_currentGeometry = feedbackRect(); // bounce alters geometry with m_frame
-            data.region = data.region.united(m_currentGeometry);
+            data.paint.region = data.paint.region.united(m_currentGeometry);
             break;
         case BlinkingFeedback:
             m_progress = (m_progress + time) % BLINKING_DURATION;
@@ -228,7 +227,7 @@ void StartupFeedbackEffect::prePaintScreen(effect::paint_data& data,
         }
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void StartupFeedbackEffect::paintScreen(effect::screen_paint_data& data)

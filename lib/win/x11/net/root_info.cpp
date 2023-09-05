@@ -421,7 +421,7 @@ void root_info::setNumberOfDesktops(int numberOfDesktops)
     }
 }
 
-void root_info::setCurrentDesktop(int desktop, bool ignore_viewport)
+void root_info::setCurrentDesktop(int desktop, bool /*ignore_viewport*/)
 {
     if (p->role == WindowManager) {
         p->current_desktop = desktop;

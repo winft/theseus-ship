@@ -51,7 +51,7 @@ class KWIN_EXPORT effect_loader : public basic_effect_loader
 {
 public:
     template<typename Platform>
-    effect_loader(EffectsHandler& effects, Platform& platform)
+    effect_loader(Platform& platform)
         : basic_effect_loader(platform.base.config.main)
     {
         add_loader(std::make_unique<plugin_effect_loader>(platform.base.config.main));

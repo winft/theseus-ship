@@ -6,7 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "cube_config.h"
 // KConfigSkeleton
 #include "cubeconfig.h"
-#include <kwinconfig.h>
+
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
 
 #include <KActionCollection>
@@ -70,7 +71,7 @@ CubeEffectConfig::CubeEffectConfig(QObject* parent, const KPluginMetaData& data)
     capsSelectionChanged();
     connect(
         m_ui.kcfg_Caps, &QCheckBox::stateChanged, this, &CubeEffectConfig::capsSelectionChanged);
-    m_ui.kcfg_Wallpaper->setFilter(QStringLiteral("*.png *.jpeg *.jpg "));
+    m_ui.kcfg_Wallpaper->setNameFilter(QStringLiteral("*.png *.jpeg *.jpg "));
     CubeConfig::instance(KWIN_CONFIG);
     addConfig(CubeConfig::self(), &m_ui);
     load();

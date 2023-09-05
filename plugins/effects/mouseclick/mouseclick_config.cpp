@@ -3,11 +3,12 @@ SPDX-FileCopyrightText: 2012 Filip Wieladek <wattos@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #include "mouseclick_config.h"
+
 // KConfigSkeleton
 #include "mouseclickconfig.h"
-#include <kwinconfig.h>
+
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
 
 #include <KActionCollection>

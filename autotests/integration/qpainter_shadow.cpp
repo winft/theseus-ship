@@ -118,8 +118,7 @@ TEST_CASE("qpainter shadow", "[render]")
     // disable all effects - we don't want to have it interact with the rendering
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames
-        = render::effect_loader(*effects, *setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);

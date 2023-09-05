@@ -6,8 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_SCREEN_EDGE_EFFECT_H
 #define KWIN_SCREEN_EDGE_EFFECT_H
 
-#include <kwineffects/effect.h>
-#include <kwinxrender/utils.h>
+#include <render/effect/interface/effect.h>
+
 #include <memory>
 
 class QTimer;
@@ -27,7 +27,7 @@ class ScreenEdgeEffect : public Effect
 public:
     ScreenEdgeEffect();
     ~ScreenEdgeEffect() override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void paintScreen(effect::screen_paint_data& data) override;
     bool isActive() const override;
 

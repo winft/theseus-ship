@@ -6,8 +6,8 @@
 */
 #include "blurshader.h"
 
-#include <kwineffects/effects_handler.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/gl/interface/utils.h>
 
 static void ensureResources()
 {

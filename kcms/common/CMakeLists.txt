@@ -10,7 +10,7 @@ set(kcmkwincommon_SRC
 )
 
 qt_add_dbus_interface(kcmkwincommon_SRC
-    ${KWIN_SOURCE_DIR}/lib/effect/org.kde.kwin.Effects.xml kwin_effects_interface
+    ${KWIN_SOURCE_DIR}/lib/render/effect/interface/org.kde.kwin.Effects.xml kwin_effects_interface
 )
 
 add_library(kcmkwincommon SHARED ${kcmkwincommon_SRC})
@@ -35,14 +35,14 @@ install(TARGETS kcmkwincommon ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_S
 
 set(kcm_kwin4_genericscripted_SRCS generic_scripted_config.cpp)
 qt_add_dbus_interface(kcm_kwin4_genericscripted_SRCS
-  ${KWIN_SOURCE_DIR}/lib/effect/org.kde.kwin.Effects.xml kwin_effects_interface
+  ${KWIN_SOURCE_DIR}/lib/render/effect/interface/org.kde.kwin.Effects.xml kwin_effects_interface
 )
 add_library(kcm_kwin4_genericscripted MODULE ${kcm_kwin4_genericscripted_SRCS})
 target_link_libraries(kcm_kwin4_genericscripted
-  base
   KF6::I18n
   KF6::KCMUtils
   Qt::DBus
   Qt::UiTools
+  render
 )
 install(TARGETS kcm_kwin4_genericscripted DESTINATION ${KDE_INSTALL_PLUGINDIR}/kwin/effects/configs)

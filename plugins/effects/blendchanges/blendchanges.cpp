@@ -5,10 +5,10 @@
 */
 #include "blendchanges.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/utils.h>
 
 #include <QDBusConnection>
 #include <QTimer>
@@ -97,16 +97,16 @@ void BlendChanges::postPaintScreen()
     effects->addRepaintFull();
 }
 
-void BlendChanges::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void BlendChanges::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (m_state == Off) {
         return;
     }
     if (m_state == Blending) {
-        m_timeline.advance(presentTime);
+        m_timeline.advance(data.present_time);
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 } // namespace KWin

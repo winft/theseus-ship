@@ -6,9 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_MAGICLAMP_H
 #define KWIN_MAGICLAMP_H
 
-#include <kwineffects/effect_window_visible_ref.h>
-#include <kwineffects/offscreen_effect.h>
-#include <kwineffects/time_line.h>
+#include <render/effect/interface/effect_window_visible_ref.h>
+#include <render/effect/interface/offscreen_effect.h>
+#include <render/effect/interface/time_line.h>
 
 namespace KWin
 {
@@ -26,9 +26,8 @@ public:
     MagicLampEffect();
 
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(effect::window_prepaint_data& data,
-                        std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
+    void prePaintWindow(effect::window_prepaint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
 

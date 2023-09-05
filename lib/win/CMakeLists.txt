@@ -7,8 +7,6 @@ add_library(win SHARED)
 
 target_link_libraries(win
   PUBLIC
-    base
-    kwineffects
     KDecoration2::KDecoration
     KDecoration2::KDecoration2Private
     KF6::ConfigWidgets
@@ -18,8 +16,13 @@ target_link_libraries(win
     Qt::Concurrent
     Qt::OpenGL
     Qt::Quick
+
+    # TODO(romangg): For now needed because of surface include.
+    WraplandServer
+
     XCB::KEYSYMS
     ${X11_LIBRARIES}
+    base
 )
 
 target_sources(win

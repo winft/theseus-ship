@@ -8,7 +8,7 @@
 #ifndef BLURSHADER_H
 #define BLURSHADER_H
 
-#include <kwingl/utils.h>
+#include <render/gl/interface/utils.h>
 
 #include <QMatrix4x4>
 #include <QObject>

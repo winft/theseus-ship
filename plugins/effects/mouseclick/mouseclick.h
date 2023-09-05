@@ -7,9 +7,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_MOUSECLICK_H
 
 #include <deque>
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_frame.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_frame.h>
+#include <render/gl/interface/utils.h>
 
 #include <KLocalizedString>
 #include <QFont>
@@ -83,7 +83,7 @@ public:
     MouseClickEffect();
     ~MouseClickEffect() override;
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;

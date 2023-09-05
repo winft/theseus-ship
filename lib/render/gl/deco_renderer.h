@@ -12,7 +12,7 @@
 // Must be included before.
 #include <epoxy/gl.h>
 
-#include <kwingl/utils.h>
+#include <render/gl/interface/utils.h>
 
 #include <cmath>
 

@@ -5,7 +5,7 @@
 */
 #include "thumbnailaside.h"
 
-#include <kwineffects/effect_plugin_factory.h>
+#include <render/effect/interface/effect_plugin_factory.h>
 
 namespace KWin
 {

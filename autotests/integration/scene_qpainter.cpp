@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/space.h"
 #include "win/x11/window.h"
 
-#include <kwineffects/effects_handler.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <KConfigGroup>
 #include <QPainter>
@@ -50,8 +50,7 @@ TEST_CASE("scene qpainter", "[render]")
     // disable all effects - we don't want to have it interact with the rendering
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames
-        = render::effect_loader(*effects, *setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);

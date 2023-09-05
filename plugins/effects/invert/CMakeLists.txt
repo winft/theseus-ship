@@ -14,9 +14,8 @@ set(invert_SOURCES
 kwin_add_builtin_effect(invert ${invert_SOURCES})
 target_link_libraries(invert PRIVATE
   KF6::I18n
-  kwineffects
-  kwinglutils
   Qt::Widgets
+  render
 )
 
 #######################################

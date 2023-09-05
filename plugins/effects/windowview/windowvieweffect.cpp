@@ -3,12 +3,12 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #include "windowvieweffect.h"
-#include "kwineffects/effect_window.h"
-#include "kwineffects/effects_handler.h"
 #include "windowview1adaptor.h"
 #include "windowviewconfig.h"
+
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <KLocalizedString>
 #include <QAction>

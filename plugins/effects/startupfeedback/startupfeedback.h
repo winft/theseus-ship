@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_STARTUPFEEDBACK_H
 #define KWIN_STARTUPFEEDBACK_H
 
-#include <kwineffects/effect.h>
+#include <render/effect/interface/effect.h>
 
 #include <KConfigWatcher>
 #include <KStartupInfo>
@@ -29,7 +29,7 @@ public:
     ~StartupFeedbackEffect() override;
 
     void reconfigure(ReconfigureFlags flags) override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;

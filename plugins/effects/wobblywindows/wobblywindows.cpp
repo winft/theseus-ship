@@ -6,9 +6,9 @@
 #include "wobblywindows.h"
 #include "wobblywindowsconfig.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
 
 #include <QLoggingCategory>
 #include <cmath>
@@ -242,8 +242,7 @@ void WobblyWindowsEffect::setDrag(qreal drag)
     m_drag = drag;
 }
 
-void WobblyWindowsEffect::prePaintScreen(effect::paint_data& data,
-                                         std::chrono::milliseconds presentTime)
+void WobblyWindowsEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     // We need to mark the screen windows as transformed. Otherwise the whole
     // screen won't be repainted, resulting in artefacts.
@@ -252,13 +251,12 @@ void WobblyWindowsEffect::prePaintScreen(effect::paint_data& data,
         m_updateRegion = QRegion();
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 static const std::chrono::milliseconds integrationStep(10);
 
-void WobblyWindowsEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                         std::chrono::milliseconds presentTime)
+void WobblyWindowsEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     auto infoIt = windows.find(&data.window);
     if (infoIt != windows.end()) {
@@ -268,8 +266,8 @@ void WobblyWindowsEffect::prePaintWindow(effect::window_prepaint_data& data,
         // opaque wobbly windows.
         data.clip = QRegion();
 
-        while ((presentTime - infoIt->clock).count() > 0) {
-            const auto delta = std::min(presentTime - infoIt->clock, integrationStep);
+        while ((data.present_time - infoIt->clock).count() > 0) {
+            const auto delta = std::min(data.present_time - infoIt->clock, integrationStep);
             infoIt->clock += delta;
 
             if (!updateWindowWobblyDatas(&data.window, delta.count())) {
@@ -278,7 +276,7 @@ void WobblyWindowsEffect::prePaintWindow(effect::window_prepaint_data& data,
         }
     }
 
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 }
 
 void WobblyWindowsEffect::apply(effect::window_paint_data& data, WindowQuadList& quads)

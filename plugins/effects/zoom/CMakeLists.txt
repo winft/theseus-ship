@@ -25,9 +25,7 @@ target_link_libraries(zoom PRIVATE
   KF6::ConfigGui
   KF6::I18n
   KF6::KCMUtils
-  kwineffects
-  kwinglutils
-  base
+  render
 )
 
 if (HAVE_ACCESSIBILITY)

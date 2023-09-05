@@ -15,8 +15,7 @@ set(startupfeedback_SOURCES
 kwin_add_builtin_effect(startupfeedback ${startupfeedback_SOURCES})
 target_link_libraries(startupfeedback PRIVATE
   KF6::WindowSystem
-  kwineffects
-  kwinglutils
   Qt::DBus
   Qt::Widgets
+  render
 )

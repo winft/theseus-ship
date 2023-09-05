@@ -32,7 +32,7 @@ kconfig_add_kcfg_files(kcm_kwinoptions_PART_SRCS kwinoptions_settings.kcfgc GENE
 kconfig_add_kcfg_files(kcm_kwinoptions_PART_SRCS kwinoptions_kdeglobals_settings.kcfgc GENERATE_MOC)
 
 qt_add_dbus_interface(kcm_kwinoptions_PART_SRCS
-  ${KWIN_SOURCE_DIR}/lib/effect/org.kde.kwin.Effects.xml
+  ${KWIN_SOURCE_DIR}/lib/render/effect/interface/org.kde.kwin.Effects.xml
   kwin_effects_interface
 )
 

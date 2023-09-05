@@ -7,8 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_ZOOM_H
 #define KWIN_ZOOM_H
 
-#include <config-kwin.h>
-#include <kwineffects/effect.h>
+#include <base/config-kwin.h>
+#include <render/effect/interface/effect.h>
 
 #include <QTime>
 #include <QTimeLine>
@@ -41,7 +41,7 @@ public:
     ZoomEffect();
     ~ZoomEffect() override;
     void reconfigure(ReconfigureFlags flags) override;
-    void prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime) override;
+    void prePaintScreen(effect::screen_prepaint_data& data) override;
     void paintScreen(effect::screen_paint_data& data) override;
     void postPaintScreen() override;
     bool isActive() const override;

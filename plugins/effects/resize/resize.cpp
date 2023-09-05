@@ -8,10 +8,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // KConfigSkeleton
 #include "resizeconfig.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/utils.h>
 
 #include <KColorScheme>
 
@@ -46,21 +46,20 @@ ResizeEffect::~ResizeEffect()
 {
 }
 
-void ResizeEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void ResizeEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (m_active) {
-        data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
+        data.paint.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
     }
-    AnimationEffect::prePaintScreen(data, presentTime);
+    AnimationEffect::prePaintScreen(data);
 }
 
-void ResizeEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                  std::chrono::milliseconds presentTime)
+void ResizeEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     if (m_active && &data.window == m_resizeWindow) {
         data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
     }
-    AnimationEffect::prePaintWindow(data, presentTime);
+    AnimationEffect::prePaintWindow(data);
 }
 
 void ResizeEffect::paintWindow(effect::window_paint_data& data)

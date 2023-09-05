@@ -8,13 +8,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // KConfigSkeleton
 #include "cubeconfig.h"
 
-#include <kwinconfig.h>
-#include <kwineffects/effect_frame.h>
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect_frame.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <KLocalizedString>
 #include <QAction>
@@ -386,10 +385,10 @@ void CubeEffect::window_added(EffectWindow* win)
     window_refs[win] = EffectWindowVisibleRef(win, EffectWindow::PAINT_DISABLED_BY_DESKTOP);
 }
 
-void CubeEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void CubeEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (activated) {
-        data.mask |= PAINT_SCREEN_TRANSFORMED | Effect::PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS
+        data.paint.mask |= PAINT_SCREEN_TRANSFORMED | Effect::PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS
             | PAINT_SCREEN_BACKGROUND_FIRST;
         if (animationState == AnimationState::None && !animations.empty()) {
             startAnimation(animations.dequeue());
@@ -401,15 +400,15 @@ void CubeEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseco
         if (animationState != AnimationState::None
             || verticalAnimationState != VerticalAnimationState::None) {
             if (animationState != AnimationState::None) {
-                timeLine.advance(presentTime);
+                timeLine.advance(data.present_time);
             }
             if (verticalAnimationState != VerticalAnimationState::None) {
-                verticalTimeLine.advance(presentTime);
+                verticalTimeLine.advance(data.present_time);
             }
             rotateCube();
         }
     }
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void CubeEffect::paintScreen(effect::screen_paint_data& data)
@@ -1081,8 +1080,7 @@ void CubeEffect::postPaintScreen()
     }
 }
 
-void CubeEffect::prePaintWindow(effect::window_prepaint_data& data,
-                                std::chrono::milliseconds presentTime)
+void CubeEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
     if (activated) {
         if (cube_painting) {
@@ -1134,7 +1132,7 @@ void CubeEffect::prePaintWindow(effect::window_prepaint_data& data,
                             data.quads = data.quads.splitAtY(rect.height() - data.window.y());
                         }
                         data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
-                        effects->prePaintWindow(data, presentTime);
+                        effects->prePaintWindow(data);
                         return;
                     }
                 }
@@ -1153,14 +1151,14 @@ void CubeEffect::prePaintWindow(effect::window_prepaint_data& data,
                             data.quads = data.quads.splitAtY(rect.height() - data.window.y());
                         }
                         data.paint.mask |= PAINT_WINDOW_TRANSFORMED;
-                        effects->prePaintWindow(data, presentTime);
+                        effects->prePaintWindow(data);
                         return;
                     }
                 }
             }
         }
     }
-    effects->prePaintWindow(data, presentTime);
+    effects->prePaintWindow(data);
 }
 
 void CubeEffect::paintWindow(effect::window_paint_data& data)

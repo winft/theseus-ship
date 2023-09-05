@@ -6,9 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "touchpoints.h"
 
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/utils.h>
 
 #include <KConfigGroup>
 #include <QAction>
@@ -89,12 +89,11 @@ bool TouchPointsEffect::touchUp(qint32 id, quint32 /*time*/)
     return false;
 }
 
-void TouchPointsEffect::prePaintScreen(effect::paint_data& data,
-                                       std::chrono::milliseconds presentTime)
+void TouchPointsEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     int time = 0;
     if (m_lastPresentTime.count()) {
-        time = (presentTime - m_lastPresentTime).count();
+        time = (data.present_time - m_lastPresentTime).count();
     }
 
     auto it = m_points.begin();
@@ -110,10 +109,10 @@ void TouchPointsEffect::prePaintScreen(effect::paint_data& data,
     if (m_points.isEmpty()) {
         m_lastPresentTime = std::chrono::milliseconds::zero();
     } else {
-        m_lastPresentTime = presentTime;
+        m_lastPresentTime = data.present_time;
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void TouchPointsEffect::paintScreen(effect::screen_paint_data& data)

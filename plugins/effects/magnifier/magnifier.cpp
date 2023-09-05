@@ -10,13 +10,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // KConfigSkeleton
 #include "magnifierconfig.h"
 
-#include <kstandardaction.h>
-#include <kwinconfig.h>
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/utils.h>
 
+#include <KStandardAction>
 #include <QAction>
 
 namespace KWin
@@ -74,10 +73,10 @@ void MagnifierEffect::reconfigure(ReconfigureFlags)
         toggle();
 }
 
-void MagnifierEffect::prePaintScreen(effect::paint_data& data,
-                                     std::chrono::milliseconds presentTime)
+void MagnifierEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
-    const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
+    const int time
+        = m_lastPresentTime.count() ? (data.present_time - m_lastPresentTime).count() : 0;
 
     if (m_zoom != m_targetZoom) {
         double diff = time / animationTime(500.0);
@@ -94,14 +93,14 @@ void MagnifierEffect::prePaintScreen(effect::paint_data& data,
     }
 
     if (m_zoom != m_targetZoom) {
-        m_lastPresentTime = presentTime;
+        m_lastPresentTime = data.present_time;
     } else {
         m_lastPresentTime = std::chrono::milliseconds::zero();
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
     if (m_zoom != 1.0)
-        data.region
+        data.paint.region
             |= magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
 }
 

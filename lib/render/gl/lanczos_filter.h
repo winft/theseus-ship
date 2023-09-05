@@ -10,10 +10,10 @@
 #include "render/types.h"
 #include "win/window_area.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <QObject>
 #include <QVector2D>
@@ -140,6 +140,7 @@ public:
             data.window,
             data.paint,
             effect::render_data{
+                .targets = data.render.targets,
                 .projection = thumb_proj,
                 .viewport = {0, 0, m_offscreenTex->width(), m_offscreenTex->height()},
             });
@@ -154,7 +155,7 @@ public:
 
         // Bind the offscreen FBO and draw the window on it unscaled
         updateOffscreenSurfaces();
-        GLFramebuffer::pushRenderTarget(m_offscreenTarget);
+        push_framebuffer(data.render, m_offscreenTarget);
 
         glClearColor(0.0, 0.0, 0.0, 0.0);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -246,7 +247,7 @@ public:
         cache->setWrapMode(GL_CLAMP_TO_EDGE);
         cache->bind();
         glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, m_offscreenTex->height() - th, tw, th);
-        GLFramebuffer::popRenderTarget();
+        pop_framebuffer(data.render);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);

@@ -13,11 +13,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "accessibilityintegration.h"
 #endif
 
-#include <kwineffects/effect_screen.h>
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect_screen.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/utils.h>
 
 #include <KConfigGroup>
 #include <KLocalizedString>
@@ -230,13 +230,15 @@ void ZoomEffect::reconfigure(ReconfigureFlags)
     }
 }
 
-void ZoomEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void ZoomEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (zoom != target_zoom) {
         int time = 0;
-        if (lastPresentTime.count())
-            time = (presentTime - lastPresentTime).count();
-        lastPresentTime = presentTime;
+        if (lastPresentTime.count()) {
+            time = (data.present_time - lastPresentTime).count();
+        }
+
+        lastPresentTime = data.present_time;
 
         const float zoomDist = qAbs(target_zoom - source_zoom);
         if (target_zoom > zoom)
@@ -249,10 +251,10 @@ void ZoomEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseco
         showCursor();
     } else {
         hideCursor();
-        data.mask |= PAINT_SCREEN_TRANSFORMED;
+        data.paint.mask |= PAINT_SCREEN_TRANSFORMED;
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(QRect const& viewport,
@@ -307,12 +309,12 @@ void ZoomEffect::paintScreen(effect::screen_paint_data& data)
     // Render the scene in an offscreen texture and then upscale it.
     effect::screen_paint_data offscreen_data{
         .paint = {.mask = data.paint.mask, .region = data.paint.region},
-        .render = {.projection = projection},
+        .render = {.targets = data.render.targets, .projection = projection},
     };
 
-    GLFramebuffer::pushRenderTarget(offscreenData->framebuffer.get());
+    render::push_framebuffer(data.render, offscreenData->framebuffer.get());
     effects->paintScreen(offscreen_data);
-    GLFramebuffer::popRenderTarget();
+    render::pop_framebuffer(data.render);
 
     data.paint.geo.scale *= QVector3D(zoom, zoom, 1);
     const QSize screenSize = effects->virtualScreenSize();

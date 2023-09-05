@@ -7,11 +7,11 @@
 */
 #pragma once
 
-#include <kwineffects/effect.h>
-#include <kwineffects/effect_integration.h>
-#include <kwineffects/effect_window_deleted_ref.h>
-#include <kwineffects/effect_window_visible_ref.h>
-#include <kwineffects/time_line.h>
+#include <render/effect/interface/effect.h>
+#include <render/effect/interface/effect_integration.h>
+#include <render/effect/interface/effect_window_deleted_ref.h>
+#include <render/effect/interface/effect_window_visible_ref.h>
+#include <render/effect/interface/time_line.h>
 
 #include <memory>
 
@@ -25,8 +25,7 @@ public:
     SlidingPopupsEffect();
     ~SlidingPopupsEffect() override;
 
-    void prePaintWindow(effect::window_prepaint_data& data,
-                        std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(effect::window_prepaint_data& data) override;
     void paintWindow(effect::window_paint_data& data) override;
     void postPaintWindow(EffectWindow* win) override;
     void reconfigure(ReconfigureFlags flags) override;

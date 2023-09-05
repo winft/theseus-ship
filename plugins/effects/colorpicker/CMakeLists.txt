@@ -13,6 +13,6 @@ set(colorpicker_SOURCES
 kwin_add_builtin_effect(colorpicker ${colorpicker_SOURCES})
 target_link_libraries(colorpicker PRIVATE
   KF6::I18n
-  kwineffects
   Qt::DBus
+  render
 )

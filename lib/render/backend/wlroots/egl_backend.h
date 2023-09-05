@@ -19,8 +19,8 @@
 #include "render/wayland/egl.h"
 #include "render/wayland/egl_data.h"
 
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <QOpenGLContext>
 #include <Wrapland/Server/linux_dmabuf_v1.h>
@@ -142,31 +142,38 @@ public:
     {
         auto const& out = get_egl_out(&output);
         auto const geo = output.geometry();
-        auto view = out->out->base.view_geometry();
+        auto viewport = out->out->base.view_geometry();
         auto res = out->out->base.mode_size();
         auto is_portrait = has_portrait_transform(out->out->base);
 
         if (is_portrait) {
             // The wlroots buffer is always sideways.
-            view = view.transposed();
+            viewport = viewport.transposed();
         }
 
         auto native_out = static_cast<base::backend::wlroots::output const&>(output).native;
         wlr_output_attach_render(native_out, &out->bufferAge);
-        wlr_renderer_begin(platform.renderer, view.width(), view.height());
-
-        native_fbo
-            = GLFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer), res, view);
-        GLFramebuffer::pushRenderTarget(&native_fbo);
+        wlr_renderer_begin(platform.renderer, viewport.width(), viewport.height());
 
         auto transform = static_cast<effect::transform_type>(
             get_transform(static_cast<base::backend::wlroots::output const&>(output)));
 
-        auto data = gl::create_view_projection(geo);
-        data.projection = effect::get_transform_matrix(transform) * data.projection;
-        data.viewport = view;
-        data.transform = transform;
-        data.flip_y = true;
+        QMatrix4x4 view;
+        QMatrix4x4 projection;
+        gl::create_view_projection(output.geometry(), view, projection);
+
+        effect::render_data data{
+            .targets = render_targets,
+            .view = view,
+            .projection = effect::get_transform_matrix(transform) * projection,
+            .viewport = viewport,
+            .transform = transform,
+            .flip_y = true,
+        };
+
+        native_fbo
+            = GLFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer), res, viewport);
+        push_framebuffer(data, &native_fbo);
 
         return data;
     }
@@ -211,7 +218,8 @@ public:
             out->out->last_timer_queries.emplace_back();
         }
 
-        GLFramebuffer::popRenderTarget();
+        render_targets.pop();
+        assert(render_targets.empty());
         wlr_renderer_end(platform.renderer);
 
         if (damagedRegion.intersected(output->geometry()).isEmpty()) {
@@ -263,6 +271,7 @@ public:
     std::unique_ptr<Wrapland::Server::linux_dmabuf_v1> dmabuf;
     wayland::egl_data data;
 
+    std::stack<framebuffer*> render_targets;
     GLFramebuffer native_fbo;
     wlr_egl* native{nullptr};
 

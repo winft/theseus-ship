@@ -11,6 +11,4 @@ target_link_libraries(kcm_auroraedecoration
     Qt::DBus
     Qt::UiTools
     Qt::Widgets
-    kwineffects
-    base
 )

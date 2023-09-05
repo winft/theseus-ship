@@ -17,9 +17,9 @@ kwin_add_builtin_effect(desktopgrid ${desktopgrid_SOURCES})
 target_link_libraries(desktopgrid PRIVATE
   KF6::ConfigGui
   KF6::I18n
-  kwineffects
   Qt::Quick
   Qt::Widgets
+  render
 )
 
 #######################################

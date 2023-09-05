@@ -7,8 +7,8 @@
 
 #include "render/effect/internal_win_update.h"
 
-#include <kwineffects/effect_integration.h>
-#include <kwineffects/effect_window.h>
+#include <render/effect/interface/effect_integration.h>
+#include <render/effect/interface/effect_window.h>
 
 #include <Wrapland/Server/slide.h>
 #include <Wrapland/Server/surface.h>

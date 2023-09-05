@@ -18,7 +18,6 @@ kwin_add_builtin_effect(screenshot ${screenshot_SOURCES})
 target_link_libraries(screenshot PRIVATE
   KF6::Service
   KF6::I18n
-  kwineffects
-  kwinglutils
   Qt::DBus
+  render
 )

@@ -3,10 +3,10 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #include "overvieweffect.h"
-#include "kwineffects/effects_handler.h"
 #include "overviewconfig.h"
+
+#include <render/effect/interface/effects_handler.h>
 
 #include <KLocalizedString>
 #include <QAction>

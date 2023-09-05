@@ -10,8 +10,6 @@
 #include "render_settings.h"
 #include "utils/algorithm.h"
 
-#include <kwingl/platform.h>
-
 namespace KWin::render
 {
 

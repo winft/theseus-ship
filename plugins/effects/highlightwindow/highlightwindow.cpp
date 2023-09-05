@@ -6,9 +6,9 @@
 */
 #include "highlightwindow.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/types.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/types.h>
 
 #include <QDBusConnection>
 #include <QLoggingCategory>

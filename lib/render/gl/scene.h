@@ -18,8 +18,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/scene.h"
 #include "render/shadow.h"
 
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <KNotification>
 #include <memory>
@@ -343,6 +343,8 @@ public:
         // Call generic implementation.
         this->paintScreen(render, mask, damage, repaint, &update, &valid, presentTime);
         paintCursor(render);
+
+        assert(render.targets.size() == 1);
 
         GLVertexBuffer::streamingBuffer()->endOfFrame();
         m_backend->endRenderingFrameForScreen(output, valid, update);

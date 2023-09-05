@@ -8,9 +8,9 @@
 
 #include "showfpseffect.h"
 
-#include <kwineffects/effect_screen.h>
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
+#include <render/effect/interface/effect_screen.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <QQmlContext>
 
@@ -49,9 +49,9 @@ QColor ShowFpsEffect::paintColor() const
     return QColor::fromHsvF(0.3 - (0.3 * normalizedDuration), 1.0, 1.0);
 }
 
-void ShowFpsEffect::prePaintScreen(effect::paint_data& data, std::chrono::milliseconds presentTime)
+void ShowFpsEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 
     m_newFps += 1;
 

@@ -15,7 +15,7 @@
 #include "win/desktop_get.h"
 #include "win/geo.h"
 
-#include <kwineffects/paint_data.h>
+#include <render/effect/interface/paint_data.h>
 
 #include <functional>
 #include <memory>
@@ -94,7 +94,7 @@ public:
             return true;
         }
 
-        return std::visit(overload{[this](auto&& ref_win) {
+        return std::visit(overload{[](auto&& ref_win) {
                               if (ref_win->remnant || !win::on_current_desktop(ref_win)) {
                                   return false;
                               }

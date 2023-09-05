@@ -10,10 +10,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // KConfigSkeleton
 #include "trackmouseconfig.h"
 
-#include <kwinconfig.h>
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
-#include <kwingl/utils.h>
+#include <base/config-kwin.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/utils.h>
 
 #include <KLocalizedString>
 #include <QAction>
@@ -73,16 +73,15 @@ void TrackMouseEffect::reconfigure(ReconfigureFlags)
     }
 }
 
-void TrackMouseEffect::prePaintScreen(effect::paint_data& data,
-                                      std::chrono::milliseconds presentTime)
+void TrackMouseEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     QTime t = QTime::currentTime();
     m_angle = ((t.second() % 4) * m_angleBase) + (t.msec() / 1000.0 * m_angleBase);
     m_lastRect[0].moveCenter(cursorPos());
     m_lastRect[1].moveCenter(cursorPos());
-    data.region |= m_lastRect[0].adjusted(-1, -1, 1, 1);
+    data.paint.region |= m_lastRect[0].adjusted(-1, -1, 1, 1);
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void TrackMouseEffect::paintScreen(effect::screen_paint_data& data)

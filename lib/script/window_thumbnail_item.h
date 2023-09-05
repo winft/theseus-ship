@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "window.h"
 
 #include "kwin_export.h"
+#include <render/effect/interface/paint_data.h>
 
 #include <QQuickItem>
 #include <QUuid>
@@ -62,7 +63,7 @@ private:
     QImage fallbackImage() const;
     QRectF paintedRect() const;
     void invalidateOffscreenTexture();
-    void updateOffscreenTexture();
+    void updateOffscreenTexture(KWin::effect::screen_paint_data& data);
     void destroyOffscreenTexture();
     void updateImplicitSize();
     void update_render_notifier();

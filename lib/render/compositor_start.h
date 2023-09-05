@@ -15,7 +15,7 @@
 #include "win/space_window_release.h"
 #include "win/stacking_order.h"
 
-#include <kwineffects/effects_handler.h>
+#include <render/effect/interface/effects_handler.h>
 
 #include <xcb/composite.h>
 

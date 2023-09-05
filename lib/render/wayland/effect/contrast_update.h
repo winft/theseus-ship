@@ -8,8 +8,8 @@
 #include "render/effect/contrast_update.h"
 #include "render/effect/internal_win_update.h"
 
-#include <kwineffects/effect_integration.h>
-#include <kwineffects/effect_window.h>
+#include <render/effect/interface/effect_integration.h>
+#include <render/effect/interface/effect_window.h>
 
 #include <Wrapland/Server/contrast.h>
 #include <Wrapland/Server/surface.h>

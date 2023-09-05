@@ -4,7 +4,6 @@
 
 add_subdirectory(utils)
 add_subdirectory(base)
-add_subdirectory(effect)
 add_subdirectory(win)
 add_subdirectory(input)
 add_subdirectory(render)

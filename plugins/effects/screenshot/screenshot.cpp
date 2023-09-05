@@ -8,10 +8,10 @@
 #include "screenshot.h"
 #include "screenshotdbusinterface2.h"
 
-#include <kwineffects/effect_window.h>
-#include <kwineffects/effects_handler.h>
-#include <kwingl/platform.h>
-#include <kwingl/utils.h>
+#include <render/effect/interface/effect_window.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/utils.h>
 
 #include <QPainter>
 
@@ -201,7 +201,7 @@ void ScreenShotEffect::paintScreen(effect::screen_paint_data& data)
     effects->paintScreen(data);
 
     for (auto& win_data : m_windowScreenShots) {
-        takeScreenShot(&win_data);
+        takeScreenShot(data.render, &win_data);
     }
     m_windowScreenShots.clear();
 
@@ -218,7 +218,7 @@ void ScreenShotEffect::paintScreen(effect::screen_paint_data& data)
     }
 }
 
-void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
+void ScreenShotEffect::takeScreenShot(effect::render_data& data, ScreenShotWindowData* screenshot)
 {
     auto window = screenshot->window;
     auto geometry = window->expandedGeometry();
@@ -253,7 +253,7 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
     if (effects->isOpenGLCompositing()) {
         QMatrix4x4 projection;
         projection.ortho(QRect{{}, fbo->size()});
-        GLFramebuffer::pushRenderTarget(fbo.get());
+        render::push_framebuffer(data, fbo.get());
 
         effect::window_paint_data win_data{
             *window,
@@ -265,7 +265,7 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
                 = {.translation
                    = {static_cast<float>(-geometry.x()), static_cast<float>(-geometry.y()), 0.}},
             },
-            {.projection = projection},
+            {.targets = data.targets, .projection = projection},
         };
 
         glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -285,7 +285,7 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
                       GL_UNSIGNED_BYTE,
                       img.sizeInBytes(),
                       static_cast<GLvoid*>(img.bits()));
-        GLFramebuffer::popRenderTarget();
+        render::pop_framebuffer(data);
         convertFromGLImage(img, img.width(), img.height(), projection);
         img = img.mirrored();
     }
@@ -298,7 +298,7 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
     screenshot->promise.finish();
 }
 
-bool ScreenShotEffect::takeScreenShot(effect::render_data const& render_data,
+bool ScreenShotEffect::takeScreenShot(effect::render_data& render_data,
                                       ScreenShotAreaData* screenshot)
 {
     if (!m_paintedScreen) {
@@ -345,7 +345,7 @@ bool ScreenShotEffect::takeScreenShot(effect::render_data const& render_data,
     return false;
 }
 
-bool ScreenShotEffect::takeScreenShot(effect::render_data const& render_data,
+bool ScreenShotEffect::takeScreenShot(effect::render_data& render_data,
                                       ScreenShotScreenData* screenshot)
 {
     if (m_paintedScreen && screenshot->screen != m_paintedScreen) {
@@ -370,7 +370,7 @@ bool ScreenShotEffect::takeScreenShot(effect::render_data const& render_data,
     return true;
 }
 
-QImage ScreenShotEffect::blitScreenshot(effect::render_data const& render_data,
+QImage ScreenShotEffect::blitScreenshot(effect::render_data& render_data,
                                         const QRect& geometry,
                                         qreal devicePixelRatio) const
 {

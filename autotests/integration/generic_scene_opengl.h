@@ -25,8 +25,7 @@ inline std::unique_ptr<setup> generic_scene_opengl_get_setup(std::string const& 
     setup->start();
 
     auto plugins = KConfigGroup(config, QStringLiteral("Plugins"));
-    auto const builtinNames
-        = render::effect_loader(*effects, *setup->base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup->base->render).listOfKnownEffects();
 
     for (QString const& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);

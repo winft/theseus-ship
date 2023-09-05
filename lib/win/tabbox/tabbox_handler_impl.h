@@ -15,8 +15,6 @@
 #include "win/stacking.h"
 #include "win/util.h"
 
-#include <kwineffects/effect_window.h>
-
 namespace KWin::win
 {
 
@@ -248,7 +246,8 @@ public:
             return;
         }
 
-        QVector<EffectWindow*> windows;
+        using effect_window = typename std::remove_pointer_t<decltype(effects.get())>::window;
+        QVector<effect_window*> windows;
         if (client) {
             windows << std::visit(overload{[&](auto&& win) { return win->render->effect.get(); }},
                                   get_client_impl(client)->client());

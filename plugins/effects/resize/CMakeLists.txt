@@ -17,7 +17,7 @@ kconfig_add_kcfg_files(resize_SOURCES
 kwin_add_builtin_effect(resize ${resize_SOURCES})
 target_link_libraries(resize PRIVATE
   KF6::KCMUtils
-  kwineffects
+  render
 )
 
 #######################################

@@ -13,6 +13,6 @@ set(highlightwindow_SOURCES
 
 kwin_add_builtin_effect(highlightwindow ${highlightwindow_SOURCES})
 target_link_libraries(highlightwindow PRIVATE
-    kwineffects
-    Qt::DBus
+  Qt::DBus
+  render
 )

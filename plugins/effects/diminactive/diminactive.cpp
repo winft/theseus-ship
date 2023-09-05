@@ -10,8 +10,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 // KConfigSkeleton
 #include "diminactiveconfig.h"
 
-#include <kwineffects/effects_handler.h>
-#include <kwineffects/paint_data.h>
+#include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/paint_data.h>
 
 namespace KWin
 {
@@ -81,20 +81,19 @@ void DimInactiveEffect::reconfigure(ReconfigureFlags flags)
     effects->addRepaintFull();
 }
 
-void DimInactiveEffect::prePaintScreen(effect::paint_data& data,
-                                       std::chrono::milliseconds presentTime)
+void DimInactiveEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
     if (m_fullScreenTransition.active) {
-        m_fullScreenTransition.timeLine.advance(presentTime);
+        m_fullScreenTransition.timeLine.advance(data.present_time);
     }
 
     auto transitionIt = m_transitions.begin();
     while (transitionIt != m_transitions.end()) {
-        (*transitionIt).advance(presentTime);
+        (*transitionIt).advance(data.present_time);
         ++transitionIt;
     }
 
-    effects->prePaintScreen(data, presentTime);
+    effects->prePaintScreen(data);
 }
 
 void DimInactiveEffect::paintWindow(effect::window_paint_data& data)

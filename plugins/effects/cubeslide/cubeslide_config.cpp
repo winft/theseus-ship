@@ -6,7 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "cubeslide_config.h"
 // KConfigSkeleton
 #include "cubeslideconfig.h"
-#include <kwinconfig.h>
+
+#include <base/config-kwin.h>
 #include <kwineffects_interface.h>
 
 #include <KPluginFactory>
