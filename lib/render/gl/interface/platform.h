@@ -39,19 +39,6 @@ enum GLFeature {
     GLSL,
 
     /**
-     * If set, assume the following:
-     * - No flow control or branches
-     * - No loops, unless the loops have a fixed iteration count and can be unrolled
-     * - No functions, unless they can be inlined
-     * - No indirect indexing of arrays
-     * - No support for gl_ClipVertex or gl_FrontFacing
-     * - No texture fetches in vertex shaders
-     * - Max 32 texture fetches in fragment shaders
-     * - Max 4 texture indirections
-     */
-    LimitedGLSL,
-
-    /**
      * Set when the driver supports GL_ARB_texture_non_power_of_two.
      */
     TextureNPOT,
@@ -465,7 +452,6 @@ private:
     qint64 m_kernelVersion;
     bool m_looseBinding : 1;
     bool m_supportsGLSL : 1;
-    bool m_limitedGLSL : 1;
     bool m_textureNPOT : 1;
     bool m_limitedNPOT : 1;
     bool m_supportsTimerQuery : 1;

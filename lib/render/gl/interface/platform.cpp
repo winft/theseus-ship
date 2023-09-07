@@ -677,7 +677,6 @@ GLPlatform::GLPlatform()
     , m_kernelVersion(0)
     , m_looseBinding(false)
     , m_supportsGLSL(false)
-    , m_limitedGLSL(false)
     , m_textureNPOT(false)
     , m_limitedNPOT(false)
     , m_supportsTimerQuery(false)
@@ -981,7 +980,6 @@ void GLPlatform::detect(gl_interface platformInterface)
         if (m_chipClass < R300)
             m_supportsGLSL = false;
 
-        m_limitedGLSL = false;
         m_limitedNPOT = false;
 
         if (m_chipClass < R600) {
@@ -989,8 +987,6 @@ void GLPlatform::detect(gl_interface platformInterface)
                 m_textureNPOT = m_limitedNPOT = false; // Software fallback
             else if (driver() == Driver_R300G)
                 m_limitedNPOT = m_textureNPOT;
-
-            m_limitedGLSL = m_supportsGLSL;
         }
 
         // fallback to NoCompositing for R100 and R200 and for R600 due to NPOT limitations not
@@ -1013,14 +1009,12 @@ void GLPlatform::detect(gl_interface platformInterface)
 
         m_recommend_sw = m_chipClass < NV40;
         m_limitedNPOT = m_textureNPOT && m_chipClass < NV40;
-        m_limitedGLSL = m_supportsGLSL && m_chipClass < G80;
     }
 
     if (isIntel()) {
         if (m_chipClass < I915)
             m_supportsGLSL = false;
 
-        m_limitedGLSL = m_supportsGLSL && m_chipClass < I965;
         // see https://bugs.freedesktop.org/show_bug.cgi?id=80349#c1
         m_looseBinding = false;
 
@@ -1058,11 +1052,10 @@ void GLPlatform::detect(gl_interface platformInterface)
             // we recommend QPainter
             m_recommend_sw = true;
             // Software emulation does not provide GLSL
-            m_limitedGLSL = m_supportsGLSL = false;
+            m_supportsGLSL = false;
         } else {
             // llvmpipe does support GLSL
             m_recommend_sw = false;
-            m_limitedGLSL = false;
             m_supportsGLSL = true;
         }
     }
@@ -1096,7 +1089,6 @@ void GLPlatform::detect(gl_interface platformInterface)
     // and force back to shader supported on gles, we wouldn't have got a context if not supported
     if (isGLES()) {
         m_supportsGLSL = true;
-        m_limitedGLSL = false;
     }
 }
 
@@ -1137,8 +1129,7 @@ void GLPlatform::printResults() const
     print(QByteArrayLiteral("Requires strict binding:"),
           !m_looseBinding ? QByteArrayLiteral("yes") : QByteArrayLiteral("no"));
     print(QByteArrayLiteral("GLSL shaders:"),
-          m_supportsGLSL ? (m_limitedGLSL ? QByteArrayLiteral("limited") : QByteArrayLiteral("yes"))
-                         : QByteArrayLiteral("no"));
+          m_supportsGLSL ? QByteArrayLiteral("yes") : QByteArrayLiteral("no"));
     print(QByteArrayLiteral("Texture NPOT support:"),
           m_textureNPOT ? (m_limitedNPOT ? QByteArrayLiteral("limited") : QByteArrayLiteral("yes"))
                         : QByteArrayLiteral("no"));
@@ -1156,9 +1147,6 @@ bool GLPlatform::supports(GLFeature feature) const
 
     case GLSL:
         return m_supportsGLSL;
-
-    case LimitedGLSL:
-        return m_limitedGLSL;
 
     case TextureNPOT:
         return m_textureNPOT;

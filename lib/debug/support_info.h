@@ -188,7 +188,7 @@ QString get_support_info(Space const& space)
             }
             support.append(QStringLiteral("\n"));
 
-            if (platform->supports(LimitedGLSL) || platform->supports(GLSL))
+            if (platform->supports(GLSL))
                 support.append(QStringLiteral("OpenGL shading language version string: ")
                                + QString::fromUtf8(platform->glShadingLanguageVersionString())
                                + QStringLiteral("\n"));
@@ -208,7 +208,7 @@ QString get_support_info(Space const& space)
                            + GLPlatform::versionToString(platform->glVersion())
                            + QStringLiteral("\n"));
 
-            if (platform->supports(LimitedGLSL) || platform->supports(GLSL))
+            if (platform->supports(GLSL))
                 support.append(QStringLiteral("GLSL version: ")
                                + GLPlatform::versionToString(platform->glslVersion())
                                + QStringLiteral("\n"));
@@ -227,7 +227,7 @@ QString get_support_info(Space const& space)
             support.append(!platform->isLooseBinding() ? yes : no);
             support.append(QStringLiteral("GLSL shaders: "));
             if (platform->supports(GLSL)) {
-                support.append(platform->supports(LimitedGLSL) ? QStringLiteral("limited\n") : yes);
+                support.append(yes);
             } else {
                 support.append(no);
             }

@@ -168,7 +168,6 @@ TEST_CASE("opengl platform", "[render],[unit]")
         QVERIFY(gl);
         QCOMPARE(gl->supports(LooseBinding), false);
         QCOMPARE(gl->supports(GLSL), false);
-        QCOMPARE(gl->supports(LimitedGLSL), false);
         QCOMPARE(gl->supports(TextureNPOT), false);
         QCOMPARE(gl->supports(LimitedNPOT), false);
 
@@ -241,7 +240,6 @@ TEST_CASE("opengl platform", "[render],[unit]")
 
             QCOMPARE(gl->supports(LooseBinding), settingsGroup.readEntry("LooseBinding", false));
             QCOMPARE(gl->supports(GLSL), settingsGroup.readEntry("GLSL", false));
-            QCOMPARE(gl->supports(LimitedGLSL), settingsGroup.readEntry("LimitedGLSL", false));
             QCOMPARE(gl->supports(TextureNPOT), settingsGroup.readEntry("TextureNPOT", false));
             QCOMPARE(gl->supports(LimitedNPOT), settingsGroup.readEntry("LimitedNPOT", false));
 
