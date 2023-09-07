@@ -73,7 +73,7 @@ LookingGlassEffect::~LookingGlassEffect() = default;
 
 bool LookingGlassEffect::supported()
 {
-    return effects->isOpenGLCompositing() && !GLPlatform::instance()->supports(LimitedNPOT);
+    return effects->isOpenGLCompositing();
 }
 
 void LookingGlassEffect::reconfigure(ReconfigureFlags)

@@ -310,7 +310,7 @@ void CubeEffect::slotWallPaperLoaded()
 bool CubeEffect::loadShader()
 {
     effects->makeOpenGLContextCurrent();
-    if (!(GLPlatform::instance()->supports(GLSL) && effects->isOpenGLCompositing())) {
+    if (!effects->isOpenGLCompositing()) {
         return false;
     }
 

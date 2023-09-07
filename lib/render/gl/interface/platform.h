@@ -30,32 +30,6 @@ enum GLFeature {
     LooseBinding,
 
     /**
-     * Set if the driver supports the following extensions:
-     * - GL_ARB_shader_objects
-     * - GL_ARB_fragment_shader
-     * - GL_ARB_vertex_shader
-     * - GL_ARB_shading_language_100
-     */
-    GLSL,
-
-    /**
-     * Set when the driver supports GL_ARB_texture_non_power_of_two.
-     */
-    TextureNPOT,
-
-    /**
-     * If set, the driver supports GL_ARB_texture_non_power_of_two with the
-     * GL_ARB_texture_rectangle limitations.
-     *
-     * This means no support for mipmap filters, and that only the following
-     * wrap modes are supported:
-     * - GL_CLAMP
-     * - GL_CLAMP_TO_EDGE
-     * - GL_CLAMP_TO_BORDER
-     */
-    LimitedNPOT,
-
-    /**
      * Set if the driver supports GL_ARB_timer_query extension or OpenGL 3.3.
      */
     TimerQuery,
@@ -451,9 +425,6 @@ private:
     qint64 m_galliumVersion;
     qint64 m_kernelVersion;
     bool m_looseBinding : 1;
-    bool m_supportsGLSL : 1;
-    bool m_textureNPOT : 1;
-    bool m_limitedNPOT : 1;
     bool m_supportsTimerQuery : 1;
     bool m_virtualMachine : 1;
     bool m_preferBufferSubData : 1;

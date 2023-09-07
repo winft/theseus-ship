@@ -167,9 +167,6 @@ TEST_CASE("opengl platform", "[render],[unit]")
         auto gl = GLPlatform::instance();
         QVERIFY(gl);
         QCOMPARE(gl->supports(LooseBinding), false);
-        QCOMPARE(gl->supports(GLSL), false);
-        QCOMPARE(gl->supports(TextureNPOT), false);
-        QCOMPARE(gl->supports(LimitedNPOT), false);
 
         QCOMPARE(gl->glVersion(), 0);
         QCOMPARE(gl->glslVersion(), 0);
@@ -239,9 +236,6 @@ TEST_CASE("opengl platform", "[render],[unit]")
             auto const settingsGroup = config.group("Settings");
 
             QCOMPARE(gl->supports(LooseBinding), settingsGroup.readEntry("LooseBinding", false));
-            QCOMPARE(gl->supports(GLSL), settingsGroup.readEntry("GLSL", false));
-            QCOMPARE(gl->supports(TextureNPOT), settingsGroup.readEntry("TextureNPOT", false));
-            QCOMPARE(gl->supports(LimitedNPOT), settingsGroup.readEntry("LimitedNPOT", false));
 
             QCOMPARE(gl->glVersion(), readVersion(settingsGroup, "GLVersion"));
             QCOMPARE(gl->glslVersion(), readVersion(settingsGroup, "GLSLVersion"));
