@@ -190,11 +190,6 @@ public:
     qint64 mesaVersion() const;
 
     /**
-     * Returns the Gallium version if the driver is a Gallium driver, and 0 otherwise.
-     */
-    qint64 galliumVersion() const;
-
-    /**
      * Returns the Linux kernel version.
      *
      * If the kernel is not a Linux kernel, this method returns 0.
@@ -222,11 +217,6 @@ public:
      * Returns true if the driver is a Mesa driver, and false otherwise.
      */
     bool isMesaDriver() const;
-
-    /**
-     * Returns true if the driver is a Gallium driver, and false otherwise.
-     */
-    bool isGalliumDriver() const;
 
     /**
      * Returns true if the GPU is a Radeon GPU, and false otherwise.
@@ -422,7 +412,6 @@ private:
     qint64 m_glslVersion;
     qint64 m_mesaVersion;
     qint64 m_driverVersion;
-    qint64 m_galliumVersion;
     qint64 m_kernelVersion;
     bool m_looseBinding : 1;
     bool m_supportsTimerQuery : 1;

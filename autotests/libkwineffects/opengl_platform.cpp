@@ -171,7 +171,6 @@ TEST_CASE("opengl platform", "[render],[unit]")
         QCOMPARE(gl->glVersion(), 0);
         QCOMPARE(gl->glslVersion(), 0);
         QCOMPARE(gl->mesaVersion(), 0);
-        QCOMPARE(gl->galliumVersion(), 0);
         QCOMPARE(gl->kernelVersion(), 0);
         QCOMPARE(gl->driverVersion(), 0);
 
@@ -179,7 +178,6 @@ TEST_CASE("opengl platform", "[render],[unit]")
         QCOMPARE(gl->chipClass(), UnknownChipClass);
 
         QCOMPARE(gl->isMesaDriver(), false);
-        QCOMPARE(gl->isGalliumDriver(), false);
         QCOMPARE(gl->isRadeon(), false);
         QCOMPARE(gl->isNvidia(), false);
         QCOMPARE(gl->isIntel(), false);
@@ -240,7 +238,6 @@ TEST_CASE("opengl platform", "[render],[unit]")
             QCOMPARE(gl->glVersion(), readVersion(settingsGroup, "GLVersion"));
             QCOMPARE(gl->glslVersion(), readVersion(settingsGroup, "GLSLVersion"));
             QCOMPARE(gl->mesaVersion(), readVersion(settingsGroup, "MesaVersion"));
-            QCOMPARE(gl->galliumVersion(), readVersion(settingsGroup, "GalliumVersion"));
 
             // Detects GL version instead of driver version
             if (file != "amd-catalyst-radeonhd-7700M-3.1.13399") {
@@ -252,7 +249,6 @@ TEST_CASE("opengl platform", "[render],[unit]")
                      ChipClass(settingsGroup.readEntry("ChipClass", int(UnknownChipClass))));
 
             QCOMPARE(gl->isMesaDriver(), settingsGroup.readEntry("Mesa", false));
-            QCOMPARE(gl->isGalliumDriver(), settingsGroup.readEntry("Gallium", false));
             QCOMPARE(gl->isRadeon(), settingsGroup.readEntry("Radeon", false));
             QCOMPARE(gl->isNvidia(), settingsGroup.readEntry("Nvidia", false));
             QCOMPARE(gl->isIntel(), settingsGroup.readEntry("Intel", false));

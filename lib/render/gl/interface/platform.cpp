@@ -673,7 +673,6 @@ GLPlatform::GLPlatform()
     , m_glslVersion(0)
     , m_mesaVersion(0)
     , m_driverVersion(0)
-    , m_galliumVersion(0)
     , m_kernelVersion(0)
     , m_looseBinding(false)
     , m_supportsTimerQuery(false)
@@ -871,15 +870,11 @@ void GLPlatform::detect(gl_interface platformInterface)
     else {
         const QList<QByteArray> tokens = m_renderer.split(' ');
         if (m_renderer.contains("Gallium")) {
-            // Sample renderer string: Gallium 0.4 on AMD RV740
-            m_galliumVersion = parseVersionString(tokens.at(1));
             m_chipset
                 = (tokens.at(3) == "AMD" || tokens.at(3) == "ATI") ? tokens.at(4) : tokens.at(3);
         } else {
             // The renderer string does not contain "Gallium" anymore.
             m_chipset = tokens.at(0);
-            // We don't know the actual version anymore, but it's at least 0.4.
-            m_galliumVersion = kVersionNumber(0, 4, 0);
         }
 
         // R300G
@@ -1103,11 +1098,6 @@ qint64 GLPlatform::mesaVersion() const
     return m_mesaVersion;
 }
 
-qint64 GLPlatform::galliumVersion() const
-{
-    return m_galliumVersion;
-}
-
 qint64 GLPlatform::kernelVersion() const
 {
     return m_kernelVersion;
@@ -1134,11 +1124,6 @@ ChipClass GLPlatform::chipClass() const
 bool GLPlatform::isMesaDriver() const
 {
     return mesaVersion() > 0;
-}
-
-bool GLPlatform::isGalliumDriver() const
-{
-    return galliumVersion() > 0;
 }
 
 bool GLPlatform::isRadeon() const
