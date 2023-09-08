@@ -338,7 +338,7 @@ QRegion BlurEffect::blur_region(EffectWindow const* win) const
     return region;
 }
 
-void BlurEffect::upload_region(QVector2D*& map, QRegion const& region)
+void BlurEffect::upload_region(std::span<QVector2D> const map, size_t& index, QRegion const& region)
 {
     for (auto const& r : region) {
         QVector2D const topLeft(r.x(), r.y());
@@ -347,14 +347,14 @@ void BlurEffect::upload_region(QVector2D*& map, QRegion const& region)
         QVector2D const bottomRight((r.x() + r.width()), (r.y() + r.height()));
 
         // First triangle
-        *(map++) = topRight;
-        *(map++) = topLeft;
-        *(map++) = bottomLeft;
+        map[index++] = topRight;
+        map[index++] = topLeft;
+        map[index++] = bottomLeft;
 
         // Second triangle
-        *(map++) = bottomLeft;
-        *(map++) = bottomRight;
-        *(map++) = topRight;
+        map[index++] = bottomLeft;
+        map[index++] = bottomRight;
+        map[index++] = topRight;
     }
 }
 
@@ -367,10 +367,14 @@ void BlurEffect::upload_geometry(GLVertexBuffer* vbo,
         return;
     }
 
-    auto map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
+    auto map = vbo->map<QVector2D>(vertexCount);
+    if (!map) {
+        return;
+    }
 
-    upload_region(map, expanded_blur_region);
-    upload_region(map, blur_region);
+    size_t index = 0;
+    upload_region(*map, index, expanded_blur_region);
+    upload_region(*map, index, blur_region);
 
     vbo->unmap();
 

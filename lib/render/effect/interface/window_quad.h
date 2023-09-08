@@ -12,6 +12,7 @@
 #include <QVector2D>
 #include <QVector3D>
 #include <QVector>
+#include <span>
 
 namespace KWin
 {
@@ -174,8 +175,9 @@ public:
     WindowQuadList select(WindowQuadType type) const;
     WindowQuadList filterOut(WindowQuadType type) const;
     bool smoothNeeded() const;
-    void
-    makeInterleavedArrays(unsigned int type, GLVertex2D* vertices, const QMatrix4x4& matrix) const;
+    void makeInterleavedArrays(unsigned int type,
+                               std::span<GLVertex2D> vertices,
+                               QMatrix4x4 const& matrix) const;
     void makeArrays(float** vertices, float** texcoords, const QSizeF& size, bool yInverted) const;
     bool isTransformed() const;
 };

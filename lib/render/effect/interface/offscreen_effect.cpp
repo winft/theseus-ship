@@ -10,6 +10,7 @@
 #include "effects_handler.h"
 #include "paint_data.h"
 
+#include <base/logging.h>
 #include <render/gl/interface/texture.h>
 
 namespace KWin
@@ -176,10 +177,14 @@ void OffscreenEffectPrivate::paint(GLTexture* texture,
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
     vbo->setAttribLayout(attribs, 2, sizeof(GLVertex2D));
-    const size_t size = verticesPerQuad * quads.count() * sizeof(GLVertex2D);
-    GLVertex2D* map = static_cast<GLVertex2D*>(vbo->map(size));
 
-    quads.makeInterleavedArrays(primitiveType, map, texture->matrix(NormalizedCoordinates));
+    auto map = vbo->map<GLVertex2D>(verticesPerQuad * quads.count());
+    if (!map) {
+        qCWarning(KWIN_CORE) << "Could not map vertices for offscreen effect";
+        return;
+    }
+
+    quads.makeInterleavedArrays(primitiveType, *map, texture->matrix(NormalizedCoordinates));
     vbo->unmap();
     vbo->bindArrays();
 

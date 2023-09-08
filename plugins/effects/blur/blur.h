@@ -85,7 +85,7 @@ private:
     bool deco_supports_blur_behind(EffectWindow const* win) const;
     bool should_blur(effect::window_paint_data const& data) const;
     void do_blur(effect::window_paint_data& data, QRegion const& shape, bool isDock);
-    void upload_region(QVector2D*& map, QRegion const& region);
+    void upload_region(std::span<QVector2D> const map, size_t& index, QRegion const& region);
     void upload_geometry(GLVertexBuffer* vbo,
                          QRegion const& expanded_blur_region,
                          QRegion const& blur_region);

@@ -14,6 +14,7 @@
 
 #include <QSize>
 #include <optional>
+#include <span>
 #include <stack>
 
 class QVector2D;
@@ -548,7 +549,16 @@ public:
      * It is assumed that the GL_ARRAY_BUFFER_BINDING will not be changed while
      * the buffer object is mapped.
      */
-    GLvoid* map(size_t size);
+    template<typename T>
+    std::optional<std::span<T>> map(size_t count)
+    {
+        auto const void_map = map(sizeof(T) * count);
+        if (!void_map) {
+            return std::nullopt;
+        }
+
+        return std::span(reinterpret_cast<T*>(void_map), count);
+    }
 
     /**
      * Flushes the mapped buffer range and unmaps the buffer.
@@ -661,6 +671,7 @@ public:
     static GLVertexBuffer* streamingBuffer();
 
 private:
+    GLvoid* map(size_t size);
     void draw_primitive(effect::render_data const& data,
                         QRegion const& region,
                         GLenum mode,

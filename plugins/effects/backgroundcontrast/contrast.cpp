@@ -131,8 +131,10 @@ QRegion ContrastEffect::contrastRegion(const EffectWindow* w) const
     return region;
 }
 
-void ContrastEffect::uploadRegion(QVector2D*& map, const QRegion& region)
+void ContrastEffect::uploadRegion(std::span<QVector2D> map, const QRegion& region)
 {
+    size_t index = 0;
+
     for (const QRect& r : region) {
         QVector2D const topLeft(r.x(), r.y());
         QVector2D const topRight(r.x() + r.width(), r.y());
@@ -140,14 +142,14 @@ void ContrastEffect::uploadRegion(QVector2D*& map, const QRegion& region)
         QVector2D const bottomRight(r.x() + r.width(), r.y() + r.height());
 
         // First triangle
-        *(map++) = topRight;
-        *(map++) = topLeft;
-        *(map++) = bottomLeft;
+        map[index++] = topRight;
+        map[index++] = topLeft;
+        map[index++] = bottomLeft;
 
         // Second triangle
-        *(map++) = bottomLeft;
-        *(map++) = bottomRight;
-        *(map++) = topRight;
+        map[index++] = bottomLeft;
+        map[index++] = bottomRight;
+        map[index++] = topRight;
     }
 }
 
@@ -158,8 +160,8 @@ void ContrastEffect::uploadGeometry(GLVertexBuffer* vbo, const QRegion& region)
         return;
     }
 
-    auto map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
-    uploadRegion(map, region);
+    auto const map = vbo->map<QVector2D>(vertexCount);
+    uploadRegion(*map, region);
     vbo->unmap();
 
     GLVertexAttrib const layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};

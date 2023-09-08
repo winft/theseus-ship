@@ -371,16 +371,15 @@ WindowQuadList WindowQuadList::makeRegularGrid(int xSubdivisions, int ySubdivisi
 #endif
 
 void WindowQuadList::makeInterleavedArrays(unsigned int type,
-                                           GLVertex2D* vertices,
-                                           const QMatrix4x4& textureMatrix) const
+                                           std::span<GLVertex2D> vertices,
+                                           QMatrix4x4 const& textureMatrix) const
 {
     // Since we know that the texture matrix just scales and translates
     // we can use this information to optimize the transformation
     const QVector2D coeff(textureMatrix(0, 0), textureMatrix(1, 1));
     const QVector2D offset(textureMatrix(0, 3), textureMatrix(1, 3));
 
-    GLVertex2D* vertex = vertices;
-
+    size_t index = 0;
     Q_ASSERT(type == GL_QUADS || type == GL_TRIANGLES);
 
     switch (type) {
@@ -394,7 +393,7 @@ void WindowQuadList::makeInterleavedArrays(unsigned int type,
                 v.position = QVector2D(wv.x(), wv.y());
                 v.texcoord = QVector2D(wv.u(), wv.v()) * coeff + offset;
 
-                *(vertex++) = v;
+                vertices[index++] = v;
             }
         }
         break;
@@ -411,14 +410,14 @@ void WindowQuadList::makeInterleavedArrays(unsigned int type,
             }
 
             // First triangle
-            *(vertex++) = v[1]; // Top-right
-            *(vertex++) = v[0]; // Top-left
-            *(vertex++) = v[3]; // Bottom-left
+            vertices[index++] = v[1]; // Top-right
+            vertices[index++] = v[0]; // Top-left
+            vertices[index++] = v[3]; // Bottom-left
 
             // Second triangle
-            *(vertex++) = v[3]; // Bottom-left
-            *(vertex++) = v[2]; // Bottom-right
-            *(vertex++) = v[1]; // Top-right
+            vertices[index++] = v[3]; // Bottom-left
+            vertices[index++] = v[2]; // Bottom-right
+            vertices[index++] = v[1]; // Top-right
         }
         break;
     }
