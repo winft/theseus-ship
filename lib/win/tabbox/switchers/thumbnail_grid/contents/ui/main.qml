@@ -5,7 +5,7 @@
  SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-import QtQuick 2.0
+import QtQuick
 import QtQuick.Layouts 1.1
 import org.kde.plasma.core as PlasmaCore
 import org.kde.ksvg 1.0 as KSvg
@@ -93,7 +93,7 @@ KWin.TabBoxSwitcher {
             GridView {
                 id: thumbnailGridView
                 anchors.fill: parent
-
+                focus: true
                 model: tabBox.model
 
                 readonly property int iconSize: Kirigami.Units.iconSizes.huge
@@ -111,7 +111,10 @@ KWin.TabBoxSwitcher {
                     id: thumbnailGridItem
                     width: thumbnailGridView.cellWidth
                     height: thumbnailGridView.cellHeight
-                    readonly property bool isCurrentItem: GridView.isCurrentItem
+                    focus: GridView.isCurrentItem
+
+                    Accessible.name: model.caption
+                    Accessible.role: Accessible.ListItem
 
                     MouseArea {
                         id: mouseArea
@@ -170,7 +173,7 @@ KWin.TabBoxSwitcher {
                                 visible: model.closeable && typeof tabBox.model.close !== 'undefined' &&
                                         (mouseArea.containsMouse
                                          || closeButton.hovered
-                                         || thumbnailGridItem.isCurrentItem
+                                         || thumbnailGridItem.focus
                                          || Kirigami.Settings.tabletMode
                                          || Kirigami.Settings.hasTransientTouchInput
                                         )
@@ -184,7 +187,7 @@ KWin.TabBoxSwitcher {
                         PlasmaComponents3.Label {
                             Layout.fillWidth: true
                             text: model.caption
-                            font.weight: thumbnailGridItem.isCurrentItem ? Font.Bold : Font.Normal
+                            font.weight: thumbnailGridItem.focus ? Font.Bold : Font.Normal
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             textFormat: Text.PlainText
