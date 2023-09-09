@@ -483,7 +483,8 @@ template<typename Space, typename RefSpace>
 class template_space : public Space
 {
 public:
-    using window_t = window_impl<typename RefSpace::window_t>;
+    using type = template_space<Space, RefSpace>;
+    using window_t = window_impl<typename RefSpace::window_t, type>;
     using base_t = typename RefSpace::base_t;
 
     template_space(RefSpace* ref_space)
@@ -494,13 +495,12 @@ public:
         QObject::connect(
             ref_space->qobject.get(), &space_qobject::clientAdded, this, [this](auto win_id) {
                 auto ref_win = this->ref_space->windows_map.at(win_id);
-                std::visit(overload{[this](auto&& win) { handle_client_added(win); }}, ref_win);
+                std::visit(overload{[&, this](auto&& win) { handle_client_added(win); }}, ref_win);
             });
-        QObject::connect(
-            ref_space->qobject.get(), &space_qobject::clientRemoved, this, [this](auto win_id) {
-                auto ref_win = this->ref_space->windows_map.at(win_id);
-                std::visit(overload{[this](auto&& win) { handle_client_removed(win); }}, ref_win);
-            });
+        QObject::connect(ref_space->qobject.get(),
+                         &space_qobject::clientRemoved,
+                         this,
+                         [this](auto win_id) { handle_client_removed(win_id); });
         QObject::connect(ref_space->qobject.get(),
                          &space_qobject::wayland_window_added,
                          this,
@@ -581,13 +581,8 @@ public:
     std::vector<window*> windows() const override
     {
         std::vector<window*> ret;
-        for (auto const& win : ref_space->windows) {
-            std::visit(overload{[&](auto&& win) {
-                           if (win->control && win->control->script) {
-                               ret.push_back(static_cast<window*>(win->control->script.get()));
-                           }
-                       }},
-                       win);
+        for (auto const& [key, win] : windows_map) {
+            ret.push_back(win.get());
         }
         return ret;
     }
@@ -884,6 +879,8 @@ public:
         win::activate_window_direction(*ref_space, win::direction::west);
     }
 
+    std::unordered_map<uint32_t, std::unique_ptr<window>> windows_map;
+
 protected:
     output* screen_at_impl(QPointF const& pos) const override
     {
@@ -1034,8 +1031,9 @@ protected:
             if (auto scr_win
                 = std::visit(overload{[&](auto&& win) -> window* {
                                  if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
-                                     if (win->control && win->xcb_windows.client == windowId) {
-                                         return static_cast<window*>(win->control->script.get());
+                                     if (win->xcb_windows.client == windowId
+                                         && windows_map.contains(win->meta.signal_id)) {
+                                         return windows_map.at(win->meta.signal_id).get();
                                      }
                                  }
                                  return nullptr;
@@ -1048,15 +1046,15 @@ protected:
         return nullptr;
     }
 
-    static window* get_window(typename RefSpace::window_t win)
+    window* get_window(typename RefSpace::window_t win) const
     {
-        return std::visit(overload{[](auto&& win) -> window* {
-                              if (!win->control) {
-                                  return nullptr;
-                              }
-                              return static_cast<window*>(win->control->script.get());
-                          }},
-                          win);
+        auto id
+            = std::visit(overload{[](auto&& win) -> uint32_t { return win->meta.signal_id; }}, win);
+        if (!windows_map.contains(id)) {
+            return nullptr;
+        }
+
+        return windows_map.at(id).get();
     }
 
     template<typename RefWin>
@@ -1067,20 +1065,22 @@ protected:
             return;
         }
 
-        win->control->script = std::make_unique<window_t>(win);
+        auto key = win->meta.signal_id;
+        windows_map.insert({key, std::make_unique<window_t>(win, *this)});
 
         Space::windows_count++;
-        Q_EMIT Space::clientAdded(static_cast<window*>(win->control->script.get()));
+        Q_EMIT Space::clientAdded(static_cast<window*>(windows_map.at(key).get()));
     }
 
-    template<typename RefWin>
-    void handle_client_removed(RefWin* client)
+    void handle_client_removed(uint32_t id)
     {
-        if (!client->control) {
+        if (!windows_map.contains(id)) {
             return;
         }
+
         Space::windows_count--;
-        Q_EMIT Space::clientRemoved(static_cast<window*>(client->control->script.get()));
+        Q_EMIT Space::clientRemoved(static_cast<window*>(windows_map.at(id).get()));
+        windows_map.erase(id);
     }
 
     output_impl<typename RefSpace::base_t::output_t>* get_output(base::output const* output) const

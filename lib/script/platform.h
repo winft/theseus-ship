@@ -221,9 +221,10 @@ public:
     QList<QAction*> actionsForUserActionMenu(typename Space::window_t window, QMenu* parent)
     {
         auto const w_wins = workspaceWrapper()->clientList();
-        auto window_it = std::find_if(w_wins.cbegin(), w_wins.cend(), [window](auto win) {
-            return static_cast<window_impl<typename Space::window_t>*>(win)->client() == window;
-        });
+        auto const id
+            = std::visit(overload{[](auto&& win) { return win->meta.internal_id; }}, window);
+        auto window_it = std::find_if(
+            w_wins.cbegin(), w_wins.cend(), [&id](auto win) { return win->internalId() == id; });
         assert(window_it != w_wins.cend());
 
         QList<QAction*> actions;
