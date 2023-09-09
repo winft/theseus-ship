@@ -25,13 +25,15 @@ void update_function(ContrastEffect& effect, KWin::effect::color_update const& u
         return;
     }
 
+    auto& win_data = effect.m_windowData;
     if (update.base.valid) {
-        effect.m_windowData[update.base.window] = {
+        win_data.try_emplace(update.base.window);
+        win_data.at(update.base.window) = {
             .colorMatrix = update.color,
             .contrastRegion = update.region,
         };
     } else {
-        effect.m_windowData.remove(update.base.window);
+        win_data.erase(update.base.window);
     }
 }
 
@@ -77,7 +79,7 @@ void ContrastEffect::reconfigure(ReconfigureFlags flags)
 
 void ContrastEffect::slotWindowDeleted(EffectWindow* w)
 {
-    m_windowData.remove(w);
+    m_windowData.erase(w);
 }
 
 bool ContrastEffect::enabledByDefault()
@@ -118,7 +120,7 @@ QRegion ContrastEffect::contrastRegion(const EffectWindow* w) const
     QRegion region;
 
     if (auto const it = m_windowData.find(w); it != m_windowData.end()) {
-        auto const& appRegion = it->contrastRegion;
+        auto const& appRegion = it->second.contrastRegion;
         if (!appRegion.isEmpty()) {
             region |= appRegion.translated(w->contentsRect().topLeft()) & w->decorationInnerRect();
         } else {
@@ -274,7 +276,7 @@ void ContrastEffect::doContrast(effect::window_paint_data const& data, QRegion c
 
     // Draw the texture on the offscreen framebuffer object, while blurring it horizontally
 
-    shader->setColorMatrix(m_windowData.value(&data.window).colorMatrix);
+    shader->setColorMatrix(m_windowData.at(&data.window).colorMatrix);
     shader->bind();
 
     shader->setOpacity(data.paint.opacity);

@@ -14,6 +14,7 @@
 #include <QVector2D>
 #include <QVector>
 #include <memory>
+#include <unordered_map>
 
 namespace KWin
 {
@@ -48,7 +49,7 @@ public:
         QMatrix4x4 colorMatrix;
         QRegion contrastRegion;
     };
-    QHash<EffectWindow const*, Data> m_windowData;
+    std::unordered_map<EffectWindow const*, Data> m_windowData;
 
 private:
     QRegion contrastRegion(const EffectWindow* w) const;
