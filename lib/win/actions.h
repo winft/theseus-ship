@@ -43,7 +43,7 @@ void set_keep_above(Win* win, bool keep)
     update_layer(win);
     win->updateWindowRules(rules::type::above);
 
-    if constexpr (requires(Win * win) { win->doSetKeepAbove(); }) {
+    if constexpr (requires(Win* win) { win->doSetKeepAbove(); }) {
         win->doSetKeepAbove();
     }
 
@@ -78,7 +78,7 @@ void set_keep_below(Win* win, bool keep)
     update_layer(win);
     win->updateWindowRules(rules::type::below);
 
-    if constexpr (requires(Win * win) { win->doSetKeepBelow(); }) {
+    if constexpr (requires(Win* win) { win->doSetKeepBelow(); }) {
         win->doSetKeepBelow();
     }
 

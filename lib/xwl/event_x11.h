@@ -79,7 +79,7 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
     }
 
     // Being here means some other X window has claimed the selection.
-    if constexpr (requires(Selection & sel) { sel.do_handle_xfixes_notify(event); }) {
+    if constexpr (requires(Selection& sel) { sel.do_handle_xfixes_notify(event); }) {
         sel->do_handle_xfixes_notify(event);
     } else {
         do_handle_xfixes_notify(sel, event);
@@ -106,7 +106,7 @@ bool filter_event(Selection* sel, xcb_generic_event_t* event)
         return handle_selection_request(sel,
                                         reinterpret_cast<xcb_selection_request_event_t*>(event));
     case XCB_CLIENT_MESSAGE:
-        if constexpr (requires(Selection & sel) { sel.handle_client_message(event); }) {
+        if constexpr (requires(Selection& sel) { sel.handle_client_message(event); }) {
             return sel->handle_client_message(reinterpret_cast<xcb_client_message_event_t*>(event));
         }
     default:

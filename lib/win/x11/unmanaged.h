@@ -48,7 +48,7 @@ auto create_unmanaged_window(xcb_window_t xcb_win, Space& space) -> typename Spa
     if constexpr (requires(compositor_t comp) {
                       {
                           comp.is_overlay_window(xcb_win)
-                          } -> std::same_as<bool>;
+                      } -> std::same_as<bool>;
                   }) {
         if (space.base.render->compositor->is_overlay_window(xcb_win)) {
             return nullptr;
