@@ -50,12 +50,12 @@ public:
         return base::get_output_index(m_tabbox->space.base.outputs, *output);
     }
 
-    std::weak_ptr<tabbox_client> active_client() const override
+    tabbox_client* active_client() const override
     {
         if (auto win = m_tabbox->space.stacking.active) {
             return std::visit(overload{[](auto&& win) { return win->control->tabbox(); }}, *win);
         }
-        return std::weak_ptr<tabbox_client>();
+        return {};
     }
 
     int current_desktop() const override
@@ -91,7 +91,7 @@ public:
         return static_cast<bool>(m_tabbox->space.base.render->compositor->scene);
     }
 
-    std::weak_ptr<tabbox_client> next_client_focus_chain(tabbox_client* client) const override
+    tabbox_client* next_client_focus_chain(tabbox_client* client) const override
     {
         if (auto c = get_client_impl(client)) {
             auto next
@@ -101,20 +101,17 @@ public:
                                   *next);
             }
         }
-        return std::weak_ptr<tabbox_client>();
+        return {};
     }
 
-    std::weak_ptr<tabbox_client> first_client_focus_chain() const override
+    tabbox_client* first_client_focus_chain() const override
     {
         if (auto c = focus_chain_first_latest_use<std::optional<typename Tabbox::window_t>>(
                 m_tabbox->space.stacking.focus_chain)) {
-            return std::visit(overload{[&](auto&& win) -> std::weak_ptr<tabbox_client> {
-                                  return win->control->tabbox();
-                              }},
-                              *c);
-        } else {
-            return std::weak_ptr<tabbox_client>();
+            return std::visit(
+                overload{[&](auto&& win) -> tabbox_client* { return win->control->tabbox(); }}, *c);
         }
+        return {};
     }
 
     bool is_in_focus_chain(tabbox_client* client) const override
@@ -177,8 +174,7 @@ public:
                    get_client_impl(c)->client());
     }
 
-    std::weak_ptr<tabbox_client> client_to_add_to_list(KWin::win::tabbox_client* client,
-                                                       int desktop) const override
+    tabbox_client* client_to_add_to_list(tabbox_client* client, int desktop) const override
     {
         if (!client) {
             return {};
@@ -189,33 +185,31 @@ public:
             return {};
         }
 
-        return std::visit(
-            overload{[&](auto&& win) -> std::weak_ptr<tabbox_client> {
-                if (!win::wants_tab_focus(win) || win->control->skip_switcher()) {
-                    return {};
-                }
+        return std::visit(overload{[&](auto&& win) -> tabbox_client* {
+                              if (!win::wants_tab_focus(win) || win->control->skip_switcher()) {
+                                  return {};
+                              }
 
-                if (auto modal = find_modal(*win); modal && modal->control && modal != win) {
-                    if (!contains_if(
-                            client_list(),
-                            [modal_client = modal->control->tabbox().lock()](auto const& client) {
-                                return client.lock() == modal_client;
-                            })) {
-                        // Add the modal dialog instead of the main window.
-                        return modal->control->tabbox();
-                    }
-                }
+                              if (auto modal = find_modal(*win);
+                                  modal && modal->control && modal != win) {
+                                  if (!contains_if(client_list(),
+                                                   [modal_win = modal->control->tabbox()](
+                                                       auto win) { return win == modal_win; })) {
+                                      // Add the modal dialog instead of the main window.
+                                      return modal->control->tabbox();
+                                  }
+                              }
 
-                return win->control->tabbox();
-            }},
-            get_client_impl(client)->client());
+                              return win->control->tabbox();
+                          }},
+                          get_client_impl(client)->client());
     }
 
-    std::weak_ptr<tabbox_client> desktop_client() const override
+    tabbox_client* desktop_client() const override
     {
         for (auto const& win : m_tabbox->space.stacking.order.stack) {
             auto success{false};
-            if (auto ret = std::visit(overload{[&](auto&& win) -> std::weak_ptr<tabbox_client> {
+            if (auto ret = std::visit(overload{[&](auto&& win) -> tabbox_client* {
                                           if (win->control && win::is_desktop(win)
                                               && on_current_desktop(win)
                                               && win->topo.central_output
@@ -231,7 +225,7 @@ public:
             }
         }
 
-        return std::weak_ptr<tabbox_client>();
+        return {};
     }
 
     void activate_and_close() override
@@ -291,19 +285,14 @@ private:
     bool check_one_window_per_application(Win& win) const
     {
         // check if the list already contains an entry of this application
-        for (const auto& client_weak : client_list()) {
-            auto client = client_weak.lock();
-            if (!client) {
-                continue;
-            }
-            if (auto c = dynamic_cast<client_impl*>(client.get())) {
-                if (std::visit(overload{[&](auto&& other) {
-                                   return win::belong_to_same_client(
-                                       other, &win, win::same_client_check::allow_cross_process);
-                               }},
-                               c->client())) {
-                    return false;
-                }
+        for (const auto& client : client_list()) {
+            auto c = static_cast<client_impl*>(client);
+            if (std::visit(overload{[&](auto&& other) {
+                               return win::belong_to_same_client(
+                                   other, &win, win::same_client_check::allow_cross_process);
+                           }},
+                           c->client())) {
+                return false;
             }
         }
 
@@ -313,19 +302,21 @@ private:
     template<typename Win>
     bool check_all_windows_current_application(Win& win) const
     {
-        auto pointer = tabbox_handle->active_client().lock();
+        auto pointer = tabbox_handle->active_client();
         if (!pointer) {
             return false;
         }
-        if (auto c = dynamic_cast<client_impl*>(pointer.get())) {
-            if (std::visit(overload{[&](auto&& other) {
-                               return win::belong_to_same_client(
-                                   other, &win, win::same_client_check::allow_cross_process);
-                           }},
-                           c->client())) {
-                return true;
-            }
+
+        auto c = static_cast<client_impl*>(pointer);
+
+        if (std::visit(overload{[&](auto&& other) {
+                           return win::belong_to_same_client(
+                               other, &win, win::same_client_check::allow_cross_process);
+                       }},
+                       c->client())) {
+            return true;
         }
+
         return false;
     }
 

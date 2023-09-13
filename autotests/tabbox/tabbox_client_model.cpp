@@ -15,7 +15,7 @@ namespace KWin::detail::test
 
 TEST_CASE("tabbox client model", "[unit],[win]")
 {
-    SECTION("longest caption with null client")
+    SECTION("longest caption")
     {
         MockTabBoxHandler tabboxhandler;
         auto clientModel = new win::tabbox_client_model(&tabboxhandler);
@@ -26,16 +26,6 @@ TEST_CASE("tabbox client model", "[unit],[win]")
         tabboxhandler.createMockWindow(QString("test"));
         clientModel->create_client_list();
         QCOMPARE(clientModel->longest_caption(), QString("test"));
-
-        // delete the one client in the list
-        QModelIndex index = clientModel->index(0, 0);
-        QVERIFY(index.isValid());
-        win::tabbox_client* client = static_cast<win::tabbox_client*>(
-            clientModel->data(index, win::tabbox_client_model::ClientRole).value<void*>());
-        client->close();
-        // internal model of ClientModel now contains a deleted pointer
-        // longestCaption should behave just as if the window were not in the list
-        QCOMPARE(clientModel->longest_caption(), QString());
     }
 
     SECTION("create client list no active client")
@@ -71,8 +61,7 @@ TEST_CASE("tabbox client model", "[unit],[win]")
         // simulate that the active client is not in the focus chain
         // for that we use the closeWindow of the MockTabBoxHandler which
         // removes the Client from the Focus Chain but leaves the active window as it is
-        auto clientOwner = client.lock();
-        tabboxhandler.closeWindow(clientOwner.get());
+        tabboxhandler.closeWindow(client);
         clientModel->create_client_list();
         QCOMPARE(clientModel->rowCount(), 1);
     }

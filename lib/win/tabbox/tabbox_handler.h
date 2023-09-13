@@ -76,7 +76,7 @@ class tabbox_client_model;
 class tabbox_config;
 class tabbox_handler_private;
 
-using tabbox_client_list = std::vector<std::weak_ptr<tabbox_client>>;
+using tabbox_client_list = std::vector<tabbox_client*>;
 
 /**
  * This class is a wrapper around KWin Workspace. It is used for accessing the
@@ -102,12 +102,12 @@ public:
      * @return The current active tabbox_client or NULL
      * if there is no active client.
      */
-    virtual std::weak_ptr<tabbox_client> active_client() const = 0;
+    virtual tabbox_client* active_client() const = 0;
     /**
      * @param client The client which is starting point to find the next client
      * @return The next tabbox_client in focus chain
      */
-    virtual std::weak_ptr<tabbox_client> next_client_focus_chain(tabbox_client* client) const = 0;
+    virtual tabbox_client* next_client_focus_chain(tabbox_client* client) const = 0;
     /**
      * This method is used by the client_model to find an entrance into the focus chain in case
      * there is no active Client.
@@ -115,7 +115,7 @@ public:
      * @return The first Client of the focus chain
      * @since 4.9.1
      */
-    virtual std::weak_ptr<tabbox_client> first_client_focus_chain() const = 0;
+    virtual tabbox_client* first_client_focus_chain() const = 0;
     /**
      * Checks whether the given @p client is part of the focus chain at all.
      * This is useful to figure out whether the currently active Client can be used
@@ -199,13 +199,11 @@ public:
      * @param allDesktops Add clients from all desktops or only from current
      * @return The client to be included in the list or NULL if it isn't to be included
      */
-    virtual std::weak_ptr<tabbox_client> client_to_add_to_list(tabbox_client* client,
-                                                               int desktop) const
-        = 0;
+    virtual tabbox_client* client_to_add_to_list(tabbox_client* client, int desktop) const = 0;
     /**
      * @return The first desktop window in the stacking order.
      */
-    virtual std::weak_ptr<tabbox_client> desktop_client() const = 0;
+    virtual tabbox_client* desktop_client() const = 0;
     /**
      * Activates the currently selected client and closes the tabbox.
      */

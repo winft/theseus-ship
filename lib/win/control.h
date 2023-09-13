@@ -61,7 +61,7 @@ public:
     {
         assert(!m_tabbox);
 #if KWIN_BUILD_TABBOX
-        m_tabbox = std::make_shared<win::tabbox_client_impl<var_win>>(m_win);
+        m_tabbox = std::make_unique<win::tabbox_client_impl<var_win>>(m_win);
 #endif
     }
 
@@ -97,9 +97,9 @@ public:
         m_skip_taskbar = set;
     }
 
-    std::weak_ptr<win::tabbox_client_impl<var_win>> tabbox() const
+    tabbox_client* tabbox() const
     {
-        return m_tabbox;
+        return m_tabbox.get();
     }
 
     bool has_application_menu() const
@@ -261,7 +261,7 @@ private:
     bool m_skip_pager{false};
     bool m_skip_switcher{false};
 
-    std::shared_ptr<win::tabbox_client_impl<var_win>> m_tabbox;
+    std::unique_ptr<win::tabbox_client_impl<var_win>> m_tabbox;
 
     QTimer* m_auto_raise_timer{nullptr};
 

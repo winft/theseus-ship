@@ -129,17 +129,9 @@ public:
      */
     QList<window_t> current_client_list()
     {
-        auto const list = handler->client_list();
         QList<window_t> ret;
-
-        for (auto& client_pointer : list) {
-            auto client = client_pointer.lock();
-            if (!client) {
-                continue;
-            }
-            if (auto c = static_cast<tabbox_client_impl<window_t> const*>(client.get())) {
-                ret.append(c->client());
-            }
+        for (auto&& win : handler->client_list()) {
+            ret.append(static_cast<tabbox_client_impl<window_t> const*>(win)->client());
         }
         return ret;
     }
@@ -171,10 +163,8 @@ public:
      */
     void set_current_client(window_t window)
     {
-        auto client = std::visit(overload{[](auto&& win) -> tabbox_client* {
-                                     return win->control->tabbox().lock().get();
-                                 }},
-                                 window);
+        auto client = std::visit(
+            overload{[](auto&& win) -> tabbox_client* { return win->control->tabbox(); }}, window);
         set_current_index(handler->index(client));
     }
 
