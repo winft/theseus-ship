@@ -53,7 +53,8 @@ public:
     tabbox_client* active_client() const override
     {
         if (auto win = m_tabbox->space.stacking.active) {
-            return std::visit(overload{[](auto&& win) { return win->control->tabbox(); }}, *win);
+            return std::visit(overload{[](auto&& win) { return win->control->tabbox.get(); }},
+                              *win);
         }
         return {};
     }
@@ -97,8 +98,8 @@ public:
             auto next
                 = focus_chain_next_latest_use(m_tabbox->space.stacking.focus_chain, c->client());
             if (next) {
-                return std::visit(overload{[&](auto&& next) { return next->control->tabbox(); }},
-                                  *next);
+                return std::visit(
+                    overload{[&](auto&& next) { return next->control->tabbox.get(); }}, *next);
             }
         }
         return {};
@@ -109,7 +110,8 @@ public:
         if (auto c = focus_chain_first_latest_use<std::optional<typename Tabbox::window_t>>(
                 m_tabbox->space.stacking.focus_chain)) {
             return std::visit(
-                overload{[&](auto&& win) -> tabbox_client* { return win->control->tabbox(); }}, *c);
+                overload{[&](auto&& win) -> tabbox_client* { return win->control->tabbox.get(); }},
+                *c);
         }
         return {};
     }
@@ -139,7 +141,7 @@ public:
         for (auto const& win : stacking) {
             std::visit(overload{[&](auto&& win) {
                            if (win->control) {
-                               ret.push_back(win->control->tabbox());
+                               ret.push_back(win->control->tabbox.get());
                            }
                        }},
                        win);
@@ -193,14 +195,14 @@ public:
                               if (auto modal = find_modal(*win);
                                   modal && modal->control && modal != win) {
                                   if (!contains_if(client_list(),
-                                                   [modal_win = modal->control->tabbox()](
+                                                   [modal_win = modal->control->tabbox.get()](
                                                        auto win) { return win == modal_win; })) {
                                       // Add the modal dialog instead of the main window.
-                                      return modal->control->tabbox();
+                                      return modal->control->tabbox.get();
                                   }
                               }
 
-                              return win->control->tabbox();
+                              return win->control->tabbox.get();
                           }},
                           get_client_impl(client)->client());
     }
@@ -215,7 +217,7 @@ public:
                                               && win->topo.central_output
                                                   == win::get_current_output(m_tabbox->space)) {
                                               success = true;
-                                              return win->control->tabbox();
+                                              return win->control->tabbox.get();
                                           }
                                           return {};
                                       }},

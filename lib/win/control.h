@@ -57,14 +57,6 @@ public:
         assert(deco.decoration == nullptr);
     }
 
-    void setup_tabbox()
-    {
-        assert(!m_tabbox);
-#if KWIN_BUILD_TABBOX
-        m_tabbox = std::make_unique<win::tabbox_client_impl<var_win>>(m_win);
-#endif
-    }
-
     virtual void set_desktops(QVector<virtual_desktop*> desktops) = 0;
 
     bool skip_pager() const
@@ -95,11 +87,6 @@ public:
     virtual void set_skip_taskbar(bool set)
     {
         m_skip_taskbar = set;
-    }
-
-    tabbox_client* tabbox() const
-    {
-        return m_tabbox.get();
     }
 
     bool has_application_menu() const
@@ -236,6 +223,7 @@ public:
     win::appmenu appmenu;
     QKeySequence shortcut;
     QIcon icon;
+    std::unique_ptr<win::tabbox_client_impl<var_win>> tabbox;
 
     quicktiles quicktiling{quicktiles::none};
     quicktiles electric{quicktiles::none};
@@ -260,8 +248,6 @@ private:
     bool m_skip_taskbar{false};
     bool m_skip_pager{false};
     bool m_skip_switcher{false};
-
-    std::unique_ptr<win::tabbox_client_impl<var_win>> m_tabbox;
 
     QTimer* m_auto_raise_timer{nullptr};
 

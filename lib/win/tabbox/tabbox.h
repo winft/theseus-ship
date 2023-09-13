@@ -164,7 +164,8 @@ public:
     void set_current_client(window_t window)
     {
         auto client = std::visit(
-            overload{[](auto&& win) -> tabbox_client* { return win->control->tabbox(); }}, window);
+            overload{[](auto&& win) -> tabbox_client* { return win->control->tabbox.get(); }},
+            window);
         set_current_index(handler->index(client));
     }
 

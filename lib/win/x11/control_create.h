@@ -25,6 +25,7 @@
 #include "win/options.h"
 #include "win/rules/find.h"
 #include "win/session.h"
+#include <win/tabbox/tabbox_client_impl.h>
 
 namespace KWin::win::x11
 {
@@ -284,7 +285,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     win->sync_request.timestamp = space.base.x11_data.time;
 
     setup_window_control_connections(win);
-    win->control->setup_tabbox();
+    win->control->tabbox = std::make_unique<win::tabbox_client_impl<typename Space::window_t>>(win);
     win->control->setup_color_scheme();
 
     QObject::connect(win->client_machine,
