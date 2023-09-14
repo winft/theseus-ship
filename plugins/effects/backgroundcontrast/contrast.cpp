@@ -25,13 +25,16 @@ void update_function(ContrastEffect& effect, KWin::effect::color_update const& u
         return;
     }
 
+    auto& win_data = effect.m_windowData;
     if (update.base.valid) {
-        effect.m_windowData[update.base.window] = {
+        win_data.try_emplace(update.base.window);
+        win_data.at(update.base.window) = {
             .colorMatrix = update.color,
             .contrastRegion = update.region,
         };
     } else {
-        effect.m_windowData.remove(update.base.window);
+        effects->makeOpenGLContextCurrent();
+        win_data.erase(update.base.window);
     }
 }
 
@@ -77,7 +80,10 @@ void ContrastEffect::reconfigure(ReconfigureFlags flags)
 
 void ContrastEffect::slotWindowDeleted(EffectWindow* w)
 {
-    m_windowData.remove(w);
+    if (auto it = m_windowData.find(w); it != m_windowData.end()) {
+        effects->makeOpenGLContextCurrent();
+        m_windowData.erase(it);
+    }
 }
 
 bool ContrastEffect::enabledByDefault()
@@ -118,7 +124,7 @@ QRegion ContrastEffect::contrastRegion(const EffectWindow* w) const
     QRegion region;
 
     if (auto const it = m_windowData.find(w); it != m_windowData.end()) {
-        auto const& appRegion = it->contrastRegion;
+        auto const& appRegion = it->second.contrastRegion;
         if (!appRegion.isEmpty()) {
             region |= appRegion.translated(w->contentsRect().topLeft()) & w->decorationInnerRect();
         } else {
@@ -131,8 +137,10 @@ QRegion ContrastEffect::contrastRegion(const EffectWindow* w) const
     return region;
 }
 
-void ContrastEffect::uploadRegion(QVector2D*& map, const QRegion& region)
+void ContrastEffect::uploadRegion(std::span<QVector2D> map, const QRegion& region)
 {
+    size_t index = 0;
+
     for (const QRect& r : region) {
         QVector2D const topLeft(r.x(), r.y());
         QVector2D const topRight(r.x() + r.width(), r.y());
@@ -140,14 +148,14 @@ void ContrastEffect::uploadRegion(QVector2D*& map, const QRegion& region)
         QVector2D const bottomRight(r.x() + r.width(), r.y() + r.height());
 
         // First triangle
-        *(map++) = topRight;
-        *(map++) = topLeft;
-        *(map++) = bottomLeft;
+        map[index++] = topRight;
+        map[index++] = topLeft;
+        map[index++] = bottomLeft;
 
         // Second triangle
-        *(map++) = bottomLeft;
-        *(map++) = bottomRight;
-        *(map++) = topRight;
+        map[index++] = bottomLeft;
+        map[index++] = bottomRight;
+        map[index++] = topRight;
     }
 }
 
@@ -158,8 +166,8 @@ void ContrastEffect::uploadGeometry(GLVertexBuffer* vbo, const QRegion& region)
         return;
     }
 
-    auto map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
-    uploadRegion(map, region);
+    auto const map = vbo->map<QVector2D>(vertexCount);
+    uploadRegion(*map, region);
     vbo->unmap();
 
     GLVertexAttrib const layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};
@@ -208,20 +216,30 @@ void ContrastEffect::drawWindow(effect::window_paint_data& data)
         || !qFuzzyCompare(data.paint.geo.scale.y(), 1.f)) {
         QPoint pt = shape.boundingRect().topLeft();
         QRegion scaledShape;
-        for (QRect r : shape) {
-            r.moveTo(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
-                         + data.paint.geo.translation.x(),
-                     pt.y() + (r.y() - pt.y()) * data.paint.geo.scale.y()
-                         + data.paint.geo.translation.y());
-            r.setWidth(r.width() * data.paint.geo.scale.x());
-            r.setHeight(r.height() * data.paint.geo.scale.y());
-            scaledShape |= r;
+        for (auto const& r : shape) {
+            QPointF const topLeft(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
+                                      + data.paint.geo.translation.x(),
+                                  pt.y() + (r.y() - pt.y()) * data.paint.geo.scale.y()
+                                      + data.paint.geo.translation.y());
+            QPoint const bottomRight(
+                std::floor(topLeft.x() + r.width() * data.paint.geo.scale.x()) - 1,
+                std::floor(topLeft.y() + r.height() * data.paint.geo.scale.y()) - 1);
+            scaledShape
+                |= QRect(QPoint(std::floor(topLeft.x()), std::floor(topLeft.y())), bottomRight);
         }
         shape = scaledShape & data.paint.region;
     } else if (data.paint.geo.translation.x() || data.paint.geo.translation.y()) {
         // Only translated, not scaled
-        shape = shape.translated(data.paint.geo.translation.x(), data.paint.geo.translation.y());
-        shape = shape & data.paint.region;
+        QRegion translated;
+        for (auto const& r : shape) {
+            const QRectF t = QRectF(r).translated(data.paint.geo.translation.x(),
+                                                  data.paint.geo.translation.y());
+            const QPoint topLeft(std::ceil(t.x()), std::ceil(t.y()));
+            const QPoint bottomRight(std::floor(t.x() + t.width() - 1),
+                                     std::floor(t.y() + t.height() - 1));
+            translated |= QRect(topLeft, bottomRight);
+        }
+        shape = translated & data.paint.region;
     }
 
     if (!shape.isEmpty()) {
@@ -232,10 +250,10 @@ void ContrastEffect::drawWindow(effect::window_paint_data& data)
     effects->drawWindow(data);
 }
 
-void ContrastEffect::doContrast(effect::window_paint_data const& data, QRegion const& shape)
+void ContrastEffect::doContrast(effect::window_paint_data& data, QRegion const& shape)
 {
     auto mvp = effect::get_mvp(data);
-    auto const rect = mvp.mapRect(shape.boundingRect());
+    auto const rect = effect::map_to_viewport(data.render, shape.boundingRect());
 
     // Upload geometry for the horizontal and vertical passes
     auto vbo = GLVertexBuffer::streamingBuffer();
@@ -243,44 +261,40 @@ void ContrastEffect::doContrast(effect::window_paint_data const& data, QRegion c
     uploadGeometry(vbo, shape);
     vbo->bindArrays();
 
-    // Create a scratch texture and copy the area in the back buffer that we're
-    // going to blur into it
-    GLTexture scratch(GL_RGBA8, rect.width(), rect.height());
-    scratch.setFilter(GL_LINEAR);
-    scratch.setWrapMode(GL_CLAMP_TO_EDGE);
-    scratch.bind();
+    assert(m_windowData.contains(&data.window));
+    auto& win_data = m_windowData.at(&data.window);
+    auto& texture = win_data.texture;
 
-    auto const sg = data.render.viewport;
-    glCopyTexSubImage2D(GL_TEXTURE_2D,
-                        0,
-                        0,
-                        0,
-                        rect.x() - sg.x(),
-                        sg.height() - (rect.y() - sg.y() + rect.height()),
-                        scratch.width(),
-                        scratch.height());
+    if (!texture || texture->size() != rect.size()) {
+        texture = std::make_unique<GLTexture>(GL_RGBA8, rect.size());
+        win_data.fbo = std::make_unique<GLFramebuffer>(texture.get());
+        texture->setFilter(GL_LINEAR);
+        texture->setWrapMode(GL_CLAMP_TO_EDGE);
+    }
+
+    texture->bind();
+
+    win_data.fbo->blit_from_current_render_target(
+        data.render, shape.boundingRect(), QRect({}, texture->size()));
 
     // Draw the texture on the offscreen framebuffer object, while blurring it horizontally
 
-    shader->setColorMatrix(m_windowData.value(&data.window).colorMatrix);
+    shader->setColorMatrix(win_data.colorMatrix);
     shader->bind();
 
     shader->setOpacity(data.paint.opacity);
 
-    // Set up the texture matrix to transform from screen coordinates
-    // to texture coordinates.
+    // Set up the texture matrix to transform from screen coordinates to texture coordinates.
     QMatrix4x4 textureMatrix;
-    textureMatrix.scale(1.0 / rect.width(), -1.0 / rect.height(), 1);
-    textureMatrix.translate(-rect.x(), -rect.height() - rect.y(), 0);
+    textureMatrix.scale(1.0 / rect.width(), 1.0 / rect.height(), 1);
+    textureMatrix.translate(-rect.x(), -rect.y(), 0);
 
     shader->setTextureMatrix(textureMatrix);
     shader->setModelViewProjectionMatrix(mvp);
 
     vbo->draw(GL_TRIANGLES, 0, shape.rectCount() * 6);
 
-    scratch.unbind();
-    scratch.discard();
-
+    texture->unbind();
     vbo->unbindArrays();
 
     if (data.paint.opacity < 1.0) {

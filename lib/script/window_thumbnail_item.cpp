@@ -251,7 +251,7 @@ QUuid window_thumbnail_item::wId() const
 
 scripting::window* find_controlled_window(QUuid const& wId)
 {
-    auto const windows = singleton_interface::qt_script_space->clientList();
+    auto const windows = singleton_interface::qt_script_space->windowList();
     for (auto win : windows) {
         if (win->internalId() == wId) {
             return win;

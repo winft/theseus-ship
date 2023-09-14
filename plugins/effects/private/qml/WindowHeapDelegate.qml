@@ -11,7 +11,7 @@ import org.kde.kirigami 2.20 as Kirigami
 import org.kde.kwin as KWinComponents
 import org.kde.kwin.private.effects
 import org.kde.plasma.components 3.0 as PC3
-import org.kde.plasma.core as PlasmaCore
+import org.kde.ksvg 1.0 as KSvg
 
 Item {
     id: thumb
@@ -27,10 +27,10 @@ Item {
     readonly property bool initialHidden: window.minimized || !presentOnCurrentDesktop
     readonly property bool activeHidden: {
         if (windowHeap.showOnly === "activeClass") {
-            if (!KWinComponents.Workspace.activeClient) {
+            if (!KWinComponents.Workspace.activeWindow) {
                 return true;
             } else {
-                return KWinComponents.Workspace.activeClient.resourceName !== window.resourceName;
+                return KWinComponents.Workspace.activeWindow.resourceName !== window.resourceName;
             }
         } else {
             return windowHeap.showOnly.length !== 0
@@ -123,13 +123,13 @@ Item {
             thumb.windowHeap.deleteDND(thumb.window.internalId);
         }
 
-        PlasmaCore.FrameSvgItem {
+        KSvg.FrameSvgItem {
             anchors {
                 fill: parent
-                topMargin: -PlasmaCore.Units.smallSpacing * 2
-                leftMargin: -PlasmaCore.Units.smallSpacing * 2
-                rightMargin: -PlasmaCore.Units.smallSpacing * 2
-                bottomMargin: -(Math.round(icon.height / 4) + (thumb.windowTitleVisible ? caption.height : 0) + (PlasmaCore.Units.smallSpacing * 2))
+                topMargin: -Kirigami.Units.smallSpacing * 2
+                leftMargin: -Kirigami.Units.smallSpacing * 2
+                rightMargin: -Kirigami.Units.smallSpacing * 2
+                bottomMargin: -(Math.round(icon.height / 4) + (thumb.windowTitleVisible ? caption.height : 0) + (Kirigami.Units.smallSpacing * 2))
             }
             imagePath: "widgets/viewitem"
             prefix: "hover"
@@ -153,12 +153,11 @@ Item {
         visible: !thumb.activeHidden
     }
 
-    PlasmaCore.IconItem {
+    Kirigami.Icon {
         id: icon
-        width: PlasmaCore.Units.iconSizes.large
-        height: PlasmaCore.Units.iconSizes.large
+        width: Kirigami.Units.iconSizes.large
+        height: Kirigami.Units.iconSizes.large
         source: thumb.window.icon
-        usesPlasmaTheme: false
         anchors.horizontalCenter: thumbSource.horizontalCenter
         anchors.bottom: thumbSource.bottom
         anchors.bottomMargin: -Math.round(height / 4)
@@ -172,6 +171,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             elide: Text.ElideRight
             text: thumb.window.caption
+            textFormat: Text.PlainText
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
         }
@@ -354,7 +354,7 @@ Item {
     TapHandler {
         acceptedButtons: Qt.LeftButton
         onTapped: {
-            KWinComponents.Workspace.activeClient = thumb.window;
+            KWinComponents.Workspace.activeWindow = thumb.window;
             thumb.windowHeap.activated();
         }
         onPressedChanged: {
@@ -443,7 +443,7 @@ Item {
         anchors {
             right: thumbSource.right
             top: thumbSource.top
-            margins: PlasmaCore.Units.smallSpacing
+            margins: Kirigami.Units.smallSpacing
         }
 
         visible: thumb.closeButtonVisible && (hoverHandler.hovered || Kirigami.Settings.tabletMode || Kirigami.Settings.hasTransientTouchInput) && thumb.window.closeable && !thumb.activeDragHandler.active

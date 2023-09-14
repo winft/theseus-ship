@@ -41,8 +41,8 @@ class KWIN_EXPORT space : public QObject
     Q_PROPERTY(QVector<KWin::win::virtual_desktop*> desktops READ desktops NOTIFY desktopsChanged)
     Q_PROPERTY(KWin::win::virtual_desktop* currentDesktop READ currentDesktop WRITE
                    setCurrentDesktop NOTIFY currentDesktopChanged)
-    Q_PROPERTY(KWin::scripting::window* activeClient READ activeClient WRITE setActiveClient NOTIFY
-                   clientActivated)
+    Q_PROPERTY(KWin::scripting::window* activeWindow READ activeWindow WRITE setActiveWindow NOTIFY
+                   windowActivated)
     // TODO: write and notify?
     Q_PROPERTY(QSize desktopGridSize READ desktopGridSize NOTIFY desktopLayoutChanged)
     Q_PROPERTY(int desktopGridWidth READ desktopGridWidth NOTIFY desktopLayoutChanged)
@@ -132,9 +132,9 @@ public:
     {
     }
 
-    virtual window* activeClient() const = 0;
+    virtual window* activeWindow() const = 0;
 
-    virtual void setActiveClient(window* win) = 0;
+    virtual void setActiveWindow(window* win) = 0;
 
     virtual QSize desktopGridSize() const = 0;
     int desktopGridWidth() const;
@@ -151,7 +151,7 @@ public:
     QSize virtualScreenSize() const;
     QRect virtualScreenGeometry() const;
 
-    virtual std::vector<window*> windows() const = 0;
+    virtual std::vector<window*> get_windows() const = 0;
 
     /**
      * Returns the geometry a Client can use with the specified option.
@@ -364,9 +364,9 @@ public Q_SLOTS:
     virtual void hideOutline() = 0;
 
 Q_SIGNALS:
-    void clientAdded(KWin::scripting::window* client);
-    void clientRemoved(KWin::scripting::window* client);
-    void clientActivated(KWin::scripting::window* client);
+    void windowAdded(KWin::scripting::window*);
+    void windowRemoved(KWin::scripting::window*);
+    void windowActivated(KWin::scripting::window*);
 
     /// This signal is emitted when a virtual desktop is added or removed.
     void desktopsChanged();
@@ -376,12 +376,6 @@ Q_SIGNALS:
      * @since 4.11
      */
     void desktopLayoutChanged();
-    /**
-     * The demands attention state for Client @p c changed to @p set.
-     * @param c The Client for which demands attention changed
-     * @param set New value of demands attention
-     */
-    void clientDemandsAttentionChanged(KWin::scripting::window* window, bool set);
     void screensChanged();
     /**
      * Signal emitted whenever the current activity changed.
@@ -460,30 +454,29 @@ public:
     qt_script_space();
     ~qt_script_space() override;
 
-    /**
-     * List of Clients currently managed by KWin.
-     */
-    Q_INVOKABLE QList<KWin::scripting::window*> clientList() const;
+    /// List of windows managed by KWin.
+    Q_INVOKABLE QList<KWin::scripting::window*> windowList() const;
 };
 
 class KWIN_EXPORT declarative_script_space : public space
 {
     Q_OBJECT
-    Q_PROPERTY(QQmlListProperty<KWin::scripting::window> clients READ clients)
+    Q_PROPERTY(QQmlListProperty<KWin::scripting::window> windows READ windows)
 
 public:
     declarative_script_space() = default;
 
-    QQmlListProperty<window> clients();
-    static qsizetype countClientList(QQmlListProperty<window>* clients);
-    static window* atClientList(QQmlListProperty<window>* clients, qsizetype index);
+    QQmlListProperty<window> windows();
+    static qsizetype countWindowList(QQmlListProperty<window>* windows);
+    static window* atWindowList(QQmlListProperty<window>* windows, qsizetype index);
 };
 
 template<typename Space, typename RefSpace>
 class template_space : public Space
 {
 public:
-    using window_t = window_impl<typename RefSpace::window_t>;
+    using type = template_space<Space, RefSpace>;
+    using window_t = window_impl<typename RefSpace::window_t, type>;
     using base_t = typename RefSpace::base_t;
 
     template_space(RefSpace* ref_space)
@@ -494,13 +487,12 @@ public:
         QObject::connect(
             ref_space->qobject.get(), &space_qobject::clientAdded, this, [this](auto win_id) {
                 auto ref_win = this->ref_space->windows_map.at(win_id);
-                std::visit(overload{[this](auto&& win) { handle_client_added(win); }}, ref_win);
+                std::visit(overload{[&, this](auto&& win) { handle_client_added(win); }}, ref_win);
             });
-        QObject::connect(
-            ref_space->qobject.get(), &space_qobject::clientRemoved, this, [this](auto win_id) {
-                auto ref_win = this->ref_space->windows_map.at(win_id);
-                std::visit(overload{[this](auto&& win) { handle_client_removed(win); }}, ref_win);
-            });
+        QObject::connect(ref_space->qobject.get(),
+                         &space_qobject::clientRemoved,
+                         this,
+                         [this](auto win_id) { handle_client_removed(win_id); });
         QObject::connect(ref_space->qobject.get(),
                          &space_qobject::wayland_window_added,
                          this,
@@ -512,18 +504,9 @@ public:
 
         QObject::connect(ref_space->qobject.get(), &space_qobject::clientActivated, this, [this] {
             if (auto act = this->ref_space->stacking.active) {
-                Q_EMIT Space::clientActivated(get_window(*act));
+                Q_EMIT Space::windowActivated(get_window(*act));
             }
         });
-
-        QObject::connect(ref_space->qobject.get(),
-                         &space_qobject::clientDemandsAttentionChanged,
-                         this,
-                         [this](auto win_id, auto set) {
-                             auto ref_win = this->ref_space->windows_map.at(win_id);
-                             auto window = get_window(ref_win);
-                             Q_EMIT Space::clientDemandsAttentionChanged(window, set);
-                         });
 
         auto& vds = ref_space->virtual_desktop_manager;
         QObject::connect(vds->qobject.get(),
@@ -578,21 +561,16 @@ public:
         ref_space->virtual_desktop_manager->setCurrent(desktop);
     }
 
-    std::vector<window*> windows() const override
+    std::vector<window*> get_windows() const override
     {
         std::vector<window*> ret;
-        for (auto const& win : ref_space->windows) {
-            std::visit(overload{[&](auto&& win) {
-                           if (win->control && win->control->script) {
-                               ret.push_back(static_cast<window*>(win->control->script.get()));
-                           }
-                       }},
-                       win);
+        for (auto const& [key, win] : windows_map) {
+            ret.push_back(win.get());
         }
         return ret;
     }
 
-    window* activeClient() const override
+    window* activeWindow() const override
     {
         auto active_client = ref_space->stacking.active;
         if (!active_client) {
@@ -601,7 +579,7 @@ public:
         return get_window(*active_client);
     }
 
-    void setActiveClient(window* win) override
+    void setActiveWindow(window* win) override
     {
         std::visit(overload{[this](auto&& ref_win) { win::activate_window(*ref_space, *ref_win); }},
                    static_cast<window_t*>(win)->client());
@@ -884,6 +862,8 @@ public:
         win::activate_window_direction(*ref_space, win::direction::west);
     }
 
+    std::unordered_map<uint32_t, std::unique_ptr<window>> windows_map;
+
 protected:
     output* screen_at_impl(QPointF const& pos) const override
     {
@@ -1034,8 +1014,9 @@ protected:
             if (auto scr_win
                 = std::visit(overload{[&](auto&& win) -> window* {
                                  if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
-                                     if (win->control && win->xcb_windows.client == windowId) {
-                                         return static_cast<window*>(win->control->script.get());
+                                     if (win->xcb_windows.client == windowId
+                                         && windows_map.contains(win->meta.signal_id)) {
+                                         return windows_map.at(win->meta.signal_id).get();
                                      }
                                  }
                                  return nullptr;
@@ -1048,15 +1029,15 @@ protected:
         return nullptr;
     }
 
-    static window* get_window(typename RefSpace::window_t win)
+    window* get_window(typename RefSpace::window_t win) const
     {
-        return std::visit(overload{[](auto&& win) -> window* {
-                              if (!win->control) {
-                                  return nullptr;
-                              }
-                              return static_cast<window*>(win->control->script.get());
-                          }},
-                          win);
+        auto id
+            = std::visit(overload{[](auto&& win) -> uint32_t { return win->meta.signal_id; }}, win);
+        if (!windows_map.contains(id)) {
+            return nullptr;
+        }
+
+        return windows_map.at(id).get();
     }
 
     template<typename RefWin>
@@ -1067,20 +1048,22 @@ protected:
             return;
         }
 
-        win->control->script = std::make_unique<window_t>(win);
+        auto key = win->meta.signal_id;
+        windows_map.insert({key, std::make_unique<window_t>(win, *this)});
 
         Space::windows_count++;
-        Q_EMIT Space::clientAdded(static_cast<window*>(win->control->script.get()));
+        Q_EMIT Space::windowAdded(static_cast<window*>(windows_map.at(key).get()));
     }
 
-    template<typename RefWin>
-    void handle_client_removed(RefWin* client)
+    void handle_client_removed(uint32_t id)
     {
-        if (!client->control) {
+        if (!windows_map.contains(id)) {
             return;
         }
+
         Space::windows_count--;
-        Q_EMIT Space::clientRemoved(static_cast<window*>(client->control->script.get()));
+        Q_EMIT Space::windowRemoved(static_cast<window*>(windows_map.at(id).get()));
+        windows_map.erase(id);
     }
 
     output_impl<typename RefSpace::base_t::output_t>* get_output(base::output const* output) const

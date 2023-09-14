@@ -567,23 +567,6 @@ private:
     /// Creates the menu if not already created.
     void init()
     {
-        auto configModules = [](bool controlCenter) -> QStringList {
-            QStringList args;
-            args << QStringLiteral("kwindecoration");
-            if (controlCenter)
-                args << QStringLiteral("kwinoptions");
-            else if (KAuthorized::authorizeControlModule(QStringLiteral("kde-kwinoptions.desktop")))
-                args << QStringLiteral("kwinactions") << QStringLiteral("kwinfocus")
-                     << QStringLiteral("kwinmoving") << QStringLiteral("kwinadvanced")
-                     << QStringLiteral("kwinrules") << QStringLiteral("kwincompositing")
-                     << QStringLiteral("kwineffects")
-#if KWIN_BUILD_TABBOX
-                     << QStringLiteral("kwintabbox")
-#endif
-                     << QStringLiteral("kwinscreenedges") << QStringLiteral("kwinscripts");
-            return args;
-        };
-
         if (m_menu) {
             return;
         }
@@ -651,61 +634,20 @@ private:
 
         advancedMenu->addSeparator();
 
-        m_shortcutOperation = advancedMenu->addAction(i18n("Set Window Short&cut..."));
+        m_shortcutOperation = advancedMenu->addAction(i18n("Set Window Short&cut…"));
         m_shortcutOperation->setIcon(QIcon::fromTheme(QStringLiteral("configure-shortcuts")));
         setShortcut(m_shortcutOperation, QStringLiteral("Setup Window Shortcut"));
         m_shortcutOperation->setData(static_cast<int>(win_op::setup_window_shortcut));
 
-        QAction* action = advancedMenu->addAction(i18n("Configure Special &Window Settings..."));
+        QAction* action = advancedMenu->addAction(i18n("Configure Special &Window Settings…"));
         action->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-actions")));
         action->setData(static_cast<int>(win_op::window_rules));
         m_rulesOperation = action;
 
-        action = advancedMenu->addAction(i18n("Configure S&pecial Application Settings..."));
+        action = advancedMenu->addAction(i18n("Configure S&pecial Application Settings…"));
         action->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-actions")));
         action->setData(static_cast<int>(win_op::application_rules));
         m_applicationRulesOperation = action;
-        if (!space.base.config.main->isImmutable()
-            && !KAuthorized::authorizeControlModules(configModules(true)).isEmpty()) {
-            advancedMenu->addSeparator();
-            action
-                = advancedMenu->addAction(i18nc("Entry in context menu of window decoration to "
-                                                "open the configuration module of KWin",
-                                                "Configure W&indow Manager..."));
-            action->setIcon(QIcon::fromTheme(QStringLiteral("configure")));
-            QObject::connect(action, &QAction::triggered, qobject.get(), [this, configModules]() {
-                // opens the KWin configuration
-                QStringList args;
-                args << QStringLiteral("--icon") << QStringLiteral("preferences-system-windows");
-                const QString path
-                    = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                             QStringLiteral("kservices5/kwinfocus.desktop"));
-                if (!path.isEmpty()) {
-                    args << QStringLiteral("--desktopfile") << path;
-                }
-                args << configModules(false);
-                auto p = new QProcess(qobject.get());
-                p->setArguments(args);
-
-                if constexpr (requires(decltype(space.base) base) { base.process_environment; }) {
-                    p->setProcessEnvironment(space.base.process_environment);
-                }
-
-                p->setProgram(QStringLiteral("kcmshell6"));
-                QObject::connect(
-                    p,
-                    static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-                    p,
-                    &QProcess::deleteLater);
-                QObject::connect(
-                    p, &QProcess::errorOccurred, qobject.get(), [](QProcess::ProcessError e) {
-                        if (e == QProcess::FailedToStart) {
-                            qCDebug(KWIN_CORE) << "Failed to start kcmshell6";
-                        }
-                    });
-                p->start();
-            });
-        }
 
         m_maximizeOperation = m_menu->addAction(i18n("Ma&ximize"));
         m_maximizeOperation->setIcon(QIcon::fromTheme(QStringLiteral("window-maximize")));

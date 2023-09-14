@@ -8,7 +8,6 @@
 #include "appmenu.h"
 #include "config-kwin.h"
 #include "geo.h"
-#include "lib_interface.h"
 #include "stacking.h"
 #include "structs.h"
 #include "tabbox/tabbox_client_impl.h"
@@ -58,14 +57,6 @@ public:
         assert(deco.decoration == nullptr);
     }
 
-    void setup_tabbox()
-    {
-        assert(!m_tabbox);
-#if KWIN_BUILD_TABBOX
-        m_tabbox = std::make_shared<win::tabbox_client_impl<var_win>>(m_win);
-#endif
-    }
-
     virtual void set_desktops(QVector<virtual_desktop*> desktops) = 0;
 
     bool skip_pager() const
@@ -96,11 +87,6 @@ public:
     virtual void set_skip_taskbar(bool set)
     {
         m_skip_taskbar = set;
-    }
-
-    std::weak_ptr<win::tabbox_client_impl<var_win>> tabbox() const
-    {
-        return m_tabbox;
     }
 
     bool has_application_menu() const
@@ -225,7 +211,6 @@ public:
         rules.remove(rule);
     }
 
-    std::unique_ptr<script_window> script;
     Wrapland::Server::PlasmaWindow* plasma_wayland_integration{nullptr};
 
     bool active{false};
@@ -238,6 +223,7 @@ public:
     win::appmenu appmenu;
     QKeySequence shortcut;
     QIcon icon;
+    std::unique_ptr<win::tabbox_client_impl<var_win>> tabbox;
 
     quicktiles quicktiling{quicktiles::none};
     quicktiles electric{quicktiles::none};
@@ -262,8 +248,6 @@ private:
     bool m_skip_taskbar{false};
     bool m_skip_pager{false};
     bool m_skip_switcher{false};
-
-    std::shared_ptr<win::tabbox_client_impl<var_win>> m_tabbox;
 
     QTimer* m_auto_raise_timer{nullptr};
 

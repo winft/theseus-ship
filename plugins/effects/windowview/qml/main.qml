@@ -10,7 +10,7 @@ import Qt5Compat.GraphicalEffects
 import QtQuick.Layouts
 import org.kde.kwin as KWinComponents
 import org.kde.kwin.private.effects
-import org.kde.plasma.core as PlasmaCore
+import org.kde.kirigami 2.20 as Kirigami
 import org.kde.plasma.extras as PlasmaExtras
 import org.kde.KWin.Effect.WindowView
 
@@ -77,7 +77,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: PlasmaCore.ColorScope.backgroundColor
+        color: Kirigami.Theme.backgroundColor
         opacity: container.organized ? 0.75 : 0
 
         TapHandler {
@@ -91,7 +91,7 @@ Item {
 
     Loader {
         anchors.centerIn: parent
-        width: parent.width - (PlasmaCore.Units.gridUnit * 8)
+        width: parent.width - (Kirigami.Units.gridUnit * 8)
 
         active: heap.activeEmpty
 
@@ -114,8 +114,8 @@ Item {
         PlasmaExtras.SearchField {
             id: searchField
             Layout.alignment: Qt.AlignCenter
-            Layout.topMargin: PlasmaCore.Units.gridUnit
-            Layout.preferredWidth: Math.min(parent.width, 20 * PlasmaCore.Units.gridUnit)
+            Layout.topMargin: Kirigami.Units.gridUnit
+            Layout.preferredWidth: Math.min(parent.width, 20 * Kirigami.Units.gridUnit)
             focus: false
 
             // Don't confuse users into thinking it's a full search
@@ -165,7 +165,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             focus: true
-            padding: PlasmaCore.Units.largeSpacing
+            padding: Kirigami.Units.gridUnit
             animationDuration: container.effect.animationDuration
             animationEnabled: container.animationEnabled
             organized: container.organized

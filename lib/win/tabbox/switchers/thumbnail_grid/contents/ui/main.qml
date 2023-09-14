@@ -8,6 +8,7 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.1
 import org.kde.plasma.core 2.0 as PlasmaCore
+import org.kde.ksvg 1.0 as KSvg
 import org.kde.plasma.components 3.0 as PlasmaComponents3
 import org.kde.kwin 3.0 as KWin
 import org.kde.kirigami 2.20 as Kirigami
@@ -82,7 +83,7 @@ KWin.TabBoxSwitcher {
             }
 
             // Just to get the margin sizes
-            PlasmaCore.FrameSvgItem {
+            KSvg.FrameSvgItem {
                 id: hoverItem
                 imagePath: "widgets/viewitem"
                 prefix: "hover"
@@ -95,10 +96,10 @@ KWin.TabBoxSwitcher {
 
                 model: tabBox.model
 
-                readonly property int iconSize: PlasmaCore.Units.iconSizes.huge
-                readonly property int captionRowHeight: PlasmaCore.Units.gridUnit * 2
-                readonly property int columnSpacing: PlasmaCore.Units.largeSpacing
-                readonly property int thumbnailWidth: PlasmaCore.Units.gridUnit * 16
+                readonly property int iconSize: Kirigami.Units.iconSizes.huge
+                readonly property int captionRowHeight: Kirigami.Units.gridUnit * 2
+                readonly property int columnSpacing: Kirigami.Units.gridUnit
+                readonly property int thumbnailWidth: Kirigami.Units.gridUnit * 16
                 readonly property int thumbnailHeight: thumbnailWidth * (1.0/dialogMainItem.screenFactor)
                 cellWidth: hoverItem.margins.left + thumbnailWidth + hoverItem.margins.right
                 cellHeight: hoverItem.margins.top + captionRowHeight + thumbnailHeight + hoverItem.margins.bottom
@@ -147,7 +148,7 @@ KWin.TabBoxSwitcher {
                                 wId: windowId
                             }
 
-                            PlasmaCore.IconItem {
+                            Kirigami.Icon {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.verticalCenter: parent.bottom
                                 anchors.verticalCenterOffset: Math.round(-columnLayout.spacing/2)
@@ -155,7 +156,6 @@ KWin.TabBoxSwitcher {
                                 height: thumbnailGridView.iconSize
 
                                 source: model.icon
-                                usesPlasmaTheme: false
                             }
 
                             PlasmaComponents3.ToolButton {
@@ -193,7 +193,7 @@ KWin.TabBoxSwitcher {
                     }
                 } // GridView.delegate
 
-                highlight: PlasmaCore.FrameSvgItem {
+                highlight: KSvg.FrameSvgItem {
                     imagePath: "widgets/viewitem"
                     prefix: "hover"
                 }

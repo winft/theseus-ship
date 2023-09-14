@@ -87,37 +87,35 @@ qt_script_space::~qt_script_space()
     singleton_interface::qt_script_space = nullptr;
 }
 
-QList<window*> qt_script_space::clientList() const
+QList<window*> qt_script_space::windowList() const
 {
     QList<window*> ret;
-    for (auto const& window : windows()) {
+    for (auto const& window : get_windows()) {
         ret << window;
     }
     return ret;
 }
 
-QQmlListProperty<window> declarative_script_space::clients()
+QQmlListProperty<window> declarative_script_space::windows()
 {
     return QQmlListProperty<window>(this,
                                     nullptr,
-                                    &declarative_script_space::countClientList,
-                                    &declarative_script_space::atClientList);
+                                    &declarative_script_space::countWindowList,
+                                    &declarative_script_space::atWindowList);
 }
 
-qsizetype declarative_script_space::countClientList(QQmlListProperty<window>* clients)
+qsizetype declarative_script_space::countWindowList(QQmlListProperty<window>* windows)
 {
-    Q_UNUSED(clients)
-    auto wsw = reinterpret_cast<declarative_script_space*>(clients->data);
+    auto wsw = reinterpret_cast<declarative_script_space*>(windows->data);
     return wsw->windows_count;
 }
 
-window* declarative_script_space::atClientList(QQmlListProperty<window>* clients, qsizetype index)
+window* declarative_script_space::atWindowList(QQmlListProperty<window>* windows, qsizetype index)
 {
-    Q_UNUSED(clients)
-    auto wsw = reinterpret_cast<declarative_script_space*>(clients->data);
+    auto wsw = reinterpret_cast<declarative_script_space*>(windows->data);
 
     try {
-        return wsw->windows()[index];
+        return wsw->get_windows()[index];
     } catch (std::out_of_range const& ex) {
         return nullptr;
     }

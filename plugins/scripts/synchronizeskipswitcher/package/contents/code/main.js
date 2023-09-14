@@ -12,9 +12,9 @@ function setupConnection(client) {
     client.skipTaskbarChanged.connect(client, synchronizeSwitcher);
 }
 
-workspace.clientAdded.connect(setupConnection);
+workspace.windowAdded.connect(setupConnection);
 // connect all existing clients
-var clients = workspace.clientList();
+var clients = workspace.windowList();
 for (var i=0; i<clients.length; i++) {
     setupConnection(clients[i]);
 }

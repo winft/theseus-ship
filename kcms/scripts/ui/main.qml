@@ -6,11 +6,10 @@
 */
 
 import QtQuick
-import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 
 import org.kde.config
-import org.kde.kirigami 2.10 as Kirigami
+import org.kde.kirigami 2 as Kirigami
 import org.kde.newstuff as NewStuff
 import org.kde.kcmutils as KCMUtils
 
@@ -63,7 +62,9 @@ KCMUtils.ScrollViewKCM {
                 Kirigami.Action {
                     enabled: kcm.canDeleteEntry(model.metaData)
                     icon.name: kcm.pendingDeletions.indexOf(model.metaData) === -1 ? "delete" : "edit-undo"
-                    tooltip: i18nc("@info:tooltip", "Delete…")
+                    text: i18nc("@info:tooltip", "Delete…")
+                    displayHint: Kirigami.DisplayHint.IconOnly
+
                     onTriggered: kcm.togglePendingDeletion(model.metaData)
                 }
             ]

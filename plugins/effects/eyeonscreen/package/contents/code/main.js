@@ -32,15 +32,15 @@ var eyeOnScreenEffect = {
     },
     slurp: function (showing) {
         var stackingOrder = effects.stackingOrder;
-        var screenGeo = effects.virtualScreenGeometry;
-        var center = { value1: screenGeo.x + screenGeo.width/2,
-                       value2: screenGeo.y + screenGeo.height/2 };
 	var screenNum = 0;
         for (var i = 0; i < stackingOrder.length; ++i) {
             var w = stackingOrder[i];
             if (!w.visible || !(showing || w.slurpedByEyeOnScreen)) {
                 continue;
             }
+            const screenGeo = w.screen.geometry;
+            const center = { value1: screenGeo.x + screenGeo.width / 2,
+                             value2: screenGeo.y + screenGeo.height / 2 };
             w.slurpedByEyeOnScreen = showing;
             if (w.desktopWindow) {
                 // causes "seizures" because of opposing movements

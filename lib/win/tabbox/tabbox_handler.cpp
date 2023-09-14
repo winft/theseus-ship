@@ -167,13 +167,12 @@ void tabbox_handler_private::update_highlight_windows()
             auto order = q->stacking_order();
             auto succ_idx = order.size() + 1;
             for (size_t i = 0; i < order.size(); ++i) {
-                if (order.at(i).lock().get() == last_raised_client) {
+                if (order.at(i) == last_raised_client) {
                     succ_idx = i + 1;
                     break;
                 }
             }
-            last_raised_client_succ
-                = (succ_idx < order.size()) ? order.at(succ_idx).lock().get() : nullptr;
+            last_raised_client_succ = (succ_idx < order.size()) ? order.at(succ_idx) : nullptr;
             q->raise_client(last_raised_client);
         }
     }
@@ -564,15 +563,11 @@ void tabbox_handler::create_model(bool partial_reset)
         // TODO: C++11 use lambda function
         bool last_raised = false;
         bool last_raised_succ = false;
-        for (auto const& client_pointer : stacking_order()) {
-            auto client = client_pointer.lock();
-            if (!client) {
-                continue;
-            }
-            if (client.get() == d->last_raised_client) {
+        for (auto const& client : stacking_order()) {
+            if (client == d->last_raised_client) {
                 last_raised = true;
             }
-            if (client.get() == d->last_raised_client_succ) {
+            if (client == d->last_raised_client_succ) {
                 last_raised_succ = true;
             }
         }

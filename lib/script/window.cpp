@@ -9,7 +9,7 @@ namespace KWin::scripting
 {
 
 window::window(win::window_qobject& qtwin)
-    : win::script_window(qtwin)
+    : win::property_window(qtwin)
 {
 }
 

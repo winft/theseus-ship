@@ -338,7 +338,7 @@ QRegion BlurEffect::blur_region(EffectWindow const* win) const
     return region;
 }
 
-void BlurEffect::upload_region(QVector2D*& map, QRegion const& region)
+void BlurEffect::upload_region(std::span<QVector2D> const map, size_t& index, QRegion const& region)
 {
     for (auto const& r : region) {
         QVector2D const topLeft(r.x(), r.y());
@@ -347,14 +347,14 @@ void BlurEffect::upload_region(QVector2D*& map, QRegion const& region)
         QVector2D const bottomRight((r.x() + r.width()), (r.y() + r.height()));
 
         // First triangle
-        *(map++) = topRight;
-        *(map++) = topLeft;
-        *(map++) = bottomLeft;
+        map[index++] = topRight;
+        map[index++] = topLeft;
+        map[index++] = bottomLeft;
 
         // Second triangle
-        *(map++) = bottomLeft;
-        *(map++) = bottomRight;
-        *(map++) = topRight;
+        map[index++] = bottomLeft;
+        map[index++] = bottomRight;
+        map[index++] = topRight;
     }
 }
 
@@ -367,10 +367,14 @@ void BlurEffect::upload_geometry(GLVertexBuffer* vbo,
         return;
     }
 
-    auto map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
+    auto map = vbo->map<QVector2D>(vertexCount);
+    if (!map) {
+        return;
+    }
 
-    upload_region(map, expanded_blur_region);
-    upload_region(map, blur_region);
+    size_t index = 0;
+    upload_region(*map, index, expanded_blur_region);
+    upload_region(*map, index, blur_region);
 
     vbo->unmap();
 
@@ -485,21 +489,32 @@ void BlurEffect::drawWindow(effect::window_paint_data& data)
         auto pt = shape.boundingRect().topLeft();
         QRegion scaled_shape;
 
-        for (auto r : shape) {
-            r.moveTo(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
-                         + data.paint.geo.translation.x(),
-                     pt.y() + (r.y() - pt.y()) * data.paint.geo.scale.y()
-                         + data.paint.geo.translation.y());
-            r.setWidth(r.width() * data.paint.geo.scale.x());
-            r.setHeight(r.height() * data.paint.geo.scale.y());
-            scaled_shape |= r;
+        for (auto const& r : shape) {
+            QPointF const topLeft(pt.x() + (r.x() - pt.x()) * data.paint.geo.scale.x()
+                                      + data.paint.geo.translation.x(),
+                                  pt.y() + (r.y() - pt.y()) * data.paint.geo.scale.y()
+                                      + data.paint.geo.translation.y());
+            QPoint const bottomRight(
+                std::floor(topLeft.x() + r.width() * data.paint.geo.scale.x()) - 1,
+                std::floor(topLeft.y() + r.height() * data.paint.geo.scale.y()) - 1);
+            scaled_shape
+                |= QRect(QPoint(std::floor(topLeft.x()), std::floor(topLeft.y())), bottomRight);
         }
 
         shape = scaled_shape;
 
     } else if (data.paint.geo.translation.x() || data.paint.geo.translation.y()) {
         // Only translated, not scaled
-        shape = shape.translated(data.paint.geo.translation.x(), data.paint.geo.translation.y());
+        QRegion translated;
+        for (auto const& r : shape) {
+            auto const t = QRectF(r).translated(data.paint.geo.translation.x(),
+                                                data.paint.geo.translation.y());
+            QPoint const topLeft(std::ceil(t.x()), std::ceil(t.y()));
+            QPoint const bottomRight(std::floor(t.x() + t.width() - 1),
+                                     std::floor(t.y() + t.height() - 1));
+            translated |= QRect(topLeft, bottomRight);
+        }
+        shape = translated;
     }
 
     auto modal = data.window.transientFor();

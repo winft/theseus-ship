@@ -5,8 +5,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 import QtQuick
 import QtQuick.Window
-import org.kde.plasma.core as PlasmaCore;
-import org.kde.plasma.extras as PlasmaExtras
+import org.kde.plasma.core as PlasmaCore
+import org.kde.kirigami 2.20 as Kirigami
+import org.kde.ksvg 1.0 as KSvg
 import org.kde.kwin
 
 PlasmaCore.Dialog {
@@ -62,7 +63,7 @@ PlasmaCore.Dialog {
         width: dialogItem.showGrid ? view.itemWidth * view.columns : Math.ceil(textElement.implicitWidth)
         height: dialogItem.showGrid ? view.itemHeight * view.rows + textElement.height : textElement.height
 
-        PlasmaExtras.Heading {
+        Kirigami.Heading {
             id: textElement
             anchors.top: dialogItem.showGrid ? parent.top : undefined
             anchors.left: parent.left
@@ -92,12 +93,12 @@ PlasmaCore.Dialog {
                 Item {
                     width: view.itemWidth
                     height: view.itemHeight
-                    PlasmaCore.FrameSvgItem {
+                    KSvg.FrameSvgItem {
                         anchors.fill: parent
                         imagePath: "widgets/pager"
                         prefix: "normal"
                     }
-                    PlasmaCore.FrameSvgItem {
+                    KSvg.FrameSvgItem {
                         id: activeElement
                         anchors.fill: parent
                         imagePath: "widgets/pager"
@@ -110,12 +111,12 @@ PlasmaCore.Dialog {
                     Item {
                         id: arrowsContainer
                         anchors.fill: parent
-                        PlasmaCore.IconItem {
+                        Kirigami.Icon {
                             anchors.fill: parent
                             source: "go-up"
                             visible: false
                         }
-                        PlasmaCore.IconItem {
+                        Kirigami.Icon {
                             anchors.fill: parent
                             source: "go-down"
                             visible: {
@@ -141,7 +142,7 @@ PlasmaCore.Dialog {
                                 return false;
                             }
                         }
-                        PlasmaCore.IconItem {
+                        Kirigami.Icon {
                             anchors.fill: parent
                             source: "go-up"
                             visible: {
@@ -167,7 +168,7 @@ PlasmaCore.Dialog {
                                 return false;
                             }
                         }
-                        PlasmaCore.IconItem {
+                        Kirigami.Icon {
                             anchors.fill: parent
                             source: "go-next"
                             visible: {
@@ -201,7 +202,7 @@ PlasmaCore.Dialog {
                                 return false;
                             }
                         }
-                        PlasmaCore.IconItem {
+                        Kirigami.Icon {
                             anchors.fill: parent
                             source: "go-previous"
                             visible: {

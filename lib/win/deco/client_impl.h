@@ -467,7 +467,7 @@ private:
         m_renderer.reset();
         auto should_create_renderer = active;
 
-        if constexpr (requires(render_t * render, render_window window) {
+        if constexpr (requires(render_t* render, render_window window) {
                           render->create_non_composited_deco(window);
                       }) {
             should_create_renderer = true;

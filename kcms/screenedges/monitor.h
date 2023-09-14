@@ -19,7 +19,7 @@ class QGraphicsView;
 class QGraphicsScene;
 class QMenu;
 
-namespace Plasma
+namespace KSvg
 {
 class FrameSvg;
 }
@@ -93,7 +93,7 @@ protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
 private:
     Monitor* monitor;
-    Plasma::FrameSvg *button;
+    KSvg::FrameSvg *button;
     bool m_active;
     bool m_hover;
 };

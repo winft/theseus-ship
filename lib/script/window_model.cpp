@@ -18,10 +18,10 @@ window_model::window_model(QObject* parent)
 {
     auto ws_wrap = singleton_interface::qt_script_space;
 
-    connect(ws_wrap, &space::clientAdded, this, &window_model::handleWindowAdded);
-    connect(ws_wrap, &space::clientRemoved, this, &window_model::handleWindowRemoved);
+    connect(ws_wrap, &space::windowAdded, this, &window_model::handleWindowAdded);
+    connect(ws_wrap, &space::windowRemoved, this, &window_model::handleWindowRemoved);
 
-    for (auto window : ws_wrap->windows()) {
+    for (auto window : ws_wrap->get_windows()) {
         m_windows << window->internalId();
         setupWindowConnections(window);
     }
@@ -75,7 +75,7 @@ QHash<int, QByteArray> window_model::roleNames() const
 
 scripting::window* find_window(QUuid const& wId)
 {
-    auto const windows = scripting::singleton_interface::qt_script_space->clientList();
+    auto const windows = scripting::singleton_interface::qt_script_space->windowList();
     for (auto win : windows) {
         if (win->internalId() == wId) {
             return win;

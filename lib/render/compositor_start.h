@@ -162,7 +162,7 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
     comp.scene.reset();
     comp.platform.render_stop(on_shutdown);
 
-    if constexpr (requires(Compositor & comp) { comp.compositeTimer; }) {
+    if constexpr (requires(Compositor& comp) { comp.compositeTimer; }) {
         comp.m_bufferSwapPending = false;
         comp.compositeTimer.stop();
         comp.repaints_region = {};

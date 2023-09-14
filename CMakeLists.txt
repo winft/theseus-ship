@@ -61,6 +61,8 @@ include(KDECompilerSettings NO_POLICY_SCOPE)
 include(ECMInstallIcons)
 include(ECMOptionalAddSubdirectory)
 include(ECMConfiguredInstall)
+include(ECMQmlModule)
+include(ECMGenerateQmlTypes)
 
 # required frameworks by Core
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
@@ -74,7 +76,7 @@ find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
     IdleTime
     Notifications
     Package
-    Plasma
+    Svg
     WidgetsAddons
     WindowSystem
 )
@@ -104,7 +106,14 @@ add_feature_info("KF6DocTools" KF6DocTools_FOUND "Enable building documentation"
 find_package(KF6Kirigami2 ${KF6_MIN_VERSION} CONFIG)
 set_package_properties(KF6Kirigami2 PROPERTIES
     DESCRIPTION "A QtQuick based components set"
-    PURPOSE "Required at runtime for Virtual desktop KCM and the virtual keyboard"
+    PURPOSE "Required at runtime for several QML effects"
+    TYPE RUNTIME
+)
+
+find_package(KF6Plasma ${KF6_MIN_VERSION} CONFIG)
+set_package_properties(KF6Plasma PROPERTIES
+    DESCRIPTION "A QtQuick based components set"
+    PURPOSE "Required at runtime for several QML effects"
     TYPE RUNTIME
 )
 
@@ -333,7 +342,7 @@ target_link_libraries(kwin_x11
 
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
 
-kcoreaddons_target_static_plugins(kwin_x11 "kwin/effects/plugins")
+kcoreaddons_target_static_plugins(kwin_x11 NAMESPACE "kwin/effects/plugins")
 
 add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
@@ -358,7 +367,7 @@ if (HAVE_LIBCAP)
     )
 endif()
 
-kcoreaddons_target_static_plugins(kwin_wayland "kwin/effects/plugins")
+kcoreaddons_target_static_plugins(kwin_wayland NAMESPACE "kwin/effects/plugins")
 
 # Required for Plasma Wayland session. It expects a binary with this name to launch on startup.
 add_custom_target(kwin_wayland_wrapper ALL COMMAND

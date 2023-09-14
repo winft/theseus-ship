@@ -43,20 +43,14 @@ void SheetEffect::reconfigure(ReconfigureFlags flags)
 
 void SheetEffect::prePaintScreen(effect::screen_prepaint_data& data)
 {
-    auto animationIt = m_animations.begin();
-    while (animationIt != m_animations.end()) {
-        (*animationIt).timeLine.advance(data.present_time);
-        ++animationIt;
-    }
-
     data.paint.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
-
     effects->prePaintScreen(data);
 }
 
 void SheetEffect::prePaintWindow(effect::window_prepaint_data& data)
 {
-    if (m_animations.contains(&data.window)) {
+    if (auto anim_it = m_animations.find(&data.window); anim_it != m_animations.end()) {
+        anim_it->timeLine.advance(data.present_time);
         data.paint.mask |= Effect::PAINT_WINDOW_TRANSFORMED;
     }
 

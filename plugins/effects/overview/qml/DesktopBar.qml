@@ -13,21 +13,21 @@ import org.kde.kirigami 2.20 as Kirigami
 import org.kde.kwin as KWinComponents
 import org.kde.kwin.private.effects
 import org.kde.plasma.components 3.0 as PC3
-import org.kde.plasma.core as PlasmaCore
+import org.kde.kirigami 2.20 as Kirigami
 
 Item {
     id: bar
 
-    readonly property real desktopHeight: PlasmaCore.Units.gridUnit * 4
+    readonly property real desktopHeight: Kirigami.Units.gridUnit * 4
     readonly property real desktopWidth: desktopHeight * targetScreen.geometry.width / targetScreen.geometry.height
-    readonly property real columnHeight: desktopHeight + PlasmaCore.Units.gridUnit
+    readonly property real columnHeight: desktopHeight + Kirigami.Units.gridUnit
 
     property QtObject windowModel
     property alias desktopModel: desktopRepeater.model
     property QtObject selectedDesktop: null
     property WindowHeap heap
 
-    implicitHeight: columnHeight + 2 * PlasmaCore.Units.smallSpacing
+    implicitHeight: columnHeight + 2 * Kirigami.Units.smallSpacing
 
     Flickable {
         anchors.fill: parent
@@ -40,7 +40,7 @@ Item {
         flickableDirection: Flickable.HorizontalFlick
 
         Row {
-            spacing: PlasmaCore.Units.largeSpacing
+            spacing: Kirigami.Units.gridUnit
 
             Repeater {
                 id: desktopRepeater
@@ -50,7 +50,7 @@ Item {
                     activeFocusOnTab: true
                     width: bar.desktopWidth
                     height: bar.columnHeight
-                    spacing: PlasmaCore.Units.smallSpacing
+                    spacing: Kirigami.Units.smallSpacing
 
                     required property QtObject desktop
                     required property int index
@@ -126,7 +126,7 @@ Item {
                             radius: 3
                             color: "transparent"
                             border.width: 2
-                            border.color: active ? PlasmaCore.ColorScope.highlightColor : PlasmaCore.ColorScope.textColor
+                            border.color: active ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
                             opacity: dropArea.containsDrag || !active ? 0.5 : 1.0
                         }
 
@@ -191,13 +191,14 @@ Item {
                     Item {
                         id: label
                         width: bar.desktopWidth
-                        height: PlasmaCore.Units.gridUnit
+                        height: Kirigami.Units.gridUnit
                         state: "normal"
 
                         PC3.Label {
                             anchors.fill: parent
                             elide: Text.ElideRight
                             text: delegate.desktop.name
+                            textFormat: Text.PlainText
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             visible: label.state === "normal"

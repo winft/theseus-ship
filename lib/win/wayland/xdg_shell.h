@@ -200,7 +200,7 @@ Win& create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
     win.toplevel = toplevel;
 
     win.control = std::make_unique<typename Win::xdg_shell_control_t>(win);
-    win.control->setup_tabbox();
+    win.control->tabbox = std::make_unique<win::tabbox_client_impl<typename Space::window_t>>(&win);
     win.control->setup_color_scheme();
 
     setup_window_control_connections(&win);

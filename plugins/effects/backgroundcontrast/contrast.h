@@ -14,6 +14,7 @@
 #include <QVector2D>
 #include <QVector>
 #include <memory>
+#include <unordered_map>
 
 namespace KWin
 {
@@ -47,14 +48,16 @@ public:
     struct Data {
         QMatrix4x4 colorMatrix;
         QRegion contrastRegion;
+        std::unique_ptr<GLTexture> texture;
+        std::unique_ptr<GLFramebuffer> fbo;
     };
-    QHash<EffectWindow const*, Data> m_windowData;
+    std::unordered_map<EffectWindow const*, Data> m_windowData;
 
 private:
     QRegion contrastRegion(const EffectWindow* w) const;
     bool shouldContrast(effect::window_paint_data const& data) const;
-    void doContrast(effect::window_paint_data const& data, QRegion const& shape);
-    void uploadRegion(QVector2D*& map, const QRegion& region);
+    void doContrast(effect::window_paint_data& data, QRegion const& shape);
+    void uploadRegion(std::span<QVector2D> map, const QRegion& region);
     void uploadGeometry(GLVertexBuffer* vbo, const QRegion& region);
 
 private:

@@ -13,8 +13,8 @@
 #include "win/activation.h"
 #include "win/controlling.h"
 #include "win/desktop_get.h"
-#include "win/lib_interface.h"
 #include "win/meta.h"
+#include "win/property_window.h"
 #include "win/screen.h"
 #include "win/transient.h"
 
@@ -23,7 +23,7 @@
 namespace KWin::scripting
 {
 
-class KWIN_EXPORT window : public win::script_window
+class KWIN_EXPORT window : public win::property_window
 {
     Q_OBJECT
 
@@ -88,14 +88,15 @@ Q_SIGNALS:
     void clientMaximizeSet(KWin::scripting::window* window, bool horizontal, bool vertical);
 };
 
-template<typename RefWin>
+template<typename RefWin, typename Space>
 class window_impl : public window
 {
 public:
     template<typename Win>
-    window_impl(Win* ref_win)
+    window_impl(Win* ref_win, Space& space)
         : window(*ref_win->qobject)
         , ref_win{ref_win}
+        , space{space}
     {
         auto qtwin = get_window_qobject();
         QObject::connect(qtwin,
@@ -657,14 +658,15 @@ public:
 
     window* transientFor() const override
     {
-        return std::visit(overload{[](auto&& win) -> window* {
+        return std::visit(overload{[this](auto&& win) -> window* {
                               auto parent = win->transient->lead();
                               if (!parent) {
                                   return nullptr;
                               }
 
                               assert(parent->control);
-                              return static_cast<window*>(parent->control->script.get());
+                              assert(space.windows_map.contains(win->meta.signal_id));
+                              return space.windows_map.at(win->meta.signal_id).get();
                           }},
                           ref_win);
     }
@@ -738,6 +740,7 @@ public:
 
 private:
     RefWin ref_win;
+    Space& space;
 };
 
 }

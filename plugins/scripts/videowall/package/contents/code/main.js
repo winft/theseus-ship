@@ -31,5 +31,5 @@ function setup(window) {
     });
 }
 
-workspace.clientAdded.connect(setup);
-workspace.clientList().forEach(setup);
+workspace.windowAdded.connect(setup);
+workspace.windowList().forEach(setup);

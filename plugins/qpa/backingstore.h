@@ -27,8 +27,7 @@ public:
     void resize(const QSize& size, const QRegion& staticContents) override;
 
 private:
-    QImage m_backBuffer;
-    QImage m_frontBuffer;
+    QImage m_buffer;
 };
 
 }

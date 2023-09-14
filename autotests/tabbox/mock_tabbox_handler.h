@@ -19,21 +19,21 @@ public:
     void activate_and_close() override
     {
     }
-    std::weak_ptr<win::tabbox_client> active_client() const override;
-    void set_active_client(const std::weak_ptr<win::tabbox_client>& client);
+    win::tabbox_client* active_client() const override;
+    void set_active_client(win::tabbox_client* client);
     int active_screen() const override
     {
         return 0;
     }
-    std::weak_ptr<win::tabbox_client> client_to_add_to_list(win::tabbox_client* client,
-                                                            int desktop) const override;
+    win::tabbox_client* client_to_add_to_list(win::tabbox_client* client,
+                                              int desktop) const override;
     int current_desktop() const override
     {
         return 1;
     }
-    std::weak_ptr<win::tabbox_client> desktop_client() const override
+    win::tabbox_client* desktop_client() const override
     {
-        return std::weak_ptr<win::tabbox_client>();
+        return {};
     }
     QString desktop_name(int desktop) const override
     {
@@ -54,9 +54,8 @@ public:
     virtual void hideOutline()
     {
     }
-    std::weak_ptr<win::tabbox_client>
-    next_client_focus_chain(win::tabbox_client* client) const override;
-    std::weak_ptr<win::tabbox_client> first_client_focus_chain() const override;
+    win::tabbox_client* next_client_focus_chain(win::tabbox_client* client) const override;
+    win::tabbox_client* first_client_focus_chain() const override;
     bool is_in_focus_chain(win::tabbox_client* client) const override;
     int next_desktop_focus_chain(int desktop) const override
     {
@@ -103,12 +102,12 @@ public:
     }
 
     // mock methods
-    std::weak_ptr<win::tabbox_client> createMockWindow(const QString& caption);
+    win::tabbox_client* createMockWindow(const QString& caption);
     void closeWindow(win::tabbox_client* client);
 
 private:
-    std::vector<std::shared_ptr<win::tabbox_client>> m_windows;
-    std::weak_ptr<win::tabbox_client> m_activeClient;
+    std::vector<std::unique_ptr<win::tabbox_client>> m_windows;
+    win::tabbox_client* m_activeClient;
 };
 } // namespace KWin
 #endif

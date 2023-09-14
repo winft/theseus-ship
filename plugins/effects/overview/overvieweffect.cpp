@@ -40,7 +40,8 @@ OverviewEffect::OverviewEffect()
             &EffectTogglableState::statusChanged,
             this,
             [this](EffectTogglableState::Status status) {
-                if (status == EffectTogglableState::Status::Activating) {
+                if (status == EffectTogglableState::Status::Activating
+                    || status == EffectTogglableState::Status::Active) {
                     m_searchText = QString();
                 }
                 setRunning(status != EffectTogglableState::Status::Inactive);
@@ -61,9 +62,7 @@ OverviewEffect::OverviewEffect()
     initConfig<OverviewConfig>();
     reconfigure(ReconfigureAll);
 
-    setSource(QUrl::fromLocalFile(
-        QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                               QStringLiteral("kwin/effects/overview/qml/main.qml"))));
+    setSource(QUrl(QStringLiteral("qrc:/overview/qml/main.qml")));
 }
 
 OverviewEffect::~OverviewEffect()

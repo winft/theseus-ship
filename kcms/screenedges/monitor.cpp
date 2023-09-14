@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "monitor.h"
 
 #include <KLocalizedString>
-#include <Plasma/FrameSvg>
+#include <KSvg/FrameSvg>
 
 #include <QApplication>
 #include <QDebug>
@@ -225,7 +225,8 @@ Monitor::Corner::Corner(Monitor* m)
       m_active(false),
       m_hover(false)
 {
-    button = new Plasma::FrameSvg();
+    button = new KSvg::FrameSvg();
+    button->setImageSet(m->svgImageSet());
     button->setImagePath("widgets/button");
     setAcceptHoverEvents(true);
 }

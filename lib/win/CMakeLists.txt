@@ -84,7 +84,6 @@ target_sources(win
       internal_window.h
       kill_window.h
       layers.h
-      lib_interface.h
       maximize.h
       meta.h
       move.h

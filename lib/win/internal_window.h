@@ -356,12 +356,14 @@ public:
 
     bool isMovable() const
     {
-        return true;
+        return !m_internalWindowFlags.testFlag(Qt::BypassWindowManagerHint)
+            && !m_internalWindowFlags.testFlag(Qt::Popup);
     }
 
     bool isMovableAcrossScreens() const
     {
-        return true;
+        return !m_internalWindowFlags.testFlag(Qt::BypassWindowManagerHint)
+            && !m_internalWindowFlags.testFlag(Qt::Popup);
     }
 
     bool isResizable() const

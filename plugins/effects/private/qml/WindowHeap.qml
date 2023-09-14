@@ -10,8 +10,6 @@ import QtQuick.Window
 import org.kde.kirigami 2.20 as Kirigami
 import org.kde.kwin as KWinComponents
 import org.kde.kwin.private.effects
-import org.kde.plasma.components 3.0 as PC3
-import org.kde.plasma.core as PlasmaCore
 
 FocusScope {
     id: heap
@@ -39,7 +37,7 @@ FocusScope {
 
     property alias layout: expoLayout
     property int selectedIndex: -1
-    property int animationDuration: PlasmaCore.Units.longDuration
+    property int animationDuration: Kirigami.Units.longDuration
     property bool animationEnabled: false
     property bool absolutePositioning: true
     property real padding: 0
@@ -53,7 +51,7 @@ FocusScope {
     signal activated()
 
     function activateIndex(index) {
-        KWinComponents.Workspace.activeClient = windowsInstantiator.objectAt(index).window;
+        KWinComponents.Workspace.activeWindow = windowsInstantiator.objectAt(index).window;
         activated();
     }
 
@@ -127,7 +125,7 @@ FocusScope {
         anchors.fill: parent
         anchors.margins: heap.padding
         fillGaps: true
-        spacing: PlasmaCore.Units.smallSpacing * 5
+        spacing: Kirigami.Units.smallSpacing * 5
 
         Instantiator {
             id: windowsInstantiator
@@ -370,7 +368,7 @@ FocusScope {
             }
             if (selectedItem) {
                 handled = true;
-                KWinComponents.Workspace.activeClient = selectedItem.window;
+                KWinComponents.Workspace.activeWindow = selectedItem.window;
                 activated();
             }
             break;

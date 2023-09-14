@@ -201,10 +201,12 @@ public:
             quad_count += quad_list.size();
         }
 
-        auto const size = verticesPerQuad * quad_count * sizeof(GLVertex2D);
-
         GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
-        GLVertex2D* map = static_cast<GLVertex2D*>(vbo->map(size));
+        auto map = vbo->map<GLVertex2D>(verticesPerQuad * quad_count);
+        if (!map) {
+            qCWarning(KWIN_CORE) << "Could not map vertices to perform paint";
+            return;
+        }
 
         std::vector<LeafNode> nodes;
         setupLeafNodes(nodes, quads, has_previous_content, data);
@@ -218,7 +220,7 @@ public:
 
             const QMatrix4x4 matrix = nodes[i].texture->matrix(nodes[i].coordinateType);
 
-            quads[i].makeInterleavedArrays(primitiveType, &map[v], matrix);
+            quads[i].makeInterleavedArrays(primitiveType, (*map).subspan(v), matrix);
             v += quads[i].count() * verticesPerQuad;
         }
 

@@ -39,7 +39,7 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
 
     // Not all selections handle X11 offer changes this way. Drags set the offers on the enter
     // events of their X11 helper window.
-    if constexpr (requires(Selection & sel,
+    if constexpr (requires(Selection& sel,
                            std::vector<std::string> const& added,
                            std::vector<std::string> const& removed) {
                       sel.handle_x11_offer_change(added, removed);
