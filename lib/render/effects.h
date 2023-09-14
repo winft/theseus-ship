@@ -39,7 +39,6 @@
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
 
-#include <Plasma/FrameSvg>
 #include <QHash>
 #include <QMouseEvent>
 #include <memory>
