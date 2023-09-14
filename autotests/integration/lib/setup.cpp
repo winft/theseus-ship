@@ -71,7 +71,8 @@ setup::setup(std::string const& test_name,
     base->operation_mode = mode;
 
     auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend);
-    wlr_headless_add_output(headless_backend, 1280, 1024);
+    auto out = wlr_headless_add_output(headless_backend, 1280, 1024);
+    wlr_output_enable(out, true);
 
     base->session = std::make_unique<base::seat::backend::wlroots::session>(base->wlroots_session,
                                                                             headless_backend);
@@ -203,7 +204,8 @@ void setup::set_outputs(std::vector<output> const& outputs)
     for (auto&& output : outputs) {
         auto const size = output.geometry.size() * output.scale;
 
-        wlr_headless_add_output(base->backend, size.width(), size.height());
+        auto out = wlr_headless_add_output(base->backend, size.width(), size.height());
+        wlr_output_enable(out, true);
         base->all_outputs.back()->force_geometry(output.geometry);
     }
 
