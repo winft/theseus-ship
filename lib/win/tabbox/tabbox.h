@@ -223,26 +223,31 @@ public:
         switch (handler->config().tabbox_mode()) {
         case tabbox_config::ClientTabBox:
             handler->create_model(partial_reset);
-            if (!partial_reset) {
+
+            if (partial_reset) {
+                if (!handler->current_index().isValid()
+                    || !handler->client(handler->current_index())) {
+                    set_current_index(handler->first());
+                }
+            } else {
                 if (space.stacking.active) {
                     set_current_client(*space.stacking.active);
                 }
 
                 // it's possible that the active client is not part of the model
                 // in that case the index is invalid
-                if (!handler->current_index().isValid())
+                if (!handler->current_index().isValid()) {
                     set_current_index(handler->first());
-            } else {
-                if (!handler->current_index().isValid()
-                    || !handler->client(handler->current_index()))
-                    set_current_index(handler->first());
+                }
             }
+
             break;
         case tabbox_config::DesktopTabBox:
             handler->create_model();
 
-            if (!partial_reset)
+            if (!partial_reset) {
                 set_current_desktop(space.virtual_desktop_manager->current());
+            }
             break;
         }
 
