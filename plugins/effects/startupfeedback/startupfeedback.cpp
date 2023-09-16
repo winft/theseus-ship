@@ -444,7 +444,7 @@ QImage StartupFeedbackEffect::scalePixmap(const QPixmap& pm, const QSize& size) 
 
     if (scaled.format() != QImage::Format_ARGB32_Premultiplied
         && scaled.format() != QImage::Format_ARGB32) {
-        scaled = scaled.convertToFormat(QImage::Format_ARGB32);
+        scaled.convertTo(QImage::Format_ARGB32);
     }
 
     QImage result(20 * m_bounceSizesRatio, 20 * m_bounceSizesRatio, QImage::Format_ARGB32);
