@@ -706,6 +706,167 @@ public:
      */
     virtual void unreferencePreviousWindowPixmap() = 0;
 
+Q_SIGNALS:
+    /**
+     * Signal emitted when a user begins a window move or resize operation.
+     * To figure out whether the user resizes or moves the window use
+     * isUserMove or isUserResize.
+     * Whenever the geometry is updated the signal @ref windowStepUserMovedResized
+     * is emitted with the current geometry.
+     * The move/resize operation ends with the signal @ref windowFinishUserMovedResized.
+     * Only one window can be moved/resized by the user at the same time!
+     * @param w The window which is being moved/resized
+     * @see windowStepUserMovedResized
+     * @see windowFinishUserMovedResized
+     * @see EffectWindow::isUserMove
+     * @see EffectWindow::isUserResize
+     * @since 4.7
+     */
+    void windowStartUserMovedResized(KWin::EffectWindow* w);
+    /**
+     * Signal emitted during a move/resize operation when the user changed the geometry.
+     * Please note: KWin supports two operation modes. In one mode all changes are applied
+     * instantly. This means the window's geometry matches the passed in @p geometry. In the
+     * other mode the geometry is changed after the user ended the move/resize mode.
+     * The @p geometry differs from the window's geometry. Also the window's pixmap still has
+     * the same size as before. Depending what the effect wants to do it would be recommended
+     * to scale/translate the window.
+     * @param w The window which is being moved/resized
+     * @param geometry The geometry of the window in the current move/resize step.
+     * @see windowStartUserMovedResized
+     * @see windowFinishUserMovedResized
+     * @see EffectWindow::isUserMove
+     * @see EffectWindow::isUserResize
+     * @since 4.7
+     */
+    void windowStepUserMovedResized(KWin::EffectWindow* w, const QRect& geometry);
+    /**
+     * Signal emitted when the user finishes move/resize of window @p w.
+     * @param w The window which has been moved/resized
+     * @see windowStartUserMovedResized
+     * @see windowFinishUserMovedResized
+     * @since 4.7
+     */
+    void windowFinishUserMovedResized(KWin::EffectWindow* w);
+    /**
+     * Signal emitted when the maximized state of the window @p w changed.
+     * A window can be in one of four states:
+     * @li restored: both @p horizontal and @p vertical are @c false
+     * @li horizontally maximized: @p horizontal is @c true and @p vertical is @c false
+     * @li vertically maximized: @p horizontal is @c false and @p vertical is @c true
+     * @li completely maximized: both @p horizontal and @p vertical are @c true
+     * @param w The window whose maximized state changed
+     * @param horizontal If @c true maximized horizontally
+     * @param vertical If @c true maximized vertically
+     * @since 4.7
+     */
+    void windowMaximizedStateChanged(KWin::EffectWindow* w, bool horizontal, bool vertical);
+    /**
+     * This signal is emitted when the frame geometry of a window changed.
+     * @param window The window whose geometry changed
+     * @param oldGeometry The previous geometry
+     * @since 5.19
+     */
+    void windowFrameGeometryChanged(KWin::EffectWindow* window, const QRect& oldGeometry);
+    /**
+     * Signal emitted when the windows opacity is changed.
+     * @param w The window whose opacity level is changed.
+     * @param oldOpacity The previous opacity level
+     * @param newOpacity The new opacity level
+     * @since 4.7
+     */
+    void windowOpacityChanged(KWin::EffectWindow* w, qreal oldOpacity, qreal newOpacity);
+    /**
+     * Signal emitted when a window got minimized.
+     * @param w The window which was minimized
+     * @since 4.7
+     */
+    void windowMinimized(KWin::EffectWindow* w);
+    /**
+     * Signal emitted when a window got unminimized.
+     * @param w The window which was unminimized
+     * @since 4.7
+     */
+    void windowUnminimized(KWin::EffectWindow* w);
+    /**
+     * Signal emitted when a window either becomes modal (ie. blocking for its main client) or
+     * looses that state.
+     * @param w The window which was unminimized
+     * @since 4.11
+     */
+    void windowModalityChanged(KWin::EffectWindow* w);
+    /**
+     * Signal emitted when a window either became unresponsive (eg. app froze or crashed)
+     * or respoonsive
+     * @param w The window that became (un)responsive
+     * @param unresponsive Whether the window is responsive or unresponsive
+     * @since 5.10
+     */
+    void windowUnresponsiveChanged(KWin::EffectWindow* w, bool unresponsive);
+    /**
+     * Signal emitted when an area of a window is scheduled for repainting.
+     * Use this signal in an effect if another area needs to be synced as well.
+     * @param w The window which is scheduled for repainting
+     * @param r Always empty.
+     * @since 4.7
+     */
+    void windowDamaged(KWin::EffectWindow* w, const QRegion& r);
+
+    /**
+     * This signal is emitted when the keep above state of @p w was changed.
+     *
+     * @param w The window whose the keep above state was changed.
+     * @since 5.15
+     */
+    void windowKeepAboveChanged(KWin::EffectWindow* w);
+
+    /**
+     * This signal is emitted when the keep below state of @p was changed.
+     *
+     * @param w The window whose the keep below state was changed.
+     * @since 5.15
+     */
+    void windowKeepBelowChanged(KWin::EffectWindow* w);
+
+    /**
+     * This signal is emitted when the full screen state of @p w was changed.
+     *
+     * @param w The window whose the full screen state was changed.
+     * @since 5.15
+     */
+    void windowFullScreenChanged(KWin::EffectWindow* w);
+
+    /**
+     * This signal is emitted when the visible geometry of a window changed.
+     */
+    void windowExpandedGeometryChanged(KWin::EffectWindow* window);
+
+    /// This signal is emitted when a window enters or leaves a virtual desktop.
+    void windowDesktopsChanged(KWin::EffectWindow* window);
+
+    /**
+     * The window @p w gets shown again. The window was previously
+     * initially shown with windowAdded and hidden with windowHidden.
+     *
+     * @see windowHidden
+     * @see windowAdded
+     * @since 5.8
+     */
+    void windowShown(KWin::EffectWindow* w);
+
+    /**
+     * The window @p w got hidden but not yet closed.
+     * This can happen when a window is still being used and is supposed to be shown again
+     * with windowShown. On X11 an example is autohiding panels. On Wayland every
+     * window first goes through the window hidden state and might get shown again, or might
+     * get closed the normal way.
+     *
+     * @see windowShown
+     * @see windowClosed
+     * @since 5.8
+     */
+    void windowHidden(KWin::EffectWindow* w);
+
 protected:
     friend EffectWindowVisibleRef;
     virtual void refVisible(EffectWindowVisibleRef const* holder) = 0;

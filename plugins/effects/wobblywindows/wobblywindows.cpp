@@ -123,22 +123,13 @@ WobblyWindowsEffect::WobblyWindowsEffect()
 {
     initConfig<WobblyWindowsConfig>();
     reconfigure(ReconfigureAll);
-    connect(effects,
-            &EffectsHandler::windowStartUserMovedResized,
-            this,
-            &WobblyWindowsEffect::slotWindowStartUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowStepUserMovedResized,
-            this,
-            &WobblyWindowsEffect::slotWindowStepUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowFinishUserMovedResized,
-            this,
-            &WobblyWindowsEffect::slotWindowFinishUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowMaximizedStateChanged,
-            this,
-            &WobblyWindowsEffect::slotWindowMaximizeStateChanged);
+
+    connect(effects, &EffectsHandler::windowAdded, this, &WobblyWindowsEffect::slotWindowAdded);
+
+    auto const windows = effects->stackingOrder();
+    for (auto window : windows) {
+        slotWindowAdded(window);
+    }
 }
 
 WobblyWindowsEffect::~WobblyWindowsEffect()
@@ -332,6 +323,26 @@ void WobblyWindowsEffect::postPaintScreen()
 
     // Call the next effect.
     effects->postPaintScreen();
+}
+
+void WobblyWindowsEffect::slotWindowAdded(EffectWindow* w)
+{
+    connect(w,
+            &EffectWindow::windowStartUserMovedResized,
+            this,
+            &WobblyWindowsEffect::slotWindowStartUserMovedResized);
+    connect(w,
+            &EffectWindow::windowStepUserMovedResized,
+            this,
+            &WobblyWindowsEffect::slotWindowStepUserMovedResized);
+    connect(w,
+            &EffectWindow::windowFinishUserMovedResized,
+            this,
+            &WobblyWindowsEffect::slotWindowFinishUserMovedResized);
+    connect(w,
+            &EffectWindow::windowMaximizedStateChanged,
+            this,
+            &WobblyWindowsEffect::slotWindowMaximizeStateChanged);
 }
 
 void WobblyWindowsEffect::slotWindowStartUserMovedResized(EffectWindow* w)

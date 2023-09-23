@@ -10,29 +10,26 @@
 namespace KWin::render::x11
 {
 
-template<typename Handler, typename Win>
-void effect_setup_unmanaged_window_connections(Handler& handler, Win& window)
+template<typename Win>
+void effect_setup_unmanaged_window_connections(Win& window)
 {
-    QObject::connect(window.qobject.get(),
-                     &win::window_qobject::opacityChanged,
-                     &handler,
-                     [&handler, &window](auto old) { handler.slotOpacityChanged(window, old); });
+    auto qtwin = window.qobject.get();
+    auto eff_win = window.render->effect.get();
+
     QObject::connect(
-        window.qobject.get(),
-        &win::window_qobject::frame_geometry_changed,
-        &handler,
-        [&handler, &window](auto const& old) { handler.slotFrameGeometryChanged(window, old); });
+        qtwin, &win::window_qobject::opacityChanged, eff_win, [&window, eff_win](auto old) {
+            Q_EMIT eff_win->windowOpacityChanged(eff_win, old, window.opacity());
+        });
     QObject::connect(
-        window.qobject.get(),
-        &win::window_qobject::damaged,
-        &handler,
-        [&handler, &window](auto const& region) { handler.slotWindowDamaged(window, region); });
-    QObject::connect(window.qobject.get(),
-                     &win::window_qobject::visible_geometry_changed,
-                     &handler,
-                     [&handler, &window]() {
-                         Q_EMIT handler.windowExpandedGeometryChanged(window.render->effect.get());
-                     });
+        qtwin, &win::window_qobject::frame_geometry_changed, eff_win, [eff_win](auto const& old) {
+            eff_win->windowFrameGeometryChanged(eff_win, old);
+        });
+    QObject::connect(qtwin, &win::window_qobject::damaged, eff_win, [eff_win](auto const& rect) {
+        eff_win->windowDamaged(eff_win, rect);
+    });
+    QObject::connect(qtwin, &win::window_qobject::visible_geometry_changed, eff_win, [eff_win]() {
+        Q_EMIT eff_win->windowExpandedGeometryChanged(eff_win);
+    });
 }
 
 }

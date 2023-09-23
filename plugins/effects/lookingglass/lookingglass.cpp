@@ -64,7 +64,12 @@ LookingGlassEffect::LookingGlassEffect()
     effects->registerGlobalShortcutAndDefault({static_cast<Qt::Key>(Qt::META) + Qt::Key_0}, a);
 
     connect(effects, &EffectsHandler::mouseChanged, this, &LookingGlassEffect::slotMouseChanged);
-    connect(effects, &EffectsHandler::windowDamaged, this, &LookingGlassEffect::slotWindowDamaged);
+    connect(effects, &EffectsHandler::windowAdded, this, &LookingGlassEffect::slotWindowAdded);
+
+    auto const windows = effects->stackingOrder();
+    for (auto window : windows) {
+        slotWindowAdded(window);
+    }
 
     reconfigure(ReconfigureAll);
 }
@@ -146,6 +151,11 @@ bool LookingGlassEffect::loadData()
 
     m_vbo->setVertices(verts);
     return true;
+}
+
+void LookingGlassEffect::slotWindowAdded(EffectWindow* w)
+{
+    connect(w, &EffectWindow::windowDamaged, this, &LookingGlassEffect::slotWindowDamaged);
 }
 
 void LookingGlassEffect::toggle()

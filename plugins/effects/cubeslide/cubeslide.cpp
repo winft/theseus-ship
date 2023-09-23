@@ -35,14 +35,6 @@ CubeSlideEffect::CubeSlideEffect()
             this,
             &CubeSlideEffect::slotDesktopChanged);
     connect(effects,
-            &EffectsHandler::windowStepUserMovedResized,
-            this,
-            &CubeSlideEffect::slotWindowStepUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowFinishUserMovedResized,
-            this,
-            &CubeSlideEffect::slotWindowFinishUserMovedResized);
-    connect(effects,
             &EffectsHandler::numberDesktopsChanged,
             this,
             &CubeSlideEffect::slotNumberDesktopsChanged);
@@ -571,6 +563,15 @@ void CubeSlideEffect::startAnimation()
 
 void CubeSlideEffect::slotWindowAdded(EffectWindow* w)
 {
+    connect(w,
+            &EffectWindow::windowStepUserMovedResized,
+            this,
+            &CubeSlideEffect::slotWindowStepUserMovedResized);
+    connect(w,
+            &EffectWindow::windowFinishUserMovedResized,
+            this,
+            &CubeSlideEffect::slotWindowFinishUserMovedResized);
+
     if (!isActive()) {
         return;
     }

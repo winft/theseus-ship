@@ -71,10 +71,6 @@ TEST_CASE("xdg-shell window", "[win]")
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
-        QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
-        QVERIFY(effectsWindowShownSpy.isValid());
-        QSignalSpy effectsWindowHiddenSpy(effects, &EffectsHandler::windowHidden);
-        QVERIFY(effectsWindowHiddenSpy.isValid());
 
         std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
@@ -88,6 +84,13 @@ TEST_CASE("xdg-shell window", "[win]")
         auto client_id = clientAddedSpy.first().first().value<quint32>();
         auto client = get_wayland_window(setup.base->space->windows_map.at(client_id));
         QVERIFY(client);
+
+        QSignalSpy effectsWindowShownSpy(client->render->effect.get(), &EffectWindow::windowShown);
+        QVERIFY(effectsWindowShownSpy.isValid());
+        QSignalSpy effectsWindowHiddenSpy(client->render->effect.get(),
+                                          &EffectWindow::windowHidden);
+        QVERIFY(effectsWindowHiddenSpy.isValid());
+
         QVERIFY(client->isShown());
         QCOMPARE(client->isHiddenInternal(), false);
         QCOMPARE(client->render_data.ready_for_painting, true);

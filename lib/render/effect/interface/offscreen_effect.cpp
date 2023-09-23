@@ -21,18 +21,24 @@ namespace KWin
 {
 
 struct OffscreenData {
+    ~OffscreenData()
+    {
+        QObject::disconnect(windowExpandedGeometryChangedConnection);
+        QObject::disconnect(windowDamagedConnection);
+    }
+
     QScopedPointer<GLTexture> texture;
     QScopedPointer<GLFramebuffer> renderTarget;
     bool isDirty = true;
     GLShader* shader = nullptr;
+    QMetaObject::Connection windowExpandedGeometryChangedConnection;
+    QMetaObject::Connection windowDamagedConnection;
 };
 
 class OffscreenEffectPrivate
 {
 public:
     QHash<EffectWindow const*, OffscreenData*> windows;
-    QMetaObject::Connection windowExpandedGeometryChangedConnection;
-    QMetaObject::Connection windowDamagedConnection;
     QMetaObject::Connection windowDeletedConnection;
 
     void paint(GLTexture* texture,
@@ -87,6 +93,18 @@ void OffscreenEffect::redirect(EffectWindow* window)
 
     effects->makeOpenGLContextCurrent();
     offscreenData = new OffscreenData;
+
+    offscreenData->windowExpandedGeometryChangedConnection
+        = connect(window,
+                  &EffectWindow::windowExpandedGeometryChanged,
+                  this,
+                  &OffscreenEffect::handleWindowGeometryChanged);
+
+    if (d->live) {
+        offscreenData->windowDamagedConnection = connect(
+            window, &EffectWindow::windowDamaged, this, &OffscreenEffect::handleWindowDamaged);
+    }
+
     allocateOffscreenData(window, offscreenData);
 
     if (d->windows.count() == 1) {
@@ -278,28 +296,13 @@ void OffscreenEffect::handleWindowDeleted(EffectWindow* window)
 
 void OffscreenEffect::setupConnections()
 {
-    d->windowExpandedGeometryChangedConnection
-        = connect(effects,
-                  &EffectsHandler::windowExpandedGeometryChanged,
-                  this,
-                  &OffscreenEffect::handleWindowGeometryChanged);
-
-    if (d->live) {
-        d->windowDamagedConnection = connect(
-            effects, &EffectsHandler::windowDamaged, this, &OffscreenEffect::handleWindowDamaged);
-    }
     d->windowDeletedConnection = connect(
         effects, &EffectsHandler::windowDeleted, this, &OffscreenEffect::handleWindowDeleted);
 }
 
 void OffscreenEffect::destroyConnections()
 {
-    disconnect(d->windowExpandedGeometryChangedConnection);
-    disconnect(d->windowDamagedConnection);
     disconnect(d->windowDeletedConnection);
-
-    d->windowExpandedGeometryChangedConnection = {};
-    d->windowDamagedConnection = {};
     d->windowDeletedConnection = {};
 }
 

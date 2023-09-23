@@ -115,15 +115,14 @@ TEST_CASE("move resize window", "[win]")
             c->qobject.get(), &win::window_qobject::clientFinishUserMovedResized);
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-        // effects signal handlers
-        QSignalSpy windowStartUserMovedResizedSpy(effects,
-                                                  &EffectsHandler::windowStartUserMovedResized);
+        QSignalSpy windowStartUserMovedResizedSpy(c->render->effect.get(),
+                                                  &EffectWindow::windowStartUserMovedResized);
         QVERIFY(windowStartUserMovedResizedSpy.isValid());
-        QSignalSpy windowStepUserMovedResizedSpy(effects,
-                                                 &EffectsHandler::windowStepUserMovedResized);
+        QSignalSpy windowStepUserMovedResizedSpy(c->render->effect.get(),
+                                                 &EffectWindow::windowStepUserMovedResized);
         QVERIFY(windowStepUserMovedResizedSpy.isValid());
-        QSignalSpy windowFinishUserMovedResizedSpy(effects,
-                                                   &EffectsHandler::windowFinishUserMovedResized);
+        QSignalSpy windowFinishUserMovedResizedSpy(c->render->effect.get(),
+                                                   &EffectWindow::windowFinishUserMovedResized);
         QVERIFY(windowFinishUserMovedResizedSpy.isValid());
 
         QVERIFY(!setup.base->space->move_resize_window);

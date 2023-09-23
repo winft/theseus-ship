@@ -112,7 +112,7 @@ void setup_handler(Handler& handler)
                          std::visit(overload{[&handler](auto&& win) {
                                         assert(win->render);
                                         assert(win->render->effect);
-                                        setup_handler_window_connections(handler, *win);
+                                        setup_window_connections(*win);
                                         Q_EMIT handler.windowAdded(win->render->effect.get());
                                     }},
                                     space->windows_map.at(win_id));
@@ -223,7 +223,7 @@ void setup_handler(Handler& handler)
     if constexpr (requires { typename Handler::space_t::internal_window_t; }) {
         for (auto& win : ws->windows) {
             std::visit(overload{[&handler](typename Handler::space_t::internal_window_t* win) {
-                                    setup_handler_window_connections(handler, *win);
+                                    setup_window_connections(*win);
                                 },
                                 [](auto&&) {}},
                        win);

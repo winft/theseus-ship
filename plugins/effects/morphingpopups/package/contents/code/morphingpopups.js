@@ -14,11 +14,6 @@ var morphingEffect = {
     },
 
     handleFrameGeometryChanged: function (window, oldGeometry) {
-        //only tooltips and notifications
-        if (!window.tooltip && !window.notification && !window.criticalNotification) {
-            return;
-        }
-
         var newGeometry = window.geometry;
 
         //only do the transition for near enough tooltips,
@@ -115,9 +110,22 @@ var morphingEffect = {
         }
     },
 
+    manage: function (window) {
+        //only tooltips and notifications
+        if (!window.tooltip && !window.notification && !window.criticalNotification) {
+            return;
+        }
+
+        window.windowFrameGeometryChanged.connect(morphingEffect.handleFrameGeometryChanged);
+    },
+
     init: function () {
         effect.configChanged.connect(morphingEffect.loadConfig);
-        effects.windowFrameGeometryChanged.connect(morphingEffect.handleFrameGeometryChanged);
+        effects.windowAdded.connect(morphingEffect.manage);
+
+        for (const window of effects.stackingOrder) {
+            morphingEffect.manage(window);
+        }
     }
 };
 morphingEffect.init();

@@ -37,20 +37,18 @@ DimInactiveEffect::DimInactiveEffect()
     reconfigure(ReconfigureAll);
 
     connect(effects, &EffectsHandler::windowActivated, this, &DimInactiveEffect::windowActivated);
+    connect(effects, &EffectsHandler::windowAdded, this, &DimInactiveEffect::windowAdded);
     connect(effects, &EffectsHandler::windowClosed, this, &DimInactiveEffect::windowClosed);
     connect(effects, &EffectsHandler::windowDeleted, this, &DimInactiveEffect::windowDeleted);
     connect(effects,
             &EffectsHandler::activeFullScreenEffectChanged,
             this,
             &DimInactiveEffect::activeFullScreenEffectChanged);
-    connect(effects,
-            &EffectsHandler::windowKeepAboveChanged,
-            this,
-            &DimInactiveEffect::updateActiveWindow);
-    connect(effects,
-            &EffectsHandler::windowFullScreenChanged,
-            this,
-            &DimInactiveEffect::updateActiveWindow);
+
+    auto const windows = effects->stackingOrder();
+    for (auto window : windows) {
+        windowAdded(window);
+    }
 }
 
 DimInactiveEffect::~DimInactiveEffect()
@@ -317,6 +315,13 @@ void DimInactiveEffect::windowActivated(EffectWindow* w)
         scheduleGroupInTransition(m_activeWindow);
         scheduleRepaint(m_activeWindow);
     }
+}
+
+void DimInactiveEffect::windowAdded(EffectWindow* w)
+{
+    connect(w, &EffectWindow::windowKeepAboveChanged, this, &DimInactiveEffect::updateActiveWindow);
+    connect(
+        w, &EffectWindow::windowFullScreenChanged, this, &DimInactiveEffect::updateActiveWindow);
 }
 
 void DimInactiveEffect::windowClosed(EffectWindow* w)

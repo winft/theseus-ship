@@ -68,10 +68,6 @@ TEST_CASE("fade", "[effect]")
 
         QSignalSpy windowAddedSpy(effects, &EffectsHandler::windowAdded);
         QVERIFY(windowAddedSpy.isValid());
-        QSignalSpy windowHiddenSpy(effects, &EffectsHandler::windowHidden);
-        QVERIFY(windowHiddenSpy.isValid());
-        QSignalSpy windowShownSpy(effects, &EffectsHandler::windowShown);
-        QVERIFY(windowShownSpy.isValid());
         QSignalSpy windowClosedSpy(effects, &EffectsHandler::windowClosed);
         QVERIFY(windowClosedSpy.isValid());
 
@@ -81,6 +77,11 @@ TEST_CASE("fade", "[effect]")
         QVERIFY(c);
         QTRY_COMPARE(windowAddedSpy.count(), 1);
         QTRY_COMPARE(fade_effect->isActive(), true);
+
+        QSignalSpy windowHiddenSpy(c->render->effect.get(), &EffectWindow::windowHidden);
+        QVERIFY(windowHiddenSpy.isValid());
+        QSignalSpy windowShownSpy(c->render->effect.get(), &EffectWindow::windowShown);
+        QVERIFY(windowShownSpy.isValid());
 
         QTest::qWait(500);
         QTRY_COMPARE(fade_effect->isActive(), false);

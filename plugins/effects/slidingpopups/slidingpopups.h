@@ -62,6 +62,7 @@ public:
     } config;
 
 private:
+    void handle_window_added(EffectWindow* win);
     void handle_window_deleted(EffectWindow* win);
     void stopAnimations();
 };

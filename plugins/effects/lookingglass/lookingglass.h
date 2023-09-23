@@ -46,6 +46,7 @@ public:
     QRect magnifierArea() const;
 
 public Q_SLOTS:
+    void slotWindowAdded(KWin::EffectWindow* w);
     void toggle();
     void zoomIn();
     void zoomOut();

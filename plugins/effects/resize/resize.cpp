@@ -30,18 +30,13 @@ ResizeEffect::ResizeEffect()
 {
     initConfig<ResizeConfig>();
     reconfigure(ReconfigureAll);
-    connect(effects,
-            &EffectsHandler::windowStartUserMovedResized,
-            this,
-            &ResizeEffect::slotWindowStartUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowStepUserMovedResized,
-            this,
-            &ResizeEffect::slotWindowStepUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowFinishUserMovedResized,
-            this,
-            &ResizeEffect::slotWindowFinishUserMovedResized);
+
+    connect(effects, &EffectsHandler::windowAdded, this, &ResizeEffect::slotWindowAdded);
+
+    auto const windows = effects->stackingOrder();
+    for (auto window : windows) {
+        slotWindowAdded(window);
+    }
 }
 
 ResizeEffect::~ResizeEffect()
@@ -134,6 +129,22 @@ void ResizeEffect::reconfigure(ReconfigureFlags)
         m_features |= TextureScale;
     if (ResizeConfig::outline())
         m_features |= Outline;
+}
+
+void ResizeEffect::slotWindowAdded(EffectWindow* w)
+{
+    connect(w,
+            &EffectWindow::windowStartUserMovedResized,
+            this,
+            &ResizeEffect::slotWindowStartUserMovedResized);
+    connect(w,
+            &EffectWindow::windowStepUserMovedResized,
+            this,
+            &ResizeEffect::slotWindowStepUserMovedResized);
+    connect(w,
+            &EffectWindow::windowFinishUserMovedResized,
+            this,
+            &ResizeEffect::slotWindowFinishUserMovedResized);
 }
 
 void ResizeEffect::slotWindowStartUserMovedResized(EffectWindow* w)

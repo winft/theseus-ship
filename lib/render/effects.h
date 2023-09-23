@@ -1032,77 +1032,15 @@ public:
     void slotClientShown(Win& window)
     {
         disconnect(window.qobject.get(), &win::window_qobject::windowShown, this, nullptr);
-        effect::setup_handler_window_connections(*this, window);
+        effect::setup_window_connections(window);
         Q_EMIT windowAdded(window.render->effect.get());
     }
 
     template<typename Win>
     void slotXdgShellClientShown(Win& window)
     {
-        effect::setup_handler_window_connections(*this, window);
+        effect::setup_window_connections(window);
         Q_EMIT windowAdded(window.render->effect.get());
-    }
-
-    template<typename Win>
-    void slotClientMaximized(Win& window, win::maximize_mode maxMode)
-    {
-        bool horizontal = false;
-        bool vertical = false;
-        switch (maxMode) {
-        case win::maximize_mode::horizontal:
-            horizontal = true;
-            break;
-        case win::maximize_mode::vertical:
-            vertical = true;
-            break;
-        case win::maximize_mode::full:
-            horizontal = true;
-            vertical = true;
-            break;
-        case win::maximize_mode::restore: // fall through
-        default:
-            // default - nothing to do
-            break;
-        }
-
-        auto ew = window.render->effect.get();
-        assert(ew);
-        Q_EMIT windowMaximizedStateChanged(ew, horizontal, vertical);
-    }
-
-    template<typename Win>
-    void slotOpacityChanged(Win& window, qreal oldOpacity)
-    {
-        assert(window.render->effect);
-
-        if (window.opacity() == oldOpacity) {
-            return;
-        }
-
-        Q_EMIT windowOpacityChanged(
-            window.render->effect.get(), oldOpacity, static_cast<qreal>(window.opacity()));
-    }
-
-    template<typename Win>
-    void slotClientModalityChanged(Win& window)
-    {
-        Q_EMIT windowModalityChanged(window.render->effect.get());
-    }
-
-    template<typename Win>
-    void slotFrameGeometryChanged(Win& window, const QRect& oldGeometry)
-    {
-        assert(window.render);
-        assert(window.render->effect);
-        Q_EMIT windowFrameGeometryChanged(window.render->effect.get(), oldGeometry);
-    }
-
-    template<typename Win>
-    void slotWindowDamaged(Win& window, const QRegion& r)
-    {
-        assert(window.render);
-        assert(window.render->effect);
-        Q_EMIT windowDamaged(window.render->effect.get(), r);
     }
 
     void slotOutputEnabled(base::output* output)

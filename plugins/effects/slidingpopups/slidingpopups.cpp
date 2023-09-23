@@ -107,13 +107,16 @@ SlidingPopupsEffect::SlidingPopupsEffect()
     connect(effects, &EffectsHandler::windowClosed, this, &SlidingPopupsEffect::slide_out);
     connect(
         effects, &EffectsHandler::windowDeleted, this, &SlidingPopupsEffect::handle_window_deleted);
-    connect(effects, &EffectsHandler::windowShown, this, &SlidingPopupsEffect::slide_in);
-    connect(effects, &EffectsHandler::windowHidden, this, &SlidingPopupsEffect::slide_out);
     connect(effects, &EffectsHandler::desktopChanged, this, &SlidingPopupsEffect::stopAnimations);
     connect(effects,
             &EffectsHandler::activeFullScreenEffectChanged,
             this,
             &SlidingPopupsEffect::stopAnimations);
+
+    auto const windows = effects->stackingOrder();
+    for (auto window : windows) {
+        handle_window_added(window);
+    }
 
     reconfigure(ReconfigureAll);
 
@@ -245,6 +248,12 @@ void SlidingPopupsEffect::postPaintWindow(EffectWindow* win)
     }
 
     effects->postPaintWindow(win);
+}
+
+void SlidingPopupsEffect::handle_window_added(EffectWindow* win)
+{
+    connect(win, &EffectWindow::windowShown, this, &SlidingPopupsEffect::slide_in);
+    connect(win, &EffectWindow::windowHidden, this, &SlidingPopupsEffect::slide_out);
 }
 
 void SlidingPopupsEffect::handle_window_deleted(EffectWindow* win)

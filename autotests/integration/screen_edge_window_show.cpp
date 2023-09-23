@@ -136,7 +136,8 @@ TEST_CASE("screen edge window show", "[win]")
             c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &test_data.location);
         xcb_flush(c.get());
 
-        QSignalSpy effectsWindowHiddenSpy(effects, &EffectsHandler::windowHidden);
+        QSignalSpy effectsWindowHiddenSpy(client->render->effect.get(),
+                                          &EffectWindow::windowHidden);
         QVERIFY(effectsWindowHiddenSpy.isValid());
         QSignalSpy clientHiddenSpy(client->qobject.get(), &win::window_qobject::windowHidden);
         QVERIFY(clientHiddenSpy.isValid());
@@ -145,7 +146,7 @@ TEST_CASE("screen edge window show", "[win]")
         QCOMPARE(effectsWindowHiddenSpy.count(), 1);
 
         // now trigger the edge
-        QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
+        QSignalSpy effectsWindowShownSpy(client->render->effect.get(), &EffectWindow::windowShown);
         QVERIFY(effectsWindowShownSpy.isValid());
         cursor()->set_pos(test_data.trigger_pos);
         QVERIFY(!client->isHiddenInternal());
@@ -264,7 +265,8 @@ TEST_CASE("screen edge window show", "[win]")
             c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &test_data.location);
         xcb_flush(c.get());
 
-        QSignalSpy effectsWindowHiddenSpy(effects, &EffectsHandler::windowHidden);
+        QSignalSpy effectsWindowHiddenSpy(client->render->effect.get(),
+                                          &EffectWindow::windowHidden);
         QVERIFY(effectsWindowHiddenSpy.isValid());
         QSignalSpy clientHiddenSpy(client->qobject.get(), &win::window_qobject::windowHidden);
         QVERIFY(clientHiddenSpy.isValid());
@@ -273,7 +275,7 @@ TEST_CASE("screen edge window show", "[win]")
         QCOMPARE(effectsWindowHiddenSpy.count(), 1);
 
         // now trigger the edge
-        QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
+        QSignalSpy effectsWindowShownSpy(client->render->effect.get(), &EffectWindow::windowShown);
         QVERIFY(effectsWindowShownSpy.isValid());
         quint32 timestamp = 0;
         touch_down(0, test_data.touch_down, timestamp++);
