@@ -29,6 +29,7 @@ qt6_add_qml_module(overview
 
 target_link_libraries(overview PRIVATE
   KF6::ConfigGui
+  KF6::GlobalAccel
   KF6::I18n
   Qt::Quick
   Qt::Widgets

@@ -38,6 +38,7 @@ include(GenerateExportHeader)
 find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Concurrent
     Core
+    Core5Compat
     DBus
     Quick
     UiTools
@@ -323,6 +324,7 @@ include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/effect
 )
 
+add_subdirectory(kconf_update)
 add_subdirectory(lib)
 add_subdirectory(plugins)
 

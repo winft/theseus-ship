@@ -20,7 +20,6 @@ Files:
   plugins/effects/cube/data/cubecap.png
   plugins/effects/cube/metadata.json
   plugins/effects/cubeslide/metadata.json
-  plugins/effects/desktopgrid/metadata.json
   plugins/effects/dialogparent/package/metadata.json
   plugins/effects/diminactive/metadata.json
   plugins/effects/dimscreen/package/metadata.json
