@@ -14,9 +14,22 @@
 #include "win/activation.h"
 #include "win/stacking.h"
 #include "win/transient.h"
+#include <win/x11/tool_windows.h>
 
 namespace KWin::win::x11
 {
+
+template<typename Space>
+auto find_group(Space& space, xcb_window_t leader) -> typename Space::window_group_t*
+{
+    assert(leader != XCB_WINDOW_NONE);
+    for (auto group : space.groups) {
+        if (group->xcb_leader == leader) {
+            return group;
+        }
+    }
+    return nullptr;
+}
 
 template<typename Win>
 void set_transient_lead(Win* win, xcb_window_t lead_id);

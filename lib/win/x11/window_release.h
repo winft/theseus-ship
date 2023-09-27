@@ -19,6 +19,7 @@
 #include "win/space_areas_helpers.h"
 #include "win/tabbox.h"
 #include "win/window_release.h"
+#include <win/x11/user_time.h>
 
 #include <csignal>
 #include <xcb/xcb_icccm.h>

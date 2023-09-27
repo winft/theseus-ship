@@ -69,7 +69,7 @@ void set_desktops(Win& win, QVector<virtual_desktop*> desktops)
 template<typename Win>
 void set_desktop(Win& win, int desktop)
 {
-    if (desktop == x11::net::win_info::OnAllDesktops) {
+    if (desktop == x11_desktop_number_on_all) {
         set_desktops(win, {});
         return;
     }

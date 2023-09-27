@@ -7,7 +7,6 @@
 
 #include "geo.h"
 #include "screen.h"
-#include "x11/net/win_info.h"
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
@@ -34,7 +33,7 @@ QRect space_window_area(Space const& space,
 {
     auto const& outputs = space.base.outputs;
 
-    if (desktop == x11::net::win_info::OnAllDesktops || desktop == 0) {
+    if (desktop == x11_desktop_number_on_all || desktop == 0) {
         desktop = space.virtual_desktop_manager->current();
     }
     if (!output) {

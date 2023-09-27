@@ -18,7 +18,7 @@ namespace KWin::win
 template<typename Space, typename Win>
 void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activate)
 {
-    if ((desk < 1 && desk != x11::net::win_info::OnAllDesktops)
+    if ((desk < 1 && desk != x11_desktop_number_on_all)
         || desk > static_cast<int>(space.virtual_desktop_manager->count())) {
         return;
     }

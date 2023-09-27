@@ -6,7 +6,7 @@
 #pragma once
 
 #include "virtual_desktops.h"
-#include "x11/net/win_info.h"
+#include <win/types.h>
 
 namespace KWin::win
 {
@@ -14,13 +14,14 @@ namespace KWin::win
 // TODO(romangg): Is the recommendation to prefer on_desktop() still sensible?
 /**
  * Returns the virtual desktop the window is located in, 0 if it isn't located on any special
- * desktop (not mapped yet), or NET::OnAllDesktops. Don't use directly, use on_desktop() instead.
+ * desktop (not mapped yet), or -1 (equals NET::OnAllDesktops). Don't use directly, use on_desktop()
+ * instead.
  */
 template<typename Win>
 int get_desktop(Win const& win)
 {
-    return win.topo.desktops.isEmpty() ? static_cast<int>(x11::net::win_info::OnAllDesktops)
-                                       : win.topo.desktops.last()->x11DesktopNumber();
+    return win.topo.desktops.empty() ? x11_desktop_number_on_all
+                                     : win.topo.desktops.back()->x11DesktopNumber();
 }
 
 template<typename Win>

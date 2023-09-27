@@ -12,6 +12,7 @@
 #include "win/deco/window.h"
 #include "win/move.h"
 #include "win/scene.h"
+#include <win/x11/net/geo.h>
 
 #include <KDecoration2/DecoratedClient>
 

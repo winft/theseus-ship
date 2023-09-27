@@ -329,6 +329,9 @@ enum class input_device_type {
     touchscreen,
 };
 
+static constexpr int x11_desktop_number_on_all{-1};
+static constexpr int x11_desktop_number_undefined{0};
+
 }
 
 ENUM_FLAGS(KWin::win::position)

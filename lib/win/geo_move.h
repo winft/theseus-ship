@@ -7,7 +7,6 @@
 
 #include "strut_rect.h"
 #include "types.h"
-#include "x11/net/win_info.h"
 
 #include <QRegion>
 
@@ -20,7 +19,7 @@ QRegion struts_to_region(Space const& space,
                          win::strut_area areas,
                          std::vector<win::strut_rects> const& struts)
 {
-    if (desktop == x11::net::win_info::OnAllDesktops || desktop == 0) {
+    if (desktop == x11_desktop_number_on_all || desktop == x11_desktop_number_undefined) {
         desktop = space.virtual_desktop_manager->current();
     }
 

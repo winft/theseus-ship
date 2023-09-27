@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "group.h"
-
 #include "base/options.h"
 #include "win/meta.h"
 
@@ -38,7 +36,7 @@ void update_tool_windows_visibility(Space* space, bool also_hide)
     }
 
     using x11_window_t = typename Space::x11_window;
-    x11::group<Space> const* active_group = nullptr;
+    typename Space::window_group_t const* active_group = nullptr;
     x11_window_t* active_window{nullptr};
 
     if (auto& active = space->stacking.active;

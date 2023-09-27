@@ -17,6 +17,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QRegion>
 #include <functional>
 #include <memory>
+#include <xcb/xcb.h>
 
 namespace KWin::win::deco
 {

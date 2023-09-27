@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "extras.h"
 #include "window_find.h"
+#include <win/x11/win_info.h>
 
 #include <QIcon>
 #include <vector>
@@ -144,17 +145,5 @@ private:
     int refcount{0};
     Space& space;
 };
-
-template<typename Space>
-group<Space>* find_group(Space& space, xcb_window_t leader)
-{
-    assert(leader != XCB_WINDOW_NONE);
-    for (auto group : space.groups) {
-        if (group->xcb_leader == leader) {
-            return group;
-        }
-    }
-    return nullptr;
-}
 
 }
