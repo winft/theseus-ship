@@ -41,7 +41,6 @@ public:
     explicit window(win::window_qobject& qtwin);
 
     virtual scripting::output* output() const = 0;
-    virtual int desktop() const = 0;
     virtual bool isOnDesktop(unsigned int desktop) const = 0;
     virtual bool isOnDesktop(win::virtual_desktop* desktop) const = 0;
     virtual bool isOnCurrentDesktop() const = 0;
@@ -332,11 +331,6 @@ public:
                 return *it;
             }},
             ref_win);
-    }
-
-    int desktop() const override
-    {
-        return std::visit(overload{[](auto&& win) { return win::get_desktop(*win); }}, ref_win);
     }
 
     QVector<win::virtual_desktop*> desktops() const override
