@@ -159,6 +159,11 @@ public:
         x11::update_work_areas(*this);
     }
 
+    void update_tool_windows_visibility(bool also_hide)
+    {
+        x11::update_tool_windows_visibility(this, also_hide);
+    }
+
     base_t& base;
 
     std::unique_ptr<render_outline_t> outline;

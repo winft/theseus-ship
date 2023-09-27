@@ -422,7 +422,10 @@ void unset_active_window(Space& space)
     std::visit(overload{[](auto&& win) { set_active(win, false); }}, *stacking.active);
     stacking.active = {};
 
-    x11::update_tool_windows_visibility(&space, false);
+    if constexpr (requires(Space space, bool arg) { space.update_tool_windows_visibility(arg); }) {
+        space.update_tool_windows_visibility(false);
+    }
+
     set_global_shortcuts_disabled(space, false);
 
     // e.g. fullscreens have different layer when active/not-active
@@ -501,7 +504,10 @@ void set_active_window(Space& space, Win& window)
         }
     }
 
-    x11::update_tool_windows_visibility(&space, false);
+    if constexpr (requires(Space space, bool arg) { space.update_tool_windows_visibility(arg); }) {
+        space.update_tool_windows_visibility(false);
+    }
+
     set_global_shortcuts_disabled(space, window.control->rules.checkDisableGlobalShortcuts(false));
 
     // e.g. fullscreens have different layer when active/not-active

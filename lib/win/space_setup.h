@@ -10,6 +10,7 @@
 #include "dbus/virtual_desktop_manager.h"
 #include "rules.h"
 #include "tabbox/tabbox.h"
+#include <win/options.h>
 
 #include "base/platform.h"
 
