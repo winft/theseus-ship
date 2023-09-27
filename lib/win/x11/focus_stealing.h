@@ -83,7 +83,7 @@ bool allow_window_activation(Space& space,
     }
 
     // Desktop switching is only allowed in the "no protection" case
-    if (!ignore_desktop && !on_current_desktop(window)) {
+    if (!ignore_desktop && !on_current_desktop(*window)) {
         // allow only with level == 0
         return false;
     }
@@ -111,7 +111,7 @@ bool allow_window_activation(Space& space,
         return true;
     }
 
-    if (!on_current_desktop(window)) {
+    if (!on_current_desktop(*window)) {
         // we allowed explicit self-activation across virtual desktops
         // inside a client or if no client was active, but not otherwise
         return false;

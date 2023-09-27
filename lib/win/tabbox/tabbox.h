@@ -996,7 +996,7 @@ private:
         // topmost one with exceptions (can't be keepabove/below, otherwise gets stuck on them).
         for (int i = space.stacking.order.stack.size() - 1; i >= 0; --i) {
             if (std::visit(overload{[&](auto&& win) {
-                               if (win->control && on_current_desktop(win)
+                               if (win->control && on_current_desktop(*win)
                                    && !win::is_special_window(win) && win->isShown()
                                    && win::wants_tab_focus(win) && !win->control->keep_above
                                    && !win->control->keep_below) {
@@ -1031,7 +1031,7 @@ private:
                                       return false;
                                   }
                                   if (!options_traverse_all
-                                      && !on_desktop(win, current_desktop())) {
+                                      && !on_desktop(*win, current_desktop())) {
                                       return false;
                                   }
                                   return true;
@@ -1067,7 +1067,7 @@ private:
                            return;
                        }
 
-                       if (!on_desktop(win, current_desktop())) {
+                       if (!on_desktop(*win, current_desktop())) {
                            set_current_desktop(get_desktop(*win));
                        }
                        win::raise_window(space, win);

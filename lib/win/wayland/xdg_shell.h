@@ -103,7 +103,7 @@ void xdg_shell_setup_control(Win& win)
         maximize(&win, ctrl->rules.checkMaximize(win.geo.update.max_mode, true));
 
         set_desktops(
-            &win,
+            win,
             ctrl->rules.checkDesktops(*win.space.virtual_desktop_manager, win.topo.desktops, true));
         set_desktop_file_name(&win,
                               ctrl->rules.checkDesktopFile(ctrl->desktop_file_name, true).toUtf8());
@@ -301,7 +301,7 @@ Win& create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
                      win.qobject.get(),
                      configure);
 
-    set_desktop(&win, win.space.virtual_desktop_manager->current());
+    set_desktop(win, win.space.virtual_desktop_manager->current());
     set_color_scheme(&win, QString());
 
     QObject::connect(win.surface, &Wrapland::Server::Surface::committed, win.qobject.get(), [&win] {
@@ -499,7 +499,7 @@ void install_plasma_shell_surface(Win& win, Wrapland::Server::PlasmaShellSurface
                 || type == win_type::on_screen_display || type == win_type::notification
                 || type == win_type::tooltip || type == win_type::critical_notification
                 || type == win_type::applet_popup) {
-                set_on_all_desktops(&win, true);
+                set_on_all_desktops(win, true);
             }
             win::update_space_areas(win.space);
         }

@@ -474,10 +474,10 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                 }
 
                 maincl = lead;
-                if (on_current_desktop(lead)) {
+                if (on_current_desktop(*lead)) {
                     on_current = true;
                 }
-                if (on_all_desktops(lead)) {
+                if (on_all_desktops(*lead)) {
                     on_all = true;
                 }
             }
@@ -512,7 +512,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
             = is_desktop(win) ? desks{} : desks{space.virtual_desktop_manager->currentDesktop()};
     }
 
-    set_desktops(win,
+    set_desktops(*win,
                  win->control->rules.checkDesktops(
                      *space.virtual_desktop_manager, *initial_desktops, !isMapped));
     win->net_info->setDesktop(get_desktop(*win));
@@ -692,11 +692,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
-        if (!on_current_desktop(win) && !isMapped && !session && (allow || isSessionSaving)) {
+        if (!on_current_desktop(*win) && !isMapped && !session && (allow || isSessionSaving)) {
             space.virtual_desktop_manager->setCurrent(get_desktop(*win));
         }
 
-        if (on_current_desktop(win) && !isMapped && !allow
+        if (on_current_desktop(*win) && !isMapped && !allow
             && (!session || session->stackingOrder < 0)) {
             restack_client_under_active(win->space, *win);
         }
@@ -704,7 +704,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         update_visibility(win);
 
         if (!isMapped) {
-            if (allow && on_current_desktop(win)) {
+            if (allow && on_current_desktop(*win)) {
                 if (!is_special_window(win)) {
                     if (space.options->qobject->focusPolicyIsReasonable() && wants_tab_focus(win)) {
                         request_focus(space, *win);

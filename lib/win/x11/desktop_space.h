@@ -30,7 +30,7 @@ void popagate_desktop_change(Space& space, uint desktop)
 
     for (auto const& var_win : space.stacking.order.stack) {
         std::visit(overload{[&](window_t* win) {
-                                if (win->control && !on_desktop(win, desktop)
+                                if (win->control && !on_desktop(*win, desktop)
                                     && var_win != space.move_resize_window) {
                                     update_visibility(win);
                                 }
@@ -47,7 +47,7 @@ void popagate_desktop_change(Space& space, uint desktop)
     auto const& list = space.stacking.order.stack;
     for (int i = list.size() - 1; i >= 0; --i) {
         std::visit(overload{[&](window_t* win) {
-                                if (win->control && on_desktop(win, desktop)) {
+                                if (win->control && on_desktop(*win, desktop)) {
                                     update_visibility(win);
                                 }
                             },

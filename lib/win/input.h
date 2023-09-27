@@ -145,7 +145,7 @@ bool perform_mouse_command(Win& win, mouse_cmd cmd, QPoint const& globalPos)
                                    // Can never raise above "it".
                                    return;
                                }
-                               mustReplay = !(on_current_desktop(cmp_win)
+                               mustReplay = !(on_current_desktop(*cmp_win)
                                               && cmp_win->geo.frame.intersects(win.geo.frame));
                            }},
                            *it);

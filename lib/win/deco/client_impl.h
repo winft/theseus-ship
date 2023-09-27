@@ -55,7 +55,7 @@ public:
                          &window_qobject::desktopsChanged,
                          qobject.get(),
                          [decoratedClient, window]() {
-                             Q_EMIT decoratedClient->onAllDesktopsChanged(on_all_desktops(window));
+                             Q_EMIT decoratedClient->onAllDesktopsChanged(on_all_desktops(*window));
                          });
         QObject::connect(window->qobject.get(),
                          &window_qobject::captionChanged,
@@ -223,7 +223,7 @@ public:
 
     bool isOnAllDesktops() const override
     {
-        return on_all_desktops(m_client);
+        return on_all_desktops(*m_client);
     }
 
     bool isResizeable() const override

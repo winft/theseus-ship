@@ -24,8 +24,8 @@ void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activ
     }
 
     auto old_desktop = get_desktop(*window);
-    auto was_on_desktop = on_desktop(window, desk) || on_all_desktops(window);
-    set_desktop(window, desk);
+    auto was_on_desktop = on_desktop(*window, desk) || on_all_desktops(*window);
+    set_desktop(*window, desk);
 
     if (get_desktop(*window) != desk) {
         // No change or desktop forced
@@ -35,7 +35,7 @@ void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activ
     // window did range checking.
     desk = get_desktop(*window);
 
-    if (on_desktop(window, space.virtual_desktop_manager->current())) {
+    if (on_desktop(*window, space.virtual_desktop_manager->current())) {
         if (win::wants_tab_focus(window) && space.options->qobject->focusPolicyIsReasonable()
             && !was_on_desktop && // for stickyness changes
             !dont_activate) {
@@ -68,8 +68,8 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 
     if (auto& mov_res = space->move_resize_window) {
         std::visit(overload{[&](auto&& win) {
-                       if (!on_desktop(win, newDesktop)) {
-                           win::set_desktop(win, newDesktop);
+                       if (!on_desktop(*win, newDesktop)) {
+                           win::set_desktop(*win, newDesktop);
                        }
                    }},
                    *mov_res);

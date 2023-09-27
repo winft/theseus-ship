@@ -224,8 +224,8 @@ void request_focus(Space& space, Win& window, bool raise = false, bool force_foc
         if constexpr (requires(Win win) { win.findModal(); }) {
             if (auto modal = window_ptr->findModal();
                 modal && modal->control && modal != window_ptr) {
-                if (auto desktop = get_desktop(*window_ptr); !on_desktop(modal, desktop)) {
-                    set_desktop(modal, desktop);
+                if (auto desktop = get_desktop(*window_ptr); !on_desktop(*modal, desktop)) {
+                    set_desktop(*modal, desktop);
                 }
                 if (!modal->isShown() && !modal->control->minimized) {
                     // forced desktop or utility window
@@ -303,7 +303,7 @@ std::optional<typename Space::window_t> window_under_mouse(Space const& space,
                            // Rule out windows which are not really visible.
                            // The screen test is rather superfluous for xrandr & twinview since the
                            // geometry would differ. -> TODO: might be dropped
-                           if (!window->isShown() || !on_current_desktop(window)
+                           if (!window->isShown() || !on_current_desktop(*window)
                                || !on_screen(window, output)) {
                                return false;
                            }
@@ -521,7 +521,7 @@ template<typename Space, typename Win>
 void activate_window_impl(Space& space, Win& window, bool force)
 {
     raise_window(space, &window);
-    if (!on_current_desktop(&window)) {
+    if (!on_current_desktop(window)) {
         focus_blocker blocker(space);
         space.virtual_desktop_manager->setCurrent(get_desktop(window));
     }
@@ -685,7 +685,7 @@ template<typename Space, typename Win>
 void process_window_hidden(Space& space, Win& window)
 {
     using var_win = typename Space::window_t;
-    assert(!window.isShown() || !on_current_desktop(&window));
+    assert(!window.isShown() || !on_current_desktop(window));
     if (most_recently_activated_window(space) == var_win(&window)) {
         activate_next_window(space);
     } else if (space.stacking.active == var_win(&window)) {
@@ -705,7 +705,7 @@ std::optional<typename Space::window_t> find_window_to_activate_on_desktop(Space
     if (space.move_resize_window && stacking.active == space.move_resize_window
         && focus_chain_at_desktop_contains(stacking.focus_chain, *stacking.active, desktop)
         && std::visit(
-            overload{[&](auto&& win) { return win->isShown() && on_current_desktop(win); }},
+            overload{[&](auto&& win) { return win->isShown() && on_current_desktop(*win); }},
             *stacking.active)) {
         // A requestFocus call will fail, as the client is already active
         return stacking.active;
@@ -721,7 +721,7 @@ std::optional<typename Space::window_t> find_window_to_activate_on_desktop(Space
                             return {};
                         }
 
-                        if (!(win->isShown() && on_desktop(win, desktop) && on_active_screen(win)))
+                        if (!(win->isShown() && on_desktop(*win, desktop) && on_active_screen(win)))
                             return {};
 
                         if (win->geo.frame.contains(space.input->cursor->pos())) {
@@ -765,7 +765,7 @@ void activate_window_on_new_desktop(Space& space, unsigned int desktop)
         }
     } else if (stacking.active
                && std::visit(
-                   overload{[&](auto&& win) { return win->isShown() && on_current_desktop(win); }},
+                   overload{[&](auto&& win) { return win->isShown() && on_current_desktop(*win); }},
                    *stacking.active)) {
         // If "unreasonable focus policy" and stacking.active is on_all_desktops and
         // under mouse (Hence == stacking.last_active), conserve focus.
@@ -802,7 +802,7 @@ bool activate_window_direction(Space& space,
                                return;
                            }
                        }
-                       if (!win->control || !wants_tab_focus(win) || !on_desktop(win, desktop)
+                       if (!win->control || !wants_tab_focus(win) || !on_desktop(*win, desktop)
                            || win->control->minimized) {
                            return;
                        }
@@ -869,8 +869,8 @@ void activate_window_direction(Space& space, win::direction direction)
 
     std::visit(
         overload{[&](auto&& act_win) {
-            int desktopNumber = on_all_desktops(act_win) ? space.virtual_desktop_manager->current()
-                                                         : get_desktop(*act_win);
+            int desktopNumber = on_all_desktops(*act_win) ? space.virtual_desktop_manager->current()
+                                                          : get_desktop(*act_win);
 
             // Centre of the active window
             auto curPos = QPoint(act_win->geo.pos().x() + act_win->geo.size().width() / 2,
@@ -953,7 +953,7 @@ void set_showing_desktop(Space& space, bool showing)
         blocker block(space.stacking.order);
         for (int i = static_cast<int>(space.stacking.order.stack.size()) - 1; i > -1; --i) {
             std::visit(overload{[&](auto&& win) {
-                           if (!on_current_desktop(win)) {
+                           if (!on_current_desktop(*win)) {
                                return;
                            }
                            if (is_dock(win)) {

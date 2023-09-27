@@ -69,14 +69,14 @@ TEST_CASE("plasma surface", "[win]")
         QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
 
         // currently the role is not yet set, so the window should not be on all desktops
-        QCOMPARE(win::on_all_desktops(c), false);
+        QCOMPARE(win::on_all_desktops(*c), false);
 
         // now let's try to change that
         QSignalSpy onAllDesktopsSpy(c->qobject.get(), &win::window_qobject::desktopsChanged);
         QVERIFY(onAllDesktopsSpy.isValid());
         plasmaSurface->setRole(test_data.role);
         QCOMPARE(onAllDesktopsSpy.wait(500), test_data.expected_on_all_desktops);
-        QCOMPARE(win::on_all_desktops(c), test_data.expected_on_all_desktops);
+        QCOMPARE(win::on_all_desktops(*c), test_data.expected_on_all_desktops);
 
         // let's create a second window where we init a little bit different
         // first creating the PlasmaSurface then the Shell Surface
@@ -93,7 +93,7 @@ TEST_CASE("plasma surface", "[win]")
         QVERIFY(c2);
         QVERIFY(c != c2);
 
-        QCOMPARE(win::on_all_desktops(c2), test_data.expected_on_all_desktops);
+        QCOMPARE(win::on_all_desktops(*c2), test_data.expected_on_all_desktops);
     }
 
     SECTION("accepts focus")

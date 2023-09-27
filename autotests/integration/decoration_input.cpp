@@ -213,7 +213,7 @@ TEST_CASE("decoration input", "[input],[win]")
         QVERIFY(c);
         QVERIFY(win::decoration(c));
         QVERIFY(!c->noBorder());
-        QVERIFY(!win::on_all_desktops(c));
+        QVERIFY(!win::on_all_desktops(*c));
         quint32 timestamp = 1;
         MOTION(QPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
@@ -222,14 +222,14 @@ TEST_CASE("decoration input", "[input],[win]")
         RELEASE;
         PRESS;
         RELEASE;
-        QVERIFY(win::on_all_desktops(c));
+        QVERIFY(win::on_all_desktops(*c));
         // double click again
         PRESS;
         RELEASE;
-        QVERIFY(win::on_all_desktops(c));
+        QVERIFY(win::on_all_desktops(*c));
         PRESS;
         RELEASE;
-        QVERIFY(!win::on_all_desktops(c));
+        QVERIFY(!win::on_all_desktops(*c));
 
         // test top most deco pixel, BUG: 362860
         win::move(c, QPoint(0, 0));
@@ -243,10 +243,10 @@ TEST_CASE("decoration input", "[input],[win]")
         // double click
         PRESS;
         RELEASE;
-        QVERIFY(!win::on_all_desktops(c));
+        QVERIFY(!win::on_all_desktops(*c));
         PRESS;
         RELEASE;
-        QVERIFY(win::on_all_desktops(c));
+        QVERIFY(win::on_all_desktops(*c));
     }
 
     SECTION("double tap")
@@ -263,7 +263,7 @@ TEST_CASE("decoration input", "[input],[win]")
         QVERIFY(c);
         QVERIFY(win::decoration(c));
         QVERIFY(!c->noBorder());
-        QVERIFY(!win::on_all_desktops(c));
+        QVERIFY(!win::on_all_desktops(*c));
         quint32 timestamp = 1;
         const QPoint tapPoint(c->geo.frame.center().x(),
                               win::frame_to_client_pos(c, QPoint()).y() / 2);
@@ -273,14 +273,14 @@ TEST_CASE("decoration input", "[input],[win]")
         touch_up(0, timestamp++);
         touch_down(0, tapPoint, timestamp++);
         touch_up(0, timestamp++);
-        QVERIFY(win::on_all_desktops(c));
+        QVERIFY(win::on_all_desktops(*c));
         // double tap again
         touch_down(0, tapPoint, timestamp++);
         touch_up(0, timestamp++);
-        QVERIFY(win::on_all_desktops(c));
+        QVERIFY(win::on_all_desktops(*c));
         touch_down(0, tapPoint, timestamp++);
         touch_up(0, timestamp++);
-        QVERIFY(!win::on_all_desktops(c));
+        QVERIFY(!win::on_all_desktops(*c));
 
         // test top most deco pixel, BUG: 362860
         //
@@ -297,10 +297,10 @@ TEST_CASE("decoration input", "[input],[win]")
             setup.base->space->input->touch->focus.deco.client->decoration()->sectionUnderMouse()
             == test_data.expected_section);
         touch_up(0, timestamp++);
-        QVERIFY(!win::on_all_desktops(c));
+        QVERIFY(!win::on_all_desktops(*c));
         touch_down(0, test_data.deco_point, timestamp++);
         touch_up(0, timestamp++);
-        QVERIFY(win::on_all_desktops(c));
+        QVERIFY(win::on_all_desktops(*c));
     }
 
     SECTION("hover")

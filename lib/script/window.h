@@ -340,34 +340,34 @@ public:
 
     void setDesktops(QVector<win::virtual_desktop*> desktops) override
     {
-        std::visit(overload{[=](auto&& win) { win::set_desktops(win, desktops); }}, ref_win);
+        std::visit(overload{[=](auto&& win) { win::set_desktops(*win, desktops); }}, ref_win);
     }
 
     bool isOnAllDesktops() const override
     {
-        return std::visit(overload{[](auto&& win) { return win::on_all_desktops(win); }}, ref_win);
+        return std::visit(overload{[](auto&& win) { return win::on_all_desktops(*win); }}, ref_win);
     }
 
     void setOnAllDesktops(bool set) override
     {
-        std::visit(overload{[set](auto&& win) { win::set_on_all_desktops(win, set); }}, ref_win);
+        std::visit(overload{[set](auto&& win) { win::set_on_all_desktops(*win, set); }}, ref_win);
     }
 
     bool isOnDesktop(unsigned int desktop) const override
     {
-        return std::visit(overload{[desktop](auto&& win) { return win::on_desktop(win, desktop); }},
-                          ref_win);
+        return std::visit(
+            overload{[desktop](auto&& win) { return win::on_desktop(*win, desktop); }}, ref_win);
     }
 
     bool isOnDesktop(win::virtual_desktop* desktop) const override
     {
-        return std::visit(overload{[desktop](auto&& win) { return win::on_desktop(win, desktop); }},
-                          ref_win);
+        return std::visit(
+            overload{[desktop](auto&& win) { return win::on_desktop(*win, desktop); }}, ref_win);
     }
 
     bool isOnCurrentDesktop() const override
     {
-        return std::visit(overload{[](auto&& win) { return win::on_current_desktop(win); }},
+        return std::visit(overload{[](auto&& win) { return win::on_current_desktop(*win); }},
                           ref_win);
     }
 

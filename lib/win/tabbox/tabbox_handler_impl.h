@@ -70,7 +70,7 @@ public:
 
         if (auto c = get_client_impl(client)) {
             return std::visit(overload{[&](auto&& win) {
-                                  if (on_all_desktops(win)) {
+                                  if (on_all_desktops(*win)) {
                                       return vds->name(vds->current());
                                   } else {
                                       return vds->name(get_desktop(*win));
@@ -213,7 +213,7 @@ public:
             auto success{false};
             if (auto ret = std::visit(overload{[&](auto&& win) -> tabbox_client* {
                                           if (win->control && win::is_desktop(win)
-                                              && on_current_desktop(win)
+                                              && on_current_desktop(*win)
                                               && win->topo.central_output
                                                   == win::get_current_output(m_tabbox->space)) {
                                               success = true;
@@ -274,10 +274,10 @@ private:
                               case tabbox_config::AllDesktopsClients:
                                   return true;
                               case tabbox_config::ExcludeCurrentDesktopClients:
-                                  return !on_desktop(win, desktop);
+                                  return !on_desktop(*win, desktop);
                               default:
                                   // TabBoxConfig::OnlyCurrentDesktopClients
-                                  return on_desktop(win, desktop);
+                                  return on_desktop(*win, desktop);
                               }
                           }},
                           get_client_impl(client)->client());

@@ -33,7 +33,7 @@ static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int 
     if (!window->isShown()) {
         return true;
     }
-    if (!on_desktop(window, desktop)) {
+    if (!on_desktop(*window, desktop)) {
         return true;
     }
     if (is_desktop(window)) {

@@ -213,19 +213,19 @@ public:
     void setDesktops(QVector<win::virtual_desktop*> desktops) override
     {
         if (ref_win->control) {
-            win::set_desktops(ref_win, desktops);
+            win::set_desktops(*ref_win, desktops);
         }
     }
 
     bool isOnAllDesktops() const override
     {
-        return win::on_all_desktops(ref_win);
+        return win::on_all_desktops(*ref_win);
     }
 
     void setOnAllDesktops(bool set) override
     {
         if (ref_win->control) {
-            win::set_on_all_desktops(ref_win, set);
+            win::set_on_all_desktops(*ref_win, set);
         }
     }
 

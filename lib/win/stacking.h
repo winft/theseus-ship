@@ -98,7 +98,7 @@ std::optional<typename Space::window_t> top_client_on_desktop(Space& space,
     auto const& list = unconstrained ? space.stacking.order.pre_stack : space.stacking.order.stack;
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         if (std::visit(overload{[&](auto&& win) {
-                           if (!on_desktop(win, desktop)) {
+                           if (!on_desktop(*win, desktop)) {
                                return false;
                            }
                            if (!win->isShown()) {
@@ -272,13 +272,13 @@ void raise_or_lower_client(Space& space, Window* window)
         && contains(space.stacking.order.stack, space.stacking.most_recently_raised)
         && std::visit(overload{[](auto&& win) { return win->isShown(); }},
                       *space.stacking.most_recently_raised)
-        && on_current_desktop(window)) {
+        && on_current_desktop(*window)) {
         topmost = space.stacking.most_recently_raised;
     } else {
         topmost = top_client_on_desktop(
             space,
-            on_all_desktops(window) ? space.virtual_desktop_manager->current()
-                                    : get_desktop(*window),
+            on_all_desktops(*window) ? space.virtual_desktop_manager->current()
+                                     : get_desktop(*window),
             space.options->qobject->isSeparateScreenFocus() ? window->topo.central_output
                                                             : nullptr);
     }

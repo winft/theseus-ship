@@ -272,7 +272,7 @@ private:
         group->addAction(action);
 
         if (m_client
-            && std::visit(overload{[](auto&& win) { return on_all_desktops(win); }}, *m_client)) {
+            && std::visit(overload{[](auto&& win) { return on_all_desktops(*win); }}, *m_client)) {
             action->setChecked(true);
         }
         m_desktopMenu->addSeparator();
@@ -292,7 +292,7 @@ private:
 
             if (m_client
                 && std::visit(overload{[&](auto&& win) {
-                                  return !on_all_desktops(win) && on_desktop(win, i);
+                                  return !on_all_desktops(*win) && on_desktop(*win, i);
                               }},
                               *m_client)) {
                 action->setChecked(true);
@@ -331,7 +331,7 @@ private:
         action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{0, false}));
         action->setCheckable(true);
         if (m_client
-            && std::visit(overload{[](auto&& win) { return on_all_desktops(win); }}, *m_client)) {
+            && std::visit(overload{[](auto&& win) { return on_all_desktops(*win); }}, *m_client)) {
             action->setChecked(true);
         }
 
@@ -351,7 +351,7 @@ private:
             action->setCheckable(true);
             if (m_client
                 && std::visit(overload{[&](auto&& win) {
-                                  return !on_all_desktops(win) && on_desktop(win, i);
+                                  return !on_all_desktops(*win) && on_desktop(*win, i);
                               }},
                               *m_client)) {
                 action->setChecked(true);
@@ -445,7 +445,7 @@ private:
                        if (desk == 0) {
                            // the 'on_all_desktops' menu entry
                            if (win) {
-                               set_on_all_desktops(win, !on_all_desktops(win));
+                               set_on_all_desktops(*win, !on_all_desktops(*win));
                            }
                            return;
                        } else if (desk > vds->count()) {
@@ -478,20 +478,20 @@ private:
         std::visit(overload{[&](auto&& win) {
                        if (data.desktop == 0) {
                            // the 'on_all_desktops' menu entry
-                           set_on_all_desktops(win, !on_all_desktops(win));
+                           set_on_all_desktops(*win, !on_all_desktops(*win));
                            return;
                        } else if (data.desktop > vds->count()) {
                            vds->setCount(data.desktop);
                        }
 
                        if (data.move_to_single) {
-                           set_desktop(win, data.desktop);
+                           set_desktop(*win, data.desktop);
                        } else {
                            auto virtualDesktop = vds->desktopForX11Id(data.desktop);
                            if (win->topo.desktops.contains(virtualDesktop)) {
-                               leave_desktop(win, virtualDesktop);
+                               leave_desktop(*win, virtualDesktop);
                            } else {
-                               enter_desktop(win, virtualDesktop);
+                               enter_desktop(*win, virtualDesktop);
                            }
                        }
                    }},

@@ -26,42 +26,41 @@ int get_desktop(Win const& win)
 }
 
 template<typename Win>
-bool on_all_desktops(Win* win)
+bool on_all_desktops(Win const& win)
 {
-    return base::should_use_wayland_for_compositing(win->space.base.operation_mode)
-        ? win->topo.desktops.isEmpty()
-        : get_desktop(*win) == x11::net::win_info::OnAllDesktops;
+    return base::should_use_wayland_for_compositing(win.space.base.operation_mode)
+        ? win.topo.desktops.isEmpty()
+        : get_desktop(win) == x11::net::win_info::OnAllDesktops;
 }
 
 template<typename Win>
-bool on_desktop(Win* win, int d)
+bool on_desktop(Win const& win, int d)
 {
-    return (base::should_use_wayland_for_compositing(win->space.base.operation_mode)
-                ? win->topo.desktops.contains(
-                    win->space.virtual_desktop_manager->desktopForX11Id(d))
-                : get_desktop(*win) == d)
+    return (base::should_use_wayland_for_compositing(win.space.base.operation_mode)
+                ? win.topo.desktops.contains(win.space.virtual_desktop_manager->desktopForX11Id(d))
+                : get_desktop(win) == d)
         || on_all_desktops(win);
 }
 
 template<typename Win>
 bool on_desktop(Win const& win, virtual_desktop* vd)
 {
-    return (base::should_use_wayland_for_compositing(win->space.base.operation_mode)
-                ? win->topo.desktops.contains(vd)
-                : get_desktop(*win) == static_cast<int>(vd->x11DesktopNumber()))
+    return (base::should_use_wayland_for_compositing(win.space.base.operation_mode)
+                ? win.topo.desktops.contains(vd)
+                : get_desktop(win) == static_cast<int>(vd->x11DesktopNumber()))
         || on_all_desktops(win);
 }
 
 template<typename Win>
-bool on_current_desktop(Win* win)
+bool on_current_desktop(Win const& win)
 {
-    return on_desktop(win, win->space.virtual_desktop_manager->current());
+    return on_desktop(win, win.space.virtual_desktop_manager->current());
 }
 
 template<typename Win>
-QVector<unsigned int> x11_desktop_ids(Win* win)
+QVector<unsigned int> x11_desktop_ids(Win const& win)
 {
-    auto const& desks = win->topo.desktops;
+    auto const& desks = win.topo.desktops;
     QVector<unsigned int> x11_ids;
     x11_ids.reserve(desks.count());
     std::transform(desks.constBegin(), desks.constEnd(), std::back_inserter(x11_ids), [](auto vd) {
@@ -71,9 +70,9 @@ QVector<unsigned int> x11_desktop_ids(Win* win)
 }
 
 template<typename Win>
-QStringList desktop_ids(Win* win)
+QStringList desktop_ids(Win const& win)
 {
-    auto const& desks = win->topo.desktops;
+    auto const& desks = win.topo.desktops;
     QStringList ids;
     ids.reserve(desks.count());
     std::transform(desks.constBegin(),

@@ -68,7 +68,7 @@ void perform_window_operation(Win* window, win_op op)
         set_minimized(window, true);
         break;
     case win_op::on_all_desktops:
-        set_on_all_desktops(window, !on_all_desktops(window));
+        set_on_all_desktops(*window, !on_all_desktops(*window));
         break;
     case win_op::fullscreen:
         window->setFullScreen(!window->control->fullscreen, true);

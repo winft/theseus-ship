@@ -993,7 +993,7 @@ protected:
                            if (!win->control) {
                                return;
                            }
-                           if (!win::on_current_desktop(win) || win->control->minimized
+                           if (!win::on_current_desktop(*win) || win->control->minimized
                                || win->isHiddenInternal()) {
                                return;
                            }

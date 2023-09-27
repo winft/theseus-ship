@@ -68,7 +68,7 @@ auto focus_chain_get_for_activation_on_current_output(Space& space, uint desktop
 template<typename Space, typename Win, typename Output>
 bool focus_chain_is_usable_focus_candidate(Space& space, Win& window, Output const* output)
 {
-    if (!window.isShown() || !on_current_desktop(&window)) {
+    if (!window.isShown() || !on_current_desktop(window)) {
         return false;
     }
 

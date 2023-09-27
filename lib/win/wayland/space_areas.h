@@ -75,7 +75,7 @@ void update_space_areas(Window* win,
     auto const strut_region = strut_rects{strut_rect(win->geo.frame, margins_to_strut_area(strut))};
     auto rect = desktop_area - margins(QRect({}, win->space.base.topology.size));
 
-    if (on_all_desktops(win)) {
+    if (on_all_desktops(*win)) {
         for (int desktop = 1; desktop <= desktops_count; ++desktop) {
             areas.work[desktop] = areas.work[desktop].intersected(rect);
 

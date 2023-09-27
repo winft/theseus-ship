@@ -78,7 +78,7 @@ public:
                                    if (!win->control) {
                                        return;
                                    }
-                                   if (on_all_desktops(win)) {
+                                   if (on_all_desktops(*win)) {
                                        return;
                                    }
                                    if (get_desktop(*win) <= desktop_count) {

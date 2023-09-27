@@ -183,7 +183,7 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("opacity") + n, c->opacity());
 
     // the config entry is called "sticky" for back. comp. reasons
-    cg.writeEntry(QLatin1String("sticky") + n, on_all_desktops(c));
+    cg.writeEntry(QLatin1String("sticky") + n, on_all_desktops(*c));
 
     // the config entry is called "staysOnTop" for back. comp. reasons
     cg.writeEntry(QLatin1String("staysOnTop") + n, c->control->keep_above);

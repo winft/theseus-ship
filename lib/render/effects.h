@@ -865,7 +865,7 @@ public:
                     }
                     desktops << d;
                 }
-                win::set_desktops(win, desktops);
+                win::set_desktops(*win, desktops);
             }},
             *static_cast<effect_window_t*>(w)->window.ref_win);
     }

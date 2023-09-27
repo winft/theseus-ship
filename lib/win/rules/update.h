@@ -34,8 +34,8 @@ bool update_rule(Ruling& ruling, RefWin const& ref_win, int selection)
         ruling.below.data = ref_win.control->keep_below;
     }
     if (remember(ruling.desktops, type::desktops)) {
-        updated = updated || ruling.desktops.data != win::desktop_ids(&ref_win);
-        ruling.desktops.data = win::desktop_ids(&ref_win);
+        updated = updated || ruling.desktops.data != win::desktop_ids(ref_win);
+        ruling.desktops.data = win::desktop_ids(ref_win);
     }
     if (remember(ruling.desktopfile, type::desktop_file)) {
         auto const name = ref_win.control->desktop_file_name;

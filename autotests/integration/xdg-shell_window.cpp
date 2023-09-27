@@ -974,9 +974,9 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(contains(c->transient->children, transient));
 
         QCOMPARE(win::get_desktop(*c), 1);
-        QVERIFY(!win::on_all_desktops(c));
+        QVERIFY(!win::on_all_desktops(*c));
         QCOMPARE(win::get_desktop(*transient), 1);
-        QVERIFY(!win::on_all_desktops(transient));
+        QVERIFY(!win::on_all_desktops(*transient));
         win::active_window_to_desktop(*setup.base->space, 2);
 
         QCOMPARE(win::get_desktop(*c), 1);

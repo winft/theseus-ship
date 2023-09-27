@@ -361,7 +361,7 @@ void restack_window(Win* win,
 
             auto above_win = std::get<Win*>(*it);
 
-            if (!(is_normal(above_win) && above_win->isShown() && on_current_desktop(above_win)
+            if (!(is_normal(above_win) && above_win->isShown() && on_current_desktop(*above_win)
                   && on_screen(above_win, win->topo.central_output))) {
                 continue;
             }

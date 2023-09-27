@@ -101,7 +101,7 @@ void place_smart(Win* window, QRect const& area)
     int y_optimal;
 
     int possible;
-    int desktop = get_desktop(*window) == 0 || on_all_desktops(window)
+    int desktop = get_desktop(*window) == 0 || on_all_desktops(*window)
         ? window->space.virtual_desktop_manager->current()
         : get_desktop(*window);
 
@@ -381,7 +381,7 @@ void place_on_main_window(Win* window, QRect const& area)
         ++mains_count;
         place_on2 = lead;
 
-        if (on_current_desktop(lead)) {
+        if (on_current_desktop(*lead)) {
             if (place_on == nullptr) {
                 place_on = lead;
             } else {
@@ -554,8 +554,8 @@ void unclutter_desktop(Space& space)
     auto const& windows = space.windows;
     for (int i = windows.size() - 1; i >= 0; i--) {
         std::visit(overload{[&](auto&& win) {
-                       if (!win->control || !on_current_desktop(win) || win->control->minimized
-                           || on_all_desktops(win) || !win->isMovable()) {
+                       if (!win->control || !on_current_desktop(*win) || win->control->minimized
+                           || on_all_desktops(*win) || !win->isMovable()) {
                            return;
                        }
                        auto const placementArea

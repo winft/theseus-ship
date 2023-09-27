@@ -204,7 +204,7 @@ void update_visibility(Win* win)
     }
 
     win->net_info->setState(net::States(), net::Hidden);
-    if (!on_current_desktop(win)) {
+    if (!on_current_desktop(*win)) {
         if (win->space.base.render->compositor->scene
             && render_options->qobject->hiddenPreviews() != hidden_preview_t::never) {
             internal_keep(win);

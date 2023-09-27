@@ -158,7 +158,7 @@ public:
         setCaption(m_internalWindow->title());
         this->control->icon = QIcon::fromTheme(QStringLiteral("kwin"));
 
-        set_on_all_desktops(this, true);
+        set_on_all_desktops(*this, true);
         setOpacity(m_internalWindow->opacity());
         set_skip_close_animation(
             *this, m_internalWindow->property(internal_skip_close_animation_name).toBool());

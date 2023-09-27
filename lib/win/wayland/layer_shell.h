@@ -340,7 +340,7 @@ void process_layer_surface_commit(Win* win)
 
     if (win->window_type == win_type::desktop || win->window_type == win_type::on_screen_display
         || win->window_type == win_type::notification) {
-        set_on_all_desktops(win, true);
+        set_on_all_desktops(*win, true);
     }
 
     update_layer(win);

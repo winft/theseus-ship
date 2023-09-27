@@ -479,8 +479,8 @@ QPoint adjust_window_position(Space const& space,
                                if (!win->isShown()) {
                                    return;
                                }
-                               if (!on_desktop(win, get_desktop(window))
-                                   && !on_desktop(&window, get_desktop(*win))) {
+                               if (!on_desktop(*win, get_desktop(window))
+                                   && !on_desktop(window, get_desktop(*win))) {
                                    // wrong virtual desktop
                                    return;
                                }
@@ -693,7 +693,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
                 std::visit(
                     overload{[&](auto&& win) {
                         if (!win->control
-                            || !on_desktop(win, space.virtual_desktop_manager->current())
+                            || !on_desktop(*win, space.virtual_desktop_manager->current())
                             || win->control->minimized) {
                             return;
                         }

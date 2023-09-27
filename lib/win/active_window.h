@@ -183,7 +183,7 @@ template<typename Space>
 void active_window_set_on_all_desktops(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) { set_on_all_desktops(win, !on_all_desktops(win)); }},
+        std::visit(overload{[&](auto&& win) { set_on_all_desktops(*win, !on_all_desktops(*win)); }},
                    *space.stacking.active);
     }
 }

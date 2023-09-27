@@ -180,11 +180,11 @@ void setup_plasma_management(Space* space, Win* win)
     // We need to set `OnAllDesktops` after the actual VD list has been added.
     // Otherwise it will unconditionally add the current desktop to the interface
     // which may not be the case, for example, when using rules
-    plasma_win->setOnAllDesktops(on_all_desktops(win));
+    plasma_win->setOnAllDesktops(on_all_desktops(*win));
 
     // Only for the legacy mechanism.
     QObject::connect(qtwin, &window_qobject::desktopsChanged, plasma_win, [plasma_win, win] {
-        if (on_all_desktops(win)) {
+        if (on_all_desktops(*win)) {
             plasma_win->setOnAllDesktops(true);
             return;
         }
@@ -199,7 +199,7 @@ void setup_plasma_management(Space* space, Win* win)
                      [win](const QString& desktopId) {
                          if (auto vd
                              = win->space.virtual_desktop_manager->desktopForId(desktopId)) {
-                             enter_desktop(win, vd);
+                             enter_desktop(*win, vd);
                          }
                      });
     QObject::connect(plasma_win,
@@ -208,7 +208,7 @@ void setup_plasma_management(Space* space, Win* win)
                      [win]() {
                          auto& vds = win->space.virtual_desktop_manager;
                          vds->setCount(vds->count() + 1);
-                         enter_desktop(win, vds->desktops().last());
+                         enter_desktop(*win, vds->desktops().last());
                      });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::leavePlasmaVirtualDesktopRequested,
@@ -216,7 +216,7 @@ void setup_plasma_management(Space* space, Win* win)
                      [win](const QString& desktopId) {
                          if (auto vd
                              = win->space.virtual_desktop_manager->desktopForId(desktopId)) {
-                             leave_desktop(win, vd);
+                             leave_desktop(*win, vd);
                          }
                      });
     QObject::connect(plasma_win,

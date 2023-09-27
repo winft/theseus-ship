@@ -15,7 +15,7 @@ namespace KWin::win::wayland
 template<typename Win>
 void idle_update(Win& window)
 {
-    auto const is_visible = window.isShown() && on_current_desktop(&window);
+    auto const is_visible = window.isShown() && on_current_desktop(window);
 
     if (is_visible && window.surface && window.surface->inhibitsIdle()) {
         if (!window.inhibit_idle) {

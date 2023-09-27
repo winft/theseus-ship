@@ -283,17 +283,17 @@ TEST_CASE("idle inhibition", "[win]")
         QCOMPARE(idle.inhibit_count, 1);
 
         // Let the client enter the second virtual desktop.
-        win::enter_desktop(c, vd_manager->desktops().at(1));
+        win::enter_desktop(*c, vd_manager->desktops().at(1));
         QCOMPARE(idle.inhibit_count, 1);
 
         // If the client leaves the first virtual desktop, then the associated idle
         // inhibitor object should not be honored.
-        win::leave_desktop(c, vd_manager->desktops().at(0));
+        win::leave_desktop(*c, vd_manager->desktops().at(0));
         QCOMPARE(idle.inhibit_count, 0);
 
         // If the client enters the first desktop, then the associated idle inhibitor
         // object should be honored back again.
-        win::enter_desktop(c, vd_manager->desktops().at(0));
+        win::enter_desktop(*c, vd_manager->desktops().at(0));
         QCOMPARE(idle.inhibit_count, 1);
 
         // Destroy the test client.

@@ -30,7 +30,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
 
     if (is_desktop(win)) {
         if (!space.stacking.active && space.stacking.should_get_focus.empty()
-            && on_current_desktop(win)) {
+            && on_current_desktop(*win)) {
             // TODO: Make sure desktop is active after startup if there's no other window active
             request_focus(space, *win);
         }

@@ -567,7 +567,7 @@ private:
                            }
 
                            if (win->topo.desktops.count() > 1) {
-                               leave_desktop(win, desktop);
+                               leave_desktop(*win, desktop);
                                return;
                            }
                            send_window_to_desktop(

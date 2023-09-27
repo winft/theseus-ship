@@ -19,7 +19,7 @@ auto find_desktop(Space* space, bool topmost, int desktop)
     auto const& list = space->stacking.order.stack;
     auto is_desktop = [desktop](auto window) {
         return std::visit(overload{[desktop](auto&& window) {
-                              return window->control && on_desktop(window, desktop)
+                              return window->control && on_desktop(*window, desktop)
                                   && win::is_desktop(window) && window->isShown();
                           }},
                           window);
