@@ -57,8 +57,9 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
         }
     }
 
-    if constexpr (requires(Win win, int desk, int was_desk) { win.doSetDesktop(desk, was_desk); }) {
-        win->doSetDesktop(get_desktop(*win), was_desk);
+    if constexpr (requires(Win win) { win.doSetDesktop(); }) {
+        // TODO(romangg): Only relevant for X11/Xwl windows. Should go somewhere else.
+        win->doSetDesktop();
     }
 
     focus_chain_update(win->space.stacking.focus_chain, win, focus_chain_change::make_first);

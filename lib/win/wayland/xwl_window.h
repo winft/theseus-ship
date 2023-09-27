@@ -430,7 +430,7 @@ public:
         return x11::belongs_to_desktop(*this);
     }
 
-    void doSetDesktop(int /*desktop*/, int /*was_desk*/)
+    void doSetDesktop()
     {
         x11::update_visibility(this);
     }

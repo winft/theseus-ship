@@ -456,7 +456,7 @@ public:
         return belongs_to_desktop(*this);
     }
 
-    void doSetDesktop(int /*desktop*/, int /*was_desk*/)
+    void doSetDesktop()
     {
         update_visibility(this);
     }
