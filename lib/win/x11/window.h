@@ -510,6 +510,27 @@ public:
         print_window_debug_info(*this, stream);
     }
 
+    void set_state_keep_below(bool keep)
+    {
+        if (static_cast<bool>(net_info->state() & net::KeepBelow) == keep) {
+            return;
+        }
+        net_info->setState(keep ? net::KeepBelow : net::States(), net::KeepBelow);
+    }
+
+    void set_state_keep_above(bool keep)
+    {
+        if (static_cast<bool>(net_info->state() & net::KeepAbove) == keep) {
+            return;
+        }
+        net_info->setState(keep ? net::KeepAbove : net::States(), net::KeepAbove);
+    }
+
+    void set_state_demands_attention(bool demand)
+    {
+        net_info->setState(demand ? net::DemandsAttention : net::States(), net::DemandsAttention);
+    }
+
     std::unique_ptr<qobject_t> qobject;
 
     win::window_metadata meta;

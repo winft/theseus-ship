@@ -559,6 +559,28 @@ public:
         }
     }
 
+    void set_state_keep_below(bool keep)
+    {
+        if (static_cast<bool>(net_info->state() & x11::net::KeepBelow) == keep) {
+            return;
+        }
+        net_info->setState(keep ? x11::net::KeepBelow : x11::net::States(), x11::net::KeepBelow);
+    }
+
+    void set_state_keep_above(bool keep)
+    {
+        if (static_cast<bool>(net_info->state() & x11::net::KeepAbove) == keep) {
+            return;
+        }
+        net_info->setState(keep ? x11::net::KeepAbove : x11::net::States(), x11::net::KeepAbove);
+    }
+
+    void set_state_demands_attention(bool demand)
+    {
+        net_info->setState(demand ? x11::net::DemandsAttention : x11::net::States(),
+                           x11::net::DemandsAttention);
+    }
+
     std::unique_ptr<qobject_t> qobject;
 
     win::window_metadata meta;

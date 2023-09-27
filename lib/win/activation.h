@@ -329,11 +329,11 @@ void set_demands_attention(Win* win, bool demand)
     if (win->control->demands_attention == demand) {
         return;
     }
+
     win->control->demands_attention = demand;
 
-    if constexpr (requires(Win win) { win.net_info; }) {
-        win->net_info->setState(demand ? x11::net::DemandsAttention : x11::net::States(),
-                                x11::net::DemandsAttention);
+    if constexpr (requires(Win win, bool demand) { win.set_state_demands_attention(demand); }) {
+        win->set_state_demands_attention(demand);
     }
 
     remove_all(win->space.stacking.attention_chain, var_win(win));
