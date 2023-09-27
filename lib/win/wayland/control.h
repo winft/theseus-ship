@@ -25,7 +25,7 @@ public:
 
     void set_desktops(QVector<virtual_desktop*> desktops) override
     {
-        wayland::set_desktops(window, desktops);
+        wayland::desktops_announce(window, desktops);
     }
 
     void destroy_plasma_wayland_integration() override

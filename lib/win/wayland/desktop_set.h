@@ -14,7 +14,7 @@ namespace KWin::win::wayland
 {
 
 template<typename Win>
-void set_desktops(Win& win, QVector<virtual_desktop*> desktops)
+void desktops_announce(Win& win, QVector<virtual_desktop*> desktops)
 {
     auto management = win.control->plasma_wayland_integration;
     if (!management) {

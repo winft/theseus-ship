@@ -25,7 +25,7 @@ public:
 
     void set_desktops(QVector<virtual_desktop*> desktops) override
     {
-        wayland::set_desktops(*window, desktops);
+        wayland::desktops_announce(*window, desktops);
         x11::control<Win>::set_desktops(desktops);
     }
 
