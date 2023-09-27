@@ -14,7 +14,6 @@
 #include "singleton_interface.h"
 #include "virtual_desktops.h"
 
-#include "base/x11/xcb/helpers.h"
 #include "input/gestures.h"
 
 #include <KConfigGroup>
@@ -1207,15 +1206,6 @@ public:
                 }
             }
         }
-    }
-
-    /**
-     * Raise electric border windows to the real top of the screen. We only need
-     * to do this if an effect input window is active.
-     */
-    void ensureOnTop()
-    {
-        base::x11::xcb::restack_windows_with_raise(space.base.x11_data.connection, windows());
     }
 
     bool isEntered(QMouseEvent* event)

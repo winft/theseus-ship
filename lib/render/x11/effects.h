@@ -14,6 +14,7 @@
 #include "effect/kscreen_integration.h"
 #include "effect/slide_integration.h"
 
+#include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb/window.h"
 #include "render/effects.h"
 #include "render/xrender/utils.h"
@@ -123,10 +124,11 @@ protected:
 
     void doStartMouseInterception(Qt::CursorShape shape) override
     {
+        auto const& base = this->scene.platform.base;
+
         // NOTE: it is intended to not perform an XPointerGrab on X11. See documentation in
         // kwineffects.h The mouse grab is implemented by using a full screen input only window
         if (!mouse_intercept.window.is_valid()) {
-            auto const& base = this->scene.platform.base;
             auto const& x11_data = base.x11_data;
             auto const& space_size = base.topology.size;
             const QRect geo(0, 0, space_size.width(), space_size.height());
@@ -147,9 +149,9 @@ protected:
         mouse_intercept.filter
             = std::make_unique<mouse_intercept_filter<type>>(mouse_intercept.window, this);
 
-        // Raise electric border windows above the input windows
-        // so they can still be triggered.
-        this->scene.platform.base.space->edges->ensureOnTop();
+        // Raise electric border windows above the input windows so they can still be triggered.
+        base::x11::xcb::restack_windows_with_raise(base.x11_data.connection,
+                                                   base.space->edges->windows());
     }
 
     void doStopMouseInterception() override
@@ -163,9 +165,11 @@ protected:
     {
         mouse_intercept.window.raise();
 
-        // Raise electric border windows above the input windows
-        // so they can still be triggered. TODO: Do both at once.
-        this->scene.platform.base.space->edges->ensureOnTop();
+        // Raise electric border windows above the input windows so they can still be triggered.
+        // TODO: Do both at once.
+        auto const& base = this->scene.platform.base;
+        base::x11::xcb::restack_windows_with_raise(base.x11_data.connection,
+                                                   base.space->edges->windows());
     }
 
     void handle_effect_destroy(Effect& effect) override
