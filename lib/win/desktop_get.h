@@ -8,8 +8,6 @@
 #include "virtual_desktops.h"
 #include "x11/net/win_info.h"
 
-#include "base/types.h"
-
 namespace KWin::win
 {
 
@@ -28,27 +26,19 @@ int get_desktop(Win const& win)
 template<typename Win>
 bool on_all_desktops(Win const& win)
 {
-    return base::should_use_wayland_for_compositing(win.space.base.operation_mode)
-        ? win.topo.desktops.isEmpty()
-        : get_desktop(win) == x11::net::win_info::OnAllDesktops;
-}
-
-template<typename Win>
-bool on_desktop(Win const& win, int d)
-{
-    return (base::should_use_wayland_for_compositing(win.space.base.operation_mode)
-                ? win.topo.desktops.contains(win.space.virtual_desktop_manager->desktopForX11Id(d))
-                : get_desktop(win) == d)
-        || on_all_desktops(win);
+    return win.topo.desktops.empty();
 }
 
 template<typename Win>
 bool on_desktop(Win const& win, virtual_desktop* vd)
 {
-    return (base::should_use_wayland_for_compositing(win.space.base.operation_mode)
-                ? win.topo.desktops.contains(vd)
-                : get_desktop(win) == static_cast<int>(vd->x11DesktopNumber()))
-        || on_all_desktops(win);
+    return win.topo.desktops.contains(vd) || on_all_desktops(win);
+}
+
+template<typename Win>
+bool on_desktop(Win const& win, int d)
+{
+    return on_desktop(win, win.space.virtual_desktop_manager->desktopForX11Id(d));
 }
 
 template<typename Win>
