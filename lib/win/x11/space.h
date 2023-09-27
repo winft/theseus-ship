@@ -95,6 +95,7 @@ public:
 
     ~space() override
     {
+        x11::clear_space(*this);
         win::clear_space(*this);
     }
 

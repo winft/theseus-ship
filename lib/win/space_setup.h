@@ -10,7 +10,6 @@
 #include "dbus/virtual_desktop_manager.h"
 #include "rules.h"
 #include "tabbox/tabbox.h"
-#include "x11/space_setup.h"
 
 #include "base/platform.h"
 
@@ -176,13 +175,9 @@ void init_space(Space& space)
 template<typename Space>
 void clear_space(Space& space)
 {
-    space.stacking.order.lock();
-
-    // TODO: grabXServer();
-
-    x11::clear_space(space);
-
     using var_win = typename Space::window_t;
+
+    space.stacking.order.lock();
 
     if constexpr (requires { Space::internal_window_t; }) {
         using int_win = typename Space::internal_window_t;
@@ -218,9 +213,6 @@ void clear_space(Space& space)
     for (auto const& s : space.session)
         delete s;
 
-    // TODO: ungrabXServer();
-
-    base::x11::xcb::extensions::destroy();
     space.base.render->compositor->space = nullptr;
 }
 

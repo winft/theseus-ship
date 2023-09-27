@@ -18,6 +18,7 @@
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
 #include "win/space_areas_helpers.h"
+#include "win/space_setup.h"
 
 namespace KWin::win::x11
 {
@@ -221,6 +222,7 @@ void clear_space(Space& space)
 {
     using var_win = typename Space::window_t;
 
+    // TODO: grabXServer();
     space.stacking.order.lock();
 
     // Use stacking.order, so that kwin --replace keeps stacking order
@@ -262,7 +264,11 @@ void clear_space(Space& space)
 
     space.root_info.reset();
     space.shape_helper_window.reset();
+
     space.stacking.order.unlock();
+
+    // TODO: ungrabXServer();
+    base::x11::xcb::extensions::destroy();
 }
 
 }

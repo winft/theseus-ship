@@ -21,6 +21,7 @@
 #include "xdg_activation.h"
 #include "xdg_shell.h"
 #include "xwl_window.h"
+#include <win/x11/space_setup.h>
 
 #include "debug/console/wayland/wayland_console.h"
 #include "desktop/kde/dbus/kwin.h"
@@ -240,7 +241,7 @@ public:
                        win);
         }
 
-        clear_space(*this);
+        win::clear_space(*this);
     }
 
     void resize(QSize const& size) override
