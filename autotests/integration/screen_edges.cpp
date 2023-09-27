@@ -165,7 +165,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QCOMPARE(te->border, win::electric_border::bottom);
 
         // we shouldn't have any x windows, though
-        QCOMPARE(screenEdges->windows().size(), 0);
+        QCOMPARE(win::x11::screen_edges_windows(*screenEdges).size(), 0);
     }
 
     SECTION("create initial edges")
@@ -189,7 +189,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QCOMPARE(screenEdges->actions.bottom_left, win::electric_border_action::none);
         QCOMPARE(screenEdges->actions.left, win::electric_border_action::none);
 
-        QCOMPARE(screenEdges->windows().size(), 0);
+        QCOMPARE(win::x11::screen_edges_windows(*screenEdges).size(), 0);
 
         // set some reasonable virtual desktops
         config->group("Desktops").writeEntry("Number", 4);
@@ -204,7 +204,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
         // approach windows for edges not created as screen too small
         screenEdges->updateLayout();
-        auto edgeWindows = screenEdges->windows();
+        auto edgeWindows = win::x11::screen_edges_windows(*screenEdges);
 
         // TODO(romangg): No window edges on Wayland. Needs investigation.
         REQUIRE_FALSE(edgeWindows.size() == 12);
@@ -253,7 +253,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
         // let's update the layout and verify that we have edges
         screenEdges->recreateEdges();
-        edgeWindows = screenEdges->windows();
+        edgeWindows = win::x11::screen_edges_windows(*screenEdges);
         QCOMPARE(edgeWindows.size(), 16);
         sg = QRect({}, setup.base->topology.size);
         expectedGeometries
@@ -282,7 +282,7 @@ TEST_CASE("screen edges", "[input],[win]")
         screenEdges->reconfigure();
         REQUIRE(!screenEdges->desktop_switching.always);
         REQUIRE(screenEdges->desktop_switching.when_moving_client);
-        REQUIRE(screenEdges->windows().size() == 0);
+        REQUIRE(win::x11::screen_edges_windows(*screenEdges).size() == 0);
 
         QCOMPARE(screenEdges->edges.size(), 8);
         for (int i = 0; i < 8; ++i) {

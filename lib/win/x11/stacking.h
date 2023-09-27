@@ -8,6 +8,7 @@
 #include "client.h"
 #include "focus_stealing.h"
 #include "hide.h"
+#include "screen_edges.h"
 #include "window_find.h"
 
 #include "base/output_helpers.h"
@@ -98,7 +99,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     // windows (e.g. popups).
     stack.push_back(space.root_info->supportWindow());
 
-    auto const edges_wins = space.edges->windows();
+    auto const edges_wins = screen_edges_windows(*space.edges);
     stack.insert(stack.end(), edges_wins.begin(), edges_wins.end());
     stack.insert(stack.end(), order.manual_overlays.begin(), order.manual_overlays.end());
 

@@ -150,8 +150,8 @@ protected:
             = std::make_unique<mouse_intercept_filter<type>>(mouse_intercept.window, this);
 
         // Raise electric border windows above the input windows so they can still be triggered.
-        base::x11::xcb::restack_windows_with_raise(base.x11_data.connection,
-                                                   base.space->edges->windows());
+        base::x11::xcb::restack_windows_with_raise(
+            base.x11_data.connection, win::x11::screen_edges_windows(*base.space->edges));
     }
 
     void doStopMouseInterception() override
@@ -168,8 +168,8 @@ protected:
         // Raise electric border windows above the input windows so they can still be triggered.
         // TODO: Do both at once.
         auto const& base = this->scene.platform.base;
-        base::x11::xcb::restack_windows_with_raise(base.x11_data.connection,
-                                                   base.space->edges->windows());
+        base::x11::xcb::restack_windows_with_raise(
+            base.x11_data.connection, win::x11::screen_edges_windows(*base.space->edges));
     }
 
     void handle_effect_destroy(Effect& effect) override

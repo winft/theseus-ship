@@ -1258,31 +1258,6 @@ public:
         return activated;
     }
 
-    /**
-     * Returns a std::vector of all existing screen edge windows
-     * @return all existing screen edge windows in a std::vector
-     */
-    std::vector<xcb_window_t> windows() const
-    {
-        std::vector<xcb_window_t> wins;
-
-        for (auto& edge : edges) {
-            xcb_window_t w = edge->window_id();
-            if (w != XCB_WINDOW_NONE) {
-                wins.push_back(w);
-            }
-
-            // TODO:  lambda
-            w = edge->approachWindow();
-
-            if (w != XCB_WINDOW_NONE) {
-                wins.push_back(w);
-            }
-        }
-
-        return wins;
-    }
-
     bool handleDndNotify(xcb_window_t window, QPoint const& point)
     {
         for (auto& edge : edges) {

@@ -9,6 +9,7 @@
 
 #include "desktop_space.h"
 #include "screen_edge.h"
+#include "screen_edges.h"
 #include "screen_edges_filter.h"
 #include "space_areas.h"
 #include "space_setup.h"
@@ -202,7 +203,7 @@ void stack_screen_edges_under_override_redirect(Space* space)
     std::vector<xcb_window_t> windows;
     windows.push_back(space->root_info->supportWindow());
 
-    auto const edges_wins = space->edges->windows();
+    auto const edges_wins = screen_edges_windows(*space->edges);
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
 
     base::x11::xcb::restack_windows(space->base.x11_data.connection, windows);
