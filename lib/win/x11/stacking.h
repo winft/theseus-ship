@@ -10,6 +10,7 @@
 #include "hide.h"
 #include "screen_edges.h"
 #include "window_find.h"
+#include <win/x11/user_time.h>
 
 #include "base/output_helpers.h"
 #include "base/x11/xcb/helpers.h"

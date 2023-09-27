@@ -25,6 +25,7 @@
 #include "win/screen_edges.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
+#include <win/x11/netinfo_helpers.h>
 
 #include <vector>
 
@@ -162,6 +163,21 @@ public:
     void update_tool_windows_visibility(bool also_hide)
     {
         x11::update_tool_windows_visibility(this, also_hide);
+    }
+
+    template<typename Win>
+    void set_active_window(Win& window)
+    {
+        if (root_info) {
+            x11::root_info_set_active_window(*root_info, window);
+        }
+    }
+
+    void unset_active_window()
+    {
+        if (root_info) {
+            x11::root_info_unset_active_window(*root_info);
+        }
     }
 
     base_t& base;

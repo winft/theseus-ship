@@ -38,6 +38,7 @@
 #include "win/x11/desktop_space.h"
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
+#include <win/x11/netinfo_helpers.h>
 
 #include <Wrapland/Server/appmenu.h>
 #include <Wrapland/Server/compositor.h>
@@ -488,6 +489,21 @@ public:
     void update_tool_windows_visibility(bool also_hide)
     {
         x11::update_tool_windows_visibility(this, also_hide);
+    }
+
+    template<typename Win>
+    void set_active_window(Win& window)
+    {
+        if (root_info) {
+            x11::root_info_set_active_window(*root_info, window);
+        }
+    }
+
+    void unset_active_window()
+    {
+        if (root_info) {
+            x11::root_info_unset_active_window(*root_info);
+        }
     }
 
     base_t& base;

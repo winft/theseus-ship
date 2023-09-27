@@ -11,6 +11,7 @@
 #include "win/meta.h"
 #include "win/setup.h"
 #include <base/x11/xcb/property.h>
+#include <win/x11/net/net.h>
 
 #include <xcb/sync.h>
 #include <xcb/xcb_icccm.h>

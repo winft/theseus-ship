@@ -16,10 +16,6 @@
 #include "stacking_order.h"
 #include "transient.h"
 #include "window_find.h"
-#include "x11/net/net.h"
-#include "x11/netinfo_helpers.h"
-#include "x11/tool_windows.h"
-#include "x11/user_time.h"
 
 #include "utils/blocker.h"
 
@@ -431,8 +427,8 @@ void unset_active_window(Space& space)
     // e.g. fullscreens have different layer when active/not-active
     stacking.order.update_order();
 
-    if (space.root_info) {
-        x11::root_info_unset_active_window(*space.root_info);
+    if constexpr (requires(Space space) { space.unset_active_window(); }) {
+        space.unset_active_window();
     }
 
     Q_EMIT space.qobject->clientActivated();
@@ -513,10 +509,8 @@ void set_active_window(Space& space, Win& window)
     // e.g. fullscreens have different layer when active/not-active
     stacking.order.update_order();
 
-    if constexpr (requires(Win win) { win.xcb_windows; }) {
-        if (space.root_info) {
-            x11::root_info_set_active_window(*space.root_info, window);
-        }
+    if constexpr (requires(Space space, Win& win) { space.set_active_window(win); }) {
+        space.set_active_window(window);
     }
 
     Q_EMIT space.qobject->clientActivated();

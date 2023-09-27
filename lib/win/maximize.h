@@ -9,6 +9,7 @@
 #include "net.h"
 #include "placement.h"
 #include "types.h"
+#include <win/x11/net/net.h>
 
 namespace KWin::win
 {
