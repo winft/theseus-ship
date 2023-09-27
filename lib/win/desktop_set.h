@@ -31,13 +31,11 @@ void set_desktops(Win& win, QVector<virtual_desktop*> desktops)
         return;
     }
 
-    auto was_desk = get_desktop(win);
+    auto const was_on_all_desktops = on_all_desktops(win);
     win.topo.desktops = desktops;
     win.control->set_desktops(desktops);
 
-    if ((was_desk == x11::net::win_info::OnAllDesktops)
-        != (get_desktop(win) == x11::net::win_info::OnAllDesktops)) {
-        // OnAllDesktops changed
+    if (was_on_all_desktops != on_all_desktops(win)) {
         propagate_on_all_desktops_to_children(win);
     }
 
