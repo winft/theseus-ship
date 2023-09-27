@@ -193,45 +193,20 @@ QObject* tabbox_handler_private::create_switcher_item()
         QStringLiteral("plasma/look-and-feel/%1/contents/windowswitcher/WindowSwitcher.qml")
             .arg(config.layout_name()));
     if (file.isNull()) {
-        const QString folder_name = QLatin1String("kwin/tabbox/");
-        auto find_switcher = [this, folder_name] {
-            const QString type = QStringLiteral("KWin/WindowSwitcher");
-            auto offers = KPackage::PackageLoader::self()->findPackages(
-                type, folder_name, [this](const KPluginMetaData& data) {
-                    return data.pluginId().compare(config.layout_name(), Qt::CaseInsensitive) == 0;
-                });
-            if (offers.isEmpty()) {
-                // load default
-                offers = KPackage::PackageLoader::self()->findPackages(
-                    type, folder_name, [](const KPluginMetaData& data) {
-                        return data.pluginId().compare(QStringLiteral("thumbnail_grid"),
-                                                       Qt::CaseInsensitive)
-                            == 0;
-                    });
-                if (offers.isEmpty()) {
-                    qCDebug(KWIN_TABBOX) << "could not find default window switcher layout";
-                    return KPluginMetaData();
-                }
-            }
-            return offers.first();
-        };
-        auto service = find_switcher();
-        if (!service.isValid()) {
-            return nullptr;
+        const QString type = QStringLiteral("KWin/WindowSwitcher");
+
+        KPackage::Package pkg
+            = KPackage::PackageLoader::self()->loadPackage(type, config.layout_name());
+
+        if (!pkg.isValid()) {
+            // load default
+            qCWarning(KWIN_TABBOX) << "Could not load window switcher package"
+                                   << config.layout_name() << ". Falling back to default";
+            pkg = KPackage::PackageLoader::self()->loadPackage(
+                type, tabbox_config::default_layout_name());
         }
-        if (service.value(QStringLiteral("X-Plasma-API"))
-            != QLatin1String("declarativeappletscript")) {
-            qCDebug(KWIN_TABBOX) << "Window Switcher Layout is no declarativeappletscript";
-            return nullptr;
-        }
-        auto find_script_file = [service, folder_name] {
-            const QString plugin_name = service.pluginId();
-            const QString script_name = service.value(QStringLiteral("X-Plasma-MainScript"));
-            return QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                          folder_name + plugin_name + QLatin1String("/contents/")
-                                              + script_name);
-        };
-        file = find_script_file();
+
+        file = pkg.filePath("mainscript");
     }
     if (file.isNull()) {
         qCDebug(KWIN_TABBOX) << "Could not find QML file for window switcher";
