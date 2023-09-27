@@ -69,17 +69,14 @@ void set_desktops(Win& win, QVector<virtual_desktop*> desktops)
 template<typename Win>
 void set_desktop(Win& win, int desktop)
 {
-    auto const desktops_count = static_cast<int>(win.space.virtual_desktop_manager->count());
-    if (desktop != x11::net::win_info::OnAllDesktops) {
-        // Check range.
-        desktop = std::max(1, std::min(desktops_count, desktop));
+    if (desktop == x11::net::win_info::OnAllDesktops) {
+        set_desktops(win, {});
+        return;
     }
 
-    QVector<virtual_desktop*> desktops;
-    if (desktop != x11::net::win_info::OnAllDesktops) {
-        desktops << win.space.virtual_desktop_manager->desktopForX11Id(desktop);
-    }
-    set_desktops(win, desktops);
+    // Check range.
+    desktop = std::clamp<int>(desktop, 1, win.space.virtual_desktop_manager->count());
+    set_desktops(win, {win.space.virtual_desktop_manager->desktopForX11Id(desktop)});
 }
 
 template<typename Win>
