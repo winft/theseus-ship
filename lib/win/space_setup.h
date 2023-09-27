@@ -11,7 +11,6 @@
 #include "rules.h"
 #include "tabbox/tabbox.h"
 #include "x11/space_setup.h"
-#include "x11/stacking.h"
 
 #include "base/platform.h"
 
@@ -161,9 +160,6 @@ void init_space(Space& space)
     QObject::connect(&space.reconfigureTimer, &QTimer::timeout, space.qobject.get(), [&] {
         space_reconfigure(space);
     });
-    QObject::connect(&space.updateToolWindowsTimer, &QTimer::timeout, space.qobject.get(), [&] {
-        x11::update_tool_windows_visibility(&space, true);
-    });
 
     // TODO: do we really need to reconfigure everything when fonts change?
     // maybe just reconfigure the decorations? Move this into libkdecoration?
@@ -175,21 +171,6 @@ void init_space(Space& space)
                                           SLOT(reconfigure()));
 
     space.stacking.active = {};
-    QObject::connect(space.stacking.order.qobject.get(),
-                     &stacking_order_qobject::changed,
-                     space.qobject.get(),
-                     [&](auto count_changed) {
-                         x11::propagate_clients(space, count_changed);
-                         if (space.stacking.active) {
-                             std::visit(
-                                 overload{[](auto&& win) { win->control->update_mouse_grab(); }},
-                                 *space.stacking.active);
-                         }
-                     });
-    QObject::connect(space.stacking.order.qobject.get(),
-                     &stacking_order_qobject::render_restack,
-                     space.qobject.get(),
-                     [&] { x11::render_stack_unmanaged_windows(space); });
 }
 
 template<typename Space>
