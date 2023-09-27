@@ -36,10 +36,6 @@ public:
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
-    void dropEvent(QDropEvent *event) override;
-
-Q_SIGNALS:
-    void imageDropped(const QString &);
 
 private:
     ScreenPreviewWidgetPrivate *const d;
