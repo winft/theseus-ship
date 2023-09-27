@@ -13,6 +13,23 @@
 namespace KWin::win::x11
 {
 
+template<typename Space>
+void update_work_areas(Space& space)
+{
+    if (!space.root_info) {
+        return;
+    }
+
+    for (uint desktop = 1; desktop <= space.virtual_desktop_manager->count(); desktop++) {
+        x11::net::rect rect;
+        rect.pos.x = space.areas.work[desktop].x();
+        rect.pos.y = space.areas.work[desktop].y();
+        rect.size.width = space.areas.work[desktop].width();
+        rect.size.height = space.areas.work[desktop].height();
+        space.root_info->setWorkArea(desktop, rect);
+    }
+}
+
 template<typename Window>
 void update_space_areas(Window* win,
                         QRect const& desktop_area,

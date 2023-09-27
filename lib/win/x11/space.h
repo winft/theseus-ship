@@ -154,6 +154,11 @@ public:
         console->show();
     }
 
+    void update_work_area() const
+    {
+        x11::update_work_areas(*this);
+    }
+
     base_t& base;
 
     std::unique_ptr<render_outline_t> outline;

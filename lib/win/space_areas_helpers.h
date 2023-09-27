@@ -7,7 +7,6 @@
 
 #include "move.h"
 #include "space_areas.h"
-#include "x11/net/geo.h"
 
 #include "base/platform.h"
 
@@ -76,15 +75,8 @@ void update_space_areas_impl(Space& space, bool force)
         space.oldrestrictedmovearea = space.areas.restrictedmove;
         space.areas = new_areas;
 
-        if (space.root_info) {
-            x11::net::rect rect;
-            for (int desktop = 1; desktop <= desktops_count; desktop++) {
-                rect.pos.x = space.areas.work[desktop].x();
-                rect.pos.y = space.areas.work[desktop].y();
-                rect.size.width = space.areas.work[desktop].width();
-                rect.size.height = space.areas.work[desktop].height();
-                space.root_info->setWorkArea(desktop, rect);
-            }
+        if constexpr (requires(Space space) { space.update_work_area(); }) {
+            space.update_work_area();
         }
 
         for (auto win : space.windows) {
