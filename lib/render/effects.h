@@ -163,6 +163,7 @@ public:
      *     is no such effect loaded.
      */
     Effect* findEffect(const QString& name) const;
+    bool is_effect_active(QString const& plugin_id) const;
 
     QImage blit_from_framebuffer(effect::render_data& data,
                                  QRect const& geometry,

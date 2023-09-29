@@ -572,6 +572,17 @@ Effect* effects_handler_wrap::findEffect(const QString& name) const
     return (*it).second;
 }
 
+bool effects_handler_wrap::is_effect_active(QString const& plugin_id) const
+{
+    auto it = std::find_if(loaded_effects.cbegin(),
+                           loaded_effects.cend(),
+                           [&plugin_id](auto const& p) { return p.first == plugin_id; });
+    if (it == loaded_effects.cend()) {
+        return false;
+    }
+    return it->second->isActive();
+}
+
 QImage effects_handler_wrap::blit_from_framebuffer(effect::render_data& data,
                                                    QRect const& geometry,
                                                    double scale) const

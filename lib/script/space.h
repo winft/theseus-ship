@@ -277,6 +277,16 @@ public:
         return window_at_impl(pos, count);
     }
 
+    /**
+     * Checks if a specific effect is currently active.
+     * @param pluginId The plugin Id of the effect to check.
+     * @return @c true if the effect is loaded and currently active, @c false otherwise.
+     */
+    Q_INVOKABLE bool isEffectActive(QString const& plugin_id) const
+    {
+        return is_effect_active_impl(plugin_id);
+    }
+
 public Q_SLOTS:
     virtual void slotSwitchToNextScreen() = 0;
     virtual void slotWindowToNextScreen() = 0;
@@ -438,6 +448,7 @@ protected:
     virtual void raise_window_impl(scripting::window* window) = 0;
     virtual window* get_client_impl(qulonglong windowId) = 0;
     virtual QList<scripting::window*> window_at_impl(QPointF const& pos, int count) const = 0;
+    virtual bool is_effect_active_impl(QString const& plugin_id) const = 0;
 
     // TODO: make this private. Remove dynamic inheritance?
     std::vector<std::unique_ptr<window>> m_windows;
@@ -1011,6 +1022,14 @@ protected:
         } while (it != stacking.begin());
 
         return result;
+    }
+
+    bool is_effect_active_impl(QString const& plugin_id) const override
+    {
+        if (auto& effects = ref_space->base.render->effects) {
+            return effects->is_effect_active(plugin_id);
+        }
+        return false;
     }
 
     window* get_client_impl(qulonglong windowId) override
