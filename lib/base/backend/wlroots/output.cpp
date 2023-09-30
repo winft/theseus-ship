@@ -69,10 +69,10 @@ output::output(wlr_output* wlr_out, wlroots::platform* platform)
             current_mode.id = id;
         }
 
-        // TODO(romangg): We fall back to 60 here as we assume >0 in other code paths, but in
+        // TODO(romangg): We fall back to 60000 here as we assume >0 in other code paths, but in
         //                general 0 is a valid value in Wayland protocol which specifies that the
         //                refresh rate is undefined.
-        mode.refresh_rate = refresh ? refresh : 60;
+        mode.refresh_rate = refresh ? refresh : 60000;
 
         modes.push_back(mode);
     };
