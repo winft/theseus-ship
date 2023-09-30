@@ -581,6 +581,18 @@ public:
                            x11::net::DemandsAttention);
     }
 
+    void set_state_maximize(maximize_mode mode)
+    {
+        auto net_state = x11::net::States();
+        if (flags(mode & maximize_mode::horizontal)) {
+            net_state |= x11::net::MaxHoriz;
+        }
+        if (flags(mode & maximize_mode::vertical)) {
+            net_state |= x11::net::MaxVert;
+        }
+        net_info->setState(net_state, x11::net::Max);
+    }
+
     std::unique_ptr<qobject_t> qobject;
 
     win::window_metadata meta;

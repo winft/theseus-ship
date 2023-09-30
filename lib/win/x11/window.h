@@ -531,6 +531,18 @@ public:
         net_info->setState(demand ? net::DemandsAttention : net::States(), net::DemandsAttention);
     }
 
+    void set_state_maximize(maximize_mode mode)
+    {
+        auto net_state = net::States();
+        if (flags(mode & maximize_mode::horizontal)) {
+            net_state |= net::MaxHoriz;
+        }
+        if (flags(mode & maximize_mode::vertical)) {
+            net_state |= net::MaxVert;
+        }
+        net_info->setState(net_state, net::Max);
+    }
+
     std::unique_ptr<qobject_t> qobject;
 
     win::window_metadata meta;
