@@ -291,6 +291,7 @@ TEST_CASE("layer shell", "[win]")
         auto const output_geo = QRect(2000, 0, 1000, 500);
         auto wlr_out
             = wlr_headless_add_output(setup.base->backend, output_geo.width(), output_geo.height());
+        wlr_output_enable(wlr_out, true);
         QCOMPARE(setup.base->outputs.size(), 3);
 
         setup.base->all_outputs.back()->force_geometry(output_geo);
