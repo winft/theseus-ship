@@ -145,35 +145,11 @@ public:
     template<typename Win>
     QRect get_icon_geometry(Win const* win) const
     {
-        auto management = win->control->plasma_wayland_integration;
-        if (!management || !base.server) {
-            // window management interface is only available if the surface is mapped
-            return QRect();
+        if constexpr (std::is_same_v<Win, wayland_window>) {
+            return get_icon_geometry_for_panel(*win);
         }
 
-        auto min_distance = INT_MAX;
-        wayland_window* candidate_panel{nullptr};
-        QRect candidate_geo;
-
-        for (auto i = management->minimizedGeometries().constBegin(),
-                  end = management->minimizedGeometries().constEnd();
-             i != end;
-             ++i) {
-            auto client = find_window(i.key());
-            if (!client) {
-                continue;
-            }
-            auto const distance = QPoint(client->geo.pos() - win->geo.pos()).manhattanLength();
-            if (distance < min_distance) {
-                min_distance = distance;
-                candidate_panel = client;
-                candidate_geo = i.value();
-            }
-        }
-        if (!candidate_panel) {
-            return QRect();
-        }
-        return candidate_geo.translated(candidate_panel->geo.pos());
+        return {};
     }
 
     wayland_window* find_window(Wrapland::Server::Surface* surface) const
