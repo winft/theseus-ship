@@ -551,11 +551,10 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
         maxmode = maxmode | maximize_mode::horizontal;
     }
 
-    auto forced_maxmode = win.control->rules.checkMaximize(maxmode, !isMapped);
-
     // Either hints were set to maximize, or is forced to maximize,
     // or is forced to non-maximize and hints were set to maximize
-    if (forced_maxmode != maximize_mode::restore || maxmode != maximize_mode::restore) {
+    if (auto const forced_maxmode = win.control->rules.checkMaximize(maxmode, !isMapped);
+        maxmode != maximize_mode::restore || forced_maxmode != maximize_mode::restore) {
         maximize(&win, forced_maxmode);
     }
 
