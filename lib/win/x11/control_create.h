@@ -214,22 +214,11 @@ xcb_timestamp_t query_timestamp(Win& win)
 }
 
 template<typename Win>
-xcb_timestamp_t read_user_time_map_timestamp(Win* win, bool session)
+xcb_timestamp_t read_user_time_map_timestamp(Win* win)
 {
     xcb_timestamp_t time = win->net_info->userTime();
-
     if (time != -1U) {
         return time;
-    }
-
-    // Creation time would just mess things up during session startup, as possibly many apps are
-    // started up at the same time. If there's no active window yet, no timestamp will be
-    // needed, as plain allow_window_activation() will return true in such case. And if there's
-    // already active window, it's better not to activate the new one. Unless it was the active
-    // window at the time of session saving and there was no user interaction yet, this check
-    // will be done in manage().
-    if (session) {
-        return -1U;
     }
 
     return query_timestamp(*win);
@@ -355,7 +344,14 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
     update_allowed_actions(&win, true);
 
     // Set initial user time directly
-    win.user_time = read_user_time_map_timestamp(&win, true);
+    //
+    // Falling back to creation time (through call to read_user_creation_time) would just mess
+    // things up during session startup, as possibly many apps are started up at the same time. If
+    // there's no active window yet, no timestamp will be needed, as plain allow_window_activation()
+    // will return true in such case. And if there's already active window, it's better not to
+    // activate the new one. Unless it was the active window at the time of session saving and there
+    // was no user interaction yet, this check will be done in manage().
+    win.user_time = win.net_info->userTime();
 
     // And do what Win::updateUserTime() does
     win.group->updateUserTime(win.user_time);
@@ -811,7 +807,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         update_allowed_actions(win, true);
 
         // Set initial user time directly
-        win->user_time = read_user_time_map_timestamp(win, false);
+        win->user_time = read_user_time_map_timestamp(win);
 
         // And do what Win::updateUserTime() does
         win->group->updateUserTime(win->user_time);
