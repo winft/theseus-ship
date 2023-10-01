@@ -1,9 +1,11 @@
 /*
     SPDX-FileCopyrightText: 2022 Francesco Sorrentino <francesco.sorr@gmail.com>
+    SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "win/desktop_get.h"
+#include <utils/algorithm.h>
 
 #include <QObject>
 #include <Wrapland/Server/surface.h>
@@ -27,6 +29,20 @@ void idle_update(Win& window)
             window.inhibit_idle = false;
             window.space.base.input->idle.uninhibit();
         }
+    }
+}
+
+template<typename Space>
+void idle_update_all(Space const& space)
+{
+    for (auto win : space.windows) {
+        std::visit(overload{[](typename Space::wayland_window* win) {
+                                if (win->control) {
+                                    idle_update(*win);
+                                }
+                            },
+                            [](auto&&) {}},
+                   win);
     }
 }
 

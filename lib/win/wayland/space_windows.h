@@ -40,6 +40,30 @@ auto space_windows_find(Space const& space, Wrapland::Server::Surface const* sur
 }
 
 template<typename Space>
+auto space_windows_find_internal(Space const& space, QWindow const* window) ->
+    typename Space::internal_window_t*
+{
+    using win_t = typename Space::internal_window_t;
+
+    if (!window) {
+        return nullptr;
+    }
+
+    for (auto win : space.windows) {
+        if (!std::holds_alternative<win_t*>(win)) {
+            continue;
+        }
+
+        auto internal = std::get<win_t*>(win);
+        if (internal->internalWindow() == window) {
+            return internal;
+        }
+    }
+
+    return nullptr;
+}
+
+template<typename Space>
 void space_windows_add(Space& space, typename Space::wayland_window& window)
 {
     using wayland_window = typename Space::wayland_window;

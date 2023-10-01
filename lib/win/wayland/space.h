@@ -98,37 +98,12 @@ public:
     {
         // TODO(romangg): Only call with Xwayland compiled.
         x11::popagate_desktop_change(*this, desktop);
-
-        for (auto win : windows) {
-            std::visit(overload{[](wayland_window* win) {
-                                    if (win->control) {
-                                        idle_update(*win);
-                                    }
-                                },
-                                [](auto&&) {}},
-                       win);
-        }
+        idle_update_all(*this);
     }
 
-    /// Internal window means a window created by KWin itself.
     internal_window_t* findInternal(QWindow* window) const
     {
-        if (!window) {
-            return nullptr;
-        }
-
-        for (auto win : windows) {
-            if (!std::holds_alternative<internal_window_t*>(win)) {
-                continue;
-            }
-
-            auto internal = std::get<internal_window_t*>(win);
-            if (internal->internalWindow() == window) {
-                return internal;
-            }
-        }
-
-        return nullptr;
+        return space_windows_find_internal(*this, window);
     }
 
     using edger_t = screen_edger<type>;
