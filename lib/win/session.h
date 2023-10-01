@@ -294,18 +294,20 @@ std::unique_ptr<session_info> take_session_info(Space& space, Win* c)
         // look for a real session managed client (algorithm suggested by ICCCM)
         auto const session_copy = space.session;
         for (auto const& info : session_copy) {
-            if (info->sessionId == sessionId && session_info_window_type_match(c, info)) {
-                if (!windowRole.isEmpty()) {
-                    if (info->windowRole == windowRole) {
-                        remove_all(space.session, info);
-                        return std::unique_ptr<session_info>{info};
-                    }
-                } else {
-                    if (info->windowRole.isEmpty() && info->resourceName == resourceName
-                        && info->resourceClass == resourceClass) {
-                        remove_all(space.session, info);
-                        return std::unique_ptr<session_info>{info};
-                    }
+            if (info->sessionId != sessionId || !session_info_window_type_match(c, info)) {
+                continue;
+            }
+
+            if (!windowRole.isEmpty()) {
+                if (info->windowRole == windowRole) {
+                    remove_all(space.session, info);
+                    return std::unique_ptr<session_info>{info};
+                }
+            } else {
+                if (info->windowRole.isEmpty() && info->resourceName == resourceName
+                    && info->resourceClass == resourceClass) {
+                    remove_all(space.session, info);
+                    return std::unique_ptr<session_info>{info};
                 }
             }
         }
@@ -315,13 +317,16 @@ std::unique_ptr<session_info> take_session_info(Space& space, Win* c)
     // look for a sessioninfo with matching features.
     auto const session_copy = space.session;
     for (auto const& info : session_copy) {
-        if (info->resourceName == resourceName && info->resourceClass == resourceClass
-            && session_info_window_type_match(c, info)) {
-            if (wmCommand.isEmpty() || info->wmCommand == wmCommand) {
-                remove_all(space.session, info);
-                return std::unique_ptr<session_info>{info};
-            }
+        if (info->resourceName != resourceName || info->resourceClass != resourceClass
+            || !session_info_window_type_match(c, info)) {
+            continue;
         }
+        if (!wmCommand.isEmpty() && info->wmCommand != wmCommand) {
+            continue;
+        }
+
+        remove_all(space.session, info);
+        return std::unique_ptr<session_info>{info};
     }
 
     return {};
