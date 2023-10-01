@@ -122,7 +122,8 @@ TEST_CASE("input method", "[input],[win]")
         popup.server_popup_surface
             = popup_spy.front().front().value<Wrapland::Server::input_method_popup_surface_v2*>();
 
-        popup.window = setup.base->space->find_window(popup.server_popup_surface->surface());
+        popup.window = win::wayland::space_windows_find(*setup.base->space,
+                                                        popup.server_popup_surface->surface());
         QVERIFY(popup.window);
 
         popup.shown_spy = std::make_unique<QSignalSpy>(popup.window->qobject.get(),

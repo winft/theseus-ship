@@ -6,6 +6,7 @@
 #pragma once
 
 #include "xdg_shell.h"
+#include <win/wayland/space_windows.h>
 
 namespace KWin::win::wayland
 {
@@ -13,7 +14,7 @@ namespace KWin::win::wayland
 template<typename Space>
 void handle_new_xdg_deco(Space* space, Wrapland::Server::XdgDecoration* deco)
 {
-    if (auto win = space->find_window(deco->toplevel()->surface()->surface())) {
+    if (auto win = space_windows_find(*space, deco->toplevel()->surface()->surface())) {
         install_deco(*win, deco);
     }
 }
@@ -21,7 +22,7 @@ void handle_new_xdg_deco(Space* space, Wrapland::Server::XdgDecoration* deco)
 template<typename Space>
 void handle_new_palette(Space* space, Wrapland::Server::ServerSideDecorationPalette* palette)
 {
-    if (auto win = space->find_window(palette->surface())) {
+    if (auto win = space_windows_find(*space, palette->surface())) {
         if (win->control) {
             install_palette(*win, palette);
         }
@@ -45,7 +46,7 @@ QRect get_icon_geometry_for_panel(Win const& win)
               end = management->minimizedGeometries().constEnd();
          i != end;
          ++i) {
-        auto client = win.space.find_window(i.key());
+        auto client = space_windows_find(win.space, i.key());
         if (!client) {
             continue;
         }

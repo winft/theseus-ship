@@ -11,6 +11,7 @@
 
 #include "base/wayland/server.h"
 #include "render/effects.h"
+#include <win/wayland/space_windows.h>
 
 namespace KWin::render::wayland
 {
@@ -101,7 +102,8 @@ public:
 
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* surface) const override
     {
-        if (auto win = this->scene.platform.base.space->find_window(surface)) {
+        if (auto win
+            = win::wayland::space_windows_find(*this->scene.platform.base.space, surface)) {
             return win->render->effect.get();
         }
         return nullptr;

@@ -7,6 +7,7 @@
 
 #include "popup_placement.h"
 #include "window_release.h"
+#include <win/wayland/space_windows.h>
 
 #include "base/wayland/server.h"
 #include "utils/geo.h"
@@ -757,7 +758,8 @@ void handle_configure_ack(Win& win, uint32_t serial)
 template<typename Win>
 Win* xdg_shell_find_parent(Win& win)
 {
-    auto find = [&win](auto parent_surface) { return win.space.find_window(parent_surface); };
+    auto find
+        = [&win](auto parent_surface) { return space_windows_find(win.space, parent_surface); };
 
     if (win.toplevel) {
         if (auto parent = win.toplevel->transientFor()) {

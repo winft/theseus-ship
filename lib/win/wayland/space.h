@@ -152,21 +152,6 @@ public:
         return {};
     }
 
-    wayland_window* find_window(Wrapland::Server::Surface* surface) const
-    {
-        if (!surface) {
-            // TODO(romangg): assert instead?
-            return nullptr;
-        }
-
-        auto it = std::find_if(windows.cbegin(), windows.cend(), [surface](auto win) {
-            return std::visit(overload{[&](wayland_window* win) { return win->surface == surface; },
-                                       [&](auto&& /*win*/) { return false; }},
-                              win);
-        });
-        return it != windows.cend() ? std::get<wayland_window*>(*it) : nullptr;
-    }
-
     void handle_window_added(wayland_window* window)
     {
         if (window->control && !window->layer_surface) {

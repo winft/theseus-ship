@@ -9,6 +9,7 @@
 #include "base/wayland/server.h"
 #include "win/activation.h"
 #include "win/stacking.h"
+#include <win/wayland/space_windows.h>
 
 #include <Wrapland/Server/xdg_activation_v1.h>
 #include <fcntl.h>
@@ -148,7 +149,7 @@ void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
             return true;
         }
 
-        auto win = space.find_window(token.surface());
+        auto win = space_windows_find(space, token.surface());
         if (!win) {
             qCDebug(KWIN_CORE) << "No window associated with token surface" << token.surface();
             return false;
@@ -197,7 +198,7 @@ void handle_xdg_activation_activate(Space* space,
                                     std::string const& token,
                                     Wrapland::Server::Surface* surface)
 {
-    auto win = space->find_window(surface);
+    auto win = space_windows_find(*space, surface);
     if (!win) {
         qCDebug(KWIN_CORE) << "No window found to xdg-activate" << surface;
         return;
