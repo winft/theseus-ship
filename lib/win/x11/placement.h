@@ -334,23 +334,6 @@ QRect place_unmapped(Win* win, QRect& frame_geo)
     return area;
 }
 
-template<typename Win>
-QRect place_on_taking_control(Win* win, QRect& frame_geo, bool mapped, win::session_info* session)
-{
-    if (session) {
-        if (mapped) {
-            qCWarning(KWIN_CORE)
-                << "Unexpected client behavior: session info provided for already mapped client.";
-        }
-        return place_session(win, frame_geo);
-    }
-    if (mapped) {
-        return place_mapped(win, frame_geo);
-    }
-
-    return place_unmapped(win, frame_geo);
-}
-
 // When kwin crashes, windows will not be gravitated back to their original position
 // and will remain offset by the size of the decoration. So when restarting, fix this
 // (the property with the size of the frame remains on the window after the crash).

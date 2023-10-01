@@ -288,7 +288,13 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
 
     win.geo.frame = frame_geo;
 
-    auto const placement_area = place_on_taking_control(&win, frame_geo, isMapped, session);
+    if (isMapped) {
+        // TODO(romangg): Or should we just in general assume a window with session info is
+        //                unmapped and remove the additional argument to this function?
+        qCWarning(KWIN_CORE)
+            << "Unexpected client behavior: session info provided for already mapped client.";
+    }
+    auto const placement_area = place_session(&win, frame_geo);
 
     // CT: Extra check for stupid jdk 1.3.1. But should make sense in general
     // if client has initial state set to Iconic and is transient with a parent
@@ -713,7 +719,11 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
         win->geo.frame = frame_geo;
 
-        place_on_taking_control(win, frame_geo, isMapped, nullptr);
+        if (isMapped) {
+            place_mapped(win, frame_geo);
+        } else {
+            place_unmapped(win, frame_geo);
+        }
 
         // CT: Extra check for stupid jdk 1.3.1. But should make sense in general
         // if client has initial state set to Iconic and is transient with a parent
