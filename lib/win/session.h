@@ -283,7 +283,6 @@ static bool session_info_window_type_match(Win const& c, win::session_info* info
 template<typename Space, typename Win>
 std::unique_ptr<session_info> take_session_info(Space& space, Win* c)
 {
-    std::unique_ptr<session_info> realInfo;
     QByteArray sessionId = x11::get_session_id(*c);
     QByteArray windowRole = c->windowRole();
     QByteArray wmCommand = x11::get_wm_command(*c);
@@ -295,41 +294,37 @@ std::unique_ptr<session_info> take_session_info(Space& space, Win* c)
         // look for a real session managed client (algorithm suggested by ICCCM)
         auto const session_copy = space.session;
         for (auto const& info : session_copy) {
-            if (realInfo) {
-                break;
-            }
             if (info->sessionId == sessionId && session_info_window_type_match(c, info)) {
                 if (!windowRole.isEmpty()) {
                     if (info->windowRole == windowRole) {
-                        realInfo.reset(info);
                         remove_all(space.session, info);
+                        return std::unique_ptr<session_info>{info};
                     }
                 } else {
                     if (info->windowRole.isEmpty() && info->resourceName == resourceName
                         && info->resourceClass == resourceClass) {
-                        realInfo.reset(info);
                         remove_all(space.session, info);
+                        return std::unique_ptr<session_info>{info};
                     }
                 }
             }
         }
-    } else {
-        // look for a sessioninfo with matching features.
-        auto const session_copy = space.session;
-        for (auto const& info : session_copy) {
-            if (realInfo) {
-                break;
-            }
-            if (info->resourceName == resourceName && info->resourceClass == resourceClass
-                && session_info_window_type_match(c, info)) {
-                if (wmCommand.isEmpty() || info->wmCommand == wmCommand) {
-                    realInfo.reset(info);
-                    remove_all(space.session, info);
-                }
+        return {};
+    }
+
+    // look for a sessioninfo with matching features.
+    auto const session_copy = space.session;
+    for (auto const& info : session_copy) {
+        if (info->resourceName == resourceName && info->resourceClass == resourceClass
+            && session_info_window_type_match(c, info)) {
+            if (wmCommand.isEmpty() || info->wmCommand == wmCommand) {
+                remove_all(space.session, info);
+                return std::unique_ptr<session_info>{info};
             }
         }
     }
-    return realInfo;
+
+    return {};
 }
 
 }
