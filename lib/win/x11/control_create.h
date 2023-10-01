@@ -281,9 +281,7 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
     prepare_decoration(&win);
 
     // Set size before placement.
-    auto frame_geo = session->geometry;
-
-    win.geo.frame = frame_geo;
+    win.geo.frame = session->geometry;
 
     if (isMapped) {
         // TODO(romangg): Or should we just in general assume a window with session info is
@@ -291,7 +289,7 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
         qCWarning(KWIN_CORE)
             << "Unexpected client behavior: session info provided for already mapped client.";
     }
-    auto const placement_area = place_session(&win, frame_geo);
+    auto const placement_area = place_session(&win, win.geo.frame);
 
     // CT: Extra check for stupid jdk 1.3.1. But should make sense in general
     // if client has initial state set to Iconic and is transient with a parent
@@ -490,8 +488,6 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
     prepare_decoration(&win);
 
     // Set size before placement.
-    QRect frame_geo;
-
     if (isMapped) {
         win.synced_geometry.client = client_geo;
     }
@@ -499,14 +495,12 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
     auto const frame_pos = client_geo.topLeft() - QPoint(left_border(&win), top_border(&win))
         + QPoint(win.geo.client_frame_extents.left(), win.geo.client_frame_extents.top());
     auto const frame_size = size_for_client_size(&win, client_geo.size(), size_mode::any, false);
-    frame_geo = QRect(frame_pos, frame_size);
-
-    win.geo.frame = frame_geo;
+    win.geo.frame = QRect(frame_pos, frame_size);
 
     if (isMapped) {
-        place_mapped(&win, frame_geo);
+        place_mapped(&win, win.geo.frame);
     } else {
-        place_unmapped(&win, frame_geo);
+        place_unmapped(&win, win.geo.frame);
     }
 
     // CT: Extra check for stupid jdk 1.3.1. But should make sense in general
