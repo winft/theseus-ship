@@ -225,6 +225,24 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win)
 }
 
 template<typename Win>
+void control_create_set_desktops(Win& win,
+                                 std::optional<QVector<virtual_desktop*>> desktops,
+                                 bool isMapped)
+{
+    using desks = QVector<virtual_desktop*>;
+
+    if (!desktops.has_value()) {
+        desktops = is_desktop(&win) ? desks{}
+                                    : desks{win.space.virtual_desktop_manager->currentDesktop()};
+    }
+
+    set_desktops(
+        win,
+        win.control->rules.checkDesktops(*win.space.virtual_desktop_manager, *desktops, !isMapped));
+    win.net_info->setDesktop(get_desktop(win));
+}
+
+template<typename Win>
 bool init_controlled_window_from_session(Win& win, bool isMapped)
 {
     auto session = take_session_info(win.space, &win);
@@ -254,17 +272,7 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
         initial_desktops = desks{desktop};
     }
 
-    if (!initial_desktops.has_value()) {
-        initial_desktops = is_desktop(&win)
-            ? desks{}
-            : desks{win.space.virtual_desktop_manager->currentDesktop()};
-    }
-
-    set_desktops(win,
-                 win.control->rules.checkDesktops(
-                     *win.space.virtual_desktop_manager, *initial_desktops, !isMapped));
-    win.net_info->setDesktop(get_desktop(win));
-
+    control_create_set_desktops(win, std::move(initial_desktops), isMapped);
     propagate_on_all_desktops_to_children(win);
 
     win.geo.client_frame_extents = gtk_frame_extents(&win);
@@ -473,17 +481,7 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
         }
     }
 
-    if (!initial_desktops.has_value()) {
-        initial_desktops = is_desktop(&win)
-            ? desks{}
-            : desks{win.space.virtual_desktop_manager->currentDesktop()};
-    }
-
-    set_desktops(win,
-                 win.control->rules.checkDesktops(
-                     *win.space.virtual_desktop_manager, *initial_desktops, !isMapped));
-    win.net_info->setDesktop(get_desktop(win));
-
+    control_create_set_desktops(win, std::move(initial_desktops), isMapped);
     propagate_on_all_desktops_to_children(win);
 
     win.geo.client_frame_extents = gtk_frame_extents(&win);
