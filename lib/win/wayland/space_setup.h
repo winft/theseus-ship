@@ -79,11 +79,48 @@ void space_setup_handle_desktop_removed(Space& space, virtual_desktop* desktop)
     }
 }
 
-template<typename Space, typename Input>
-void space_setup_init(Space& space, Input& input)
+template<typename Space, typename Render, typename Input>
+void space_setup_init(Space& space, Render& render, Input& input)
 {
     namespace WS = Wrapland::Server;
     using wayland_window = win::wayland::window<Space>;
+
+    space.outline = Space::render_outline_t::create(*render.compositor, [&space] {
+        return space.outline->create_visual(*space.base.render->compositor);
+    });
+    space.deco = std::make_unique<deco::bridge<Space>>(space);
+    space.appmenu = std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(space));
+    space.user_actions_menu = std::make_unique<win::user_actions_menu<Space>>(space);
+    space.screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
+    space.compositor
+        = std::make_unique<Wrapland::Server::Compositor>(space.base.server->display.get());
+    space.subcompositor
+        = std::make_unique<Wrapland::Server::Subcompositor>(space.base.server->display.get());
+    space.xdg_shell
+        = std::make_unique<Wrapland::Server::XdgShell>(space.base.server->display.get());
+    space.layer_shell
+        = std::make_unique<Wrapland::Server::LayerShellV1>(space.base.server->display.get());
+    space.xdg_decoration_manager = std::make_unique<Wrapland::Server::XdgDecorationManager>(
+        space.base.server->display.get(), space.xdg_shell.get());
+    space.xdg_foreign
+        = std::make_unique<Wrapland::Server::XdgForeign>(space.base.server->display.get());
+    space.plasma_activation_feedback
+        = std::make_unique<Wrapland::Server::plasma_activation_feedback>(
+            space.base.server->display.get());
+    space.plasma_shell
+        = std::make_unique<Wrapland::Server::PlasmaShell>(space.base.server->display.get());
+    space.plasma_window_manager
+        = std::make_unique<Wrapland::Server::PlasmaWindowManager>(space.base.server->display.get());
+    space.plasma_virtual_desktop_manager
+        = std::make_unique<Wrapland::Server::PlasmaVirtualDesktopManager>(
+            space.base.server->display.get());
+    space.idle_inhibit_manager_v1 = std::make_unique<Wrapland::Server::IdleInhibitManagerV1>(
+        space.base.server->display.get());
+    space.appmenu_manager
+        = std::make_unique<Wrapland::Server::AppmenuManager>(space.base.server->display.get());
+    space.server_side_decoration_palette_manager
+        = std::make_unique<Wrapland::Server::ServerSideDecorationPaletteManager>(
+            space.base.server->display.get());
 
     singleton_interface::get_current_output_geometry = [&space] {
         auto output = get_current_output(space);

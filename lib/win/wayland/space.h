@@ -47,38 +47,8 @@ public:
     space(Render& render, Input& input)
         : win::space(input.base.config.main)
         , base{input.base}
-        , outline{render_outline_t::create(
-              *render.compositor,
-              [this] { return outline->create_visual(*this->base.render->compositor); })}
-        , deco{std::make_unique<deco::bridge<type>>(*this)}
-        , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
-        , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
-        , screen_locker_watcher{std::make_unique<desktop::screen_locker_watcher>()}
-        , compositor{std::make_unique<Wrapland::Server::Compositor>(base.server->display.get())}
-        , subcompositor{std::make_unique<Wrapland::Server::Subcompositor>(
-              base.server->display.get())}
-        , xdg_shell{std::make_unique<Wrapland::Server::XdgShell>(base.server->display.get())}
-        , layer_shell{std::make_unique<Wrapland::Server::LayerShellV1>(base.server->display.get())}
-        , xdg_decoration_manager{std::make_unique<Wrapland::Server::XdgDecorationManager>(
-              base.server->display.get(),
-              xdg_shell.get())}
-        , xdg_foreign{std::make_unique<Wrapland::Server::XdgForeign>(base.server->display.get())}
-        , plasma_activation_feedback{std::make_unique<Wrapland::Server::plasma_activation_feedback>(
-              base.server->display.get())}
-        , plasma_shell{std::make_unique<Wrapland::Server::PlasmaShell>(base.server->display.get())}
-        , plasma_window_manager{std::make_unique<Wrapland::Server::PlasmaWindowManager>(
-              base.server->display.get())}
-        , plasma_virtual_desktop_manager{std::make_unique<
-              Wrapland::Server::PlasmaVirtualDesktopManager>(base.server->display.get())}
-        , idle_inhibit_manager_v1{std::make_unique<Wrapland::Server::IdleInhibitManagerV1>(
-              base.server->display.get())}
-        , appmenu_manager{std::make_unique<Wrapland::Server::AppmenuManager>(
-              base.server->display.get())}
-        , server_side_decoration_palette_manager{
-              std::make_unique<Wrapland::Server::ServerSideDecorationPaletteManager>(
-                  base.server->display.get())}
     {
-        space_setup_init(*this, input);
+        space_setup_init(*this, render, input);
         init_space(*this);
     }
 
