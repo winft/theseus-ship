@@ -233,16 +233,6 @@ void space_setup_init(Space& space, Render& render, Input& input)
                          handle_new_layer_surface<wayland_window>(&space, layer_surface);
                      });
 
-    // For Xwayland windows we need to setup Plasma management too.
-    QObject::connect(space.qobject.get(),
-                     &Space::qobject_t::clientAdded,
-                     space.qobject.get(),
-                     [&space](auto win_id) {
-                         auto win = space.windows_map.at(win_id);
-                         space_setup_handle_x11_window_added(
-                             space, std::get<typename Space::x11_window*>(win));
-                     });
-
     QObject::connect(
         space.subspace_manager->qobject.get(),
         &subspace_manager_qobject::subspace_removed,

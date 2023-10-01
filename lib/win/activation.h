@@ -293,8 +293,10 @@ void request_focus(Space& space, Win& window, bool raise = false, bool force_foc
 template<typename Space>
 void focus_to_null(Space& space)
 {
-    if (space.m_nullFocus) {
-        space.m_nullFocus->focus();
+    if constexpr (requires(Space space) { space.m_nullFocus; }) {
+        if (space.m_nullFocus) {
+            space.m_nullFocus->focus();
+        }
     }
 }
 
@@ -952,8 +954,11 @@ template<typename Space>
 void set_showing_desktop(Space& space, bool showing)
 {
     const bool changed = showing != space.showing_desktop;
-    if (space.root_info && changed) {
-        space.root_info->setShowingDesktop(showing);
+
+    if constexpr (requires(Space space) { space.root_info; }) {
+        if (space.root_info && changed) {
+            space.root_info->setShowingDesktop(showing);
+        }
     }
 
     space.showing_desktop = showing;

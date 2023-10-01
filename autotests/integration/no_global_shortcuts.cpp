@@ -76,7 +76,12 @@ TEST_CASE("no global shortcuts", "[input]")
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup(
         "no-global-shortcuts", operation_mode, base::wayland::start_options::no_global_shortcuts);
     setup.start();

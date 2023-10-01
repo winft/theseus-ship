@@ -351,6 +351,7 @@ target_sources(win-wl
       wayland/xdg_shell.h
       wayland/xdg_shell_control.h
       wayland/xwl_control.h
+      wayland/xwl_space.h
       wayland/xwl_window.h
 )
 

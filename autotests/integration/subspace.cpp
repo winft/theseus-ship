@@ -129,10 +129,16 @@ TEST_CASE("subspace", "[win]")
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("subspace", operation_mode);
     setup.start();
 
+#if USE_XWL
     if (setup.base->x11_data.connection) {
         // verify the current desktop x11 property on startup, see BUG: 391034
         base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP",
@@ -149,6 +155,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(currentDesktop.value(0, &ok), 0);
         QVERIFY(ok);
     }
+#endif
 
     setup_wayland_connection();
     auto& vd_manager = setup.base->space->subspace_manager;
@@ -758,6 +765,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(subspaces.hasKey("Name_4"), false);
     }
 
+#if USE_XWL
     SECTION("net current desktop")
     {
         if (!setup.base->x11_data.connection) {
@@ -830,6 +838,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(currentDesktop.value(0, &ok), 0);
         QVERIFY(ok);
     }
+#endif
 
     SECTION("last subspace removed")
     {

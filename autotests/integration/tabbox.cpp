@@ -29,7 +29,12 @@ TEST_CASE("tabbox", "[win]")
 {
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("tabbox", operation_mode);
 
     auto c = setup.base->config.main;

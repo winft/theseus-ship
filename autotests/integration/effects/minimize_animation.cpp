@@ -30,7 +30,12 @@ TEST_CASE("minimize animation", "[effect]")
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("minimize-animation", operation_mode);
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));

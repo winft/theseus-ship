@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_MAIN_WAYLAND_H
 
 #include <base/backend/wlroots/platform.h>
-#include <base/wayland/platform.h>
+#include <base/wayland/xwl_platform.h>
 
 #include <QApplication>
 #include <QProcessEnvironment>
@@ -43,7 +43,7 @@ private:
     QStringList m_applicationsToStart;
     QString m_sessionArgument;
 
-    using base_t = base::backend::wlroots::platform<base::wayland::platform>;
+    using base_t = base::backend::wlroots::platform<base::wayland::xwl_platform>;
     std::unique_ptr<base_t> base;
 
     QProcess* exit_with_process{nullptr};

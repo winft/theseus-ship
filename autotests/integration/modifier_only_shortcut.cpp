@@ -69,7 +69,12 @@ TEST_CASE("modifier only shortcut", "[input]")
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("mod-only-shortcut", operation_mode);
     setup.start();
     setup_wayland_connection();

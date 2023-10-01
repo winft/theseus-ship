@@ -5,9 +5,7 @@
 */
 #pragma once
 
-#include "effects.h"
-
-#include <render/compositor_start.h>
+#include <render/compositor.h>
 #include <render/dbus/compositing.h>
 #include <render/gl/backend.h>
 #include <render/gl/egl_data.h>
@@ -16,8 +14,9 @@
 #include <render/post/night_color_manager.h>
 #include <render/qpainter/scene.h>
 #include <render/singleton_interface.h>
-#include <render/wayland/presentation.h>
 #include <render/wayland/shadow.h>
+#include <render/wayland/xwl_effects.h>
+#include <render/x11/compositor_start.h>
 
 #include <memory>
 
@@ -25,23 +24,24 @@ namespace KWin::render::wayland
 {
 
 template<typename Base>
-class platform
+class xwl_platform
 {
 public:
-    using type = platform<Base>;
+    using type = xwl_platform<Base>;
     using qobject_t = compositor_qobject;
     using base_t = Base;
     using space_t = typename Base::space_t;
 
     using state_t = render::state;
     using scene_t = render::scene<type>;
-    using effects_t = wayland::effects_handler_impl<scene_t>;
+    using effects_t = wayland::xwl_effects_handler_impl<scene_t>;
 
     using window_t = render::window<typename space_t::window_t, type>;
+    using effect_window_group_t = effect_window_group_impl<typename space_t::window_group_t>;
     using buffer_t = buffer_win_integration<typename scene_t::buffer_t>;
     using shadow_t = render::shadow<window_t>;
 
-    platform(Base& base)
+    xwl_platform(Base& base)
         : base{base}
         , qobject{std::make_unique<compositor_qobject>([this](auto /*te*/) { return false; })}
         , options{std::make_unique<render::options>(base.operation_mode, base.config.main)}
@@ -57,12 +57,16 @@ public:
         singleton_interface::get_egl_data = [this] { return egl_data; };
 
         compositor_setup(*this);
+        x11::compositor_setup(*this);
 
         dbus->qobject->integration.get_types = [] { return QStringList{"egl"}; };
     }
 
-    virtual ~platform()
+    virtual ~xwl_platform()
     {
+        x11::delete_unused_support_properties(*this);
+        selection_owner = {};
+
         singleton_interface::get_egl_data = {};
     }
 
@@ -115,6 +119,9 @@ public:
     {
         if (!this->space) {
             // On first start setup connections.
+            QObject::connect(&space.base, &base::platform::x11_reset, this->qobject.get(), [this] {
+                x11::compositor_claim(*this);
+            });
             QObject::connect(space.stacking.order.qobject.get(),
                              &win::stacking_order_qobject::changed,
                              this->qobject.get(),
@@ -149,6 +156,7 @@ public:
 
         try {
             if (compositor_prepare_scene(*this)) {
+                x11::compositor_claim(*this);
                 compositor_start_scene(*this);
             }
         } catch (std::runtime_error const& ex) {
@@ -276,6 +284,8 @@ public:
     std::unique_ptr<effects_t> effects;
     std::unique_ptr<wayland::presentation> presentation;
     std::unique_ptr<cursor<type>> software_cursor;
+
+    std::unique_ptr<x11::compositor_selection_owner> selection_owner;
 
     QList<xcb_atom_t> unused_support_properties;
     QTimer unused_support_property_timer;

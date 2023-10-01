@@ -1,5 +1,5 @@
 /*
-    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -7,17 +7,24 @@
 
 #include "subsurface.h"
 #include "surface.h"
+#include "xwl_window.h"
 #include <win/wayland/space_setup.h>
+#include <win/x11/space_setup.h>
 
-#include "debug/console/wayland/wayland_console.h"
 #include "desktop/screen_locker_watcher.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
+#include "win/x11/desktop_space.h"
+#include "win/x11/space_areas.h"
+#include "xwl/surface.h"
+#include <debug/console/wayland/xwl_console.h>
 #include <win/stacking_state.h>
 #include <win/subspace_manager.h>
+#include <win/x11/debug.h>
+#include <win/x11/netinfo_helpers.h>
 
 #include <memory>
 
@@ -25,37 +32,51 @@ namespace KWin::win::wayland
 {
 
 template<typename Render, typename Input>
-class space
+class xwl_space
 {
 public:
-    using type = space<Render, Input>;
+    using type = xwl_space<Render, Input>;
     using qobject_t = space_qobject;
     using base_t = typename Input::base_t;
     using input_t = typename Input::redirect_t;
+    using x11_window = xwl_window<type>;
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
-    using window_t = std::variant<wayland_window*, internal_window_t*>;
+    using window_t = std::variant<wayland_window*, internal_window_t*, x11_window*>;
+    using window_group_t = x11::group<type>;
     using render_outline_t = typename base_t::render_t::qobject_t::outline_t;
 
-    space(Render& render, Input& input)
+    xwl_space(Render& render, Input& input)
         : base{input.base}
     {
         space_setup_init(*this, render, input);
+
+        // For Xwayland windows we need to setup Plasma management too.
+        QObject::connect(
+            qobject.get(), &type::qobject_t::clientAdded, qobject.get(), [this](auto win_id) {
+                auto win = windows_map.at(win_id);
+                space_setup_handle_x11_window_added(*this, std::get<x11_window*>(win));
+            });
+
         init_space(*this);
     }
 
-    virtual ~space()
+    virtual ~xwl_space()
     {
         space_setup_clear(*this);
     }
 
     void resize(QSize const& size)
     {
+        // TODO(romangg): Only call with Xwayland compiled.
+        x11::handle_desktop_resize(root_info.get(), size);
         handle_desktop_resize(*this, size);
     }
 
-    void handle_subspace_changed(uint /*subspace*/)
+    void handle_subspace_changed(uint subspace)
     {
+        // TODO(romangg): Only call with Xwayland compiled.
+        x11::popagate_subspace_change(*this, subspace);
         idle_update_all(*this);
     }
 
@@ -84,6 +105,18 @@ public:
                                         std::vector<QRect> const& screens_geos,
                                         space_areas& areas)
     {
+        for (auto window : windows) {
+            std::visit(overload{[&](x11_window* win) {
+                                    if (win->control) {
+                                        x11::update_space_areas(
+                                            win, desktop_area, screens_geos, areas);
+                                    }
+                                },
+                                [&](auto&&) {}},
+                       window);
+        }
+
+        // TODO(romangg): Combine this and above loop.
         for (auto win : windows) {
             std::visit(overload{[&](wayland_window* win) {
                                     // TODO(romangg): check on control like in the previous loop?
@@ -96,12 +129,38 @@ public:
 
     void show_debug_console()
     {
-        auto console = new debug::wayland_console(*this);
+        auto console = new debug::xwl_console(*this);
         console->show();
     }
 
-    void debug(QString& /*support*/) const
+    void update_work_area() const
     {
+        x11::update_work_areas(*this);
+    }
+
+    void update_tool_windows_visibility(bool also_hide)
+    {
+        x11::update_tool_windows_visibility(this, also_hide);
+    }
+
+    template<typename Win>
+    void set_active_window(Win& window)
+    {
+        if (root_info) {
+            x11::root_info_set_active_window(*root_info, window);
+        }
+    }
+
+    void unset_active_window()
+    {
+        if (root_info) {
+            x11::root_info_unset_active_window(*root_info);
+        }
+    }
+
+    void debug(QString& support) const
+    {
+        x11::debug_support_info(*this, support);
     }
 
     base_t& base;
@@ -110,9 +169,16 @@ public:
     std::unique_ptr<win::options> options;
 
     win::space_areas areas;
+    std::unique_ptr<base::x11::atoms> atoms;
     std::unique_ptr<rules::book> rule_book;
 
+    std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;
+    std::unique_ptr<base::x11::event_filter> m_movingClientFilter;
+    std::unique_ptr<base::x11::event_filter> m_syncAlarmFilter;
+
     int initial_subspace{1};
+    std::unique_ptr<base::x11::xcb::window> m_nullFocus;
+
     int block_focus{0};
 
     QPoint focusMousePos;
@@ -125,16 +191,23 @@ public:
     std::vector<win::strut_rects> oldrestrictedmovearea;
 
     std::unique_ptr<win::subspace_manager> subspace_manager;
+    std::unique_ptr<x11::session_manager> session_manager;
 
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
     QWidget* active_popup{nullptr};
 
+    std::vector<x11::session_info*> session;
+
     // Delay(ed) window focus timer and client
     QTimer* delayFocusTimer{nullptr};
 
     bool showing_desktop{false};
+    bool was_user_interaction{false};
+
+    int session_active_client;
+    int session_desktop;
 
     win::shortcut_dialog* client_keys_dialog{nullptr};
     bool global_shortcuts_disabled{false};
@@ -146,6 +219,9 @@ public:
     QSize olddisplaysize;
 
     int set_active_client_recursion{0};
+
+    base::x11::xcb::window shape_helper_window;
+
     uint32_t window_id{0};
 
     std::unique_ptr<render_outline_t> outline;
@@ -153,7 +229,11 @@ public:
     std::unique_ptr<deco::bridge<type>> deco;
     std::unique_ptr<dbus::appmenu> appmenu;
 
+    std::unique_ptr<x11::root_info<type>> root_info;
+    std::unique_ptr<x11::color_mapper<type>> color_mapper;
+
     std::unique_ptr<input_t> input;
+    std::unordered_map<std::string, xcb_cursor_t> xcb_cursors;
 
     std::unique_ptr<win::tabbox<type>> tabbox;
     std::unique_ptr<osd_notification<input_t>> osd;
@@ -188,6 +268,7 @@ public:
 
     std::vector<window_t> windows;
     std::unordered_map<uint32_t, window_t> windows_map;
+    std::vector<win::x11::group<type>*> groups;
 
     stacking_state<window_t> stacking;
 

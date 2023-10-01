@@ -54,7 +54,12 @@ const char* policy_to_string(win::placement policy)
 
 TEST_CASE("placement", "[win]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("placement", operation_mode);
     setup.start();
     setup.set_outputs(2);

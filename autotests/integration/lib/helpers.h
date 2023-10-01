@@ -12,9 +12,17 @@
 #include "types.h"
 
 #include "base/output.h"
-#include "base/wayland/platform.h"
-#include "win/wayland/space.h"
 #include "win/wayland/window.h"
+
+#if USE_XWL
+#include <base/wayland/xwl_platform.h>
+#include <render/wayland/xwl_platform.h>
+#include <win/wayland/xwl_space.h>
+#else
+#include <base/wayland/platform.h>
+#include <render/wayland/platform.h>
+#include <win/wayland/space.h>
+#endif
 
 #include <Wrapland/Client/xdg_shell.h>
 
@@ -33,8 +41,14 @@ namespace KWin::detail::test
 
 class client;
 
+#if USE_XWL
+using space = win::wayland::xwl_space<render::wayland::xwl_platform<base::wayland::xwl_platform>,
+                                      input::wayland::platform<base::wayland::xwl_platform>>;
+#else
 using space = win::wayland::space<render::wayland::platform<base::wayland::platform>,
                                   input::wayland::platform<base::wayland::platform>>;
+#endif
+
 using wayland_window = win::wayland::window<space>;
 
 struct KWIN_EXPORT output {

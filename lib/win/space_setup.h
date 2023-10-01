@@ -171,16 +171,19 @@ void clear_space(Space& space)
 
     space.stacking.order.lock();
 
-    if constexpr (requires { Space::internal_window_t; }) {
+    if constexpr (requires { typename Space::internal_window_t; }) {
         using int_win = typename Space::internal_window_t;
         auto const windows_copy = space.windows;
         for (auto const& window : windows_copy) {
-            std::visit(overload{[&](int_win* win) {
-                           if (!win->remnant) {
-                               win->destroyClient();
-                               remove_all(space.windows, var_win(win));
-                           }
-                       }},
+            std::visit(overload{
+                           [&](int_win* win) {
+                               if (!win->remnant) {
+                                   win->destroyClient();
+                                   remove_all(space.windows, var_win(win));
+                               }
+                           },
+                           [](auto&&) {},
+                       },
                        window);
         }
     }
@@ -200,11 +203,14 @@ void clear_space(Space& space)
     space.rule_book.reset();
     space.base.config.main->sync();
 
-    space.root_info.reset();
-    delete space.client_keys_dialog;
-    for (auto const& s : space.session)
-        delete s;
+    if constexpr (requires(Space space) { space.root_info; }) {
+        space.root_info.reset();
+        for (auto const& s : space.session) {
+            delete s;
+        }
+    }
 
+    delete space.client_keys_dialog;
     space.base.render->space = nullptr;
 }
 

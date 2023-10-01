@@ -46,18 +46,17 @@ public:
         // parent can be Client, XdgShellClient, or Unmanaged. So, later on, when
         // an instance of Deleted becomes parent of the EffectWindow, effects
         // can still figure out whether it is/was a managed window.
-        std::visit(overload{[this](typename space_t::x11_window* ref_win) {
-                                managed = ref_win->isClient();
-                                x11Client = true;
-                            },
-                            [this](auto&& ref_win) {
-                                if constexpr (requires(decltype(ref_win) win) {
-                                                  win->is_wayland_window();
-                                              }) {
-                                    waylandClient = ref_win->is_wayland_window();
-                                }
-                            }},
-                   *window.ref_win);
+        std::visit(
+            overload{[this](auto&& ref_win) {
+                if constexpr (requires(decltype(ref_win) win) { win->is_wayland_window(); }) {
+                    waylandClient = ref_win->is_wayland_window();
+                }
+                if constexpr (requires(decltype(ref_win) win) { win->xcb_windows; }) {
+                    managed = ref_win->isClient();
+                    x11Client = true;
+                }
+            }},
+            *window.ref_win);
     }
 
     ~effects_window_impl() override
@@ -132,16 +131,19 @@ public:
 
     const EffectWindowGroup* group() const override
     {
-        using x11_win = typename space_t::x11_window;
-        return std::visit(
-            overload{[](x11_win* ref_win) -> EffectWindowGroup* {
-                         if (!ref_win->group) {
-                             return nullptr;
-                         }
-                         return ref_win->group->effect_group;
-                     },
-                     [](auto&& /*ref_win*/) -> EffectWindowGroup* { return nullptr; }},
-            *window.ref_win);
+        if constexpr (requires { typename space_t::x11_window; }) {
+            using x11_win = typename space_t::x11_window;
+            return std::visit(
+                overload{[](x11_win* ref_win) -> EffectWindowGroup* {
+                             if (!ref_win->group) {
+                                 return nullptr;
+                             }
+                             return ref_win->group->effect_group;
+                         },
+                         [](auto&& /*ref_win*/) -> EffectWindowGroup* { return nullptr; }},
+                *window.ref_win);
+        }
+        return nullptr;
     }
 
     bool isDeleted() const override
@@ -685,10 +687,10 @@ public:
     QByteArray readProperty(long atom, long type, int format) const override
     {
         return std::visit(overload{[&](auto&& win) -> QByteArray {
-                              if (!win->space.base.x11_data.connection) {
-                                  return {};
-                              }
                               if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
+                                  if (!win->space.base.x11_data.connection) {
+                                      return {};
+                                  }
                                   return x11::read_window_property(
                                       win->space.base.x11_data.connection,
                                       win->xcb_windows.client,

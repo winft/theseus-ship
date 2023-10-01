@@ -77,9 +77,14 @@ setup::setup(std::string const& test_name,
                                                                             headless_backend);
 
     try {
+#if USE_XWL
+        using render_t = render::backend::wlroots::
+            platform<base_t, render::wayland::xwl_platform<base_t::abstract_type>>;
+#else
         using render_t
             = render::backend::wlroots::platform<base_t,
                                                  render::wayland::platform<base_t::abstract_type>>;
+#endif
         base->render = std::make_unique<render_t>(*base);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
@@ -101,8 +106,10 @@ setup::~setup()
         base->render->effects->unloadAllEffects();
     }
 
+#if USE_XWL
     // Kill Xwayland before terminating its connection.
     base->xwayland.reset();
+#endif
     base->server->terminateClientConnections();
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
@@ -212,16 +219,19 @@ void setup::add_client(global_selection globals)
 
 void setup::handle_server_addons_created()
 {
+#if USE_XWL
     if (base->operation_mode == base::operation_mode::xwayland) {
         create_xwayland();
         return;
     }
+#endif
 
     ready = true;
 }
 
 void setup::create_xwayland()
 {
+#if USE_XWL
     auto status_callback = [this](auto error) {
         if (error) {
             std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
@@ -237,6 +247,7 @@ void setup::create_xwayland()
     } catch (std::exception const& exc) {
         std::cerr << "Exception creating Xwayland: " << exc.what() << std::endl;
     }
+#endif
 }
 
 setup* app()

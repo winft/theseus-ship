@@ -24,6 +24,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/shortcuts_init.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
+#include <render/wayland/xwl_platform.h>
 
 // Wrapland
 #include <Wrapland/Server/display.h>
@@ -179,9 +180,8 @@ void ApplicationWayland::start(base::operation_mode mode,
     session->take_control(base->server->display->native());
 
     try {
-        using render_t
-            = render::backend::wlroots::platform<base_t,
-                                                 render::wayland::platform<base_t::abstract_type>>;
+        using render_t = render::backend::wlroots::
+            platform<base_t, render::wayland::xwl_platform<base_t::abstract_type>>;
         base->render = std::make_unique<render_t>(*base);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
@@ -237,8 +237,8 @@ void ApplicationWayland::create_xwayland()
     };
 
     try {
-        using space_t = base::wayland::platform::space_t;
-        base->xwayland = std::make_unique<xwl::xwayland<space_t>>(*base->space, status_callback);
+        base->xwayland
+            = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

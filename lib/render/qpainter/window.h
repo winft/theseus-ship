@@ -103,7 +103,7 @@ private:
             }
         }
 
-        if constexpr (std::is_same_v<Win, typename Scene::platform_t::space_t::x11_window>) {
+        if constexpr (requires(Win win) { win.xcb_windows; }) {
             // special case for XWayland windows
             if (viewportRectangle.isValid()) {
                 source = viewportRectangle;

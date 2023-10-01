@@ -35,7 +35,12 @@ namespace KWin::detail::test
 
 TEST_CASE("maximize", "[win]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("maximize", operation_mode);
     setup.start();
     setup.set_outputs(2);

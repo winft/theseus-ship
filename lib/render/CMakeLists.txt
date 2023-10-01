@@ -245,12 +245,13 @@ target_sources(render-wl
       wayland/egl.h
       wayland/egl_data.h
       wayland/output.h
-      wayland/platform.h
       wayland/presentation.h
       wayland/setup_handler.h
       wayland/setup_window.h
       wayland/shadow.h
       wayland/utils.h
+      wayland/xwl_effects.h
+      wayland/xwl_platform.h
 )
 
 set_target_properties(render-wl PROPERTIES

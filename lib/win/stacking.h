@@ -182,21 +182,23 @@ void lower_window(Space& space, Window* window)
     auto block = do_lower(window);
 
     // TODO(romangg): Factor this out in separatge function.
-    if constexpr (std::is_same_v<typename Space::x11_window, Window>) {
-        if (window->transient->lead() && window->group) {
-            // Lower also all windows in the group, in reversed stacking order.
-            auto const wins
-                = restacked_by_space_stacking_order(space, get_transient_family(window));
+    if constexpr (requires { typename Space::x11_window; }) {
+        if constexpr (std::is_same_v<typename Space::x11_window, Window>) {
+            if (window->transient->lead() && window->group) {
+                // Lower also all windows in the group, in reversed stacking order.
+                auto const wins
+                    = restacked_by_space_stacking_order(space, get_transient_family(window));
 
-            for (auto it = wins.crbegin(); it != wins.crend(); it++) {
-                auto gwin = *it;
-                if (gwin == window) {
-                    continue;
+                for (auto it = wins.crbegin(); it != wins.crend(); it++) {
+                    auto gwin = *it;
+                    if (gwin == window) {
+                        continue;
+                    }
+
+                    assert(gwin->control);
+                    do_lower(gwin);
+                    cleanup(gwin);
                 }
-
-                assert(gwin->control);
-                do_lower(gwin);
-                cleanup(gwin);
             }
         }
     }

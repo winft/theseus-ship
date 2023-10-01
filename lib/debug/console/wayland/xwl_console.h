@@ -1,5 +1,5 @@
 /*
-    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -8,7 +8,8 @@
 #include "input_device_model.h"
 #include "input_filter.h"
 #include "model_helpers.h"
-#include "surface_tree_model.h"
+#include "xwl_surface_tree_model.h"
+#include <debug/console/wayland/wayland_console.h>
 
 #include "debug/console/console.h"
 #include "input/redirect_qobject.h"
@@ -16,56 +17,21 @@
 namespace KWin::debug
 {
 
-class KWIN_EXPORT wayland_console_model : public console_model
-{
-    Q_OBJECT
-public:
-    explicit wayland_console_model(QObject* parent = nullptr);
-    ~wayland_console_model();
-
-    bool get_client_count(int parent_id, int& count) const override;
-    bool get_property_count(QModelIndex const& parent, int& count) const override;
-
-    bool get_client_index(int row, int column, int parent_id, QModelIndex& index) const override;
-    bool get_property_index(int row,
-                            int column,
-                            QModelIndex const& parent,
-                            QModelIndex& index) const override;
-
-    QVariant get_client_data(QModelIndex const& index, int role) const override;
-    QVariant get_client_property_data(QModelIndex const& index, int role) const override;
-
-    int topLevelRowCount() const override;
-    win::property_window* shellClient(QModelIndex const& index) const;
-    win::property_window* internal_window(QModelIndex const& index) const;
-
-    std::vector<std::unique_ptr<win::property_window>> m_shellClients;
-    std::vector<std::unique_ptr<win::property_window>> internal_windows;
-};
-
-class KWIN_EXPORT wayland_console_delegate : public console_delegate
-{
-    Q_OBJECT
-public:
-    explicit wayland_console_delegate(QObject* parent = nullptr);
-
-    QString displayText(const QVariant& value, const QLocale& locale) const override;
-};
-
 template<typename Space>
-class KWIN_EXPORT wayland_console : public console<Space>
+class KWIN_EXPORT xwl_console : public console<Space>
 {
 public:
-    wayland_console(Space& space)
+    xwl_console(Space& space)
         : console<Space>(space)
     {
         this->m_ui->windowsView->setItemDelegate(new wayland_console_delegate(this));
 
         auto windows_model = new wayland_console_model(this);
+        model_setup_connections(*windows_model, space);
         wayland_model_setup_connections(*windows_model, space);
         this->m_ui->windowsView->setModel(windows_model);
 
-        this->m_ui->surfacesView->setModel(new surface_tree_model(space, this));
+        this->m_ui->surfacesView->setModel(new xwl_surface_tree_model(space, this));
 
         auto device_model = new input_device_model(this);
         setup_input_device_model(*device_model, *space.base.input->dbus);
@@ -85,7 +51,7 @@ public:
                     QObject::connect(space.input->qobject.get(),
                                      &input::redirect_qobject::keyStateChanged,
                                      this,
-                                     &wayland_console::update_keyboard_tab);
+                                     &xwl_console::update_keyboard_tab);
                 }
             });
 

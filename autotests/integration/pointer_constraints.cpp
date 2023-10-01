@@ -36,7 +36,12 @@ namespace KWin::detail::test
 
 TEST_CASE("pointer constraints", "[input]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("pointer-constraints", operation_mode);
 
     // set custom config which disables the OnScreenNotification

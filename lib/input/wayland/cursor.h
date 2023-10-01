@@ -45,9 +45,11 @@ public:
                          this,
                          &type::slot_modifiers_changed);
 
-        QObject::connect(this, &cursor::theme_changed, redirect.space.qobject.get(), [this] {
-            this->redirect.space.xcb_cursors.clear();
-        });
+        if constexpr (requires(Redirect redirect) { redirect.space.xcb_cursors; }) {
+            QObject::connect(this, &cursor::theme_changed, redirect.space.qobject.get(), [this] {
+                this->redirect.space.xcb_cursors.clear();
+            });
+        }
     }
 
     QImage image() const override

@@ -63,6 +63,8 @@ target_sources(debug-wl
       console/wayland/model_helpers.h
       console/wayland/surface_tree_model.h
       console/wayland/wayland_console.h
+      console/wayland/xwl_console.h
+      console/wayland/xwl_surface_tree_model.h
   PRIVATE
     console/wayland/input_device_model.cpp
     console/wayland/wayland_console.cpp

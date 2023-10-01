@@ -107,28 +107,36 @@ void device_redirect_update_focus(Dev* dev)
     auto oldFocus = dev->focus.window;
 
     if (dev->at.window) {
-        std::visit(overload{[&](typename space_t::wayland_window* win) {
-                                device_redirect_set_focus(dev, *win);
-                            },
-                            [&](typename space_t::x11_window* win) {
-                                if (win->surface) {
+        if constexpr (requires { typename space_t::x11_window; }) {
+            std::visit(overload{[&](typename space_t::wayland_window* win) {
                                     device_redirect_set_focus(dev, *win);
-                                    return;
-                                }
+                                },
+                                [&](typename space_t::x11_window* win) {
+                                    if (win->surface) {
+                                        device_redirect_set_focus(dev, *win);
+                                        return;
+                                    }
 
-                                // The surface has not yet been created (special XWayland case).
-                                // Therefore listen for its creation.
-                                if (!dev->at.notifiers.surface) {
-                                    dev->at.notifiers.surface
-                                        = QObject::connect(win->qobject.get(),
-                                                           &win::window_qobject::surfaceChanged,
-                                                           dev->qobject.get(),
-                                                           [dev] { device_redirect_update(dev); });
-                                }
-                                device_redirect_unset_focus(dev);
-                            },
-                            [](auto&&) { /* internal window */ }},
-                   *dev->at.window);
+                                    // The surface has not yet been created (special XWayland case).
+                                    // Therefore listen for its creation.
+                                    if (!dev->at.notifiers.surface) {
+                                        dev->at.notifiers.surface = QObject::connect(
+                                            win->qobject.get(),
+                                            &win::window_qobject::surfaceChanged,
+                                            dev->qobject.get(),
+                                            [dev] { device_redirect_update(dev); });
+                                    }
+                                    device_redirect_unset_focus(dev);
+                                },
+                                [](auto&&) { /* internal window */ }},
+                       *dev->at.window);
+        } else {
+            std::visit(overload{[&](typename space_t::wayland_window* win) {
+                                    device_redirect_set_focus(dev, *win);
+                                },
+                                [](auto&&) { /* internal window */ }},
+                       *dev->at.window);
+        }
     } else {
         device_redirect_unset_focus(dev);
     }

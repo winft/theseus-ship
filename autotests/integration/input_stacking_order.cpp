@@ -32,7 +32,12 @@ namespace KWin::detail::test
 
 TEST_CASE("input stacking order", "[win]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("input-stacking-order", operation_mode);
     setup.start();
     setup.set_outputs(2);

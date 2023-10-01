@@ -144,10 +144,14 @@ void setup_handler(Handler& handler)
                                     }},
                                     space->windows_map.at(win_id));
                      });
-    QObject::connect(ws->session_manager.get(),
-                     &decltype(ws->session_manager)::element_type::stateChanged,
-                     &handler,
-                     &KWin::EffectsHandler::sessionStateChanged);
+
+    if constexpr (requires(decltype(ws) space) { space->session_manager; }) {
+        QObject::connect(ws->session_manager.get(),
+                         &decltype(ws->session_manager)::element_type::stateChanged,
+                         &handler,
+                         &KWin::EffectsHandler::sessionStateChanged);
+    }
+
     QObject::connect(vds->qobject.get(),
                      &win::subspace_manager_qobject::countChanged,
                      &handler,
