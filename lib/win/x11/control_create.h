@@ -399,26 +399,6 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
         update_visibility(&win);
     }
 
-    assert(win.mapping != mapping_state::withdrawn);
-
-    // Enforce a geometry update now.
-    block_geometry_updates(&win, false);
-
-    if (decoration(&win)) {
-        // Sync the final size.
-        win.control->deco.client->update_size();
-    }
-
-    if (win.user_time == XCB_TIME_CURRENT_TIME || win.user_time == -1U) {
-        // No known user time, set something old
-        win.user_time = win.space.base.x11_data.time - 1000000;
-
-        // Let's be paranoid.
-        if (win.user_time == XCB_TIME_CURRENT_TIME || win.user_time == -1U) {
-            win.user_time = win.space.base.x11_data.time - 1000000 + 10;
-        }
-    }
-
     delete session;
     return true;
 }
@@ -853,25 +833,25 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         } else {
             update_visibility(win);
         }
+    }
 
-        assert(win->mapping != mapping_state::withdrawn);
+    assert(win->mapping != mapping_state::withdrawn);
 
-        // Enforce a geometry update now.
-        block_geometry_updates(win, false);
+    // Enforce a geometry update now.
+    block_geometry_updates(win, false);
 
-        if (decoration(win)) {
-            // Sync the final size.
-            win->control->deco.client->update_size();
-        }
+    if (decoration(win)) {
+        // Sync the final size.
+        win->control->deco.client->update_size();
+    }
 
+    if (win->user_time == XCB_TIME_CURRENT_TIME || win->user_time == -1U) {
+        // No known user time, set something old
+        win->user_time = win->space.base.x11_data.time - 1000000;
+
+        // Let's be paranoid.
         if (win->user_time == XCB_TIME_CURRENT_TIME || win->user_time == -1U) {
-            // No known user time, set something old
-            win->user_time = win->space.base.x11_data.time - 1000000;
-
-            // Let's be paranoid.
-            if (win->user_time == XCB_TIME_CURRENT_TIME || win->user_time == -1U) {
-                win->user_time = win->space.base.x11_data.time - 1000000 + 10;
-            }
+            win->user_time = win->space.base.x11_data.time - 1000000 + 10;
         }
     }
 
