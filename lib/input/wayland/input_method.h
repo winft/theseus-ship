@@ -13,6 +13,7 @@
 #include "win/wayland/popup_placement.h"
 #include "win/wayland/window_release.h"
 #include "win/window_area.h"
+#include <win/wayland/space_windows.h>
 
 #include <QObject>
 #include <Wrapland/Server/display.h>
@@ -210,7 +211,7 @@ private:
                          });
 
         if (popup->render_data.ready_for_painting) {
-            redirect.space.handle_window_added(popup);
+            win::wayland::space_windows_add(redirect.space, *popup);
         }
 
         if (auto text_input = redirect.platform.base.server->seat()->text_inputs().v3.text_input) {

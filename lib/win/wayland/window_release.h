@@ -13,6 +13,7 @@
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/window_release.h"
+#include <win/wayland/space_windows.h>
 
 #if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
@@ -32,7 +33,7 @@ void destroy_window(Win* win)
     if (win->transient->annexed && !lead_of_annexed_transient(win)) {
         // With the lead gone there is no way - and no need - for remnant effects. Delete directly.
         Q_EMIT win->qobject->closed();
-        win->space.handle_window_removed(win);
+        space_windows_remove(win->space, *win);
         remove_all(win->space.windows, var_win(win));
         remove_all(win->space.stacking.order.pre_stack, var_win(win));
         remove_all(win->space.stacking.order.stack, var_win(win));
@@ -67,7 +68,7 @@ void destroy_window(Win* win)
         win->control->destroy_decoration();
     }
 
-    win->space.handle_window_removed(win);
+    space_windows_remove(win->space, *win);
 
     if (remnant_window) {
         remnant_window->remnant->unref();

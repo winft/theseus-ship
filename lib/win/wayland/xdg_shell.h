@@ -642,7 +642,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
     space->windows.push_back(&win);
 
     if (win.render_data.ready_for_painting) {
-        space->handle_window_added(&win);
+        space_windows_add(*space, win);
     }
 
     // Not directly connected as the connection is tied to client instead of this.
@@ -664,7 +664,7 @@ void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
     space->windows.push_back(&win);
 
     if (win.render_data.ready_for_painting) {
-        space->handle_window_added(&win);
+        space_windows_add(*space, win);
     }
 }
 

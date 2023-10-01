@@ -8,7 +8,6 @@
 #include "activation.h"
 #include "meta.h"
 #include "shortcut_dialog.h"
-#include "shortcut_set.h"
 
 #include "config-kwin.h"
 

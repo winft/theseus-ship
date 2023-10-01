@@ -5,11 +5,8 @@
 */
 #pragma once
 
-#include "idle.h"
-#include "space_areas.h"
 #include "subsurface.h"
 #include "surface.h"
-#include "transient.h"
 #include "xwl_window.h"
 #include <win/wayland/space_setup.h>
 #include <win/x11/space_setup.h>
@@ -18,12 +15,10 @@
 #include "desktop/screen_locker_watcher.h"
 #include "win/input.h"
 #include "win/internal_window.h"
-#include "win/placement.h"
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
-#include "win/tabbox.h"
 #include "win/virtual_desktops.h"
 #include "win/x11/desktop_space.h"
 #include "win/x11/space_areas.h"
@@ -150,111 +145,6 @@ public:
         }
 
         return {};
-    }
-
-    void handle_window_added(wayland_window* window)
-    {
-        if (window->control && !window->layer_surface) {
-            setup_space_window_connections(this, window);
-            window->updateDecoration(false);
-            update_layer(window);
-
-            auto const area = space_window_area(*this,
-                                                area_option::placement,
-                                                get_current_output(window->space),
-                                                get_desktop(*window));
-            auto placementDone = false;
-
-            if (window->isInitialPositionSet()) {
-                placementDone = true;
-            }
-            if (window->control->fullscreen) {
-                placementDone = true;
-            }
-            if (window->maximizeMode() == maximize_mode::full) {
-                placementDone = true;
-            }
-            if (window->control->rules.checkPosition(geo::invalid_point, true)
-                != geo::invalid_point) {
-                placementDone = true;
-            }
-            if (!placementDone) {
-                place_in_area(window, area);
-            }
-        }
-
-        assert(!contains(stacking.order.pre_stack, window_t(window)));
-        stacking.order.pre_stack.push_back(window);
-        stacking.order.update_order();
-
-        if (window->control) {
-            update_space_areas(*this);
-
-            if (window->wantsInput() && !window->control->minimized) {
-                activate_window(*this, *window);
-            }
-
-            update_tabbox(*this);
-
-            QObject::connect(window->qobject.get(),
-                             &wayland_window::qobject_t::windowShown,
-                             qobject.get(),
-                             [this, window] {
-                                 update_layer(window);
-                                 stacking.order.update_count();
-                                 update_space_areas(*this);
-                                 if (window->wantsInput()) {
-                                     activate_window(*this, *window);
-                                 }
-                             });
-            QObject::connect(window->qobject.get(),
-                             &wayland_window::qobject_t::windowHidden,
-                             qobject.get(),
-                             [this] {
-                                 // TODO: update tabbox if it's displayed
-                                 stacking.order.update_count();
-                                 update_space_areas(*this);
-                             });
-
-            idle_setup(*window);
-        }
-
-        adopt_transient_children(this, window);
-        Q_EMIT qobject->wayland_window_added(window->meta.signal_id);
-    }
-    void handle_window_removed(wayland_window* window)
-    {
-        remove_all(windows, window_t(window));
-
-        if (window->control) {
-            if (window_t(window) == stacking.most_recently_raised) {
-                stacking.most_recently_raised = {};
-            }
-            if (window_t(window) == stacking.delayfocus_window) {
-                cancel_delay_focus(*this);
-            }
-            if (window_t(window) == stacking.last_active) {
-                stacking.last_active = {};
-            }
-            if (window_t(window) == client_keys_client) {
-                shortcut_dialog_done(*this, false);
-            }
-            if (!window->control->shortcut.isEmpty()) {
-                // Remove from client_keys.
-                set_shortcut(window, QString());
-            }
-            process_window_hidden(*this, *window);
-            Q_EMIT qobject->clientRemoved(window->meta.signal_id);
-        }
-
-        stacking.order.update_count();
-
-        if (window->control) {
-            update_space_areas(*this);
-            update_tabbox(*this);
-        }
-
-        Q_EMIT qobject->wayland_window_removed(window->meta.signal_id);
     }
 
     void update_space_area_from_windows(QRect const& desktop_area,

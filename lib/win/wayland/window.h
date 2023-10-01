@@ -1508,7 +1508,7 @@ private:
 
         // First time shown. Must be added to space.
         set_ready_for_painting(*this);
-        this->space.handle_window_added(this);
+        space_windows_add(space, *this);
     }
 };
 
