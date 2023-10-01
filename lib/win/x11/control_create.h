@@ -399,7 +399,6 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
         update_visibility(&win);
     }
 
-    delete session;
     return true;
 }
 
