@@ -21,7 +21,6 @@
 #include "win/stacking_order.h"
 #include "win/types.h"
 #include "win/virtual_desktops.h"
-#include "win/x11/stacking.h"
 
 #include <render/effect/interface/effect.h>
 #include <render/effect/interface/effect_frame.h>
@@ -718,15 +717,7 @@ public:
 
     EffectWindow* find_window_by_wid(WId id) const override
     {
-        if (auto w = win::x11::find_controlled_window<typename space_t::x11_window>(
-                *scene.platform.base.space, win::x11::predicate_match::window, id)) {
-            return w->render->effect.get();
-        }
-        if (auto unmanaged = win::x11::find_unmanaged<typename space_t::x11_window>(
-                *scene.platform.base.space, id)) {
-            return unmanaged->render->effect.get();
-        }
-        return nullptr;
+        return x11::find_window_by_wid(*scene.platform.base.space, id);
     }
 
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* /*surface*/) const override
@@ -1059,12 +1050,7 @@ public:
 
     QByteArray readRootProperty(long atom, long type, int format) const override
     {
-        auto const& data = scene.platform.base.x11_data;
-        if (!data.connection) {
-            return QByteArray();
-        }
-        return render::x11::read_window_property(
-            data.connection, data.root_window, atom, type, format);
+        return x11::read_root_property(scene.platform.base, atom, type, format);
     }
 
     xcb_atom_t announceSupportProperty(const QByteArray& propertyName, Effect* effect) override

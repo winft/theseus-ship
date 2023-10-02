@@ -11,11 +11,26 @@
 #include "utils/memory.h"
 
 #include <render/effect/interface/effect.h>
+#include <win/x11/unmanaged.h>
+#include <win/x11/window_find.h>
 
 #include <xcb/xcb.h>
 
 namespace KWin::render::x11
 {
+
+template<typename Space>
+EffectWindow* find_window_by_wid(Space& space, WId id)
+{
+    if (auto win = win::x11::find_controlled_window<typename Space::x11_window>(
+            space, win::x11::predicate_match::window, id)) {
+        return win->render->effect.get();
+    }
+    if (auto win = win::x11::find_unmanaged<typename Space::x11_window>(space, id)) {
+        return win->render->effect.get();
+    }
+    return nullptr;
+}
 
 inline QByteArray read_window_property(xcb_connection_t* con,
                                        xcb_window_t win,
@@ -43,6 +58,16 @@ inline QByteArray read_window_property(xcb_connection_t* con,
 
         return prop.to_byte_array(format, type);
     }
+}
+
+template<typename Base>
+QByteArray read_root_property(Base const& base, long atom, long type, int format)
+{
+    auto const& data = base.x11_data;
+    if (!data.connection) {
+        return QByteArray();
+    }
+    return read_window_property(data.connection, data.root_window, atom, type, format);
 }
 
 inline static xcb_atom_t register_support_property(base::x11::data const& data,
