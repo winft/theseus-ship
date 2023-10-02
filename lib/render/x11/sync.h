@@ -166,11 +166,17 @@ public:
         m_fences.fill(sync_object(data.connection, data.root_window));
     }
 
-    sync_object* nextFence()
+    void trigger()
     {
-        sync_object* fence = &m_fences[m_next];
-        m_next = (m_next + 1) % MaxFences;
-        return fence;
+        current_fence = nextFence();
+        current_fence->trigger();
+    }
+
+    void wait()
+    {
+        if (current_fence && current_fence->state() != x11::sync_object::Waiting) {
+            current_fence->wait();
+        }
     }
 
     bool updateFences()
@@ -185,8 +191,11 @@ public:
 
             case sync_object::TriggerSent:
             case sync_object::Waiting:
-                if (!fence.finish())
+                if (!fence.finish()) {
+                    qCDebug(KWIN_CORE)
+                        << "Error on explicit synchronization with the X command stream.";
                     return false;
+                }
                 fence.reset();
                 break;
 
@@ -206,8 +215,16 @@ public:
     }
 
 private:
+    sync_object* nextFence()
+    {
+        sync_object* fence = &m_fences[m_next];
+        m_next = (m_next + 1) % MaxFences;
+        return fence;
+    }
+
     std::array<sync_object, MaxFences> m_fences;
     int m_next{0};
+    sync_object* current_fence{nullptr};
 };
 
 }

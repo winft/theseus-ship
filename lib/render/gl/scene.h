@@ -159,16 +159,9 @@ public:
     {
         m_backend->try_present();
 
-        if (m_currentFence) {
-            if (!m_syncManager->updateFences()) {
-                qCDebug(KWIN_CORE)
-                    << "Aborting explicit synchronization with the X command stream. "
-                       "Future frames will be rendered unsynchronized.";
-                delete m_syncManager;
-                m_syncManager = nullptr;
-            }
-
-            m_currentFence = nullptr;
+        if (m_syncManager && !m_syncManager->updateFences()) {
+            delete m_syncManager;
+            m_syncManager = nullptr;
         }
     }
 
@@ -219,8 +212,7 @@ public:
     void triggerFence() override
     {
         if (m_syncManager) {
-            m_currentFence = m_syncManager->nextFence();
-            m_currentFence->trigger();
+            m_syncManager->trigger();
         }
     }
 
@@ -231,8 +223,8 @@ public:
 
     void insertWait()
     {
-        if (m_currentFence && m_currentFence->state() != x11::sync_object::Waiting) {
-            m_currentFence->wait();
+        if (m_syncManager) {
+            m_syncManager->wait();
         }
     }
 
@@ -597,7 +589,6 @@ private:
 
     backend_t* m_backend;
     x11::sync_manager* m_syncManager{nullptr};
-    x11::sync_object* m_currentFence{nullptr};
 
     lanczos_filter<type>* lanczos{nullptr};
 
