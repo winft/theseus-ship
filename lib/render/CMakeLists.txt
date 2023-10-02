@@ -95,7 +95,6 @@ target_sources(render
       shadow.h
       shortcuts_init.h
       singleton_interface.h
-      support_properties.h
       types.h
       window.h
   PRIVATE
@@ -195,6 +194,7 @@ target_sources(render-x11
       x11/platform.h
       x11/property_notify_filter.h
       x11/shadow.h
+      x11/support_properties.h
       x11/sync.h
       x11/types.h
       xrender/utils.h

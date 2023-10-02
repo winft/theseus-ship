@@ -17,6 +17,7 @@
 #include "render/gl/scene.h"
 #include "render/qpainter/scene.h"
 #include <render/x11/compositor_start.h>
+#include <render/x11/support_properties.h>
 
 #include <deque>
 #include <map>
@@ -60,7 +61,7 @@ public:
     {
         Q_EMIT this->qobject->aboutToDestroy();
         compositor_stop(*this, true);
-        delete_unused_support_properties(*this);
+        x11::delete_unused_support_properties(*this);
         selection_owner = {};
     }
 

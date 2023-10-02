@@ -7,8 +7,8 @@
 
 #include "base/x11/data.h"
 #include "base/x11/xcb/property.h"
-#include "render/support_properties.h"
 #include "utils/memory.h"
+#include <render/x11/support_properties.h>
 
 #include <render/effect/interface/effect.h>
 #include <win/x11/unmanaged.h>

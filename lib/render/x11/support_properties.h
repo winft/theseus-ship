@@ -7,7 +7,9 @@
 
 #include "types.h"
 
-namespace KWin::render
+#include <xcb/xcb.h>
+
+namespace KWin::render::x11
 {
 
 // for delayed supportproperty management of effects

@@ -7,6 +7,7 @@
 
 #include <render/compositor_start.h>
 #include <render/x11/compositor_selection_owner.h>
+#include <render/x11/support_properties.h>
 
 #include <xcb/composite.h>
 

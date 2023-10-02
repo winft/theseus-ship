@@ -7,7 +7,6 @@
 
 #include "compositor.h"
 #include "options.h"
-#include "support_properties.h"
 #include "types.h"
 
 #include "win/remnant.h"
