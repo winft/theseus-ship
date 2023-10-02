@@ -12,11 +12,11 @@
 #include "utils.h"
 
 #include "render/compositor.h"
-#include "render/compositor_start.h"
 #include "render/cursor.h"
 #include "render/dbus/compositing.h"
 #include "render/gl/scene.h"
 #include "render/qpainter/scene.h"
+#include <render/x11/compositor_start.h>
 
 #include <deque>
 #include <map>
@@ -51,6 +51,7 @@ public:
         , dbus{std::make_unique<dbus::compositing<type>>(*this)}
     {
         compositor_setup(*this);
+        x11::compositor_setup(*this);
 
         dbus->qobject->integration.get_types = [] { return QStringList{"egl"}; };
     }
@@ -68,7 +69,7 @@ public:
         if (!this->space) {
             // On first start setup connections.
             QObject::connect(&space.base, &base::platform::x11_reset, this->qobject.get(), [this] {
-                compositor_claim(*this);
+                x11::compositor_claim(*this);
             });
             QObject::connect(space.stacking.order.qobject.get(),
                              &win::stacking_order_qobject::changed,
@@ -107,7 +108,7 @@ public:
 
         try {
             if (compositor_prepare_scene(*this)) {
-                compositor_claim(*this);
+                x11::compositor_claim(*this);
                 compositor_start_scene(*this);
             }
         } catch (std::runtime_error const& ex) {

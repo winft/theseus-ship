@@ -186,6 +186,7 @@ target_sources(render-x11
       x11/buffer.h
       x11/compositor.h
       x11/compositor_selection_owner.h
+      x11/compositor_start.h
       x11/effect.h
       x11/effects.h
       x11/keyboard_intercept_filter.h

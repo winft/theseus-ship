@@ -9,7 +9,6 @@
 #include "options.h"
 #include "support_properties.h"
 #include "types.h"
-#include "x11/compositor_selection_owner.h"
 
 #include "win/remnant.h"
 #include "win/space_window_release.h"
@@ -17,52 +16,8 @@
 
 #include <render/effect/interface/effects_handler.h>
 
-#include <xcb/composite.h>
-
 namespace KWin::render
 {
-
-// 2 sec which should be enough to restart the compositor.
-constexpr auto compositor_lost_message_delay = 2000;
-
-template<typename Compositor>
-void compositor_claim_selection(Compositor& comp)
-{
-    if (!comp.selection_owner) {
-        char selection_name[100];
-        sprintf(selection_name, "_NET_WM_CM_S%d", comp.platform.base.x11_data.screen_number);
-        comp.selection_owner = std::make_unique<x11::compositor_selection_owner>(
-            selection_name,
-            comp.platform.base.x11_data.connection,
-            comp.platform.base.x11_data.root_window);
-        if (comp.selection_owner) {
-            QObject::connect(comp.selection_owner.get(),
-                             &x11::compositor_selection_owner::lostOwnership,
-                             comp.qobject.get(),
-                             [comp = &comp] { compositor_stop(*comp, false); });
-        }
-    }
-
-    if (!comp.selection_owner) {
-        // No X11 yet.
-        return;
-    }
-
-    comp.selection_owner->own();
-}
-
-template<typename Compositor>
-void compositor_claim(Compositor& comp)
-{
-    auto con = comp.platform.base.x11_data.connection;
-    if (!con) {
-        comp.selection_owner = {};
-        return;
-    }
-    compositor_claim_selection(comp);
-    xcb_composite_redirect_subwindows(
-        con, comp.platform.base.x11_data.root_window, XCB_COMPOSITE_REDIRECT_MANUAL);
-}
 
 template<typename Compositor>
 bool compositor_prepare_scene(Compositor& comp)
@@ -141,10 +96,10 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
                 var_win);
         }
 
-        if (auto con = comp.platform.base.x11_data.connection) {
-            xcb_composite_unredirect_subwindows(
-                con, comp.platform.base.x11_data.root_window, XCB_COMPOSITE_REDIRECT_MANUAL);
+        if constexpr (requires(Compositor comp) { comp.unredirect(); }) {
+            comp.unredirect();
         }
+
         while (!win::get_remnants(*comp.space).empty()) {
             auto win = win::get_remnants(*comp.space).front();
             std::visit(overload{[&comp](auto&& win) {
@@ -192,17 +147,6 @@ void reinitialize_compositor(Compositor& comp)
 }
 
 template<typename Compositor>
-void compositor_setup_x11(Compositor& comp)
-{
-    comp.unused_support_property_timer.setInterval(compositor_lost_message_delay);
-    comp.unused_support_property_timer.setSingleShot(true);
-    QObject::connect(&comp.unused_support_property_timer,
-                     &QTimer::timeout,
-                     comp.qobject.get(),
-                     [&] { delete_unused_support_properties(comp); });
-}
-
-template<typename Compositor>
 void compositor_setup(Compositor& comp)
 {
     QObject::connect(comp.platform.options->qobject.get(),
@@ -213,8 +157,6 @@ void compositor_setup(Compositor& comp)
                      &render::options_qobject::animationSpeedChanged,
                      comp.qobject.get(),
                      [&] { comp.configChanged(); });
-
-    compositor_setup_x11(comp);
 }
 
 }

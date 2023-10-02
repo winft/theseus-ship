@@ -16,7 +16,6 @@
 
 #include "debug/perf/ftrace.h"
 #include "render/compositor.h"
-#include "render/compositor_start.h"
 #include "render/dbus/compositing.h"
 #include "render/effect/window_impl.h"
 #include "render/gl/scene.h"
@@ -25,6 +24,7 @@
 #include "win/remnant.h"
 #include "win/space_window_release.h"
 #include "win/stacking_order.h"
+#include <render/x11/compositor_start.h>
 
 #include <KNotification>
 #include <QAction>
@@ -86,7 +86,8 @@ public:
                                                                     : suspend_reason::user)
         , dbus{std::make_unique<dbus::compositing<type>>(*this)}
     {
-        compositor_setup(*this);
+        render::compositor_setup(*this);
+        x11::compositor_setup(*this);
 
         this->dbus->qobject->integration.get_types = [] { return QStringList{"glx"}; };
         this->dbus->qobject->integration.resume = [this] { resume(suspend_reason::script); };
@@ -497,6 +498,13 @@ public:
         }
 
         sync = std::make_unique<x11::sync_manager>(platform.base.x11_data);
+    }
+
+    void unredirect()
+    {
+        xcb_composite_unredirect_subwindows(platform.base.x11_data.connection,
+                                            platform.base.x11_data.root_window,
+                                            XCB_COMPOSITE_REDIRECT_MANUAL);
     }
 
     std::unique_ptr<compositor_qobject> qobject;
