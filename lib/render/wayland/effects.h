@@ -73,7 +73,7 @@ public:
         for (auto win : space->windows) {
             std::visit(overload{[&](typename space_t::wayland_window* win) {
                                     if (win->render_data.ready_for_painting) {
-                                        this->setupAbstractClientConnections(*win);
+                                        effect::setup_handler_window_connections(*this, *win);
                                     } else {
                                         QObject::connect(
                                             win->qobject.get(),
