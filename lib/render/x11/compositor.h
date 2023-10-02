@@ -124,7 +124,7 @@ public:
         if (!this->space) {
             // On first start setup connections.
             QObject::connect(&space.base, &base::platform::x11_reset, this->qobject.get(), [this] {
-                compositor_setup_x11_support(*this);
+                compositor_claim(*this);
             });
             QObject::connect(space.stacking.order.qobject.get(),
                              &win::stacking_order_qobject::changed,
@@ -170,7 +170,10 @@ public:
         }
 
         try {
-            compositor_start_scene(*this);
+            if (compositor_prepare_scene(*this)) {
+                compositor_claim(*this);
+                compositor_start_scene(*this);
+            }
         } catch (std::runtime_error const& ex) {
             qCWarning(KWIN_CORE) << "Error: " << ex.what();
             qCWarning(KWIN_CORE) << "Compositing not possible. Continue without it.";

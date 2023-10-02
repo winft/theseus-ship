@@ -52,7 +52,7 @@ void compositor_claim_selection(Compositor& comp)
 }
 
 template<typename Compositor>
-void compositor_setup_x11_support(Compositor& comp)
+void compositor_claim(Compositor& comp)
 {
     auto con = comp.platform.base.x11_data.connection;
     if (!con) {
@@ -65,21 +65,26 @@ void compositor_setup_x11_support(Compositor& comp)
 }
 
 template<typename Compositor>
-void compositor_start_scene(Compositor& comp)
+bool compositor_prepare_scene(Compositor& comp)
 {
     assert(comp.space);
     assert(!comp.scene);
 
     if (comp.state != state::off) {
-        return;
+        // TODO(romangg): assert?
+        return false;
     }
 
     comp.state = state::starting;
     comp.platform.options->reloadCompositingSettings(true);
-    compositor_setup_x11_support(comp);
 
     Q_EMIT comp.qobject->aboutToToggleCompositing();
+    return true;
+}
 
+template<typename Compositor>
+void compositor_start_scene(Compositor& comp)
+{
     comp.scene = comp.create_scene();
     comp.space->stacking.order.render_restack_required = true;
 
@@ -187,6 +192,17 @@ void reinitialize_compositor(Compositor& comp)
 }
 
 template<typename Compositor>
+void compositor_setup_x11(Compositor& comp)
+{
+    comp.unused_support_property_timer.setInterval(compositor_lost_message_delay);
+    comp.unused_support_property_timer.setSingleShot(true);
+    QObject::connect(&comp.unused_support_property_timer,
+                     &QTimer::timeout,
+                     comp.qobject.get(),
+                     [&] { delete_unused_support_properties(comp); });
+}
+
+template<typename Compositor>
 void compositor_setup(Compositor& comp)
 {
     QObject::connect(comp.platform.options->qobject.get(),
@@ -198,12 +214,7 @@ void compositor_setup(Compositor& comp)
                      comp.qobject.get(),
                      [&] { comp.configChanged(); });
 
-    comp.unused_support_property_timer.setInterval(compositor_lost_message_delay);
-    comp.unused_support_property_timer.setSingleShot(true);
-    QObject::connect(&comp.unused_support_property_timer,
-                     &QTimer::timeout,
-                     comp.qobject.get(),
-                     [&] { delete_unused_support_properties(comp); });
+    compositor_setup_x11(comp);
 }
 
 }
