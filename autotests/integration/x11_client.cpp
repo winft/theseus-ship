@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/activation.h"
 #include "win/active_window.h"
 #include "win/meta.h"
-#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"

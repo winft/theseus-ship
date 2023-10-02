@@ -17,12 +17,12 @@
 #include "win/internal_window.h"
 #include "win/screen.h"
 #include "win/setup.h"
-#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/virtual_desktops.h"
 #include "win/x11/desktop_space.h"
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
+#include <win/stacking_state.h>
 #include <win/x11/netinfo_helpers.h>
 
 #include <memory>

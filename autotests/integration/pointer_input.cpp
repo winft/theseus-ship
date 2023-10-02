@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effects.h"
 #include "win/move.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"

@@ -12,7 +12,6 @@
 #include "utils/algorithm.h"
 #include "utils/geo.h"
 #include "win/setup.h"
-#include "win/space.h"
 #include "win/x11/client_machine.h"
 #include "win/x11/net/net.h"
 

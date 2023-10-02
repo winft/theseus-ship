@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/actions.h"
 #include "win/activation.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 

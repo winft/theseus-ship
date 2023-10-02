@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "tabbox_handler.h"
 #include "win/screen.h"
 #include "win/singleton_interface.h"
-#include "win/space.h"
 
 #include <QAbstractItemModel>
 

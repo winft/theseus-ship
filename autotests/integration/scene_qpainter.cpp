@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effect_loader.h"
 #include "render/qpainter/scene.h"
 #include "win/geo.h"
-#include "win/space.h"
 #include "win/x11/window.h"
 
 #include <render/effect/interface/effects_handler.h>

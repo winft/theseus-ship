@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/window.h"
 #include "shadow.h"
 #include "win/deco.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 
 #include <algorithm>

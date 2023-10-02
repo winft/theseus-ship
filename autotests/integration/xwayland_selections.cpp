@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/wayland/server.h"
 #include "win/activation.h"
-#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"

@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/wayland/server.h"
 #include "win/activation.h"
 #include "win/net.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/plasmashell.h>

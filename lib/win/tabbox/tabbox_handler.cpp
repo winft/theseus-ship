@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "script/platform.h"
 #include "tabbox_logging.h"
 #include "tabbox_switcher_item.h"
-#include "win/space.h"
 
 #include <QKeyEvent>
 #include <QModelIndex>

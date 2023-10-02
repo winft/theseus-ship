@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/internal_window.h"
 #include "win/move.h"
 #include "win/net.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 
 #include <QPainter>

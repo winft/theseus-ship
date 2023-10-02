@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effects.h"
 #include "render/scene.h"
 #include "win/property_window.h"
-#include "win/space.h"
 
 #include <render/gl/interface/platform.h>
 

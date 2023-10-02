@@ -14,7 +14,6 @@
 #include "win/meta.h"
 #include "win/rules.h"
 #include "win/screen.h"
-#include "win/space.h"
 #include "win/stacking.h"
 #include "win/x11/client_machine.h"
 

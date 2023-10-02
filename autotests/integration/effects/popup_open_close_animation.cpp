@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/deco/client_impl.h"
 #include "win/internal_window.h"
 #include "win/net.h"
-#include "win/space.h"
 #include "win/transient.h"
 #include "win/user_actions_menu.h"
 

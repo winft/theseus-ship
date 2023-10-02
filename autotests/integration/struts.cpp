@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/geo.h"
 #include "win/input.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"

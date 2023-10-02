@@ -15,7 +15,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/shortcut_dialog.h"
-#include "win/space.h"
 #include "win/user_actions_menu.h"
 #include "win/x11/window.h"
 

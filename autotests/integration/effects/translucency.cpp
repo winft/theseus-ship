@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effects.h"
 #include "win/desktop_space.h"
 #include "win/move.h"
-#include "win/space.h"
 #include "win/x11/window.h"
 
 #include <KConfigGroup>

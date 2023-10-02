@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/wayland/device_redirect.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>

@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/qt_event.h"
 #include "input/xkb/helpers.h"
 #include "kwin_export.h"
-#include "win/space.h"
 
 #include <QDBusConnection>
 #include <QDBusMessage>

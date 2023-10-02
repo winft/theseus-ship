@@ -107,7 +107,6 @@ target_sources(win
       shortcut_dialog.h
       shortcut_set.h
       singleton_interface.h
-      space.h
       space_areas.h
       space_areas_helpers.h
       space_qobject.h
@@ -116,6 +115,7 @@ target_sources(win
       space_window_release.h
       stacking.h
       stacking_order.h
+      stacking_state.h
       structs.h
       strut_rect.h
       tabbox.h

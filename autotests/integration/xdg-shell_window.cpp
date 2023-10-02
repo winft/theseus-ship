@@ -19,7 +19,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/screen.h"
-#include "win/space.h"
 #include "win/transient.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"

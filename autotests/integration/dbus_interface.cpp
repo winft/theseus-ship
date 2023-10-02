@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 #include "win/controlling.h"
 #include "win/desktop_space.h"
 #include "win/move.h"
-#include "win/space.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"

@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/move.h"
 #include "win/screen.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/wayland/space.h"
 
 #include <Wrapland/Client/compositor.h>

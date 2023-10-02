@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "script/platform.h"
 #include "script/script.h"
 #include "win/control.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <KPackage/PackageLoader>

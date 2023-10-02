@@ -22,7 +22,6 @@
 #include "render/x11/compositor.h"
 #include "script/platform.h"
 #include "win/shortcuts_init.h"
-#include "win/space.h"
 #include "win/x11/space.h"
 #include "win/x11/space_event.h"
 #include "win/x11/xcb_event_filter.h"

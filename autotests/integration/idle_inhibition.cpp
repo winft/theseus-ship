@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/actions.h"
 #include "win/desktop_set.h"
 #include "win/screen.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/idle_notify_v1.h>

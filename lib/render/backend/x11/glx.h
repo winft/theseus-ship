@@ -10,7 +10,6 @@
 #include "base/x11/xcb/helpers.h"
 #include "render/gl/gl.h"
 #include "render/x11/compositor.h"
-#include "win/space.h"
 
 // Must be included late because of Qt.
 #include "glx_context_attribute_builder.h"

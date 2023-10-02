@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/blocker.h"
 #include "win/actions.h"
 #include "win/activation.h"
-#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/wayland/window.h"

@@ -23,9 +23,9 @@
 #include "win/desktop_space.h"
 #include "win/internal_window.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/stacking_order.h"
 #include <win/space_reconfigure.h>
+#include <win/stacking_state.h>
 #include <win/user_actions_menu.h>
 #include <win/x11/netinfo_helpers.h>
 

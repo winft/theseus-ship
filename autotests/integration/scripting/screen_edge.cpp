@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effect_loader.h"
 #include "script/platform.h"
 #include "script/script.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 
 #define private public

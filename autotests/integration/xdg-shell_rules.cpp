@@ -15,7 +15,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/rules/book.h"
 #include "win/rules/ruling.h"
 #include "win/setup.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/space.h"

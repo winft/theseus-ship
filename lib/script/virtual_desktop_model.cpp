@@ -6,7 +6,6 @@
 #include "virtual_desktop_model.h"
 
 #include "win/singleton_interface.h"
-#include "win/space.h"
 #include "win/virtual_desktops.h"
 
 namespace KWin::scripting

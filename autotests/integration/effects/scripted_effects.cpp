@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effects.h"
 #include "script/effect.h"
 #include "win/actions.h"
-#include "win/space.h"
 #include "win/virtual_desktops.h"
 
 #include <QJSValue>

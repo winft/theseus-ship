@@ -13,7 +13,6 @@
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
 #include "win/activation.h"
-#include "win/space.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
 

@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/cursor.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
 

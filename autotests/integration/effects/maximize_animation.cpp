@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/scene.h"
 #include "win/active_window.h"
 #include "win/control.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/surface.h>

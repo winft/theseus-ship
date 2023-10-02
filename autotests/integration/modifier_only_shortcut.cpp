@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 
 #include <KConfigGroup>
