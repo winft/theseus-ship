@@ -15,7 +15,7 @@
 namespace KWin::input::backend::wlroots
 {
 
-class touch_control : public input::control::touch
+class KWIN_EXPORT touch_control : public input::control::touch
 {
     Q_OBJECT
 

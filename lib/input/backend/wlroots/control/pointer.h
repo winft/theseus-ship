@@ -14,7 +14,7 @@
 namespace KWin::input::backend::wlroots
 {
 
-class pointer_control : public input::control::pointer
+class KWIN_EXPORT pointer_control : public input::control::pointer
 {
     Q_OBJECT
 

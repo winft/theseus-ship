@@ -42,7 +42,9 @@ target_sources(wlroots
       base/backend/wlroots/non_desktop_output.h
       base/backend/wlroots/output.h
       base/backend/wlroots/platform.h
+      base/backend/wlroots/platform_events.h
       base/backend/wlroots/platform_helpers.h
+      input/backend/wlroots/device_helpers.h
       input/backend/wlroots/keyboard.h
       input/backend/wlroots/platform.h
       input/backend/wlroots/pointer.h
@@ -63,11 +65,7 @@ target_sources(wlroots
       render/backend/wlroots/wlr_non_owning_data_buffer.h
   PRIVATE
    base/backend/wlroots/drm_lease.cpp
-   base/backend/wlroots/non_desktop_output.cpp
-   base/backend/wlroots/output.cpp
-   base/backend/wlroots/platform.cpp
    base/seat/backend/wlroots/session.cpp
-   input/backend/wlroots/platform.cpp
    input/backend/wlroots/control/headless/keyboard.cpp
    input/backend/wlroots/control/keyboard.cpp
    input/backend/wlroots/control/pointer.cpp

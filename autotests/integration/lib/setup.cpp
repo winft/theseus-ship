@@ -63,11 +63,10 @@ setup::setup(std::string const& test_name,
     qunsetenv("XKB_DEFAULT_VARIANT");
     qunsetenv("XKB_DEFAULT_OPTIONS");
 
-    base = std::make_unique<base::backend::wlroots::platform>(
-        base::config(KConfig::OpenFlag::SimpleConfig, ""),
-        socket_name,
-        flags,
-        base::backend::wlroots::start_options::headless);
+    base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::SimpleConfig, ""),
+                                    socket_name,
+                                    flags,
+                                    base::backend::wlroots::start_options::headless);
     base->operation_mode = mode;
 
     auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend);
@@ -117,8 +116,8 @@ setup::~setup()
 void setup::start()
 {
     base->options = base::create_options(base->operation_mode, base->config.main);
-    base->input = std::make_unique<input::backend::wlroots::platform>(
-        *base, input::config(KConfig::SimpleConfig));
+    base->input = std::make_unique<input::backend::wlroots::platform<base_t>>(
+        *base, base->backend, input::config(KConfig::SimpleConfig));
     base->input->install_shortcuts();
 
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));

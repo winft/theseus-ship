@@ -8,7 +8,6 @@
 #include "egl_helpers.h"
 #include "wlr_includes.h"
 
-#include "base/backend/wlroots/output.h"
 #include "base/logging.h"
 #include "render/wayland/egl_data.h"
 
@@ -59,7 +58,7 @@ public:
 
     bool present()
     {
-        auto& base = static_cast<base::backend::wlroots::output&>(out->base);
+        auto& base = static_cast<typename Output::base_t&>(out->base);
         out->swap_pending = true;
 
         if (!base.native->enabled) {

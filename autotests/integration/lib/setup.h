@@ -27,7 +27,7 @@ namespace KWin::detail::test
 {
 
 struct setup final {
-    using base_t = base::backend::wlroots::platform;
+    using base_t = base::backend::wlroots::platform<base::wayland::platform>;
 
     setup(std::string const& test_name);
     setup(std::string const& test_name, base::operation_mode mode);

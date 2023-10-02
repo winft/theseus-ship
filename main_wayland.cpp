@@ -167,7 +167,6 @@ void ApplicationWayland::start(base::operation_mode mode,
     setQuitOnLastWindowClosed(false);
     setQuitLockEnabled(false);
 
-    using base_t = base::backend::wlroots::platform;
     base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::FullConfig, "kwinrc"),
                                     socket_name,
                                     flags,
@@ -183,8 +182,8 @@ void ApplicationWayland::start(base::operation_mode mode,
     using render_t = render::backend::wlroots::platform<base_t>;
     base->render = std::make_unique<render_t>(*base);
 
-    base->input = std::make_unique<input::backend::wlroots::platform>(
-        *base, input::config(KConfig::NoGlobals));
+    base->input = std::make_unique<input::backend::wlroots::platform<base_t>>(
+        *base, base->backend, input::config(KConfig::NoGlobals));
     input::wayland::add_dbus(base->input.get());
     base->input->install_shortcuts();
 

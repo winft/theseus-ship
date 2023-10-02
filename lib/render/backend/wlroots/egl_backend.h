@@ -151,12 +151,12 @@ public:
             viewport = viewport.transposed();
         }
 
-        auto native_out = static_cast<base::backend::wlroots::output const&>(output).native;
+        auto const& output_impl = static_cast<typename Platform::output_t::base_t const&>(output);
+        auto native_out = output_impl.native;
         wlr_output_attach_render(native_out, &out->bufferAge);
         wlr_renderer_begin(platform.renderer, viewport.width(), viewport.height());
 
-        auto transform = static_cast<effect::transform_type>(
-            get_transform(static_cast<base::backend::wlroots::output const&>(output)));
+        auto transform = static_cast<effect::transform_type>(get_transform(output_impl));
 
         QMatrix4x4 view;
         QMatrix4x4 projection;
@@ -212,7 +212,7 @@ public:
                                     QRegion const& damagedRegion) override
     {
         auto& out = get_egl_out(output);
-        auto impl_out = static_cast<base::backend::wlroots::output*>(output);
+        auto impl_out = static_cast<typename Platform::output_t::base_t*>(output);
 
         if (GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
             out->out->last_timer_queries.emplace_back();
@@ -262,7 +262,7 @@ public:
     get_egl_out(base::output const* out) const
     {
         using out_t = typename Platform::output_t;
-        using base_wlout_t = base::wayland::output<base::wayland::platform>;
+        using base_wlout_t = out_t::base_t::abstract_type;
         return static_cast<out_t*>(static_cast<base_wlout_t const*>(out)->render.get())->egl;
     }
 
@@ -292,7 +292,8 @@ private:
         }
     }
 
-    static void set_output_damage(base::backend::wlroots::output* output, QRegion const& src_damage)
+    template<typename Output>
+    void set_output_damage(Output* output, QRegion const& src_damage) const
     {
         auto damage = create_pixman_region(src_damage);
 

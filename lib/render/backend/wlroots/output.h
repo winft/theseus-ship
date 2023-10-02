@@ -31,10 +31,11 @@ public:
     using type = output<Base, Platform>;
     using abstract_type
         = wayland::output<typename Base::abstract_type, typename Platform::abstract_type>;
+    using base_t = Base;
     using egl_output_t = egl_output<type>;
     using qpainter_output_t = qpainter_output<type>;
 
-    output(base::backend::wlroots::output& base, Platform& platform)
+    output(base_t& base, Platform& platform)
         : abstract_type(base, platform)
     {
         this->swap_pending = base.native->frame_pending;

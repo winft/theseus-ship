@@ -34,7 +34,7 @@ public:
 
     void begin_render()
     {
-        auto native_out = static_cast<base::backend::wlroots::output&>(output.base).native;
+        auto native_out = static_cast<typename Output::base_t&>(output.base).native;
 
         auto const size = output.base.geometry().size();
 
@@ -61,7 +61,7 @@ public:
 
         memcpy(pixman_data, buffer_bits, buffer->width() * buffer->height() * 4);
 
-        auto& base = static_cast<base::backend::wlroots::output&>(output.base);
+        auto& base = static_cast<typename Output::base_t&>(output.base);
         output.swap_pending = true;
 
         if (!base.native->enabled) {

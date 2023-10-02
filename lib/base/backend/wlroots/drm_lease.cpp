@@ -37,7 +37,7 @@ static void handle_destroy(struct wl_listener* listener, void* /*data*/)
 }
 
 drm_lease::drm_lease(Wrapland::Server::drm_lease_v1* lease,
-                     std::vector<non_desktop_output*> const& outputs)
+                     std::vector<non_desktop_output_wrap*> const& outputs)
     : lease{lease}
     , outputs{outputs}
     , destroyed{std::make_unique<event_receiver<drm_lease>>()}
