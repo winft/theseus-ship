@@ -10,7 +10,8 @@
 
 #include <KSharedConfig>
 #include <QKeyEvent>
-#include <xcb/xcb.h>
+
+struct xcb_connection_t;
 
 namespace KWin
 {
@@ -433,7 +434,7 @@ public Q_SLOTS:
 
 protected:
     xcb_connection_t* xcbConnection() const;
-    xcb_window_t x11RootWindow() const;
+    uint32_t x11RootWindow() const;
 
     /**
      * An implementing class can call this with it's kconfig compiled singleton class.

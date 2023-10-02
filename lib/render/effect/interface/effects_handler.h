@@ -11,11 +11,12 @@
 #include <render/effect/interface/types.h>
 
 #include <KSharedConfig>
-#include <xcb/xcb.h>
 
 class QAction;
 class QKeyEvent;
 class QQmlEngine;
+
+struct xcb_connection_t;
 
 namespace Wrapland::Server
 {
@@ -528,7 +529,7 @@ public:
     virtual void doneOpenGLContextCurrent() = 0;
 
     virtual xcb_connection_t* xcbConnection() const = 0;
-    virtual xcb_window_t x11RootWindow() const = 0;
+    virtual uint32_t x11RootWindow() const = 0;
 
     /**
      * Interface to the Wayland display: this is relevant only
