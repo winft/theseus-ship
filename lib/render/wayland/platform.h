@@ -28,6 +28,7 @@ public:
     using compositor_t = typename wayland::compositor<platform<Base>>;
     using scene_t = typename compositor_t::scene_t;
     using space_t = typename Base::space_t;
+    using effect_window_group_t = effect_window_group_impl<typename space_t::window_group_t>;
 
     using window_t = typename scene_t::window_t;
     using buffer_t = buffer_win_integration<typename scene_t::buffer_t>;

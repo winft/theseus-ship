@@ -22,7 +22,7 @@ class group
 public:
     using group_t = group<Space>;
     using x11_window_t = typename Space::x11_window;
-    using effect_window_group_t = typename Space::base_t::render_t::scene_t::effect_window_group_t;
+    using effect_window_group_t = typename Space::base_t::render_t::effect_window_group_t;
 
     group(xcb_window_t xcb_leader, Space& space)
         : xcb_leader{xcb_leader}
