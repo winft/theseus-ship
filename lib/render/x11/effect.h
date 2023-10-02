@@ -121,6 +121,21 @@ xcb_atom_t add_support_property(Effects& effects, QByteArray const& name)
     return atom;
 }
 
+/**
+ * @brief Announces support for the feature with the given name. If no other Effect
+ * has announced support for this feature yet, an X11 property will be installed on
+ * the root window.
+ *
+ * The Effect will be notified for events through the signal propertyNotify().
+ *
+ * To remove the support again use remove_support_property. When an Effect is
+ * destroyed it is automatically taken care of removing the support. It is not
+ * required to call remove_support_property in the Effect's cleanup handling.
+ *
+ * @param name The name of the property to announce support for
+ * @param effect The effect which announces support
+ * @return xcb_atom_t The created X11 atom
+ */
 template<typename Effects>
 xcb_atom_t announce_support_property(Effects& effects, Effect* effect, QByteArray const& name)
 {
@@ -139,6 +154,17 @@ xcb_atom_t announce_support_property(Effects& effects, Effect* effect, QByteArra
     return add_support_property(effects, name);
 }
 
+/**
+ * @brief Removes support for the feature with the given name. If there is no other Effect left
+ * which has announced support for the given property, the property will be removed from the
+ * root window.
+ *
+ * In case the Effect had not registered support, calling this function does not change
+ * anything.
+ *
+ * @param name The name of the property to remove support for
+ * @param effect The effect which had registered the property.
+ */
 template<typename Effects>
 void remove_support_property(Effects& effects, Effect* effect, QByteArray const& name)
 {

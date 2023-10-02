@@ -160,6 +160,13 @@ protected:
         blur.remove(effect);
         contrast.remove(effect);
         slide.remove(effect);
+
+        auto const properties = this->m_propertiesForEffects.keys();
+        for (auto const& property : properties) {
+            x11::remove_support_property(*this, &effect, property);
+        }
+
+        delete &effect;
     }
 
 private:

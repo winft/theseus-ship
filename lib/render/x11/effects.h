@@ -180,6 +180,13 @@ protected:
         contrast.remove(effect);
         slide.remove(effect);
         kscreen.remove(effect);
+
+        auto const properties = this->m_propertiesForEffects.keys();
+        for (auto const& property : properties) {
+            remove_support_property(*this, &effect, property);
+        }
+
+        delete &effect;
     }
 
 private:

@@ -174,6 +174,10 @@ public:
     QHash<long, int> registered_atoms;
     std::unique_ptr<effect_loader> loader;
 
+Q_SIGNALS:
+    void propertyNotify(KWin::EffectWindow* win, long atom);
+    void xcbConnectionChanged();
+
 public Q_SLOTS:
     // slots for D-Bus interface
     Q_SCRIPTABLE void reconfigureEffect(const QString& name)
@@ -1051,16 +1055,6 @@ public:
     QByteArray readRootProperty(long atom, long type, int format) const override
     {
         return x11::read_root_property(scene.platform.base, atom, type, format);
-    }
-
-    xcb_atom_t announceSupportProperty(const QByteArray& propertyName, Effect* effect) override
-    {
-        return x11::announce_support_property(*this, effect, propertyName);
-    }
-
-    void removeSupportProperty(const QByteArray& propertyName, Effect* effect) override
-    {
-        x11::remove_support_property(*this, effect, propertyName);
     }
 
     KSharedConfigPtr config() const override

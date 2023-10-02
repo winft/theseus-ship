@@ -7,6 +7,7 @@
 
 #include "render/effect/integration.h"
 #include "render/effect/internal_win_update.h"
+#include <render/x11/effect.h>
 
 #include <xcb/xcb.h>
 
@@ -20,8 +21,8 @@ void setup_effect_connection_change(EffectIntegrator& effi)
 
     QObject::connect(&effi.effects, &Effects::xcbConnectionChanged, &effi.effects, [&] {
         if (!effi.registry.empty()) {
-            effi.atom = effi.effects.announceSupportProperty(effi.atom_name.data(),
-                                                             effi.registry.begin()->first);
+            effi.atom = announce_support_property(
+                effi.effects, effi.registry.begin()->first, effi.atom_name.data());
         }
     });
 }
