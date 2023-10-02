@@ -12,6 +12,10 @@
 #include "render/backend/x11/deco_renderer.h"
 #include "render/gl/backend.h"
 #include "render/platform.h"
+#include <render/gl/egl_data.h>
+#include <render/options.h>
+#include <render/post/night_color_manager.h>
+#include <render/singleton_interface.h>
 
 #include <KConfigGroup>
 #include <memory>
@@ -20,21 +24,29 @@ namespace KWin::render::x11
 {
 
 template<typename Base>
-class platform : public render::platform<Base>
+class platform : public render::platform
 {
 public:
+    using type = platform<Base>;
     using base_t = Base;
-    using type = platform<base_t>;
-    using space_t = typename base_t::space_t;
     using compositor_t = typename x11::compositor<type>;
     using scene_t = typename compositor_t::scene_t;
+    using space_t = typename base_t::space_t;
 
     using window_t = typename scene_t::window_t;
     using buffer_t = x11::buffer_win_integration<typename scene_t::buffer_t>;
 
     platform(Base& base)
-        : render::platform<Base>(base)
+        : base{base}
+        , options{std::make_unique<render::options>(base.operation_mode, base.config.main)}
+        , night_color{std::make_unique<render::post::night_color_manager<Base>>(base)}
     {
+        singleton_interface::get_egl_data = [this] { return egl_data; };
+    }
+
+    ~platform() override
+    {
+        singleton_interface::get_egl_data = {};
     }
 
     virtual gl::backend<gl::scene<type>, type>* get_opengl_backend(compositor_t& compositor) = 0;
@@ -57,6 +69,11 @@ public:
         return KConfigGroup(this->base.config.main, "Compositing").readEntry(unsafeKey, false);
     }
 
+    Base& base;
+    std::unique_ptr<render::options> options;
+    gl::egl_data* egl_data{nullptr};
+
+    std::unique_ptr<render::post::night_color_manager<Base>> night_color;
     std::unique_ptr<compositor_t> compositor;
 };
 

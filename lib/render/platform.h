@@ -6,29 +6,19 @@
 */
 #pragma once
 
-#include "gl/egl_data.h"
-#include "options.h"
 #include "outline.h"
-#include "post/night_color_manager.h"
-#include "singleton_interface.h"
-#include <memory>
 
 namespace KWin::render
 {
 
-template<typename Base>
 class platform
 {
 public:
-    using base_t = Base;
-    using platform_t = platform<base_t>;
-    using space_t = typename base_t::space_t;
+    // TODO(romangg): For unknown reason this using declaration can't be set in the child classes.
+    //                Maybe because there is a Q_OBJECT macro in render::outline?
     using outline_t = render::outline;
 
-    virtual ~platform()
-    {
-        singleton_interface::get_egl_data = {};
-    }
+    virtual ~platform() = default;
 
     // TODO(romangg): Remove the boolean trap.
     virtual void render_stop(bool on_shutdown) = 0;
@@ -46,21 +36,6 @@ public:
     virtual void invertScreen() = 0;
 
     virtual bool is_sw_compositing() const = 0;
-
-    std::unique_ptr<render::options> options;
-    std::unique_ptr<render::post::night_color_manager<Base>> night_color;
-    Base& base;
-
-    gl::egl_data* egl_data{nullptr};
-
-protected:
-    platform(Base& base)
-        : options{std::make_unique<render::options>(base.operation_mode, base.config.main)}
-        , night_color{std::make_unique<render::post::night_color_manager<Base>>(base)}
-        , base{base}
-    {
-        singleton_interface::get_egl_data = [this] { return egl_data; };
-    }
 };
 
 }

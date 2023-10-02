@@ -9,6 +9,10 @@
 #include "effects.h"
 
 #include "render/platform.h"
+#include <render/gl/egl_data.h>
+#include <render/options.h>
+#include <render/post/night_color_manager.h>
+#include <render/singleton_interface.h>
 
 #include <memory>
 
@@ -16,7 +20,7 @@ namespace KWin::render::wayland
 {
 
 template<typename Base>
-class platform : public render::platform<Base>
+class platform : public render::platform
 {
 public:
     using type = platform<Base>;
@@ -29,8 +33,16 @@ public:
     using buffer_t = buffer_win_integration<typename scene_t::buffer_t>;
 
     platform(Base& base)
-        : render::platform<Base>(base)
+        : base{base}
+        , options{std::make_unique<render::options>(base.operation_mode, base.config.main)}
+        , night_color{std::make_unique<render::post::night_color_manager<Base>>(base)}
     {
+        singleton_interface::get_egl_data = [this] { return egl_data; };
+    }
+
+    ~platform() override
+    {
+        singleton_interface::get_egl_data = {};
     }
 
     bool requiresCompositing() const override
@@ -73,6 +85,11 @@ public:
         compositor->effects->invert_screen();
     }
 
+    Base& base;
+    std::unique_ptr<render::options> options;
+    gl::egl_data* egl_data{nullptr};
+
+    std::unique_ptr<render::post::night_color_manager<Base>> night_color;
     std::unique_ptr<compositor_t> compositor;
 
     int output_index{0};
