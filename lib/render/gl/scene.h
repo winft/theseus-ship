@@ -17,6 +17,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/cursor.h"
 #include "render/scene.h"
 #include "render/shadow.h"
+#include <render/x11/sync.h>
 
 #include <render/gl/interface/platform.h>
 #include <render/gl/interface/utils.h>
@@ -25,210 +26,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <memory>
 #include <unistd.h>
 #include <unordered_map>
-#include <xcb/sync.h>
 
 namespace KWin::render::gl
 {
-
-/**
- * SyncObject represents a fence used to synchronize operations in
- * the kwin command stream with operations in the X command stream.
- */
-class SyncObject
-{
-public:
-    enum State {
-        Ready,
-        TriggerSent,
-        Waiting,
-        Done,
-        Resetting,
-    };
-
-    SyncObject() = default;
-
-    SyncObject(xcb_connection_t* con, xcb_window_t root_window)
-        : con{con}
-    {
-        m_state = Ready;
-
-        m_fence = xcb_generate_id(con);
-        xcb_sync_create_fence(con, root_window, m_fence, false);
-        xcb_flush(con);
-
-        m_sync = glImportSyncEXT(GL_SYNC_X11_FENCE_EXT, m_fence, 0);
-        m_reset_cookie.sequence = 0;
-    }
-
-    ~SyncObject()
-    {
-        // If glDeleteSync is called before the xcb fence is signalled
-        // the nvidia driver (the only one to implement GL_SYNC_X11_FENCE_EXT)
-        // deadlocks waiting for the fence to be signalled.
-        // To avoid this, make sure the fence is signalled before
-        // deleting the sync.
-        if (m_state == Resetting || m_state == Ready) {
-            trigger();
-            // The flush is necessary!
-            // The trigger command needs to be sent to the X server.
-            xcb_flush(con);
-        }
-        xcb_sync_destroy_fence(con, m_fence);
-        glDeleteSync(m_sync);
-
-        if (m_state == Resetting)
-            xcb_discard_reply(con, m_reset_cookie.sequence);
-    }
-
-    State state() const
-    {
-        return m_state;
-    }
-
-    void trigger()
-    {
-        Q_ASSERT(m_state == Ready || m_state == Resetting);
-
-        // Finish resetting the fence if necessary
-        if (m_state == Resetting)
-            finishResetting();
-
-        xcb_sync_trigger_fence(con, m_fence);
-        m_state = TriggerSent;
-    }
-
-    void wait()
-    {
-        if (m_state != TriggerSent)
-            return;
-
-        glWaitSync(m_sync, 0, GL_TIMEOUT_IGNORED);
-        m_state = Waiting;
-    }
-
-    bool finish()
-    {
-        if (m_state == Done)
-            return true;
-
-        // Note: It is possible that we never inserted a wait for the fence.
-        //       This can happen if we ended up not rendering the damaged
-        //       window because it is fully occluded.
-        Q_ASSERT(m_state == TriggerSent || m_state == Waiting);
-
-        // Check if the fence is signaled
-        GLint value;
-        glGetSynciv(m_sync, GL_SYNC_STATUS, 1, nullptr, &value);
-
-        if (value != GL_SIGNALED) {
-            qCDebug(KWIN_CORE) << "Waiting for X fence to finish";
-
-            // Wait for the fence to become signaled with a one second timeout
-            const GLenum result = glClientWaitSync(m_sync, 0, 1000000000);
-
-            switch (result) {
-            case GL_TIMEOUT_EXPIRED:
-                qCWarning(KWIN_CORE) << "Timeout while waiting for X fence";
-                return false;
-
-            case GL_WAIT_FAILED:
-                qCWarning(KWIN_CORE) << "glClientWaitSync() failed";
-                return false;
-            }
-        }
-
-        m_state = Done;
-        return true;
-    }
-
-    void reset()
-    {
-        Q_ASSERT(m_state == Done);
-
-        // Send the reset request along with a sync request.
-        // We use the cookie to ensure that the server has processed the reset
-        // request before we trigger the fence and call glWaitSync().
-        // Otherwise there is a race condition between the reset finishing and
-        // the glWaitSync() call.
-        xcb_sync_reset_fence(con, m_fence);
-        m_reset_cookie = xcb_get_input_focus(con);
-        xcb_flush(con);
-
-        m_state = Resetting;
-    }
-
-    void finishResetting()
-    {
-        Q_ASSERT(m_state == Resetting);
-        free(xcb_get_input_focus_reply(con, m_reset_cookie, nullptr));
-        m_state = Ready;
-    }
-
-private:
-    State m_state;
-    GLsync m_sync;
-    xcb_sync_fence_t m_fence;
-    xcb_get_input_focus_cookie_t m_reset_cookie;
-    xcb_connection_t* con;
-};
-
-/**
- * SyncManager manages a set of fences used for explicit synchronization
- * with the X command stream.
- */
-class SyncManager
-{
-public:
-    enum { MaxFences = 4 };
-
-    SyncManager(base::x11::data const& data)
-    {
-        m_fences.fill(SyncObject(data.connection, data.root_window));
-    }
-
-    SyncObject* nextFence()
-    {
-        SyncObject* fence = &m_fences[m_next];
-        m_next = (m_next + 1) % MaxFences;
-        return fence;
-    }
-
-    bool updateFences()
-    {
-        for (int i = 0; i < qMin(2, MaxFences - 1); i++) {
-            const int index = (m_next + i) % MaxFences;
-            SyncObject& fence = m_fences[index];
-
-            switch (fence.state()) {
-            case SyncObject::Ready:
-                break;
-
-            case SyncObject::TriggerSent:
-            case SyncObject::Waiting:
-                if (!fence.finish())
-                    return false;
-                fence.reset();
-                break;
-
-            // Should not happen in practice since we always reset the fence
-            // after finishing it
-            case SyncObject::Done:
-                fence.reset();
-                break;
-
-            case SyncObject::Resetting:
-                fence.finishResetting();
-                break;
-            }
-        }
-
-        return true;
-    }
-
-private:
-    std::array<SyncObject, MaxFences> m_fences;
-    int m_next{0};
-};
 
 template<typename Platform>
 class scene : public render::scene<Platform>
@@ -276,7 +76,7 @@ public:
             if (useExplicitSync != "0") {
                 qCDebug(KWIN_CORE)
                     << "Initializing fences for synchronization with the X command stream";
-                m_syncManager = new SyncManager(platform.base.x11_data);
+                m_syncManager = new x11::sync_manager(platform.base.x11_data);
             } else {
                 qCDebug(KWIN_CORE) << "Explicit synchronization with the X command stream disabled "
                                       "by environment variable";
@@ -431,7 +231,7 @@ public:
 
     void insertWait()
     {
-        if (m_currentFence && m_currentFence->state() != SyncObject::Waiting) {
+        if (m_currentFence && m_currentFence->state() != x11::sync_object::Waiting) {
             m_currentFence->wait();
         }
     }
@@ -796,8 +596,8 @@ private:
     }
 
     backend_t* m_backend;
-    SyncManager* m_syncManager{nullptr};
-    SyncObject* m_currentFence{nullptr};
+    x11::sync_manager* m_syncManager{nullptr};
+    x11::sync_object* m_currentFence{nullptr};
 
     lanczos_filter<type>* lanczos{nullptr};
 
