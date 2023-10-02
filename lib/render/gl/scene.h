@@ -17,7 +17,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/cursor.h"
 #include "render/scene.h"
 #include "render/shadow.h"
-#include <render/x11/sync.h>
 
 #include <render/gl/interface/platform.h>
 #include <render/gl/interface/utils.h>
@@ -66,23 +65,8 @@ public:
                 !glPlatform->supports(LooseBinding));
         }
 
-        bool haveSyncObjects = glPlatform->isGLES()
-            ? hasGLVersion(3, 0)
-            : hasGLVersion(3, 2) || hasGLExtension("GL_ARB_sync");
-
-        if (hasGLExtension("GL_EXT_x11_sync_object") && haveSyncObjects
-            && compositor.platform.base.operation_mode == base::operation_mode::x11) {
-            const QByteArray useExplicitSync = qgetenv("KWIN_EXPLICIT_SYNC");
-
-            if (useExplicitSync != "0") {
-                qCDebug(KWIN_CORE)
-                    << "Initializing fences for synchronization with the X command stream";
-                m_syncManager
-                    = std::make_unique<x11::sync_manager>(compositor.platform.base.x11_data);
-            } else {
-                qCDebug(KWIN_CORE) << "Explicit synchronization with the X command stream disabled "
-                                      "by environment variable";
-            }
+        if constexpr (requires(Compositor comp) { comp.create_sync(); }) {
+            compositor.create_sync();
         }
 
         // We only support the OpenGL 2+ shader API, not GL_ARB_shader_objects
@@ -110,6 +94,10 @@ public:
         if (lanczos) {
             delete lanczos;
             lanczos = nullptr;
+        }
+
+        if constexpr (requires(Compositor comp) { comp.sync; }) {
+            this->compositor.sync = {};
         }
     }
 
@@ -159,8 +147,10 @@ public:
     {
         m_backend->try_present();
 
-        if (m_syncManager && !m_syncManager->updateFences()) {
-            m_syncManager.reset();
+        if constexpr (requires(Compositor comp) { comp.sync; }) {
+            if (this->compositor.sync && !this->compositor.sync->updateFences()) {
+                this->compositor.sync.reset();
+            }
         }
     }
 
@@ -210,8 +200,10 @@ public:
 
     void triggerFence() override
     {
-        if (m_syncManager) {
-            m_syncManager->trigger();
+        if constexpr (requires(Compositor comp) { comp.sync; }) {
+            if (this->compositor.sync) {
+                this->compositor.sync->trigger();
+            }
         }
     }
 
@@ -222,8 +214,10 @@ public:
 
     void insertWait()
     {
-        if (m_syncManager) {
-            m_syncManager->wait();
+        if constexpr (requires(Compositor comp) { comp.sync; }) {
+            if (this->compositor.sync) {
+                this->compositor.sync->wait();
+            }
         }
     }
 
@@ -586,7 +580,6 @@ private:
     }
 
     backend_t* m_backend;
-    std::unique_ptr<x11::sync_manager> m_syncManager;
 
     lanczos_filter<type>* lanczos{nullptr};
 

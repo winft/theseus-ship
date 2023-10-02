@@ -12,6 +12,7 @@
 #include "overlay_window.h"
 #include "shadow.h"
 #include "types.h"
+#include <render/x11/sync.h>
 
 #include "debug/perf/ftrace.h"
 #include "render/compositor.h"
@@ -467,8 +468,37 @@ public:
         Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
     }
 
+    void create_sync()
+    {
+        qCDebug(KWIN_CORE) << "Checking for explicit sync with X command stream.";
+
+        if (!hasGLExtension("GL_EXT_x11_sync_object")) {
+            qCDebug(KWIN_CORE) << "GL_EXT_x11_sync_object not available.";
+            return;
+        }
+
+        auto have_sync_objects = GLPlatform::instance()->isGLES()
+            ? hasGLVersion(3, 0)
+            : hasGLVersion(3, 2) || hasGLExtension("GL_ARB_sync");
+
+        if (!have_sync_objects) {
+            qCDebug(KWIN_CORE) << "Sync objects not available.";
+            return;
+        }
+
+        QByteArray const env_var = qgetenv("KWIN_EXPLICIT_SYNC");
+
+        if (env_var == "0") {
+            qCDebug(KWIN_CORE) << "Explicit sync disabled by env var.";
+            return;
+        }
+
+        sync = std::make_unique<x11::sync_manager>(platform.base.x11_data);
+    }
+
     std::unique_ptr<compositor_qobject> qobject;
 
+    std::unique_ptr<x11::sync_manager> sync;
     std::unique_ptr<scene_t> scene;
     std::unique_ptr<effects_t> effects;
 

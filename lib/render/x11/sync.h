@@ -163,6 +163,7 @@ public:
 
     sync_manager(base::x11::data const& data)
     {
+        qCDebug(KWIN_CORE) << "Initializing fences for synchronization with the X command stream";
         m_fences.fill(sync_object(data.connection, data.root_window));
     }
 
