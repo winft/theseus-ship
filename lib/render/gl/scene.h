@@ -76,7 +76,7 @@ public:
             if (useExplicitSync != "0") {
                 qCDebug(KWIN_CORE)
                     << "Initializing fences for synchronization with the X command stream";
-                m_syncManager = new x11::sync_manager(platform.base.x11_data);
+                m_syncManager = std::make_unique<x11::sync_manager>(platform.base.x11_data);
             } else {
                 qCDebug(KWIN_CORE) << "Explicit synchronization with the X command stream disabled "
                                       "by environment variable";
@@ -109,8 +109,6 @@ public:
             delete lanczos;
             lanczos = nullptr;
         }
-
-        delete m_syncManager;
     }
 
     int64_t paint_output(output_t* output,
@@ -160,8 +158,7 @@ public:
         m_backend->try_present();
 
         if (m_syncManager && !m_syncManager->updateFences()) {
-            delete m_syncManager;
-            m_syncManager = nullptr;
+            m_syncManager.reset();
         }
     }
 
@@ -588,7 +585,7 @@ private:
     }
 
     backend_t* m_backend;
-    x11::sync_manager* m_syncManager{nullptr};
+    std::unique_ptr<x11::sync_manager> m_syncManager;
 
     lanczos_filter<type>* lanczos{nullptr};
 
