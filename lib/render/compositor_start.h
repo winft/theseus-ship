@@ -26,36 +26,29 @@ namespace KWin::render
 constexpr auto compositor_lost_message_delay = 2000;
 
 template<typename Compositor>
-void compositor_destroy_selection(Compositor& comp)
-{
-    delete comp.m_selectionOwner;
-    comp.m_selectionOwner = nullptr;
-}
-
-template<typename Compositor>
 void compositor_claim_selection(Compositor& comp)
 {
-    using CompositorSelectionOwner = x11::compositor_selection_owner;
-
-    if (!comp.m_selectionOwner) {
+    if (!comp.selection_owner) {
         char selection_name[100];
         sprintf(selection_name, "_NET_WM_CM_S%d", comp.platform.base.x11_data.screen_number);
-        comp.m_selectionOwner
-            = new CompositorSelectionOwner(selection_name,
-                                           comp.platform.base.x11_data.connection,
-                                           comp.platform.base.x11_data.root_window);
-        QObject::connect(comp.m_selectionOwner,
-                         &CompositorSelectionOwner::lostOwnership,
-                         comp.qobject.get(),
-                         [comp = &comp] { compositor_stop(*comp, false); });
+        comp.selection_owner = std::make_unique<x11::compositor_selection_owner>(
+            selection_name,
+            comp.platform.base.x11_data.connection,
+            comp.platform.base.x11_data.root_window);
+        if (comp.selection_owner) {
+            QObject::connect(comp.selection_owner.get(),
+                             &x11::compositor_selection_owner::lostOwnership,
+                             comp.qobject.get(),
+                             [comp = &comp] { compositor_stop(*comp, false); });
+        }
     }
 
-    if (!comp.m_selectionOwner) {
+    if (!comp.selection_owner) {
         // No X11 yet.
         return;
     }
 
-    comp.m_selectionOwner->own();
+    comp.selection_owner->own();
 }
 
 template<typename Compositor>
@@ -63,8 +56,7 @@ void compositor_setup_x11_support(Compositor& comp)
 {
     auto con = comp.platform.base.x11_data.connection;
     if (!con) {
-        delete comp.m_selectionOwner;
-        comp.m_selectionOwner = nullptr;
+        comp.selection_owner = {};
         return;
     }
     compositor_claim_selection(comp);

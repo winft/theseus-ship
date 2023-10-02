@@ -116,7 +116,7 @@ public:
         Q_EMIT this->qobject->aboutToDestroy();
         compositor_stop(*this, true);
         delete_unused_support_properties(*this);
-        compositor_destroy_selection(*this);
+        selection_owner = {};
     }
 
     void start(space_t& space)
@@ -179,7 +179,7 @@ public:
             xcb_composite_unredirect_subwindows(space.base.x11_data.connection,
                                                 space.base.x11_data.root_window,
                                                 XCB_COMPOSITE_REDIRECT_MANUAL);
-            compositor_destroy_selection(*this);
+            selection_owner = {};
         }
     }
 
@@ -503,7 +503,7 @@ public:
     std::unique_ptr<effects_t> effects;
 
     state_t state{state::off};
-    x11::compositor_selection_owner* m_selectionOwner{nullptr};
+    std::unique_ptr<compositor_selection_owner> selection_owner;
     QRegion repaints_region;
     QBasicTimer compositeTimer;
     qint64 m_delay{0};
@@ -545,9 +545,9 @@ private:
             // We are compositing at the moment. Don't release.
             break;
         case state::off:
-            if (m_selectionOwner) {
+            if (selection_owner) {
                 qCDebug(KWIN_CORE) << "Releasing compositor selection";
-                m_selectionOwner->disown();
+                selection_owner->disown();
             }
             break;
         case state::starting:

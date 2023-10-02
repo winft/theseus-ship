@@ -60,7 +60,7 @@ public:
         Q_EMIT this->qobject->aboutToDestroy();
         compositor_stop(*this, true);
         delete_unused_support_properties(*this);
-        compositor_destroy_selection(*this);
+        selection_owner = {};
     }
 
     void start(space_t& space)
@@ -225,7 +225,7 @@ public:
     std::unique_ptr<cursor<Platform>> software_cursor;
 
     state_t state{state::off};
-    x11::compositor_selection_owner* m_selectionOwner{nullptr};
+    std::unique_ptr<x11::compositor_selection_owner> selection_owner;
 
     QList<xcb_atom_t> unused_support_properties;
     QTimer unused_support_property_timer;
