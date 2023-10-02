@@ -8,8 +8,6 @@
 #include "move.h"
 #include "space_areas.h"
 
-#include "base/platform.h"
-
 namespace KWin::win
 {
 

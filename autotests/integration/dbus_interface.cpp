@@ -82,7 +82,7 @@ TEST_CASE("dbus interface", "[base]")
     SECTION("get window info for xdg-shell client")
     {
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         std::unique_ptr<Surface> surface(create_surface());
@@ -241,7 +241,7 @@ TEST_CASE("dbus interface", "[base]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 

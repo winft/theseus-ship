@@ -418,7 +418,7 @@ TEST_CASE("scripted effects", "[effect]")
             // the test effect doesn't keep the window alive, so it should be
             // removed immediately
             QSignalSpy deletedRemovedSpy(setup.base->space->qobject.get(),
-                                         &win::space::qobject_t::window_deleted);
+                                         &space::qobject_t::window_deleted);
             QVERIFY(deletedRemovedSpy.isValid());
             TRY_REQUIRE_WITH_TIMEOUT(deletedRemovedSpy.count() == 1, 100);
             QCOMPARE(effect->state().count(), 0);

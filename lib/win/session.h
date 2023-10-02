@@ -85,6 +85,48 @@ static inline win_type txt_to_window_type(const char* txt)
     return static_cast<win_type>(-2);
 }
 
+template<typename Space, typename Win>
+void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
+{
+    using var_win = typename Space::window_t;
+    QString n = QString::number(num);
+    cg.writeEntry(QLatin1String("sessionId") + n, x11::get_session_id(*c).constData());
+    cg.writeEntry(QLatin1String("windowRole") + n, c->windowRole().constData());
+    cg.writeEntry(QLatin1String("wmCommand") + n, x11::get_wm_command(*c).constData());
+    cg.writeEntry(QLatin1String("resourceName") + n, c->meta.wm_class.res_name.constData());
+    cg.writeEntry(QLatin1String("resourceClass") + n, c->meta.wm_class.res_class.constData());
+    cg.writeEntry(
+        QLatin1String("geometry") + n,
+        QRect(x11::calculate_gravitation(c, true), frame_to_client_size(c, c->geo.size())));
+    cg.writeEntry(QLatin1String("restore") + n, c->geo.restore.max);
+    cg.writeEntry(QLatin1String("fsrestore") + n, c->geo.restore.max);
+    cg.writeEntry(QLatin1String("maximize") + n, static_cast<int>(c->maximizeMode()));
+    cg.writeEntry(QLatin1String("fullscreen") + n, static_cast<int>(c->control->fullscreen));
+    cg.writeEntry(QLatin1String("desktop") + n, get_desktop(*c));
+
+    // the config entry is called "iconified" for back. comp. reasons
+    // (kconf_update script for updating session files would be too complicated)
+    cg.writeEntry(QLatin1String("iconified") + n, c->control->minimized);
+    cg.writeEntry(QLatin1String("opacity") + n, c->opacity());
+
+    // the config entry is called "sticky" for back. comp. reasons
+    cg.writeEntry(QLatin1String("sticky") + n, on_all_desktops(*c));
+
+    // the config entry is called "staysOnTop" for back. comp. reasons
+    cg.writeEntry(QLatin1String("staysOnTop") + n, c->control->keep_above);
+    cg.writeEntry(QLatin1String("keepBelow") + n, c->control->keep_below);
+    cg.writeEntry(QLatin1String("skipTaskbar") + n, c->control->original_skip_taskbar);
+    cg.writeEntry(QLatin1String("skipPager") + n, c->control->skip_pager());
+    cg.writeEntry(QLatin1String("skipSwitcher") + n, c->control->skip_switcher());
+
+    // not really just set by user, but name kept for back. comp. reasons
+    cg.writeEntry(QLatin1String("userNoBorder") + n, c->user_no_border);
+    cg.writeEntry(QLatin1String("windowType") + n, window_type_to_txt(c->windowType()));
+    cg.writeEntry(QLatin1String("shortcut") + n, c->control->shortcut.toString());
+    cg.writeEntry(QLatin1String("stackingOrder") + n,
+                  static_cast<int>(index_of(space.stacking.order.pre_stack, var_win(c))));
+}
+
 /**
  * Stores the current session in the config file
  *
@@ -159,61 +201,6 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
     config->sync();
 }
 
-template<typename Space, typename Win>
-void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
-{
-    using var_win = typename Space::window_t;
-    QString n = QString::number(num);
-    cg.writeEntry(QLatin1String("sessionId") + n, x11::get_session_id(*c).constData());
-    cg.writeEntry(QLatin1String("windowRole") + n, c->windowRole().constData());
-    cg.writeEntry(QLatin1String("wmCommand") + n, x11::get_wm_command(*c).constData());
-    cg.writeEntry(QLatin1String("resourceName") + n, c->meta.wm_class.res_name.constData());
-    cg.writeEntry(QLatin1String("resourceClass") + n, c->meta.wm_class.res_class.constData());
-    cg.writeEntry(
-        QLatin1String("geometry") + n,
-        QRect(x11::calculate_gravitation(c, true), frame_to_client_size(c, c->geo.size())));
-    cg.writeEntry(QLatin1String("restore") + n, c->geo.restore.max);
-    cg.writeEntry(QLatin1String("fsrestore") + n, c->geo.restore.max);
-    cg.writeEntry(QLatin1String("maximize") + n, static_cast<int>(c->maximizeMode()));
-    cg.writeEntry(QLatin1String("fullscreen") + n, static_cast<int>(c->control->fullscreen));
-    cg.writeEntry(QLatin1String("desktop") + n, get_desktop(*c));
-
-    // the config entry is called "iconified" for back. comp. reasons
-    // (kconf_update script for updating session files would be too complicated)
-    cg.writeEntry(QLatin1String("iconified") + n, c->control->minimized);
-    cg.writeEntry(QLatin1String("opacity") + n, c->opacity());
-
-    // the config entry is called "sticky" for back. comp. reasons
-    cg.writeEntry(QLatin1String("sticky") + n, on_all_desktops(*c));
-
-    // the config entry is called "staysOnTop" for back. comp. reasons
-    cg.writeEntry(QLatin1String("staysOnTop") + n, c->control->keep_above);
-    cg.writeEntry(QLatin1String("keepBelow") + n, c->control->keep_below);
-    cg.writeEntry(QLatin1String("skipTaskbar") + n, c->control->original_skip_taskbar);
-    cg.writeEntry(QLatin1String("skipPager") + n, c->control->skip_pager());
-    cg.writeEntry(QLatin1String("skipSwitcher") + n, c->control->skip_switcher());
-
-    // not really just set by user, but name kept for back. comp. reasons
-    cg.writeEntry(QLatin1String("userNoBorder") + n, c->user_no_border);
-    cg.writeEntry(QLatin1String("windowType") + n, window_type_to_txt(c->windowType()));
-    cg.writeEntry(QLatin1String("shortcut") + n, c->control->shortcut.toString());
-    cg.writeEntry(QLatin1String("stackingOrder") + n,
-                  static_cast<int>(index_of(space.stacking.order.pre_stack, var_win(c))));
-}
-
-/**
- * Loads the session information from the config file.
- *
- * @see storeSession
- */
-template<typename Space>
-void load_session_info(Space& space, QString const& sessionName)
-{
-    space.session.clear();
-    KConfigGroup cg(get_session_config(sessionName, QString()), "Session");
-    add_session_info(space, cg);
-}
-
 template<typename Space>
 void add_session_info(Space& space, KConfigGroup& cg)
 {
@@ -252,6 +239,19 @@ void add_session_info(Space& space, KConfigGroup& cg)
         info->active = (active_client == i);
         info->stackingOrder = cg.readEntry(QLatin1String("stackingOrder") + n, -1);
     }
+}
+
+/**
+ * Loads the session information from the config file.
+ *
+ * @see storeSession
+ */
+template<typename Space>
+void load_session_info(Space& space, QString const& sessionName)
+{
+    space.session.clear();
+    KConfigGroup cg(get_session_config(sessionName, QString()), "Session");
+    add_session_info(space, cg);
 }
 
 template<typename Space>

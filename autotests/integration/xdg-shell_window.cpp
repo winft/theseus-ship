@@ -70,7 +70,7 @@ TEST_CASE("xdg-shell window", "[win]")
     {
         // this test verifies that mapping a previously mapped window works correctly
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
         QVERIFY(effectsWindowShownSpy.isValid());
@@ -110,7 +110,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(deletedUuid.isNull(), true);
 
         QObject::connect(client->space.qobject.get(),
-                         &win::space::qobject_t::remnant_created,
+                         &space::qobject_t::remnant_created,
                          client->qobject.get(),
                          [&setup, &deletedUuid](auto win_id) {
                              auto remnant_win
@@ -121,8 +121,7 @@ TEST_CASE("xdg-shell window", "[win]")
         // now unmap
         QSignalSpy hiddenSpy(client->qobject.get(), &win::window_qobject::windowHidden);
         QVERIFY(hiddenSpy.isValid());
-        QSignalSpy windowClosedSpy(client->space.qobject.get(),
-                                   &win::space::qobject_t::remnant_created);
+        QSignalSpy windowClosedSpy(client->space.qobject.get(), &space::qobject_t::remnant_created);
         QVERIFY(windowClosedSpy.isValid());
         surface->attachBuffer(Buffer::Ptr());
         surface->commit(Surface::CommitFlag::None);
@@ -828,7 +827,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QString const kill = QFINDTESTDATA(QStringLiteral("kill"));
         QVERIFY(!kill.isEmpty());
         QSignalSpy shellClientAddedSpy(setup.base->space->qobject.get(),
-                                       &win::space::qobject_t::wayland_window_added);
+                                       &space::qobject_t::wayland_window_added);
         QVERIFY(shellClientAddedSpy.isValid());
 
         std::unique_ptr<QProcess> process(new QProcess);

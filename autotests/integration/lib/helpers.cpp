@@ -180,7 +180,7 @@ wayland_window* render_and_wait_for_shown(client const& clt,
                                           int timeout)
 {
     QSignalSpy clientAddedSpy(app()->base->space->qobject.get(),
-                              &win::space::qobject_t::wayland_window_added);
+                              &space::qobject_t::wayland_window_added);
     if (!clientAddedSpy.isValid()) {
         return nullptr;
     }

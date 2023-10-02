@@ -85,7 +85,7 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(app()->base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 

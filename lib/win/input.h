@@ -12,6 +12,7 @@
 #include "screen.h"
 #include "stacking_order.h"
 #include "types.h"
+#include <win/activation.h>
 
 #include "base/options.h"
 #include "utils/blocker.h"

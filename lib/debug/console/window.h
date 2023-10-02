@@ -5,14 +5,11 @@
 */
 #pragma once
 
-#include "win/actions.h"
-#include "win/activation.h"
-#include "win/controlling.h"
-#include "win/desktop_get.h"
-#include "win/meta.h"
-#include "win/property_window.h"
-#include "win/space.h"
-#include "win/transient.h"
+#include <win/activation.h>
+#include <win/desktop_get.h>
+#include <win/desktop_set.h>
+#include <win/move.h>
+#include <win/property_window.h>
 
 namespace KWin::debug
 {

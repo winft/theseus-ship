@@ -94,7 +94,7 @@ TEST_CASE("xdg activation", "[win]")
                                     &Wrapland::Server::XdgActivationV1::activate);
         QVERIFY(xdg_activate_spy.isValid());
         QSignalSpy activated_spy(setup.base->space->qobject.get(),
-                                 &win::space::qobject_t::clientActivated);
+                                 &space::qobject_t::clientActivated);
         QVERIFY(activated_spy.isValid());
 
         QVERIFY(activated_spy.wait());
@@ -176,7 +176,7 @@ TEST_CASE("xdg activation", "[win]")
                                     &Wrapland::Server::XdgActivationV1::activate);
         QVERIFY(xdg_activate_spy.isValid());
         QSignalSpy activated_spy(setup.base->space->qobject.get(),
-                                 &win::space::qobject_t::clientActivated);
+                                 &space::qobject_t::clientActivated);
         QVERIFY(activated_spy.isValid());
 
         QVERIFY(activated_spy.wait());

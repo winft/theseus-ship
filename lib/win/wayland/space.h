@@ -31,10 +31,11 @@ namespace KWin::win::wayland
 {
 
 template<typename Render, typename Input>
-class space : public win::space
+class space
 {
 public:
     using type = space<Render, Input>;
+    using qobject_t = space_qobject;
     using base_t = typename Input::base_t;
     using input_t = typename Input::redirect_t;
     using x11_window = xwl_window<type>;
@@ -45,26 +46,25 @@ public:
     using render_outline_t = typename base_t::render_t::outline_t;
 
     space(Render& render, Input& input)
-        : win::space(input.base.config.main)
-        , base{input.base}
+        : base{input.base}
     {
         space_setup_init(*this, render, input);
         init_space(*this);
     }
 
-    ~space() override
+    virtual ~space()
     {
         space_setup_clear(*this);
     }
 
-    void resize(QSize const& size) override
+    void resize(QSize const& size)
     {
         // TODO(romangg): Only call with Xwayland compiled.
         x11::handle_desktop_resize(root_info.get(), size);
         handle_desktop_resize(*this, size);
     }
 
-    void handle_desktop_changed(uint desktop) override
+    void handle_desktop_changed(uint desktop)
     {
         // TODO(romangg): Only call with Xwayland compiled.
         x11::popagate_desktop_change(*this, desktop);
@@ -94,7 +94,7 @@ public:
 
     void update_space_area_from_windows(QRect const& desktop_area,
                                         std::vector<QRect> const& screens_geos,
-                                        space_areas& areas) override
+                                        space_areas& areas)
     {
         for (auto window : windows) {
             std::visit(overload{[&](x11_window* win) {
@@ -118,7 +118,7 @@ public:
         }
     }
 
-    void show_debug_console() override
+    void show_debug_console()
     {
         auto console = new debug::wayland_console(*this);
         console->show();
@@ -150,6 +150,65 @@ public:
     }
 
     base_t& base;
+
+    std::unique_ptr<qobject_t> qobject;
+    std::unique_ptr<win::options> options;
+
+    win::space_areas areas;
+    std::unique_ptr<base::x11::atoms> atoms;
+    std::unique_ptr<rules::book> rule_book;
+
+    std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;
+    std::unique_ptr<base::x11::event_filter> m_movingClientFilter;
+    std::unique_ptr<base::x11::event_filter> m_syncAlarmFilter;
+
+    int m_initialDesktop{1};
+    std::unique_ptr<base::x11::xcb::window> m_nullFocus;
+
+    int block_focus{0};
+
+    QPoint focusMousePos;
+
+    // Timer to collect requests for 'reconfigure'
+    QTimer reconfigureTimer;
+    QTimer updateToolWindowsTimer;
+
+    // Array of the previous restricted areas that window cannot be moved into
+    std::vector<win::strut_rects> oldrestrictedmovearea;
+
+    std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
+    std::unique_ptr<win::session_manager> session_manager;
+
+    QTimer* m_quickTileCombineTimer{nullptr};
+    win::quicktiles m_lastTilingMode{win::quicktiles::none};
+
+    QWidget* active_popup{nullptr};
+
+    std::vector<win::session_info*> session;
+
+    // Delay(ed) window focus timer and client
+    QTimer* delayFocusTimer{nullptr};
+
+    bool showing_desktop{false};
+    bool was_user_interaction{false};
+
+    int session_active_client;
+    int session_desktop;
+
+    win::shortcut_dialog* client_keys_dialog{nullptr};
+    bool global_shortcuts_disabled{false};
+
+    // array of previous sizes of xinerama screens
+    std::vector<QRect> oldscreensizes;
+
+    // previous sizes od displayWidth()/displayHeight()
+    QSize olddisplaysize;
+
+    int set_active_client_recursion{0};
+
+    base::x11::xcb::window shape_helper_window;
+
+    uint32_t window_id{0};
 
     std::unique_ptr<render_outline_t> outline;
     std::unique_ptr<edger_t> edges;

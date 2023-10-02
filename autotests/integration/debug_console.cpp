@@ -231,7 +231,7 @@ TEST_CASE("debug console", "[debug]")
         window.map();
 
         QSignalSpy unmanaged_server_spy(setup.base->space->qobject.get(),
-                                        &win::space::qobject_t::unmanagedAdded);
+                                        &space::qobject_t::unmanagedAdded);
         QVERIFY(unmanaged_server_spy.isValid());
 
         QVERIFY(rowsInsertedSpy.wait());
@@ -503,7 +503,7 @@ TEST_CASE("debug console", "[debug]")
         QVERIFY(destroyedSpy.isValid());
 
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::internalClientAdded);
+                                  &space::qobject_t::internalClientAdded);
         QVERIFY(clientAddedSpy.isValid());
         console->show();
         QCOMPARE(console->windowHandle()->isVisible(), true);

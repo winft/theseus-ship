@@ -101,8 +101,7 @@ struct x11_test_window {
         xcb_map_window(client.connection, client.window);
         xcb_flush(client.connection);
 
-        QSignalSpy window_spy(setup.base->space->qobject.get(),
-                              &win::space::qobject_t::clientAdded);
+        QSignalSpy window_spy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
         QVERIFY(window_spy.isValid());
         QVERIFY(window_spy.wait());
 
@@ -265,7 +264,7 @@ TEST_CASE("plasma window", "[win]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -386,7 +385,7 @@ TEST_CASE("plasma window", "[win]")
 
         // this time we use a QSignalSpy on XdgShellClient as it'a a little bit more complex setup
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         // lock

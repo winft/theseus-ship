@@ -6,6 +6,7 @@
 #pragma once
 
 #include "geo.h"
+#include <win/scene.h>
 
 #include "utils/algorithm.h"
 
@@ -22,20 +23,6 @@ QRegion repaints(Win const& win)
 }
 
 template<typename Win>
-void acquire_repaint_outputs(Win& win, QRegion const& region)
-{
-    for (auto& out : win.space.base.outputs) {
-        if (contains(win.render_data.repaint_outputs, out)) {
-            continue;
-        }
-        if (region.intersected(out->geometry()).isEmpty()) {
-            continue;
-        }
-        win.render_data.repaint_outputs.push_back(out);
-    }
-}
-
-template<typename Win>
 void add_repaint(Win& win, QRegion const& region)
 {
     if (!win.space.base.render->compositor->scene) {
@@ -43,33 +30,6 @@ void add_repaint(Win& win, QRegion const& region)
     }
     win.render_data.repaints_region += region;
     acquire_repaint_outputs(win, region.translated(win.geo.pos()));
-    Q_EMIT win.qobject->needsRepaint();
-}
-
-template<typename Win>
-void add_layer_repaint(Win& win, QRegion const& region)
-{
-    if (!win.space.base.render->compositor->scene) {
-        return;
-    }
-    win.render_data.layer_repaints_region += region;
-    acquire_repaint_outputs(win, region);
-    Q_EMIT win.qobject->needsRepaint();
-}
-
-template<typename Win>
-void add_full_repaint(Win& win)
-{
-    auto const region = visible_rect(&win);
-    win.render_data.repaints_region = region.translated(-win.geo.pos());
-
-    for (auto child : win.transient->children) {
-        if (child->transient->annexed) {
-            add_full_repaint(*child);
-        }
-    }
-
-    acquire_repaint_outputs(win, region);
     Q_EMIT win.qobject->needsRepaint();
 }
 
@@ -102,37 +62,6 @@ void reset_repaints(Win& win, Output const* output)
 
     win.render_data.layer_repaints_region
         = win.render_data.layer_repaints_region.subtracted(reset_region);
-}
-
-template<typename Win>
-void add_full_damage(Win& win)
-{
-    if (!win.space.base.render->compositor->scene) {
-        return;
-    }
-
-    auto const render_geo = frame_to_render_rect(&win, win.geo.frame);
-
-    auto const damage = QRect({}, render_geo.size());
-    win.render_data.damage_region = damage;
-
-    auto repaint = damage;
-    if (win.geo.has_in_content_deco) {
-        repaint.translate(-QPoint(left_border(&win), top_border(&win)));
-    }
-    win.render_data.repaints_region |= repaint;
-    acquire_repaint_outputs(win, render_geo);
-
-    Q_EMIT win.qobject->damaged(win.render_data.damage_region);
-}
-
-template<typename Win>
-void discard_buffer(Win& win)
-{
-    add_full_damage(win);
-    if (win.render) {
-        win.render->discard_buffer();
-    }
 }
 
 template<typename Win>

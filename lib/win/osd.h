@@ -38,6 +38,15 @@ static void create_osd(Space& space)
 }
 
 template<typename Space>
+auto get_osd(Space& space) -> osd_notification<typename Space::input_t>*
+{
+    if (!space.osd) {
+        create_osd(space);
+    }
+    return space.osd.get();
+}
+
+template<typename Space>
 void osd_show(Space& space, QString const& message, QString const& iconName, int timeout)
 {
     if (!base::should_use_wayland_for_compositing(space.base)) {
@@ -50,15 +59,6 @@ void osd_show(Space& space, QString const& message, QString const& iconName, int
     notification->qobject->setMessage(message);
     notification->qobject->setTimeout(timeout);
     notification->qobject->setVisible(true);
-}
-
-template<typename Space>
-auto get_osd(Space& space) -> osd_notification<typename Space::input_t>*
-{
-    if (!space.osd) {
-        create_osd(space);
-    }
-    return space.osd.get();
 }
 
 template<typename Space>

@@ -8,6 +8,7 @@
 #include <desktop/kde/dbus/kwin.h>
 #include <win/singleton_interface.h>
 #include <win/space_setup.h>
+#include <win/user_actions_menu.h>
 #include <win/wayland/appmenu.h>
 #include <win/wayland/deco.h>
 #include <win/wayland/layer_shell.h>
@@ -85,6 +86,12 @@ void space_setup_init(Space& space, Render& render, Input& input)
     namespace WS = Wrapland::Server;
     using wayland_window = win::wayland::window<Space>;
 
+    space.qobject
+        = std::make_unique<space_qobject>([&space] { space_start_reconfigure_timer(space); });
+    space.options = std::make_unique<win::options>(input.base.config.main);
+    space.rule_book = std::make_unique<rules::book>();
+    space.virtual_desktop_manager = std::make_unique<win::virtual_desktop_manager>();
+    space.session_manager = std::make_unique<win::session_manager>();
     space.outline = Space::render_outline_t::create(*render.compositor, [&space] {
         return space.outline->create_visual(*space.base.render->compositor);
     });
@@ -182,7 +189,7 @@ void space_setup_init(Space& space, Render& render, Input& input)
 
     space.xdg_activation = std::make_unique<wayland::xdg_activation<Space>>(space);
     QObject::connect(
-        space.qobject.get(), &space::qobject_t::clientActivated, space.qobject.get(), [&space] {
+        space.qobject.get(), &Space::qobject_t::clientActivated, space.qobject.get(), [&space] {
             if (space.stacking.active) {
                 space.xdg_activation->clear();
             }
@@ -233,7 +240,7 @@ void space_setup_init(Space& space, Render& render, Input& input)
 
     // For Xwayland windows we need to setup Plasma management too.
     QObject::connect(space.qobject.get(),
-                     &space::qobject_t::clientAdded,
+                     &Space::qobject_t::clientAdded,
                      space.qobject.get(),
                      [&space](auto win_id) {
                          auto win = space.windows_map.at(win_id);
@@ -265,6 +272,7 @@ void space_setup_clear(Space& space)
                    win);
     }
 
+    singleton_interface::get_current_output_geometry = {};
     win::clear_space(space);
 }
 

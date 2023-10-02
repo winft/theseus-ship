@@ -505,7 +505,7 @@ public:
 
         // Must be done after signal is emitted so the screen margins are updated.
         if (hasStrut()) {
-            update_space_areas(this->space);
+            win::update_space_areas(this->space);
         }
     }
 

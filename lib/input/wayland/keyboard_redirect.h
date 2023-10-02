@@ -102,7 +102,7 @@ public:
         redirect->m_spies.push_back(keyRepeatSpy);
 
         QObject::connect(redirect->space.qobject.get(),
-                         &win::space::qobject_t::clientActivated,
+                         &space_t::qobject_t::clientActivated,
                          qobject.get(),
                          [this] {
                              QObject::disconnect(m_activeClientSurfaceChangedConnection);

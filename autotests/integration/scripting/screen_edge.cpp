@@ -92,7 +92,7 @@ TEST_CASE("screen edge script", "[script]")
 
         // triggering the edge will result in show desktop being triggered
         QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::showingDesktopChanged);
+                                  &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
         // trigger the edge
@@ -137,7 +137,7 @@ TEST_CASE("screen edge script", "[script]")
         QCOMPARE(runningChangedSpy.first().first().toBool(), true);
         // triggering the edge will result in show desktop being triggered
         QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::showingDesktopChanged);
+                                  &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
         // trigger the edge
@@ -167,7 +167,7 @@ TEST_CASE("screen edge script", "[script]")
         QVERIFY(runningChangedSpy.wait());
 
         QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::showingDesktopChanged);
+                                  &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
         // trigger the edge
@@ -217,7 +217,7 @@ TEST_CASE("screen edge script", "[script]")
         QTRY_COMPARE(runningChangedSpy.count(), 1);
 
         QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::showingDesktopChanged);
+                                  &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
         // Trigger the edge through touch

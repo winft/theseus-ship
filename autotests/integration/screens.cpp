@@ -229,7 +229,7 @@ TEST_CASE("screens", "[base]")
 
         // Create a window.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);

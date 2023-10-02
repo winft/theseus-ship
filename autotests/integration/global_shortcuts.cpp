@@ -318,7 +318,7 @@ TEST_CASE("global shortcuts", "[input]")
         xcb_flush(c.get());
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -424,7 +424,7 @@ TEST_CASE("global shortcuts", "[input]")
         QCOMPARE(client->control->shortcut, QKeySequence());
 
         QSignalSpy shortcutDialogAddedSpy(setup.base->space->qobject.get(),
-                                          &win::space::qobject_t::internalClientAdded);
+                                          &space::qobject_t::internalClientAdded);
         QVERIFY(shortcutDialogAddedSpy.isValid());
         win::active_window_setup_window_shortcut(*setup.base->space);
         QTRY_COMPARE(shortcutDialogAddedSpy.count(), 1);

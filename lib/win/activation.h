@@ -9,7 +9,6 @@
 #include "desktop_set.h"
 #include "focus_blocker.h"
 #include "focus_chain_find.h"
-#include "input.h"
 #include "layers.h"
 #include "screen.h"
 #include "stacking.h"
@@ -198,6 +197,21 @@ void cancel_delay_focus(Space& space)
     space.delayFocusTimer = nullptr;
 }
 
+template<typename Space>
+void close_active_popup(Space& space)
+{
+    if (space.active_popup) {
+        space.active_popup->close();
+        space.active_popup = nullptr;
+        space.active_popup_client = {};
+    }
+
+    space.user_actions_menu->close();
+}
+
+template<typename Space, typename Win>
+void activate_window(Space& space, Win& window);
+
 /**
  * Request focus and optionally try raising the window.
  *
@@ -340,59 +354,11 @@ void set_demands_attention(Win* win, bool demand)
     Q_EMIT win->qobject->demandsAttentionChanged();
 }
 
-/**
- * Sets the client's active state to \a act.
- *
- * This function does only change the visual appearance of the client,
- * it does not change the focus setting. Use
- * Workspace::activateClient() or Workspace::requestFocus() instead.
- *
- * If a client receives or looses the focus, it calls setActive() on
- * its own.
- */
 template<typename Win>
-void set_active(Win* win, bool active)
-{
-    if (win->control->active == active) {
-        return;
-    }
+void set_active(Win* win, bool active);
 
-    win->control->active = active;
-
-    auto const ruledOpacity = active
-        ? win->control->rules.checkOpacityActive(qRound(win->opacity() * 100.0))
-        : win->control->rules.checkOpacityInactive(qRound(win->opacity() * 100.0));
-    win->setOpacity(ruledOpacity / 100.0);
-
-    if (active) {
-        set_active_window(win->space, *win);
-    } else {
-        unset_active_window(win->space);
-        win->control->cancel_auto_raise();
-    }
-
-    blocker block(win->space.stacking.order);
-
-    // active windows may get different layer
-    update_layer(win);
-
-    auto leads = win->transient->leads();
-    for (auto lead : leads) {
-        if (lead->remnant) {
-            continue;
-        }
-        if (lead->control->fullscreen) {
-            // Fullscreens go high even if their transient is active.
-            update_layer(lead);
-        }
-    }
-
-    if constexpr (requires(Win win) { win.doSetActive(); }) {
-        win->doSetActive();
-    }
-    Q_EMIT win->qobject->activeChanged();
-    win->control->update_mouse_grab();
-}
+template<typename Space>
+void set_global_shortcuts_disabled(Space& space, bool disable);
 
 template<typename Space>
 void unset_active_window(Space& space)
@@ -515,6 +481,60 @@ void set_active_window(Space& space, Win& window)
 
     Q_EMIT space.qobject->clientActivated();
     --space.set_active_client_recursion;
+}
+
+/**
+ * Sets the client's active state to \a act.
+ *
+ * This function does only change the visual appearance of the client,
+ * it does not change the focus setting. Use
+ * Workspace::activateClient() or Workspace::requestFocus() instead.
+ *
+ * If a client receives or looses the focus, it calls setActive() on
+ * its own.
+ */
+template<typename Win>
+void set_active(Win* win, bool active)
+{
+    if (win->control->active == active) {
+        return;
+    }
+
+    win->control->active = active;
+
+    auto const ruledOpacity = active
+        ? win->control->rules.checkOpacityActive(qRound(win->opacity() * 100.0))
+        : win->control->rules.checkOpacityInactive(qRound(win->opacity() * 100.0));
+    win->setOpacity(ruledOpacity / 100.0);
+
+    if (active) {
+        set_active_window(win->space, *win);
+    } else {
+        unset_active_window(win->space);
+        win->control->cancel_auto_raise();
+    }
+
+    blocker block(win->space.stacking.order);
+
+    // active windows may get different layer
+    update_layer(win);
+
+    auto leads = win->transient->leads();
+    for (auto lead : leads) {
+        if (lead->remnant) {
+            continue;
+        }
+        if (lead->control->fullscreen) {
+            // Fullscreens go high even if their transient is active.
+            update_layer(lead);
+        }
+    }
+
+    if constexpr (requires(Win win) { win.doSetActive(); }) {
+        win->doSetActive();
+    }
+    Q_EMIT win->qobject->activeChanged();
+    win->control->update_mouse_grab();
 }
 
 template<typename Space, typename Win>
@@ -922,18 +942,6 @@ void reset_delay_focus_timer(Space& space)
     });
     space.delayFocusTimer->setSingleShot(true);
     space.delayFocusTimer->start(space.options->qobject->delayFocusInterval());
-}
-
-template<typename Space>
-void close_active_popup(Space& space)
-{
-    if (space.active_popup) {
-        space.active_popup->close();
-        space.active_popup = nullptr;
-        space.active_popup_client = {};
-    }
-
-    space.user_actions_menu->close();
 }
 
 template<typename Space>

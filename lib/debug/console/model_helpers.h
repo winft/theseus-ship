@@ -11,6 +11,7 @@
 #include "win/space_qobject.h"
 #include "win/x11/stacking.h"
 
+#include <QModelIndex>
 #include <QVector>
 
 namespace KWin::debug

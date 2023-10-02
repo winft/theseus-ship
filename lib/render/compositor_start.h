@@ -138,7 +138,7 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
                     if constexpr (requires(decltype(win) win) { win->finishCompositing(); }) {
                         win->finishCompositing();
                     } else {
-                        finish_compositing(*win);
+                        win::finish_compositing(*win);
                     }
                 }},
                 var_win);

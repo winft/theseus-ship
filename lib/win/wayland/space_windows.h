@@ -10,6 +10,7 @@
 #include <win/layers.h>
 #include <win/placement.h>
 #include <win/setup.h>
+#include <win/space_areas_helpers.h>
 #include <win/tabbox.h>
 #include <win/wayland/idle.h>
 #include <win/wayland/space_areas.h>
@@ -99,7 +100,7 @@ void space_windows_add(Space& space, typename Space::wayland_window& window)
     space.stacking.order.update_order();
 
     if (window.control) {
-        update_space_areas(space);
+        win::update_space_areas(space);
 
         if (window.wantsInput() && !window.control->minimized) {
             activate_window(space, window);
@@ -113,7 +114,7 @@ void space_windows_add(Space& space, typename Space::wayland_window& window)
                          [&space, &window] {
                              update_layer(&window);
                              space.stacking.order.update_count();
-                             update_space_areas(space);
+                             win::update_space_areas(space);
                              if (window.wantsInput()) {
                                  activate_window(space, window);
                              }
@@ -124,7 +125,7 @@ void space_windows_add(Space& space, typename Space::wayland_window& window)
                          [&space] {
                              // TODO: update tabbox if it's displayed
                              space.stacking.order.update_count();
-                             update_space_areas(space);
+                             win::update_space_areas(space);
                          });
 
         idle_setup(window);
@@ -165,7 +166,7 @@ void space_windows_remove(Space& space, typename Space::wayland_window& window)
     space.stacking.order.update_count();
 
     if (window.control) {
-        update_space_areas(space);
+        win::update_space_areas(space);
         update_tabbox(space);
     }
 

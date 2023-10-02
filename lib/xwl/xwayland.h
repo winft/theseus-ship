@@ -260,7 +260,7 @@ private:
 
         QObject::connect(
             space.qobject.get(),
-            &win::space::qobject_t::surface_id_changed,
+            &Space::qobject_t::surface_id_changed,
             this,
             [this, xwayland_connection = space.base.server->xwayland_connection()](auto win_id,
                                                                                    auto id) {

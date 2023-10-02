@@ -17,8 +17,8 @@
 #include "base/x11/xcb/window.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
-#include "win/space_areas_helpers.h"
 #include "win/space_setup.h"
+#include <win/space_areas_helpers.h>
 
 namespace KWin::win::x11
 {
@@ -170,7 +170,7 @@ void init_space(Space& space)
         space.stacking.order.update_count();
 
         save_old_output_sizes(space);
-        update_space_areas(space);
+        win::update_space_areas(space);
 
         // NETWM spec says we have to set it to (0,0) if we don't support it
         auto viewports = new net::point[vds->count()];

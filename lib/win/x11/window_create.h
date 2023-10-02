@@ -8,8 +8,8 @@
 #include "hide.h"
 #include "transient.h"
 
-#include "win/space_areas_helpers.h"
 #include "win/tabbox.h"
+#include <win/space_areas_helpers.h>
 
 namespace KWin::win::x11
 {
@@ -48,7 +48,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
     }
 
     // This cannot be in manage(), because the client got added only now
-    update_space_areas(space);
+    win::update_space_areas(space);
     update_layer(win);
 
     if (is_desktop(win)) {

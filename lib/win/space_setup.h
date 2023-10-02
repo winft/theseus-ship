@@ -11,6 +11,8 @@
 #include "rules.h"
 #include "tabbox/tabbox.h"
 #include <win/options.h>
+#include <win/session.h>
+#include <win/space_reconfigure.h>
 
 #include "base/platform.h"
 

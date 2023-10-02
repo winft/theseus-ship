@@ -723,6 +723,26 @@ void update_move_resize(Win* win, QPointF const& currentGlobalCursor)
     move_resize(win, win->geo.pos(), currentGlobalCursor.toPoint());
 }
 
+template<typename Space, typename Win, typename Output>
+void send_to_screen(Space const& space, Win* win, Output const& output);
+
+// TODO(romangg): We have 3 different functions to finish/end/leave a move-resize operation. There
+//                should be only a single one!
+template<typename Win>
+void leave_move_resize(Win& win)
+{
+    unset_move_resize_window(win.space);
+    win.control->move_resize.enabled = false;
+
+    if (win.space.edges->desktop_switching.when_moving_client) {
+        win.space.edges->reserveDesktopSwitching(false, Qt::Vertical | Qt::Horizontal);
+    }
+    if (win.control->electric_maximizing) {
+        win.space.outline->hide();
+        elevate(&win, false);
+    }
+}
+
 template<typename Win>
 void finish_move_resize(Win* win, bool cancel)
 {
@@ -801,23 +821,6 @@ void end_move_resize(Win* win)
     }
 
     update_cursor(win);
-}
-
-// TODO(romangg): We have 3 different functions to finish/end/leave a move-resize operation. There
-//                should be only a single one!
-template<typename Win>
-void leave_move_resize(Win& win)
-{
-    unset_move_resize_window(win.space);
-    win.control->move_resize.enabled = false;
-
-    if (win.space.edges->desktop_switching.when_moving_client) {
-        win.space.edges->reserveDesktopSwitching(false, Qt::Vertical | Qt::Horizontal);
-    }
-    if (win.control->electric_maximizing) {
-        win.space.outline->hide();
-        elevate(&win, false);
-    }
 }
 
 template<typename Win>

@@ -162,7 +162,7 @@ TEST_CASE("lockscreen", "[base]")
     {
         // This test verifies that the lockscreen greeter is placed above other windows.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         LOCK QVERIFY(clientAddedSpy.wait());

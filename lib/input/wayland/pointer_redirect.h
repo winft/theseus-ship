@@ -14,6 +14,7 @@
 #include "input/event_spy.h"
 #include "input/qt_event.h"
 #include "utils/blocker.h"
+#include <win/input.h>
 
 #include <KScreenLocker/KsldApp>
 #include <QObject>

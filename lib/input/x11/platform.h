@@ -240,9 +240,9 @@ private:
                     continue;
                 }
 
-                qCDebug(KWIN_TABBOX) << iKeySym << ": keySymX=0x" << QString::number(keySymX, 16)
-                                     << " i=" << i << " mask=0x" << QString::number(mask, 16)
-                                     << " keymap[i]=0x" << QString::number(keymap[i], 16);
+                qCDebug(KWIN_CORE) << iKeySym << ": keySymX=0x" << QString::number(keySymX, 16)
+                                   << " i=" << i << " mask=0x" << QString::number(mask, 16)
+                                   << " keymap[i]=0x" << QString::number(keymap[i], 16);
 
                 if (keymap[i] & mask) {
                     depressed = true;

@@ -127,7 +127,7 @@ TEST_CASE("window rules", "[win]")
         xcb_flush(c.get());
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -206,7 +206,7 @@ TEST_CASE("window rules", "[win]")
         xcb_flush(c.get());
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 

@@ -67,7 +67,7 @@ TEST_CASE("input stacking order", "[win]")
 
         // now create the two windows and make them overlap
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface1 = create_surface();
         QVERIFY(surface1);

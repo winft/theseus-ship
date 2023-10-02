@@ -747,7 +747,7 @@ TEST_CASE("decoration input", "[input],[win]")
         QVERIFY(keyEvent.isValid());
 
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::internalClientAdded);
+                                  &space::qobject_t::internalClientAdded);
         QVERIFY(clientAddedSpy.isValid());
         c->control->deco.client->requestShowToolTip(QStringLiteral("test"));
         // now we should get an internal window

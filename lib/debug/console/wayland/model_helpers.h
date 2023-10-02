@@ -39,21 +39,16 @@ void wayland_model_setup_connections(Model& model, Space& space)
     }
 
     // TODO: that only includes windows getting shown, not those which are only created
-    QObject::connect(space.qobject.get(),
-                     &win::space::qobject_t::wayland_window_added,
-                     &model,
-                     [&](auto win_id) {
-                         auto win = std::get<wayland_window_t*>(space.windows_map.at(win_id));
-                         add_window(&model, model.s_waylandClientId - 1, model.m_shellClients, win);
-                     });
-    QObject::connect(space.qobject.get(),
-                     &win::space::qobject_t::wayland_window_removed,
-                     &model,
-                     [&](auto win_id) {
-                         auto win = std::get<wayland_window_t*>(space.windows_map.at(win_id));
-                         remove_window(
-                             &model, model.s_waylandClientId - 1, model.m_shellClients, win);
-                     });
+    QObject::connect(
+        space.qobject.get(), &Space::qobject_t::wayland_window_added, &model, [&](auto win_id) {
+            auto win = std::get<wayland_window_t*>(space.windows_map.at(win_id));
+            add_window(&model, model.s_waylandClientId - 1, model.m_shellClients, win);
+        });
+    QObject::connect(
+        space.qobject.get(), &Space::qobject_t::wayland_window_removed, &model, [&](auto win_id) {
+            auto win = std::get<wayland_window_t*>(space.windows_map.at(win_id));
+            remove_window(&model, model.s_waylandClientId - 1, model.m_shellClients, win);
+        });
     QObject::connect(
         space.qobject.get(), &win::space_qobject::internalClientAdded, &model, [&](auto win_id) {
             auto win = std::get<internal_window_t*>(space.windows_map.at(win_id));

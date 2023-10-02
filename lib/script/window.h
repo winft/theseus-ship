@@ -17,6 +17,7 @@
 #include "win/property_window.h"
 #include "win/screen.h"
 #include "win/transient.h"
+#include <win/move.h>
 
 #include <variant>
 

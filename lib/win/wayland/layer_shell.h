@@ -348,7 +348,7 @@ void process_layer_surface_commit(Win* win)
 
     // TODO(romangg): update client area also on size change?
     if (win->layer_surface->exclusive_zone() > 0) {
-        update_space_areas(win->space);
+        win::update_space_areas(win->space);
     }
 }
 

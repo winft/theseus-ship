@@ -295,7 +295,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
         // Let's start a window move. First create a window.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -639,7 +639,7 @@ TEST_CASE("screen edges", "[input],[win]")
         config->sync();
 
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -750,7 +750,7 @@ TEST_CASE("screen edges", "[input],[win]")
     SECTION("client edge")
     {
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);

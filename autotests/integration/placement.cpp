@@ -74,7 +74,7 @@ TEST_CASE("placement", "[win]")
         PlaceWindowResult rc;
 
         QSignalSpy window_spy(setup.base->space->qobject.get(),
-                              &win::space::qobject_t::wayland_window_added);
+                              &space::qobject_t::wayland_window_added);
         assert(window_spy.isValid());
 
         // create a new window

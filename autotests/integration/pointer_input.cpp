@@ -154,7 +154,7 @@ TEST_CASE("pointer input", "[input]")
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -205,7 +205,7 @@ TEST_CASE("pointer input", "[input]")
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -246,7 +246,7 @@ TEST_CASE("pointer input", "[input]")
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -296,7 +296,7 @@ TEST_CASE("pointer input", "[input]")
 
         // Create a window.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         auto surface = create_surface();
@@ -389,7 +389,7 @@ TEST_CASE("pointer input", "[input]")
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -463,7 +463,7 @@ TEST_CASE("pointer input", "[input]")
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -544,7 +544,7 @@ TEST_CASE("pointer input", "[input]")
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -606,7 +606,7 @@ TEST_CASE("pointer input", "[input]")
 
         // create a window
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -659,7 +659,7 @@ TEST_CASE("pointer input", "[input]")
         win::space_reconfigure(*setup.base->space);
         // create two windows
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface1 = create_surface();
         QVERIFY(surface1);
@@ -725,7 +725,7 @@ TEST_CASE("pointer input", "[input]")
 
         // create two windows
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface1 = create_surface();
         QVERIFY(surface1);
@@ -753,7 +753,7 @@ TEST_CASE("pointer input", "[input]")
 
         // signal spies for active window changed and stacking order changed
         QSignalSpy activeWindowChangedSpy(setup.base->space->qobject.get(),
-                                          &win::space::qobject_t::clientActivated);
+                                          &space::qobject_t::clientActivated);
         QVERIFY(activeWindowChangedSpy.isValid());
         QSignalSpy stackingOrderChangedSpy(setup.base->space->stacking.order.qobject.get(),
                                            &win::stacking_order_qobject::changed);
@@ -814,7 +814,7 @@ TEST_CASE("pointer input", "[input]")
 
         // Create two windows.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         auto surface1 = create_surface();
@@ -847,7 +847,7 @@ TEST_CASE("pointer input", "[input]")
 
         // Signal spies for active window changed and stacking order changed.
         QSignalSpy activeWindowChangedSpy(setup.base->space->qobject.get(),
-                                          &win::space::qobject_t::clientActivated);
+                                          &space::qobject_t::clientActivated);
         QVERIFY(activeWindowChangedSpy.isValid());
         QSignalSpy stackingOrderChangedSpy(setup.base->space->stacking.order.qobject.get(),
                                            &win::stacking_order_qobject::changed);
@@ -908,7 +908,7 @@ TEST_CASE("pointer input", "[input]")
 
         // Create two windows.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         auto surface1 = create_surface();
@@ -1007,7 +1007,7 @@ TEST_CASE("pointer input", "[input]")
 
         // Create a window.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         auto surface = create_surface();
@@ -1119,7 +1119,7 @@ TEST_CASE("pointer input", "[input]")
 
         // Now let's create a window.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         auto surface = create_surface();
@@ -1202,7 +1202,7 @@ TEST_CASE("pointer input", "[input]")
         cursor()->set_pos(800, 800);
 
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -1325,7 +1325,7 @@ TEST_CASE("pointer input", "[input]")
 
         cursor()->set_pos(800, 800);
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
@@ -1416,7 +1416,7 @@ TEST_CASE("pointer input", "[input]")
 
         cursor()->set_pos(800, 800);
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
         QVERIFY(surface);
