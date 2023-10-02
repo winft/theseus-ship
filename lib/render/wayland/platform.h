@@ -76,8 +76,10 @@ public:
         return nullptr;
     }
 
-    virtual gl::backend<gl::scene<type>, type>* get_opengl_backend(compositor_t& compositor) = 0;
-    virtual qpainter::backend<qpainter::scene<type>>* get_qpainter_backend(compositor_t& compositor)
+    virtual gl::backend<gl::scene<compositor_t>, type>* get_opengl_backend(compositor_t& compositor)
+        = 0;
+    virtual qpainter::backend<qpainter::scene<compositor_t>>*
+    get_qpainter_backend(compositor_t& compositor)
         = 0;
 
     void invertScreen() override

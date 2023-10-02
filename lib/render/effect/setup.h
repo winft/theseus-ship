@@ -159,10 +159,10 @@ template<typename Handler>
 void setup_handler(Handler& handler)
 {
     QObject::connect(&handler, &Handler::hasActiveFullScreenEffectChanged, &handler, [&handler] {
-        Q_EMIT handler.scene.platform.base.space->edges->qobject->checkBlocking();
+        Q_EMIT handler.scene.compositor.platform.base.space->edges->qobject->checkBlocking();
     });
 
-    auto ws = handler.scene.platform.base.space.get();
+    auto ws = handler.scene.compositor.platform.base.space.get();
     auto& vds = ws->virtual_desktop_manager;
 
     QObject::connect(ws->qobject.get(),
@@ -298,7 +298,7 @@ void setup_handler(Handler& handler)
                      &handler,
                      &EffectsHandler::mouseChanged);
 
-    auto& base = handler.scene.platform.base;
+    auto& base = handler.scene.compositor.platform.base;
     QObject::connect(&base,
                      &Handler::base_t::topology_changed,
                      &handler,
@@ -351,12 +351,12 @@ void setup_handler(Handler& handler)
 
     auto make_property_filter = [&handler] {
         using filter = render::x11::property_notify_filter<Handler, typename Handler::space_t>;
-        auto& base = handler.scene.platform.base;
+        auto& base = handler.scene.compositor.platform.base;
         handler.x11_property_notify
             = std::make_unique<filter>(handler, *base.space, base.x11_data.root_window);
     };
 
-    QObject::connect(&handler.scene.platform.base,
+    QObject::connect(&handler.scene.compositor.platform.base,
                      &base::platform::x11_reset,
                      &handler,
                      [&handler, make_property_filter] {
@@ -366,7 +366,7 @@ void setup_handler(Handler& handler)
                               it++) {
                              render::x11::add_support_property(handler, *it);
                          }
-                         if (handler.scene.platform.base.x11_data.connection) {
+                         if (handler.scene.compositor.platform.base.x11_data.connection) {
                              make_property_filter();
                          } else {
                              handler.x11_property_notify.reset();
@@ -374,7 +374,7 @@ void setup_handler(Handler& handler)
                          Q_EMIT handler.xcbConnectionChanged();
                      });
 
-    if (handler.scene.platform.base.x11_data.connection) {
+    if (handler.scene.compositor.platform.base.x11_data.connection) {
         make_property_filter();
     }
 
@@ -406,22 +406,22 @@ void setup_handler(Handler& handler)
         }
     }
 
-    QObject::connect(&handler.scene.platform.base,
+    QObject::connect(&handler.scene.compositor.platform.base,
                      &Handler::base_t::output_added,
                      &handler,
                      &Handler::slotOutputEnabled);
-    QObject::connect(&handler.scene.platform.base,
+    QObject::connect(&handler.scene.compositor.platform.base,
                      &Handler::base_t::output_removed,
                      &handler,
                      &Handler::slotOutputDisabled);
 
-    auto const outputs = handler.scene.platform.base.outputs;
+    auto const outputs = handler.scene.compositor.platform.base.outputs;
     for (auto&& output : outputs) {
         handler.slotOutputEnabled(output);
     }
 
-    QObject::connect(handler.scene.platform.base.input->shortcuts.get(),
-                     &decltype(handler.scene.platform.base.input
+    QObject::connect(handler.scene.compositor.platform.base.input->shortcuts.get(),
+                     &decltype(handler.scene.compositor.platform.base.input
                                    ->shortcuts)::element_type::keyboard_shortcut_changed,
                      &handler,
                      &Handler::globalShortcutChanged);

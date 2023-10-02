@@ -44,7 +44,8 @@ TEST_CASE("scene qpainter", "[render]")
 
     test::setup setup("scene-qpainter", base::operation_mode::xwayland);
 
-    using qpainter_scene_t = render::qpainter::scene<decltype(setup.base->render)::element_type>;
+    using qpainter_scene_t
+        = render::qpainter::scene<decltype(setup.base->render->compositor)::element_type>;
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = setup.base->config.main;

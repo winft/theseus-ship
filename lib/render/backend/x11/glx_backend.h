@@ -29,12 +29,12 @@ namespace KWin::render::backend::x11
 
 /// OpenGL Backend using GLX over an X overlay window.
 template<typename Platform>
-class glx_backend : public gl::backend<gl::scene<typename Platform::abstract_type>,
+class glx_backend : public gl::backend<gl::scene<typename Platform::compositor_t>,
                                        typename Platform::abstract_type>
 {
 public:
     using type = glx_backend<Platform>;
-    using gl_scene = gl::scene<typename Platform::abstract_type>;
+    using gl_scene = gl::scene<typename Platform::compositor_t>;
     using abstract_type = gl::backend<gl_scene, typename Platform::abstract_type>;
     using x11_compositor_t = typename Platform::compositor_t;
 

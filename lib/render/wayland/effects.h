@@ -34,44 +34,44 @@ template<typename Scene>
 class effects_handler_impl : public render::effects_handler_impl<Scene>
 {
 public:
-    using space_t = typename Scene::platform_t::space_t;
-
     effects_handler_impl(Scene& scene)
         : render::effects_handler_impl<Scene>(scene)
-        , blur{*this, *scene.platform.base.server->display}
-        , contrast{*this, *scene.platform.base.server->display}
-        , slide{*this, *scene.platform.base.server->display}
+        , blur{*this, *scene.compositor.platform.base.server->display}
+        , contrast{*this, *scene.compositor.platform.base.server->display}
+        , slide{*this, *scene.compositor.platform.base.server->display}
     {
         this->reconfigure();
 
-        auto space = scene.platform.base.space.get();
+        auto space = scene.compositor.platform.base.space.get();
 
         // TODO(romangg): We do this for every window here, even for windows that are not an
         // xdg-shell
         //                type window. Restrict that?
-        QObject::connect(space->qobject.get(),
-                         &win::space_qobject::wayland_window_added,
-                         this,
-                         [this](auto win_id) {
-                             std::visit(
-                                 overload{[&](auto&& win) {
-                                     if (win->render_data.ready_for_painting) {
-                                         this->slotXdgShellClientShown(*win);
-                                         return;
-                                     }
+        QObject::connect(
+            space->qobject.get(),
+            &win::space_qobject::wayland_window_added,
+            this,
+            [this](auto win_id) {
+                std::visit(overload{[&](auto&& win) {
+                               if (win->render_data.ready_for_painting) {
+                                   this->slotXdgShellClientShown(*win);
+                                   return;
+                               }
 
-                                     QObject::connect(
-                                         win->qobject.get(),
-                                         &win::window_qobject::windowShown,
-                                         this,
-                                         [this, win] { this->slotXdgShellClientShown(*win); });
-                                 }},
-                                 this->scene.platform.base.space->windows_map.at(win_id));
-                         });
+                               QObject::connect(
+                                   win->qobject.get(),
+                                   &win::window_qobject::windowShown,
+                                   this,
+                                   [this, win] { this->slotXdgShellClientShown(*win); });
+                           }},
+                           this->scene.compositor.platform.base.space->windows_map.at(win_id));
+            });
 
         // TODO(romangg): We do this here too for every window.
         for (auto win : space->windows) {
-            std::visit(overload{[&](typename space_t::wayland_window* win) {
+            using wayland_window =
+                typename Scene::compositor_t::platform_t::space_t::wayland_window;
+            std::visit(overload{[&](wayland_window* win) {
                                     if (win->render_data.ready_for_painting) {
                                         effect::setup_handler_window_connections(*this, *win);
                                     } else {
@@ -102,8 +102,8 @@ public:
 
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* surface) const override
     {
-        if (auto win
-            = win::wayland::space_windows_find(*this->scene.platform.base.space, surface)) {
+        if (auto win = win::wayland::space_windows_find(*this->scene.compositor.platform.base.space,
+                                                        surface)) {
             return win->render->effect.get();
         }
         return nullptr;
@@ -111,7 +111,7 @@ public:
 
     Wrapland::Server::Display* waylandDisplay() const override
     {
-        return this->scene.platform.base.server->display.get();
+        return this->scene.compositor.platform.base.server->display.get();
     }
 
     effect::region_integration& get_blur_integration() override
@@ -141,7 +141,7 @@ public:
 protected:
     void doStartMouseInterception(Qt::CursorShape shape) override
     {
-        auto& space = this->scene.platform.base.space;
+        auto& space = this->scene.compositor.platform.base.space;
         space->input->pointer->setEffectsOverrideCursor(shape);
         if (auto& mov_res = space->move_resize_window) {
             std::visit(overload{[&](auto&& win) { win::end_move_resize(win); }}, *mov_res);
@@ -150,7 +150,7 @@ protected:
 
     void doStopMouseInterception() override
     {
-        this->scene.platform.base.space->input->pointer->removeEffectsOverrideCursor();
+        this->scene.compositor.platform.base.space->input->pointer->removeEffectsOverrideCursor();
     }
 
     void handle_effect_destroy(Effect& effect) override

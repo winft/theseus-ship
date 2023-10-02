@@ -53,8 +53,8 @@ class KWIN_EXPORT effects_handler_wrap : public EffectsHandler
 public:
     template<typename Scene>
     effects_handler_wrap(Scene& scene)
-        : loader(std::make_unique<effect_loader>(scene.platform))
-        , options{*scene.platform.options}
+        : loader(std::make_unique<effect_loader>(scene.compositor.platform))
+        , options{*scene.compositor.platform.options}
     {
         qRegisterMetaType<QVector<KWin::EffectWindow*>>();
 
@@ -249,14 +249,12 @@ class effects_handler_impl : public effects_handler_wrap
 public:
     using type = effects_handler_impl<Scene>;
     using scene_t = Scene;
-    using platform_t = typename scene_t::platform_t;
-    using base_t = typename platform_t::base_t;
-    using space_t = typename platform_t::space_t;
+    using base_t = typename Scene::compositor_t::platform_t::base_t;
+    using space_t = typename Scene::compositor_t::platform_t::space_t;
     using effect_window_t = typename scene_t::effect_window_t;
 
     effects_handler_impl(Scene& scene)
         : effects_handler_wrap(scene)
-        , compositor{*scene.platform.compositor}
         , scene{scene}
     {
         effect::setup_handler(*this);
@@ -273,17 +271,17 @@ public:
 
     bool isScreenLocked() const override
     {
-        return scene.platform.base.space->screen_locker_watcher->is_locked();
+        return get_space().screen_locker_watcher->is_locked();
     }
 
     xcb_connection_t* xcbConnection() const override
     {
-        return scene.platform.base.x11_data.connection;
+        return scene.compositor.platform.base.x11_data.connection;
     }
 
     xcb_window_t x11RootWindow() const override
     {
-        return scene.platform.base.x11_data.root_window;
+        return scene.compositor.platform.base.x11_data.root_window;
     }
 
     QPainter* scenePainter() override
@@ -313,22 +311,22 @@ public:
 
     void addRepaintFull() override
     {
-        full_repaint(*scene.platform.compositor);
+        full_repaint(scene.compositor);
     }
 
     void addRepaint(const QRect& r) override
     {
-        scene.platform.compositor->addRepaint(r);
+        scene.compositor.addRepaint(r);
     }
 
     void addRepaint(const QRegion& r) override
     {
-        scene.platform.compositor->addRepaint(r);
+        scene.compositor.addRepaint(r);
     }
 
     void addRepaint(int x, int y, int w, int h) override
     {
-        scene.platform.compositor->addRepaint(QRegion(x, y, w, h));
+        scene.compositor.addRepaint(QRegion(x, y, w, h));
     }
 
     void final_paint_screen(paint_type mask, effect::screen_paint_data& data) override
@@ -354,7 +352,7 @@ public:
 
         std::visit(overload{[this](auto&& win) {
                        if (win->control) {
-                           win::force_activate_window(*scene.platform.base.space, *win);
+                           win::force_activate_window(get_space(), *win);
                        }
                    }},
                    *window);
@@ -362,7 +360,7 @@ public:
 
     EffectWindow* activeWindow() const override
     {
-        if (auto win = scene.platform.base.space->stacking.active) {
+        if (auto win = get_space().stacking.active) {
             return std::visit(overload{[](auto&& win) { return win->render->effect.get(); }}, *win);
         }
         return nullptr;
@@ -377,16 +375,18 @@ public:
     QList<QKeySequence> registerGlobalShortcut(QList<QKeySequence> const& shortcut,
                                                QAction* action) override
     {
-        scene.platform.base.input->shortcuts->register_keyboard_shortcut(action, shortcut);
-        scene.platform.base.input->registerShortcut(
+        scene.compositor.platform.base.input->shortcuts->register_keyboard_shortcut(action,
+                                                                                    shortcut);
+        scene.compositor.platform.base.input->registerShortcut(
             shortcut.empty() ? QKeySequence() : shortcut.front(), action);
-        return scene.platform.base.input->shortcuts->get_keyboard_shortcut(action);
+        return scene.compositor.platform.base.input->shortcuts->get_keyboard_shortcut(action);
     }
 
     QList<QKeySequence> registerGlobalShortcutAndDefault(QList<QKeySequence> const& shortcut,
                                                          QAction* action) override
     {
-        scene.platform.base.input->shortcuts->register_keyboard_default_shortcut(action, shortcut);
+        scene.compositor.platform.base.input->shortcuts->register_keyboard_default_shortcut(
+            action, shortcut);
         return registerGlobalShortcut(shortcut, action);
     }
 
@@ -394,7 +394,7 @@ public:
                                  Qt::MouseButton pointerButtons,
                                  QAction* action) override
     {
-        scene.platform.base.input->shortcuts->registerPointerShortcut(
+        scene.compositor.platform.base.input->shortcuts->registerPointerShortcut(
             action, modifiers, pointerButtons);
     }
 
@@ -402,7 +402,7 @@ public:
                               PointerAxisDirection axis,
                               QAction* action) override
     {
-        scene.platform.base.input->shortcuts->registerAxisShortcut(
+        scene.compositor.platform.base.input->shortcuts->registerAxisShortcut(
             action, modifiers, static_cast<win::pointer_axis_direction>(axis));
     }
 
@@ -411,7 +411,7 @@ public:
                                        QAction* action,
                                        std::function<void(qreal)> progressCallback) override
     {
-        scene.platform.base.input->shortcuts->registerTouchpadSwipe(
+        scene.compositor.platform.base.input->shortcuts->registerTouchpadSwipe(
             static_cast<win::swipe_direction>(direction), fingerCount, action, progressCallback);
     }
 
@@ -420,7 +420,7 @@ public:
                                        QAction* action,
                                        std::function<void(qreal)> progressCallback) override
     {
-        scene.platform.base.input->shortcuts->registerTouchpadPinch(
+        scene.compositor.platform.base.input->shortcuts->registerTouchpadPinch(
             static_cast<win::pinch_direction>(direction), fingerCount, action, progressCallback);
     }
 
@@ -429,7 +429,7 @@ public:
                                           QAction* action,
                                           std::function<void(qreal)> progressCallback) override
     {
-        scene.platform.base.input->shortcuts->registerTouchscreenSwipe(
+        scene.compositor.platform.base.input->shortcuts->registerTouchscreenSwipe(
             action, progressCallback, static_cast<win::swipe_direction>(direction), fingerCount);
     }
 
@@ -445,19 +445,19 @@ public:
 
     QPoint cursorPos() const override
     {
-        return scene.platform.base.space->input->cursor->pos();
+        return get_space().input->cursor->pos();
     }
 
     void defineCursor(Qt::CursorShape shape) override
     {
-        scene.platform.base.space->input->pointer->setEffectsOverrideCursor(shape);
+        get_space().input->pointer->setEffectsOverrideCursor(shape);
     }
 
     void connectNotify(const QMetaMethod& signal) override
     {
         if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
             if (!m_trackingCursorChanges) {
-                auto cursor = scene.platform.base.space->input->cursor.get();
+                auto cursor = get_space().input->cursor.get();
                 using cursor_t = std::remove_pointer_t<decltype(cursor)>;
                 QObject::connect(
                     cursor, &cursor_t::image_changed, this, &EffectsHandler::cursorShapeChanged);
@@ -473,7 +473,7 @@ public:
         if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
             Q_ASSERT(m_trackingCursorChanges > 0);
             if (!--m_trackingCursorChanges) {
-                auto cursor = scene.platform.base.space->input->cursor.get();
+                auto cursor = get_space().input->cursor.get();
                 using cursor_t = std::remove_pointer_t<decltype(cursor)>;
                 cursor->stop_image_tracking();
                 QObject::disconnect(
@@ -485,28 +485,28 @@ public:
 
     effect::cursor_image cursorImage() const override
     {
-        auto img = scene.platform.base.space->input->cursor->platform_image();
+        auto img = get_space().input->cursor->platform_image();
         return {img.first, img.second};
     }
 
     bool isCursorHidden() const override
     {
-        return scene.platform.base.space->input->cursor->is_hidden();
+        return get_space().input->cursor->is_hidden();
     }
 
     void hideCursor() override
     {
-        scene.platform.base.space->input->cursor->hide();
+        get_space().input->cursor->hide();
     }
 
     void showCursor() override
     {
-        scene.platform.base.space->input->cursor->show();
+        get_space().input->cursor->show();
     }
 
     void startInteractiveWindowSelection(std::function<void(KWin::EffectWindow*)> callback) override
     {
-        scene.platform.base.space->input->start_interactive_window_selection([callback](auto win) {
+        get_space().input->start_interactive_window_selection([callback](auto win) {
             if (!win) {
                 callback(nullptr);
                 return;
@@ -523,12 +523,12 @@ public:
 
     void startInteractivePositionSelection(std::function<void(const QPoint&)> callback) override
     {
-        scene.platform.base.space->input->start_interactive_position_selection(callback);
+        get_space().input->start_interactive_position_selection(callback);
     }
 
     void showOnScreenMessage(const QString& message, const QString& iconName = QString()) override
     {
-        win::osd_show(*scene.platform.base.space, message, iconName);
+        win::osd_show(get_space(), message, iconName);
     }
 
     void hideOnScreenMessage(OnScreenMessageHideFlags flags = OnScreenMessageHideFlags()) override
@@ -537,12 +537,12 @@ public:
         if (flags.testFlag(OnScreenMessageHideFlag::SkipsCloseAnimation)) {
             internal_flags |= win::osd_hide_flags::skip_close_animation;
         }
-        win::osd_hide(*scene.platform.base.space, internal_flags);
+        win::osd_hide(get_space(), internal_flags);
     }
 
     QQmlEngine* qmlEngine() const override
     {
-        auto& script = scene.platform.base.script;
+        auto& script = scene.compositor.platform.base.script;
         return script ? script->qml_engine : nullptr;
     }
 
@@ -567,9 +567,9 @@ public:
                            win::move(win, pos);
                            return;
                        }
-                       win::move(win,
-                                 win::adjust_window_position(
-                                     *scene.platform.base.space, *win, pos, true, snapAdjust));
+                       win::move(
+                           win,
+                           win::adjust_window_position(get_space(), *win, pos, true, snapAdjust));
                    }},
                    *static_cast<effect_window_t*>(w)->window.ref_win);
     }
@@ -578,8 +578,7 @@ public:
     {
         std::visit(overload{[&, this](auto&& win) {
                        if (win->control && !win::is_desktop(win) && !win::is_dock(win)) {
-                           win::send_window_to_desktop(
-                               *scene.platform.base.space, win, desktop, true);
+                           win::send_window_to_desktop(get_space(), win, desktop, true);
                        }
                    }},
                    *static_cast<effect_window_t*>(w)->window.ref_win);
@@ -587,28 +586,26 @@ public:
 
     void windowToDesktops(EffectWindow* w, const QVector<uint>& desktopIds) override
     {
-        std::visit(
-            overload{[&](auto&& win) {
-                if (!win->control || win::is_desktop(win) || win::is_dock(win)) {
-                    return;
-                }
-                QVector<win::virtual_desktop*> desktops;
-                desktops.reserve(desktopIds.count());
-                for (uint x11Id : desktopIds) {
-                    if (x11Id > scene.platform.base.space->virtual_desktop_manager->count()) {
-                        continue;
-                    }
-                    auto d = scene.platform.base.space->virtual_desktop_manager->desktopForX11Id(
-                        x11Id);
-                    Q_ASSERT(d);
-                    if (desktops.contains(d)) {
-                        continue;
-                    }
-                    desktops << d;
-                }
-                win::set_desktops(*win, desktops);
-            }},
-            *static_cast<effect_window_t*>(w)->window.ref_win);
+        std::visit(overload{[&](auto&& win) {
+                       if (!win->control || win::is_desktop(win) || win::is_dock(win)) {
+                           return;
+                       }
+                       QVector<win::virtual_desktop*> desktops;
+                       desktops.reserve(desktopIds.count());
+                       for (uint x11Id : desktopIds) {
+                           if (x11Id > get_space().virtual_desktop_manager->count()) {
+                               continue;
+                           }
+                           auto d = get_space().virtual_desktop_manager->desktopForX11Id(x11Id);
+                           Q_ASSERT(d);
+                           if (desktops.contains(d)) {
+                               continue;
+                           }
+                           desktops << d;
+                       }
+                       win::set_desktops(*win, desktops);
+                   }},
+                   *static_cast<effect_window_t*>(w)->window.ref_win);
     }
 
     void windowToScreen(EffectWindow* w, EffectScreen* screen) override
@@ -621,7 +618,7 @@ public:
 
         std::visit(overload{[&, this](auto&& win) {
                        if (win->control && !win::is_desktop(win) && !win::is_dock(win)) {
-                           win::send_to_screen(*scene.platform.base.space, win, *output);
+                           win::send_to_screen(get_space(), win, *output);
                        }
                    }},
                    *static_cast<effect_window_t*>(w)->window.ref_win);
@@ -629,47 +626,47 @@ public:
 
     void setShowingDesktop(bool showing) override
     {
-        win::set_showing_desktop(*scene.platform.base.space, showing);
+        win::set_showing_desktop(get_space(), showing);
     }
 
     int currentDesktop() const override
     {
-        return scene.platform.base.space->virtual_desktop_manager->current();
+        return get_space().virtual_desktop_manager->current();
     }
 
     int numberOfDesktops() const override
     {
-        return scene.platform.base.space->virtual_desktop_manager->count();
+        return get_space().virtual_desktop_manager->count();
     }
 
     void setCurrentDesktop(int desktop) override
     {
-        scene.platform.base.space->virtual_desktop_manager->setCurrent(desktop);
+        get_space().virtual_desktop_manager->setCurrent(desktop);
     }
 
     void setNumberOfDesktops(int desktops) override
     {
-        scene.platform.base.space->virtual_desktop_manager->setCount(desktops);
+        get_space().virtual_desktop_manager->setCount(desktops);
     }
 
     QSize desktopGridSize() const override
     {
-        return scene.platform.base.space->virtual_desktop_manager->grid().size();
+        return get_space().virtual_desktop_manager->grid().size();
     }
 
     int workspaceWidth() const override
     {
-        return desktopGridWidth() * scene.platform.base.topology.size.width();
+        return desktopGridWidth() * scene.compositor.platform.base.topology.size.width();
     }
 
     int workspaceHeight() const override
     {
-        return desktopGridHeight() * scene.platform.base.topology.size.height();
+        return desktopGridHeight() * scene.compositor.platform.base.topology.size.height();
     }
 
     int desktopAtCoords(QPoint coords) const override
     {
-        if (auto vd = scene.platform.base.space->virtual_desktop_manager->grid().at(coords)) {
+        if (auto vd = get_space().virtual_desktop_manager->grid().at(coords)) {
             return vd->x11DesktopNumber();
         }
         return 0;
@@ -677,51 +674,51 @@ public:
 
     QPoint desktopGridCoords(int id) const override
     {
-        return scene.platform.base.space->virtual_desktop_manager->grid().gridCoords(id);
+        return get_space().virtual_desktop_manager->grid().gridCoords(id);
     }
 
     QPoint desktopCoords(int id) const override
     {
-        auto coords = scene.platform.base.space->virtual_desktop_manager->grid().gridCoords(id);
+        auto coords = get_space().virtual_desktop_manager->grid().gridCoords(id);
         if (coords.x() == -1) {
             return QPoint(-1, -1);
         }
-        auto const& space_size = scene.platform.base.topology.size;
+        auto const& space_size = scene.compositor.platform.base.topology.size;
         return QPoint(coords.x() * space_size.width(), coords.y() * space_size.height());
     }
 
     int desktopAbove(int desktop = 0, bool wrap = true) const override
     {
         return win::getDesktop<win::virtual_desktop_above>(
-            *scene.platform.base.space->virtual_desktop_manager, desktop, wrap);
+            *get_space().virtual_desktop_manager, desktop, wrap);
     }
 
     int desktopToRight(int desktop = 0, bool wrap = true) const override
     {
         return win::getDesktop<win::virtual_desktop_right>(
-            *scene.platform.base.space->virtual_desktop_manager, desktop, wrap);
+            *get_space().virtual_desktop_manager, desktop, wrap);
     }
 
     int desktopBelow(int desktop = 0, bool wrap = true) const override
     {
         return win::getDesktop<win::virtual_desktop_below>(
-            *scene.platform.base.space->virtual_desktop_manager, desktop, wrap);
+            *get_space().virtual_desktop_manager, desktop, wrap);
     }
 
     int desktopToLeft(int desktop = 0, bool wrap = true) const override
     {
         return win::getDesktop<win::virtual_desktop_left>(
-            *scene.platform.base.space->virtual_desktop_manager, desktop, wrap);
+            *get_space().virtual_desktop_manager, desktop, wrap);
     }
 
     QString desktopName(int desktop) const override
     {
-        return scene.platform.base.space->virtual_desktop_manager->name(desktop);
+        return get_space().virtual_desktop_manager->name(desktop);
     }
 
     EffectWindow* find_window_by_wid(WId id) const override
     {
-        return x11::find_window_by_wid(*scene.platform.base.space, id);
+        return x11::find_window_by_wid(get_space(), id);
     }
 
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* /*surface*/) const override
@@ -731,7 +728,7 @@ public:
 
     EffectWindow* find_window_by_qwindow(QWindow* w) const override
     {
-        if (auto toplevel = scene.platform.base.space->findInternal(w)) {
+        if (auto toplevel = get_space().findInternal(w)) {
             return toplevel->render->effect.get();
         }
         return nullptr;
@@ -739,7 +736,7 @@ public:
 
     EffectWindow* find_window_by_uuid(const QUuid& id) const override
     {
-        for (auto win : scene.platform.base.space->windows) {
+        for (auto win : get_space().windows) {
             if (auto eff_win = std::visit(overload{[&](auto&& win) -> EffectWindow* {
                                               if (!win->remnant && win->meta.internal_id == id) {
                                                   return win->render->effect.get();
@@ -756,7 +753,7 @@ public:
     EffectWindowList stackingOrder() const override
     {
         EffectWindowList ret;
-        for (auto win : win::render_stack(scene.platform.base.space->stacking.order)) {
+        for (auto win : win::render_stack(get_space().stacking.order)) {
             std::visit(overload{[&](auto&& win) {
                            if (auto eff_win = win->render->effect.get()) {
                                ret.append(eff_win);
@@ -772,7 +769,7 @@ public:
 #if KWIN_BUILD_TABBOX
         std::visit(overload{[&, this](auto&& win) {
                        if (win->control) {
-                           scene.platform.base.space->tabbox->set_current_client(win);
+                           get_space().tabbox->set_current_client(win);
                        }
                    }},
                    *static_cast<effect_window_t*>(w)->window.ref_win);
@@ -782,14 +779,14 @@ public:
     void setTabBoxDesktop([[maybe_unused]] int desktop) override
     {
 #if KWIN_BUILD_TABBOX
-        scene.platform.base.space->tabbox->set_current_desktop(desktop);
+        get_space().tabbox->set_current_desktop(desktop);
 #endif
     }
 
     EffectWindowList currentTabBoxWindowList() const override
     {
 #if KWIN_BUILD_TABBOX
-        const auto clients = scene.platform.base.space->tabbox->current_client_list();
+        const auto clients = get_space().tabbox->current_client_list();
         EffectWindowList ret;
         ret.reserve(clients.size());
         std::transform(
@@ -806,28 +803,28 @@ public:
     void refTabBox() override
     {
 #if KWIN_BUILD_TABBOX
-        scene.platform.base.space->tabbox->reference();
+        get_space().tabbox->reference();
 #endif
     }
 
     void unrefTabBox() override
     {
 #if KWIN_BUILD_TABBOX
-        scene.platform.base.space->tabbox->unreference();
+        get_space().tabbox->unreference();
 #endif
     }
 
     void closeTabBox() override
     {
 #if KWIN_BUILD_TABBOX
-        scene.platform.base.space->tabbox->close();
+        get_space().tabbox->close();
 #endif
     }
 
     QList<int> currentTabBoxDesktopList() const override
     {
 #if KWIN_BUILD_TABBOX
-        return scene.platform.base.space->tabbox->current_desktop_list();
+        return get_space().tabbox->current_desktop_list();
 #else
         return QList<int>();
 #endif
@@ -836,7 +833,7 @@ public:
     int currentTabBoxDesktop() const override
     {
 #if KWIN_BUILD_TABBOX
-        return scene.platform.base.space->tabbox->current_desktop();
+        return get_space().tabbox->current_desktop();
 #else
         return -1;
 #endif
@@ -845,7 +842,7 @@ public:
     EffectWindow* currentTabBoxWindow() const override
     {
 #if KWIN_BUILD_TABBOX
-        if (auto win = scene.platform.base.space->tabbox->current_client()) {
+        if (auto win = get_space().tabbox->current_client()) {
             return std::visit(overload{[](auto&& win) { return win->render->effect.get(); }}, *win);
         }
 #endif
@@ -854,7 +851,7 @@ public:
 
     EffectScreen* activeScreen() const override
     {
-        auto output = win::get_current_output(*scene.platform.base.space);
+        auto output = win::get_current_output(get_space());
         if (!output) {
             return nullptr;
         }
@@ -868,7 +865,7 @@ public:
 
     EffectScreen* screenAt(const QPoint& point) const override
     {
-        auto const& outputs = scene.platform.base.outputs;
+        auto const& outputs = scene.compositor.platform.base.outputs;
         auto output = base::get_nearest_output(outputs, point);
         if (!output) {
             return nullptr;
@@ -899,46 +896,44 @@ public:
             output = static_cast<typename base_t::output_t*>(screenImpl->platformOutput());
         }
         return win::space_window_area(
-            *scene.platform.base.space, static_cast<win::area_option>(opt), output, desktop);
+            get_space(), static_cast<win::area_option>(opt), output, desktop);
     }
 
     QRect clientArea(clientAreaOption opt, const EffectWindow* eff_win) const override
     {
         return std::visit(overload{[&, this](auto&& win) {
                               if (win->control) {
-                                  return win::space_window_area(*scene.platform.base.space,
-                                                                static_cast<win::area_option>(opt),
-                                                                win);
+                                  return win::space_window_area(
+                                      get_space(), static_cast<win::area_option>(opt), win);
                               }
 
                               return win::space_window_area(
-                                  *scene.platform.base.space,
+                                  get_space(),
                                   static_cast<win::area_option>(opt),
                                   win->geo.frame.center(),
-                                  scene.platform.base.space->virtual_desktop_manager->current());
+                                  get_space().virtual_desktop_manager->current());
                           }},
                           *static_cast<effect_window_t const*>(eff_win)->window.ref_win);
     }
 
     QRect clientArea(clientAreaOption opt, const QPoint& p, int desktop) const override
     {
-        return win::space_window_area(
-            *scene.platform.base.space, static_cast<win::area_option>(opt), p, desktop);
+        return win::space_window_area(get_space(), static_cast<win::area_option>(opt), p, desktop);
     }
 
     QSize virtualScreenSize() const override
     {
-        return scene.platform.base.topology.size;
+        return scene.compositor.platform.base.topology.size;
     }
 
     QRect virtualScreenGeometry() const override
     {
-        return QRect({}, scene.platform.base.topology.size);
+        return QRect({}, scene.compositor.platform.base.topology.size);
     }
 
     void reserveElectricBorder(ElectricBorder border, Effect* effect) override
     {
-        auto id = scene.platform.base.space->edges->reserve(
+        auto id = get_space().edges->reserve(
             static_cast<win::electric_border>(border),
             [effect](auto eb) { return effect->borderActivated(static_cast<ElectricBorder>(eb)); });
 
@@ -972,35 +967,32 @@ public:
             return;
         }
 
-        scene.platform.base.space->edges->unreserve(static_cast<win::electric_border>(border),
-                                                    it2->second);
+        get_space().edges->unreserve(static_cast<win::electric_border>(border), it2->second);
     }
 
     void registerTouchBorder(ElectricBorder border, QAction* action) override
     {
-        scene.platform.base.space->edges->reserveTouch(static_cast<win::electric_border>(border),
-                                                       action);
+        get_space().edges->reserveTouch(static_cast<win::electric_border>(border), action);
     }
 
     void registerRealtimeTouchBorder(ElectricBorder border,
                                      QAction* action,
                                      EffectsHandler::TouchBorderCallback progressCallback) override
     {
-        scene.platform.base.space->edges->reserveTouch(
-            static_cast<win::electric_border>(border),
-            action,
-            [progressCallback,
-             this](auto border, const QSizeF& deltaProgress, base::output* output) {
-                progressCallback(static_cast<ElectricBorder>(border),
-                                 deltaProgress,
-                                 get_effect_screen(*this, *output));
-            });
+        get_space().edges->reserveTouch(static_cast<win::electric_border>(border),
+                                        action,
+                                        [progressCallback, this](auto border,
+                                                                 const QSizeF& deltaProgress,
+                                                                 base::output* output) {
+                                            progressCallback(static_cast<ElectricBorder>(border),
+                                                             deltaProgress,
+                                                             get_effect_screen(*this, *output));
+                                        });
     }
 
     void unregisterTouchBorder(ElectricBorder border, QAction* action) override
     {
-        scene.platform.base.space->edges->unreserveTouch(static_cast<win::electric_border>(border),
-                                                         action);
+        get_space().edges->unreserveTouch(static_cast<win::electric_border>(border), action);
     }
 
     void unreserve_borders(Effect& effect)
@@ -1011,10 +1003,9 @@ public:
         }
 
         // Might be at shutdown with space already gone.
-        if (scene.platform.base.space && scene.platform.base.space->edges) {
+        if (scene.compositor.platform.base.space && get_space().edges) {
             for (auto& [key, id] : it->second) {
-                scene.platform.base.space->edges->unreserve(static_cast<win::electric_border>(key),
-                                                            id);
+                get_space().edges->unreserve(static_cast<win::electric_border>(key), id);
             }
         }
 
@@ -1027,16 +1018,16 @@ public:
         case CloseButtonCorner: {
             // TODO: this could become per window and be derived from the actual position in the
             // deco
-            auto deco_settings = scene.platform.base.space->deco->settings();
+            auto deco_settings = get_space().deco->settings();
             auto close_enum = KDecoration2::DecorationButtonType::Close;
             return deco_settings && deco_settings->decorationButtonsLeft().contains(close_enum)
                 ? Qt::TopLeftCorner
                 : Qt::TopRightCorner;
         }
         case SwitchDesktopOnScreenEdge:
-            return scene.platform.base.space->edges->desktop_switching.always;
+            return get_space().edges->desktop_switching.always;
         case SwitchDesktopOnScreenEdgeMovingWindows:
-            return scene.platform.base.space->edges->desktop_switching.when_moving_client;
+            return get_space().edges->desktop_switching.when_moving_client;
         default:
             return QVariant(); // an invalid one
         }
@@ -1044,41 +1035,40 @@ public:
 
     bool optionRollOverDesktops() const override
     {
-        return scene.platform.base.space->options->qobject->isRollOverDesktops();
+        return get_space().options->qobject->isRollOverDesktops();
     }
 
     SessionState sessionState() const override
     {
-        return static_cast<SessionState>(scene.platform.base.space->session_manager->state());
+        return static_cast<SessionState>(get_space().session_manager->state());
     }
 
     QByteArray readRootProperty(long atom, long type, int format) const override
     {
-        return x11::read_root_property(scene.platform.base, atom, type, format);
+        return x11::read_root_property(scene.compositor.platform.base, atom, type, format);
     }
 
     KSharedConfigPtr config() const override
     {
-        return scene.platform.base.config.main;
+        return scene.compositor.platform.base.config.main;
     }
 
     KSharedConfigPtr inputConfig() const override
     {
-        return scene.platform.base.input->config.main;
+        return scene.compositor.platform.base.input->config.main;
     }
 
     void reconfigure_effect_impl(QString const& name) override
     {
         for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it)
             if ((*it).first == name) {
-                scene.platform.base.config.main->reparseConfiguration();
+                scene.compositor.platform.base.config.main->reparseConfiguration();
                 makeOpenGLContextCurrent();
                 (*it).second->reconfigure(Effect::ReconfigureAll);
                 return;
             }
     }
 
-    typename platform_t::compositor_t& compositor;
     Scene& scene;
 
 public:
@@ -1188,6 +1178,11 @@ public:
         m_effectScreens.removeOne(screen);
         Q_EMIT screenRemoved(screen);
         delete screen;
+    }
+
+    auto& get_space() const
+    {
+        return *scene.compositor.platform.base.space;
     }
 
     QList<EffectScreen*> m_effectScreens;

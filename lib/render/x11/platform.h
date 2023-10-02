@@ -50,7 +50,8 @@ public:
         singleton_interface::get_egl_data = {};
     }
 
-    virtual gl::backend<gl::scene<type>, type>* get_opengl_backend(compositor_t& compositor) = 0;
+    virtual gl::backend<gl::scene<compositor_t>, type>* get_opengl_backend(compositor_t& compositor)
+        = 0;
     virtual render::outline_visual* create_non_composited_outline(render::outline* outline) = 0;
 
     std::unique_ptr<win::deco::render_injector>

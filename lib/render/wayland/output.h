@@ -91,7 +91,7 @@ public:
             return;
         }
 
-        static_cast<gl::scene<Platform>&>(*scene).backend()->makeCurrent();
+        static_cast<gl::scene<typename Platform::compositor_t>&>(*scene).backend()->makeCurrent();
 
         // First get the latest Gl timer queries.
         std::chrono::nanoseconds render_time_debug;

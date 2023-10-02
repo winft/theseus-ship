@@ -37,7 +37,7 @@ namespace KWin::render::x11
 {
 
 template<typename Compositor, typename Factory>
-std::unique_ptr<render::scene<typename Compositor::platform_t>>
+std::unique_ptr<render::scene<Compositor>>
 create_scene_impl(Compositor& compositor, Factory& factory, std::string const& prev_err)
 {
     auto setup_hooks = [&](auto& scene) {
@@ -49,7 +49,7 @@ create_scene_impl(Compositor& compositor, Factory& factory, std::string const& p
     };
 
     try {
-        auto scene = factory(compositor.platform);
+        auto scene = factory(compositor);
         setup_hooks(scene);
         if (!prev_err.empty()) {
             qCDebug(KWIN_CORE) << "Fallback after error:" << prev_err.c_str();
@@ -67,7 +67,7 @@ public:
     using qobject_t = compositor_qobject;
     using platform_t = Platform;
     using type = compositor<Platform>;
-    using scene_t = render::scene<Platform>;
+    using scene_t = render::scene<type>;
     using effects_t = x11::effects_handler_impl<scene_t>;
     using overlay_window_t = x11::overlay_window<type>;
     using space_t = typename Platform::base_t::space_t;
@@ -396,12 +396,12 @@ public:
      */
     overlay_window_t* overlay_window{nullptr};
 
-    std::unique_ptr<render::scene<Platform>> create_scene()
+    std::unique_ptr<scene_t> create_scene()
     {
-        using Factory = std::function<std::unique_ptr<render::scene<Platform>>(Platform&)>;
+        using Factory = std::function<std::unique_ptr<scene_t>(type&)>;
 
         std::deque<Factory> factories;
-        factories.push_back(gl::create_scene<Platform>);
+        factories.push_back(gl::create_scene<type>);
 
         try {
             return create_scene_impl(*this, factories.at(0), "");

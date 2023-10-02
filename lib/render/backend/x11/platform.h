@@ -61,7 +61,7 @@ public:
         XRenderUtils::init(this->base.x11_data.connection, this->base.x11_data.root_window);
     }
 
-    gl::backend<gl::scene<abstract_type>, abstract_type>*
+    gl::backend<gl::scene<compositor_t>, abstract_type>*
     get_opengl_backend(compositor_t& compositor) override
     {
         if (gl_backend) {

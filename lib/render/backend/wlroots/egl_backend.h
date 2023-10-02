@@ -31,12 +31,12 @@ namespace KWin::render::backend::wlroots
 {
 
 template<typename Platform>
-class egl_backend : public gl::backend<gl::scene<typename Platform::abstract_type>,
+class egl_backend : public gl::backend<gl::scene<typename Platform::compositor_t>,
                                        typename Platform::abstract_type>
 {
 public:
     using type = egl_backend<Platform>;
-    using gl_scene = gl::scene<typename Platform::abstract_type>;
+    using gl_scene = gl::scene<typename Platform::compositor_t>;
     using abstract_type = gl::backend<gl_scene, typename Platform::abstract_type>;
     using egl_output_t = egl_output<typename Platform::output_t>;
 

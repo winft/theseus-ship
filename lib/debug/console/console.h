@@ -135,8 +135,7 @@ protected:
     template<typename Scene>
     void initGLTab(Scene& scene)
     {
-        if (!scene.platform.compositor->effects
-            || !scene.platform.compositor->effects->isOpenGLCompositing()) {
+        if (!scene.compositor.effects || !scene.compositor.effects->isOpenGLCompositing()) {
             m_ui->noOpenGLLabel->setVisible(true);
             m_ui->glInfoScrollArea->setVisible(false);
             return;

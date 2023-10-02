@@ -10,7 +10,6 @@
 #include "deco_renderer.h"
 #include "shadow.h"
 
-#include "render/window.h"
 #include "win/scene.h"
 
 namespace KWin::render::qpainter
@@ -22,10 +21,9 @@ class window : public Scene::window_t
 public:
     using window_t = typename Scene::window_t;
     using buffer_t = typename Scene::buffer_t;
-    using space_t = typename Scene::space_t;
 
     window(RefWin ref_win, Scene& scene)
-        : window_t(ref_win, *scene.platform.compositor)
+        : window_t(ref_win, scene.compositor)
         , scene{scene}
     {
     }
@@ -105,7 +103,7 @@ private:
             }
         }
 
-        if constexpr (std::is_same_v<Win, typename space_t::x11_window>) {
+        if constexpr (std::is_same_v<Win, typename Scene::compositor_t::space_t::x11_window>) {
             // special case for XWayland windows
             if (viewportRectangle.isValid()) {
                 source = viewportRectangle;

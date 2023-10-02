@@ -54,7 +54,7 @@ public:
         return static_cast<bool>(qpainter);
     }
 
-    gl::backend<gl::scene<abstract_type>, abstract_type>*
+    gl::backend<gl::scene<compositor_t>, abstract_type>*
     get_opengl_backend(compositor_t& /*compositor*/) override
     {
         assert(egl);
@@ -62,7 +62,7 @@ public:
         return egl.get();
     }
 
-    qpainter::backend<qpainter::scene<abstract_type>>*
+    qpainter::backend<qpainter::scene<compositor_t>>*
     get_qpainter_backend(compositor_t& /*compositor*/) override
     {
         assert(qpainter);

@@ -32,7 +32,7 @@ public:
     using qobject_t = compositor_qobject;
     using platform_t = Platform;
     using type = compositor<Platform>;
-    using scene_t = render::scene<Platform>;
+    using scene_t = render::scene<type>;
     using effects_t = wayland::effects_handler_impl<scene_t>;
     using space_t = typename Platform::base_t::space_t;
     using window_t = render::window<typename space_t::window_t, type>;
@@ -198,9 +198,9 @@ public:
     std::unique_ptr<scene_t> create_scene()
     {
         if (this->platform.is_sw_compositing()) {
-            return qpainter::create_scene(this->platform);
+            return qpainter::create_scene(*this);
         }
-        return gl::create_scene(this->platform);
+        return gl::create_scene(*this);
     }
 
     template<typename RefWin>

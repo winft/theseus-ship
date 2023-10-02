@@ -109,12 +109,12 @@ void register_property_type(Effects& effects, long atom, bool reg)
 template<typename Effects>
 xcb_atom_t add_support_property(Effects& effects, QByteArray const& name)
 {
-    auto atom = register_support_property(effects.scene.platform.base.x11_data, name);
+    auto atom = register_support_property(effects.scene.compositor.platform.base.x11_data, name);
     if (atom == XCB_ATOM_NONE) {
         return atom;
     }
 
-    keep_support_property(effects.compositor, atom);
+    keep_support_property(effects.scene.compositor, atom);
     effects.m_managedProperties.insert(name, atom);
     register_property_type(effects, atom, true);
 
@@ -192,7 +192,7 @@ void remove_support_property(Effects& effects, Effect* effect, QByteArray const&
     effects.m_propertiesForEffects.remove(name);
 
     // Delayed removal.
-    remove_support_property(effects.compositor, atom);
+    remove_support_property(effects.scene.compositor, atom);
 }
 
 }

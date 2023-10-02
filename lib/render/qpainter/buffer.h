@@ -77,9 +77,9 @@ public:
         render::buffer<Window>::updateBuffer();
         auto b = win_integrate.external.get();
 
-        std::visit(overload{[&, this](typename Window::scene_t::space_t::internal_window_t*) {
-                                image = win_integrate.internal.image;
-                            },
+        using internal_window = typename Window::scene_t::compositor_t::space_t::internal_window_t;
+
+        std::visit(overload{[&, this](internal_window*) { image = win_integrate.internal.image; },
                             [&, this](auto&& win) {
                                 if (!win->surface) {
                                     // TODO(romangg): Can this really happen? Xwayland maybe.

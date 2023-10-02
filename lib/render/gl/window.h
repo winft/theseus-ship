@@ -60,7 +60,7 @@ public:
     using buffer_t = typename Scene::buffer_t;
 
     window(RefWin ref_win, Scene& scene)
-        : window_t(ref_win, *scene.platform.compositor)
+        : window_t(ref_win, scene.compositor)
         , scene{scene}
     {
         scene.windows.insert({this->id(), this});
@@ -443,7 +443,7 @@ private:
         }
 
         // Update the texture filter
-        if (scene.platform.base.operation_mode == base::operation_mode::x11) {
+        if (scene.compositor.platform.base.operation_mode == base::operation_mode::x11) {
             if (flags(mask & (paint_type::window_transformed | paint_type::screen_transformed))) {
                 this->filter = image_filter_type::good;
             } else {

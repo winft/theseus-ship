@@ -78,19 +78,18 @@ struct scene_windowing_integration {
  repaint certain parts can manually damage them during post-paint and repaint
  of these parts will be done during the next paint pass.
 */
-template<typename Platform>
+template<typename Compositor>
 class scene : public QObject
 {
 public:
-    using platform_t = Platform;
-    using space_t = typename Platform::base_t::space_t;
-    using window_t = typename Platform::compositor_t::window_t;
+    using compositor_t = Compositor;
+    using window_t = typename compositor_t::window_t;
     using effect_window_t = typename window_t::effect_window_t;
     using buffer_t = buffer<window_t>;
-    using output_t = typename Platform::base_t::output_t;
+    using output_t = typename compositor_t::platform_t::base_t::output_t;
 
-    explicit scene(Platform& platform)
-        : platform{platform}
+    explicit scene(Compositor& compositor)
+        : compositor{compositor}
     {
         singleton_interface::supports_surfaceless_context
             = [this] { return supportsSurfacelessContext(); };
@@ -204,7 +203,7 @@ public:
         ref_win->render->invalidateQuadsCache();
     }
 
-    Platform& platform;
+    Compositor& compositor;
     scene_windowing_integration windowing_integration;
 
     uint32_t window_id{0};
@@ -235,12 +234,12 @@ public:
                      QRegion* validRegion,
                      std::chrono::milliseconds presentTime)
     {
-        auto const& space_size = platform.base.topology.size;
+        auto const& space_size = compositor.platform.base.topology.size;
         const QRegion displayRegion(0, 0, space_size.width(), space_size.height());
         mask = (damage == displayRegion) ? paint_type::none : paint_type::screen_region;
 
         assert(repaint_output);
-        auto effect_screen = platform.compositor->effects->findScreen(repaint_output->name());
+        auto effect_screen = compositor.effects->findScreen(repaint_output->name());
         assert(effect_screen);
 
         if (Q_UNLIKELY(presentTime < m_expectedPresentTimestamp)) {
@@ -253,7 +252,7 @@ public:
         }
 
         // preparation step
-        platform.compositor->effects->startPaint();
+        compositor.effects->startPaint();
 
         QRegion region = damage;
 
@@ -267,7 +266,7 @@ public:
             .present_time = m_expectedPresentTimestamp,
         };
 
-        platform.compositor->effects->prePaintScreen(pre_data);
+        compositor.effects->prePaintScreen(pre_data);
 
         mask = static_cast<paint_type>(pre_data.paint.mask);
         region = pre_data.paint.region;
@@ -304,14 +303,14 @@ public:
             .render = render,
         };
 
-        platform.compositor->effects->paintScreen(data);
+        compositor.effects->paintScreen(data);
         render.targets = data.render.targets;
 
         for (auto const& w : stacking_order) {
-            platform.compositor->effects->postPaintWindow(w->effect.get());
+            compositor.effects->postPaintWindow(w->effect.get());
         }
 
-        platform.compositor->effects->postPaintScreen();
+        compositor.effects->postPaintScreen();
 
         // make sure not to go outside of the screen area
         *updateRegion = damaged_region;
@@ -384,7 +383,7 @@ public:
             };
 
             // preparation step
-            platform.compositor->effects->prePaintWindow(win_data);
+            compositor.effects->prePaintWindow(win_data);
 
 #if !defined(QT_NO_DEBUG)
             if (win_data.quads.isTransformed()) {
@@ -403,7 +402,7 @@ public:
             paintWindow(data.render, data2.window, data2.mask, data2.region, data2.quads);
         }
 
-        auto const& space_size = platform.base.topology.size;
+        auto const& space_size = compositor.platform.base.topology.size;
         damaged_region = QRegion(0, 0, space_size.width(), space_size.height());
     }
 
@@ -466,7 +465,7 @@ public:
         data.quads = win->buildQuads();
 
         // preparation step
-        platform.compositor->effects->prePaintWindow(data);
+        compositor.effects->prePaintWindow(data);
 
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
@@ -514,7 +513,7 @@ public:
         const QRegion repaintClip = repaint_region - dirtyArea;
         dirtyArea |= repaint_region;
 
-        auto const& space_size = platform.base.topology.size;
+        auto const& space_size = compositor.platform.base.topology.size;
         const QRegion displayRegion(0, 0, space_size.width(), space_size.height());
         bool fullRepaint(dirtyArea == displayRegion); // spare some expensive region operations
         if (!fullRepaint) {
@@ -594,7 +593,7 @@ public:
     // called after all effects had their paintWindow() called, eventually by paintWindow() below
     void finalPaintWindow(effect::window_paint_data& data)
     {
-        platform.compositor->effects->drawWindow(data);
+        compositor.effects->drawWindow(data);
     }
 
     // shared implementation, starts painting the window
@@ -605,7 +604,7 @@ public:
                      WindowQuadList quads)
     {
         // no painting outside visible screen (and no transformations)
-        region &= QRect({}, platform.base.topology.size);
+        region &= QRect({}, compositor.platform.base.topology.size);
         if (region.isEmpty()) {
             // completely clipped
             return;
@@ -621,7 +620,7 @@ public:
             render_data,
         };
 
-        platform.compositor->effects->paintWindow(data);
+        compositor.effects->paintWindow(data);
         render_data.targets = data.render.targets;
     }
 
@@ -631,7 +630,7 @@ public:
         auto& eff_win = static_cast<effect_window_t&>(data.window);
         auto mask = static_cast<paint_type>(data.paint.mask);
 
-        if (base::wayland::is_screen_locked(platform.base)) {
+        if (base::wayland::is_screen_locked(compositor.platform.base)) {
             if (!std::visit(
                     overload{[](auto&& win) {
                         auto do_draw{false};
