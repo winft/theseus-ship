@@ -34,7 +34,7 @@ bool position_via_hint(Win* win, QRect const& geo, bool ignore_default, QRect& p
 
     // Disobey xinerama placement option for now (#70943)
     place_area
-        = space_window_area(win->space, area_option::placement, geo.center(), get_desktop(*win));
+        = space_window_area(win->space, area_option::placement, geo.center(), get_subspace(*win));
 
     return true;
 }
@@ -52,7 +52,7 @@ bool move_with_force_rule(Win* win, QRect& frame_geo, bool is_inital_placement, 
     frame_geo = pending_frame_geometry(win);
 
     // Don't keep inside workarea if the window has specially configured position
-    area = space_window_area(win->space, area_option::full, frame_geo.center(), get_desktop(*win));
+    area = space_window_area(win->space, area_option::full, frame_geo.center(), get_subspace(*win));
     return true;
 }
 
@@ -101,10 +101,10 @@ void place_max_fs(Win* win,
     }
 
     auto const screen_area
-        = space_window_area(win->space, area_option::screen, area.center(), get_desktop(*win))
+        = space_window_area(win->space, area_option::screen, area.center(), get_subspace(*win))
               .size();
     auto const full_area
-        = space_window_area(win->space, area_option::full, frame_geo.center(), get_desktop(*win));
+        = space_window_area(win->space, area_option::full, frame_geo.center(), get_subspace(*win));
     auto const client_size = frame_to_client_size(win, win->geo.size());
 
     auto pseudo_max{maximize_mode::restore};
@@ -190,7 +190,7 @@ QRect place_mapped(Win* win, QRect& frame_geo)
     auto must_place{false};
 
     auto area
-        = space_window_area(win->space, area_option::full, frame_geo.center(), get_desktop(*win));
+        = space_window_area(win->space, area_option::full, frame_geo.center(), get_subspace(*win));
     check_offscreen_position(frame_geo, area);
 
     if (must_correct_position(win, frame_geo, area)) {
@@ -230,7 +230,7 @@ QRect place_session(Win* win, QRect& frame_geo)
     auto must_place{false};
 
     auto area
-        = space_window_area(win->space, area_option::full, frame_geo.center(), get_desktop(*win));
+        = space_window_area(win->space, area_option::full, frame_geo.center(), get_subspace(*win));
     check_offscreen_position(frame_geo, area);
 
     if (must_correct_position(win, frame_geo, area)) {
@@ -300,7 +300,7 @@ QRect place_unmapped(Win* win, QRect& frame_geo)
         center = output->geometry().center();
     }
 
-    auto area = space_window_area(win->space, area_option::placement, center, get_desktop(*win));
+    auto area = space_window_area(win->space, area_option::placement, center, get_subspace(*win));
 
     // Desktop windows' positions are not placed by us.
     auto must_place = !is_desktop(win);

@@ -456,7 +456,7 @@ public:
         return belongs_to_desktop(*this);
     }
 
-    void doSetDesktop()
+    void do_set_subspace()
     {
         update_visibility(this);
     }

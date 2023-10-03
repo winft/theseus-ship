@@ -30,10 +30,10 @@ public:
         info->event(event, &dirtyProtocols, &dirtyProtocols2);
 
         if (dirtyProtocols & net::DesktopNames) {
-            info->space.virtual_desktop_manager->save();
+            info->space.subspace_manager->save();
         }
         if (dirtyProtocols2 & net::WM2DesktopLayout) {
-            info->space.virtual_desktop_manager->updateLayout();
+            info->space.subspace_manager->updateLayout();
         }
         return false;
     }

@@ -12,17 +12,17 @@ namespace KWin::win
 {
 
 template<typename Win>
-QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
+QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int subspace)
 {
     if (win->control->electric == win::quicktiles::maximize) {
         if (win->maximizeMode() == maximize_mode::full) {
             return win->geo.restore.max;
         } else {
-            return space_window_area(win->space, area_option::maximize, pos, desktop);
+            return space_window_area(win->space, area_option::maximize, pos, subspace);
         }
     }
 
-    auto ret = space_window_area(win->space, area_option::maximize, pos, desktop);
+    auto ret = space_window_area(win->space, area_option::maximize, pos, subspace);
 
     if (flags(win->control->electric & win::quicktiles::left)) {
         ret.setRight(ret.left() + ret.width() / 2 - 1);
@@ -46,7 +46,7 @@ void set_electric_maximizing(Win* win, bool maximizing)
 
     if (maximizing) {
         auto max_geo = electric_border_maximize_geometry(
-            win, win->space.input->cursor->pos(), get_desktop(*win));
+            win, win->space.input->cursor->pos(), get_subspace(*win));
         win->space.outline->show(max_geo, win->control->move_resize.geometry);
     } else {
         win->space.outline->hide();

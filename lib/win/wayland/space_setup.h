@@ -58,23 +58,23 @@ void space_setup_handle_x11_window_added(Space& space, typename Space::x11_windo
 }
 
 template<typename Space>
-void space_setup_handle_desktop_removed(Space& space, virtual_desktop* desktop)
+void space_setup_handle_subspace_removed(Space& space, subspace* sub)
 {
     for (auto const& win : space.windows) {
-        std::visit(overload{[&space, desktop](auto&& win) {
-                       if (!win->control || !win->topo.desktops.contains(desktop)) {
+        std::visit(overload{[&space, sub](auto&& win) {
+                       if (!win->control || !win->topo.subspaces.contains(sub)) {
                            return;
                        }
 
-                       if (win->topo.desktops.count() > 1) {
-                           leave_desktop(*win, desktop);
+                       if (win->topo.subspaces.count() > 1) {
+                           leave_subspace(*win, sub);
                            return;
                        }
-                       send_window_to_desktop(space,
-                                              win,
-                                              qMin(desktop->x11DesktopNumber(),
-                                                   space.virtual_desktop_manager->count()),
-                                              true);
+                       send_window_to_subspace(
+                           space,
+                           win,
+                           qMin(sub->x11DesktopNumber(), space.subspace_manager->count()),
+                           true);
                    }},
                    win);
     }
@@ -90,7 +90,7 @@ void space_setup_init(Space& space, Render& render, Input& input)
         = std::make_unique<space_qobject>([&space] { space_start_reconfigure_timer(space); });
     space.options = std::make_unique<win::options>(input.base.config.main);
     space.rule_book = std::make_unique<rules::book>();
-    space.virtual_desktop_manager = std::make_unique<win::virtual_desktop_manager>();
+    space.subspace_manager = std::make_unique<win::subspace_manager>();
     space.session_manager = std::make_unique<win::session_manager>();
     space.outline = Space::render_outline_t::create(*render.compositor, [&space] {
         return space.outline->create_visual(*space.base.render->compositor);
@@ -118,9 +118,8 @@ void space_setup_init(Space& space, Render& render, Input& input)
         = std::make_unique<Wrapland::Server::PlasmaShell>(space.base.server->display.get());
     space.plasma_window_manager
         = std::make_unique<Wrapland::Server::PlasmaWindowManager>(space.base.server->display.get());
-    space.plasma_virtual_desktop_manager
-        = std::make_unique<Wrapland::Server::PlasmaVirtualDesktopManager>(
-            space.base.server->display.get());
+    space.plasma_subspace_manager = std::make_unique<Wrapland::Server::PlasmaVirtualDesktopManager>(
+        space.base.server->display.get());
     space.idle_inhibit_manager_v1 = std::make_unique<Wrapland::Server::IdleInhibitManagerV1>(
         space.base.server->display.get());
     space.appmenu_manager
@@ -146,10 +145,8 @@ void space_setup_init(Space& space, Render& render, Input& input)
 
     space.plasma_window_manager->setShowingDesktopState(
         Wrapland::Server::PlasmaWindowManager::ShowingDesktopState::Disabled);
-    space.plasma_window_manager->setVirtualDesktopManager(
-        space.plasma_virtual_desktop_manager.get());
-    setup_virtual_desktop_manager(*space.virtual_desktop_manager,
-                                  *space.plasma_virtual_desktop_manager);
+    space.plasma_window_manager->setVirtualDesktopManager(space.plasma_subspace_manager.get());
+    setup_subspace_manager(*space.subspace_manager, *space.plasma_subspace_manager);
 
     QObject::connect(
         space.stacking.order.qobject.get(),
@@ -249,10 +246,10 @@ void space_setup_init(Space& space, Render& render, Input& input)
                      });
 
     QObject::connect(
-        space.virtual_desktop_manager->qobject.get(),
-        &virtual_desktop_manager_qobject::desktopRemoved,
+        space.subspace_manager->qobject.get(),
+        &subspace_manager_qobject::subspace_removed,
         space.qobject.get(),
-        [&space](auto&& desktop) { space_setup_handle_desktop_removed(space, desktop); });
+        [&space](auto&& subspace) { space_setup_handle_subspace_removed(space, subspace); });
 }
 
 template<typename Space>

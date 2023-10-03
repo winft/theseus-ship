@@ -15,16 +15,16 @@ namespace KWin::win
 
 template<typename Space>
 QRegion struts_to_region(Space const& space,
-                         int desktop,
+                         int subspace,
                          win::strut_area areas,
                          std::vector<win::strut_rects> const& struts)
 {
-    if (desktop == x11_desktop_number_on_all || desktop == x11_desktop_number_undefined) {
-        desktop = space.virtual_desktop_manager->current();
+    if (subspace == x11_desktop_number_on_all || subspace == x11_desktop_number_undefined) {
+        subspace = space.subspace_manager->current();
     }
 
     QRegion region;
-    auto const& rects = struts[desktop];
+    auto const& rects = struts[subspace];
 
     for (auto const& rect : rects) {
         if (flags(areas & rect.area())) {

@@ -20,88 +20,88 @@ using namespace Wrapland::Client;
 namespace KWin::detail::test
 {
 
-struct desktop_above {
-    desktop_above(win::virtual_desktop_manager& manager)
+struct subspace_above {
+    subspace_above(win::subspace_manager& manager)
         : manager{manager}
     {
     }
-    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    win::subspace* operator()(win::subspace* subspace, bool wrap)
     {
-        return manager.above(desktop, wrap);
+        return manager.above(subspace, wrap);
     }
 
-    win::virtual_desktop_manager& manager;
+    win::subspace_manager& manager;
 };
 
-struct desktop_below {
-    desktop_below(win::virtual_desktop_manager& manager)
+struct subspace_below {
+    subspace_below(win::subspace_manager& manager)
         : manager{manager}
     {
     }
-    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    win::subspace* operator()(win::subspace* subspace, bool wrap)
     {
-        return manager.below(desktop, wrap);
+        return manager.below(subspace, wrap);
     }
 
-    win::virtual_desktop_manager& manager;
+    win::subspace_manager& manager;
 };
 
-struct desktop_left {
-    desktop_left(win::virtual_desktop_manager& manager)
+struct subspace_left {
+    subspace_left(win::subspace_manager& manager)
         : manager{manager}
     {
     }
-    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    win::subspace* operator()(win::subspace* subspace, bool wrap)
     {
-        return manager.toLeft(desktop, wrap);
+        return manager.toLeft(subspace, wrap);
     }
 
-    win::virtual_desktop_manager& manager;
+    win::subspace_manager& manager;
 };
 
-struct desktop_right {
-    desktop_right(win::virtual_desktop_manager& manager)
+struct subspace_right {
+    subspace_right(win::subspace_manager& manager)
         : manager{manager}
     {
     }
-    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    win::subspace* operator()(win::subspace* subspace, bool wrap)
     {
-        return manager.toRight(desktop, wrap);
+        return manager.toRight(subspace, wrap);
     }
 
-    win::virtual_desktop_manager& manager;
+    win::subspace_manager& manager;
 };
 
-struct desktop_next {
-    desktop_next(win::virtual_desktop_manager& manager)
+struct subspace_next {
+    subspace_next(win::subspace_manager& manager)
         : manager{manager}
     {
     }
-    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    win::subspace* operator()(win::subspace* subspace, bool wrap)
     {
-        return manager.next(desktop, wrap);
+        return manager.next(subspace, wrap);
     }
 
-    win::virtual_desktop_manager& manager;
+    win::subspace_manager& manager;
 };
 
-struct desktop_previous {
-    desktop_previous(win::virtual_desktop_manager& manager)
+struct subspace_previous {
+    subspace_previous(win::subspace_manager& manager)
         : manager{manager}
     {
     }
-    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    win::subspace* operator()(win::subspace* subspace, bool wrap)
     {
-        return manager.previous(desktop, wrap);
+        return manager.previous(subspace, wrap);
     }
 
-    win::virtual_desktop_manager& manager;
+    win::subspace_manager& manager;
 };
 
 template<typename Functor, typename Data>
 void test_direction(test::setup& setup, Data const& test_data, std::string const& action_name)
 {
-    auto& vd_manager = setup.base->space->virtual_desktop_manager;
+    auto& vd_manager = setup.base->space->subspace_manager;
 
     vd_manager->setCount(test_data.init_count);
     vd_manager->setRows(2);
@@ -118,19 +118,19 @@ void test_direction(test::setup& setup, Data const& test_data, std::string const
 
     QCOMPARE(vd_manager->current(), test_data.result);
 
-    auto init_desktop = vd_manager->desktopForX11Id(test_data.init_current);
-    auto result = functor(init_desktop, test_data.wrap);
+    auto init_subspace = vd_manager->subspace_for_x11id(test_data.init_current);
+    auto result = functor(init_subspace, test_data.wrap);
     QVERIFY(result);
     QCOMPARE(result->x11DesktopNumber(), test_data.result);
 }
 
-TEST_CASE("virtual desktop", "[win]")
+TEST_CASE("subspace", "[win]")
 {
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
-    test::setup setup("virtual-desktop", operation_mode);
+    test::setup setup("subspace", operation_mode);
     setup.start();
 
     if (setup.base->x11_data.connection) {
@@ -151,7 +151,7 @@ TEST_CASE("virtual desktop", "[win]")
     }
 
     setup_wayland_connection();
-    auto& vd_manager = setup.base->space->virtual_desktop_manager;
+    auto& vd_manager = setup.base->space->subspace_manager;
     vd_manager->setCount(1);
     vd_manager->setCurrent(0u);
 
@@ -172,13 +172,10 @@ TEST_CASE("virtual desktop", "[win]")
             // Normal value
             data{10, 10, true, false},
             // Maximum
-            data{win::virtual_desktop_manager::maximum(),
-                 win::virtual_desktop_manager::maximum(),
-                 true,
-                 false},
+            data{win::subspace_manager::maximum(), win::subspace_manager::maximum(), true, false},
             // Above maximum
-            data{win::virtual_desktop_manager::maximum() + 1,
-                 win::virtual_desktop_manager::maximum(),
+            data{win::subspace_manager::maximum() + 1,
+                 win::subspace_manager::maximum(),
                  true,
                  false},
             // Unchanged
@@ -186,16 +183,15 @@ TEST_CASE("virtual desktop", "[win]")
 
         QCOMPARE(vd_manager->count(), 1);
 
-        // start with a useful desktop count
+        // start with a useful subspace count
         auto const count_init_value = 2;
         vd_manager->setCount(count_init_value);
 
-        QSignalSpy spy(vd_manager->qobject.get(),
-                       &win::virtual_desktop_manager_qobject::countChanged);
-        QSignalSpy desktopsRemoved(vd_manager->qobject.get(),
-                                   &win::virtual_desktop_manager_qobject::desktopRemoved);
+        QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::countChanged);
+        QSignalSpy subspacesRemoved(vd_manager->qobject.get(),
+                                    &win::subspace_manager_qobject::subspace_removed);
 
-        auto vdToRemove = vd_manager->desktops().last();
+        auto vdToRemove = vd_manager->subspaces().last();
 
         vd_manager->setCount(test_data.request);
         QCOMPARE(vd_manager->count(), test_data.result);
@@ -210,11 +206,11 @@ TEST_CASE("virtual desktop", "[win]")
             QCOMPARE(arguments.at(1).toUInt(), test_data.result);
         }
 
-        QCOMPARE(desktopsRemoved.isEmpty(), !test_data.removed_signal);
-        if (!desktopsRemoved.isEmpty()) {
-            auto arguments = desktopsRemoved.takeFirst();
+        QCOMPARE(subspacesRemoved.isEmpty(), !test_data.removed_signal);
+        if (!subspacesRemoved.isEmpty()) {
+            auto arguments = subspacesRemoved.takeFirst();
             QCOMPARE(arguments.count(), 1);
-            QCOMPARE(arguments.at(0).value<win::virtual_desktop*>(), vdToRemove);
+            QCOMPARE(arguments.at(0).value<win::subspace*>(), vdToRemove);
         }
     }
 
@@ -244,7 +240,7 @@ TEST_CASE("virtual desktop", "[win]")
         QCOMPARE(vd_manager->isNavigationWrappingAround(), test_data.init);
 
         QSignalSpy spy(vd_manager->qobject.get(),
-                       &win::virtual_desktop_manager_qobject::navigationWrappingAroundChanged);
+                       &win::subspace_manager_qobject::navigationWrappingAroundChanged);
         vd_manager->setNavigationWrappingAround(test_data.request);
         QCOMPARE(vd_manager->isNavigationWrappingAround(), test_data.result);
         QCOMPARE(spy.isEmpty(), !test_data.signal);
@@ -282,8 +278,7 @@ TEST_CASE("virtual desktop", "[win]")
         REQUIRE(vd_manager->setCurrent(test_data.init) == (test_data.init != 1));
         QCOMPARE(vd_manager->current(), test_data.init);
 
-        QSignalSpy spy(vd_manager->qobject.get(),
-                       &win::virtual_desktop_manager_qobject::currentChanged);
+        QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::currentChanged);
 
         QCOMPARE(vd_manager->setCurrent(test_data.request), test_data.signal);
         QCOMPARE(vd_manager->current(), test_data.result);
@@ -326,8 +321,7 @@ TEST_CASE("virtual desktop", "[win]")
         vd_manager->setCount(test_data.init_count);
         vd_manager->setCurrent(test_data.init_current);
 
-        QSignalSpy spy(vd_manager->qobject.get(),
-                       &win::virtual_desktop_manager_qobject::currentChanged);
+        QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::currentChanged);
 
         vd_manager->setCount(test_data.request);
         QCOMPARE(vd_manager->current(), test_data.current);
@@ -344,20 +338,20 @@ TEST_CASE("virtual desktop", "[win]")
         };
 
         auto test_data = GENERATE(
-            // one desktop, wrap
+            // one subspace, wrap
             data{1, 1, true, 1},
-            // one desktop, no wrap
+            // one subspace, no wrap
             data{1, 1, false, 1},
-            // desktops, wrap
+            // subspaces, wrap
             data{4, 1, true, 2},
-            // desktops, no wrap
+            // subspaces, no wrap
             data{4, 1, false, 2},
-            // desktops at end, wrap
+            // subspaces at end, wrap
             data{4, 4, true, 1},
-            // desktops at end, no wrap
+            // subspaces at end, no wrap
             data{4, 4, false, 4});
 
-        test_direction<desktop_next>(setup, test_data, "Switch to Next Desktop");
+        test_direction<subspace_next>(setup, test_data, "Switch to Next Desktop");
     }
 
     SECTION("previous")
@@ -370,20 +364,20 @@ TEST_CASE("virtual desktop", "[win]")
         };
 
         auto test_data = GENERATE(
-            // one desktop, wrap
+            // one subspace, wrap
             data{1, 1, true, 1},
-            // one desktop, no wrap
+            // one subspace, no wrap
             data{1, 1, false, 1},
-            // desktops, wrap
+            // subspaces, wrap
             data{4, 3, true, 2},
-            // desktops, no wrap
+            // subspaces, no wrap
             data{4, 3, false, 2},
-            // desktops at start, wrap
+            // subspaces at start, wrap
             data{4, 1, true, 4},
-            // desktops at start, no wrap
+            // subspaces at start, no wrap
             data{4, 1, false, 1});
 
-        test_direction<desktop_previous>(setup, test_data, "Switch to Previous Desktop");
+        test_direction<subspace_previous>(setup, test_data, "Switch to Previous Desktop");
     }
 
     SECTION("left")
@@ -396,25 +390,25 @@ TEST_CASE("virtual desktop", "[win]")
         };
 
         auto test_data = GENERATE(
-            // one desktop, wrap
+            // one subspace, wrap
             data{1, 1, true, 1},
-            // one desktop, no wrap
+            // one subspace, no wrap
             data{1, 1, false, 1},
-            // desktops, wrap, 1st row
+            // subspaces, wrap, 1st row
             data{4, 2, true, 1},
-            // desktops, no wrap, 1st row
+            // subspaces, no wrap, 1st row
             data{4, 2, false, 1},
-            // desktops, wrap, 2nd row
+            // subspaces, wrap, 2nd row
             data{4, 4, true, 3},
-            // desktops, no wrap, 2nd row
+            // subspaces, no wrap, 2nd row
             data{4, 4, false, 3},
-            // desktops at start, wrap, 1st row
+            // subspaces at start, wrap, 1st row
             data{4, 1, true, 2},
-            // desktops at start, no wrap, 1st row
+            // subspaces at start, no wrap, 1st row
             data{4, 1, false, 1},
-            // desktops at start, wrap, 2nd row
+            // subspaces at start, wrap, 2nd row
             data{4, 3, true, 4},
-            // desktops at start, no wrap, 2nd row
+            // subspaces at start, no wrap, 2nd row
             data{4, 3, false, 3},
             // non symmetric, start
             data{5, 5, false, 4},
@@ -423,7 +417,7 @@ TEST_CASE("virtual desktop", "[win]")
             // non symmetric, end, wrap
             data{5, 4, true, 5});
 
-        test_direction<desktop_left>(setup, test_data, "Switch One Desktop to the Left");
+        test_direction<subspace_left>(setup, test_data, "Switch One Desktop to the Left");
     }
 
     SECTION("right")
@@ -436,25 +430,25 @@ TEST_CASE("virtual desktop", "[win]")
         };
 
         auto test_data = GENERATE(
-            // one desktop, wrap
+            // one subspace, wrap
             data{1, 1, true, 1},
-            // one desktop, no wrap
+            // one subspace, no wrap
             data{1, 1, false, 1},
-            // desktops, wrap, 1st row
+            // subspaces, wrap, 1st row
             data{4, 1, true, 2},
-            // desktops, no wrap, 1st row
+            // subspaces, no wrap, 1st row
             data{4, 1, false, 2},
-            // desktops, wrap, 2nd row
+            // subspaces, wrap, 2nd row
             data{4, 3, true, 4},
-            // desktops, no wrap, 2nd row
+            // subspaces, no wrap, 2nd row
             data{4, 3, false, 4},
-            // desktops at start, wrap, 1st row
+            // subspaces at start, wrap, 1st row
             data{4, 2, true, 1},
-            // desktops at start, no wrap, 1st row
+            // subspaces at start, no wrap, 1st row
             data{4, 2, false, 2},
-            // desktops at start, wrap, 2nd row
+            // subspaces at start, wrap, 2nd row
             data{4, 4, true, 3},
-            // desktops at start, no wrap, 2nd row
+            // subspaces at start, no wrap, 2nd row
             data{4, 4, false, 4},
             // non symmetric, start
             data{5, 4, true, 5},
@@ -463,7 +457,7 @@ TEST_CASE("virtual desktop", "[win]")
             // non symmetric, end, wrap
             data{5, 5, true, 4});
 
-        test_direction<desktop_right>(setup, test_data, "Switch One Desktop to the Right");
+        test_direction<subspace_right>(setup, test_data, "Switch One Desktop to the Right");
     }
 
     SECTION("above")
@@ -476,28 +470,28 @@ TEST_CASE("virtual desktop", "[win]")
         };
 
         auto test_data = GENERATE(
-            // one desktop, wrap
+            // one subspace, wrap
             data{1, 1, true, 1},
-            // one desktop, no wrap
+            // one subspace, no wrap
             data{1, 1, false, 1},
-            // desktops, wrap, 1st column
+            // subspaces, wrap, 1st column
             data{4, 3, true, 1},
-            // desktops, no wrap, 1st column
+            // subspaces, no wrap, 1st column
             data{4, 3, false, 1},
-            // desktops, wrap, 2nd column
+            // subspaces, wrap, 2nd column
             data{4, 4, true, 2},
-            // desktops, no wrap, 2nd column
+            // subspaces, no wrap, 2nd column
             data{4, 4, false, 2},
-            // desktops at start, wrap, 1st column
+            // subspaces at start, wrap, 1st column
             data{4, 1, true, 3},
-            // desktops at start, no wrap, 1st column
+            // subspaces at start, no wrap, 1st column
             data{4, 1, false, 1},
-            // desktops at start, wrap, 2nd column
+            // subspaces at start, wrap, 2nd column
             data{4, 2, true, 4},
-            // desktops at start, no wrap, 2nd column
+            // subspaces at start, no wrap, 2nd column
             data{4, 2, false, 2});
 
-        test_direction<desktop_above>(setup, test_data, "Switch One Desktop Up");
+        test_direction<subspace_above>(setup, test_data, "Switch One Desktop Up");
     }
 
     SECTION("below")
@@ -510,28 +504,28 @@ TEST_CASE("virtual desktop", "[win]")
         };
 
         auto test_data = GENERATE(
-            // one desktop, wrap
+            // one subspace, wrap
             data{1, 1, true, 1},
-            // one desktop, no wrap
+            // one subspace, no wrap
             data{1, 1, false, 1},
-            // desktops, wrap, 1st column
+            // subspaces, wrap, 1st column
             data{4, 1, true, 3},
-            // desktops, no wrap, 1st column
+            // subspaces, no wrap, 1st column
             data{4, 1, false, 3},
-            // desktops, wrap, 2nd column
+            // subspaces, wrap, 2nd column
             data{4, 2, true, 4},
-            // desktops, no wrap, 2nd column
+            // subspaces, no wrap, 2nd column
             data{4, 2, false, 4},
-            // desktops at start, wrap, 1st column
+            // subspaces at start, wrap, 1st column
             data{4, 3, true, 1},
-            // desktops at start, no wrap, 1st column
+            // subspaces at start, no wrap, 1st column
             data{4, 3, false, 3},
-            // desktops at start, wrap, 2nd column
+            // subspaces at start, wrap, 2nd column
             data{4, 4, true, 2},
-            // desktops at start, no wrap, 2nd column
+            // subspaces at start, no wrap, 2nd column
             data{4, 4, false, 4});
 
-        test_direction<desktop_below>(setup, test_data, "Switch One Desktop Down");
+        test_direction<subspace_below>(setup, test_data, "Switch One Desktop Down");
     }
 
     SECTION("update grid")
@@ -541,7 +535,7 @@ TEST_CASE("virtual desktop", "[win]")
             QSize size;
             Qt::Orientation orientation;
             QPoint coords;
-            unsigned int desktop;
+            unsigned int subspace;
         };
 
         auto test_data = GENERATE(data{1, {1, 1}, Qt::Horizontal, {0, 0}, 1},
@@ -576,19 +570,19 @@ TEST_CASE("virtual desktop", "[win]")
 
         vd_manager->setCount(test_data.init_count);
 
-        win::virtual_desktop_grid grid(*vd_manager);
+        win::subspace_grid grid(*vd_manager);
 
-        QCOMPARE(vd_manager->desktops().count(), int(test_data.init_count));
+        QCOMPARE(vd_manager->subspaces().count(), int(test_data.init_count));
 
-        grid.update(test_data.size, test_data.orientation, vd_manager->desktops());
+        grid.update(test_data.size, test_data.orientation, vd_manager->subspaces());
         QCOMPARE(grid.size(), test_data.size);
         QCOMPARE(grid.width(), test_data.size.width());
         QCOMPARE(grid.height(), test_data.size.height());
 
-        QCOMPARE(grid.at(test_data.coords), vd_manager->desktopForX11Id(test_data.desktop));
+        QCOMPARE(grid.at(test_data.coords), vd_manager->subspace_for_x11id(test_data.subspace));
 
-        if (test_data.desktop != 0) {
-            QCOMPARE(grid.gridCoords(test_data.desktop), test_data.coords);
+        if (test_data.subspace != 0) {
+            QCOMPARE(grid.gridCoords(test_data.subspace), test_data.coords);
         }
     }
 
@@ -597,7 +591,7 @@ TEST_CASE("virtual desktop", "[win]")
         // call update layout - implicitly through setCount
 
         struct data {
-            unsigned int desktop;
+            unsigned int subspace;
             QSize result;
         };
 
@@ -622,16 +616,15 @@ TEST_CASE("virtual desktop", "[win]")
                                   data{19, {10, 2}},
                                   data{20, {10, 2}});
 
-        QSignalSpy spy(vd_manager->qobject.get(),
-                       &win::virtual_desktop_manager_qobject::layoutChanged);
+        QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::layoutChanged);
         QVERIFY(spy.isValid());
 
-        if (test_data.desktop == 1) {
+        if (test_data.subspace == 1) {
             // Must be changed back and forth from our default so the spy fires.
             vd_manager->setCount(2);
         }
 
-        vd_manager->setCount(test_data.desktop);
+        vd_manager->setCount(test_data.subspace);
         vd_manager->setRows(2);
 
         QCOMPARE(vd_manager->grid().size(), test_data.result);
@@ -657,8 +650,8 @@ TEST_CASE("virtual desktop", "[win]")
     {
         struct data {
             unsigned int init_count;
-            unsigned int desktop;
-            std::string desktop_name;
+            unsigned int subspace;
+            std::string subspace_name;
         };
 
         auto test_data = GENERATE(data{4, 1, "Desktop 1"},
@@ -668,8 +661,8 @@ TEST_CASE("virtual desktop", "[win]")
                                   data{5, 5, "Desktop 5"});
 
         vd_manager->setCount(test_data.init_count);
-        REQUIRE(vd_manager->name(test_data.desktop)
-                == QString::fromStdString(test_data.desktop_name));
+        REQUIRE(vd_manager->name(test_data.subspace)
+                == QString::fromStdString(test_data.subspace_name));
     }
 
     SECTION("switch to shortcut")
@@ -706,7 +699,7 @@ TEST_CASE("virtual desktop", "[win]")
 
         // TODO(romangg): Fails when run in Xwayland mode and passes otherwise. The root cause
         //                seems to be the update from root info in
-        //                win::virtual_desktop_manager::updateLayout.
+        //                win::subspace_manager::updateLayout.
         if (operation_mode == base::operation_mode::wayland) {
             REQUIRE(vd_manager->rows() == 2);
         } else {
@@ -721,7 +714,7 @@ TEST_CASE("virtual desktop", "[win]")
         vd_manager->load();
         QCOMPARE(vd_manager->count(), 1);
 
-        // Empty config should create one desktop.
+        // Empty config should create one subspace.
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
         vd_manager->setConfig(config);
         vd_manager->load();
@@ -754,12 +747,12 @@ TEST_CASE("virtual desktop", "[win]")
         vd_manager->save();
         QCOMPARE(config->hasGroup("Desktops"), true);
 
-        auto desktops = config->group("Desktops");
-        QCOMPARE(desktops.readEntry<int>("Number", 1), 4);
-        QCOMPARE(desktops.hasKey("Name_1"), false);
-        QCOMPARE(desktops.hasKey("Name_2"), false);
-        QCOMPARE(desktops.hasKey("Name_3"), false);
-        QCOMPARE(desktops.hasKey("Name_4"), false);
+        auto subspaces = config->group("Desktops");
+        QCOMPARE(subspaces.readEntry<int>("Number", 1), 4);
+        QCOMPARE(subspaces.hasKey("Name_1"), false);
+        QCOMPARE(subspaces.hasKey("Name_2"), false);
+        QCOMPARE(subspaces.hasKey("Name_3"), false);
+        QCOMPARE(subspaces.hasKey("Name_4"), false);
     }
 
     SECTION("net current desktop")
@@ -786,7 +779,7 @@ TEST_CASE("virtual desktop", "[win]")
         QCOMPARE(currentDesktop.value(0, &ok), 0);
         QVERIFY(ok);
 
-        // go to desktop 2
+        // go to subspace 2
         vd_manager->setCurrent(2);
         currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
                                                   0,
@@ -798,7 +791,7 @@ TEST_CASE("virtual desktop", "[win]")
         QCOMPARE(currentDesktop.value(0, &ok), 1);
         QVERIFY(ok);
 
-        // go to desktop 3
+        // go to subspace 3
         vd_manager->setCurrent(3);
         currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
                                                   0,
@@ -810,7 +803,7 @@ TEST_CASE("virtual desktop", "[win]")
         QCOMPARE(currentDesktop.value(0, &ok), 2);
         QVERIFY(ok);
 
-        // go to desktop 4
+        // go to subspace 4
         vd_manager->setCurrent(4);
         currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
                                                   0,
@@ -835,18 +828,18 @@ TEST_CASE("virtual desktop", "[win]")
         QVERIFY(ok);
     }
 
-    SECTION("last desktop removed")
+    SECTION("last subspace removed")
     {
-        // first create a new desktop
+        // first create a new subspace
         QCOMPARE(vd_manager->count(), 1u);
         vd_manager->setCount(2);
         QCOMPARE(vd_manager->count(), 2u);
 
-        // switch to last desktop
-        vd_manager->setCurrent(vd_manager->desktops().last());
+        // switch to last subspace
+        vd_manager->setCurrent(vd_manager->subspaces().last());
         QCOMPARE(vd_manager->current(), 2u);
 
-        // now create a window on this desktop
+        // now create a window on this subspace
         std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
@@ -855,33 +848,33 @@ TEST_CASE("virtual desktop", "[win]")
         auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(client);
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(client->topo.desktops.count(), 1u);
-        QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(client->topo.subspaces.count(), 1u);
+        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.constFirst());
 
-        // and remove last desktop
+        // and remove last subspace
         vd_manager->setCount(1);
         QCOMPARE(vd_manager->count(), 1u);
 
         // now the client should be moved as well
-        QCOMPARE(win::get_desktop(*client), 1);
+        QCOMPARE(win::get_subspace(*client), 1);
 
-        QCOMPARE(client->topo.desktops.count(), 1u);
-        QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
+        QCOMPARE(client->topo.subspaces.count(), 1u);
+        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.constFirst());
     }
 
-    SECTION("window on multiple desktops")
+    SECTION("window on multiple subspaces")
     {
-        // first create two new desktops
+        // first create two new subspaces
         QCOMPARE(vd_manager->count(), 1u);
         vd_manager->setCount(3);
         QCOMPARE(vd_manager->count(), 3u);
 
-        // switch to last desktop
-        vd_manager->setCurrent(vd_manager->desktops().last());
+        // switch to last subspace
+        vd_manager->setCurrent(vd_manager->subspaces().last());
         QCOMPARE(vd_manager->current(), 3u);
 
-        // now create a window on this desktop
+        // now create a window on this subspace
         std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
@@ -890,77 +883,82 @@ TEST_CASE("virtual desktop", "[win]")
         auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(client);
-        QCOMPARE(win::get_desktop(*client), 3u);
-        QCOMPARE(client->topo.desktops.count(), 1u);
-        QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
+        QCOMPARE(win::get_subspace(*client), 3u);
+        QCOMPARE(client->topo.subspaces.count(), 1u);
+        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.constFirst());
 
-        // Set the window on desktop 2 as well
-        win::enter_desktop(*client, vd_manager->desktopForX11Id(2));
-        QCOMPARE(client->topo.desktops.count(), 2u);
-        QCOMPARE(vd_manager->desktops()[2], client->topo.desktops.at(0));
-        QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(1));
-        QVERIFY(win::on_desktop(*client, 2));
-        QVERIFY(win::on_desktop(*client, 3));
+        // Set the window on subspace 2 as well
+        win::enter_subspace(*client, vd_manager->subspace_for_x11id(2));
+        QCOMPARE(client->topo.subspaces.count(), 2u);
+        QCOMPARE(vd_manager->subspaces()[2], client->topo.subspaces.at(0));
+        QCOMPARE(vd_manager->subspaces()[1], client->topo.subspaces.at(1));
+        QVERIFY(win::on_subspace(*client, 2));
+        QVERIFY(win::on_subspace(*client, 3));
 
-        // leave desktop 3
-        win::leave_desktop(*client, vd_manager->desktopForX11Id(3));
-        QCOMPARE(client->topo.desktops.count(), 1u);
-        // leave desktop 2
-        win::leave_desktop(*client, vd_manager->desktopForX11Id(2));
-        QCOMPARE(client->topo.desktops.count(), 0u);
-        // we should be on all desktops now
-        QVERIFY(win::on_all_desktops(*client));
-        // put on desktop 1
-        win::enter_desktop(*client, vd_manager->desktopForX11Id(1));
-        QVERIFY(win::on_desktop(*client, 1));
-        QVERIFY(!win::on_desktop(*client, 2));
-        QVERIFY(!win::on_desktop(*client, 3));
-        QCOMPARE(client->topo.desktops.count(), 1u);
-        // put on desktop 2
-        win::enter_desktop(*client, vd_manager->desktopForX11Id(2));
-        QVERIFY(win::on_desktop(*client, 1));
-        QVERIFY(win::on_desktop(*client, 2));
-        QVERIFY(!win::on_desktop(*client, 3));
-        QCOMPARE(client->topo.desktops.count(), 2u);
-        // put on desktop 3
-        win::enter_desktop(*client, vd_manager->desktopForX11Id(3));
-        QVERIFY(win::on_desktop(*client, 1));
-        QVERIFY(win::on_desktop(*client, 2));
-        QVERIFY(win::on_desktop(*client, 3));
-        QCOMPARE(client->topo.desktops.count(), 3u);
+        // leave subspace 3
+        win::leave_subspace(*client, vd_manager->subspace_for_x11id(3));
+        QCOMPARE(client->topo.subspaces.count(), 1u);
+
+        // leave subspace 2
+        win::leave_subspace(*client, vd_manager->subspace_for_x11id(2));
+        QCOMPARE(client->topo.subspaces.count(), 0u);
+
+        // we should be on all subspaces now
+        QVERIFY(win::on_all_subspaces(*client));
+
+        // put on subspace 1
+        win::enter_subspace(*client, vd_manager->subspace_for_x11id(1));
+        QVERIFY(win::on_subspace(*client, 1));
+        QVERIFY(!win::on_subspace(*client, 2));
+        QVERIFY(!win::on_subspace(*client, 3));
+        QCOMPARE(client->topo.subspaces.count(), 1u);
+
+        // put on subspace 2
+        win::enter_subspace(*client, vd_manager->subspace_for_x11id(2));
+        QVERIFY(win::on_subspace(*client, 1));
+        QVERIFY(win::on_subspace(*client, 2));
+        QVERIFY(!win::on_subspace(*client, 3));
+        QCOMPARE(client->topo.subspaces.count(), 2u);
+
+        // put on subspace 3
+        win::enter_subspace(*client, vd_manager->subspace_for_x11id(3));
+        QVERIFY(win::on_subspace(*client, 1));
+        QVERIFY(win::on_subspace(*client, 2));
+        QVERIFY(win::on_subspace(*client, 3));
+        QCOMPARE(client->topo.subspaces.count(), 3u);
 
         // entering twice dooes nothing
-        win::enter_desktop(*client, vd_manager->desktopForX11Id(3));
-        QCOMPARE(client->topo.desktops.count(), 3u);
+        win::enter_subspace(*client, vd_manager->subspace_for_x11id(3));
+        QCOMPARE(client->topo.subspaces.count(), 3u);
 
-        // adding to "all desktops" results in just that one desktop
-        win::set_on_all_desktops(*client, true);
-        QCOMPARE(client->topo.desktops.count(), 0u);
-        win::enter_desktop(*client, vd_manager->desktopForX11Id(3));
-        QVERIFY(win::on_desktop(*client, 3));
-        QCOMPARE(client->topo.desktops.count(), 1u);
+        // adding to "all subspaces" results in just that one subspace
+        win::set_on_all_subspaces(*client, true);
+        QCOMPARE(client->topo.subspaces.count(), 0u);
+        win::enter_subspace(*client, vd_manager->subspace_for_x11id(3));
+        QVERIFY(win::on_subspace(*client, 3));
+        QCOMPARE(client->topo.subspaces.count(), 1u);
 
-        // leaving a desktop on "all desktops" puts on everything else
-        win::set_on_all_desktops(*client, true);
-        QCOMPARE(client->topo.desktops.count(), 0u);
-        win::leave_desktop(*client, vd_manager->desktopForX11Id(3));
-        QVERIFY(win::on_desktop(*client, 1));
-        QVERIFY(win::on_desktop(*client, 2));
-        QCOMPARE(client->topo.desktops.count(), 2u);
+        // leaving a subspace on "all subspaces" puts on everything else
+        win::set_on_all_subspaces(*client, true);
+        QCOMPARE(client->topo.subspaces.count(), 0u);
+        win::leave_subspace(*client, vd_manager->subspace_for_x11id(3));
+        QVERIFY(win::on_subspace(*client, 1));
+        QVERIFY(win::on_subspace(*client, 2));
+        QCOMPARE(client->topo.subspaces.count(), 2u);
     }
 
-    SECTION("remove desktop with window")
+    SECTION("remove subspace with window")
     {
-        // first create two new desktops
+        // first create two new subspaces
         QCOMPARE(vd_manager->count(), 1u);
         vd_manager->setCount(3);
         QCOMPARE(vd_manager->count(), 3u);
 
-        // switch to last desktop
-        vd_manager->setCurrent(vd_manager->desktops().last());
+        // switch to last subspace
+        vd_manager->setCurrent(vd_manager->subspaces().last());
         QCOMPARE(vd_manager->current(), 3u);
 
-        // now create a window on this desktop
+        // now create a window on this subspace
         std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
         QVERIFY(surface);
@@ -969,38 +967,38 @@ TEST_CASE("virtual desktop", "[win]")
         auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(client);
-        QCOMPARE(win::get_desktop(*client), 3u);
-        QCOMPARE(client->topo.desktops.count(), 1u);
-        QCOMPARE(vd_manager->currentDesktop(), client->topo.desktops.constFirst());
+        QCOMPARE(win::get_subspace(*client), 3u);
+        QCOMPARE(client->topo.subspaces.count(), 1u);
+        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.constFirst());
 
-        // Set the window on desktop 2 as well
-        win::enter_desktop(*client, vd_manager->desktops()[1]);
-        QCOMPARE(client->topo.desktops.count(), 2u);
-        QCOMPARE(vd_manager->desktops()[2], client->topo.desktops.at(0));
-        QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(1));
-        QVERIFY(win::on_desktop(*client, 2));
-        QVERIFY(win::on_desktop(*client, 3));
+        // Set the window on subspace 2 as well
+        win::enter_subspace(*client, vd_manager->subspaces()[1]);
+        QCOMPARE(client->topo.subspaces.count(), 2u);
+        QCOMPARE(vd_manager->subspaces()[2], client->topo.subspaces.at(0));
+        QCOMPARE(vd_manager->subspaces()[1], client->topo.subspaces.at(1));
+        QVERIFY(win::on_subspace(*client, 2));
+        QVERIFY(win::on_subspace(*client, 3));
 
-        // remove desktop 3
+        // remove subspace 3
         vd_manager->setCount(2);
-        QCOMPARE(client->topo.desktops.count(), 1u);
-        // window is only on desktop 2
-        QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(0));
+        QCOMPARE(client->topo.subspaces.count(), 1u);
+        // window is only on subspace 2
+        QCOMPARE(vd_manager->subspaces()[1], client->topo.subspaces.at(0));
 
-        // Again 3 desktops
+        // Again 3 subspaces
         vd_manager->setCount(3);
-        // move window to be only on desktop 3
-        win::enter_desktop(*client, vd_manager->desktops()[2]);
-        win::leave_desktop(*client, vd_manager->desktops()[1]);
-        QCOMPARE(client->topo.desktops.count(), 1u);
-        // window is only on desktop 3
-        QCOMPARE(vd_manager->desktops()[2], client->topo.desktops.at(0));
+        // move window to be only on subspace 3
+        win::enter_subspace(*client, vd_manager->subspaces()[2]);
+        win::leave_subspace(*client, vd_manager->subspaces()[1]);
+        QCOMPARE(client->topo.subspaces.count(), 1u);
+        // window is only on subspace 3
+        QCOMPARE(vd_manager->subspaces()[2], client->topo.subspaces.at(0));
 
-        // remove desktop 3
+        // remove subspace 3
         vd_manager->setCount(2);
-        QCOMPARE(client->topo.desktops.count(), 1u);
-        // window is only on desktop 2
-        QCOMPARE(vd_manager->desktops()[1], client->topo.desktops.at(0));
+        QCOMPARE(client->topo.subspaces.count(), 1u);
+        // window is only on subspace 2
+        QCOMPARE(vd_manager->subspaces()[1], client->topo.subspaces.at(0));
     }
 }
 

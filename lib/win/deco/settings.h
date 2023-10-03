@@ -38,8 +38,8 @@ public:
                          &comp_qobject_t::compositingToggled,
                          parent,
                          &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
-        connect(space.virtual_desktop_manager->qobject.get(),
-                &win::virtual_desktop_manager_qobject::countChanged,
+        connect(space.subspace_manager->qobject.get(),
+                &win::subspace_manager_qobject::countChanged,
                 this,
                 [parent](uint previous, uint current) {
                     if (previous != 1 && current != 1) {
@@ -66,7 +66,7 @@ public:
 
     bool isOnAllDesktopsAvailable() const override
     {
-        return space.virtual_desktop_manager->count() > 1;
+        return space.subspace_manager->count() > 1;
     }
 
     bool isCloseOnDoubleClickOnMenu() const override

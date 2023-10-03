@@ -17,7 +17,7 @@ namespace KWin::win::wayland
 template<typename Win>
 void idle_update(Win& window)
 {
-    auto const is_visible = window.isShown() && on_current_desktop(window);
+    auto const is_visible = window.isShown() && on_current_subspace(window);
 
     if (is_visible && window.surface && window.surface->inhibitsIdle()) {
         if (!window.inhibit_idle) {
@@ -54,7 +54,7 @@ void idle_setup(Win& window)
     auto qwin = window.qobject.get();
 
     QObject::connect(window.surface, &Wrapland::Server::Surface::inhibitsIdleChanged, qwin, update);
-    QObject::connect(qwin, &Win::qobject_t::desktopsChanged, qwin, update);
+    QObject::connect(qwin, &Win::qobject_t::subspaces_changed, qwin, update);
     QObject::connect(qwin, &Win::qobject_t::clientMinimized, qwin, update);
     QObject::connect(qwin, &Win::qobject_t::clientUnminimized, qwin, update);
     QObject::connect(qwin, &Win::qobject_t::windowHidden, qwin, update);

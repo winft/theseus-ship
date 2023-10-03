@@ -153,7 +153,7 @@ void check_unrestricted_move_resize(Win* win)
     }
 
     auto desktopArea = space_window_area(
-        win->space, area_option::work, mov_res.geometry.center(), get_desktop(*win));
+        win->space, area_option::work, mov_res.geometry.center(), get_subspace(*win));
     int left_marge, right_marge, top_marge, bottom_marge, titlebar_marge;
 
     // restricted move/resize - keep at least part of the titlebar always visible
@@ -436,7 +436,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             QRegion availableArea(space_window_area(win->space, area_option::full, nullptr, 0));
 
             // Strut areas
-            availableArea -= restricted_move_area(win->space, get_desktop(*win), strut_area::all);
+            availableArea -= restricted_move_area(win->space, get_subspace(*win), strut_area::all);
 
             bool transposed = false;
             int requiredPixels;
@@ -575,7 +575,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             if (!mov_res.unrestricted) {
                 // Strut areas
                 auto const strut
-                    = restricted_move_area(win->space, get_desktop(*win), strut_area::all);
+                    = restricted_move_area(win->space, get_subspace(*win), strut_area::all);
 
                 // On the screen
                 QRegion availableArea(space_window_area(win->space, area_option::full, nullptr, 0));
@@ -976,7 +976,7 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
 
     auto oldScreenArea = space_window_area(space, area_option::maximize, win);
     auto screenArea
-        = space_window_area(space, area_option::maximize, checked_output, get_desktop(*win));
+        = space_window_area(space, area_option::maximize, checked_output, get_subspace(*win));
 
     // the window can have its center so that the position correction moves the new center onto
     // the old screen, what will tile it where it is. Ie. the screen is not changed

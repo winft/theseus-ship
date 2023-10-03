@@ -15,7 +15,7 @@ template<typename Output>
 struct window_topology {
     win::layer layer{layer::unknown};
     Output const* central_output{nullptr};
-    QVector<virtual_desktop*> desktops;
+    QVector<subspace*> subspaces;
 };
 
 }

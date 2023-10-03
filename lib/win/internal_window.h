@@ -40,7 +40,7 @@ public:
     {
     }
 
-    void set_desktops(QVector<virtual_desktop*> /*desktops*/) override
+    void set_subspaces(QVector<subspace*> /*subs*/) override
     {
     }
 
@@ -158,7 +158,7 @@ public:
         setCaption(m_internalWindow->title());
         this->control->icon = QIcon::fromTheme(QStringLiteral("kwin"));
 
-        set_on_all_desktops(*this, true);
+        set_on_all_subspaces(*this, true);
         setOpacity(m_internalWindow->opacity());
         set_skip_close_animation(
             *this, m_internalWindow->property(internal_skip_close_animation_name).toBool());
@@ -759,7 +759,7 @@ public:
             auto const area = space_window_area(this->space,
                                                 area_option::placement,
                                                 get_current_output(this->space),
-                                                get_desktop(*this));
+                                                get_subspace(*this));
             place_in_area(this, area);
         }
 

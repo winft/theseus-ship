@@ -32,7 +32,7 @@ win::remnant create_remnant(Win& source)
         remnant.data.buffer_scale = source.bufferScale();
     }
 
-    remnant.data.desk = get_desktop(source);
+    remnant.data.desk = get_subspace(source);
     remnant.data.frame = source.frameId();
     remnant.data.opacity = source.opacity();
     remnant.data.window_role = source.windowRole();
@@ -108,7 +108,7 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.meta.wm_class = source.meta.wm_class;
     dest.render_data.opaque_region = source.render_data.opaque_region;
     dest.topo.central_output = source.topo.central_output;
-    dest.topo.desktops = source.topo.desktops;
+    dest.topo.subspaces = source.topo.subspaces;
     dest.topo.layer = get_layer(source);
     dest.geo.has_in_content_deco = source.geo.has_in_content_deco;
     dest.geo.client_frame_extents = source.geo.client_frame_extents;
@@ -128,12 +128,12 @@ void transfer_remnant_data(Win& source, Win& dest)
         source.transient->remove_child(child);
     }
 
-    auto const desktops = dest.topo.desktops;
-    for (auto vd : desktops) {
-        QObject::connect(vd, &QObject::destroyed, dest.qobject.get(), [vd, dest_ptr = &dest] {
-            auto desks = dest_ptr->topo.desktops;
-            desks.removeOne(vd);
-            dest_ptr->topo.desktops = desks;
+    auto const subspaces = dest.topo.subspaces;
+    for (auto sub : subspaces) {
+        QObject::connect(sub, &QObject::destroyed, dest.qobject.get(), [sub, dest_ptr = &dest] {
+            auto subs = dest_ptr->topo.subspaces;
+            subs.removeOne(sub);
+            dest_ptr->topo.subspaces = subs;
         });
     }
 }

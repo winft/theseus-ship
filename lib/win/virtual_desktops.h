@@ -34,7 +34,7 @@ namespace x11::net
 class root_info;
 }
 
-class KWIN_EXPORT virtual_desktop : public QObject
+class KWIN_EXPORT subspace : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString id READ id CONSTANT)
@@ -42,8 +42,8 @@ class KWIN_EXPORT virtual_desktop : public QObject
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
 
 public:
-    explicit virtual_desktop(QObject* parent = nullptr);
-    ~virtual_desktop() override;
+    explicit subspace(QObject* parent = nullptr);
+    ~subspace() override;
 
     void setId(QString const& id);
     QString id() const
@@ -77,64 +77,62 @@ private:
     int m_x11DesktopNumber = 0;
 };
 
-class virtual_desktop_manager;
+class subspace_manager;
 
-class KWIN_EXPORT virtual_desktop_grid
+class KWIN_EXPORT subspace_grid
 {
 public:
-    virtual_desktop_grid(virtual_desktop_manager& manager);
-    ~virtual_desktop_grid();
+    subspace_grid(subspace_manager& manager);
+    ~subspace_grid();
 
-    void update(QSize const& size,
-                Qt::Orientation orientation,
-                QVector<virtual_desktop*> const& desktops);
+    void update(QSize const& size, Qt::Orientation orientation, QVector<subspace*> const& subs);
 
     QPoint gridCoords(uint id) const;
-    QPoint gridCoords(virtual_desktop* vd) const;
+    QPoint gridCoords(subspace* vd) const;
 
-    virtual_desktop* at(const QPoint& coords) const;
+    subspace* at(const QPoint& coords) const;
     int width() const;
     int height() const;
     QSize const& size() const;
 
 private:
     QSize m_size;
-    QVector<QVector<virtual_desktop*>> m_grid;
-    virtual_desktop_manager& manager;
+    QVector<QVector<subspace*>> m_grid;
+    subspace_manager& manager;
 };
 
-class KWIN_EXPORT virtual_desktop_manager_qobject : public QObject
+class KWIN_EXPORT subspace_manager_qobject : public QObject
 {
     Q_OBJECT
 public:
-    virtual_desktop_manager_qobject();
+    subspace_manager_qobject();
 
 Q_SIGNALS:
     void countChanged(uint previousCount, uint newCount);
     void rowsChanged(uint rows);
 
-    void desktopCreated(KWin::win::virtual_desktop* desktop);
-    void desktopRemoved(KWin::win::virtual_desktop* desktop);
+    void subspace_created(KWin::win::subspace*);
+    void subspace_removed(KWin::win::subspace*);
 
-    void currentChanged(uint previousDesktop, uint newDesktop);
+    void currentChanged(uint prev_sub, uint new_sub);
 
     /**
-     * For realtime desktop switching animations. Offset is current total change in desktop
+     * For realtime subspace switching animations. Offset is current total change in subspace
      * coordinate. x and y are negative if switching left/down. Example: x = 0.6 means 60% of the
-     * way to the desktop to the right.
+     * way to the subspace to the right.
      */
-    void currentChanging(uint currentDesktop, QPointF offset);
+    void currentChanging(uint current_sub, QPointF offset);
     void currentChangingCancelled();
 
     void layoutChanged(int columns, int rows);
     void navigationWrappingAroundChanged();
 };
 
-class KWIN_EXPORT virtual_desktop_manager
+class KWIN_EXPORT subspace_manager
 {
 public:
-    virtual_desktop_manager();
-    ~virtual_desktop_manager();
+    subspace_manager();
+    ~subspace_manager();
 
     void setRootInfo(x11::net::root_info* info);
     void setConfig(KSharedConfig::Ptr config);
@@ -143,54 +141,55 @@ public:
     uint rows() const;
 
     uint current() const;
-    virtual_desktop* currentDesktop() const;
+    subspace* current_subspace() const;
 
-    QString name(uint desktop) const;
+    QString name(uint sub) const;
     bool isNavigationWrappingAround() const;
-    const virtual_desktop_grid& grid() const;
+    const subspace_grid& grid() const;
 
     uint above(uint id = 0, bool wrap = true) const;
-    virtual_desktop* above(virtual_desktop* desktop, bool wrap = true) const;
+    subspace* above(subspace* desktop, bool wrap = true) const;
 
     uint toRight(uint id = 0, bool wrap = true) const;
-    virtual_desktop* toRight(virtual_desktop* desktop, bool wrap = true) const;
+    subspace* toRight(subspace* desktop, bool wrap = true) const;
 
     uint below(uint id = 0, bool wrap = true) const;
-    virtual_desktop* below(virtual_desktop* desktop, bool wrap = true) const;
+    subspace* below(subspace* desktop, bool wrap = true) const;
 
     uint toLeft(uint id = 0, bool wrap = true) const;
-    virtual_desktop* toLeft(virtual_desktop* desktop, bool wrap = true) const;
+    subspace* toLeft(subspace* desktop, bool wrap = true) const;
 
-    virtual_desktop* next(virtual_desktop* desktop = nullptr, bool wrap = true) const;
+    subspace* next(subspace* desktop = nullptr, bool wrap = true) const;
     uint next(uint id = 0, bool wrap = true) const;
 
-    virtual_desktop* previous(virtual_desktop* desktop = nullptr, bool wrap = true) const;
+    subspace* previous(subspace* desktop = nullptr, bool wrap = true) const;
     uint previous(uint id = 0, bool wrap = true) const;
 
-    QVector<virtual_desktop*> desktops() const
+    QVector<subspace*> subspaces() const
     {
-        return m_desktops;
+        return m_subspaces;
     }
 
-    virtual_desktop* desktopForX11Id(uint id) const;
-    virtual_desktop* desktopForId(QString const& id) const;
+    subspace* subspace_for_x11id(uint id) const;
+    subspace* subspace_for_id(QString const& id) const;
 
     /**
      * Create a new virtual desktop at the requested position. The difference with setCount is that
-     * setCount always adds new desktops at the end of the chain. The Id is automatically generated.
-     * @returns the new virtual_desktop, nullptr if we reached the maximum number of desktops.
+     * setCount always adds new subspaces at the end of the chain. The Id is automatically
+     * generated.
+     * @returns the new subspace, nullptr if we reached the maximum number of subspaces.
      */
-    virtual_desktop* createVirtualDesktop(uint position, QString const& name = QString());
+    subspace* create_subspace(uint position, QString const& name = QString());
 
-    void removeVirtualDesktop(QString const& id);
-    void removeVirtualDesktop(virtual_desktop* desktop);
+    void remove_subspace(QString const& id);
+    void remove_subspace(subspace* sub);
 
     void updateRootInfo();
     static uint maximum();
 
     void setCount(uint count);
     bool setCurrent(uint current);
-    bool setCurrent(virtual_desktop* current);
+    bool setCurrent(subspace* current);
 
     void setRows(uint rows);
     void updateLayout();
@@ -199,7 +198,7 @@ public:
     void load();
     void save();
 
-    std::unique_ptr<virtual_desktop_manager_qobject> qobject;
+    std::unique_ptr<subspace_manager_qobject> qobject;
 
     void slotSwitchTo(QAction& action);
     void slotNext();
@@ -235,7 +234,7 @@ public:
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement{nullptr};
 
 private:
-    QList<virtual_desktop*> update_count(uint count);
+    QList<subspace*> update_count(uint count);
 
     /// Generate a desktop layout from EWMH _NET_DESKTOP_LAYOUT property parameters.
     void
@@ -243,11 +242,11 @@ private:
 
     QString defaultName(int desktop) const;
 
-    QVector<virtual_desktop*> m_desktops;
-    QPointer<virtual_desktop> m_current;
+    QVector<subspace*> m_subspaces;
+    QPointer<subspace> m_current;
     quint32 m_rows = 2;
     bool m_navigationWrapsAround{false};
-    virtual_desktop_grid m_grid;
+    subspace_grid m_grid;
     // TODO: QPointer
     x11::net::root_info* m_rootInfo{nullptr};
     KSharedConfig::Ptr m_config;
@@ -256,45 +255,45 @@ private:
     QScopedPointer<QAction> m_swipeGestureReleasedX;
     QPointF m_currentDesktopOffset = QPointF(0, 0);
 
-    virtual_desktops_singleton singleton;
+    subspaces_singleton singleton;
 };
 
-inline int virtual_desktop_grid::width() const
+inline int subspace_grid::width() const
 {
     return m_size.width();
 }
 
-inline int virtual_desktop_grid::height() const
+inline int subspace_grid::height() const
 {
     return m_size.height();
 }
 
-inline QSize const& virtual_desktop_grid::size() const
+inline QSize const& subspace_grid::size() const
 {
     return m_size;
 }
 
-inline uint virtual_desktop_manager::maximum()
+inline uint subspace_manager::maximum()
 {
     return 20;
 }
 
-inline uint virtual_desktop_manager::count() const
+inline uint subspace_manager::count() const
 {
-    return m_desktops.count();
+    return m_subspaces.count();
 }
 
-inline bool virtual_desktop_manager::isNavigationWrappingAround() const
+inline bool subspace_manager::isNavigationWrappingAround() const
 {
     return m_navigationWrapsAround;
 }
 
-inline void virtual_desktop_manager::setConfig(KSharedConfig::Ptr config)
+inline void subspace_manager::setConfig(KSharedConfig::Ptr config)
 {
     m_config = std::move(config);
 }
 
-inline virtual_desktop_grid const& virtual_desktop_manager::grid() const
+inline subspace_grid const& subspace_manager::grid() const
 {
     return m_grid;
 }

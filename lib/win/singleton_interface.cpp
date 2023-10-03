@@ -9,7 +9,7 @@ namespace KWin::win
 {
 
 screen_edger_singleton* singleton_interface::edger{nullptr};
-virtual_desktops_singleton* singleton_interface::virtual_desktops{nullptr};
+subspaces_singleton* singleton_interface::subspaces{nullptr};
 
 std::function<QRect()> singleton_interface::get_current_output_geometry{};
 std::function<std::string(std::string const&)> singleton_interface::set_activation_token{};

@@ -32,7 +32,7 @@ inline void check_offscreen_position(QRect& frame_geo, const QRect& screenArea)
 template<typename Win>
 void check_workspace_position(Win* win,
                               QRect old_frame_geo = QRect(),
-                              int oldDesktop = -2,
+                              int old_subspace = -2,
                               QRect old_client_geo = QRect())
 {
     assert(win->control);
@@ -72,7 +72,7 @@ void check_workspace_position(Win* win,
 
     if (win->control->quicktiling != quicktiles::none) {
         win->setFrameGeometry(electric_border_maximize_geometry(
-            win, pending_frame_geometry(win).center(), get_desktop(*win)));
+            win, pending_frame_geometry(win).center(), get_subspace(*win)));
         return;
     }
 
@@ -92,8 +92,8 @@ void check_workspace_position(Win* win,
     if (!old_frame_geo.isValid()) {
         old_frame_geo = pending_frame_geometry(win);
     }
-    if (oldDesktop == -2) {
-        oldDesktop = get_desktop(*win);
+    if (old_subspace == -2) {
+        old_subspace = get_subspace(*win);
     }
     if (!old_client_geo.isValid()) {
         old_client_geo
@@ -120,7 +120,7 @@ void check_workspace_position(Win* win,
         }
     } else {
         old_screen_area = space_window_area(
-            win->space, area_option::screen, old_frame_geo.center(), oldDesktop);
+            win->space, area_option::screen, old_frame_geo.center(), old_subspace);
     }
 
     // With full screen height.
@@ -137,7 +137,7 @@ void check_workspace_position(Win* win,
     auto old_left_max = old_screen_area.x();
 
     auto const screenArea = space_window_area(
-        win->space, area_option::screen, pending_frame_geometry(win).center(), get_desktop(*win));
+        win->space, area_option::screen, pending_frame_geometry(win).center(), get_subspace(*win));
 
     auto top_max = screenArea.y();
     auto right_max = screenArea.x() + screenArea.width();
@@ -159,7 +159,7 @@ void check_workspace_position(Win* win,
     // Get the max strut point for each side where the window is (E.g. Highest point for
     // the bottom struts bounded by the window's left and right sides).
 
-    // Default is to use restrictedMoveArea. That's on active desktop or screen change.
+    // Default is to use restrictedMoveArea. That's on active subspace or screen change.
     auto move_area_func = win::restricted_move_area<decltype(win->space)>;
     if (in_update_window_area(win->space)) {
         // On restriected area changes.
@@ -169,25 +169,25 @@ void check_workspace_position(Win* win,
     }
 
     // These 4 compute old bounds.
-    for (auto const& r : move_area_func(win->space, oldDesktop, strut_area::top)) {
+    for (auto const& r : move_area_func(win->space, old_subspace, strut_area::top)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
             old_top_max = std::max(old_top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : move_area_func(win->space, oldDesktop, strut_area::right)) {
+    for (auto const& r : move_area_func(win->space, old_subspace, strut_area::right)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
             old_right_max = std::min(old_right_max, rect.x());
         }
     }
-    for (auto const& r : move_area_func(win->space, oldDesktop, strut_area::bottom)) {
+    for (auto const& r : move_area_func(win->space, old_subspace, strut_area::bottom)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
             old_bottom_max = std::min(old_bottom_max, rect.y());
         }
     }
-    for (auto const& r : move_area_func(win->space, oldDesktop, strut_area::left)) {
+    for (auto const& r : move_area_func(win->space, old_subspace, strut_area::left)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
             old_left_max = std::max(old_left_max, rect.x() + rect.width());
@@ -195,25 +195,25 @@ void check_workspace_position(Win* win,
     }
 
     // These 4 compute new bounds.
-    for (auto const& r : restricted_move_area(win->space, get_desktop(*win), strut_area::top)) {
+    for (auto const& r : restricted_move_area(win->space, get_subspace(*win), strut_area::top)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             top_max = std::max(top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : restricted_move_area(win->space, get_desktop(*win), strut_area::right)) {
+    for (auto const& r : restricted_move_area(win->space, get_subspace(*win), strut_area::right)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             right_max = std::min(right_max, rect.x());
         }
     }
-    for (auto const& r : restricted_move_area(win->space, get_desktop(*win), strut_area::bottom)) {
+    for (auto const& r : restricted_move_area(win->space, get_subspace(*win), strut_area::bottom)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             bottom_max = std::min(bottom_max, rect.y());
         }
     }
-    for (auto const& r : restricted_move_area(win->space, get_desktop(*win), strut_area::left)) {
+    for (auto const& r : restricted_move_area(win->space, get_subspace(*win), strut_area::left)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             left_max = std::max(left_max, rect.x() + rect.width());
@@ -357,7 +357,7 @@ QPoint adjust_window_position(Space const& space,
         maxRect = space_window_area(space,
                                     area_option::maximize,
                                     pos + QRect({}, window.geo.size()).center(),
-                                    get_desktop(window));
+                                    get_subspace(window));
         auto geo = window.geo.frame;
         if (flags(window.maximizeMode() & maximize_mode::horizontal)
             && (geo.x() == maxRect.left() || geo.right() == maxRect.right())) {
@@ -379,7 +379,7 @@ QPoint adjust_window_position(Space const& space,
             = base::get_nearest_output(outputs, pos + QRect({}, window.geo.size()).center());
 
         if (maxRect.isNull()) {
-            maxRect = space_window_area(space, area_option::movement, output, get_desktop(window));
+            maxRect = space_window_area(space, area_option::movement, output, get_subspace(window));
         }
 
         const int xmin = maxRect.left();
@@ -479,9 +479,9 @@ QPoint adjust_window_position(Space const& space,
                                if (!win->isShown()) {
                                    return;
                                }
-                               if (!on_desktop(*win, get_desktop(window))
-                                   && !on_desktop(window, get_desktop(*win))) {
-                                   // wrong virtual desktop
+                               if (!on_subspace(*win, get_subspace(window))
+                                   && !on_subspace(window, get_subspace(*win))) {
+                                   // wrong subspace
                                    return;
                                }
                                if (is_desktop(win) || is_splash(win) || is_applet_popup(win)) {
@@ -596,7 +596,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
         auto const maxRect = space_window_area(space,
                                                area_option::movement,
                                                QRect(QPoint(0, 0), window.geo.size()).center(),
-                                               get_desktop(window));
+                                               get_subspace(window));
         const int xmin = maxRect.left();
         const int xmax = maxRect.right(); // desk size
         const int ymin = maxRect.top();
@@ -692,8 +692,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
             for (auto win : space.windows) {
                 std::visit(
                     overload{[&](auto&& win) {
-                        if (!win->control
-                            || !on_desktop(*win, space.virtual_desktop_manager->current())
+                        if (!win->control || !on_subspace(*win, space.subspace_manager->current())
                             || win->control->minimized) {
                             return;
                         }

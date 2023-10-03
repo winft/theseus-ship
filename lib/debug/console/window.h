@@ -202,27 +202,27 @@ public:
         }
     }
 
-    QVector<win::virtual_desktop*> desktops() const override
+    QVector<win::subspace*> desktops() const override
     {
-        return win::get_desktops(*ref_win);
+        return win::get_subspaces(*ref_win);
     }
 
-    void setDesktops(QVector<win::virtual_desktop*> desktops) override
+    void setDesktops(QVector<win::subspace*> subs) override
     {
         if (ref_win->control) {
-            win::set_desktops(*ref_win, desktops);
+            win::set_subspaces(*ref_win, subs);
         }
     }
 
     bool isOnAllDesktops() const override
     {
-        return win::on_all_desktops(*ref_win);
+        return win::on_all_subspaces(*ref_win);
     }
 
     void setOnAllDesktops(bool set) override
     {
         if (ref_win->control) {
-            win::set_on_all_desktops(*ref_win, set);
+            win::set_on_all_subspaces(*ref_win, set);
         }
     }
 

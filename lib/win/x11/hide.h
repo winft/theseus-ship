@@ -58,9 +58,9 @@ void export_mapping_state(Win* win, int state)
 template<typename Win>
 void map(Win* win)
 {
-    // XComposite invalidates backing pixmaps on unmap (minimize, different
-    // virtual desktop, etc.).  We kept the last known good pixmap around
-    // for use in effects, but now we want to have access to the new pixmap
+    // XComposite invalidates backing pixmaps on unmap (minimize, different subspace, etc.). We kept
+    // the last known good pixmap around for use in effects, but now we want to have access to the
+    // new pixmap.
     if (win->space.base.render->compositor->scene) {
         discard_buffer(*win);
     }
@@ -204,7 +204,7 @@ void update_visibility(Win* win)
     }
 
     win->net_info->setState(net::States(), net::Hidden);
-    if (!on_current_desktop(*win)) {
+    if (!on_current_subspace(*win)) {
         if (win->space.base.render->compositor->scene
             && render_options->qobject->hiddenPreviews() != hidden_preview_t::never) {
             internal_keep(win);

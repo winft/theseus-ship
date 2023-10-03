@@ -15,24 +15,24 @@ namespace KWin::win
 
 /**
  * @brief Finds the best window to become the new active window in the focus chain for the given
- * virtual @p desktop on the given @p output.
+ * virtual @p subspace on the given @p output.
  *
  * This method makes only sense to use if separate output focus is used. If separate output
  * focus is disabled the @p output is ignored. If no window for activation is found @c null is
  * returned.
  *
- * @param desktop The virtual desktop to look for a window for activation
+ * @param subspace The subspace to look for a window for activation
  * @param output The output to constrain the search on with separate output focus
  * @return The window which could be activated or @c null if there is none.
  */
 template<typename Space>
-auto focus_chain_get_for_activation(Space& space, uint desktop, base::output const* output)
+auto focus_chain_get_for_activation(Space& space, uint subspace, base::output const* output)
     -> std::optional<typename Space::window_t>
 {
     auto& manager = space.stacking.focus_chain;
 
-    auto desk_it = manager.chains.desktops.find(desktop);
-    if (desk_it == manager.chains.desktops.end()) {
+    auto desk_it = manager.chains.subspaces.find(subspace);
+    if (desk_it == manager.chains.subspaces.end()) {
         return {};
     }
 
@@ -59,16 +59,16 @@ auto focus_chain_get_for_activation(Space& space, uint desktop, base::output con
 }
 
 template<typename Space>
-auto focus_chain_get_for_activation_on_current_output(Space& space, uint desktop)
+auto focus_chain_get_for_activation_on_current_output(Space& space, uint subspace)
     -> std::optional<typename Space::window_t>
 {
-    return focus_chain_get_for_activation(space, desktop, get_current_output(space));
+    return focus_chain_get_for_activation(space, subspace, get_current_output(space));
 }
 
 template<typename Space, typename Win, typename Output>
 bool focus_chain_is_usable_focus_candidate(Space& space, Win& window, Output const* output)
 {
-    if (!window.isShown() || !on_current_desktop(window)) {
+    if (!window.isShown() || !on_current_subspace(window)) {
         return false;
     }
 
@@ -80,26 +80,26 @@ bool focus_chain_is_usable_focus_candidate(Space& space, Win& window, Output con
 }
 
 /**
- * @brief Queries the focus chain for @p output and @p desktop for the next window in relation to
+ * @brief Queries the focus chain for @p output and @p subspace for the next window in relation to
  * the given @p reference.
  *
  * The method finds the first usable window which is not the @p reference Client. If no Client
  * can be found @c null is returned
  *
  * @param reference The reference window which should not be returned
- * @param desktop The virtual desktop whose focus chain should be used
+ * @param subspace The subspace whose focus chain should be used
  * @return *The next usable window or @c null if none can be found.
  */
 template<typename Space, typename Output>
 auto focus_chain_next(Space& space,
                       std::optional<typename Space::window_t> reference,
-                      uint desktop,
+                      uint subspace,
                       Output const* output) -> std::optional<typename Space::window_t>
 {
     auto& manager = space.stacking.focus_chain;
 
-    auto desk_it = manager.chains.desktops.find(desktop);
-    if (desk_it == manager.chains.desktops.end()) {
+    auto desk_it = manager.chains.subspaces.find(subspace);
+    if (desk_it == manager.chains.subspaces.end()) {
         return {};
     }
 

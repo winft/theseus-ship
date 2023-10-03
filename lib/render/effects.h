@@ -574,11 +574,11 @@ public:
                    *static_cast<effect_window_t*>(w)->window.ref_win);
     }
 
-    void windowToDesktop(EffectWindow* w, int desktop) override
+    void windowToDesktop(EffectWindow* w, int subspace) override
     {
         std::visit(overload{[&, this](auto&& win) {
                        if (win->control && !win::is_desktop(win) && !win::is_dock(win)) {
-                           win::send_window_to_desktop(get_space(), win, desktop, true);
+                           win::send_window_to_subspace(get_space(), win, subspace, true);
                        }
                    }},
                    *static_cast<effect_window_t*>(w)->window.ref_win);
@@ -590,20 +590,20 @@ public:
                        if (!win->control || win::is_desktop(win) || win::is_dock(win)) {
                            return;
                        }
-                       QVector<win::virtual_desktop*> desktops;
+                       QVector<win::subspace*> desktops;
                        desktops.reserve(desktopIds.count());
                        for (uint x11Id : desktopIds) {
-                           if (x11Id > get_space().virtual_desktop_manager->count()) {
+                           if (x11Id > get_space().subspace_manager->count()) {
                                continue;
                            }
-                           auto d = get_space().virtual_desktop_manager->desktopForX11Id(x11Id);
+                           auto d = get_space().subspace_manager->subspace_for_x11id(x11Id);
                            Q_ASSERT(d);
                            if (desktops.contains(d)) {
                                continue;
                            }
                            desktops << d;
                        }
-                       win::set_desktops(*win, desktops);
+                       win::set_subspaces(*win, desktops);
                    }},
                    *static_cast<effect_window_t*>(w)->window.ref_win);
     }
@@ -631,27 +631,27 @@ public:
 
     int currentDesktop() const override
     {
-        return get_space().virtual_desktop_manager->current();
+        return get_space().subspace_manager->current();
     }
 
     int numberOfDesktops() const override
     {
-        return get_space().virtual_desktop_manager->count();
+        return get_space().subspace_manager->count();
     }
 
     void setCurrentDesktop(int desktop) override
     {
-        get_space().virtual_desktop_manager->setCurrent(desktop);
+        get_space().subspace_manager->setCurrent(desktop);
     }
 
     void setNumberOfDesktops(int desktops) override
     {
-        get_space().virtual_desktop_manager->setCount(desktops);
+        get_space().subspace_manager->setCount(desktops);
     }
 
     QSize desktopGridSize() const override
     {
-        return get_space().virtual_desktop_manager->grid().size();
+        return get_space().subspace_manager->grid().size();
     }
 
     int workspaceWidth() const override
@@ -666,7 +666,7 @@ public:
 
     int desktopAtCoords(QPoint coords) const override
     {
-        if (auto vd = get_space().virtual_desktop_manager->grid().at(coords)) {
+        if (auto vd = get_space().subspace_manager->grid().at(coords)) {
             return vd->x11DesktopNumber();
         }
         return 0;
@@ -674,12 +674,12 @@ public:
 
     QPoint desktopGridCoords(int id) const override
     {
-        return get_space().virtual_desktop_manager->grid().gridCoords(id);
+        return get_space().subspace_manager->grid().gridCoords(id);
     }
 
     QPoint desktopCoords(int id) const override
     {
-        auto coords = get_space().virtual_desktop_manager->grid().gridCoords(id);
+        auto coords = get_space().subspace_manager->grid().gridCoords(id);
         if (coords.x() == -1) {
             return QPoint(-1, -1);
         }
@@ -689,27 +689,27 @@ public:
 
     int desktopAbove(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().virtual_desktop_manager->above(desktop, wrap);
+        return get_space().subspace_manager->above(desktop, wrap);
     }
 
     int desktopToRight(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().virtual_desktop_manager->toRight(desktop, wrap);
+        return get_space().subspace_manager->toRight(desktop, wrap);
     }
 
     int desktopBelow(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().virtual_desktop_manager->below(desktop, wrap);
+        return get_space().subspace_manager->below(desktop, wrap);
     }
 
     int desktopToLeft(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().virtual_desktop_manager->toLeft(desktop, wrap);
+        return get_space().subspace_manager->toLeft(desktop, wrap);
     }
 
     QString desktopName(int desktop) const override
     {
-        return get_space().virtual_desktop_manager->name(desktop);
+        return get_space().subspace_manager->name(desktop);
     }
 
     EffectWindow* find_window_by_wid(WId id) const override
@@ -907,7 +907,7 @@ public:
                                   get_space(),
                                   static_cast<win::area_option>(opt),
                                   win->geo.frame.center(),
-                                  get_space().virtual_desktop_manager->current());
+                                  get_space().subspace_manager->current());
                           }},
                           *static_cast<effect_window_t const*>(eff_win)->window.ref_win);
     }

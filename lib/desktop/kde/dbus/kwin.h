@@ -167,7 +167,7 @@ public:
 
     void unclutter_desktop_impl() override
     {
-        win::unclutter_desktop(space);
+        win::unclutter_subspace(space);
     }
 
     QString support_information_impl() override
@@ -186,7 +186,7 @@ public:
 
     int current_desktop_impl() override
     {
-        return space.virtual_desktop_manager->current();
+        return space.subspace_manager->current();
     }
 
     void show_desktop_impl(bool show) override
@@ -196,19 +196,17 @@ public:
 
     bool set_current_desktop_impl(int desktop) override
     {
-        return space.virtual_desktop_manager->setCurrent(desktop);
+        return space.subspace_manager->setCurrent(desktop);
     }
 
     void next_desktop_impl() override
     {
-        space.virtual_desktop_manager->setCurrent(
-            space.virtual_desktop_manager->next(nullptr, false));
+        space.subspace_manager->setCurrent(space.subspace_manager->next(nullptr, false));
     }
 
     void previous_desktop_impl() override
     {
-        space.virtual_desktop_manager->setCurrent(
-            space.virtual_desktop_manager->previous(nullptr, false));
+        space.subspace_manager->setCurrent(space.subspace_manager->previous(nullptr, false));
     }
 
     void show_debug_console_impl() override
@@ -305,7 +303,7 @@ private:
             {QStringLiteral("y"), win->geo.pos().y()},
             {QStringLiteral("width"), win->geo.size().width()},
             {QStringLiteral("height"), win->geo.size().height()},
-            {QStringLiteral("desktops"), win::desktop_ids(*win)},
+            {QStringLiteral("desktops"), win::subspaces_ids(*win)},
             {QStringLiteral("minimized"), win->control->minimized},
             {QStringLiteral("shaded"), false},
             {QStringLiteral("fullscreen"), win->control->fullscreen},

@@ -185,12 +185,12 @@ public:
 protected:
     void changeNumberOfDesktops(int n) override
     {
-        space.virtual_desktop_manager->setCount(n);
+        space.subspace_manager->setCount(n);
     }
 
     void changeCurrentDesktop(int d) override
     {
-        space.virtual_desktop_manager->setCurrent(d);
+        space.subspace_manager->setCurrent(d);
     }
 
     void changeActiveWindow(xcb_window_t w,

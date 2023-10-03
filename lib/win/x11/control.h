@@ -27,9 +27,9 @@ public:
     {
     }
 
-    void set_desktops(QVector<virtual_desktop*> /*desktops*/) override
+    void set_subspaces(QVector<subspace*> /*subs*/) override
     {
-        m_window->net_info->setDesktop(get_desktop(*m_window));
+        m_window->net_info->setDesktop(get_subspace(*m_window));
     }
 
     void set_skip_pager(bool set) override

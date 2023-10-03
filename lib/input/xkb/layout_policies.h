@@ -149,15 +149,15 @@ private:
 };
 
 template<typename Manager>
-class virtual_desktop_layout_policy : public layout_policy<Manager>
+class subspace_layout_policy : public layout_policy<Manager>
 {
 public:
-    virtual_desktop_layout_policy(Manager* manager, KConfigGroup const& config)
+    subspace_layout_policy(Manager* manager, KConfigGroup const& config)
         : layout_policy<Manager>(manager, config)
     {
         auto& space = manager->redirect.space;
-        QObject::connect(space.virtual_desktop_manager->qobject.get(),
-                         &win::virtual_desktop_manager_qobject::currentChanged,
+        QObject::connect(space.subspace_manager->qobject.get(),
+                         &win::subspace_manager_qobject::currentChanged,
                          this->qobject.get(),
                          [this] { handle_desktop_change(); });
 
@@ -168,14 +168,14 @@ public:
                          [this] {
                              this->clear_layouts();
 
-                             for (auto const& [vd, layout] : layouts) {
+                             for (auto const& [subspace, layout] : layouts) {
                                  if (!layout) {
                                      continue;
                                  }
 
                                  this->config.writeEntry(this->default_layout_entry_key()
                                                              % QLatin1String(QByteArray::number(
-                                                                 vd->x11DesktopNumber())),
+                                                                 subspace->x11DesktopNumber())),
                                                          layout);
                              }
                          });
@@ -186,21 +186,21 @@ public:
             this->qobject.get(),
             [this] {
                 if (this->get_keyboard()->layouts_count() > 1) {
-                    auto const& desktops
-                        = this->manager->redirect.space.virtual_desktop_manager->desktops();
+                    auto const& subspaces
+                        = this->manager->redirect.space.subspace_manager->subspaces();
 
-                    for (auto const desktop : desktops) {
+                    for (auto const subspace : subspaces) {
                         uint const layout = this->config.readEntry(
                             this->default_layout_entry_key()
-                                % QLatin1String(QByteArray::number(desktop->x11DesktopNumber())),
+                                % QLatin1String(QByteArray::number(subspace->x11DesktopNumber())),
                             0u);
 
                         if (layout) {
-                            layouts.insert({desktop, layout});
-                            QObject::connect(desktop,
-                                             &win::virtual_desktop::aboutToBeDestroyed,
+                            layouts.insert({subspace, layout});
+                            QObject::connect(subspace,
+                                             &win::subspace::aboutToBeDestroyed,
                                              this->qobject.get(),
-                                             [this, desktop] { layouts.erase(desktop); });
+                                             [this, subspace] { layouts.erase(subspace); });
                         }
                     }
 
@@ -222,7 +222,7 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto desktop = this->manager->redirect.space.virtual_desktop_manager->currentDesktop();
+        auto desktop = this->manager->redirect.space.subspace_manager->current_subspace();
         if (!desktop) {
             return;
         }
@@ -232,7 +232,7 @@ protected:
         if (it == layouts.end()) {
             layouts.insert({desktop, index});
             QObject::connect(desktop,
-                             &win::virtual_desktop::aboutToBeDestroyed,
+                             &win::subspace::aboutToBeDestroyed,
                              this->qobject.get(),
                              [this, desktop] { layouts.erase(desktop); });
         } else {
@@ -243,13 +243,12 @@ protected:
 private:
     void handle_desktop_change()
     {
-        if (auto desktop
-            = this->manager->redirect.space.virtual_desktop_manager->currentDesktop()) {
+        if (auto desktop = this->manager->redirect.space.subspace_manager->current_subspace()) {
             this->set_layout(get_layout(layouts, desktop));
         }
     }
 
-    std::unordered_map<win::virtual_desktop*, uint32_t> layouts;
+    std::unordered_map<win::subspace*, uint32_t> layouts;
 };
 
 template<typename Manager>
@@ -483,7 +482,7 @@ std::unique_ptr<layout_policy<Manager>>
 create_layout_policy(Manager* manager, KConfigGroup const& config, QString const& policy)
 {
     if (policy.toLower() == QStringLiteral("desktop")) {
-        return std::make_unique<virtual_desktop_layout_policy<Manager>>(manager, config);
+        return std::make_unique<subspace_layout_policy<Manager>>(manager, config);
     }
     if (policy.toLower() == QStringLiteral("window")) {
         return std::make_unique<window_layout_policy<Manager>>(manager);

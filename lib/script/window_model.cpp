@@ -148,15 +148,15 @@ void window_filter_model::resetActivity()
 {
 }
 
-win::virtual_desktop* window_filter_model::desktop() const
+win::subspace* window_filter_model::desktop() const
 {
     return m_desktop;
 }
 
-void window_filter_model::setDesktop(win::virtual_desktop* desktop)
+void window_filter_model::setDesktop(win::subspace* sub)
 {
-    if (m_desktop != desktop) {
-        m_desktop = desktop;
+    if (m_desktop != sub) {
+        m_desktop = sub;
         Q_EMIT desktopChanged();
         invalidateFilter();
     }

@@ -947,12 +947,12 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(win::decoration(c));
     }
 
-    SECTION("send window with transient to desktop")
+    SECTION("send window with transient to subspace")
     {
-        // this test verifies that when sending a client to a desktop all transients are also send
-        // to that desktop
+        // this test verifies that when sending a client to a subspace all transients are also send
+        // to that subspace
 
-        setup.base->space->virtual_desktop_manager->setCount(2);
+        setup.base->space->subspace_manager->setCount(2);
         std::unique_ptr<Surface> surface{create_surface()};
         std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
 
@@ -971,28 +971,28 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(transient->transient->lead(), c);
         QVERIFY(contains(c->transient->children, transient));
 
-        QCOMPARE(win::get_desktop(*c), 1);
-        QVERIFY(!win::on_all_desktops(*c));
-        QCOMPARE(win::get_desktop(*transient), 1);
-        QVERIFY(!win::on_all_desktops(*transient));
-        win::active_window_to_desktop(*setup.base->space, 2);
+        QCOMPARE(win::get_subspace(*c), 1);
+        QVERIFY(!win::on_all_subspaces(*c));
+        QCOMPARE(win::get_subspace(*transient), 1);
+        QVERIFY(!win::on_all_subspaces(*transient));
+        win::active_window_to_subspace(*setup.base->space, 2);
 
-        QCOMPARE(win::get_desktop(*c), 1);
-        QCOMPARE(win::get_desktop(*transient), 2);
+        QCOMPARE(win::get_subspace(*c), 1);
+        QCOMPARE(win::get_subspace(*transient), 2);
 
         // activate c
         win::activate_window(*setup.base->space, *c);
         QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QVERIFY(c->control->active);
 
-        // and send it to the desktop it's already on
-        QCOMPARE(win::get_desktop(*c), 1);
-        QCOMPARE(win::get_desktop(*transient), 2);
-        win::active_window_to_desktop(*setup.base->space, 1);
+        // and send it to the subspace it's already on
+        QCOMPARE(win::get_subspace(*c), 1);
+        QCOMPARE(win::get_subspace(*transient), 2);
+        win::active_window_to_subspace(*setup.base->space, 1);
 
-        // which should move the transient back to the desktop
-        QCOMPARE(win::get_desktop(*c), 1);
-        QCOMPARE(win::get_desktop(*transient), 1);
+        // which should move the transient back to the subspace
+        QCOMPARE(win::get_subspace(*c), 1);
+        QCOMPARE(win::get_subspace(*transient), 1);
     }
 
     SECTION("minimize window with transients")

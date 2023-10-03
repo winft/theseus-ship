@@ -8,7 +8,6 @@
 #include "base/output_helpers.h"
 #include "win/desktop_get.h"
 #include "win/space_areas.h"
-#include "win/virtual_desktops.h"
 
 namespace KWin::win::wayland
 {
@@ -20,7 +19,7 @@ void update_space_areas(Window* win,
                         space_areas& areas)
 {
     auto const screens_count = win->space.base.outputs.size();
-    auto const desktops_count = static_cast<int>(win->space.virtual_desktop_manager->count());
+    auto const subspaces_count = static_cast<int>(win->space.subspace_manager->count());
 
     // Assuming that only docks have "struts" and that all docks have a strut.
     if (!win->hasStrut()) {
@@ -75,29 +74,29 @@ void update_space_areas(Window* win,
     auto const strut_region = strut_rects{strut_rect(win->geo.frame, margins_to_strut_area(strut))};
     auto rect = desktop_area - margins(QRect({}, win->space.base.topology.size));
 
-    if (on_all_desktops(*win)) {
-        for (int desktop = 1; desktop <= desktops_count; ++desktop) {
-            areas.work[desktop] = areas.work[desktop].intersected(rect);
+    if (on_all_subspaces(*win)) {
+        for (int sub = 1; sub <= subspaces_count; ++sub) {
+            areas.work[sub] = areas.work[sub].intersected(rect);
 
             for (size_t screen = 0; screen < screens_count; ++screen) {
-                auto& screen_area = areas.screen[desktop][screen];
+                auto& screen_area = areas.screen[sub][screen];
                 auto intersect = screens_geos[screen] - margins(screens_geos[screen]);
                 screen_area = screen_area.intersected(intersect);
             }
 
-            auto& resmove = areas.restrictedmove[desktop];
+            auto& resmove = areas.restrictedmove[sub];
             resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
         }
     } else {
-        auto desktop = get_desktop(*win);
-        areas.work[desktop] = areas.work[desktop].intersected(rect);
+        auto subspace = get_subspace(*win);
+        areas.work[subspace] = areas.work[subspace].intersected(rect);
 
         for (size_t screen = 0; screen < screens_count; screen++) {
-            areas.screen[desktop][screen] = areas.screen[desktop][screen].intersected(
+            areas.screen[subspace][screen] = areas.screen[subspace][screen].intersected(
                 screens_geos[screen] - margins(screens_geos[screen]));
         }
 
-        auto& resmove = areas.restrictedmove[desktop];
+        auto& resmove = areas.restrictedmove[subspace];
         resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
     }
 }

@@ -65,10 +65,10 @@ public:
         handle_desktop_resize(*this, size);
     }
 
-    void handle_desktop_changed(uint desktop)
+    void handle_subspace_changed(uint subspace)
     {
         // TODO(romangg): Only call with Xwayland compiled.
-        x11::popagate_desktop_change(*this, desktop);
+        x11::popagate_subspace_change(*this, subspace);
         idle_update_all(*this);
     }
 
@@ -168,7 +168,7 @@ public:
     std::unique_ptr<base::x11::event_filter> m_movingClientFilter;
     std::unique_ptr<base::x11::event_filter> m_syncAlarmFilter;
 
-    int m_initialDesktop{1};
+    int initial_subspace{1};
     std::unique_ptr<base::x11::xcb::window> m_nullFocus;
 
     int block_focus{0};
@@ -182,7 +182,7 @@ public:
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<win::strut_rects> oldrestrictedmovearea;
 
-    std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
+    std::unique_ptr<win::subspace_manager> subspace_manager;
     std::unique_ptr<win::session_manager> session_manager;
 
     QTimer* m_quickTileCombineTimer{nullptr};
@@ -245,7 +245,7 @@ public:
     std::unique_ptr<Wrapland::Server::plasma_activation_feedback> plasma_activation_feedback;
     std::unique_ptr<Wrapland::Server::PlasmaShell> plasma_shell;
     std::unique_ptr<Wrapland::Server::PlasmaWindowManager> plasma_window_manager;
-    std::unique_ptr<Wrapland::Server::PlasmaVirtualDesktopManager> plasma_virtual_desktop_manager;
+    std::unique_ptr<Wrapland::Server::PlasmaVirtualDesktopManager> plasma_subspace_manager;
 
     std::unique_ptr<Wrapland::Server::IdleInhibitManagerV1> idle_inhibit_manager_v1;
 

@@ -225,21 +225,17 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win)
 }
 
 template<typename Win>
-void control_create_set_desktops(Win& win,
-                                 std::optional<QVector<virtual_desktop*>> desktops,
-                                 bool isMapped)
+void control_create_set_subspaces(Win& win, std::optional<QVector<subspace*>> subs, bool isMapped)
 {
-    using desks = QVector<virtual_desktop*>;
+    using desks = QVector<subspace*>;
 
-    if (!desktops.has_value()) {
-        desktops = is_desktop(&win) ? desks{}
-                                    : desks{win.space.virtual_desktop_manager->currentDesktop()};
+    if (!subs.has_value()) {
+        subs = is_desktop(&win) ? desks{} : desks{win.space.subspace_manager->current_subspace()};
     }
 
-    set_desktops(
-        win,
-        win.control->rules.checkDesktops(*win.space.virtual_desktop_manager, *desktops, !isMapped));
-    win.net_info->setDesktop(get_desktop(win));
+    set_subspaces(win,
+                  win.control->rules.checkDesktops(*win.space.subspace_manager, *subs, !isMapped));
+    win.net_info->setDesktop(get_subspace(win));
 }
 
 template<typename Win>
@@ -258,22 +254,21 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
     init_minimize = win.control->rules.checkMinimize(init_minimize, !isMapped);
     win.user_no_border = win.control->rules.checkNoBorder(win.user_no_border, !isMapped);
 
-    // We setup compositing already here so a desktop presence change can access effects.
+    // We setup compositing already here so a subspace presence change can access effects.
     win.setupCompositing();
 
-    // Initial desktop placement
-    using desks = QVector<virtual_desktop*>;
-    std::optional<desks> initial_desktops;
+    // Initial subspace placement
+    using desks = QVector<subspace*>;
+    std::optional<desks> initial_subspaces;
 
     if (session->onAllDesktops) {
-        initial_desktops = desks{};
-    } else if (auto desktop
-               = win.space.virtual_desktop_manager->desktopForX11Id(session->desktop)) {
-        initial_desktops = desks{desktop};
+        initial_subspaces = desks{};
+    } else if (auto subspace = win.space.subspace_manager->subspace_for_x11id(session->desktop)) {
+        initial_subspaces = desks{subspace};
     }
 
-    control_create_set_desktops(win, std::move(initial_desktops), isMapped);
-    propagate_on_all_desktops_to_children(win);
+    control_create_set_subspaces(win, std::move(initial_subspaces), isMapped);
+    propagate_on_all_subspaces_to_children(win);
 
     win.geo.client_frame_extents = gtk_frame_extents(&win);
     win.geo.update.original.client_frame_extents = win.geo.client_frame_extents;
@@ -385,14 +380,14 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
                                   *win.space.stacking.active));
         }
 
-        if (on_current_desktop(win) && !isMapped && !allow && session->stackingOrder < 0) {
+        if (on_current_subspace(win) && !isMapped && !allow && session->stackingOrder < 0) {
             restack_client_under_active(win.space, win);
         }
 
         update_visibility(&win);
 
         if (!isMapped) {
-            if (allow && on_current_desktop(win)) {
+            if (allow && on_current_subspace(win)) {
                 if (!is_special_window(&win)) {
                     if (win.space.options->qobject->focusPolicyIsReasonable()
                         && wants_tab_focus(&win)) {
@@ -421,16 +416,16 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
     init_minimize = win.control->rules.checkMinimize(init_minimize, !isMapped);
     win.user_no_border = win.control->rules.checkNoBorder(win.user_no_border, !isMapped);
 
-    // We setup compositing already here so a desktop presence change can access effects.
+    // We setup compositing already here so a subspace presence change can access effects.
     win.setupCompositing();
 
-    // Initial desktop placement
-    using desks = QVector<virtual_desktop*>;
-    std::optional<desks> initial_desktops;
+    // Initial subspace placement
+    using desks = QVector<subspace*>;
+    std::optional<desks> initial_subspaces;
 
     // If this window is transient, ensure that it is opened on the
     // same window as its parent.  this is necessary when an application
-    // starts up on a different desktop than is currently displayed.
+    // starts up on a different subspace than is currently displayed.
     if (win.transient->lead()) {
         auto leads = win.transient->leads();
         bool on_current = false;
@@ -447,40 +442,40 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
             }
 
             maincl = lead;
-            if (on_current_desktop(*lead)) {
+            if (on_current_subspace(*lead)) {
                 on_current = true;
             }
-            if (on_all_desktops(*lead)) {
+            if (on_all_subspaces(*lead)) {
                 on_all = true;
             }
         }
 
         if (on_all) {
-            initial_desktops = desks{};
+            initial_subspaces = desks{};
         } else if (on_current) {
-            initial_desktops = desks{win.space.virtual_desktop_manager->currentDesktop()};
+            initial_subspaces = desks{win.space.subspace_manager->current_subspace()};
         } else if (maincl != nullptr) {
-            initial_desktops = maincl->topo.desktops;
+            initial_subspaces = maincl->topo.subspaces;
         }
     } else {
         // A transient shall appear on its leader and not drag that around.
-        auto desktop_id = 0;
+        auto subspace_id = 0;
         if (win.net_info->desktop()) {
             // Window had the initial desktop property, force it
-            desktop_id = win.net_info->desktop();
+            subspace_id = win.net_info->desktop();
         }
-        if (desktop_id) {
-            if (desktop_id == net::OnAllDesktops) {
-                initial_desktops = desks{};
-            } else if (auto desktop
-                       = win.space.virtual_desktop_manager->desktopForX11Id(desktop_id)) {
-                initial_desktops = desks{desktop};
+        if (subspace_id) {
+            if (subspace_id == net::OnAllDesktops) {
+                initial_subspaces = desks{};
+            } else if (auto subspace
+                       = win.space.subspace_manager->subspace_for_x11id(subspace_id)) {
+                initial_subspaces = desks{subspace};
             }
         }
     }
 
-    control_create_set_desktops(win, std::move(initial_desktops), isMapped);
-    propagate_on_all_desktops_to_children(win);
+    control_create_set_subspaces(win, std::move(initial_subspaces), isMapped);
+    propagate_on_all_subspaces_to_children(win);
 
     win.geo.client_frame_extents = gtk_frame_extents(&win);
     win.geo.update.original.client_frame_extents = win.geo.client_frame_extents;
@@ -605,18 +600,18 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
 
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
-        if (!on_current_desktop(win) && !isMapped && (allow || isSessionSaving)) {
-            win.space.virtual_desktop_manager->setCurrent(get_desktop(win));
+        if (!on_current_subspace(win) && !isMapped && (allow || isSessionSaving)) {
+            win.space.subspace_manager->setCurrent(get_subspace(win));
         }
 
-        if (on_current_desktop(win) && !isMapped && !allow) {
+        if (on_current_subspace(win) && !isMapped && !allow) {
             restack_client_under_active(win.space, win);
         }
 
         update_visibility(&win);
 
         if (!isMapped) {
-            if (allow && on_current_desktop(win)) {
+            if (allow && on_current_subspace(win)) {
                 if (!is_special_window(&win)) {
                     if (win.space.options->qobject->focusPolicyIsReasonable()
                         && wants_tab_focus(&win)) {

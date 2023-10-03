@@ -105,7 +105,7 @@ private Q_SLOTS:
 private:
     QList<RuleItem *> m_ruleList;
     QHash<QString, RuleItem *> m_rules;
-    win::dbus::virtual_desktop_data_vector m_virtualDesktops;
+    win::dbus::subspace_data_vector m_virtualDesktops;
     win::rules::settings* m_settings{nullptr};
 };
 

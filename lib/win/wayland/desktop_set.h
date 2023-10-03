@@ -14,14 +14,14 @@ namespace KWin::win::wayland
 {
 
 template<typename Win>
-void desktops_announce(Win& win, QVector<virtual_desktop*> desktops)
+void subspaces_announce(Win& win, QVector<subspace*> subs)
 {
     auto management = win.control->plasma_wayland_integration;
     if (!management) {
         return;
     }
 
-    if (desktops.isEmpty()) {
+    if (subs.isEmpty()) {
         management->setOnAllDesktops(true);
         return;
     }
@@ -29,8 +29,8 @@ void desktops_announce(Win& win, QVector<virtual_desktop*> desktops)
     management->setOnAllDesktops(false);
 
     auto currentDesktops = management->plasmaVirtualDesktops();
-    for (auto desktop : desktops) {
-        auto id = desktop->id().toStdString();
+    for (auto sub : subs) {
+        auto id = sub->id().toStdString();
         if (!contains(currentDesktops, id)) {
             management->addPlasmaVirtualDesktop(id);
         } else {

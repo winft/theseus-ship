@@ -16,28 +16,28 @@ namespace KWin::win
 {
 
 template<typename Space, typename Win>
-void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activate)
+void send_window_to_subspace(Space& space, Win* window, int desk, bool dont_activate)
 {
     if ((desk < 1 && desk != x11_desktop_number_on_all)
-        || desk > static_cast<int>(space.virtual_desktop_manager->count())) {
+        || desk > static_cast<int>(space.subspace_manager->count())) {
         return;
     }
 
-    auto old_desktop = get_desktop(*window);
-    auto was_on_desktop = on_desktop(*window, desk) || on_all_desktops(*window);
-    set_desktop(*window, desk);
+    auto old_subspace = get_subspace(*window);
+    auto was_on_subspace = on_subspace(*window, desk) || on_all_subspaces(*window);
+    set_subspace(*window, desk);
 
-    if (get_desktop(*window) != desk) {
-        // No change or desktop forced
+    if (get_subspace(*window) != desk) {
+        // No change or subspace forced
         return;
     }
 
     // window did range checking.
-    desk = get_desktop(*window);
+    desk = get_subspace(*window);
 
-    if (on_desktop(*window, space.virtual_desktop_manager->current())) {
+    if (on_subspace(*window, space.subspace_manager->current())) {
         if (win::wants_tab_focus(window) && space.options->qobject->focusPolicyIsReasonable()
-            && !was_on_desktop && // for stickyness changes
+            && !was_on_subspace && // for stickyness changes
             !dont_activate) {
             request_focus(space, *window);
         } else {
@@ -47,13 +47,13 @@ void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activ
         raise_window(space, window);
     }
 
-    check_workspace_position(window, QRect(), old_desktop);
+    check_workspace_position(window, QRect(), old_subspace);
 
     auto const transients_stacking_order
         = restacked_by_space_stacking_order(space, window->transient->children);
     for (auto const& transient : transients_stacking_order) {
         if (transient->control) {
-            send_window_to_desktop(space, transient, desk, dont_activate);
+            send_window_to_subspace(space, transient, desk, dont_activate);
         }
     }
 
@@ -61,54 +61,54 @@ void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activ
 }
 
 template<typename Space>
-void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
+void update_client_visibility_on_subspace_change(Space* space, uint subspace)
 {
-    // Restore the focus on this desktop afterwards.
+    // Restore the focus on this subspace afterwards.
     focus_blocker<Space> blocker(*space);
 
     if (auto& mov_res = space->move_resize_window) {
         std::visit(overload{[&](auto&& win) {
-                       if (!on_desktop(*win, newDesktop)) {
-                           win::set_desktop(*win, newDesktop);
+                       if (!on_subspace(*win, subspace)) {
+                           win::set_subspace(*win, subspace);
                        }
                    }},
                    *mov_res);
     }
 
-    space->handle_desktop_changed(newDesktop);
+    space->handle_subspace_changed(subspace);
 }
 
 template<typename Space>
-void handle_desktop_count_changed(Space& space, unsigned int /*prev*/, unsigned int next)
+void handle_subspace_count_changed(Space& space, unsigned int /*prev*/, unsigned int next)
 {
     reset_space_areas(space, next);
 }
 
 template<typename Win>
-void window_to_desktop(Win& window, virtual_desktop* desktop)
+void window_to_subspace(Win& window, subspace* sub)
 {
     auto& ws = window.space;
-    auto& vds = ws.virtual_desktop_manager;
+    auto& vds = ws.subspace_manager;
 
     if (!is_desktop(&window) && !is_dock(&window)) {
         set_move_resize_window(ws, window);
-        vds->setCurrent(desktop);
+        vds->setCurrent(sub);
         unset_move_resize_window(ws);
     }
 }
 
 template<typename Win>
-void window_to_next_desktop(Win& window)
+void window_to_next_subspace(Win& window)
 {
     // TODO: why is win.space.options->isRollOverDesktops() not honored?
-    window_to_desktop(window, window.space.virtual_desktop_manager->next(nullptr, true));
+    window_to_subspace(window, window.space.subspace_manager->next(nullptr, true));
 }
 
 template<typename Win>
-void window_to_prev_desktop(Win& window)
+void window_to_prev_subspace(Win& window)
 {
     // TODO: why is win.space.options->isRollOverDesktops() not honored?
-    window_to_desktop(window, window.space.virtual_desktop_manager->previous(nullptr, true));
+    window_to_subspace(window, window.space.subspace_manager->previous(nullptr, true));
 }
 
 template<typename Space>

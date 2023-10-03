@@ -83,22 +83,22 @@ namespace KWin::win
 {
 
 /**
- * Returns topmost visible client. Windows on the dock, the desktop
+ * Returns topmost visible client. Windows on the dock, the subspace
  * or of any other special kind are excluded. Also if the window
  * doesn't accept focus it's excluded.
  */
 // TODO misleading name for this method, too many slightly different ways to use it
 template<typename Space>
-std::optional<typename Space::window_t> top_client_on_desktop(Space& space,
-                                                              int desktop,
-                                                              base::output const* output,
-                                                              bool unconstrained = false,
-                                                              bool only_normal = true)
+std::optional<typename Space::window_t> top_client_in_subspace(Space& space,
+                                                               int subspace,
+                                                               base::output const* output,
+                                                               bool unconstrained = false,
+                                                               bool only_normal = true)
 {
     auto const& list = unconstrained ? space.stacking.order.pre_stack : space.stacking.order.stack;
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         if (std::visit(overload{[&](auto&& win) {
-                           if (!on_desktop(*win, desktop)) {
+                           if (!on_subspace(*win, subspace)) {
                                return false;
                            }
                            if (!win->isShown()) {
@@ -272,13 +272,12 @@ void raise_or_lower_client(Space& space, Window* window)
         && contains(space.stacking.order.stack, space.stacking.most_recently_raised)
         && std::visit(overload{[](auto&& win) { return win->isShown(); }},
                       *space.stacking.most_recently_raised)
-        && on_current_desktop(*window)) {
+        && on_current_subspace(*window)) {
         topmost = space.stacking.most_recently_raised;
     } else {
-        topmost = top_client_on_desktop(
+        topmost = top_client_in_subspace(
             space,
-            on_all_desktops(*window) ? space.virtual_desktop_manager->current()
-                                     : get_desktop(*window),
+            on_all_subspaces(*window) ? space.subspace_manager->current() : get_subspace(*window),
             space.options->qobject->isSeparateScreenFocus() ? window->topo.central_output
                                                             : nullptr);
     }

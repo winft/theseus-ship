@@ -21,20 +21,19 @@ bool in_update_window_area(Space const& space)
 }
 
 /**
- * Returns the area available for clients. This is the desktop
- * geometry minus windows on the dock. Placement algorithms should
- * refer to this rather than Screens::geometry.
+ * Returns the area available for clients. This is the subspace geometry minus windows on the dock.
+ * Placement algorithms should refer to this rather than Screens::geometry.
  */
 template<typename Space>
 QRect space_window_area(Space const& space,
                         area_option opt,
                         typename Space::base_t::output_t const* output,
-                        int desktop)
+                        int subspace)
 {
     auto const& outputs = space.base.outputs;
 
-    if (desktop == x11_desktop_number_on_all || desktop == 0) {
-        desktop = space.virtual_desktop_manager->current();
+    if (subspace == x11_desktop_number_on_all || subspace == 0) {
+        subspace = space.subspace_manager->current();
     }
     if (!output) {
         output = get_current_output(space);
@@ -51,11 +50,11 @@ QRect space_window_area(Space const& space,
     QRect sarea, warea;
     sarea = (!space.areas.screen.empty()
              // screens may be missing during KWin initialization or screen config changes
-             && output_index < space.areas.screen[desktop].size())
-        ? space.areas.screen[desktop][output_index]
+             && output_index < space.areas.screen[subspace].size())
+        ? space.areas.screen[subspace][output_index]
         : output_geo;
-    warea = space.areas.work[desktop].isNull() ? QRect({}, space.base.topology.size)
-                                               : space.areas.work[desktop];
+    warea = space.areas.work[subspace].isNull() ? QRect({}, space.base.topology.size)
+                                                : space.areas.work[subspace];
 
     switch (opt) {
     case area_option::maximize:
@@ -75,16 +74,16 @@ QRect space_window_area(Space const& space,
 }
 
 template<typename Space>
-QRect space_window_area(Space const& space, area_option opt, QPoint const& p, int desktop)
+QRect space_window_area(Space const& space, area_option opt, QPoint const& p, int subspace)
 {
-    return space_window_area(space, opt, base::get_nearest_output(space.base.outputs, p), desktop);
+    return space_window_area(space, opt, base::get_nearest_output(space.base.outputs, p), subspace);
 }
 
 template<typename Space, typename Win>
 QRect space_window_area(Space const& space, area_option opt, Win const* window)
 {
     return space_window_area(
-        space, opt, pending_frame_geometry(window).center(), get_desktop(*window));
+        space, opt, pending_frame_geometry(window).center(), get_subspace(*window));
 }
 
 }

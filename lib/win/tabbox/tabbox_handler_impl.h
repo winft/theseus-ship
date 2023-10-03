@@ -30,13 +30,13 @@ public:
         , m_desktop_focus_chain(new tabbox_desktop_chain_manager(this))
     {
         // connects for DesktopFocusChainManager
-        auto& vds = tabbox->space.virtual_desktop_manager;
+        auto& vds = tabbox->space.subspace_manager;
         connect(vds->qobject.get(),
-                &win::virtual_desktop_manager_qobject::countChanged,
+                &win::subspace_manager_qobject::countChanged,
                 m_desktop_focus_chain,
                 &tabbox_desktop_chain_manager::resize);
         connect(vds->qobject.get(),
-                &win::virtual_desktop_manager_qobject::currentChanged,
+                &win::subspace_manager_qobject::currentChanged,
                 m_desktop_focus_chain,
                 &tabbox_desktop_chain_manager::add_desktop);
     }
@@ -61,19 +61,19 @@ public:
 
     int current_desktop() const override
     {
-        return m_tabbox->space.virtual_desktop_manager->current();
+        return m_tabbox->space.subspace_manager->current();
     }
 
     QString desktop_name(tabbox_client* client) const override
     {
-        auto& vds = m_tabbox->space.virtual_desktop_manager;
+        auto& vds = m_tabbox->space.subspace_manager;
 
         if (auto c = get_client_impl(client)) {
             return std::visit(overload{[&](auto&& win) {
-                                  if (on_all_desktops(*win)) {
+                                  if (on_all_subspaces(*win)) {
                                       return vds->name(vds->current());
                                   } else {
-                                      return vds->name(get_desktop(*win));
+                                      return vds->name(get_subspace(*win));
                                   }
                               }},
                               c->client());
@@ -82,9 +82,9 @@ public:
         return vds->name(vds->current());
     }
 
-    QString desktop_name(int desktop) const override
+    QString desktop_name(int subspace) const override
     {
-        return m_tabbox->space.virtual_desktop_manager->name(desktop);
+        return m_tabbox->space.subspace_manager->name(subspace);
     }
 
     bool is_kwin_compositing() const override
@@ -124,14 +124,14 @@ public:
         return false;
     }
 
-    int next_desktop_focus_chain(int desktop) const override
+    int next_desktop_focus_chain(int subspace) const override
     {
-        return m_desktop_focus_chain->next(desktop);
+        return m_desktop_focus_chain->next(subspace);
     }
 
     int number_of_desktops() const override
     {
-        return m_tabbox->space.virtual_desktop_manager->count();
+        return m_tabbox->space.subspace_manager->count();
     }
 
     tabbox_client_list stacking_order() const override
@@ -176,13 +176,13 @@ public:
                    get_client_impl(c)->client());
     }
 
-    tabbox_client* client_to_add_to_list(tabbox_client* client, int desktop) const override
+    tabbox_client* client_to_add_to_list(tabbox_client* client, int subspace) const override
     {
         if (!client) {
             return {};
         }
 
-        if (!check_desktop(client, desktop) || !check_applications(client)
+        if (!check_subspace(client, subspace) || !check_applications(client)
             || !check_minimized(client) || !check_multi_screen(client)) {
             return {};
         }
@@ -213,7 +213,7 @@ public:
             auto success{false};
             if (auto ret = std::visit(overload{[&](auto&& win) -> tabbox_client* {
                                           if (win->control && win::is_desktop(win)
-                                              && on_current_desktop(*win)
+                                              && on_current_subspace(*win)
                                               && win->topo.central_output
                                                   == win::get_current_output(m_tabbox->space)) {
                                               success = true;
@@ -267,17 +267,17 @@ private:
         return static_cast<tabbox_client_impl<typename Tabbox::window_t>*>(client);
     }
 
-    bool check_desktop(tabbox_client* client, int desktop) const
+    bool check_subspace(tabbox_client* client, int subspace) const
     {
         return std::visit(overload{[&](auto&& win) {
                               switch (config().client_desktop_mode()) {
                               case tabbox_config::AllDesktopsClients:
                                   return true;
                               case tabbox_config::ExcludeCurrentDesktopClients:
-                                  return !on_desktop(*win, desktop);
+                                  return !on_subspace(*win, subspace);
                               default:
                                   // TabBoxConfig::OnlyCurrentDesktopClients
-                                  return on_desktop(*win, desktop);
+                                  return on_subspace(*win, subspace);
                               }
                           }},
                           get_client_impl(client)->client());

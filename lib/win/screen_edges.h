@@ -817,8 +817,8 @@ private:
     void switchDesktop(QPoint const& cursorPos)
     {
         QPoint pos(cursorPos);
-        auto& vds = edger->space.virtual_desktop_manager;
-        auto const oldDesktop = vds->currentDesktop();
+        auto& vds = edger->space.subspace_manager;
+        auto const oldDesktop = vds->current_subspace();
         auto desktop = oldDesktop;
         int const OFFSET = 2;
 
@@ -847,10 +847,10 @@ private:
         }
 
         if (auto& mov_res = edger->space.move_resize_window) {
-            QVector<virtual_desktop*> desktops{desktop};
+            QVector<subspace*> desktops{desktop};
             if (std::visit(overload{[&](auto&& win) {
                                return win->control->rules.checkDesktops(
-                                   *edger->space.virtual_desktop_manager, desktops);
+                                   *edger->space.subspace_manager, desktops);
                            }},
                            *mov_res)
                 != desktops) {
@@ -861,7 +861,7 @@ private:
 
         vds->setCurrent(desktop);
 
-        if (vds->currentDesktop() != oldDesktop) {
+        if (vds->current_subspace() != oldDesktop) {
             push_back_is_blocked = true;
             edger->space.input->cursor->set_pos(pos);
 
@@ -1007,8 +1007,8 @@ public:
                          &base::options_qobject::configChanged,
                          qobject.get(),
                          [this] { reconfigure(); });
-        QObject::connect(space.virtual_desktop_manager->qobject.get(),
-                         &virtual_desktop_manager_qobject::layoutChanged,
+        QObject::connect(space.subspace_manager->qobject.get(),
+                         &subspace_manager_qobject::layoutChanged,
                          qobject.get(),
                          [this] { updateLayout(); });
 
@@ -1197,12 +1197,10 @@ public:
             if (edge->isCorner()) {
                 isToReserve ? edge->reserve() : edge->unreserve();
             } else {
-                if ((virtual_desktop_layout & Qt::Horizontal)
-                    && (edge->isLeft() || edge->isRight())) {
+                if ((subspace_layout & Qt::Horizontal) && (edge->isLeft() || edge->isRight())) {
                     isToReserve ? edge->reserve() : edge->unreserve();
                 }
-                if ((virtual_desktop_layout & Qt::Vertical)
-                    && (edge->isTop() || edge->isBottom())) {
+                if ((subspace_layout & Qt::Vertical) && (edge->isTop() || edge->isBottom())) {
                     isToReserve ? edge->reserve() : edge->unreserve();
                 }
             }
@@ -1395,7 +1393,7 @@ public:
     /// Updates virtual desktops layout, adjusts reserved borders in case of vd switching on edges.
     void updateLayout()
     {
-        auto const desktopMatrix = space.virtual_desktop_manager->grid().size();
+        auto const desktopMatrix = space.subspace_manager->grid().size();
         Qt::Orientations newLayout = {};
         if (desktopMatrix.width() > 1) {
             newLayout |= Qt::Horizontal;
@@ -1403,15 +1401,15 @@ public:
         if (desktopMatrix.height() > 1) {
             newLayout |= Qt::Vertical;
         }
-        if (newLayout == virtual_desktop_layout) {
+        if (newLayout == subspace_layout) {
             return;
         }
         if (desktop_switching.always) {
-            reserveDesktopSwitching(false, virtual_desktop_layout);
+            reserveDesktopSwitching(false, subspace_layout);
         }
-        virtual_desktop_layout = newLayout;
+        subspace_layout = newLayout;
         if (desktop_switching.always) {
-            reserveDesktopSwitching(true, virtual_desktop_layout);
+            reserveDesktopSwitching(true, subspace_layout);
         }
     }
 
@@ -1522,7 +1520,7 @@ private:
             return;
         }
         desktop_switching.always = enable;
-        reserveDesktopSwitching(enable, virtual_desktop_layout);
+        reserveDesktopSwitching(enable, subspace_layout);
     }
 
     // How large the touch target of the area recognizing touch gestures is
@@ -1632,12 +1630,10 @@ private:
             if (edge->isCorner()) {
                 edge->reserve();
             } else {
-                if ((virtual_desktop_layout & Qt::Horizontal)
-                    && (edge->isLeft() || edge->isRight())) {
+                if ((subspace_layout & Qt::Horizontal) && (edge->isLeft() || edge->isRight())) {
                     edge->reserve();
                 }
-                if ((virtual_desktop_layout & Qt::Vertical)
-                    && (edge->isTop() || edge->isBottom())) {
+                if ((subspace_layout & Qt::Vertical) && (edge->isTop() || edge->isBottom())) {
                     edge->reserve();
                 }
             }
@@ -2005,7 +2001,7 @@ private:
         return true;
     }
 
-    Qt::Orientations virtual_desktop_layout{};
+    Qt::Orientations subspace_layout{};
 
     QMap<electric_border, electric_border_action> touch_call_backs;
     bool m_remainActiveOnFullscreen{false};

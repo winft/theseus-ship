@@ -188,7 +188,7 @@ public:
     {
         return std::visit(overload{[](auto&& ref_win) -> QVector<uint> {
                               if (ref_win->control || ref_win->remnant) {
-                                  return win::x11_desktop_ids(*ref_win);
+                                  return win::x11_subspace_ids(*ref_win);
                               }
                               return {};
                           }},

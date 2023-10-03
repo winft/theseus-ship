@@ -123,7 +123,7 @@ public:
 
         qRegisterMetaType<QList<output*>>();
         qRegisterMetaType<QList<window*>>();
-        qRegisterMetaType<QVector<KWin::win::virtual_desktop*>>();
+        qRegisterMetaType<QVector<KWin::win::subspace*>>();
 
         qmlRegisterType<desktop_background_item>("org.kde.kwin", 3, 0, "DesktopBackground");
         qmlRegisterType<window_thumbnail_item>("org.kde.kwin", 3, 0, "WindowThumbnail");
@@ -132,7 +132,7 @@ public:
         qmlRegisterType<shortcut_handler>("org.kde.kwin", 3, 0, "ShortcutHandler");
         qmlRegisterType<window_model>("org.kde.kwin", 3, 0, "WindowModel");
         qmlRegisterType<window_filter_model>("org.kde.kwin", 3, 0, "WindowFilterModel");
-        qmlRegisterType<virtual_desktop_model>("org.kde.kwin", 3, 0, "VirtualDesktopModel");
+        qmlRegisterType<subspace_model>("org.kde.kwin", 3, 0, "VirtualDesktopModel");
         qmlRegisterUncreatableType<KWin::QuickSceneView>(
             "org.kde.kwin",
             3,
@@ -154,7 +154,7 @@ public:
 
         qmlRegisterAnonymousType<output>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<window>("org.kde.kwin", 3);
-        qmlRegisterAnonymousType<win::virtual_desktop>("org.kde.kwin", 3);
+        qmlRegisterAnonymousType<win::subspace>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
 
         if (auto& render = space.base.render; render->compositor->effects) {

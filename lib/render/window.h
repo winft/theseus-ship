@@ -95,7 +95,7 @@ public:
         }
 
         return std::visit(overload{[](auto&& ref_win) {
-                              if (ref_win->remnant || !win::on_current_desktop(*ref_win)) {
+                              if (ref_win->remnant || !win::on_current_subspace(*ref_win)) {
                                   return false;
                               }
                               if (ref_win->control
@@ -114,7 +114,7 @@ public:
                               if (ref_win->remnant) {
                                   return false;
                               }
-                              if (!win::on_current_desktop(*ref_win)) {
+                              if (!win::on_current_subspace(*ref_win)) {
                                   return false;
                               }
                               if (!ref_win->control) {

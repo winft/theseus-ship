@@ -15,35 +15,35 @@ namespace KWin::win
 {
 
 template<typename Win>
-void propagate_on_all_desktops_to_children(Win& window);
+void propagate_on_all_subspaces_to_children(Win& window);
 
 template<typename Win>
-void set_desktops(Win& win, QVector<virtual_desktop*> desktops)
+void set_subspaces(Win& win, QVector<subspace*> subs)
 {
-    // On x11 we can have only one desktop at a time.
-    if (win.space.base.operation_mode == base::operation_mode::x11 && desktops.size() > 1) {
-        desktops = QVector<virtual_desktop*>({desktops.last()});
+    // On x11 we can have only one subspace at a time.
+    if (win.space.base.operation_mode == base::operation_mode::x11 && subs.size() > 1) {
+        subs = QVector<subspace*>({subs.last()});
     }
 
-    desktops = win.control->rules.checkDesktops(*win.space.virtual_desktop_manager, desktops);
+    subs = win.control->rules.checkDesktops(*win.space.subspace_manager, subs);
 
-    if (desktops == win.topo.desktops) {
+    if (subs == win.topo.subspaces) {
         return;
     }
 
-    auto const was_on_all_desktops = on_all_desktops(win);
-    win.topo.desktops = desktops;
-    win.control->set_desktops(desktops);
+    auto const was_on_all_subspaces = on_all_subspaces(win);
+    win.topo.subspaces = subs;
+    win.control->set_subspaces(subs);
 
-    if (was_on_all_desktops != on_all_desktops(win)) {
-        propagate_on_all_desktops_to_children(win);
+    if (was_on_all_subspaces != on_all_subspaces(win)) {
+        propagate_on_all_subspaces_to_children(win);
     }
 
     auto transients_stacking_order
         = restacked_by_space_stacking_order(win.space, win.transient->children);
     for (auto const& child : transients_stacking_order) {
         if (!child->transient->annexed) {
-            set_desktops(*child, desktops);
+            set_subspaces(*child, subs);
         }
     }
 
@@ -51,85 +51,87 @@ void set_desktops(Win& win, QVector<virtual_desktop*> desktops)
         // When a modal dialog is moved move the parent window with it as otherwise the just moved
         // modal dialog will return to the parent window with the next desktop change.
         for (auto client : win.transient->leads()) {
-            set_desktops(*client, desktops);
+            set_subspaces(*client, subs);
         }
     }
 
-    if constexpr (requires(Win win) { win.doSetDesktop(); }) {
+    if constexpr (requires(Win win) { win.do_set_subspace(); }) {
         // TODO(romangg): Only relevant for X11/Xwl windows. Should go somewhere else.
-        win.doSetDesktop();
+        win.do_set_subspace();
     }
 
     focus_chain_update(win.space.stacking.focus_chain, &win, focus_chain_change::make_first);
     win.updateWindowRules(rules::type::desktops);
 
-    Q_EMIT win.qobject->desktopsChanged();
+    Q_EMIT win.qobject->subspaces_changed();
 }
 
 template<typename Win>
-void set_desktop(Win& win, int desktop)
+void set_subspace(Win& win, int subspace)
 {
-    if (desktop == x11_desktop_number_on_all) {
-        set_desktops(win, {});
+    if (subspace == x11_desktop_number_on_all) {
+        set_subspaces(win, {});
         return;
     }
 
     // Check range.
-    desktop = std::clamp<int>(desktop, 1, win.space.virtual_desktop_manager->count());
-    set_desktops(win, {win.space.virtual_desktop_manager->desktopForX11Id(desktop)});
+    subspace = std::clamp<int>(subspace, 1, win.space.subspace_manager->count());
+    set_subspaces(win, {win.space.subspace_manager->subspace_for_x11id(subspace)});
 }
 
 template<typename Win>
-void set_on_all_desktops(Win& win, bool set)
+void set_on_all_subspaces(Win& win, bool set)
 {
-    if (set == on_all_desktops(win)) {
+    if (set == on_all_subspaces(win)) {
         return;
     }
 
     if (set) {
-        set_desktops(win, {});
+        set_subspaces(win, {});
     } else {
-        set_desktops(win, {win.space.virtual_desktop_manager->currentDesktop()});
+        set_subspaces(win, {win.space.subspace_manager->current_subspace()});
     }
 }
 
 template<typename Win>
-void enter_desktop(Win& win, virtual_desktop* virtualDesktop)
+void enter_subspace(Win& win, subspace* sub)
 {
-    if (win.topo.desktops.contains(virtualDesktop)) {
+    if (win.topo.subspaces.contains(sub)) {
         return;
     }
-    auto desktops = win.topo.desktops;
-    desktops.append(virtualDesktop);
-    set_desktops(win, desktops);
+    auto subspaces = win.topo.subspaces;
+    subspaces.append(sub);
+    set_subspaces(win, subspaces);
 }
 
 template<typename Win>
-void leave_desktop(Win& win, virtual_desktop* virtualDesktop)
+void leave_subspace(Win& win, subspace* sub)
 {
-    QVector<virtual_desktop*> currentDesktops;
-    if (win.topo.desktops.isEmpty()) {
-        currentDesktops = win.space.virtual_desktop_manager->desktops();
+    QVector<subspace*> current_subs;
+
+    if (win.topo.subspaces.isEmpty()) {
+        current_subs = win.space.subspace_manager->subspaces();
     } else {
-        currentDesktops = win.topo.desktops;
+        current_subs = win.topo.subspaces;
     }
 
-    if (!currentDesktops.contains(virtualDesktop)) {
+    if (!current_subs.contains(sub)) {
         return;
     }
-    auto desktops = currentDesktops;
-    desktops.removeOne(virtualDesktop);
-    set_desktops(win, desktops);
+
+    auto subs = current_subs;
+    subs.removeOne(sub);
+    set_subspaces(win, subs);
 }
 
 template<typename Win>
-void propagate_on_all_desktops_to_children(Win& window)
+void propagate_on_all_subspaces_to_children(Win& window)
 {
-    auto all_desk = on_all_desktops(window);
+    auto all_desk = on_all_subspaces(window);
 
     for (auto const& child : window.transient->children) {
-        if (on_all_desktops(*child) != all_desk) {
-            set_on_all_desktops(*child, all_desk);
+        if (on_all_subspaces(*child) != all_desk) {
+            set_on_all_subspaces(*child, all_desk);
         }
     }
 }

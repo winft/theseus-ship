@@ -13,12 +13,12 @@
 namespace KWin::win::dbus
 {
 
-virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* parent)
+subspace_manager::subspace_manager(win::subspace_manager* parent)
     : QObject(parent->qobject.get())
     , m_manager(parent)
 {
-    qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data>();
-    qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data_vector>();
+    qDBusRegisterMetaType<KWin::win::dbus::subspace_data>();
+    qDBusRegisterMetaType<KWin::win::dbus::subspace_data_vector>();
 
     new VirtualDesktopManagerAdaptor(this);
     QDBusConnection::sessionBus().registerObject(
@@ -27,16 +27,16 @@ virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* p
         this);
 
     QObject::connect(m_manager->qobject.get(),
-                     &win::virtual_desktop_manager_qobject::currentChanged,
+                     &win::subspace_manager_qobject::currentChanged,
                      this,
                      [this](uint previousDesktop, uint newDesktop) {
                          Q_UNUSED(previousDesktop);
                          Q_UNUSED(newDesktop);
-                         Q_EMIT currentChanged(m_manager->currentDesktop()->id());
+                         Q_EMIT currentChanged(m_manager->current_subspace()->id());
                      });
 
     QObject::connect(m_manager->qobject.get(),
-                     &win::virtual_desktop_manager_qobject::countChanged,
+                     &win::subspace_manager_qobject::countChanged,
                      this,
                      [this](uint previousCount, uint newCount) {
                          Q_UNUSED(previousCount);
@@ -46,25 +46,25 @@ virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* p
 
     QObject::connect(
         m_manager->qobject.get(),
-        &win::virtual_desktop_manager_qobject::navigationWrappingAroundChanged,
+        &win::subspace_manager_qobject::navigationWrappingAroundChanged,
         this,
         [this]() { Q_EMIT navigationWrappingAroundChanged(isNavigationWrappingAround()); });
 
     QObject::connect(m_manager->qobject.get(),
-                     &win::virtual_desktop_manager_qobject::rowsChanged,
+                     &win::subspace_manager_qobject::rowsChanged,
                      this,
-                     &virtual_desktop_manager::rowsChanged);
+                     &subspace_manager::rowsChanged);
 
-    auto const desks = m_manager->desktops();
+    auto const desks = m_manager->subspaces();
     for (auto vd : desks) {
-        QObject::connect(vd, &win::virtual_desktop::x11DesktopNumberChanged, this, [this, vd]() {
-            virtual_desktop_data data{
+        QObject::connect(vd, &win::subspace::x11DesktopNumberChanged, this, [this, vd]() {
+            subspace_data data{
                 .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
             Q_EMIT desktopDataChanged(vd->id(), data);
             Q_EMIT desktopsChanged(desktops());
         });
-        QObject::connect(vd, &win::virtual_desktop::nameChanged, this, [this, vd]() {
-            virtual_desktop_data data{
+        QObject::connect(vd, &win::subspace::nameChanged, this, [this, vd]() {
+            subspace_data data{
                 .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
             Q_EMIT desktopDataChanged(vd->id(), data);
             Q_EMIT desktopsChanged(desktops());
@@ -72,29 +72,28 @@ virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* p
     }
     QObject::connect(
         m_manager->qobject.get(),
-        &win::virtual_desktop_manager_qobject::desktopCreated,
+        &win::subspace_manager_qobject::subspace_created,
         this,
         [this](auto vd) {
-            QObject::connect(
-                vd, &win::virtual_desktop::x11DesktopNumberChanged, this, [this, vd]() {
-                    virtual_desktop_data data{
-                        .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
-                    Q_EMIT desktopDataChanged(vd->id(), data);
-                    Q_EMIT desktopsChanged(desktops());
-                });
-            QObject::connect(vd, &win::virtual_desktop::nameChanged, this, [this, vd]() {
-                virtual_desktop_data data{
+            QObject::connect(vd, &win::subspace::x11DesktopNumberChanged, this, [this, vd]() {
+                subspace_data data{
                     .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
                 Q_EMIT desktopDataChanged(vd->id(), data);
                 Q_EMIT desktopsChanged(desktops());
             });
-            virtual_desktop_data data{
+            QObject::connect(vd, &win::subspace::nameChanged, this, [this, vd]() {
+                subspace_data data{
+                    .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
+                Q_EMIT desktopDataChanged(vd->id(), data);
+                Q_EMIT desktopsChanged(desktops());
+            });
+            subspace_data data{
                 .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
             Q_EMIT desktopCreated(vd->id(), data);
             Q_EMIT desktopsChanged(desktops());
         });
     QObject::connect(m_manager->qobject.get(),
-                     &win::virtual_desktop_manager_qobject::desktopRemoved,
+                     &win::subspace_manager_qobject::subspace_removed,
                      this,
                      [this](auto vd) {
                          Q_EMIT desktopRemoved(vd->id());
@@ -102,12 +101,12 @@ virtual_desktop_manager::virtual_desktop_manager(win::virtual_desktop_manager* p
                      });
 }
 
-uint virtual_desktop_manager::count() const
+uint subspace_manager::count() const
 {
     return m_manager->count();
 }
 
-void virtual_desktop_manager::setRows(uint rows)
+void subspace_manager::setRows(uint rows)
 {
     if (static_cast<uint>(m_manager->grid().height()) == rows) {
         return;
@@ -117,29 +116,29 @@ void virtual_desktop_manager::setRows(uint rows)
     m_manager->save();
 }
 
-uint virtual_desktop_manager::rows() const
+uint subspace_manager::rows() const
 {
     return m_manager->rows();
 }
 
-void virtual_desktop_manager::setCurrent(const QString& id)
+void subspace_manager::setCurrent(const QString& id)
 {
-    if (m_manager->currentDesktop()->id() == id) {
+    if (m_manager->current_subspace()->id() == id) {
         return;
     }
 
-    auto vd = m_manager->desktopForId(id);
+    auto vd = m_manager->subspace_for_id(id);
     if (vd) {
         m_manager->setCurrent(vd);
     }
 }
 
-QString virtual_desktop_manager::current() const
+QString subspace_manager::current() const
 {
-    return m_manager->currentDesktop()->id();
+    return m_manager->current_subspace()->id();
 }
 
-void virtual_desktop_manager::setNavigationWrappingAround(bool wraps)
+void subspace_manager::setNavigationWrappingAround(bool wraps)
 {
     if (m_manager->isNavigationWrappingAround() == wraps) {
         return;
@@ -148,34 +147,34 @@ void virtual_desktop_manager::setNavigationWrappingAround(bool wraps)
     m_manager->setNavigationWrappingAround(wraps);
 }
 
-bool virtual_desktop_manager::isNavigationWrappingAround() const
+bool subspace_manager::isNavigationWrappingAround() const
 {
     return m_manager->isNavigationWrappingAround();
 }
 
-virtual_desktop_data_vector virtual_desktop_manager::desktops() const
+subspace_data_vector subspace_manager::desktops() const
 {
-    auto const desks = m_manager->desktops();
-    virtual_desktop_data_vector desktopVect;
+    auto const desks = m_manager->subspaces();
+    subspace_data_vector desktopVect;
     desktopVect.reserve(m_manager->count());
 
     std::transform(
         desks.constBegin(), desks.constEnd(), std::back_inserter(desktopVect), [](auto vd) {
-            return virtual_desktop_data{
+            return subspace_data{
                 .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
         });
 
     return desktopVect;
 }
 
-void virtual_desktop_manager::createDesktop(uint position, const QString& name)
+void subspace_manager::createDesktop(uint position, const QString& name)
 {
-    m_manager->createVirtualDesktop(position, name);
+    m_manager->create_subspace(position, name);
 }
 
-void virtual_desktop_manager::setDesktopName(const QString& id, const QString& name)
+void subspace_manager::setDesktopName(const QString& id, const QString& name)
 {
-    auto vd = m_manager->desktopForId(id);
+    auto vd = m_manager->subspace_for_id(id);
     if (!vd) {
         return;
     }
@@ -187,9 +186,9 @@ void virtual_desktop_manager::setDesktopName(const QString& id, const QString& n
     m_manager->save();
 }
 
-void virtual_desktop_manager::removeDesktop(const QString& id)
+void subspace_manager::removeDesktop(const QString& id)
 {
-    m_manager->removeVirtualDesktop(id);
+    m_manager->remove_subspace(id);
 }
 
 }

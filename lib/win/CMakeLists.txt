@@ -197,7 +197,7 @@ endif()
 qt6_add_dbus_adaptor(win_dbus_src
   dbus/org.kde.KWin.VirtualDesktopManager.xml
   dbus/virtual_desktop_manager.h
-  KWin::win::dbus::virtual_desktop_manager
+  KWin::win::dbus::subspace_manager
 )
 qt6_add_dbus_adaptor(win_dbus_src
   dbus/org.kde.KWin.Session.xml

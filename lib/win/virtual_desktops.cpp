@@ -27,24 +27,24 @@ static QString generateDesktopId()
     return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
 
-virtual_desktop::virtual_desktop(QObject* parent)
+subspace::subspace(QObject* parent)
     : QObject(parent)
 {
 }
 
-virtual_desktop::~virtual_desktop()
+subspace::~subspace()
 {
     Q_EMIT aboutToBeDestroyed();
 }
 
-void virtual_desktop::setId(QString const& id)
+void subspace::setId(QString const& id)
 {
     Q_ASSERT(m_id.isEmpty());
     assert(!id.isEmpty());
     m_id = id;
 }
 
-void virtual_desktop::setX11DesktopNumber(uint number)
+void subspace::setX11DesktopNumber(uint number)
 {
     // x11DesktopNumber can be changed now
     if (static_cast<uint>(m_x11DesktopNumber) == number) {
@@ -58,7 +58,7 @@ void virtual_desktop::setX11DesktopNumber(uint number)
     }
 }
 
-void virtual_desktop::setName(QString const& name)
+void subspace::setName(QString const& name)
 {
     if (m_name == name) {
         return;
@@ -68,19 +68,18 @@ void virtual_desktop::setName(QString const& name)
     Q_EMIT nameChanged();
 }
 
-virtual_desktop_grid::virtual_desktop_grid(virtual_desktop_manager& manager)
+subspace_grid::subspace_grid(subspace_manager& manager)
     : m_size(1, 2) // Default to tow rows
-    , m_grid(QVector<QVector<virtual_desktop*>>{QVector<virtual_desktop*>{},
-                                                QVector<virtual_desktop*>{}})
+    , m_grid(QVector<QVector<subspace*>>{QVector<subspace*>{}, QVector<subspace*>{}})
     , manager{manager}
 {
 }
 
-virtual_desktop_grid::~virtual_desktop_grid() = default;
+subspace_grid::~subspace_grid() = default;
 
-void virtual_desktop_grid::update(QSize const& size,
-                                  Qt::Orientation orientation,
-                                  QVector<virtual_desktop*> const& desktops)
+void subspace_grid::update(QSize const& size,
+                           Qt::Orientation orientation,
+                           QVector<subspace*> const& subs)
 {
     // Set private variables
     m_size = size;
@@ -88,12 +87,12 @@ void virtual_desktop_grid::update(QSize const& size,
     uint const height = size.height();
 
     m_grid.clear();
-    auto it = desktops.begin();
-    auto end = desktops.end();
+    auto it = subs.begin();
+    auto end = subs.end();
 
     if (orientation == Qt::Horizontal) {
         for (uint y = 0; y < height; ++y) {
-            QVector<virtual_desktop*> row;
+            QVector<subspace*> row;
             for (uint x = 0; x < width && it != end; ++x) {
                 row << *it;
                 it++;
@@ -102,7 +101,7 @@ void virtual_desktop_grid::update(QSize const& size,
         }
     } else {
         for (uint y = 0; y < height; ++y) {
-            m_grid << QVector<virtual_desktop*>();
+            m_grid << QVector<subspace*>();
         }
         for (uint x = 0; x < width; ++x) {
             for (uint y = 0; y < height && it != end; ++y) {
@@ -114,12 +113,12 @@ void virtual_desktop_grid::update(QSize const& size,
     }
 }
 
-QPoint virtual_desktop_grid::gridCoords(uint id) const
+QPoint subspace_grid::gridCoords(uint id) const
 {
-    return gridCoords(manager.desktopForX11Id(id));
+    return gridCoords(manager.subspace_for_x11id(id));
 }
 
-QPoint virtual_desktop_grid::gridCoords(virtual_desktop* vd) const
+QPoint subspace_grid::gridCoords(subspace* vd) const
 {
     for (int y = 0; y < m_grid.count(); ++y) {
         auto const& row = m_grid.at(y);
@@ -133,7 +132,7 @@ QPoint virtual_desktop_grid::gridCoords(virtual_desktop* vd) const
     return QPoint(-1, -1);
 }
 
-virtual_desktop* virtual_desktop_grid::at(const QPoint& coords) const
+subspace* subspace_grid::at(const QPoint& coords) const
 {
     if (coords.y() >= m_grid.count()) {
         return nullptr;
@@ -147,29 +146,29 @@ virtual_desktop* virtual_desktop_grid::at(const QPoint& coords) const
     return row.at(coords.x());
 }
 
-virtual_desktop_manager_qobject::virtual_desktop_manager_qobject() = default;
+subspace_manager_qobject::subspace_manager_qobject() = default;
 
-virtual_desktop_manager::virtual_desktop_manager()
-    : qobject{std::make_unique<virtual_desktop_manager_qobject>()}
+subspace_manager::subspace_manager()
+    : qobject{std::make_unique<subspace_manager_qobject>()}
     , m_grid{*this}
     , m_swipeGestureReleasedY(new QAction(qobject.get()))
     , m_swipeGestureReleasedX(new QAction(qobject.get()))
     , singleton{qobject.get(),
-                [this] { return desktops(); },
-                [this](auto pos, auto const& name) { return createVirtualDesktop(pos, name); },
-                [this](auto id) { return removeVirtualDesktop(id); },
-                [this] { return currentDesktop(); }}
+                [this] { return subspaces(); },
+                [this](auto pos, auto const& name) { return create_subspace(pos, name); },
+                [this](auto id) { return remove_subspace(id); },
+                [this] { return current_subspace(); }}
 
 {
-    singleton_interface::virtual_desktops = &singleton;
+    singleton_interface::subspaces = &singleton;
 }
 
-virtual_desktop_manager::~virtual_desktop_manager()
+subspace_manager::~subspace_manager()
 {
-    singleton_interface::virtual_desktops = {};
+    singleton_interface::subspaces = {};
 }
 
-void virtual_desktop_manager::setRootInfo(x11::net::root_info* info)
+void subspace_manager::setRootInfo(x11::net::root_info* info)
 {
     m_rootInfo = info;
 
@@ -183,33 +182,33 @@ void virtual_desktop_manager::setRootInfo(x11::net::root_info* info)
         m_rootInfo->setDesktopLayout(
             x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
         updateRootInfo();
-        m_rootInfo->setCurrentDesktop(currentDesktop()->x11DesktopNumber());
+        m_rootInfo->setCurrentDesktop(current_subspace()->x11DesktopNumber());
 
-        for (auto vd : qAsConst(m_desktops)) {
+        for (auto vd : qAsConst(m_subspaces)) {
             m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
         }
     }
 }
 
-QString virtual_desktop_manager::name(uint desktop) const
+QString subspace_manager::name(uint sub) const
 {
-    if (uint(m_desktops.length()) > desktop - 1) {
-        return m_desktops[desktop - 1]->name();
+    if (uint(m_subspaces.length()) > sub - 1) {
+        return m_subspaces[sub - 1]->name();
     }
 
     if (!m_rootInfo) {
-        return defaultName(desktop);
+        return defaultName(sub);
     }
-    return QString::fromUtf8(m_rootInfo->desktopName(desktop));
+    return QString::fromUtf8(m_rootInfo->desktopName(sub));
 }
 
-uint virtual_desktop_manager::above(uint id, bool wrap) const
+uint subspace_manager::above(uint id, bool wrap) const
 {
-    auto vd = above(desktopForX11Id(id), wrap);
+    auto vd = above(subspace_for_x11id(id), wrap);
     return vd ? vd->x11DesktopNumber() : 0;
 }
 
-virtual_desktop* virtual_desktop_manager::above(virtual_desktop* desktop, bool wrap) const
+subspace* subspace_manager::above(subspace* desktop, bool wrap) const
 {
     Q_ASSERT(m_current);
 
@@ -239,13 +238,13 @@ virtual_desktop* virtual_desktop_manager::above(virtual_desktop* desktop, bool w
     return nullptr;
 }
 
-uint virtual_desktop_manager::toRight(uint id, bool wrap) const
+uint subspace_manager::toRight(uint id, bool wrap) const
 {
-    auto vd = toRight(desktopForX11Id(id), wrap);
+    auto vd = toRight(subspace_for_x11id(id), wrap);
     return vd ? vd->x11DesktopNumber() : 0;
 }
 
-virtual_desktop* virtual_desktop_manager::toRight(virtual_desktop* desktop, bool wrap) const
+subspace* subspace_manager::toRight(subspace* desktop, bool wrap) const
 {
     Q_ASSERT(m_current);
 
@@ -275,13 +274,13 @@ virtual_desktop* virtual_desktop_manager::toRight(virtual_desktop* desktop, bool
     return nullptr;
 }
 
-uint virtual_desktop_manager::below(uint id, bool wrap) const
+uint subspace_manager::below(uint id, bool wrap) const
 {
-    auto vd = below(desktopForX11Id(id), wrap);
+    auto vd = below(subspace_for_x11id(id), wrap);
     return vd ? vd->x11DesktopNumber() : 0;
 }
 
-virtual_desktop* virtual_desktop_manager::below(virtual_desktop* desktop, bool wrap) const
+subspace* subspace_manager::below(subspace* desktop, bool wrap) const
 {
     Q_ASSERT(m_current);
 
@@ -311,13 +310,13 @@ virtual_desktop* virtual_desktop_manager::below(virtual_desktop* desktop, bool w
     return nullptr;
 }
 
-uint virtual_desktop_manager::toLeft(uint id, bool wrap) const
+uint subspace_manager::toLeft(uint id, bool wrap) const
 {
-    auto vd = toLeft(desktopForX11Id(id), wrap);
+    auto vd = toLeft(subspace_for_x11id(id), wrap);
     return vd ? vd->x11DesktopNumber() : 0;
 }
 
-virtual_desktop* virtual_desktop_manager::toLeft(virtual_desktop* desktop, bool wrap) const
+subspace* subspace_manager::toLeft(subspace* desktop, bool wrap) const
 {
     Q_ASSERT(m_current);
 
@@ -346,20 +345,20 @@ virtual_desktop* virtual_desktop_manager::toLeft(virtual_desktop* desktop, bool 
     return nullptr;
 }
 
-virtual_desktop* virtual_desktop_manager::next(virtual_desktop* desktop, bool wrap) const
+subspace* subspace_manager::next(subspace* desktop, bool wrap) const
 {
     Q_ASSERT(m_current);
     if (!desktop) {
         desktop = m_current;
     }
 
-    auto it = std::find(m_desktops.begin(), m_desktops.end(), desktop);
-    Q_ASSERT(it != m_desktops.end());
+    auto it = std::find(m_subspaces.begin(), m_subspaces.end(), desktop);
+    Q_ASSERT(it != m_subspaces.end());
     it++;
 
-    if (it == m_desktops.end()) {
+    if (it == m_subspaces.end()) {
         if (wrap) {
-            return m_desktops.first();
+            return m_subspaces.first();
         } else {
             return desktop;
         }
@@ -368,25 +367,25 @@ virtual_desktop* virtual_desktop_manager::next(virtual_desktop* desktop, bool wr
     return *it;
 }
 
-uint virtual_desktop_manager::next(uint id, bool wrap) const
+uint subspace_manager::next(uint id, bool wrap) const
 {
-    auto vd = next(desktopForX11Id(id), wrap);
+    auto vd = next(subspace_for_x11id(id), wrap);
     return vd ? vd->x11DesktopNumber() : 0;
 }
 
-virtual_desktop* virtual_desktop_manager::previous(virtual_desktop* desktop, bool wrap) const
+subspace* subspace_manager::previous(subspace* desktop, bool wrap) const
 {
     Q_ASSERT(m_current);
     if (!desktop) {
         desktop = m_current;
     }
 
-    auto it = std::find(m_desktops.begin(), m_desktops.end(), desktop);
-    Q_ASSERT(it != m_desktops.end());
+    auto it = std::find(m_subspaces.begin(), m_subspaces.end(), desktop);
+    Q_ASSERT(it != m_subspaces.end());
 
-    if (it == m_desktops.begin()) {
+    if (it == m_subspaces.begin()) {
         if (wrap) {
-            return m_desktops.last();
+            return m_subspaces.last();
         } else {
             return desktop;
         }
@@ -396,53 +395,53 @@ virtual_desktop* virtual_desktop_manager::previous(virtual_desktop* desktop, boo
     return *it;
 }
 
-uint virtual_desktop_manager::previous(uint id, bool wrap) const
+uint subspace_manager::previous(uint id, bool wrap) const
 {
-    auto vd = previous(desktopForX11Id(id), wrap);
+    auto vd = previous(subspace_for_x11id(id), wrap);
     return vd ? vd->x11DesktopNumber() : 0;
 }
 
-virtual_desktop* virtual_desktop_manager::desktopForX11Id(uint id) const
+subspace* subspace_manager::subspace_for_x11id(uint id) const
 {
     if (id == 0 || id > count()) {
         return nullptr;
     }
-    return m_desktops.at(id - 1);
+    return m_subspaces.at(id - 1);
 }
 
-virtual_desktop* virtual_desktop_manager::desktopForId(QString const& id) const
+subspace* subspace_manager::subspace_for_id(QString const& id) const
 {
-    auto desk = std::find_if(m_desktops.constBegin(), m_desktops.constEnd(), [id](auto desk) {
+    auto desk = std::find_if(m_subspaces.constBegin(), m_subspaces.constEnd(), [id](auto desk) {
         return desk->id() == id;
     });
 
-    if (desk != m_desktops.constEnd()) {
+    if (desk != m_subspaces.constEnd()) {
         return *desk;
     }
 
     return nullptr;
 }
 
-virtual_desktop* virtual_desktop_manager::createVirtualDesktop(uint position, QString const& name)
+subspace* subspace_manager::create_subspace(uint position, QString const& name)
 {
     // too many, can't insert new ones
-    if (static_cast<uint>(m_desktops.count()) == virtual_desktop_manager::maximum()) {
+    if (static_cast<uint>(m_subspaces.count()) == subspace_manager::maximum()) {
         return nullptr;
     }
 
-    position = qBound(0u, position, static_cast<uint>(m_desktops.count()));
+    position = qBound(0u, position, static_cast<uint>(m_subspaces.count()));
 
     QString desktopName = name;
     if (desktopName.isEmpty()) {
         desktopName = defaultName(position + 1);
     }
 
-    auto vd = new virtual_desktop(qobject.get());
+    auto vd = new subspace(qobject.get());
     vd->setX11DesktopNumber(position + 1);
     vd->setId(generateDesktopId());
     vd->setName(desktopName);
 
-    QObject::connect(vd, &virtual_desktop::nameChanged, qobject.get(), [this, vd]() {
+    QObject::connect(vd, &subspace::nameChanged, qobject.get(), [this, vd]() {
         if (m_rootInfo) {
             m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
         }
@@ -452,55 +451,55 @@ virtual_desktop* virtual_desktop_manager::createVirtualDesktop(uint position, QS
         m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
     }
 
-    m_desktops.insert(position, vd);
+    m_subspaces.insert(position, vd);
 
-    // update the id of displaced desktops
-    for (uint i = position + 1; i < static_cast<uint>(m_desktops.count()); ++i) {
-        m_desktops[i]->setX11DesktopNumber(i + 1);
+    // update the id of displaced subspaces
+    for (uint i = position + 1; i < static_cast<uint>(m_subspaces.count()); ++i) {
+        m_subspaces[i]->setX11DesktopNumber(i + 1);
         if (m_rootInfo) {
-            m_rootInfo->setDesktopName(i + 1, m_desktops[i]->name().toUtf8().data());
+            m_rootInfo->setDesktopName(i + 1, m_subspaces[i]->name().toUtf8().data());
         }
     }
 
     save();
     updateRootInfo();
 
-    Q_EMIT qobject->desktopCreated(vd);
-    Q_EMIT qobject->countChanged(m_desktops.count() - 1, m_desktops.count());
+    Q_EMIT qobject->subspace_created(vd);
+    Q_EMIT qobject->countChanged(m_subspaces.count() - 1, m_subspaces.count());
 
     return vd;
 }
 
-void virtual_desktop_manager::removeVirtualDesktop(QString const& id)
+void subspace_manager::remove_subspace(QString const& id)
 {
-    auto desktop = desktopForId(id);
-    if (desktop) {
-        removeVirtualDesktop(desktop);
+    auto sub = subspace_for_id(id);
+    if (sub) {
+        remove_subspace(sub);
     }
 }
 
-void virtual_desktop_manager::removeVirtualDesktop(virtual_desktop* desktop)
+void subspace_manager::remove_subspace(subspace* sub)
 {
-    assert(desktop);
+    assert(sub);
 
-    // don't end up without any desktop
-    if (m_desktops.count() == 1) {
+    // don't end up without any subspace
+    if (m_subspaces.count() == 1) {
         return;
     }
 
     uint const oldCurrent = m_current->x11DesktopNumber();
-    uint const i = desktop->x11DesktopNumber() - 1;
-    m_desktops.remove(i);
+    uint const i = sub->x11DesktopNumber() - 1;
+    m_subspaces.remove(i);
 
-    for (uint j = i; j < static_cast<uint>(m_desktops.count()); ++j) {
-        m_desktops[j]->setX11DesktopNumber(j + 1);
+    for (uint j = i; j < static_cast<uint>(m_subspaces.count()); ++j) {
+        m_subspaces[j]->setX11DesktopNumber(j + 1);
         if (m_rootInfo) {
-            m_rootInfo->setDesktopName(j + 1, m_desktops[j]->name().toUtf8().data());
+            m_rootInfo->setDesktopName(j + 1, m_subspaces[j]->name().toUtf8().data());
         }
     }
 
-    uint const newCurrent = qMin(oldCurrent, static_cast<uint>(m_desktops.count()));
-    m_current = m_desktops.at(newCurrent - 1);
+    uint const newCurrent = qMin(oldCurrent, static_cast<uint>(m_subspaces.count()));
+    m_current = m_subspaces.at(newCurrent - 1);
     if (oldCurrent != newCurrent) {
         Q_EMIT qobject->currentChanged(oldCurrent, newCurrent);
     }
@@ -508,34 +507,34 @@ void virtual_desktop_manager::removeVirtualDesktop(virtual_desktop* desktop)
     updateRootInfo();
     save();
 
-    Q_EMIT qobject->desktopRemoved(desktop);
-    Q_EMIT qobject->countChanged(m_desktops.count() + 1, m_desktops.count());
+    Q_EMIT qobject->subspace_removed(sub);
+    Q_EMIT qobject->countChanged(m_subspaces.count() + 1, m_subspaces.count());
 
-    desktop->deleteLater();
+    sub->deleteLater();
 }
 
-uint virtual_desktop_manager::current() const
+uint subspace_manager::current() const
 {
     return m_current ? m_current->x11DesktopNumber() : 0;
 }
 
-virtual_desktop* virtual_desktop_manager::currentDesktop() const
+subspace* subspace_manager::current_subspace() const
 {
     return m_current;
 }
 
-bool virtual_desktop_manager::setCurrent(uint newDesktop)
+bool subspace_manager::setCurrent(uint newDesktop)
 {
     if (newDesktop < 1 || newDesktop > count()) {
         return false;
     }
 
-    auto d = desktopForX11Id(newDesktop);
+    auto d = subspace_for_x11id(newDesktop);
     Q_ASSERT(d);
     return setCurrent(d);
 }
 
-bool virtual_desktop_manager::setCurrent(virtual_desktop* newDesktop)
+bool subspace_manager::setCurrent(subspace* newDesktop)
 {
     Q_ASSERT(newDesktop);
     if (m_current == newDesktop) {
@@ -549,41 +548,41 @@ bool virtual_desktop_manager::setCurrent(virtual_desktop* newDesktop)
     return true;
 }
 
-QList<virtual_desktop*> virtual_desktop_manager::update_count(uint count)
+QList<subspace*> subspace_manager::update_count(uint count)
 {
     // this explicit check makes it more readable
-    if (static_cast<uint>(m_desktops.count()) > count) {
-        auto const desktopsToRemove = m_desktops.mid(count);
-        m_desktops.resize(count);
+    if (static_cast<uint>(m_subspaces.count()) > count) {
+        auto const subspacesToRemove = m_subspaces.mid(count);
+        m_subspaces.resize(count);
         if (m_current) {
             uint oldCurrent = current();
             uint newCurrent = qMin(oldCurrent, count);
-            m_current = m_desktops.at(newCurrent - 1);
+            m_current = m_subspaces.at(newCurrent - 1);
             if (oldCurrent != newCurrent) {
                 Q_EMIT qobject->currentChanged(oldCurrent, newCurrent);
             }
         }
-        for (auto desktop : desktopsToRemove) {
-            Q_EMIT qobject->desktopRemoved(desktop);
+        for (auto desktop : subspacesToRemove) {
+            Q_EMIT qobject->subspace_removed(desktop);
             desktop->deleteLater();
         }
 
         return {};
     }
 
-    QList<virtual_desktop*> newDesktops;
+    QList<subspace*> new_subspaces;
 
-    while (uint(m_desktops.count()) < count) {
-        auto vd = new virtual_desktop(qobject.get());
-        const int x11Number = m_desktops.count() + 1;
+    while (uint(m_subspaces.count()) < count) {
+        auto vd = new subspace(qobject.get());
+        const int x11Number = m_subspaces.count() + 1;
         vd->setX11DesktopNumber(x11Number);
         vd->setName(defaultName(x11Number));
         if (!s_loadingDesktopSettings) {
             vd->setId(generateDesktopId());
         }
-        m_desktops << vd;
-        newDesktops << vd;
-        QObject::connect(vd, &virtual_desktop::nameChanged, qobject.get(), [this, vd] {
+        m_subspaces << vd;
+        new_subspaces << vd;
+        QObject::connect(vd, &subspace::nameChanged, qobject.get(), [this, vd] {
             if (m_rootInfo) {
                 m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
             }
@@ -593,39 +592,39 @@ QList<virtual_desktop*> virtual_desktop_manager::update_count(uint count)
         }
     }
 
-    return newDesktops;
+    return new_subspaces;
 }
 
-void virtual_desktop_manager::setCount(uint count)
+void subspace_manager::setCount(uint count)
 {
-    count = qBound<uint>(1, count, virtual_desktop_manager::maximum());
-    if (count == uint(m_desktops.count())) {
+    count = qBound<uint>(1, count, subspace_manager::maximum());
+    if (count == uint(m_subspaces.count())) {
         // nothing to change
         return;
     }
 
-    uint const oldCount = m_desktops.count();
+    uint const oldCount = m_subspaces.count();
 
-    auto newDesktops = update_count(count);
+    auto new_subspaces = update_count(count);
 
     updateRootInfo();
 
     if (!s_loadingDesktopSettings) {
         save();
     }
-    for (auto vd : qAsConst(newDesktops)) {
-        Q_EMIT qobject->desktopCreated(vd);
+    for (auto vd : qAsConst(new_subspaces)) {
+        Q_EMIT qobject->subspace_created(vd);
     }
 
-    Q_EMIT qobject->countChanged(oldCount, m_desktops.count());
+    Q_EMIT qobject->countChanged(oldCount, m_subspaces.count());
 }
 
-uint virtual_desktop_manager::rows() const
+uint subspace_manager::rows() const
 {
     return m_rows;
 }
 
-void virtual_desktop_manager::setRows(uint rows)
+void subspace_manager::setRows(uint rows)
 {
     if (rows == 0 || rows > count() || rows == m_rows) {
         return;
@@ -649,7 +648,7 @@ void virtual_desktop_manager::setRows(uint rows)
     // rowsChanged will be emitted by setNETDesktopLayout called by updateLayout
 }
 
-void virtual_desktop_manager::updateRootInfo()
+void subspace_manager::updateRootInfo()
 {
     if (!m_rootInfo) {
         // Make sure the layout is still valid
@@ -668,7 +667,7 @@ void virtual_desktop_manager::updateRootInfo()
     updateLayout();
 }
 
-void virtual_desktop_manager::updateLayout()
+void subspace_manager::updateLayout()
 {
     m_rows = qMin(m_rows, count());
 
@@ -691,7 +690,7 @@ void virtual_desktop_manager::updateLayout()
     }
 
     // Patch to make desktop grid size equal 1 when 1 desktop for desktop switching animations
-    if (m_desktops.size() == 1) {
+    if (m_subspaces.size() == 1) {
         m_rows = 1;
         columns = 1;
     }
@@ -704,7 +703,7 @@ void virtual_desktop_manager::updateLayout()
     );
 }
 
-void virtual_desktop_manager::load()
+void subspace_manager::load()
 {
     if (!m_config) {
         return;
@@ -715,7 +714,7 @@ void virtual_desktop_manager::load()
     KConfigGroup group(m_config, QStringLiteral("Desktops"));
     const int n = group.readEntry("Number", 1);
 
-    uint const oldCount = m_desktops.count();
+    uint const oldCount = m_subspaces.count();
     auto new_desktops = update_count(n);
 
     for (int i = 1; i <= n; i++) {
@@ -723,14 +722,14 @@ void virtual_desktop_manager::load()
         if (m_rootInfo) {
             m_rootInfo->setDesktopName(i, s.toUtf8().data());
         }
-        m_desktops[i - 1]->setName(s);
+        m_subspaces[i - 1]->setName(s);
 
         auto const sId = group.readEntry(QStringLiteral("Id_%1").arg(i), QString());
 
-        if (m_desktops[i - 1]->id().isEmpty()) {
-            m_desktops[i - 1]->setId(sId.isEmpty() ? generateDesktopId() : sId);
+        if (m_subspaces[i - 1]->id().isEmpty()) {
+            m_subspaces[i - 1]->setId(sId.isEmpty() ? generateDesktopId() : sId);
         } else {
-            Q_ASSERT(sId.isEmpty() || m_desktops[i - 1]->id() == sId);
+            Q_ASSERT(sId.isEmpty() || m_subspaces[i - 1]->id() == sId);
         }
 
         // TODO: update desktop focus chain, why?
@@ -740,10 +739,10 @@ void virtual_desktop_manager::load()
     updateRootInfo();
 
     for (auto vd : qAsConst(new_desktops)) {
-        Q_EMIT qobject->desktopCreated(vd);
+        Q_EMIT qobject->subspace_created(vd);
     }
 
-    Q_EMIT qobject->countChanged(oldCount, m_desktops.count());
+    Q_EMIT qobject->countChanged(oldCount, m_subspaces.count());
 
     int rows = group.readEntry<int>("Rows", 2);
     m_rows = qBound(1, rows, n);
@@ -751,7 +750,7 @@ void virtual_desktop_manager::load()
     s_loadingDesktopSettings = false;
 }
 
-void virtual_desktop_manager::save()
+void subspace_manager::save()
 {
     if (s_loadingDesktopSettings) {
         return;
@@ -787,7 +786,7 @@ void virtual_desktop_manager::save()
                 group.deleteEntry(QStringLiteral("Name_%1").arg(i));
             }
         }
-        group.writeEntry(QStringLiteral("Id_%1").arg(i), m_desktops[i - 1]->id());
+        group.writeEntry(QStringLiteral("Id_%1").arg(i), m_subspaces[i - 1]->id());
     }
 
     group.writeEntry("Rows", m_rows);
@@ -796,18 +795,18 @@ void virtual_desktop_manager::save()
     group.sync();
 }
 
-QString virtual_desktop_manager::defaultName(int desktop) const
+QString subspace_manager::defaultName(int desktop) const
 {
     return i18n("Desktop %1", desktop);
 }
 
-void virtual_desktop_manager::setNETDesktopLayout(Qt::Orientation orientation,
-                                                  uint width,
-                                                  uint height,
-                                                  int startingCorner)
+void subspace_manager::setNETDesktopLayout(Qt::Orientation orientation,
+                                           uint width,
+                                           uint height,
+                                           int startingCorner)
 {
     Q_UNUSED(startingCorner); // Not really worth implementing right now.
-    uint const count = m_desktops.count();
+    uint const count = m_subspaces.count();
 
     // Calculate valid grid size
     Q_ASSERT(width > 0 || height > 0);
@@ -827,19 +826,19 @@ void virtual_desktop_manager::setNETDesktopLayout(Qt::Orientation orientation,
     }
 
     m_rows = qMax(1u, height);
-    m_grid.update(QSize(width, height), orientation, m_desktops);
+    m_grid.update(QSize(width, height), orientation, m_subspaces);
 
     // TODO: why is there no call to m_rootInfo->setDesktopLayout?
     Q_EMIT qobject->layoutChanged(width, height);
     Q_EMIT qobject->rowsChanged(height);
 }
 
-void virtual_desktop_manager::connect_gestures()
+void subspace_manager::connect_gestures()
 {
     QObject::connect(m_swipeGestureReleasedX.get(), &QAction::triggered, qobject.get(), [this]() {
         // Note that if desktop wrapping is disabled and there's no desktop to left or right,
         // toLeft() and toRight() will return the current desktop.
-        virtual_desktop* target = m_current;
+        subspace* target = m_current;
         if (m_currentDesktopOffset.x() <= -GESTURE_SWITCH_THRESHOLD) {
             target = toLeft(m_current, isNavigationWrappingAround());
         } else if (m_currentDesktopOffset.x() >= GESTURE_SWITCH_THRESHOLD) {
@@ -857,7 +856,7 @@ void virtual_desktop_manager::connect_gestures()
     QObject::connect(m_swipeGestureReleasedY.get(), &QAction::triggered, qobject.get(), [this]() {
         // Note that if desktop wrapping is disabled and there's no desktop above or below,
         // above() and below() will return the current desktop.
-        virtual_desktop* target = m_current;
+        subspace* target = m_current;
         if (m_currentDesktopOffset.y() <= -GESTURE_SWITCH_THRESHOLD) {
             target = above(m_current, isNavigationWrappingAround());
         } else if (m_currentDesktopOffset.y() >= GESTURE_SWITCH_THRESHOLD) {
@@ -874,7 +873,7 @@ void virtual_desktop_manager::connect_gestures()
     });
 }
 
-void virtual_desktop_manager::slotSwitchTo(QAction& action)
+void subspace_manager::slotSwitchTo(QAction& action)
 {
     bool ok = false;
     uint const i = action.data().toUInt(&ok);
@@ -883,7 +882,7 @@ void virtual_desktop_manager::slotSwitchTo(QAction& action)
     }
 }
 
-void virtual_desktop_manager::setNavigationWrappingAround(bool enabled)
+void subspace_manager::setNavigationWrappingAround(bool enabled)
 {
     if (enabled == m_navigationWrapsAround) {
         return;
@@ -893,32 +892,32 @@ void virtual_desktop_manager::setNavigationWrappingAround(bool enabled)
     Q_EMIT qobject->navigationWrappingAroundChanged();
 }
 
-void virtual_desktop_manager::slotDown()
+void subspace_manager::slotDown()
 {
     setCurrent(below(nullptr, isNavigationWrappingAround()));
 }
 
-void virtual_desktop_manager::slotLeft()
+void subspace_manager::slotLeft()
 {
     setCurrent(toLeft(nullptr, isNavigationWrappingAround()));
 }
 
-void virtual_desktop_manager::slotPrevious()
+void subspace_manager::slotPrevious()
 {
     setCurrent(previous(nullptr, isNavigationWrappingAround()));
 }
 
-void virtual_desktop_manager::slotNext()
+void subspace_manager::slotNext()
 {
     setCurrent(next(nullptr, isNavigationWrappingAround()));
 }
 
-void virtual_desktop_manager::slotRight()
+void subspace_manager::slotRight()
 {
     setCurrent(toRight(nullptr, isNavigationWrappingAround()));
 }
 
-void virtual_desktop_manager::slotUp()
+void subspace_manager::slotUp()
 {
     setCurrent(above(nullptr, isNavigationWrappingAround()));
 }

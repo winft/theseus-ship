@@ -15,14 +15,14 @@
 namespace KWin::win
 {
 
-class virtual_desktop_manager;
+class subspace_manager;
 
 namespace dbus
 {
 
 // TODO: disable all of this in case of kiosk?
 
-class KWIN_EXPORT virtual_desktop_manager : public QObject
+class KWIN_EXPORT subspace_manager : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.VirtualDesktopManager")
@@ -30,7 +30,7 @@ class KWIN_EXPORT virtual_desktop_manager : public QObject
     /**
      * The number of virtual desktops currently available.
      * The ids of the virtual desktops are in the range [1,
-     * win::virtual_desktop_manager::maximum()].
+     * win::subspace_manager::maximum()].
      */
     Q_PROPERTY(uint count READ count NOTIFY countChanged)
     /**
@@ -50,12 +50,11 @@ class KWIN_EXPORT virtual_desktop_manager : public QObject
     /**
      * list of key/value pairs which every one of them is representing a desktop
      */
-    Q_PROPERTY(
-        KWin::win::dbus::virtual_desktop_data_vector desktops READ desktops NOTIFY desktopsChanged)
+    Q_PROPERTY(KWin::win::dbus::subspace_data_vector desktops READ desktops NOTIFY desktopsChanged)
 
 public:
-    virtual_desktop_manager(win::virtual_desktop_manager* parent);
-    ~virtual_desktop_manager() override = default;
+    subspace_manager(win::subspace_manager* parent);
+    ~subspace_manager() override = default;
 
     uint count() const;
 
@@ -68,16 +67,16 @@ public:
     void setNavigationWrappingAround(bool wraps);
     bool isNavigationWrappingAround() const;
 
-    virtual_desktop_data_vector desktops() const;
+    subspace_data_vector desktops() const;
 
 Q_SIGNALS:
     void countChanged(uint count);
     void rowsChanged(uint rows);
     void currentChanged(const QString& id);
     void navigationWrappingAroundChanged(bool wraps);
-    void desktopsChanged(KWin::win::dbus::virtual_desktop_data_vector);
-    void desktopDataChanged(const QString& id, KWin::win::dbus::virtual_desktop_data);
-    void desktopCreated(const QString& id, KWin::win::dbus::virtual_desktop_data);
+    void desktopsChanged(KWin::win::dbus::subspace_data_vector);
+    void desktopDataChanged(const QString& id, KWin::win::dbus::subspace_data);
+    void desktopCreated(const QString& id, KWin::win::dbus::subspace_data);
     void desktopRemoved(const QString& id);
 
 public Q_SLOTS:
@@ -90,7 +89,7 @@ public Q_SLOTS:
     void removeDesktop(const QString& id);
 
 private:
-    win::virtual_desktop_manager* m_manager;
+    win::subspace_manager* m_manager;
 };
 
 }

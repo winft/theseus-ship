@@ -30,7 +30,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
 
     if (is_desktop(win)) {
         if (!space.stacking.active && space.stacking.should_get_focus.empty()
-            && on_current_desktop(*win)) {
+            && on_current_subspace(*win)) {
             // TODO: Make sure desktop is active after startup if there's no other window active
             request_focus(space, *win);
         }
@@ -55,7 +55,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
         raise_window(space, win);
         // If there's no active client, make this desktop the active one
         if (!space.stacking.active && space.stacking.should_get_focus.empty()) {
-            if (auto desk = find_desktop(&space, true, space.virtual_desktop_manager->current())) {
+            if (auto desk = find_desktop(&space, true, space.subspace_manager->current())) {
                 std::visit(overload{[&](auto&& desk) { activate_window(space, *desk); }}, *desk);
             } else {
                 // TODO(romangg): Can this happen or does desktop always exist?

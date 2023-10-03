@@ -53,9 +53,7 @@ public:
     bool applyOpacityActive(int& s) const;
     bool applyOpacityInactive(int& s) const;
     bool applyIgnoreGeometry(bool& ignore, bool init) const;
-    bool applyDesktops(virtual_desktop_manager const& manager,
-                       QVector<virtual_desktop*>& vds,
-                       bool init) const;
+    bool applyDesktops(subspace_manager const& manager, QVector<subspace*>& vds, bool init) const;
     bool applyScreen(int& screen, bool init) const;
     bool applyType(win_type& type) const;
     bool applyMaximizeVert(win::maximize_mode& mode, bool init) const;

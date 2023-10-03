@@ -24,8 +24,7 @@ class KWIN_EXPORT desktop_background_item : public scripting::window_thumbnail_i
     Q_PROPERTY(QString outputName READ outputName WRITE setOutputName NOTIFY outputChanged)
     Q_PROPERTY(KWin::base::output* output READ output WRITE setOutput NOTIFY outputChanged)
     Q_PROPERTY(QString activity READ activity WRITE setActivity NOTIFY activityChanged)
-    Q_PROPERTY(
-        KWin::win::virtual_desktop* desktop READ desktop WRITE setDesktop NOTIFY desktopChanged)
+    Q_PROPERTY(KWin::win::subspace* desktop READ desktop WRITE setDesktop NOTIFY desktopChanged)
 
 public:
     explicit desktop_background_item(QQuickItem* parent = nullptr);
@@ -38,8 +37,8 @@ public:
     base::output* output() const;
     void setOutput(base::output* output);
 
-    win::virtual_desktop* desktop() const;
-    void setDesktop(win::virtual_desktop* desktop);
+    win::subspace* desktop() const;
+    void setDesktop(win::subspace* desktop);
 
     QString activity() const;
     void setActivity(QString const& activity);
@@ -53,7 +52,7 @@ private:
     void updateWindow();
 
     base::output* m_output = nullptr;
-    win::virtual_desktop* m_desktop = nullptr;
+    win::subspace* m_desktop = nullptr;
     QString m_activity;
 };
 

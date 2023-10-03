@@ -102,7 +102,7 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("fsrestore") + n, c->geo.restore.max);
     cg.writeEntry(QLatin1String("maximize") + n, static_cast<int>(c->maximizeMode()));
     cg.writeEntry(QLatin1String("fullscreen") + n, static_cast<int>(c->control->fullscreen));
-    cg.writeEntry(QLatin1String("desktop") + n, get_desktop(*c));
+    cg.writeEntry(QLatin1String("desktop") + n, get_subspace(*c));
 
     // the config entry is called "iconified" for back. comp. reasons
     // (kconf_update script for updating session files would be too complicated)
@@ -110,7 +110,7 @@ void store_window(Space const& space, KConfigGroup& cg, int num, Win* c)
     cg.writeEntry(QLatin1String("opacity") + n, c->opacity());
 
     // the config entry is called "sticky" for back. comp. reasons
-    cg.writeEntry(QLatin1String("sticky") + n, on_all_desktops(*c));
+    cg.writeEntry(QLatin1String("sticky") + n, on_all_subspaces(*c));
 
     // the config entry is called "staysOnTop" for back. comp. reasons
     cg.writeEntry(QLatin1String("staysOnTop") + n, c->control->keep_above);
@@ -185,7 +185,7 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
         // but both Qt and KDE treat phase1 and phase2 separately,
         // which results in different sessionkey and different config file :(
         space.session_active_client = active_client;
-        space.session_desktop = space.virtual_desktop_manager->current();
+        space.session_desktop = space.subspace_manager->current();
     } else if (phase == sm_save_phase2) {
         cg.writeEntry("count", count);
         cg.writeEntry("active", space.session_active_client);
@@ -194,7 +194,7 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
         // SMSavePhase2Full
         cg.writeEntry("count", count);
         cg.writeEntry("active", space.session_active_client);
-        cg.writeEntry("desktop", space.virtual_desktop_manager->current());
+        cg.writeEntry("desktop", space.subspace_manager->current());
     }
 
     // it previously did some "revert to defaults" stuff for phase1 I think
@@ -204,7 +204,7 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
 template<typename Space>
 void add_session_info(Space& space, KConfigGroup& cg)
 {
-    space.m_initialDesktop = cg.readEntry("desktop", 1);
+    space.initial_subspace = cg.readEntry("desktop", 1);
     int count = cg.readEntry("count", 0);
     int active_client = cg.readEntry("active", 0);
 

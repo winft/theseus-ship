@@ -64,7 +64,7 @@ TEST_CASE("dbus interface", "[base]")
 {
     test::setup setup("dbus-interface", base::operation_mode::xwayland);
     setup.start();
-    setup.base->space->virtual_desktop_manager->setCount(4);
+    setup.base->space->subspace_manager->setCount(4);
 
     setup_wayland_connection();
 
@@ -112,7 +112,7 @@ TEST_CASE("dbus interface", "[base]")
         QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->geo.pos().y());
         QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->geo.size().width());
         QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->geo.size().height());
-        QCOMPARE(windowData.value(QStringLiteral("desktops")), win::desktop_ids(*client));
+        QCOMPARE(windowData.value(QStringLiteral("desktops")), win::subspaces_ids(*client));
         QCOMPARE(windowData.value(QStringLiteral("minimized")).toBool(), false);
         QCOMPARE(windowData.value(QStringLiteral("fullscreen")).toBool(), false);
         QCOMPARE(windowData.value(QStringLiteral("keepAbove")).toBool(), false);
@@ -174,13 +174,13 @@ TEST_CASE("dbus interface", "[base]")
         // not testing fullscreen, maximizeHorizontal, maximizeVertical and noBorder as those
         // require window geometry changes
 
-        QCOMPARE(win::get_desktop(*client), 1);
-        win::send_window_to_desktop(*setup.base->space, client, 2, false);
-        QCOMPARE(win::get_desktop(*client), 2);
+        QCOMPARE(win::get_subspace(*client), 1);
+        win::send_window_to_subspace(*setup.base->space, client, 2, false);
+        QCOMPARE(win::get_subspace(*client), 2);
         reply = getWindowInfo(client->meta.internal_id);
         reply.waitForFinished();
         QCOMPARE(reply.value().value(QStringLiteral("desktops")).toStringList(),
-                 win::desktop_ids(*client));
+                 win::subspaces_ids(*client));
 
         win::move(client, QPoint(10, 20));
         reply = getWindowInfo(client->meta.internal_id);
@@ -264,7 +264,7 @@ TEST_CASE("dbus interface", "[base]")
         QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->geo.pos().y());
         QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->geo.size().width());
         QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->geo.size().height());
-        QCOMPARE(windowData.value(QStringLiteral("desktops")), win::desktop_ids(*client));
+        QCOMPARE(windowData.value(QStringLiteral("desktops")), win::subspaces_ids(*client));
         QCOMPARE(windowData.value(QStringLiteral("minimized")).toBool(), false);
         QCOMPARE(windowData.value(QStringLiteral("shaded")).toBool(), false);
         QCOMPARE(windowData.value(QStringLiteral("fullscreen")).toBool(), false);

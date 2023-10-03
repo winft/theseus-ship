@@ -28,16 +28,16 @@ bool has_usable_active_window(Space& space)
 }
 
 template<typename Space>
-void active_window_to_desktop(Space& space, unsigned int i)
+void active_window_to_subspace(Space& space, unsigned int i)
 {
     if (!has_usable_active_window(space)) {
         return;
     }
-    if (i < 1 || i > space.virtual_desktop_manager->count()) {
+    if (i < 1 || i > space.subspace_manager->count()) {
         return;
     }
 
-    std::visit(overload{[&](auto&& win) { send_window_to_desktop(space, win, i, true); }},
+    std::visit(overload{[&](auto&& win) { send_window_to_subspace(space, win, i, true); }},
                *space.stacking.active);
 }
 
@@ -160,7 +160,7 @@ void active_window_lower(Space& space)
             }
 
             if (auto top
-                = top_client_on_desktop(space, space.virtual_desktop_manager->current(), nullptr)) {
+                = top_client_in_subspace(space, space.subspace_manager->current(), nullptr)) {
                 std::visit(overload{[&](auto&& top) { activate_window(space, *top); }}, *top);
                 return;
             }
@@ -180,11 +180,12 @@ void active_window_raise_or_lower(Space& space)
 }
 
 template<typename Space>
-void active_window_set_on_all_desktops(Space& space)
+void active_window_set_on_all_subspaces(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) { set_on_all_desktops(*win, !on_all_desktops(*win)); }},
-                   *space.stacking.active);
+        std::visit(
+            overload{[&](auto&& win) { set_on_all_subspaces(*win, !on_all_subspaces(*win)); }},
+            *space.stacking.active);
     }
 }
 
@@ -285,29 +286,29 @@ void active_window_lower_opacity(Space& space)
 }
 
 template<typename Space>
-void active_window_to_next_desktop(Space& space)
+void active_window_to_next_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) { window_to_next_desktop(*win); }},
+        std::visit(overload{[&](auto&& win) { window_to_next_subspace(*win); }},
                    *space.stacking.active);
     }
 }
 
 template<typename Space>
-void active_window_to_prev_desktop(Space& space)
+void active_window_to_prev_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        std::visit(overload{[&](auto&& win) { window_to_prev_desktop(*win); }},
+        std::visit(overload{[&](auto&& win) { window_to_prev_subspace(*win); }},
                    *space.stacking.active);
     }
 }
 
 template<typename Space>
-void active_window_to_desktop(Space& space, virtual_desktop* desktop)
+void active_window_to_subspace(Space& space, subspace* sub)
 {
-    auto& vds = space.virtual_desktop_manager;
+    auto& vds = space.subspace_manager;
 
-    if (desktop == vds->currentDesktop()) {
+    if (sub == vds->current_subspace()) {
         return;
     }
 
@@ -315,47 +316,47 @@ void active_window_to_desktop(Space& space, virtual_desktop* desktop)
     std::visit(overload{[&](auto&& win) { set_move_resize_window(space, *win); }},
                *space.stacking.active);
 
-    vds->setCurrent(desktop);
+    vds->setCurrent(sub);
     unset_move_resize_window(space);
 }
 
 template<typename Space>
-void active_window_to_right_desktop(Space& space)
+void active_window_to_right_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_desktop(space,
-                                 space.virtual_desktop_manager->toRight(
-                                     nullptr, space.options->qobject->isRollOverDesktops()));
+        active_window_to_subspace(
+            space,
+            space.subspace_manager->toRight(nullptr, space.options->qobject->isRollOverDesktops()));
     }
 }
 
 template<typename Space>
-void active_window_to_left_desktop(Space& space)
+void active_window_to_left_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_desktop(space,
-                                 space.virtual_desktop_manager->toLeft(
-                                     nullptr, space.options->qobject->isRollOverDesktops()));
+        active_window_to_subspace(
+            space,
+            space.subspace_manager->toLeft(nullptr, space.options->qobject->isRollOverDesktops()));
     }
 }
 
 template<typename Space>
-void active_window_to_above_desktop(Space& space)
+void active_window_to_above_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_desktop(space,
-                                 space.virtual_desktop_manager->above(
-                                     nullptr, space.options->qobject->isRollOverDesktops()));
+        active_window_to_subspace(
+            space,
+            space.subspace_manager->above(nullptr, space.options->qobject->isRollOverDesktops()));
     }
 }
 
 template<typename Space>
-void active_window_to_below_desktop(Space& space)
+void active_window_to_below_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_desktop(space,
-                                 space.virtual_desktop_manager->below(
-                                     nullptr, space.options->qobject->isRollOverDesktops()));
+        active_window_to_subspace(
+            space,
+            space.subspace_manager->below(nullptr, space.options->qobject->isRollOverDesktops()));
     }
 }
 

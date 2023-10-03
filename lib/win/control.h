@@ -57,7 +57,7 @@ public:
         assert(deco.decoration == nullptr);
     }
 
-    virtual void set_desktops(QVector<virtual_desktop*> desktops) = 0;
+    virtual void set_subspaces(QVector<subspace*> subs) = 0;
 
     bool skip_pager() const
     {

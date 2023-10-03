@@ -193,13 +193,13 @@ TEST_CASE("screen edges", "[input],[win]")
         // set some reasonable virtual desktops
         config->group("Desktops").writeEntry("Number", 4);
         config->sync();
-        auto& vd = setup.base->space->virtual_desktop_manager;
-        vd->setConfig(config);
-        vd->load();
-        vd->updateLayout();
-        QCOMPARE(vd->count(), 4u);
-        QCOMPARE(vd->grid().width(), 4);
-        QCOMPARE(vd->grid().height(), 1);
+        auto& subs = setup.base->space->subspace_manager;
+        subs->setConfig(config);
+        subs->load();
+        subs->updateLayout();
+        QCOMPARE(subs->count(), 4u);
+        QCOMPARE(subs->grid().width(), 4);
+        QCOMPARE(subs->grid().height(), 1);
 
         // approach windows for edges not created as screen too small
         screenEdges->updateLayout();

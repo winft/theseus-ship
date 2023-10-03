@@ -173,18 +173,18 @@ void setup_plasma_management(Space* space, Win* win)
             }
         });
 
-    for (auto const vd : win->topo.desktops) {
+    for (auto const vd : win->topo.subspaces) {
         plasma_win->addPlasmaVirtualDesktop(vd->id().toStdString());
     }
 
     // We need to set `OnAllDesktops` after the actual VD list has been added.
     // Otherwise it will unconditionally add the current desktop to the interface
     // which may not be the case, for example, when using rules
-    plasma_win->setOnAllDesktops(on_all_desktops(*win));
+    plasma_win->setOnAllDesktops(on_all_subspaces(*win));
 
     // Only for the legacy mechanism.
-    QObject::connect(qtwin, &window_qobject::desktopsChanged, plasma_win, [plasma_win, win] {
-        if (on_all_desktops(*win)) {
+    QObject::connect(qtwin, &window_qobject::subspaces_changed, plasma_win, [plasma_win, win] {
+        if (on_all_subspaces(*win)) {
             plasma_win->setOnAllDesktops(true);
             return;
         }
@@ -197,26 +197,24 @@ void setup_plasma_management(Space* space, Win* win)
                      &Wrapland::Server::PlasmaWindow::enterPlasmaVirtualDesktopRequested,
                      qtwin,
                      [win](const QString& desktopId) {
-                         if (auto vd
-                             = win->space.virtual_desktop_manager->desktopForId(desktopId)) {
-                             enter_desktop(*win, vd);
+                         if (auto vd = win->space.subspace_manager->subspace_for_id(desktopId)) {
+                             enter_subspace(*win, vd);
                          }
                      });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::enterNewPlasmaVirtualDesktopRequested,
                      qtwin,
                      [win]() {
-                         auto& vds = win->space.virtual_desktop_manager;
+                         auto& vds = win->space.subspace_manager;
                          vds->setCount(vds->count() + 1);
-                         enter_desktop(*win, vds->desktops().last());
+                         enter_subspace(*win, vds->subspaces().last());
                      });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::leavePlasmaVirtualDesktopRequested,
                      qtwin,
                      [win](const QString& desktopId) {
-                         if (auto vd
-                             = win->space.virtual_desktop_manager->desktopForId(desktopId)) {
-                             leave_desktop(*win, vd);
+                         if (auto vd = win->space.subspace_manager->subspace_for_id(desktopId)) {
+                             leave_subspace(*win, vd);
                          }
                      });
     QObject::connect(plasma_win,
@@ -260,8 +258,8 @@ void plasma_manage_update_stacking_order(Space& space)
 }
 
 template<typename Manager>
-void setup_virtual_desktop_manager(Manager& manager,
-                                   Wrapland::Server::PlasmaVirtualDesktopManager& management)
+void setup_subspace_manager(Manager& manager,
+                            Wrapland::Server::PlasmaVirtualDesktopManager& management)
 {
     using namespace Wrapland::Server;
 
@@ -274,7 +272,7 @@ void setup_virtual_desktop_manager(Manager& manager,
         pvd->setName(desktop->name().toStdString());
         pvd->sendDone();
 
-        QObject::connect(desktop, &virtual_desktop::nameChanged, pvd, [desktop, pvd] {
+        QObject::connect(desktop, &subspace::nameChanged, pvd, [desktop, pvd] {
             pvd->setName(desktop->name().toStdString());
             pvd->sendDone();
         });
@@ -285,21 +283,21 @@ void setup_virtual_desktop_manager(Manager& manager,
     };
 
     QObject::connect(manager.qobject.get(),
-                     &virtual_desktop_manager_qobject::desktopCreated,
+                     &subspace_manager_qobject::subspace_created,
                      manager.m_virtualDesktopManagement,
                      createPlasmaVirtualDesktop);
 
     QObject::connect(manager.qobject.get(),
-                     &virtual_desktop_manager_qobject::rowsChanged,
+                     &subspace_manager_qobject::rowsChanged,
                      manager.m_virtualDesktopManagement,
                      [&manager](uint rows) {
                          manager.m_virtualDesktopManagement->setRows(rows);
                          manager.m_virtualDesktopManagement->sendDone();
                      });
 
-    // handle removed: from virtual_desktop_manager to the wayland interface
+    // handle removed: from subspace_manager to the wayland interface
     QObject::connect(manager.qobject.get(),
-                     &virtual_desktop_manager_qobject::desktopRemoved,
+                     &subspace_manager_qobject::subspace_removed,
                      manager.m_virtualDesktopManagement,
                      [&manager](auto desktop) {
                          manager.m_virtualDesktopManagement->removeDesktop(
@@ -311,7 +309,7 @@ void setup_virtual_desktop_manager(Manager& manager,
                      &PlasmaVirtualDesktopManager::desktopCreateRequested,
                      manager.qobject.get(),
                      [&manager](auto const& name, quint32 position) {
-                         manager.createVirtualDesktop(position, QString::fromStdString(name));
+                         manager.create_subspace(position, QString::fromStdString(name));
                      });
 
     // remove when the client asks to
@@ -320,23 +318,23 @@ void setup_virtual_desktop_manager(Manager& manager,
                      manager.qobject.get(),
                      [&manager](auto const& id) {
                          // here there can be some nice kauthorized check?
-                         // remove only from virtual_desktop_manager, the other connections will
+                         // remove only from subspace_manager, the other connections will
                          // remove it from m_virtualDesktopManagement as well
-                         manager.removeVirtualDesktop(id.c_str());
+                         manager.remove_subspace(id.c_str());
                      });
 
-    auto const& desktops = manager.desktops();
-    std::for_each(desktops.constBegin(), desktops.constEnd(), createPlasmaVirtualDesktop);
+    auto const& subspaces = manager.subspaces();
+    std::for_each(subspaces.constBegin(), subspaces.constEnd(), createPlasmaVirtualDesktop);
 
     // Now we are sure all ids are there
     manager.save();
 
     QObject::connect(manager.qobject.get(),
-                     &virtual_desktop_manager_qobject::currentChanged,
+                     &subspace_manager_qobject::currentChanged,
                      manager.m_virtualDesktopManagement,
                      [&manager]() {
                          for (auto deskInt : manager.m_virtualDesktopManagement->desktops()) {
-                             if (deskInt->id() == manager.currentDesktop()->id().toStdString()) {
+                             if (deskInt->id() == manager.current_subspace()->id().toStdString()) {
                                  deskInt->setActive(true);
                              } else {
                                  deskInt->setActive(false);

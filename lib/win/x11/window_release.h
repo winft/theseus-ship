@@ -262,7 +262,7 @@ void release_window(Win* win, bool on_shutdown)
     finish_rules(win);
     win->geo.update.block++;
 
-    if (on_current_desktop(*win) && win->isShown()) {
+    if (on_current_subspace(*win) && win->isShown()) {
         space.base.render->compositor->addRepaint(visible_rect(win));
     }
 
@@ -380,7 +380,7 @@ void destroy_window(Win* win)
     finish_rules(win);
     win->geo.update.block++;
 
-    if (on_current_desktop(*win) && win->isShown()) {
+    if (on_current_subspace(*win) && win->isShown()) {
         win->space.base.render->compositor->addRepaint(visible_rect(win));
     }
 

@@ -27,7 +27,7 @@ void setup_handler_window_connections(Handler& handler, Win& window)
 {
     auto qtwin = window.qobject.get();
 
-    QObject::connect(qtwin, &win::window_qobject::desktopsChanged, &handler, [&handler, &window] {
+    QObject::connect(qtwin, &win::window_qobject::subspaces_changed, &handler, [&handler, &window] {
         Q_EMIT handler.windowDesktopsChanged(window.render->effect.get());
     });
     QObject::connect(qtwin,
@@ -163,7 +163,7 @@ void setup_handler(Handler& handler)
     });
 
     auto ws = handler.scene.compositor.platform.base.space.get();
-    auto& vds = ws->virtual_desktop_manager;
+    auto& vds = ws->subspace_manager;
 
     QObject::connect(ws->qobject.get(),
                      &win::space_qobject::showingDesktopChanged,
@@ -173,7 +173,7 @@ void setup_handler(Handler& handler)
                      &win::space_qobject::currentDesktopChanged,
                      &handler,
                      [&handler, space = ws](int old) {
-                         int const newDesktop = space->virtual_desktop_manager->current();
+                         int const newDesktop = space->subspace_manager->current();
                          if (old == 0 || newDesktop == old) {
                              return;
                          }
@@ -282,11 +282,11 @@ void setup_handler(Handler& handler)
                      &handler,
                      &KWin::EffectsHandler::sessionStateChanged);
     QObject::connect(vds->qobject.get(),
-                     &win::virtual_desktop_manager_qobject::countChanged,
+                     &win::subspace_manager_qobject::countChanged,
                      &handler,
                      &EffectsHandler::numberDesktopsChanged);
     QObject::connect(vds->qobject.get(),
-                     &win::virtual_desktop_manager_qobject::layoutChanged,
+                     &win::subspace_manager_qobject::layoutChanged,
                      &handler,
                      [&handler](int width, int height) {
                          Q_EMIT handler.desktopGridSizeChanged(QSize(width, height));

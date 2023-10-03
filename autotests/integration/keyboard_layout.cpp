@@ -573,7 +573,7 @@ TEST_CASE("keyboard layout", "[input]")
                      .value());
     }
 
-    SECTION("virtual_desktop_policy")
+    SECTION("subspace_policy")
     {
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.writeEntry("SwitchMode", QStringLiteral("Desktop"));
@@ -584,18 +584,18 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(xkb->layouts_count(), 3u);
         QCOMPARE(xkb->layout_name(), "English (US)");
 
-        auto& vd_manager = setup.base->space->virtual_desktop_manager;
+        auto& vd_manager = setup.base->space->subspace_manager;
         vd_manager->setCount(4);
         QCOMPARE(vd_manager->count(), 4u);
-        auto desktops = vd_manager->desktops();
-        QCOMPARE(desktops.count(), 4);
+        auto subspaces = vd_manager->subspaces();
+        QCOMPARE(subspaces.count(), 4);
 
-        // Give desktops different layouts.
+        // Give subspaces different layouts.
         uint desktop, layout;
         for (desktop = 0; desktop < vd_manager->count(); ++desktop) {
             // Switch to another virtual desktop.
-            vd_manager->setCurrent(desktops.at(desktop));
-            QCOMPARE(desktops.at(desktop), vd_manager->currentDesktop());
+            vd_manager->setCurrent(subspaces.at(desktop));
+            QCOMPARE(subspaces.at(desktop), vd_manager->current_subspace());
 
             // Should be reset to English.
             QCOMPARE(xkb->layout, 0);
@@ -611,7 +611,7 @@ TEST_CASE("keyboard layout", "[input]")
 
         // check layout set on desktop switching as intended
         for (--desktop;;) {
-            QCOMPARE(desktops.at(desktop), vd_manager->currentDesktop());
+            QCOMPARE(subspaces.at(desktop), vd_manager->current_subspace());
 
             layout = (desktop + 1) % xkb->layouts_count();
             QCOMPARE(xkb->layout, layout);
@@ -620,12 +620,12 @@ TEST_CASE("keyboard layout", "[input]")
                 // overflow
                 break;
             }
-            vd_manager->setCurrent(desktops.at(desktop));
+            vd_manager->setCurrent(subspaces.at(desktop));
         }
 
-        // Remove virtual desktops.
+        // Remove subspaces.
         desktop = 0;
-        auto const deletedDesktop = desktops.last();
+        auto const deletedDesktop = subspaces.last();
         vd_manager->setCount(1);
         REQUIRE(xkb->layout == (layout = (desktop + 1) % xkb->layouts_count()));
         QCOMPARE(xkb->layout_name(), "German");
@@ -634,16 +634,16 @@ TEST_CASE("keyboard layout", "[input]")
         vd_manager->setCount(2);
 
         // Switching to it should result in going to default.
-        desktops = vd_manager->desktops();
-        QCOMPARE(desktops.count(), 2);
-        QCOMPARE(desktops.first(), vd_manager->currentDesktop());
+        subspaces = vd_manager->subspaces();
+        QCOMPARE(subspaces.count(), 2);
+        QCOMPARE(subspaces.first(), vd_manager->current_subspace());
 
-        vd_manager->setCurrent(desktops.last());
+        vd_manager->setCurrent(subspaces.last());
         QCOMPARE(xkb->layout_name(), "English (US)");
 
         // Check there are no more layouts left in config than the last actual non-default layouts
         // number.
-        QSignalSpy deletedDesktopSpy(deletedDesktop, &win::virtual_desktop::aboutToBeDestroyed);
+        QSignalSpy deletedDesktopSpy(deletedDesktop, &win::subspace::aboutToBeDestroyed);
         QVERIFY(deletedDesktopSpy.isValid());
         QVERIFY(deletedDesktopSpy.wait());
         reset_layouts();

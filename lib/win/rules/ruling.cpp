@@ -465,15 +465,15 @@ bool ruling::applyFullScreen(bool& fs, bool init) const
     return apply_set(fs, this->fullscreen, init);
 }
 
-bool ruling::applyDesktops(virtual_desktop_manager const& manager,
-                           QVector<virtual_desktop*>& vds,
+bool ruling::applyDesktops(subspace_manager const& manager,
+                           QVector<subspace*>& vds,
                            bool init) const
 {
     if (checkSetRule(desktops.rule, init)) {
         vds.clear();
 
         for (auto id : desktops.data) {
-            if (auto vd = manager.desktopForId(id)) {
+            if (auto vd = manager.subspace_for_id(id)) {
                 vds << vd;
             }
         }

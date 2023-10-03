@@ -63,10 +63,10 @@ add_executable(tests
   showing_desktop.cpp
   stacking_order.cpp
   struts.cpp
+  subspace.cpp
   tabbox.cpp
   touch_input.cpp
   transient_placement.cpp
-  virtual_desktop.cpp
   virtual_keyboard.cpp
   window_rules.cpp
   window_selection.cpp
@@ -79,13 +79,13 @@ add_executable(tests
   xwayland_input.cpp
   xwayland_selections.cpp
   # effect tests
-  effects/desktop_switching_animation.cpp
   effects/fade.cpp
   effects/maximize_animation.cpp
   effects/minimize_animation.cpp
   effects/popup_open_close_animation.cpp
   effects/scripted_effects.cpp
   effects/slidingpopups.cpp
+  effects/subspace_switching_animation.cpp
   effects/window_open_close_animation.cpp
   effects/translucency.cpp
   # scripting tests

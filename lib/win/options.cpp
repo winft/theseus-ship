@@ -515,7 +515,7 @@ win_op options::windowOperation(const QString& name, bool restricted)
     else if (name == QStringLiteral("Close"))
         return win_op::close;
     else if (name == QStringLiteral("OnAllDesktops"))
-        return win_op::on_all_desktops;
+        return win_op::on_all_subspaces;
     else if (name == QStringLiteral("Operations"))
         return win_op::operations;
     else if (name == QStringLiteral("Maximize (vertical only)"))

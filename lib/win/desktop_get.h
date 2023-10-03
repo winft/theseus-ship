@@ -11,47 +11,46 @@
 namespace KWin::win
 {
 
-// TODO(romangg): Is the recommendation to prefer on_desktop() still sensible?
+// TODO(romangg): Is the recommendation to prefer on_subspace() still sensible?
 /**
- * Returns the virtual desktop the window is located in, 0 if it isn't located on any special
- * desktop (not mapped yet), or -1 (equals NET::OnAllDesktops). Don't use directly, use on_desktop()
- * instead.
+ * Returns the subspace the window is located in, 0 if it isn't located on any special subspace (not
+ * mapped yet), or -1 (equals NET::OnAllDesktops). Don't use directly, use on_subspace() instead.
  */
 template<typename Win>
-int get_desktop(Win const& win)
+int get_subspace(Win const& win)
 {
-    return win.topo.desktops.empty() ? x11_desktop_number_on_all
-                                     : win.topo.desktops.back()->x11DesktopNumber();
+    return win.topo.subspaces.empty() ? x11_desktop_number_on_all
+                                      : win.topo.subspaces.back()->x11DesktopNumber();
 }
 
 template<typename Win>
-bool on_all_desktops(Win const& win)
+bool on_all_subspaces(Win const& win)
 {
-    return win.topo.desktops.empty();
+    return win.topo.subspaces.empty();
 }
 
 template<typename Win>
-bool on_desktop(Win const& win, virtual_desktop* vd)
+bool on_subspace(Win const& win, subspace* sub)
 {
-    return win.topo.desktops.contains(vd) || on_all_desktops(win);
+    return win.topo.subspaces.contains(sub) || on_all_subspaces(win);
 }
 
 template<typename Win>
-bool on_desktop(Win const& win, int d)
+bool on_subspace(Win const& win, int sub)
 {
-    return on_desktop(win, win.space.virtual_desktop_manager->desktopForX11Id(d));
+    return on_subspace(win, win.space.subspace_manager->subspace_for_x11id(sub));
 }
 
 template<typename Win>
-bool on_current_desktop(Win const& win)
+bool on_current_subspace(Win const& win)
 {
-    return on_desktop(win, win.space.virtual_desktop_manager->current());
+    return on_subspace(win, win.space.subspace_manager->current());
 }
 
 template<typename Win>
-QVector<unsigned int> x11_desktop_ids(Win const& win)
+QVector<unsigned int> x11_subspace_ids(Win const& win)
 {
-    auto const& desks = win.topo.desktops;
+    auto const& desks = win.topo.subspaces;
     QVector<unsigned int> x11_ids;
     x11_ids.reserve(desks.count());
     std::transform(desks.constBegin(), desks.constEnd(), std::back_inserter(x11_ids), [](auto vd) {
@@ -61,9 +60,9 @@ QVector<unsigned int> x11_desktop_ids(Win const& win)
 }
 
 template<typename Win>
-QStringList desktop_ids(Win const& win)
+QStringList subspaces_ids(Win const& win)
 {
-    auto const& desks = win.topo.desktops;
+    auto const& desks = win.topo.subspaces;
     QStringList ids;
     ids.reserve(desks.count());
     std::transform(desks.constBegin(),
@@ -74,9 +73,9 @@ QStringList desktop_ids(Win const& win)
 }
 
 template<typename Win>
-QVector<virtual_desktop*> get_desktops(Win const& win)
+QVector<subspace*> get_subspaces(Win const& win)
 {
-    return win.topo.desktops;
+    return win.topo.subspaces;
 }
 
 }

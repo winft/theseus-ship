@@ -34,7 +34,7 @@ public:
 
     void changeDesktop(int desktop) override
     {
-        send_window_to_desktop(window->space, window, desktop, true);
+        send_window_to_subspace(window->space, window, desktop, true);
     }
 
     void changeFullscreenMonitors(net::fullscreen_monitors topology) override

@@ -80,7 +80,7 @@ void apply_window_rules(Win& win)
 
     // MinSize, MaxSize handled by Geometry
     // IgnoreGeometry
-    set_desktops(win, win.topo.desktops);
+    set_subspaces(win, win.topo.subspaces);
 
     // TODO(romangg): can central_output be null?
     send_to_screen(win.space, &win, *win.topo.central_output);

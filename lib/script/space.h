@@ -38,9 +38,9 @@ namespace KWin::scripting
 class KWIN_EXPORT space : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QVector<KWin::win::virtual_desktop*> desktops READ desktops NOTIFY desktopsChanged)
-    Q_PROPERTY(KWin::win::virtual_desktop* currentDesktop READ currentDesktop WRITE
-                   setCurrentDesktop NOTIFY currentDesktopChanged)
+    Q_PROPERTY(QVector<KWin::win::subspace*> desktops READ desktops NOTIFY desktopsChanged)
+    Q_PROPERTY(KWin::win::subspace* currentDesktop READ currentDesktop WRITE setCurrentDesktop
+                   NOTIFY currentDesktopChanged)
     Q_PROPERTY(KWin::scripting::window* activeWindow READ activeWindow WRITE setActiveWindow NOTIFY
                    windowActivated)
     // TODO: write and notify?
@@ -114,9 +114,9 @@ public:
     };
     Q_ENUM(ElectricBorder)
 
-    virtual win::virtual_desktop* currentDesktop() const = 0;
-    virtual void setCurrentDesktop(win::virtual_desktop* desktop) = 0;
-    virtual QVector<KWin::win::virtual_desktop*> desktops() const = 0;
+    virtual win::subspace* currentDesktop() const = 0;
+    virtual void setCurrentDesktop(win::subspace* desktop) = 0;
+    virtual QVector<KWin::win::subspace*> desktops() const = 0;
 
     Q_INVOKABLE output* screenAt(QPointF const& pos) const
     {
@@ -166,7 +166,7 @@ public:
      */
     Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
                                   scripting::output* output,
-                                  win::virtual_desktop* desktop) const
+                                  win::subspace* desktop) const
     {
         return client_area_impl(static_cast<win::area_option>(option), output, desktop);
     }
@@ -418,7 +418,7 @@ protected:
 
     virtual QRect client_area_impl(win::area_option option,
                                    scripting::output* output,
-                                   win::virtual_desktop* desktop) const
+                                   win::subspace* desktop) const
         = 0;
     virtual QRect client_area_impl(win::area_option option, window* window) const = 0;
     virtual QRect client_area_impl(win::area_option option, window const* window) const = 0;
@@ -508,17 +508,17 @@ public:
             }
         });
 
-        auto& vds = ref_space->virtual_desktop_manager;
+        auto& vds = ref_space->subspace_manager;
         QObject::connect(vds->qobject.get(),
-                         &win::virtual_desktop_manager_qobject::countChanged,
+                         &win::subspace_manager_qobject::countChanged,
                          this,
                          &space::desktopsChanged);
         QObject::connect(vds->qobject.get(),
-                         &win::virtual_desktop_manager_qobject::layoutChanged,
+                         &win::subspace_manager_qobject::layoutChanged,
                          this,
                          &space::desktopLayoutChanged);
         QObject::connect(vds->qobject.get(),
-                         &win::virtual_desktop_manager_qobject::currentChanged,
+                         &win::subspace_manager_qobject::currentChanged,
                          this,
                          &space::currentDesktopChanged);
 
@@ -546,19 +546,19 @@ public:
         }
     }
 
-    win::virtual_desktop* currentDesktop() const override
+    win::subspace* currentDesktop() const override
     {
-        return ref_space->virtual_desktop_manager->currentDesktop();
+        return ref_space->subspace_manager->current_subspace();
     }
 
-    QVector<KWin::win::virtual_desktop*> desktops() const override
+    QVector<KWin::win::subspace*> desktops() const override
     {
-        return ref_space->virtual_desktop_manager->desktops();
+        return ref_space->subspace_manager->subspaces();
     }
 
-    void setCurrentDesktop(win::virtual_desktop* desktop) override
+    void setCurrentDesktop(win::subspace* desktop) override
     {
-        ref_space->virtual_desktop_manager->setCurrent(desktop);
+        ref_space->subspace_manager->setCurrent(desktop);
     }
 
     std::vector<window*> get_windows() const override
@@ -587,7 +587,7 @@ public:
 
     QSize desktopGridSize() const override
     {
-        return ref_space->virtual_desktop_manager->grid().size();
+        return ref_space->subspace_manager->grid().size();
     }
 
     QSize displaySize() const override
@@ -769,7 +769,7 @@ public:
 
     void slotWindowOnAllDesktops() override
     {
-        win::active_window_set_on_all_desktops(*ref_space);
+        win::active_window_set_on_all_subspaces(*ref_space);
     }
 
     void slotWindowFullScreen() override
@@ -784,32 +784,32 @@ public:
 
     void slotWindowToNextDesktop() override
     {
-        win::active_window_to_next_desktop(*ref_space);
+        win::active_window_to_next_subspace(*ref_space);
     }
 
     void slotWindowToPreviousDesktop() override
     {
-        win::active_window_to_prev_desktop(*ref_space);
+        win::active_window_to_prev_subspace(*ref_space);
     }
 
     void slotWindowToDesktopRight() override
     {
-        win::active_window_to_right_desktop(*ref_space);
+        win::active_window_to_right_subspace(*ref_space);
     }
 
     void slotWindowToDesktopLeft() override
     {
-        win::active_window_to_left_desktop(*ref_space);
+        win::active_window_to_left_subspace(*ref_space);
     }
 
     void slotWindowToDesktopUp() override
     {
-        win::active_window_to_above_desktop(*ref_space);
+        win::active_window_to_above_subspace(*ref_space);
     }
 
     void slotWindowToDesktopDown() override
     {
-        win::active_window_to_below_desktop(*ref_space);
+        win::active_window_to_below_subspace(*ref_space);
     }
 
     void slotWindowQuickTileLeft() override
@@ -875,14 +875,14 @@ protected:
 
     QRect client_area_impl(win::area_option option,
                            scripting::output* output,
-                           win::virtual_desktop* desktop) const override
+                           win::subspace* subspace) const override
     {
         if (!output) {
             return {};
         }
         auto out_impl = static_cast<output_impl<typename RefSpace::base_t::output_t>*>(output);
         return win::space_window_area(
-            *ref_space, option, &out_impl->ref_out, desktop->x11DesktopNumber());
+            *ref_space, option, &out_impl->ref_out, subspace->x11DesktopNumber());
     }
 
     QRect client_area_impl(win::area_option option, window* win) const override
@@ -903,47 +903,47 @@ protected:
 
     QString desktop_name_impl(int desktop) const override
     {
-        return ref_space->virtual_desktop_manager->name(desktop);
+        return ref_space->subspace_manager->name(desktop);
     }
     void create_desktop_impl(int position, QString const& name) const override
     {
-        ref_space->virtual_desktop_manager->createVirtualDesktop(position, name);
+        ref_space->subspace_manager->create_subspace(position, name);
     }
     void remove_desktop_impl(int position) const override
     {
-        if (auto vd = ref_space->virtual_desktop_manager->desktopForX11Id(position + 1)) {
-            ref_space->virtual_desktop_manager->removeVirtualDesktop(vd->id());
+        if (auto vd = ref_space->subspace_manager->subspace_for_x11id(position + 1)) {
+            ref_space->subspace_manager->remove_subspace(vd->id());
         }
     }
 
     void switch_desktop_next_impl() const override
     {
-        auto& vdm = ref_space->virtual_desktop_manager;
+        auto& vdm = ref_space->subspace_manager;
         vdm->setCurrent(vdm->next(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
     void switch_desktop_previous_impl() const override
     {
-        auto& vdm = ref_space->virtual_desktop_manager;
+        auto& vdm = ref_space->subspace_manager;
         vdm->setCurrent(vdm->previous(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
     void switch_desktop_left_impl() const override
     {
-        auto& vdm = ref_space->virtual_desktop_manager;
+        auto& vdm = ref_space->subspace_manager;
         vdm->setCurrent(vdm->toLeft(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
     void switch_desktop_right_impl() const override
     {
-        auto& vdm = ref_space->virtual_desktop_manager;
+        auto& vdm = ref_space->subspace_manager;
         vdm->setCurrent(vdm->toRight(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
     void switch_desktop_up_impl() const override
     {
-        auto& vdm = ref_space->virtual_desktop_manager;
+        auto& vdm = ref_space->subspace_manager;
         vdm->setCurrent(vdm->above(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
     void switch_desktop_down_impl() const override
     {
-        auto& vdm = ref_space->virtual_desktop_manager;
+        auto& vdm = ref_space->subspace_manager;
         vdm->setCurrent(vdm->below(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
 
@@ -993,7 +993,7 @@ protected:
                            if (!win->control) {
                                return;
                            }
-                           if (!win::on_current_desktop(*win) || win->control->minimized
+                           if (!win::on_current_subspace(*win) || win->control->minimized
                                || win->isHiddenInternal()) {
                                return;
                            }

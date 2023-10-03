@@ -101,9 +101,9 @@ void place_smart(Win* window, QRect const& area)
     int y_optimal;
 
     int possible;
-    int desktop = get_desktop(*window) == 0 || on_all_desktops(*window)
-        ? window->space.virtual_desktop_manager->current()
-        : get_desktop(*window);
+    int subspace = get_subspace(*window) == 0 || on_all_subspaces(*window)
+        ? window->space.subspace_manager->current()
+        : get_subspace(*window);
 
     // temp coords
     int cxl;
@@ -149,7 +149,7 @@ void place_smart(Win* window, QRect const& area)
             cyb = y + ch;
             for (auto const& var_win : window->space.stacking.order.stack) {
                 std::visit(overload{[&](auto&& win) {
-                               if (is_irrelevant(win, window, desktop)) {
+                               if (is_irrelevant(win, window, subspace)) {
                                    return;
                                }
                                auto const& frame = win->geo.update.frame;
@@ -207,7 +207,7 @@ void place_smart(Win* window, QRect const& area)
             // compare to the position of each window on the same desk
             for (auto const& var_win : window->space.stacking.order.stack) {
                 std::visit(overload{[&](auto&& win) {
-                               if (is_irrelevant(win, window, desktop)) {
+                               if (is_irrelevant(win, window, subspace)) {
                                    return;
                                }
 
@@ -245,7 +245,7 @@ void place_smart(Win* window, QRect const& area)
             // test the position of each window on the desk
             for (auto const& var_win : window->space.stacking.order.stack) {
                 std::visit(overload{[&](auto&& win) {
-                               if (is_irrelevant(win, window, desktop)) {
+                               if (is_irrelevant(win, window, subspace)) {
                                    return;
                                }
 
@@ -381,11 +381,11 @@ void place_on_main_window(Win* window, QRect const& area)
         ++mains_count;
         place_on2 = lead;
 
-        if (on_current_desktop(*lead)) {
+        if (on_current_subspace(*lead)) {
             if (place_on == nullptr) {
                 place_on = lead;
             } else {
-                // Two or more on current desktop -> center. That's the default at least.
+                // Two or more on current subspace -> center. That's the default at least.
                 place_with_policy(window, area, placement::centered);
                 return;
             }
@@ -546,16 +546,16 @@ void place_in_area(Win* window, QRect const& area)
 }
 
 /**
- * Unclutters the current desktop by smart-placing all windows again.
+ * Unclutters the current subspace by smart-placing all windows again.
  */
 template<typename Space>
-void unclutter_desktop(Space& space)
+void unclutter_subspace(Space& space)
 {
     auto const& windows = space.windows;
     for (int i = windows.size() - 1; i >= 0; i--) {
         std::visit(overload{[&](auto&& win) {
-                       if (!win->control || !on_current_desktop(*win) || win->control->minimized
-                           || on_all_desktops(*win) || !win->isMovable()) {
+                       if (!win->control || !on_current_subspace(*win) || win->control->minimized
+                           || on_all_subspaces(*win) || !win->isMovable()) {
                            return;
                        }
                        auto const placementArea

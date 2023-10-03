@@ -54,7 +54,7 @@ public:
         qobject = std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); });
         options = std::make_unique<win::options>(input.base.config.main);
         rule_book = std::make_unique<rules::book>();
-        virtual_desktop_manager = std::make_unique<win::virtual_desktop_manager>();
+        subspace_manager = std::make_unique<win::subspace_manager>();
         session_manager = std::make_unique<win::session_manager>();
 
         outline = render_outline_t::create(*render.compositor, [this] {
@@ -79,23 +79,23 @@ public:
         dbus = std::make_unique<desktop::kde::kwin_impl<type>>(*this);
 
         QObject::connect(
-            virtual_desktop_manager->qobject.get(),
-            &virtual_desktop_manager_qobject::desktopRemoved,
+            subspace_manager->qobject.get(),
+            &subspace_manager_qobject::subspace_removed,
             qobject.get(),
             [this] {
-                auto const desktop_count = static_cast<int>(virtual_desktop_manager->count());
+                auto const subspace_count = static_cast<int>(subspace_manager->count());
                 for (auto const& window : windows) {
                     std::visit(overload{[&](auto&& win) {
                                    if (!win->control) {
                                        return;
                                    }
-                                   if (on_all_desktops(*win)) {
+                                   if (on_all_subspaces(*win)) {
                                        return;
                                    }
-                                   if (get_desktop(*win) <= desktop_count) {
+                                   if (get_subspace(*win) <= subspace_count) {
                                        return;
                                    }
-                                   send_window_to_desktop(*this, win, desktop_count, true);
+                                   send_window_to_subspace(*this, win, subspace_count, true);
                                }},
                                window);
                 }
@@ -116,9 +116,9 @@ public:
         win::handle_desktop_resize(*this, size);
     }
 
-    void handle_desktop_changed(uint desktop)
+    void handle_subspace_changed(uint subspace)
     {
-        x11::popagate_desktop_change(*this, desktop);
+        x11::popagate_subspace_change(*this, subspace);
     }
 
     /// On X11 an internal window is an unmanaged and mapped by the window id.
@@ -208,7 +208,7 @@ public:
     std::unique_ptr<base::x11::event_filter> m_movingClientFilter;
     std::unique_ptr<base::x11::event_filter> m_syncAlarmFilter;
 
-    int m_initialDesktop{1};
+    int initial_subspace{1};
     std::unique_ptr<base::x11::xcb::window> m_nullFocus;
 
     int block_focus{0};
@@ -222,7 +222,7 @@ public:
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<win::strut_rects> oldrestrictedmovearea;
 
-    std::unique_ptr<win::virtual_desktop_manager> virtual_desktop_manager;
+    std::unique_ptr<win::subspace_manager> subspace_manager;
     std::unique_ptr<win::session_manager> session_manager;
 
     QTimer* m_quickTileCombineTimer{nullptr};

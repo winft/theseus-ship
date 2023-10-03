@@ -246,7 +246,7 @@ public:
             handler->create_model();
 
             if (!partial_reset) {
-                set_current_desktop(space.virtual_desktop_manager->current());
+                set_current_desktop(space.subspace_manager->current());
             }
             break;
         }
@@ -494,12 +494,12 @@ public:
 
     int next_desktop_static(int iDesktop) const
     {
-        return space.virtual_desktop_manager->next(iDesktop, true);
+        return space.subspace_manager->next(iDesktop, true);
     }
 
     int previous_desktop_static(int iDesktop) const
     {
-        return space.virtual_desktop_manager->previous(iDesktop, true);
+        return space.subspace_manager->previous(iDesktop, true);
     }
 
     void key_press(int keyQt)
@@ -654,7 +654,7 @@ public:
             grab.tab = old_tab_grab;
             if (desktop != -1) {
                 set_current_desktop(desktop);
-                space.virtual_desktop_manager->setCurrent(desktop);
+                space.subspace_manager->setCurrent(desktop);
             }
         }
     }
@@ -994,7 +994,7 @@ private:
         // topmost one with exceptions (can't be keepabove/below, otherwise gets stuck on them).
         for (int i = space.stacking.order.stack.size() - 1; i >= 0; --i) {
             if (std::visit(overload{[&](auto&& win) {
-                               if (win->control && on_current_desktop(*win)
+                               if (win->control && on_current_subspace(*win)
                                    && !win::is_special_window(win) && win->isShown()
                                    && win::wants_tab_focus(win) && !win->control->keep_above
                                    && !win->control->keep_below) {
@@ -1029,7 +1029,7 @@ private:
                                       return false;
                                   }
                                   if (!options_traverse_all
-                                      && !on_desktop(*win, current_desktop())) {
+                                      && !on_subspace(*win, current_desktop())) {
                                       return false;
                                   }
                                   return true;
@@ -1065,8 +1065,8 @@ private:
                            return;
                        }
 
-                       if (!on_desktop(*win, current_desktop())) {
-                           set_current_desktop(get_desktop(*win));
+                       if (!on_subspace(*win, current_desktop())) {
+                           set_current_desktop(get_subspace(*win));
                        }
                        win::raise_window(space, win);
                    }},

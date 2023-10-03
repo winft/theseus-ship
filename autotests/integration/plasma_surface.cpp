@@ -36,13 +36,13 @@ TEST_CASE("plasma surface", "[win]")
     setup_wayland_connection(global_selection::plasma_shell);
     auto plasma_shell = get_client().interfaces.plasma_shell.get();
 
-    SECTION("role on all desktops")
+    SECTION("role on all subspaces")
     {
-        // this test verifies that a XdgShellClient is set on all desktops when the role changes
+        // this test verifies that a XdgShellClient is set on all subspaces when the role changes
 
         struct data {
             PlasmaShellSurface::Role role;
-            bool expected_on_all_desktops;
+            bool expected_on_all_subspaces;
         };
 
         auto test_data = GENERATE(data{PlasmaShellSurface::Role::Desktop, true},
@@ -67,15 +67,15 @@ TEST_CASE("plasma surface", "[win]")
         QVERIFY(c);
         QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
 
-        // currently the role is not yet set, so the window should not be on all desktops
-        QCOMPARE(win::on_all_desktops(*c), false);
+        // currently the role is not yet set, so the window should not be on all subspaces
+        QCOMPARE(win::on_all_subspaces(*c), false);
 
         // now let's try to change that
-        QSignalSpy onAllDesktopsSpy(c->qobject.get(), &win::window_qobject::desktopsChanged);
-        QVERIFY(onAllDesktopsSpy.isValid());
+        QSignalSpy onAllSubspacesSpy(c->qobject.get(), &win::window_qobject::subspaces_changed);
+        QVERIFY(onAllSubspacesSpy.isValid());
         plasmaSurface->setRole(test_data.role);
-        QCOMPARE(onAllDesktopsSpy.wait(500), test_data.expected_on_all_desktops);
-        QCOMPARE(win::on_all_desktops(*c), test_data.expected_on_all_desktops);
+        QCOMPARE(onAllSubspacesSpy.wait(500), test_data.expected_on_all_subspaces);
+        QCOMPARE(win::on_all_subspaces(*c), test_data.expected_on_all_subspaces);
 
         // let's create a second window where we init a little bit different
         // first creating the PlasmaSurface then the Shell Surface
@@ -92,7 +92,7 @@ TEST_CASE("plasma surface", "[win]")
         QVERIFY(c2);
         QVERIFY(c != c2);
 
-        QCOMPARE(win::on_all_desktops(*c2), test_data.expected_on_all_desktops);
+        QCOMPARE(win::on_all_subspaces(*c2), test_data.expected_on_all_subspaces);
     }
 
     SECTION("accepts focus")

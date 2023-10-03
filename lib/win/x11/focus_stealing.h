@@ -17,14 +17,14 @@ namespace KWin::win::x11
 {
 
 // focus_in -> the window got FocusIn event
-// ignore_desktop - call comes from _NET_ACTIVE_WINDOW message, don't refuse just because of window
-//     is on a different desktop
+// ignore_subspace - call comes from _NET_ACTIVE_WINDOW message, don't refuse just because of window
+//     is on a different subspace
 template<typename Space, typename Win>
 bool allow_window_activation(Space& space,
                              Win const* window,
                              xcb_timestamp_t time = -1U,
                              bool focus_in = false,
-                             bool ignore_desktop = false)
+                             bool ignore_subspace = false)
 {
     using var_win = typename Space::window_t;
 
@@ -82,8 +82,8 @@ bool allow_window_activation(Space& space,
         return false;
     }
 
-    // Desktop switching is only allowed in the "no protection" case
-    if (!ignore_desktop && !on_current_desktop(*window)) {
+    // subspace switching is only allowed in the "no protection" case
+    if (!ignore_subspace && !on_current_subspace(*window)) {
         // allow only with level == 0
         return false;
     }
@@ -111,9 +111,9 @@ bool allow_window_activation(Space& space,
         return true;
     }
 
-    if (!on_current_desktop(*window)) {
-        // we allowed explicit self-activation across virtual desktops
-        // inside a client or if no client was active, but not otherwise
+    if (!on_current_subspace(*window)) {
+        // we allowed explicit self-activation across subspaces inside a client or if no client was
+        // active, but not otherwise
         return false;
     }
 

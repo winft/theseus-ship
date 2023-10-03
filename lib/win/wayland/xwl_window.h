@@ -430,7 +430,7 @@ public:
         return x11::belongs_to_desktop(*this);
     }
 
-    void doSetDesktop()
+    void do_set_subspace()
     {
         x11::update_visibility(this);
     }

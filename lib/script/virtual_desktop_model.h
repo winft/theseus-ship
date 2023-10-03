@@ -14,16 +14,16 @@ namespace KWin
 
 namespace win
 {
-class virtual_desktop;
+class subspace;
 }
 
 namespace scripting
 {
 
 /**
- * The virtual_desktop_model class provides a data model for the virtual desktops.
+ * The subspace_model class provides a data model for the virtual desktops.
  */
-class KWIN_EXPORT virtual_desktop_model : public QAbstractListModel
+class KWIN_EXPORT subspace_model : public QAbstractListModel
 {
     Q_OBJECT
 
@@ -32,23 +32,23 @@ public:
         DesktopRole = Qt::UserRole + 1,
     };
 
-    explicit virtual_desktop_model(QObject* parent = nullptr);
+    explicit subspace_model(QObject* parent = nullptr);
 
     QHash<int, QByteArray> roleNames() const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 public Q_SLOTS:
-    win::virtual_desktop* create(uint position, const QString& name = QString());
+    win::subspace* create(uint position, const QString& name = QString());
     void remove(uint position);
 
 private:
-    win::virtual_desktop* desktopFromIndex(const QModelIndex& index) const;
+    win::subspace* desktopFromIndex(const QModelIndex& index) const;
 
-    void handleVirtualDesktopAdded(win::virtual_desktop* desktop);
-    void handleVirtualDesktopRemoved(win::virtual_desktop* desktop);
+    void handleVirtualDesktopAdded(win::subspace* desktop);
+    void handleVirtualDesktopRemoved(win::subspace* desktop);
 
-    QVector<win::virtual_desktop*> m_virtualDesktops;
+    QVector<win::subspace*> m_virtualDesktops;
 };
 
 }

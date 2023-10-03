@@ -75,7 +75,7 @@ void space_windows_add(Space& space, typename Space::wayland_window& window)
         update_layer(&window);
 
         auto const area = space_window_area(
-            space, area_option::placement, get_current_output(window.space), get_desktop(window));
+            space, area_option::placement, get_current_output(window.space), get_subspace(window));
         auto placementDone = false;
 
         if (window.isInitialPositionSet()) {

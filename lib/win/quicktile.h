@@ -50,7 +50,7 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
         };
 
         auto area = space_window_area(
-            win->space, area_option::maximize, QPoint(xroot, yroot), get_desktop(*win));
+            win->space, area_option::maximize, QPoint(xroot, yroot), get_subspace(*win));
         if (win->space.options->qobject->electricBorderTiling()) {
             if (xroot <= area.x() + 20) {
                 mode |= quicktiles::left;
@@ -165,7 +165,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
                 = keyboard ? pending_frame_geometry(win).center() : win->space.input->cursor->pos();
 
             win->setFrameGeometry(
-                electric_border_maximize_geometry(win, ref_pos, get_desktop(*win)));
+                electric_border_maximize_geometry(win, ref_pos, get_subspace(*win)));
             // Store the mode change
             win->control->quicktiling = mode;
             win->geo.restore.max = old_restore_geo;
@@ -265,7 +265,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             // TODO(romangg): With decorations this was previously forced in order to handle borders
             //                being changed. Is it safe to do this now without that?
             win->setFrameGeometry(
-                electric_border_maximize_geometry(win, target_screen, get_desktop(*win)));
+                electric_border_maximize_geometry(win, target_screen, get_subspace(*win)));
         }
 
         // Store the mode change

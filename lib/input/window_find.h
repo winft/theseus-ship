@@ -33,7 +33,7 @@ auto find_controlled_window(Redirect const& redirect, QPoint const& pos)
                                return false;
                            }
                            if (win->control) {
-                               if (!win::on_current_desktop(*win) || win->control->minimized) {
+                               if (!win::on_current_subspace(*win) || win->control->minimized) {
                                    return false;
                                }
                            }

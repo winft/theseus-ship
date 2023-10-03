@@ -102,8 +102,8 @@ void init_space(Space& space)
     space.m_nullFocus->map();
 
     space.root_info = x11::root_info<Space>::create(space);
-    auto& vds = space.virtual_desktop_manager;
-    vds->setRootInfo(space.root_info.get());
+    auto& subspaces = space.subspace_manager;
+    subspaces->setRootInfo(space.root_info.get());
     space.root_info->activate();
 
     // TODO(romangg): Do we need this still?
@@ -173,8 +173,8 @@ void init_space(Space& space)
         win::update_space_areas(space);
 
         // NETWM spec says we have to set it to (0,0) if we don't support it
-        auto viewports = new net::point[vds->count()];
-        space.root_info->setDesktopViewport(vds->count(), *viewports);
+        auto viewports = new net::point[subspaces->count()];
+        space.root_info->setDesktopViewport(subspaces->count(), *viewports);
         delete[] viewports;
         QRect geom;
 
@@ -206,10 +206,10 @@ void init_space(Space& space)
     if (!new_active_win && !space.stacking.active && space.stacking.should_get_focus.empty()) {
         // No client activated in manage()
         if (!new_active_win) {
-            new_active_win = win::top_client_on_desktop(space, vds->current(), nullptr);
+            new_active_win = win::top_client_in_subspace(space, subspaces->current(), nullptr);
         }
         if (!new_active_win) {
-            new_active_win = win::find_desktop(&space, true, vds->current());
+            new_active_win = win::find_desktop(&space, true, subspaces->current());
         }
     }
     if (new_active_win) {

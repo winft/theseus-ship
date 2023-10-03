@@ -48,7 +48,7 @@ QRect get_maximizing_area(Win* win)
 
     if (win->control->electric_maximizing) {
         area = space_window_area(
-            win->space, area_option::maximize, win->space.input->cursor->pos(), get_desktop(*win));
+            win->space, area_option::maximize, win->space.input->cursor->pos(), get_subspace(*win));
     } else {
         area = space_window_area(win->space, area_option::maximize, win);
     }

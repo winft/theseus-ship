@@ -165,8 +165,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
                        win);
         }
 
-        /// Desktop windows are always on the bottom, so copy the non-desktop windows to the
-        /// end/top.
+        // Desktop windows are always on the bottom, so copy the non-desktop windows to the end/top.
         std::copy(non_desktops.begin(), non_desktops.end(), std::back_inserter(clients));
         space.root_info->setClientList(clients.data(), clients.size());
     }
@@ -362,7 +361,7 @@ void restack_window(Win* win,
 
             auto above_win = std::get<Win*>(*it);
 
-            if (!(is_normal(above_win) && above_win->isShown() && on_current_desktop(*above_win)
+            if (!(is_normal(above_win) && above_win->isShown() && on_current_subspace(*above_win)
                   && on_screen(above_win, win->topo.central_output))) {
                 continue;
             }
