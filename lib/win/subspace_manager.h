@@ -82,23 +82,23 @@ public:
     bool isNavigationWrappingAround() const;
     const subspace_grid& grid() const;
 
-    uint above(uint id = 0, bool wrap = true) const;
-    subspace* above(subspace* desktop, bool wrap = true) const;
+    uint above(uint id, bool wrap) const;
+    subspace* above(subspace* desktop, bool wrap) const;
 
-    uint toRight(uint id = 0, bool wrap = true) const;
-    subspace* toRight(subspace* desktop, bool wrap = true) const;
+    uint toRight(uint id, bool wrap) const;
+    subspace* toRight(subspace* desktop, bool wrap) const;
 
-    uint below(uint id = 0, bool wrap = true) const;
-    subspace* below(subspace* desktop, bool wrap = true) const;
+    uint below(uint id, bool wrap) const;
+    subspace* below(subspace* desktop, bool wrap) const;
 
-    uint toLeft(uint id = 0, bool wrap = true) const;
-    subspace* toLeft(subspace* desktop, bool wrap = true) const;
+    uint toLeft(uint id, bool wrap) const;
+    subspace* toLeft(subspace* desktop, bool wrap) const;
 
-    subspace* next(subspace* desktop = nullptr, bool wrap = true) const;
-    uint next(uint id = 0, bool wrap = true) const;
+    subspace* next(subspace* desktop, bool wrap) const;
+    uint next(uint id, bool wrap) const;
 
-    subspace* previous(subspace* desktop = nullptr, bool wrap = true) const;
-    uint previous(uint id = 0, bool wrap = true) const;
+    subspace* previous(subspace* desktop, bool wrap) const;
+    uint previous(uint id, bool wrap) const;
 
     QVector<subspace*> subspaces() const
     {
@@ -114,7 +114,7 @@ public:
      * generated.
      * @returns the new subspace, nullptr if we reached the maximum number of subspaces.
      */
-    subspace* create_subspace(uint position, QString const& name = QString());
+    subspace* create_subspace(uint position, QString const& name);
 
     void remove_subspace(QString const& id);
     void remove_subspace(subspace* sub);
