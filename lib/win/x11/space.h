@@ -27,6 +27,7 @@
 #include <win/space_reconfigure.h>
 #include <win/stacking_state.h>
 #include <win/user_actions_menu.h>
+#include <win/x11/debug.h>
 #include <win/x11/netinfo_helpers.h>
 
 #include <vector>
@@ -187,6 +188,11 @@ public:
         if (root_info) {
             x11::root_info_unset_active_window(*root_info);
         }
+    }
+
+    void debug(QString& support) const
+    {
+        x11::debug_support_info(*this, support);
     }
 
     base_t& base;

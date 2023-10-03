@@ -23,6 +23,7 @@
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
 #include <win/stacking_state.h>
+#include <win/x11/debug.h>
 #include <win/x11/netinfo_helpers.h>
 
 #include <memory>
@@ -147,6 +148,11 @@ public:
         if (root_info) {
             x11::root_info_unset_active_window(*root_info);
         }
+    }
+
+    void debug(QString& support) const
+    {
+        x11::debug_support_info(*this, support);
     }
 
     base_t& base;

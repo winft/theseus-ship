@@ -10,6 +10,8 @@
 #include "kwin_export.h"
 #include "win/kill_window.h"
 #include "win/placement.h"
+#include <win/activation.h>
+#include <win/space_qobject.h>
 
 #include <QObject>
 #include <QtDBus>
