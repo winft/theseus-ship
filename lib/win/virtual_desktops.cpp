@@ -68,10 +68,9 @@ void subspace::setName(QString const& name)
     Q_EMIT nameChanged();
 }
 
-subspace_grid::subspace_grid(subspace_manager& manager)
+subspace_grid::subspace_grid()
     : m_size(1, 2) // Default to tow rows
     , m_grid(QVector<QVector<subspace*>>{QVector<subspace*>{}, QVector<subspace*>{}})
-    , manager{manager}
 {
 }
 
@@ -113,11 +112,6 @@ void subspace_grid::update(QSize const& size,
     }
 }
 
-QPoint subspace_grid::gridCoords(uint id) const
-{
-    return gridCoords(manager.subspace_for_x11id(id));
-}
-
 QPoint subspace_grid::gridCoords(subspace* vd) const
 {
     for (int y = 0; y < m_grid.count(); ++y) {
@@ -150,7 +144,6 @@ subspace_manager_qobject::subspace_manager_qobject() = default;
 
 subspace_manager::subspace_manager()
     : qobject{std::make_unique<subspace_manager_qobject>()}
-    , m_grid{*this}
     , m_swipeGestureReleasedY(new QAction(qobject.get()))
     , m_swipeGestureReleasedX(new QAction(qobject.get()))
     , singleton{qobject.get(),

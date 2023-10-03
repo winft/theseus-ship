@@ -77,17 +77,13 @@ private:
     int m_x11DesktopNumber = 0;
 };
 
-class subspace_manager;
-
 class KWIN_EXPORT subspace_grid
 {
 public:
-    subspace_grid(subspace_manager& manager);
+    subspace_grid();
     ~subspace_grid();
 
     void update(QSize const& size, Qt::Orientation orientation, QVector<subspace*> const& subs);
-
-    QPoint gridCoords(uint id) const;
     QPoint gridCoords(subspace* vd) const;
 
     subspace* at(const QPoint& coords) const;
@@ -98,7 +94,6 @@ public:
 private:
     QSize m_size;
     QVector<QVector<subspace*>> m_grid;
-    subspace_manager& manager;
 };
 
 class KWIN_EXPORT subspace_manager_qobject : public QObject

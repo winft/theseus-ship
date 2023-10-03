@@ -674,15 +674,19 @@ public:
 
     QPoint desktopGridCoords(int id) const override
     {
-        return get_space().subspace_manager->grid().gridCoords(id);
+        auto& mgr = get_space().subspace_manager;
+        return mgr->grid().gridCoords(mgr->subspace_for_x11id(id));
     }
 
     QPoint desktopCoords(int id) const override
     {
-        auto coords = get_space().subspace_manager->grid().gridCoords(id);
+        auto& mgr = get_space().subspace_manager;
+        auto coords = mgr->grid().gridCoords(mgr->subspace_for_x11id(id));
+
         if (coords.x() == -1) {
             return QPoint(-1, -1);
         }
+
         auto const& space_size = scene.compositor.platform.base.topology.size;
         return QPoint(coords.x() * space_size.width(), coords.y() * space_size.height());
     }

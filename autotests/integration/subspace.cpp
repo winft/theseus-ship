@@ -570,7 +570,7 @@ TEST_CASE("subspace", "[win]")
 
         vd_manager->setCount(test_data.init_count);
 
-        win::subspace_grid grid(*vd_manager);
+        win::subspace_grid grid;
 
         QCOMPARE(vd_manager->subspaces().count(), int(test_data.init_count));
 
@@ -582,7 +582,8 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(grid.at(test_data.coords), vd_manager->subspace_for_x11id(test_data.subspace));
 
         if (test_data.subspace != 0) {
-            QCOMPARE(grid.gridCoords(test_data.subspace), test_data.coords);
+            QCOMPARE(grid.gridCoords(vd_manager->subspace_for_x11id(test_data.subspace)),
+                     test_data.coords);
         }
     }
 
