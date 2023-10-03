@@ -528,8 +528,6 @@ void subspace_manager::setRows(uint rows)
     }
 
     updateLayout();
-
-    // rowsChanged will be emitted by setNETDesktopLayout called by updateLayout
 }
 
 void subspace_manager::updateRootInfo()
@@ -574,12 +572,29 @@ void subspace_manager::updateLayout()
         columns = 1;
     }
 
-    setNETDesktopLayout(
-        orientation,
-        columns,
-        m_rows,
-        0 // rootInfo->desktopLayoutCorner() // Not really worth implementing right now.
-    );
+    // Calculate valid grid size
+    Q_ASSERT(columns > 0 || m_rows > 0);
+
+    if ((columns <= 0) && (m_rows > 0)) {
+        columns = (count() + m_rows - 1) / m_rows;
+    } else if ((m_rows <= 0) && (columns > 0)) {
+        m_rows = (count() + columns - 1) / columns;
+    }
+
+    while (columns * m_rows < count()) {
+        if (orientation == Qt::Horizontal) {
+            ++columns;
+        } else {
+            ++m_rows;
+        }
+    }
+
+    m_rows = qMax(1u, m_rows);
+    m_grid.update(QSize(columns, m_rows), orientation, m_subspaces);
+
+    // TODO: why is there no call to m_rootInfo->setDesktopLayout?
+    Q_EMIT qobject->layoutChanged(columns, m_rows);
+    Q_EMIT qobject->rowsChanged(m_rows);
 }
 
 void subspace_manager::load()
@@ -678,39 +693,6 @@ void subspace_manager::save()
 QString subspace_manager::defaultName(int desktop) const
 {
     return i18n("Desktop %1", desktop);
-}
-
-void subspace_manager::setNETDesktopLayout(Qt::Orientation orientation,
-                                           uint width,
-                                           uint height,
-                                           int startingCorner)
-{
-    Q_UNUSED(startingCorner); // Not really worth implementing right now.
-    uint const count = m_subspaces.count();
-
-    // Calculate valid grid size
-    Q_ASSERT(width > 0 || height > 0);
-
-    if ((width <= 0) && (height > 0)) {
-        width = (count + height - 1) / height;
-    } else if ((height <= 0) && (width > 0)) {
-        height = (count + width - 1) / width;
-    }
-
-    while (width * height < count) {
-        if (orientation == Qt::Horizontal) {
-            ++width;
-        } else {
-            ++height;
-        }
-    }
-
-    m_rows = qMax(1u, height);
-    m_grid.update(QSize(width, height), orientation, m_subspaces);
-
-    // TODO: why is there no call to m_rootInfo->setDesktopLayout?
-    Q_EMIT qobject->layoutChanged(width, height);
-    Q_EMIT qobject->rowsChanged(height);
 }
 
 void subspace_manager::connect_gestures()

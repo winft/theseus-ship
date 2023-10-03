@@ -171,10 +171,6 @@ private:
     void updateRootInfo();
     QList<subspace*> update_count(uint count);
 
-    /// Generate a desktop layout from EWMH _NET_DESKTOP_LAYOUT property parameters.
-    void
-    setNETDesktopLayout(Qt::Orientation orientation, uint width, uint height, int startingCorner);
-
     QString defaultName(int desktop) const;
 
     QVector<subspace*> m_subspaces;
