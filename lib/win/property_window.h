@@ -6,7 +6,7 @@
 #pragma once
 
 #include "kwin_export.h"
-#include "virtual_desktops.h"
+#include <win/subspace.h>
 
 #include <QObject>
 

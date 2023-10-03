@@ -124,7 +124,9 @@ target_sources(win
       types.h
       user_actions_menu.h
       util.h
-      virtual_desktops.h
+      subspace.h
+      subspace_grid.h
+      subspace_manager.h
       window_area.h
       window_find.h
       window_geometry.h
@@ -156,7 +158,9 @@ target_sources(win
     shortcut_dialog.cpp
     singleton_interface.cpp
     space_qobject.cpp
-    virtual_desktops.cpp
+    subspace.cpp
+    subspace_grid.cpp
+    subspace_manager.cpp
     x11/client_machine.cpp
     x11/extras.cpp
     x11/key_server.cpp

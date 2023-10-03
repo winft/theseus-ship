@@ -5,7 +5,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "virtual_desktops.h"
+#include "subspace_manager.h"
 
 #include "singleton_interface.h"
 #include "x11/net/root_info.h"
@@ -25,119 +25,6 @@ static const double GESTURE_SWITCH_THRESHOLD = .25;
 static QString generateDesktopId()
 {
     return QUuid::createUuid().toString(QUuid::WithoutBraces);
-}
-
-subspace::subspace(QObject* parent)
-    : QObject(parent)
-{
-}
-
-subspace::~subspace()
-{
-    Q_EMIT aboutToBeDestroyed();
-}
-
-void subspace::setId(QString const& id)
-{
-    Q_ASSERT(m_id.isEmpty());
-    assert(!id.isEmpty());
-    m_id = id;
-}
-
-void subspace::setX11DesktopNumber(uint number)
-{
-    // x11DesktopNumber can be changed now
-    if (static_cast<uint>(m_x11DesktopNumber) == number) {
-        return;
-    }
-
-    m_x11DesktopNumber = number;
-
-    if (m_x11DesktopNumber != 0) {
-        Q_EMIT x11DesktopNumberChanged();
-    }
-}
-
-void subspace::setName(QString const& name)
-{
-    if (m_name == name) {
-        return;
-    }
-
-    m_name = name;
-    Q_EMIT nameChanged();
-}
-
-subspace_grid::subspace_grid()
-    : m_size(1, 2) // Default to tow rows
-    , m_grid(QVector<QVector<subspace*>>{QVector<subspace*>{}, QVector<subspace*>{}})
-{
-}
-
-subspace_grid::~subspace_grid() = default;
-
-void subspace_grid::update(QSize const& size,
-                           Qt::Orientation orientation,
-                           QVector<subspace*> const& subs)
-{
-    // Set private variables
-    m_size = size;
-    uint const width = size.width();
-    uint const height = size.height();
-
-    m_grid.clear();
-    auto it = subs.begin();
-    auto end = subs.end();
-
-    if (orientation == Qt::Horizontal) {
-        for (uint y = 0; y < height; ++y) {
-            QVector<subspace*> row;
-            for (uint x = 0; x < width && it != end; ++x) {
-                row << *it;
-                it++;
-            }
-            m_grid << row;
-        }
-    } else {
-        for (uint y = 0; y < height; ++y) {
-            m_grid << QVector<subspace*>();
-        }
-        for (uint x = 0; x < width; ++x) {
-            for (uint y = 0; y < height && it != end; ++y) {
-                auto& row = m_grid[y];
-                row << *it;
-                it++;
-            }
-        }
-    }
-}
-
-QPoint subspace_grid::gridCoords(subspace* vd) const
-{
-    for (int y = 0; y < m_grid.count(); ++y) {
-        auto const& row = m_grid.at(y);
-        for (int x = 0; x < row.count(); ++x) {
-            if (row.at(x) == vd) {
-                return QPoint(x, y);
-            }
-        }
-    }
-
-    return QPoint(-1, -1);
-}
-
-subspace* subspace_grid::at(const QPoint& coords) const
-{
-    if (coords.y() >= m_grid.count()) {
-        return nullptr;
-    }
-
-    auto const& row = m_grid.at(coords.y());
-    if (coords.x() >= row.count()) {
-        return nullptr;
-    }
-
-    return row.at(coords.x());
 }
 
 subspace_manager_qobject::subspace_manager_qobject() = default;

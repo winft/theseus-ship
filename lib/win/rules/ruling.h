@@ -12,7 +12,7 @@
 
 #include "base/options.h"
 #include "win/types.h"
-#include "win/virtual_desktops.h"
+#include <win/subspace_manager.h>
 
 class QDebug;
 

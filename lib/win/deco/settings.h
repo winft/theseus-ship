@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "bridge_qobject.h"
 
 #include "win/space_qobject.h"
-#include "win/virtual_desktops.h"
 
 #include <KConfigGroup>
 #include <KDecoration2/Private/DecorationSettingsPrivate>
@@ -39,7 +38,7 @@ public:
                          parent,
                          &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
         connect(space.subspace_manager->qobject.get(),
-                &win::subspace_manager_qobject::countChanged,
+                &decltype(space.subspace_manager->qobject)::element_type::countChanged,
                 this,
                 [parent](uint previous, uint current) {
                     if (previous != 1 && current != 1) {

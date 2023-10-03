@@ -14,6 +14,7 @@
 #include "space_areas.h"
 #include "space_setup.h"
 #include "window.h"
+#include <win/subspace_manager.h>
 
 #include "base/x11/xcb/helpers.h"
 #include "debug/console/x11/x11_console.h"

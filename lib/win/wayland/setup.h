@@ -11,7 +11,6 @@
 #include "win/move.h"
 #include "win/screen.h"
 #include "win/types.h"
-#include "win/virtual_desktops.h"
 
 #include <Wrapland/Server/plasma_virtual_desktop.h>
 #include <Wrapland/Server/plasma_window.h>
@@ -283,12 +282,12 @@ void setup_subspace_manager(Manager& manager,
     };
 
     QObject::connect(manager.qobject.get(),
-                     &subspace_manager_qobject::subspace_created,
+                     &decltype(manager.qobject)::element_type::subspace_created,
                      manager.m_virtualDesktopManagement,
                      createPlasmaVirtualDesktop);
 
     QObject::connect(manager.qobject.get(),
-                     &subspace_manager_qobject::rowsChanged,
+                     &decltype(manager.qobject)::element_type::rowsChanged,
                      manager.m_virtualDesktopManagement,
                      [&manager](uint rows) {
                          manager.m_virtualDesktopManagement->setRows(rows);
@@ -297,7 +296,7 @@ void setup_subspace_manager(Manager& manager,
 
     // handle removed: from subspace_manager to the wayland interface
     QObject::connect(manager.qobject.get(),
-                     &subspace_manager_qobject::subspace_removed,
+                     &decltype(manager.qobject)::element_type::subspace_removed,
                      manager.m_virtualDesktopManagement,
                      [&manager](auto desktop) {
                          manager.m_virtualDesktopManagement->removeDesktop(
@@ -330,7 +329,7 @@ void setup_subspace_manager(Manager& manager,
     manager.save();
 
     QObject::connect(manager.qobject.get(),
-                     &subspace_manager_qobject::current_changed,
+                     &decltype(manager.qobject)::element_type::current_changed,
                      manager.m_virtualDesktopManagement,
                      [&manager]() {
                          for (auto deskInt : manager.m_virtualDesktopManagement->desktops()) {

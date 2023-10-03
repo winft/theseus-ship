@@ -6,7 +6,7 @@
 #pragma once
 
 #include "utils/algorithm.h"
-#include "win/virtual_desktops.h"
+#include <win/subspace.h>
 
 #include <Wrapland/Server/plasma_window.h>
 

@@ -18,11 +18,11 @@
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
-#include "win/virtual_desktops.h"
 #include "win/x11/desktop_space.h"
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
 #include <win/stacking_state.h>
+#include <win/subspace_manager.h>
 #include <win/x11/debug.h>
 #include <win/x11/netinfo_helpers.h>
 

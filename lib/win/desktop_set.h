@@ -9,7 +9,7 @@
 #include "focus_chain_edit.h"
 #include "stacking.h"
 #include "transient.h"
-#include "virtual_desktops.h"
+#include <win/subspace.h>
 
 namespace KWin::win
 {

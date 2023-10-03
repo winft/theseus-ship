@@ -7,6 +7,8 @@
 #pragma once
 
 #include "singleton_interface.h"
+#include <win/subspace.h>
+#include <win/subspace_grid.h>
 
 #include "kwin_export.h"
 
@@ -33,68 +35,6 @@ namespace x11::net
 {
 class root_info;
 }
-
-class KWIN_EXPORT subspace : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(QString id READ id CONSTANT)
-    Q_PROPERTY(uint x11DesktopNumber READ x11DesktopNumber NOTIFY x11DesktopNumberChanged)
-    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
-
-public:
-    explicit subspace(QObject* parent = nullptr);
-    ~subspace() override;
-
-    void setId(QString const& id);
-    QString id() const
-    {
-        return m_id;
-    }
-
-    void setName(QString const& name);
-    QString name() const
-    {
-        return m_name;
-    }
-
-    void setX11DesktopNumber(uint number);
-    uint x11DesktopNumber() const
-    {
-        return m_x11DesktopNumber;
-    }
-
-Q_SIGNALS:
-    void nameChanged();
-    void x11DesktopNumberChanged();
-    /**
-     * Emitted just before the desktop gets destroyed.
-     */
-    void aboutToBeDestroyed();
-
-private:
-    QString m_id;
-    QString m_name;
-    int m_x11DesktopNumber = 0;
-};
-
-class KWIN_EXPORT subspace_grid
-{
-public:
-    subspace_grid();
-    ~subspace_grid();
-
-    void update(QSize const& size, Qt::Orientation orientation, QVector<subspace*> const& subs);
-    QPoint gridCoords(subspace* vd) const;
-
-    subspace* at(const QPoint& coords) const;
-    int width() const;
-    int height() const;
-    QSize const& size() const;
-
-private:
-    QSize m_size;
-    QVector<QVector<subspace*>> m_grid;
-};
 
 class KWIN_EXPORT subspace_manager_qobject : public QObject
 {
@@ -252,21 +192,6 @@ private:
 
     subspaces_singleton singleton;
 };
-
-inline int subspace_grid::width() const
-{
-    return m_size.width();
-}
-
-inline int subspace_grid::height() const
-{
-    return m_size.height();
-}
-
-inline QSize const& subspace_grid::size() const
-{
-    return m_size;
-}
 
 inline uint subspace_manager::maximum()
 {

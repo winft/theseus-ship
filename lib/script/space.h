@@ -19,8 +19,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/move.h"
 #include "win/output_space.h"
 #include "win/screen.h"
-#include "win/virtual_desktops.h"
 #include <kwin_export.h>
+#include <win/subspace.h>
 
 #include <QObject>
 #include <QQmlEngine>

@@ -9,7 +9,7 @@
 #include "window_thumbnail_item.h"
 
 #include "base/output.h"
-#include "win/virtual_desktops.h"
+#include <win/subspace.h>
 
 namespace KWin
 {

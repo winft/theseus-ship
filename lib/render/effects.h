@@ -20,7 +20,7 @@
 #include "win/space_qobject.h"
 #include "win/stacking_order.h"
 #include "win/types.h"
-#include "win/virtual_desktops.h"
+#include <win/subspace.h>
 
 #include <render/effect/interface/effect.h>
 #include <render/effect/interface/effect_frame.h>

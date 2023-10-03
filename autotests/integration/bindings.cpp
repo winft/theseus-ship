@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "script/script.h"
 #include "win/control.h"
 #include "win/move.h"
-#include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
 
 #include <QDBusConnection>

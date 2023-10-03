@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "virtual_desktops.h"
+#include <win/subspace.h>
 #include <win/types.h>
 
 namespace KWin::win

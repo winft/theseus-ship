@@ -12,8 +12,8 @@
 #include "win/session_manager.h"
 #include "win/space_qobject.h"
 #include "win/util.h"
-#include "win/virtual_desktops.h"
 #include "win/window_qobject.h"
+#include <win/subspace.h>
 
 #include <KConfigGroup>
 #include <QObject>
@@ -157,7 +157,7 @@ public:
     {
         auto& space = manager->redirect.space;
         QObject::connect(space.subspace_manager->qobject.get(),
-                         &win::subspace_manager_qobject::current_changed,
+                         &decltype(space.subspace_manager->qobject)::element_type::current_changed,
                          this->qobject.get(),
                          [this] { handle_desktop_change(); });
 

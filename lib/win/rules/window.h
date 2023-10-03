@@ -11,7 +11,7 @@
 #include "kwin_export.h"
 #include "ruling.h"
 #include "win/types.h"
-#include "win/virtual_desktops.h"
+#include <win/subspace_manager.h>
 
 #include <QRect>
 #include <functional>

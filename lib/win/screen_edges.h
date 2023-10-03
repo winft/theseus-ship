@@ -12,7 +12,7 @@
 
 #include "move.h"
 #include "singleton_interface.h"
-#include "virtual_desktops.h"
+#include <win/subspace.h>
 
 #include "input/gestures.h"
 #include <base/x11/data.h>

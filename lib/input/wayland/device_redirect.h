@@ -12,7 +12,6 @@
 #include "win/geo.h"
 #include "win/space_qobject.h"
 #include "win/stacking_order.h"
-#include "win/virtual_desktops.h"
 
 #include <QWindow>
 
@@ -37,7 +36,7 @@ void device_redirect_init(Dev* dev)
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
     QObject::connect(space.subspace_manager->qobject.get(),
-                     &win::subspace_manager_qobject::current_changed,
+                     &decltype(space.subspace_manager->qobject)::element_type::current_changed,
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
 }
