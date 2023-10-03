@@ -162,7 +162,7 @@ TEST_CASE("bindings", "[input],[win]")
 
         // first go to subspace one
         auto& vd_manager = setup.base->space->subspace_manager;
-        vd_manager->setCurrent(vd_manager->subspaces().first());
+        vd_manager->setCurrent(vd_manager->subspaces().front());
 
         // now create a window
         auto surface = create_surface();

@@ -73,7 +73,7 @@ void subspace_manager::setRootInfo(x11::net::root_info* info)
 
 QString subspace_manager::name(uint sub) const
 {
-    if (uint(m_subspaces.length()) > sub - 1) {
+    if (uint(m_subspaces.size()) > sub - 1) {
         return m_subspaces[sub - 1]->name();
     }
 
@@ -239,7 +239,7 @@ subspace* subspace_manager::next(subspace* desktop, bool wrap) const
 
     if (it == m_subspaces.end()) {
         if (wrap) {
-            return m_subspaces.first();
+            return m_subspaces.front();
         } else {
             return desktop;
         }
@@ -266,7 +266,7 @@ subspace* subspace_manager::previous(subspace* desktop, bool wrap) const
 
     if (it == m_subspaces.begin()) {
         if (wrap) {
-            return m_subspaces.last();
+            return m_subspaces.back();
         } else {
             return desktop;
         }
@@ -292,11 +292,10 @@ subspace* subspace_manager::subspace_for_x11id(uint id) const
 
 subspace* subspace_manager::subspace_for_id(QString const& id) const
 {
-    auto desk = std::find_if(m_subspaces.constBegin(), m_subspaces.constEnd(), [id](auto desk) {
-        return desk->id() == id;
-    });
+    auto desk = std::find_if(
+        m_subspaces.begin(), m_subspaces.end(), [id](auto desk) { return desk->id() == id; });
 
-    if (desk != m_subspaces.constEnd()) {
+    if (desk != m_subspaces.end()) {
         return *desk;
     }
 
@@ -306,11 +305,11 @@ subspace* subspace_manager::subspace_for_id(QString const& id) const
 subspace* subspace_manager::create_subspace(uint position, QString const& name)
 {
     // too many, can't insert new ones
-    if (static_cast<uint>(m_subspaces.count()) == subspace_manager::maximum()) {
+    if (static_cast<uint>(m_subspaces.size()) == subspace_manager::maximum()) {
         return nullptr;
     }
 
-    position = qBound(0u, position, static_cast<uint>(m_subspaces.count()));
+    position = qBound(0u, position, static_cast<uint>(m_subspaces.size()));
 
     QString desktopName = name;
     if (desktopName.isEmpty()) {
@@ -332,10 +331,10 @@ subspace* subspace_manager::create_subspace(uint position, QString const& name)
         m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
     }
 
-    m_subspaces.insert(position, vd);
+    m_subspaces.insert(m_subspaces.begin() + position, vd);
 
     // update the id of displaced subspaces
-    for (uint i = position + 1; i < static_cast<uint>(m_subspaces.count()); ++i) {
+    for (uint i = position + 1; i < static_cast<uint>(m_subspaces.size()); ++i) {
         m_subspaces[i]->setX11DesktopNumber(i + 1);
         if (m_rootInfo) {
             m_rootInfo->setDesktopName(i + 1, m_subspaces[i]->name().toUtf8().data());
@@ -347,7 +346,7 @@ subspace* subspace_manager::create_subspace(uint position, QString const& name)
     updateLayout();
 
     Q_EMIT qobject->subspace_created(vd);
-    Q_EMIT qobject->countChanged(m_subspaces.count() - 1, m_subspaces.count());
+    Q_EMIT qobject->countChanged(m_subspaces.size() - 1, m_subspaces.size());
 
     return vd;
 }
@@ -365,22 +364,22 @@ void subspace_manager::remove_subspace(subspace* sub)
     assert(sub);
 
     // don't end up without any subspace
-    if (m_subspaces.count() == 1) {
+    if (count() == 1) {
         return;
     }
 
     uint const oldCurrent = m_current->x11DesktopNumber();
     uint const i = sub->x11DesktopNumber() - 1;
-    m_subspaces.remove(i);
+    m_subspaces.erase(m_subspaces.begin() + i);
 
-    for (uint j = i; j < static_cast<uint>(m_subspaces.count()); ++j) {
+    for (uint j = i; j < static_cast<uint>(count()); ++j) {
         m_subspaces[j]->setX11DesktopNumber(j + 1);
         if (m_rootInfo) {
             m_rootInfo->setDesktopName(j + 1, m_subspaces[j]->name().toUtf8().data());
         }
     }
 
-    uint const newCurrent = qMin(oldCurrent, static_cast<uint>(m_subspaces.count()));
+    uint const newCurrent = qMin(oldCurrent, static_cast<uint>(count()));
     m_current = m_subspaces.at(newCurrent - 1);
     if (oldCurrent != newCurrent) {
         Q_EMIT qobject->current_changed(oldCurrent, newCurrent);
@@ -391,7 +390,7 @@ void subspace_manager::remove_subspace(subspace* sub)
     save();
 
     Q_EMIT qobject->subspace_removed(sub);
-    Q_EMIT qobject->countChanged(m_subspaces.count() + 1, m_subspaces.count());
+    Q_EMIT qobject->countChanged(count() + 1, count());
 
     sub->deleteLater();
 }
@@ -431,12 +430,14 @@ bool subspace_manager::setCurrent(subspace* newDesktop)
     return true;
 }
 
-QList<subspace*> subspace_manager::update_count(uint count)
+std::vector<subspace*> subspace_manager::update_count(uint count)
 {
     // this explicit check makes it more readable
-    if (static_cast<uint>(m_subspaces.count()) > count) {
-        auto const subspacesToRemove = m_subspaces.mid(count);
+    if (static_cast<uint>(m_subspaces.size()) > count) {
+        auto const subspacesToRemove
+            = std::vector<subspace*>{m_subspaces.begin() + count, m_subspaces.end()};
         m_subspaces.resize(count);
+
         if (m_current) {
             uint oldCurrent = current();
             uint newCurrent = qMin(oldCurrent, count);
@@ -445,6 +446,7 @@ QList<subspace*> subspace_manager::update_count(uint count)
                 Q_EMIT qobject->current_changed(oldCurrent, newCurrent);
             }
         }
+
         for (auto desktop : subspacesToRemove) {
             Q_EMIT qobject->subspace_removed(desktop);
             desktop->deleteLater();
@@ -453,18 +455,22 @@ QList<subspace*> subspace_manager::update_count(uint count)
         return {};
     }
 
-    QList<subspace*> new_subspaces;
+    std::vector<subspace*> new_subspaces;
 
-    while (uint(m_subspaces.count()) < count) {
+    while (uint(m_subspaces.size()) < count) {
         auto vd = new subspace(qobject.get());
-        const int x11Number = m_subspaces.count() + 1;
+        const int x11Number = m_subspaces.size() + 1;
+
         vd->setX11DesktopNumber(x11Number);
         vd->setName(defaultName(x11Number));
+
         if (!s_loadingDesktopSettings) {
             vd->setId(generateDesktopId());
         }
-        m_subspaces << vd;
-        new_subspaces << vd;
+
+        m_subspaces.push_back(vd);
+        new_subspaces.push_back(vd);
+
         QObject::connect(vd, &subspace::nameChanged, qobject.get(), [this, vd] {
             if (m_rootInfo) {
                 m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
@@ -481,14 +487,14 @@ QList<subspace*> subspace_manager::update_count(uint count)
 void subspace_manager::setCount(uint count)
 {
     count = qBound<uint>(1, count, subspace_manager::maximum());
-    if (count == uint(m_subspaces.count())) {
+    if (count == uint(m_subspaces.size())) {
         // nothing to change
         return;
     }
 
-    uint const oldCount = m_subspaces.count();
+    uint const oldCount = m_subspaces.size();
 
-    auto new_subspaces = update_count(count);
+    auto const new_subspaces = update_count(count);
 
     updateRootInfo();
     updateLayout();
@@ -496,11 +502,11 @@ void subspace_manager::setCount(uint count)
     if (!s_loadingDesktopSettings) {
         save();
     }
-    for (auto vd : qAsConst(new_subspaces)) {
+    for (auto vd : new_subspaces) {
         Q_EMIT qobject->subspace_created(vd);
     }
 
-    Q_EMIT qobject->countChanged(oldCount, m_subspaces.count());
+    Q_EMIT qobject->countChanged(oldCount, m_subspaces.size());
 }
 
 uint subspace_manager::rows() const
@@ -608,8 +614,8 @@ void subspace_manager::load()
     KConfigGroup group(m_config, QStringLiteral("Desktops"));
     const int n = group.readEntry("Number", 1);
 
-    uint const oldCount = m_subspaces.count();
-    auto new_desktops = update_count(n);
+    uint const oldCount = m_subspaces.size();
+    auto const new_desktops = update_count(n);
 
     for (int i = 1; i <= n; i++) {
         QString s = group.readEntry(QStringLiteral("Name_%1").arg(i), i18n("Desktop %1", i));
@@ -633,11 +639,11 @@ void subspace_manager::load()
     updateRootInfo();
     updateLayout();
 
-    for (auto vd : qAsConst(new_desktops)) {
+    for (auto vd : new_desktops) {
         Q_EMIT qobject->subspace_created(vd);
     }
 
-    Q_EMIT qobject->countChanged(oldCount, m_subspaces.count());
+    Q_EMIT qobject->countChanged(oldCount, m_subspaces.size());
 
     int rows = group.readEntry<int>("Rows", 2);
     m_rows = qBound(1, rows, n);

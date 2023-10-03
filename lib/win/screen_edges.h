@@ -847,13 +847,13 @@ private:
         }
 
         if (auto& mov_res = edger->space.move_resize_window) {
-            QVector<subspace*> desktops{desktop};
+            std::vector<subspace*> subs{desktop};
             if (std::visit(overload{[&](auto&& win) {
                                return win->control->rules.checkDesktops(
-                                   *edger->space.subspace_manager, desktops);
+                                   *edger->space.subspace_manager, subs);
                            }},
                            *mov_res)
-                != desktops) {
+                != subs) {
                 // User tries to move a client to another desktop where it is ruleforced to not be.
                 return;
             }

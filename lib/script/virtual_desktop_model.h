@@ -8,6 +8,7 @@
 #include "kwin_export.h"
 
 #include <QAbstractListModel>
+#include <vector>
 
 namespace KWin
 {
@@ -48,7 +49,7 @@ private:
     void handleVirtualDesktopAdded(win::subspace* desktop);
     void handleVirtualDesktopRemoved(win::subspace* desktop);
 
-    QVector<win::subspace*> m_virtualDesktops;
+    std::vector<win::subspace*> m_virtualDesktops;
 };
 
 }

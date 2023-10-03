@@ -21,6 +21,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 class QAction;
 
@@ -43,7 +44,7 @@ struct screen_edger_singleton {
 
 struct subspaces_singleton {
     win::subspace_manager_qobject* qobject;
-    std::function<QVector<subspace*>()> get;
+    std::function<std::vector<subspace*>()> get;
     std::function<subspace*(unsigned int, QString)> create;
     std::function<void(QString const&)> remove;
     std::function<subspace*()> current;

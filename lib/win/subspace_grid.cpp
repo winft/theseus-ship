@@ -9,8 +9,8 @@ namespace KWin::win
 {
 
 subspace_grid::subspace_grid()
-    : m_size(1, 2) // Default to tow rows
-    , m_grid(QVector<QVector<subspace*>>{QVector<subspace*>{}, QVector<subspace*>{}})
+    : m_size(1, 2) // Default to two rows
+    , m_grid{std::vector<subspace*>{}, std::vector<subspace*>{}}
 {
 }
 
@@ -18,7 +18,7 @@ subspace_grid::~subspace_grid() = default;
 
 void subspace_grid::update(QSize const& size,
                            Qt::Orientation orientation,
-                           QVector<subspace*> const& subs)
+                           std::vector<subspace*> const& subs)
 {
     // Set private variables
     m_size = size;
@@ -31,21 +31,21 @@ void subspace_grid::update(QSize const& size,
 
     if (orientation == Qt::Horizontal) {
         for (uint y = 0; y < height; ++y) {
-            QVector<subspace*> row;
+            std::vector<subspace*> row;
             for (uint x = 0; x < width && it != end; ++x) {
-                row << *it;
+                row.push_back(*it);
                 it++;
             }
-            m_grid << row;
+            m_grid.push_back(row);
         }
     } else {
         for (uint y = 0; y < height; ++y) {
-            m_grid << QVector<subspace*>();
+            m_grid.push_back(std::vector<subspace*>());
         }
         for (uint x = 0; x < width; ++x) {
             for (uint y = 0; y < height && it != end; ++y) {
                 auto& row = m_grid[y];
-                row << *it;
+                row.push_back(*it);
                 it++;
             }
         }
@@ -54,9 +54,9 @@ void subspace_grid::update(QSize const& size,
 
 QPoint subspace_grid::gridCoords(subspace* vd) const
 {
-    for (int y = 0; y < m_grid.count(); ++y) {
+    for (size_t y = 0; y < m_grid.size(); ++y) {
         auto const& row = m_grid.at(y);
-        for (int x = 0; x < row.count(); ++x) {
+        for (size_t x = 0; x < row.size(); ++x) {
             if (row.at(x) == vd) {
                 return QPoint(x, y);
             }
@@ -68,12 +68,12 @@ QPoint subspace_grid::gridCoords(subspace* vd) const
 
 subspace* subspace_grid::at(const QPoint& coords) const
 {
-    if (coords.y() >= m_grid.count()) {
+    if (coords.y() >= static_cast<int>(m_grid.size())) {
         return nullptr;
     }
 
     auto const& row = m_grid.at(coords.y());
-    if (coords.x() >= row.count()) {
+    if (coords.x() >= static_cast<int>(row.size())) {
         return nullptr;
     }
 

@@ -590,20 +590,26 @@ public:
                        if (!win->control || win::is_desktop(win) || win::is_dock(win)) {
                            return;
                        }
-                       QVector<win::subspace*> desktops;
-                       desktops.reserve(desktopIds.count());
+
+                       std::vector<win::subspace*> subs;
+                       subs.reserve(desktopIds.count());
+
                        for (uint x11Id : desktopIds) {
                            if (x11Id > get_space().subspace_manager->count()) {
                                continue;
                            }
-                           auto d = get_space().subspace_manager->subspace_for_x11id(x11Id);
-                           Q_ASSERT(d);
-                           if (desktops.contains(d)) {
+
+                           auto sub = get_space().subspace_manager->subspace_for_x11id(x11Id);
+                           Q_ASSERT(sub);
+
+                           if (contains(subs, sub)) {
                                continue;
                            }
-                           desktops << d;
+
+                           subs.push_back(sub);
                        }
-                       win::set_subspaces(*win, desktops);
+
+                       win::set_subspaces(*win, subs);
                    }},
                    *static_cast<effect_window_t*>(w)->window.ref_win);
     }

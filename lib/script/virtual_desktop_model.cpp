@@ -34,7 +34,7 @@ win::subspace* subspace_model::create(uint position, const QString& name)
 
 void subspace_model::remove(uint position)
 {
-    if (static_cast<int>(position) < m_virtualDesktops.count()) {
+    if (position < m_virtualDesktops.size()) {
         win::singleton_interface::subspaces->remove(m_virtualDesktops[position]->id());
     }
 }
@@ -43,17 +43,18 @@ void subspace_model::handleVirtualDesktopAdded(win::subspace* desktop)
 {
     const int position = desktop->x11DesktopNumber() - 1;
     beginInsertRows(QModelIndex(), position, position);
-    m_virtualDesktops.insert(position, desktop);
+    m_virtualDesktops.insert(m_virtualDesktops.begin() + position, desktop);
     endInsertRows();
 }
 
 void subspace_model::handleVirtualDesktopRemoved(win::subspace* desktop)
 {
-    const int index = m_virtualDesktops.indexOf(desktop);
-    Q_ASSERT(index != -1);
+    auto const it = std::ranges::find(m_virtualDesktops, desktop);
+    assert(it != m_virtualDesktops.end());
 
+    auto const index = it - m_virtualDesktops.begin();
     beginRemoveRows(QModelIndex(), index, index);
-    m_virtualDesktops.removeAt(index);
+    m_virtualDesktops.erase(it);
     endRemoveRows();
 }
 
@@ -66,7 +67,8 @@ QHash<int, QByteArray> subspace_model::roleNames() const
 
 win::subspace* subspace_model::desktopFromIndex(const QModelIndex& index) const
 {
-    if (!index.isValid() || index.row() < 0 || index.row() >= m_virtualDesktops.count()) {
+    if (!index.isValid() || index.row() < 0
+        || index.row() >= static_cast<int>(m_virtualDesktops.size())) {
         return nullptr;
     }
     return m_virtualDesktops[index.row()];
@@ -89,7 +91,7 @@ QVariant subspace_model::data(const QModelIndex& index, int role) const
 
 int subspace_model::rowCount(const QModelIndex& parent) const
 {
-    return parent.isValid() ? 0 : m_virtualDesktops.count();
+    return parent.isValid() ? 0 : m_virtualDesktops.size();
 }
 
 } // namespace KWin::ScriptingModels::V3

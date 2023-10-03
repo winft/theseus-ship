@@ -225,9 +225,11 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win)
 }
 
 template<typename Win>
-void control_create_set_subspaces(Win& win, std::optional<QVector<subspace*>> subs, bool isMapped)
+void control_create_set_subspaces(Win& win,
+                                  std::optional<std::vector<subspace*>> subs,
+                                  bool isMapped)
 {
-    using desks = QVector<subspace*>;
+    using desks = std::vector<subspace*>;
 
     if (!subs.has_value()) {
         subs = is_desktop(&win) ? desks{} : desks{win.space.subspace_manager->current_subspace()};
@@ -258,7 +260,7 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
     win.setupCompositing();
 
     // Initial subspace placement
-    using desks = QVector<subspace*>;
+    using desks = std::vector<subspace*>;
     std::optional<desks> initial_subspaces;
 
     if (session->onAllDesktops) {
@@ -420,7 +422,7 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
     win.setupCompositing();
 
     // Initial subspace placement
-    using desks = QVector<subspace*>;
+    using desks = std::vector<subspace*>;
     std::optional<desks> initial_subspaces;
 
     // If this window is transient, ensure that it is opened on the

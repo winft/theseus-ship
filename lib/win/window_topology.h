@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <vector>
 #include <win/subspace.h>
 #include <win/types.h>
 
@@ -15,7 +16,7 @@ template<typename Output>
 struct window_topology {
     win::layer layer{layer::unknown};
     Output const* central_output{nullptr};
-    QVector<subspace*> subspaces;
+    std::vector<subspace*> subspaces;
 };
 
 }

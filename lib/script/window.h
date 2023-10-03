@@ -336,12 +336,23 @@ public:
 
     QVector<win::subspace*> desktops() const override
     {
-        return std::visit(overload{[](auto&& win) { return win::get_subspaces(*win); }}, ref_win);
+        return std::visit(overload{[](auto&& win) {
+                              QVector<win::subspace*> ret;
+                              auto const& subs = win->topo.subspaces;
+                              std::copy(subs.begin(), subs.end(), std::back_inserter(ret));
+                              return ret;
+                          }},
+                          ref_win);
     }
 
     void setDesktops(QVector<win::subspace*> desktops) override
     {
-        std::visit(overload{[=](auto&& win) { win::set_subspaces(*win, desktops); }}, ref_win);
+        std::visit(overload{[=](auto&& win) {
+                       std::vector<win::subspace*> vec;
+                       std::copy(desktops.begin(), desktops.end(), std::back_inserter(vec));
+                       win::set_subspaces(*win, vec);
+                   }},
+                   ref_win);
     }
 
     bool isOnAllDesktops() const override

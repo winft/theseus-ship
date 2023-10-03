@@ -65,8 +65,8 @@ TEST_CASE("subspace switching animation", "[effect]")
     QVERIFY(shellSurface);
     auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
-    QCOMPARE(client->topo.subspaces.count(), 1);
-    QCOMPARE(client->topo.subspaces.constFirst(), subs->subspaces().first());
+    QCOMPARE(client->topo.subspaces.size(), 1);
+    QCOMPARE(client->topo.subspaces.front(), subs->subspaces().front());
 
     // Load effect that will be tested.
     auto& effectsImpl = setup.base->render->compositor->effects;

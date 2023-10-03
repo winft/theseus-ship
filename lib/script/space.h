@@ -553,7 +553,10 @@ public:
 
     QVector<KWin::win::subspace*> desktops() const override
     {
-        return ref_space->subspace_manager->subspaces();
+        QVector<win::subspace*> ret;
+        auto const& subs = ref_space->subspace_manager->subspaces();
+        std::copy(subs.begin(), subs.end(), std::back_inserter(ret));
+        return ret;
     }
 
     void setCurrentDesktop(win::subspace* desktop) override

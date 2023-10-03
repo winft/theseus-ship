@@ -206,7 +206,7 @@ void setup_plasma_management(Space* space, Win* win)
                      [win]() {
                          auto& vds = win->space.subspace_manager;
                          vds->setCount(vds->count() + 1);
-                         enter_subspace(*win, vds->subspaces().last());
+                         enter_subspace(*win, vds->subspaces().back());
                      });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::leavePlasmaVirtualDesktopRequested,
@@ -323,7 +323,7 @@ void setup_subspace_manager(Manager& manager,
                      });
 
     auto const& subspaces = manager.subspaces();
-    std::for_each(subspaces.constBegin(), subspaces.constEnd(), createPlasmaVirtualDesktop);
+    std::for_each(subspaces.cbegin(), subspaces.cend(), createPlasmaVirtualDesktop);
 
     // Now we are sure all ids are there
     manager.save();

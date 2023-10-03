@@ -38,7 +38,7 @@ TEST_CASE("xdg-shell rules", "[win]")
     setup_wayland_connection(global_selection::xdg_decoration);
 
     auto& vd_manager = setup.base->space->subspace_manager;
-    vd_manager->setCurrent(vd_manager->subspaces().first());
+    vd_manager->setCurrent(vd_manager->subspaces().front());
 
     auto get_config = [&]() -> std::tuple<KSharedConfigPtr, KConfigGroup> {
         auto config = setup.base->config.main;

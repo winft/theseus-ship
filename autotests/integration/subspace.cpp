@@ -191,7 +191,7 @@ TEST_CASE("subspace", "[win]")
         QSignalSpy subspacesRemoved(vd_manager->qobject.get(),
                                     &win::subspace_manager_qobject::subspace_removed);
 
-        auto vdToRemove = vd_manager->subspaces().last();
+        auto vdToRemove = vd_manager->subspaces().back();
 
         vd_manager->setCount(test_data.request);
         QCOMPARE(vd_manager->count(), test_data.result);
@@ -572,7 +572,7 @@ TEST_CASE("subspace", "[win]")
 
         win::subspace_grid grid;
 
-        QCOMPARE(vd_manager->subspaces().count(), int(test_data.init_count));
+        QCOMPARE(vd_manager->subspaces().size(), int(test_data.init_count));
 
         grid.update(test_data.size, test_data.orientation, vd_manager->subspaces());
         QCOMPARE(grid.size(), test_data.size);
@@ -837,7 +837,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->count(), 2u);
 
         // switch to last subspace
-        vd_manager->setCurrent(vd_manager->subspaces().last());
+        vd_manager->setCurrent(vd_manager->subspaces().back());
         QCOMPARE(vd_manager->current(), 2u);
 
         // now create a window on this subspace
@@ -850,8 +850,8 @@ TEST_CASE("subspace", "[win]")
 
         QVERIFY(client);
         QCOMPARE(win::get_subspace(*client), 2);
-        QCOMPARE(client->topo.subspaces.count(), 1u);
-        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.constFirst());
+        QCOMPARE(client->topo.subspaces.size(), 1u);
+        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.front());
 
         // and remove last subspace
         vd_manager->setCount(1);
@@ -860,8 +860,8 @@ TEST_CASE("subspace", "[win]")
         // now the client should be moved as well
         QCOMPARE(win::get_subspace(*client), 1);
 
-        QCOMPARE(client->topo.subspaces.count(), 1u);
-        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.constFirst());
+        QCOMPARE(client->topo.subspaces.size(), 1u);
+        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.front());
     }
 
     SECTION("window on multiple subspaces")
@@ -872,7 +872,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->count(), 3u);
 
         // switch to last subspace
-        vd_manager->setCurrent(vd_manager->subspaces().last());
+        vd_manager->setCurrent(vd_manager->subspaces().back());
         QCOMPARE(vd_manager->current(), 3u);
 
         // now create a window on this subspace
@@ -885,12 +885,12 @@ TEST_CASE("subspace", "[win]")
 
         QVERIFY(client);
         QCOMPARE(win::get_subspace(*client), 3u);
-        QCOMPARE(client->topo.subspaces.count(), 1u);
-        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.constFirst());
+        QCOMPARE(client->topo.subspaces.size(), 1u);
+        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.front());
 
         // Set the window on subspace 2 as well
         win::enter_subspace(*client, vd_manager->subspace_for_x11id(2));
-        QCOMPARE(client->topo.subspaces.count(), 2u);
+        QCOMPARE(client->topo.subspaces.size(), 2u);
         QCOMPARE(vd_manager->subspaces()[2], client->topo.subspaces.at(0));
         QCOMPARE(vd_manager->subspaces()[1], client->topo.subspaces.at(1));
         QVERIFY(win::on_subspace(*client, 2));
@@ -898,11 +898,11 @@ TEST_CASE("subspace", "[win]")
 
         // leave subspace 3
         win::leave_subspace(*client, vd_manager->subspace_for_x11id(3));
-        QCOMPARE(client->topo.subspaces.count(), 1u);
+        QCOMPARE(client->topo.subspaces.size(), 1u);
 
         // leave subspace 2
         win::leave_subspace(*client, vd_manager->subspace_for_x11id(2));
-        QCOMPARE(client->topo.subspaces.count(), 0u);
+        QCOMPARE(client->topo.subspaces.size(), 0u);
 
         // we should be on all subspaces now
         QVERIFY(win::on_all_subspaces(*client));
@@ -912,40 +912,40 @@ TEST_CASE("subspace", "[win]")
         QVERIFY(win::on_subspace(*client, 1));
         QVERIFY(!win::on_subspace(*client, 2));
         QVERIFY(!win::on_subspace(*client, 3));
-        QCOMPARE(client->topo.subspaces.count(), 1u);
+        QCOMPARE(client->topo.subspaces.size(), 1u);
 
         // put on subspace 2
         win::enter_subspace(*client, vd_manager->subspace_for_x11id(2));
         QVERIFY(win::on_subspace(*client, 1));
         QVERIFY(win::on_subspace(*client, 2));
         QVERIFY(!win::on_subspace(*client, 3));
-        QCOMPARE(client->topo.subspaces.count(), 2u);
+        QCOMPARE(client->topo.subspaces.size(), 2u);
 
         // put on subspace 3
         win::enter_subspace(*client, vd_manager->subspace_for_x11id(3));
         QVERIFY(win::on_subspace(*client, 1));
         QVERIFY(win::on_subspace(*client, 2));
         QVERIFY(win::on_subspace(*client, 3));
-        QCOMPARE(client->topo.subspaces.count(), 3u);
+        QCOMPARE(client->topo.subspaces.size(), 3u);
 
         // entering twice dooes nothing
         win::enter_subspace(*client, vd_manager->subspace_for_x11id(3));
-        QCOMPARE(client->topo.subspaces.count(), 3u);
+        QCOMPARE(client->topo.subspaces.size(), 3u);
 
         // adding to "all subspaces" results in just that one subspace
         win::set_on_all_subspaces(*client, true);
-        QCOMPARE(client->topo.subspaces.count(), 0u);
+        QCOMPARE(client->topo.subspaces.size(), 0u);
         win::enter_subspace(*client, vd_manager->subspace_for_x11id(3));
         QVERIFY(win::on_subspace(*client, 3));
-        QCOMPARE(client->topo.subspaces.count(), 1u);
+        QCOMPARE(client->topo.subspaces.size(), 1u);
 
         // leaving a subspace on "all subspaces" puts on everything else
         win::set_on_all_subspaces(*client, true);
-        QCOMPARE(client->topo.subspaces.count(), 0u);
+        QCOMPARE(client->topo.subspaces.size(), 0u);
         win::leave_subspace(*client, vd_manager->subspace_for_x11id(3));
         QVERIFY(win::on_subspace(*client, 1));
         QVERIFY(win::on_subspace(*client, 2));
-        QCOMPARE(client->topo.subspaces.count(), 2u);
+        QCOMPARE(client->topo.subspaces.size(), 2u);
     }
 
     SECTION("remove subspace with window")
@@ -956,7 +956,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->count(), 3u);
 
         // switch to last subspace
-        vd_manager->setCurrent(vd_manager->subspaces().last());
+        vd_manager->setCurrent(vd_manager->subspaces().back());
         QCOMPARE(vd_manager->current(), 3u);
 
         // now create a window on this subspace
@@ -969,12 +969,12 @@ TEST_CASE("subspace", "[win]")
 
         QVERIFY(client);
         QCOMPARE(win::get_subspace(*client), 3u);
-        QCOMPARE(client->topo.subspaces.count(), 1u);
-        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.constFirst());
+        QCOMPARE(client->topo.subspaces.size(), 1u);
+        QCOMPARE(vd_manager->current_subspace(), client->topo.subspaces.front());
 
         // Set the window on subspace 2 as well
         win::enter_subspace(*client, vd_manager->subspaces()[1]);
-        QCOMPARE(client->topo.subspaces.count(), 2u);
+        QCOMPARE(client->topo.subspaces.size(), 2u);
         QCOMPARE(vd_manager->subspaces()[2], client->topo.subspaces.at(0));
         QCOMPARE(vd_manager->subspaces()[1], client->topo.subspaces.at(1));
         QVERIFY(win::on_subspace(*client, 2));
@@ -982,7 +982,7 @@ TEST_CASE("subspace", "[win]")
 
         // remove subspace 3
         vd_manager->setCount(2);
-        QCOMPARE(client->topo.subspaces.count(), 1u);
+        QCOMPARE(client->topo.subspaces.size(), 1u);
         // window is only on subspace 2
         QCOMPARE(vd_manager->subspaces()[1], client->topo.subspaces.at(0));
 
@@ -991,13 +991,13 @@ TEST_CASE("subspace", "[win]")
         // move window to be only on subspace 3
         win::enter_subspace(*client, vd_manager->subspaces()[2]);
         win::leave_subspace(*client, vd_manager->subspaces()[1]);
-        QCOMPARE(client->topo.subspaces.count(), 1u);
+        QCOMPARE(client->topo.subspaces.size(), 1u);
         // window is only on subspace 3
         QCOMPARE(vd_manager->subspaces()[2], client->topo.subspaces.at(0));
 
         // remove subspace 3
         vd_manager->setCount(2);
-        QCOMPARE(client->topo.subspaces.count(), 1u);
+        QCOMPARE(client->topo.subspaces.size(), 1u);
         // window is only on subspace 2
         QCOMPARE(vd_manager->subspaces()[1], client->topo.subspaces.at(0));
     }

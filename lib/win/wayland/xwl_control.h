@@ -23,7 +23,7 @@ public:
     {
     }
 
-    void set_subspaces(QVector<subspace*> subs) override
+    void set_subspaces(std::vector<subspace*> subs) override
     {
         wayland::subspaces_announce(*window, subs);
         x11::control<Win>::set_subspaces(subs);

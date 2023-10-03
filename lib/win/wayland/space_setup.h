@@ -62,11 +62,11 @@ void space_setup_handle_subspace_removed(Space& space, subspace* sub)
 {
     for (auto const& win : space.windows) {
         std::visit(overload{[&space, sub](auto&& win) {
-                       if (!win->control || !win->topo.subspaces.contains(sub)) {
+                       if (!win->control || !contains(win->topo.subspaces, sub)) {
                            return;
                        }
 
-                       if (win->topo.subspaces.count() > 1) {
+                       if (win->topo.subspaces.size() > 1) {
                            leave_subspace(*win, sub);
                            return;
                        }

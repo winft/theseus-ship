@@ -40,7 +40,7 @@ public:
     {
     }
 
-    void set_subspaces(QVector<subspace*> /*subs*/) override
+    void set_subspaces(std::vector<subspace*> /*subs*/) override
     {
     }
 

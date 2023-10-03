@@ -204,13 +204,18 @@ public:
 
     QVector<win::subspace*> desktops() const override
     {
-        return win::get_subspaces(*ref_win);
+        QVector<win::subspace*> ret;
+        auto const& subs = ref_win->topo.subspaces;
+        std::copy(subs.begin(), subs.end(), std::back_inserter(ret));
+        return ret;
     }
 
     void setDesktops(QVector<win::subspace*> subs) override
     {
         if (ref_win->control) {
-            win::set_subspaces(*ref_win, subs);
+            std::vector<win::subspace*> vec;
+            std::copy(subs.begin(), subs.end(), std::back_inserter(vec));
+            win::set_subspaces(*ref_win, vec);
         }
     }
 

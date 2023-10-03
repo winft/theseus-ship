@@ -587,7 +587,7 @@ TEST_CASE("keyboard layout", "[input]")
         vd_manager->setCount(4);
         QCOMPARE(vd_manager->count(), 4u);
         auto subspaces = vd_manager->subspaces();
-        QCOMPARE(subspaces.count(), 4);
+        QCOMPARE(subspaces.size(), 4);
 
         // Give subspaces different layouts.
         uint desktop, layout;
@@ -624,7 +624,7 @@ TEST_CASE("keyboard layout", "[input]")
 
         // Remove subspaces.
         desktop = 0;
-        auto const deletedDesktop = subspaces.last();
+        auto const deletedDesktop = subspaces.back();
         vd_manager->setCount(1);
         REQUIRE(xkb->layout == (layout = (desktop + 1) % xkb->layouts_count()));
         QCOMPARE(xkb->layout_name(), "German");
@@ -634,10 +634,10 @@ TEST_CASE("keyboard layout", "[input]")
 
         // Switching to it should result in going to default.
         subspaces = vd_manager->subspaces();
-        QCOMPARE(subspaces.count(), 2);
-        QCOMPARE(subspaces.first(), vd_manager->current_subspace());
+        QCOMPARE(subspaces.size(), 2);
+        QCOMPARE(subspaces.front(), vd_manager->current_subspace());
 
-        vd_manager->setCurrent(subspaces.last());
+        vd_manager->setCurrent(subspaces.back());
         QCOMPARE(xkb->layout_name(), "English (US)");
 
         // Check there are no more layouts left in config than the last actual non-default layouts

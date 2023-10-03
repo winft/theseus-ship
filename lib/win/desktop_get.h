@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <utils/algorithm.h>
 #include <win/subspace.h>
 #include <win/types.h>
 
@@ -32,7 +33,7 @@ bool on_all_subspaces(Win const& win)
 template<typename Win>
 bool on_subspace(Win const& win, subspace* sub)
 {
-    return win.topo.subspaces.contains(sub) || on_all_subspaces(win);
+    return contains(win.topo.subspaces, sub) || on_all_subspaces(win);
 }
 
 template<typename Win>
@@ -50,10 +51,10 @@ bool on_current_subspace(Win const& win)
 template<typename Win>
 QVector<unsigned int> x11_subspace_ids(Win const& win)
 {
-    auto const& desks = win.topo.subspaces;
+    auto const& subs = win.topo.subspaces;
     QVector<unsigned int> x11_ids;
-    x11_ids.reserve(desks.count());
-    std::transform(desks.constBegin(), desks.constEnd(), std::back_inserter(x11_ids), [](auto vd) {
+    x11_ids.reserve(subs.size());
+    std::transform(subs.cbegin(), subs.cend(), std::back_inserter(x11_ids), [](auto&& vd) {
         return vd->x11DesktopNumber();
     });
     return x11_ids;
@@ -62,20 +63,12 @@ QVector<unsigned int> x11_subspace_ids(Win const& win)
 template<typename Win>
 QStringList subspaces_ids(Win const& win)
 {
-    auto const& desks = win.topo.subspaces;
+    auto const& subs = win.topo.subspaces;
     QStringList ids;
-    ids.reserve(desks.count());
-    std::transform(desks.constBegin(),
-                   desks.constEnd(),
-                   std::back_inserter(ids),
-                   [](auto const* vd) { return vd->id(); });
+    ids.reserve(subs.size());
+    std::transform(
+        subs.cbegin(), subs.cend(), std::back_inserter(ids), [](auto&& vd) { return vd->id(); });
     return ids;
-}
-
-template<typename Win>
-QVector<subspace*> get_subspaces(Win const& win)
-{
-    return win.topo.subspaces;
 }
 
 }

@@ -52,8 +52,9 @@ public:
     int checkOpacityActive(int s) const;
     int checkOpacityInactive(int s) const;
     bool checkIgnoreGeometry(bool ignore, bool init = false) const;
-    QVector<win::subspace*>
-    checkDesktops(subspace_manager const& manager, QVector<subspace*> vds, bool init = false) const
+    std::vector<win::subspace*> checkDesktops(subspace_manager const& manager,
+                                              std::vector<subspace*> vds,
+                                              bool init = false) const
     {
         for (auto&& rule : rules) {
             if (rule->applyDesktops(manager, vds, init)) {

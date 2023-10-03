@@ -132,7 +132,7 @@ void transfer_remnant_data(Win& source, Win& dest)
     for (auto sub : subspaces) {
         QObject::connect(sub, &QObject::destroyed, dest.qobject.get(), [sub, dest_ptr = &dest] {
             auto subs = dest_ptr->topo.subspaces;
-            subs.removeOne(sub);
+            remove_all(subs, sub);
             dest_ptr->topo.subspaces = subs;
         });
     }

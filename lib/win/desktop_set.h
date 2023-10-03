@@ -18,11 +18,11 @@ template<typename Win>
 void propagate_on_all_subspaces_to_children(Win& window);
 
 template<typename Win>
-void set_subspaces(Win& win, QVector<subspace*> subs)
+void set_subspaces(Win& win, std::vector<subspace*> subs)
 {
     // On x11 we can have only one subspace at a time.
     if (win.space.base.operation_mode == base::operation_mode::x11 && subs.size() > 1) {
-        subs = QVector<subspace*>({subs.last()});
+        subs = {subs.back()};
     }
 
     subs = win.control->rules.checkDesktops(*win.space.subspace_manager, subs);
@@ -96,32 +96,28 @@ void set_on_all_subspaces(Win& win, bool set)
 template<typename Win>
 void enter_subspace(Win& win, subspace* sub)
 {
-    if (win.topo.subspaces.contains(sub)) {
+    if (contains(win.topo.subspaces, sub)) {
         return;
     }
+
     auto subspaces = win.topo.subspaces;
-    subspaces.append(sub);
+    subspaces.push_back(sub);
     set_subspaces(win, subspaces);
 }
 
 template<typename Win>
 void leave_subspace(Win& win, subspace* sub)
 {
-    QVector<subspace*> current_subs;
+    auto subspaces
+        = win.topo.subspaces.empty() ? win.space.subspace_manager->subspaces() : win.topo.subspaces;
 
-    if (win.topo.subspaces.isEmpty()) {
-        current_subs = win.space.subspace_manager->subspaces();
-    } else {
-        current_subs = win.topo.subspaces;
-    }
-
-    if (!current_subs.contains(sub)) {
+    auto it = std::ranges::find(subspaces, sub);
+    if (it == subspaces.end()) {
         return;
     }
 
-    auto subs = current_subs;
-    subs.removeOne(sub);
-    set_subspaces(win, subs);
+    subspaces.erase(it);
+    set_subspaces(win, subspaces);
 }
 
 template<typename Win>

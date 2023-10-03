@@ -158,11 +158,10 @@ subspace_data_vector subspace_manager::desktops() const
     subspace_data_vector desktopVect;
     desktopVect.reserve(m_manager->count());
 
-    std::transform(
-        desks.constBegin(), desks.constEnd(), std::back_inserter(desktopVect), [](auto vd) {
-            return subspace_data{
-                .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
-        });
+    std::transform(desks.cbegin(), desks.cend(), std::back_inserter(desktopVect), [](auto vd) {
+        return subspace_data{
+            .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
+    });
 
     return desktopVect;
 }

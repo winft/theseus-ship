@@ -18,6 +18,7 @@
 #include <QPoint>
 #include <QPointer>
 #include <QSize>
+#include <vector>
 
 class KLocalizedString;
 class QAction;
@@ -100,7 +101,7 @@ public:
     subspace* previous(subspace* desktop, bool wrap) const;
     uint previous(uint id, bool wrap) const;
 
-    QVector<subspace*> subspaces() const
+    std::vector<subspace*> subspaces() const
     {
         return m_subspaces;
     }
@@ -169,11 +170,11 @@ public:
 
 private:
     void updateRootInfo();
-    QList<subspace*> update_count(uint count);
+    std::vector<subspace*> update_count(uint count);
 
     QString defaultName(int desktop) const;
 
-    QVector<subspace*> m_subspaces;
+    std::vector<subspace*> m_subspaces;
     QPointer<subspace> m_current;
     quint32 m_rows = 2;
     bool m_navigationWrapsAround{false};
@@ -196,7 +197,7 @@ inline uint subspace_manager::maximum()
 
 inline uint subspace_manager::count() const
 {
-    return m_subspaces.count();
+    return m_subspaces.size();
 }
 
 inline bool subspace_manager::isNavigationWrappingAround() const

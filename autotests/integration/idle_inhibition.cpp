@@ -125,8 +125,8 @@ TEST_CASE("idle inhibition", "[win]")
         QVERIFY(c);
 
         // The test client should be only on the first subspace.
-        QCOMPARE(c->topo.subspaces.count(), 1);
-        QCOMPARE(c->topo.subspaces.constFirst(), vd_manager->subspaces().first());
+        QCOMPARE(c->topo.subspaces.size(), 1);
+        QCOMPARE(c->topo.subspaces.front(), vd_manager->subspaces().front());
 
         // This should inhibit our server object.
         QCOMPARE(idle.inhibit_count, 1);
@@ -275,8 +275,8 @@ TEST_CASE("idle inhibition", "[win]")
         QVERIFY(c);
 
         // The test client should be only on the first subspace.
-        QCOMPARE(c->topo.subspaces.count(), 1);
-        QCOMPARE(c->topo.subspaces.constFirst(), vd_manager->subspaces().first());
+        QCOMPARE(c->topo.subspaces.size(), 1);
+        QCOMPARE(c->topo.subspaces.front(), vd_manager->subspaces().front());
 
         // This should inhibit our server object.
         QCOMPARE(idle.inhibit_count, 1);

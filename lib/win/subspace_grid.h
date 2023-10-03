@@ -10,7 +10,7 @@
 
 #include <QPoint>
 #include <QSize>
-#include <QVector>
+#include <vector>
 
 namespace KWin::win
 {
@@ -21,7 +21,7 @@ public:
     subspace_grid();
     ~subspace_grid();
 
-    void update(QSize const& size, Qt::Orientation orientation, QVector<subspace*> const& subs);
+    void update(QSize const& size, Qt::Orientation orientation, std::vector<subspace*> const& subs);
     QPoint gridCoords(subspace* vd) const;
 
     subspace* at(const QPoint& coords) const;
@@ -31,7 +31,7 @@ public:
 
 private:
     QSize m_size;
-    QVector<QVector<subspace*>> m_grid;
+    std::vector<std::vector<subspace*>> m_grid;
 };
 
 }

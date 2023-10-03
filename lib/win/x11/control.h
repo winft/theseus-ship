@@ -27,7 +27,7 @@ public:
     {
     }
 
-    void set_subspaces(QVector<subspace*> /*subs*/) override
+    void set_subspaces(std::vector<subspace*> /*subs*/) override
     {
         m_window->net_info->setDesktop(get_subspace(*m_window));
     }

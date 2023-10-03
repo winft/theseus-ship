@@ -14,14 +14,14 @@ namespace KWin::win::wayland
 {
 
 template<typename Win>
-void subspaces_announce(Win& win, QVector<subspace*> subs)
+void subspaces_announce(Win& win, std::vector<subspace*> subs)
 {
     auto management = win.control->plasma_wayland_integration;
     if (!management) {
         return;
     }
 
-    if (subs.isEmpty()) {
+    if (subs.empty()) {
         management->setOnAllDesktops(true);
         return;
     }
