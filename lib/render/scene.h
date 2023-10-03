@@ -26,7 +26,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <chrono>
 #include <deque>
 #include <memory>
-#include <xcb/render.h>
 
 namespace KWin::render
 {

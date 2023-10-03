@@ -22,7 +22,6 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
-#include <xcb/xcb.h>
 
 namespace KWin
 {
@@ -47,27 +46,6 @@ static qint64 parseVersionString(const QByteArray& version)
     const qint64 major = tokens.at(0).toInt();
     const qint64 minor = tokens.count() > 1 ? tokens.at(1).toInt() : 0;
     const qint64 patch = tokens.count() > 2 ? tokens.at(2).toInt() : 0;
-
-    return kVersionNumber(major, minor, patch);
-}
-
-static qint64 getXServerVersion(xcb_connection_t* x11_connection)
-{
-    qint64 major, minor, patch;
-    major = 0;
-    minor = 0;
-    patch = 0;
-
-    if (x11_connection) {
-        auto setup = xcb_get_setup(x11_connection);
-        const QByteArray vendorName(xcb_setup_vendor(setup), xcb_setup_vendor_length(setup));
-        if (vendorName.contains("X.Org")) {
-            const int release = setup->release_number;
-            major = (release / 10000000);
-            minor = (release / 100000) % 100;
-            patch = (release / 1000) % 100;
-        }
-    }
 
     return kVersionNumber(major, minor, patch);
 }
@@ -688,7 +666,7 @@ QByteArray GLPlatform::chipClassToString8(ChipClass chipClass)
 
 // -------
 
-GLPlatform::GLPlatform(xcb_connection_t* x11_connection)
+GLPlatform::GLPlatform()
     : m_driver(Driver_Unknown)
     , m_chipClass(UnknownChipClass)
     , m_glVersion(0)
@@ -696,7 +674,6 @@ GLPlatform::GLPlatform(xcb_connection_t* x11_connection)
     , m_mesaVersion(0)
     , m_driverVersion(0)
     , m_galliumVersion(0)
-    , m_serverVersion(0)
     , m_kernelVersion(0)
     , m_looseBinding(false)
     , m_supportsGLSL(false)
@@ -707,7 +684,6 @@ GLPlatform::GLPlatform(xcb_connection_t* x11_connection)
     , m_virtualMachine(false)
     , m_preferBufferSubData(false)
     , m_gles(false)
-    , x11_con{x11_connection}
 {
 }
 
@@ -786,7 +762,6 @@ void GLPlatform::detect(gl_interface platformInterface)
         }
     }
 
-    m_serverVersion = getXServerVersion(x11_con);
     m_kernelVersion = getKernelVersion();
 
     m_glslVersion = 0;
@@ -1156,8 +1131,6 @@ void GLPlatform::printResults() const
         print(QByteArrayLiteral("Mesa version:"), versionToString8(mesaVersion()));
     // if (galliumVersion() > 0)
     //     print("Gallium version:", versionToString(m_galliumVersion));
-    if (serverVersion() > 0)
-        print(QByteArrayLiteral("X server version:"), versionToString8(m_serverVersion));
     if (kernelVersion() > 0)
         print(QByteArrayLiteral("Linux kernel version:"), versionToString8(m_kernelVersion));
 
@@ -1219,11 +1192,6 @@ qint64 GLPlatform::mesaVersion() const
 qint64 GLPlatform::galliumVersion() const
 {
     return m_galliumVersion;
-}
-
-qint64 GLPlatform::serverVersion() const
-{
-    return m_serverVersion;
 }
 
 qint64 GLPlatform::kernelVersion() const

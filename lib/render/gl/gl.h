@@ -14,9 +14,9 @@ namespace KWin::render::gl
 {
 
 template<typename ProcAddrGetter>
-void init_gl(gl_interface interface, ProcAddrGetter* getter, xcb_connection_t* x11_con)
+void init_gl(gl_interface interface, ProcAddrGetter* getter)
 {
-    auto glPlatform = GLPlatform::create(x11_con);
+    auto glPlatform = GLPlatform::create();
     glPlatform->detect(interface);
     glPlatform->printResults();
     initGL(getter);

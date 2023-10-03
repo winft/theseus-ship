@@ -395,7 +395,7 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
         throw std::runtime_error("Could not initialize rendering context");
     }
 
-    gl::init_gl(gl_interface::glx, getProcAddress, backend.platform.base.x11_data.connection);
+    gl::init_gl(gl_interface::glx, getProcAddress);
 
     // Check whether certain features are supported
     backend.data.extensions.mesa_copy_sub_buffer
