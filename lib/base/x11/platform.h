@@ -16,6 +16,8 @@
 #include "render/x11/platform.h"
 #include "script/platform.h"
 #include "win/x11/space.h"
+#include <base/x11/data.h>
+#include <base/x11/event_filter_manager.h>
 
 #include <memory>
 #include <vector>
@@ -32,9 +34,12 @@ public:
     using space_t = win::x11::space<render_t, input_t>;
 
     platform(base::config config)
-        : base::platform(std::move(config))
+        : config{std::move(config)}
+        , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
     {
         operation_mode = operation_mode::x11;
+
+        init_platform(*this);
 
         singleton_interface::platform = this;
         singleton_interface::get_outputs = [this] {
@@ -65,6 +70,14 @@ public:
 
         update_outputs_impl<base::x11::xcb::randr::current_resources>();
     }
+
+    base::operation_mode operation_mode;
+    base::config config;
+    base::x11::data x11_data;
+
+    std::unique_ptr<base::options> options;
+    std::unique_ptr<base::seat::session> session;
+    std::unique_ptr<x11::event_filter_manager> x11_event_filters;
 
     std::vector<output_t*> outputs;
     std::unique_ptr<render_t> render;

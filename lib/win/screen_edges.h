@@ -15,6 +15,7 @@
 #include "virtual_desktops.h"
 
 #include "input/gestures.h"
+#include <base/x11/data.h>
 
 #include <KConfigGroup>
 #include <KSharedConfig>

@@ -15,6 +15,8 @@
 #include "utils/algorithm.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
+#include <base/x11/data.h>
+#include <base/x11/event_filter_manager.h>
 
 #include <QProcessEnvironment>
 #include <Wrapland/Server/drm_lease_v1.h>
@@ -34,17 +36,21 @@ public:
     using space_t = win::wayland::space<render_t, input_t>;
 
     platform(base::config config)
-        : base::platform(std::move(config))
+        : config{std::move(config)}
+        , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
     {
+        init_platform(*this);
         init_singleton_interface();
     }
 
     platform(base::config config,
              std::string const& socket_name,
              base::wayland::start_options flags)
-        : base::platform(std::move(config))
+        : config{std::move(config)}
+        , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
         , server{std::make_unique<wayland::server<platform>>(*this, socket_name, flags)}
     {
+        init_platform(*this);
         init_singleton_interface();
     }
 
@@ -72,9 +78,18 @@ public:
         Q_EMIT output_removed(output);
     }
 
+    base::operation_mode operation_mode;
+    base::config config;
+    base::x11::data x11_data;
+
+    std::unique_ptr<base::options> options;
+    std::unique_ptr<base::seat::session> session;
+    std::unique_ptr<x11::event_filter_manager> x11_event_filters;
+
     QProcessEnvironment process_environment;
 
     std::unique_ptr<wayland::server<platform>> server;
+
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
 
     // All outputs, including disabled ones.
