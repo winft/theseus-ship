@@ -119,7 +119,6 @@ public:
     void remove_subspace(QString const& id);
     void remove_subspace(subspace* sub);
 
-    void updateRootInfo();
     static uint maximum();
 
     void setCount(uint count);
@@ -169,6 +168,7 @@ public:
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement{nullptr};
 
 private:
+    void updateRootInfo();
     QList<subspace*> update_count(uint count);
 
     /// Generate a desktop layout from EWMH _NET_DESKTOP_LAYOUT property parameters.

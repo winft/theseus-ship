@@ -62,6 +62,7 @@ void subspace_manager::setRootInfo(x11::net::root_info* info)
         m_rootInfo->setDesktopLayout(
             x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
         updateRootInfo();
+        updateLayout();
         m_rootInfo->setCurrentDesktop(current_subspace()->x11DesktopNumber());
 
         for (auto vd : qAsConst(m_subspaces)) {
@@ -343,6 +344,7 @@ subspace* subspace_manager::create_subspace(uint position, QString const& name)
 
     save();
     updateRootInfo();
+    updateLayout();
 
     Q_EMIT qobject->subspace_created(vd);
     Q_EMIT qobject->countChanged(m_subspaces.count() - 1, m_subspaces.count());
@@ -385,6 +387,7 @@ void subspace_manager::remove_subspace(subspace* sub)
     }
 
     updateRootInfo();
+    updateLayout();
     save();
 
     Q_EMIT qobject->subspace_removed(sub);
@@ -488,6 +491,7 @@ void subspace_manager::setCount(uint count)
     auto new_subspaces = update_count(count);
 
     updateRootInfo();
+    updateLayout();
 
     if (!s_loadingDesktopSettings) {
         save();
@@ -531,8 +535,6 @@ void subspace_manager::setRows(uint rows)
 void subspace_manager::updateRootInfo()
 {
     if (!m_rootInfo) {
-        // Make sure the layout is still valid
-        updateLayout();
         return;
     }
 
@@ -542,9 +544,6 @@ void subspace_manager::updateRootInfo()
     auto viewports = new x11::net::point[n];
     m_rootInfo->setDesktopViewport(n, *viewports);
     delete[] viewports;
-
-    // Make sure the layout is still valid
-    updateLayout();
 }
 
 void subspace_manager::updateLayout()
@@ -617,6 +616,7 @@ void subspace_manager::load()
     }
 
     updateRootInfo();
+    updateLayout();
 
     for (auto vd : qAsConst(new_desktops)) {
         Q_EMIT qobject->subspace_created(vd);
