@@ -689,26 +689,22 @@ public:
 
     int desktopAbove(int desktop = 0, bool wrap = true) const override
     {
-        return win::getDesktop<win::virtual_desktop_above>(
-            *get_space().virtual_desktop_manager, desktop, wrap);
+        return get_space().virtual_desktop_manager->above(desktop, wrap);
     }
 
     int desktopToRight(int desktop = 0, bool wrap = true) const override
     {
-        return win::getDesktop<win::virtual_desktop_right>(
-            *get_space().virtual_desktop_manager, desktop, wrap);
+        return get_space().virtual_desktop_manager->toRight(desktop, wrap);
     }
 
     int desktopBelow(int desktop = 0, bool wrap = true) const override
     {
-        return win::getDesktop<win::virtual_desktop_below>(
-            *get_space().virtual_desktop_manager, desktop, wrap);
+        return get_space().virtual_desktop_manager->below(desktop, wrap);
     }
 
     int desktopToLeft(int desktop = 0, bool wrap = true) const override
     {
-        return win::getDesktop<win::virtual_desktop_left>(
-            *get_space().virtual_desktop_manager, desktop, wrap);
+        return get_space().virtual_desktop_manager->toLeft(desktop, wrap);
     }
 
     QString desktopName(int desktop) const override

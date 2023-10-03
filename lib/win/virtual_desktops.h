@@ -240,13 +240,6 @@ public:
      * @see currentChanged
      */
     virtual_desktop* currentDesktop() const;
-    /**
-     * Moves to the desktop through the algorithm described by Direction.
-     * @param wrap If @c true wraps around to the other side of the layout
-     * @see setCurrent
-     */
-    template<typename Direction>
-    void moveTo(bool wrap = false);
 
     /**
      * @returns The name of the @p desktop
@@ -310,11 +303,13 @@ public:
      * desktop if @a wrap is set. If @a desktop is @c null use the current desktop.
      */
     virtual_desktop* next(virtual_desktop* desktop = nullptr, bool wrap = true) const;
+    uint next(uint id = 0, bool wrap = true) const;
     /**
      * @returns The desktop in front of the desktop @a desktop. Wraps around to the
      * last desktop if @a wrap is set. If @a desktop is @c null use the current desktop.
      */
     virtual_desktop* previous(virtual_desktop* desktop = nullptr, bool wrap = true) const;
+    uint previous(uint id = 0, bool wrap = true) const;
 
     /**
      * @returns all currently managed virtual_desktops
@@ -514,239 +509,6 @@ private:
     virtual_desktops_singleton singleton;
 };
 
-/**
- * Function object to select the desktop above in the layout.
- * Note: does not switch to the desktop!
- */
-class virtual_desktop_above
-{
-public:
-    virtual_desktop_above(virtual_desktop_manager& manager)
-        : manager{manager}
-    {
-    }
-    /**
-     * @param desktop The desktop from which the desktop above should be selected. If @c 0 the
-     * current desktop is used
-     * @param wrap Whether to wrap around if already topmost desktop
-     * @returns Id of the desktop above @p desktop
-     */
-    uint operator()(uint desktop, bool wrap)
-    {
-        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
-    }
-    /**
-     * @param desktop The desktop from which the desktop above should be selected. If @c 0 the
-     * current desktop is used
-     * @param wrap Whether to wrap around if already topmost desktop
-     * @returns the desktop above @p desktop
-     */
-    virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
-    {
-        return manager.above(desktop, wrap);
-    }
-
-private:
-    virtual_desktop_manager& manager;
-};
-
-/**
- * Function object to select the desktop below in the layout.
- * Note: does not switch to the desktop!
- */
-class virtual_desktop_below
-{
-public:
-    virtual_desktop_below(virtual_desktop_manager& manager)
-        : manager{manager}
-    {
-    }
-    /**
-     * @param desktop The desktop from which the desktop below should be selected. If @c 0 the
-     * current desktop is used
-     * @param wrap Whether to wrap around if already lowest desktop
-     * @returns Id of the desktop below @p desktop
-     */
-    uint operator()(uint desktop, bool wrap)
-    {
-        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
-    }
-    /**
-     * @param desktop The desktop from which the desktop below should be selected. If @c 0 the
-     * current desktop is used
-     * @param wrap Whether to wrap around if already lowest desktop
-     * @returns the desktop below @p desktop
-     */
-    virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
-    {
-        return manager.below(desktop, wrap);
-    }
-
-private:
-    virtual_desktop_manager& manager;
-};
-
-/**
- * Function object to select the desktop to the left in the layout.
- * Note: does not switch to the desktop!
- */
-class virtual_desktop_left
-{
-public:
-    virtual_desktop_left(virtual_desktop_manager& manager)
-        : manager{manager}
-    {
-    }
-    /**
-     * @param desktop The desktop from which the desktop on the left should be selected. If @c 0 the
-     * current desktop is used
-     * @param wrap Whether to wrap around if already leftmost desktop
-     * @returns Id of the desktop left of @p desktop
-     */
-    uint operator()(uint desktop, bool wrap)
-    {
-        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
-    }
-    /**
-     * @param desktop The desktop from which the desktop on the left should be selected. If @c 0 the
-     * current desktop is used
-     * @param wrap Whether to wrap around if already leftmost desktop
-     * @returns the desktop left of @p desktop
-     */
-    virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
-    {
-        return manager.toLeft(desktop, wrap);
-    }
-
-private:
-    virtual_desktop_manager& manager;
-};
-
-/**
- * Function object to select the desktop to the right in the layout.
- * Note: does not switch to the desktop!
- */
-class virtual_desktop_right
-{
-public:
-    virtual_desktop_right(virtual_desktop_manager& manager)
-        : manager{manager}
-    {
-    }
-    /**
-     * @param desktop The desktop from which the desktop on the right should be selected. If @c 0
-     * the current desktop is used
-     * @param wrap Whether to wrap around if already rightmost desktop
-     * @returns Id of the desktop right of @p desktop
-     */
-    uint operator()(uint desktop, bool wrap)
-    {
-        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
-    }
-    /**
-     * @param desktop The desktop from which the desktop on the right should be selected. If @c 0
-     * the current desktop is used
-     * @param wrap Whether to wrap around if already rightmost desktop
-     * @returns the desktop right of @p desktop
-     */
-    virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
-    {
-        return manager.toRight(desktop, wrap);
-    }
-
-private:
-    virtual_desktop_manager& manager;
-};
-
-/**
- * Function object to select the next desktop in the layout.
- * Note: does not switch to the desktop!
- */
-class virtual_desktop_next
-{
-public:
-    virtual_desktop_next(virtual_desktop_manager& manager)
-        : manager{manager}
-    {
-    }
-    /**
-     * @param desktop The desktop from which the next desktop should be selected. If @c 0 the
-     * current desktop is used
-     * @param wrap Whether to wrap around if already last desktop
-     * @returns Id of the next desktop
-     */
-    uint operator()(uint desktop, bool wrap)
-    {
-        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
-    }
-    /**
-     * @param desktop The desktop from which the next desktop should be selected. If @c 0 the
-     * current desktop is used
-     * @param wrap Whether to wrap around if already last desktop
-     * @returns the next desktop
-     */
-    virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
-    {
-        return manager.next(desktop, wrap);
-    }
-
-private:
-    virtual_desktop_manager& manager;
-};
-
-/**
- * Function object to select the previous desktop in the layout.
- * Note: does not switch to the desktop!
- */
-class virtual_desktop_previous
-{
-public:
-    virtual_desktop_previous(virtual_desktop_manager& manager)
-        : manager{manager}
-    {
-    }
-    /**
-     * @param desktop The desktop from which the previous desktop should be selected. If @c 0 the
-     * current desktop is used
-     * @param wrap Whether to wrap around if already first desktop
-     * @returns Id of the previous desktop
-     */
-    uint operator()(uint desktop, bool wrap)
-    {
-        return (*this)(manager.desktopForX11Id(desktop), wrap)->x11DesktopNumber();
-    }
-    /**
-     * @param desktop The desktop from which the previous desktop should be selected. If @c 0 the
-     * current desktop is used
-     * @param wrap Whether to wrap around if already first desktop
-     * @returns the previous desktop
-     */
-    virtual_desktop* operator()(virtual_desktop* desktop, bool wrap)
-    {
-        return manager.previous(desktop, wrap);
-    }
-
-private:
-    virtual_desktop_manager& manager;
-};
-
-/**
- * Helper function to get the ID of a virtual desktop in the direction from
- * the given @p desktop. If @c 0 the current desktop is used as a starting point.
- * @param desktop The desktop from which the desktop in given Direction should be selected.
- * @param wrap Whether desktop navigation wraps around at the borders of the layout
- * @returns The next desktop in specified direction
- */
-template<typename Direction>
-uint getDesktop(int desktop = 0, bool wrap = true);
-
-template<typename Direction>
-uint getDesktop(virtual_desktop_manager& manager, int d, bool wrap)
-{
-    Direction direction(manager);
-    return direction(d, wrap);
-}
-
 inline int virtual_desktop_grid::width() const
 {
     return m_size.width();
@@ -785,13 +547,6 @@ inline void virtual_desktop_manager::setConfig(KSharedConfig::Ptr config)
 inline virtual_desktop_grid const& virtual_desktop_manager::grid() const
 {
     return m_grid;
-}
-
-template<typename Direction>
-void virtual_desktop_manager::moveTo(bool wrap)
-{
-    Direction functor(*this);
-    setCurrent(functor(nullptr, wrap));
 }
 
 }

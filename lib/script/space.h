@@ -916,35 +916,35 @@ protected:
         }
     }
 
-    template<typename Direction>
-    void switch_desktop() const
-    {
-        ref_space->virtual_desktop_manager->template moveTo<Direction>(
-            ref_space->options->qobject->isRollOverDesktops());
-    }
     void switch_desktop_next_impl() const override
     {
-        switch_desktop<win::virtual_desktop_next>();
+        auto& vdm = ref_space->virtual_desktop_manager;
+        vdm->setCurrent(vdm->next(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
     void switch_desktop_previous_impl() const override
     {
-        switch_desktop<win::virtual_desktop_previous>();
+        auto& vdm = ref_space->virtual_desktop_manager;
+        vdm->setCurrent(vdm->previous(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
     void switch_desktop_left_impl() const override
     {
-        switch_desktop<win::virtual_desktop_left>();
+        auto& vdm = ref_space->virtual_desktop_manager;
+        vdm->setCurrent(vdm->toLeft(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
     void switch_desktop_right_impl() const override
     {
-        switch_desktop<win::virtual_desktop_right>();
+        auto& vdm = ref_space->virtual_desktop_manager;
+        vdm->setCurrent(vdm->toRight(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
     void switch_desktop_up_impl() const override
     {
-        switch_desktop<win::virtual_desktop_above>();
+        auto& vdm = ref_space->virtual_desktop_manager;
+        vdm->setCurrent(vdm->above(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
     void switch_desktop_down_impl() const override
     {
-        switch_desktop<win::virtual_desktop_below>();
+        auto& vdm = ref_space->virtual_desktop_manager;
+        vdm->setCurrent(vdm->below(nullptr, ref_space->options->qobject->isRollOverDesktops()));
     }
 
     QString supportInformation() const override

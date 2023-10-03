@@ -494,14 +494,12 @@ public:
 
     int next_desktop_static(int iDesktop) const
     {
-        win::virtual_desktop_next functor(*space.virtual_desktop_manager);
-        return functor(iDesktop, true);
+        return space.virtual_desktop_manager->next(iDesktop, true);
     }
 
     int previous_desktop_static(int iDesktop) const
     {
-        win::virtual_desktop_previous functor(*space.virtual_desktop_manager);
-        return functor(iDesktop, true);
+        return space.virtual_desktop_manager->previous(iDesktop, true);
     }
 
     void key_press(int keyQt)

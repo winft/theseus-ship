@@ -302,22 +302,20 @@ void active_window_to_prev_desktop(Space& space)
     }
 }
 
-template<typename Direction, typename Space>
-void active_window_to_desktop(Space& space)
+template<typename Space>
+void active_window_to_desktop(Space& space, virtual_desktop* desktop)
 {
     auto& vds = space.virtual_desktop_manager;
-    int const current = vds->current();
-    Direction functor(*vds);
 
-    int const d = functor(current, space.options->qobject->isRollOverDesktops());
-    if (d == current) {
+    if (desktop == vds->currentDesktop()) {
         return;
     }
 
     assert(space.stacking.active);
     std::visit(overload{[&](auto&& win) { set_move_resize_window(space, *win); }},
                *space.stacking.active);
-    vds->setCurrent(d);
+
+    vds->setCurrent(desktop);
     unset_move_resize_window(space);
 }
 
@@ -325,7 +323,9 @@ template<typename Space>
 void active_window_to_right_desktop(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_desktop<virtual_desktop_right>(space);
+        active_window_to_desktop(space,
+                                 space.virtual_desktop_manager->toRight(
+                                     nullptr, space.options->qobject->isRollOverDesktops()));
     }
 }
 
@@ -333,7 +333,9 @@ template<typename Space>
 void active_window_to_left_desktop(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_desktop<virtual_desktop_left>(space);
+        active_window_to_desktop(space,
+                                 space.virtual_desktop_manager->toLeft(
+                                     nullptr, space.options->qobject->isRollOverDesktops()));
     }
 }
 
@@ -341,7 +343,9 @@ template<typename Space>
 void active_window_to_above_desktop(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_desktop<virtual_desktop_above>(space);
+        active_window_to_desktop(space,
+                                 space.virtual_desktop_manager->above(
+                                     nullptr, space.options->qobject->isRollOverDesktops()));
     }
 }
 
@@ -349,7 +353,9 @@ template<typename Space>
 void active_window_to_below_desktop(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_desktop<virtual_desktop_below>(space);
+        active_window_to_desktop(space,
+                                 space.virtual_desktop_manager->below(
+                                     nullptr, space.options->qobject->isRollOverDesktops()));
     }
 }
 

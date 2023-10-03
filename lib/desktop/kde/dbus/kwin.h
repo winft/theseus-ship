@@ -201,12 +201,14 @@ public:
 
     void next_desktop_impl() override
     {
-        space.virtual_desktop_manager->template moveTo<win::virtual_desktop_next>();
+        space.virtual_desktop_manager->setCurrent(
+            space.virtual_desktop_manager->next(nullptr, false));
     }
 
     void previous_desktop_impl() override
     {
-        space.virtual_desktop_manager->template moveTo<win::virtual_desktop_previous>();
+        space.virtual_desktop_manager->setCurrent(
+            space.virtual_desktop_manager->previous(nullptr, false));
     }
 
     void show_debug_console_impl() override

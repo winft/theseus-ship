@@ -20,6 +20,84 @@ using namespace Wrapland::Client;
 namespace KWin::detail::test
 {
 
+struct desktop_above {
+    desktop_above(win::virtual_desktop_manager& manager)
+        : manager{manager}
+    {
+    }
+    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    {
+        return manager.above(desktop, wrap);
+    }
+
+    win::virtual_desktop_manager& manager;
+};
+
+struct desktop_below {
+    desktop_below(win::virtual_desktop_manager& manager)
+        : manager{manager}
+    {
+    }
+    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    {
+        return manager.below(desktop, wrap);
+    }
+
+    win::virtual_desktop_manager& manager;
+};
+
+struct desktop_left {
+    desktop_left(win::virtual_desktop_manager& manager)
+        : manager{manager}
+    {
+    }
+    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    {
+        return manager.toLeft(desktop, wrap);
+    }
+
+    win::virtual_desktop_manager& manager;
+};
+
+struct desktop_right {
+    desktop_right(win::virtual_desktop_manager& manager)
+        : manager{manager}
+    {
+    }
+    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    {
+        return manager.toRight(desktop, wrap);
+    }
+
+    win::virtual_desktop_manager& manager;
+};
+
+struct desktop_next {
+    desktop_next(win::virtual_desktop_manager& manager)
+        : manager{manager}
+    {
+    }
+    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    {
+        return manager.next(desktop, wrap);
+    }
+
+    win::virtual_desktop_manager& manager;
+};
+
+struct desktop_previous {
+    desktop_previous(win::virtual_desktop_manager& manager)
+        : manager{manager}
+    {
+    }
+    win::virtual_desktop* operator()(win::virtual_desktop* desktop, bool wrap)
+    {
+        return manager.previous(desktop, wrap);
+    }
+
+    win::virtual_desktop_manager& manager;
+};
+
 template<typename Functor, typename Data>
 void test_direction(test::setup& setup, Data const& test_data, std::string const& action_name)
 {
@@ -39,7 +117,11 @@ void test_direction(test::setup& setup, Data const& test_data, std::string const
     action->trigger();
 
     QCOMPARE(vd_manager->current(), test_data.result);
-    QCOMPARE(functor(test_data.init_current, test_data.wrap), test_data.result);
+
+    auto init_desktop = vd_manager->desktopForX11Id(test_data.init_current);
+    auto result = functor(init_desktop, test_data.wrap);
+    QVERIFY(result);
+    QCOMPARE(result->x11DesktopNumber(), test_data.result);
 }
 
 TEST_CASE("virtual desktop", "[win]")
@@ -275,7 +357,7 @@ TEST_CASE("virtual desktop", "[win]")
             // desktops at end, no wrap
             data{4, 4, false, 4});
 
-        test_direction<win::virtual_desktop_next>(setup, test_data, "Switch to Next Desktop");
+        test_direction<desktop_next>(setup, test_data, "Switch to Next Desktop");
     }
 
     SECTION("previous")
@@ -301,8 +383,7 @@ TEST_CASE("virtual desktop", "[win]")
             // desktops at start, no wrap
             data{4, 1, false, 1});
 
-        test_direction<win::virtual_desktop_previous>(
-            setup, test_data, "Switch to Previous Desktop");
+        test_direction<desktop_previous>(setup, test_data, "Switch to Previous Desktop");
     }
 
     SECTION("left")
@@ -342,8 +423,7 @@ TEST_CASE("virtual desktop", "[win]")
             // non symmetric, end, wrap
             data{5, 4, true, 5});
 
-        test_direction<win::virtual_desktop_left>(
-            setup, test_data, "Switch One Desktop to the Left");
+        test_direction<desktop_left>(setup, test_data, "Switch One Desktop to the Left");
     }
 
     SECTION("right")
@@ -383,8 +463,7 @@ TEST_CASE("virtual desktop", "[win]")
             // non symmetric, end, wrap
             data{5, 5, true, 4});
 
-        test_direction<win::virtual_desktop_right>(
-            setup, test_data, "Switch One Desktop to the Right");
+        test_direction<desktop_right>(setup, test_data, "Switch One Desktop to the Right");
     }
 
     SECTION("above")
@@ -418,7 +497,7 @@ TEST_CASE("virtual desktop", "[win]")
             // desktops at start, no wrap, 2nd column
             data{4, 2, false, 2});
 
-        test_direction<win::virtual_desktop_above>(setup, test_data, "Switch One Desktop Up");
+        test_direction<desktop_above>(setup, test_data, "Switch One Desktop Up");
     }
 
     SECTION("below")
@@ -452,7 +531,7 @@ TEST_CASE("virtual desktop", "[win]")
             // desktops at start, no wrap, 2nd column
             data{4, 4, false, 4});
 
-        test_direction<win::virtual_desktop_below>(setup, test_data, "Switch One Desktop Down");
+        test_direction<desktop_below>(setup, test_data, "Switch One Desktop Down");
     }
 
     SECTION("update grid")

@@ -84,15 +84,11 @@ void handle_desktop_count_changed(Space& space, unsigned int /*prev*/, unsigned 
     reset_space_areas(space, next);
 }
 
-template<typename Direction, typename Win>
-void window_to_desktop(Win& window)
+template<typename Win>
+void window_to_desktop(Win& window, virtual_desktop* desktop)
 {
     auto& ws = window.space;
     auto& vds = ws.virtual_desktop_manager;
-    Direction functor(*vds);
-
-    // TODO: why is win.space.options->isRollOverDesktops() not honored?
-    auto const desktop = functor(nullptr, true);
 
     if (!is_desktop(&window) && !is_dock(&window)) {
         set_move_resize_window(ws, window);
@@ -104,13 +100,15 @@ void window_to_desktop(Win& window)
 template<typename Win>
 void window_to_next_desktop(Win& window)
 {
-    window_to_desktop<win::virtual_desktop_next>(window);
+    // TODO: why is win.space.options->isRollOverDesktops() not honored?
+    window_to_desktop(window, window.space.virtual_desktop_manager->next(nullptr, true));
 }
 
 template<typename Win>
 void window_to_prev_desktop(Win& window)
 {
-    window_to_desktop<win::virtual_desktop_previous>(window);
+    // TODO: why is win.space.options->isRollOverDesktops() not honored?
+    window_to_desktop(window, window.space.virtual_desktop_manager->previous(nullptr, true));
 }
 
 template<typename Space>

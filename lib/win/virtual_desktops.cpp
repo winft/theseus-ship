@@ -368,6 +368,12 @@ virtual_desktop* virtual_desktop_manager::next(virtual_desktop* desktop, bool wr
     return *it;
 }
 
+uint virtual_desktop_manager::next(uint id, bool wrap) const
+{
+    auto vd = next(desktopForX11Id(id), wrap);
+    return vd ? vd->x11DesktopNumber() : 0;
+}
+
 virtual_desktop* virtual_desktop_manager::previous(virtual_desktop* desktop, bool wrap) const
 {
     Q_ASSERT(m_current);
@@ -388,6 +394,12 @@ virtual_desktop* virtual_desktop_manager::previous(virtual_desktop* desktop, boo
 
     it--;
     return *it;
+}
+
+uint virtual_desktop_manager::previous(uint id, bool wrap) const
+{
+    auto vd = previous(desktopForX11Id(id), wrap);
+    return vd ? vd->x11DesktopNumber() : 0;
 }
 
 virtual_desktop* virtual_desktop_manager::desktopForX11Id(uint id) const
@@ -883,32 +895,32 @@ void virtual_desktop_manager::setNavigationWrappingAround(bool enabled)
 
 void virtual_desktop_manager::slotDown()
 {
-    moveTo<virtual_desktop_below>(isNavigationWrappingAround());
+    setCurrent(below(nullptr, isNavigationWrappingAround()));
 }
 
 void virtual_desktop_manager::slotLeft()
 {
-    moveTo<virtual_desktop_left>(isNavigationWrappingAround());
+    setCurrent(toLeft(nullptr, isNavigationWrappingAround()));
 }
 
 void virtual_desktop_manager::slotPrevious()
 {
-    moveTo<virtual_desktop_previous>(isNavigationWrappingAround());
+    setCurrent(previous(nullptr, isNavigationWrappingAround()));
 }
 
 void virtual_desktop_manager::slotNext()
 {
-    moveTo<virtual_desktop_next>(isNavigationWrappingAround());
+    setCurrent(next(nullptr, isNavigationWrappingAround()));
 }
 
 void virtual_desktop_manager::slotRight()
 {
-    moveTo<virtual_desktop_right>(isNavigationWrappingAround());
+    setCurrent(toRight(nullptr, isNavigationWrappingAround()));
 }
 
 void virtual_desktop_manager::slotUp()
 {
-    moveTo<virtual_desktop_above>(isNavigationWrappingAround());
+    setCurrent(above(nullptr, isNavigationWrappingAround()));
 }
 
 }
