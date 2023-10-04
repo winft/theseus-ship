@@ -51,42 +51,17 @@ subspace_manager::subspace_manager(win::subspace_manager* parent)
                      this,
                      &subspace_manager::rowsChanged);
 
-    for (auto&& vd : m_manager->subspaces) {
-        QObject::connect(vd, &win::subspace::x11DesktopNumberChanged, this, [this, vd]() {
-            subspace_data data{
-                .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
-            Q_EMIT desktopDataChanged(vd->id(), data);
-            Q_EMIT desktopsChanged(desktops());
-        });
-        QObject::connect(vd, &win::subspace::nameChanged, this, [this, vd]() {
-            subspace_data data{
-                .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
-            Q_EMIT desktopDataChanged(vd->id(), data);
-            Q_EMIT desktopsChanged(desktops());
-        });
+    for (auto&& subspace : m_manager->subspaces) {
+        add_subspace(*subspace);
     }
-    QObject::connect(
-        m_manager->qobject.get(),
-        &win::subspace_manager_qobject::subspace_created,
-        this,
-        [this](auto vd) {
-            QObject::connect(vd, &win::subspace::x11DesktopNumberChanged, this, [this, vd]() {
-                subspace_data data{
-                    .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
-                Q_EMIT desktopDataChanged(vd->id(), data);
-                Q_EMIT desktopsChanged(desktops());
-            });
-            QObject::connect(vd, &win::subspace::nameChanged, this, [this, vd]() {
-                subspace_data data{
-                    .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
-                Q_EMIT desktopDataChanged(vd->id(), data);
-                Q_EMIT desktopsChanged(desktops());
-            });
-            subspace_data data{
-                .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
-            Q_EMIT desktopCreated(vd->id(), data);
-            Q_EMIT desktopsChanged(desktops());
-        });
+
+    QObject::connect(m_manager->qobject.get(),
+                     &win::subspace_manager_qobject::subspace_created,
+                     this,
+                     [this](auto subsp) {
+                         assert(subsp);
+                         add_subspace(*subsp);
+                     });
     QObject::connect(m_manager->qobject.get(),
                      &win::subspace_manager_qobject::subspace_removed,
                      this,
@@ -183,6 +158,33 @@ void subspace_manager::setDesktopName(const QString& id, const QString& name)
 void subspace_manager::removeDesktop(const QString& id)
 {
     m_manager->remove_subspace(id);
+}
+
+void subspace_manager::add_subspace(win::subspace& subspace)
+{
+    QObject::connect(&subspace, &win::subspace::x11DesktopNumberChanged, this, [this, &subspace]() {
+        auto const data = get_subspace_data(subspace);
+        Q_EMIT desktopDataChanged(data.id, data);
+        Q_EMIT desktopsChanged(desktops());
+    });
+    QObject::connect(&subspace, &win::subspace::nameChanged, this, [this, &subspace]() {
+        auto const data = get_subspace_data(subspace);
+        Q_EMIT desktopDataChanged(data.id, data);
+        Q_EMIT desktopsChanged(desktops());
+    });
+
+    auto const data = get_subspace_data(subspace);
+    Q_EMIT desktopCreated(data.id, data);
+    Q_EMIT desktopsChanged(desktops());
+}
+
+subspace_data subspace_manager::get_subspace_data(win::subspace& subspace)
+{
+    return {
+        .position = subspace.x11DesktopNumber() - 1,
+        .id = subspace.id(),
+        .name = subspace.name(),
+    };
 }
 
 }

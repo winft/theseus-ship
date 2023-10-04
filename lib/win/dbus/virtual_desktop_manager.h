@@ -15,6 +15,7 @@
 namespace KWin::win
 {
 
+class subspace;
 class subspace_manager;
 
 namespace dbus
@@ -89,6 +90,9 @@ public Q_SLOTS:
     void removeDesktop(const QString& id);
 
 private:
+    void add_subspace(win::subspace& subspace);
+    subspace_data get_subspace_data(win::subspace& subspace);
+
     win::subspace_manager* m_manager;
 };
 
