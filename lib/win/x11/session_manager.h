@@ -14,7 +14,7 @@
 #include <QObject>
 #include <QRect>
 
-namespace KWin::win
+namespace KWin::win::x11
 {
 
 class KWIN_EXPORT session_manager : public QObject

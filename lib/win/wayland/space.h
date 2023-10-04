@@ -183,14 +183,14 @@ public:
     std::vector<win::strut_rects> oldrestrictedmovearea;
 
     std::unique_ptr<win::subspace_manager> subspace_manager;
-    std::unique_ptr<win::session_manager> session_manager;
+    std::unique_ptr<x11::session_manager> session_manager;
 
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
     QWidget* active_popup{nullptr};
 
-    std::vector<win::session_info*> session;
+    std::vector<x11::session_info*> session;
 
     // Delay(ed) window focus timer and client
     QTimer* delayFocusTimer{nullptr};

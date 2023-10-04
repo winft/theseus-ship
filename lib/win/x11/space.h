@@ -56,7 +56,7 @@ public:
         options = std::make_unique<win::options>(input.base.config.main);
         rule_book = std::make_unique<rules::book>();
         subspace_manager = std::make_unique<win::subspace_manager>();
-        session_manager = std::make_unique<win::session_manager>();
+        session_manager = std::make_unique<x11::session_manager>();
 
         outline = render_outline_t::create(*render.compositor, [this] {
             return outline->create_visual(*this->base.render->compositor);
@@ -224,14 +224,14 @@ public:
     std::vector<win::strut_rects> oldrestrictedmovearea;
 
     std::unique_ptr<win::subspace_manager> subspace_manager;
-    std::unique_ptr<win::session_manager> session_manager;
+    std::unique_ptr<x11::session_manager> session_manager;
 
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
     QWidget* active_popup{nullptr};
 
-    std::vector<win::session_info*> session;
+    std::vector<session_info*> session;
 
     // Delay(ed) window focus timer and client
     QTimer* delayFocusTimer{nullptr};

@@ -9,7 +9,6 @@
 #include "helpers.h"
 
 #include "win/meta.h"
-#include "win/session_manager.h"
 #include "win/space_qobject.h"
 #include "win/util.h"
 #include "win/window_qobject.h"
@@ -105,8 +104,10 @@ public:
         : layout_policy<Manager>(manager, config)
     {
         auto session_manager = manager->redirect.space.session_manager.get();
+        using session_manager_t = std::remove_pointer_t<decltype(session_manager)>;
+
         QObject::connect(session_manager,
-                         &win::session_manager::prepareSessionSaveRequested,
+                         &session_manager_t::prepareSessionSaveRequested,
                          this->qobject.get(),
                          [this] {
                              this->clear_layouts();
@@ -115,15 +116,12 @@ public:
                              }
                          });
 
-        QObject::connect(session_manager,
-                         &win::session_manager::loadSessionRequested,
-                         this->qobject.get(),
-                         [this] {
-                             if (this->get_keyboard()->layouts_count() > 1) {
-                                 this->set_layout(
-                                     this->config.readEntry(default_layout_entry_key(), 0));
-                             }
-                         });
+        QObject::connect(
+            session_manager, &session_manager_t::loadSessionRequested, this->qobject.get(), [this] {
+                if (this->get_keyboard()->layouts_count() > 1) {
+                    this->set_layout(this->config.readEntry(default_layout_entry_key(), 0));
+                }
+            });
     }
 
     QString name() const override
@@ -162,8 +160,10 @@ public:
                          [this] { handle_desktop_change(); });
 
         auto session_manager = space.session_manager.get();
+        using session_manager_t = std::remove_pointer_t<decltype(session_manager)>;
+
         QObject::connect(session_manager,
-                         &win::session_manager::prepareSessionSaveRequested,
+                         &session_manager_t::prepareSessionSaveRequested,
                          this->qobject.get(),
                          [this] {
                              this->clear_layouts();
@@ -181,10 +181,7 @@ public:
                          });
 
         QObject::connect(
-            session_manager,
-            &win::session_manager::loadSessionRequested,
-            this->qobject.get(),
-            [this] {
+            session_manager, &session_manager_t::loadSessionRequested, this->qobject.get(), [this] {
                 if (this->get_keyboard()->layouts_count() > 1) {
                     auto const& subspaces
                         = this->manager->redirect.space.subspace_manager->subspaces;
@@ -345,9 +342,11 @@ public:
                          });
 
         auto session_manager = space.session_manager.get();
+        using session_manager_t = std::remove_pointer_t<decltype(session_manager)>;
+
         QObject::connect(
             session_manager,
-            &win::session_manager::prepareSessionSaveRequested,
+            &session_manager_t::prepareSessionSaveRequested,
             this->qobject.get(),
             [this] {
                 this->clear_layouts();
@@ -365,20 +364,17 @@ public:
                     }
                 }
             });
-        QObject::connect(session_manager,
-                         &win::session_manager::loadSessionRequested,
-                         this->qobject.get(),
-                         [this] {
-                             if (this->get_keyboard()->layouts_count() > 1) {
-                                 auto const keyPrefix = this->default_layout_entry_key();
-                                 auto const keyList = this->config.keyList().filter(keyPrefix);
-                                 for (auto const& key : keyList) {
-                                     restored_layouts.insert(
-                                         {QStringView(key).mid(keyPrefix.size()).toLatin1(),
-                                          this->config.readEntry(key, 0)});
-                                 }
-                             }
-                         });
+        QObject::connect(
+            session_manager, &session_manager_t::loadSessionRequested, this->qobject.get(), [this] {
+                if (this->get_keyboard()->layouts_count() > 1) {
+                    auto const keyPrefix = this->default_layout_entry_key();
+                    auto const keyList = this->config.keyList().filter(keyPrefix);
+                    for (auto const& key : keyList) {
+                        restored_layouts.insert({QStringView(key).mid(keyPrefix.size()).toLatin1(),
+                                                 this->config.readEntry(key, 0)});
+                    }
+                }
+            });
     }
 
     QString name() const override

@@ -91,7 +91,7 @@ void space_setup_init(Space& space, Render& render, Input& input)
     space.options = std::make_unique<win::options>(input.base.config.main);
     space.rule_book = std::make_unique<rules::book>();
     space.subspace_manager = std::make_unique<win::subspace_manager>();
-    space.session_manager = std::make_unique<win::session_manager>();
+    space.session_manager = std::make_unique<x11::session_manager>();
     space.outline = Space::render_outline_t::create(*render.compositor, [&space] {
         return space.outline->create_visual(*space.base.render->compositor);
     });

@@ -100,8 +100,6 @@ target_sources(win
       scene.h
       screen.h
       screen_edges.h
-      session.h
-      session_manager.h
       setup.h
       shortcuts_init.h
       shortcut_dialog.h
@@ -153,7 +151,6 @@ target_sources(win
     rules/book_settings.cpp
     rules/ruling.cpp
     rules/window.cpp
-    session_manager.cpp
     screen_edges.cpp
     shortcut_dialog.cpp
     singleton_interface.cpp
@@ -164,6 +161,7 @@ target_sources(win
     x11/client_machine.cpp
     x11/extras.cpp
     x11/key_server.cpp
+    x11/session_manager.cpp
     x11/net/atoms.cpp
     x11/net/root_info.cpp
     x11/net/win_info.cpp
@@ -205,8 +203,8 @@ qt6_add_dbus_adaptor(win_dbus_src
 )
 qt6_add_dbus_adaptor(win_dbus_src
   dbus/org.kde.KWin.Session.xml
-  session_manager.h
-  KWin::win::session_manager
+  x11/session_manager.h
+  KWin::win::x11::session_manager
 )
 qt6_add_dbus_interface(win_dbus_src dbus/org.kde.kappmenu.xml appmenu_interface)
 qt6_add_dbus_interface(win_dbus_src
@@ -288,6 +286,7 @@ target_sources(win-x11
       x11/screen_edge.h
       x11/screen_edges_filter.h
       x11/session.h
+      x11/session_manager.h
       x11/shortcut.h
       x11/space.h
       x11/space_areas.h

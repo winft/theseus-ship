@@ -10,9 +10,9 @@
 // Include first to not clash with later X definitions in other includes.
 #include "sessionadaptor.h"
 
-#include "stacking_order.h"
-#include "x11/geo.h"
-#include "x11/window.h"
+#include "win/stacking_order.h"
+#include "win/x11/geo.h"
+#include "win/x11/window.h"
 
 #include <KConfig>
 #include <QDBusConnection>
@@ -20,7 +20,7 @@
 #include <pwd.h>
 #include <unistd.h>
 
-namespace KWin::win
+namespace KWin::win::x11
 {
 
 session_manager::session_manager()

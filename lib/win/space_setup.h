@@ -11,8 +11,8 @@
 #include "rules.h"
 #include "tabbox/tabbox.h"
 #include <win/options.h>
-#include <win/session.h>
 #include <win/space_reconfigure.h>
+#include <win/x11/session.h>
 
 #include "base/platform.h"
 
@@ -43,18 +43,22 @@ void init_space(Space& space)
                      space.deco->qobject.get(),
                      [&] { space.deco->reconfigure(); });
 
-    QObject::connect(space.session_manager.get(),
-                     &session_manager::loadSessionRequested,
+    auto session_manager = space.session_manager.get();
+    using session_manager_t = std::remove_pointer_t<decltype(session_manager)>;
+    QObject::connect(session_manager,
+                     &session_manager_t::loadSessionRequested,
                      space.qobject.get(),
-                     [&](auto&& session_name) { load_session_info(space, session_name); });
-    QObject::connect(space.session_manager.get(),
-                     &session_manager::prepareSessionSaveRequested,
-                     space.qobject.get(),
-                     [&](auto const& name) { store_session(space, name, sm_save_phase0); });
-    QObject::connect(space.session_manager.get(),
-                     &session_manager::finishSessionSaveRequested,
-                     space.qobject.get(),
-                     [&](auto const& name) { store_session(space, name, sm_save_phase2); });
+                     [&](auto&& session_name) { x11::load_session_info(space, session_name); });
+    QObject::connect(
+        session_manager,
+        &session_manager_t::prepareSessionSaveRequested,
+        space.qobject.get(),
+        [&](auto const& name) { x11::store_session(space, name, x11::sm_save_phase0); });
+    QObject::connect(
+        session_manager,
+        &session_manager_t::finishSessionSaveRequested,
+        space.qobject.get(),
+        [&](auto const& name) { x11::store_session(space, name, x11::sm_save_phase2); });
 
     QObject::connect(&space.base,
                      &base::platform::topology_changed,

@@ -24,7 +24,6 @@
 #include "win/layers.h"
 #include "win/options.h"
 #include "win/rules/find.h"
-#include "win/session.h"
 #include <win/tabbox/tabbox_client_impl.h>
 
 namespace KWin::win::x11

@@ -8,7 +8,6 @@
 #include <render/x11/effect.h>
 #include <render/x11/property_notify_filter.h>
 #include <win/screen_edges.h>
-#include <win/session_manager.h>
 
 #include <config-kwin.h>
 
@@ -280,7 +279,7 @@ void setup_handler(Handler& handler)
                                     space->windows_map.at(win_id));
                      });
     QObject::connect(ws->session_manager.get(),
-                     &win::session_manager::stateChanged,
+                     &decltype(ws->session_manager)::element_type::stateChanged,
                      &handler,
                      &KWin::EffectsHandler::sessionStateChanged);
     QObject::connect(vds->qobject.get(),
