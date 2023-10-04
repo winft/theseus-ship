@@ -33,7 +33,7 @@ void active_window_to_subspace(Space& space, unsigned int i)
     if (!has_usable_active_window(space)) {
         return;
     }
-    if (i < 1 || i > space.subspace_manager->count()) {
+    if (i < 1 || i > space.subspace_manager->subspaces.size()) {
         return;
     }
 
@@ -160,7 +160,7 @@ void active_window_lower(Space& space)
             }
 
             if (auto top
-                = top_client_in_subspace(space, space.subspace_manager->current(), nullptr)) {
+                = top_client_in_subspace(space, space.subspace_manager->current_x11id(), nullptr)) {
                 std::visit(overload{[&](auto&& top) { activate_window(space, *top); }}, *top);
                 return;
             }
@@ -308,7 +308,7 @@ void active_window_to_subspace(Space& space, subspace* sub)
 {
     auto& vds = space.subspace_manager;
 
-    if (sub == vds->current_subspace()) {
+    if (sub == vds->current) {
         return;
     }
 

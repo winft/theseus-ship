@@ -186,7 +186,7 @@ public:
 
     int current_desktop_impl() override
     {
-        return space.subspace_manager->current();
+        return space.subspace_manager->current_x11id();
     }
 
     void show_desktop_impl(bool show) override

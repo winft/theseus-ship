@@ -246,7 +246,7 @@ public:
             handler->create_model();
 
             if (!partial_reset) {
-                set_current_desktop(space.subspace_manager->current());
+                set_current_desktop(space.subspace_manager->current_x11id());
             }
             break;
         }

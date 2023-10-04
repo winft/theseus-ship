@@ -595,7 +595,7 @@ public:
                        subs.reserve(desktopIds.count());
 
                        for (uint x11Id : desktopIds) {
-                           if (x11Id > get_space().subspace_manager->count()) {
+                           if (x11Id > get_space().subspace_manager->subspaces.size()) {
                                continue;
                            }
 
@@ -637,12 +637,12 @@ public:
 
     int currentDesktop() const override
     {
-        return get_space().subspace_manager->current();
+        return get_space().subspace_manager->current_x11id();
     }
 
     int numberOfDesktops() const override
     {
-        return get_space().subspace_manager->count();
+        return get_space().subspace_manager->subspaces.size();
     }
 
     void setCurrentDesktop(int desktop) override
@@ -917,7 +917,7 @@ public:
                                   get_space(),
                                   static_cast<win::area_option>(opt),
                                   win->geo.frame.center(),
-                                  get_space().subspace_manager->current());
+                                  get_space().subspace_manager->current_x11id());
                           }},
                           *static_cast<effect_window_t const*>(eff_win)->window.ref_win);
     }

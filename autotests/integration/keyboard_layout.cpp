@@ -585,16 +585,16 @@ TEST_CASE("keyboard layout", "[input]")
 
         auto& vd_manager = setup.base->space->subspace_manager;
         vd_manager->setCount(4);
-        QCOMPARE(vd_manager->count(), 4u);
-        auto subspaces = vd_manager->subspaces();
+        QCOMPARE(vd_manager->subspaces.size(), 4u);
+        auto subspaces = vd_manager->subspaces;
         QCOMPARE(subspaces.size(), 4);
 
         // Give subspaces different layouts.
         uint desktop, layout;
-        for (desktop = 0; desktop < vd_manager->count(); ++desktop) {
+        for (desktop = 0; desktop < vd_manager->subspaces.size(); ++desktop) {
             // Switch to another virtual desktop.
             vd_manager->setCurrent(subspaces.at(desktop));
-            QCOMPARE(subspaces.at(desktop), vd_manager->current_subspace());
+            QCOMPARE(subspaces.at(desktop), vd_manager->current);
 
             // Should be reset to English.
             QCOMPARE(xkb->layout, 0);
@@ -610,12 +610,12 @@ TEST_CASE("keyboard layout", "[input]")
 
         // check layout set on desktop switching as intended
         for (--desktop;;) {
-            QCOMPARE(subspaces.at(desktop), vd_manager->current_subspace());
+            QCOMPARE(subspaces.at(desktop), vd_manager->current);
 
             layout = (desktop + 1) % xkb->layouts_count();
             QCOMPARE(xkb->layout, layout);
 
-            if (--desktop >= vd_manager->count()) {
+            if (--desktop >= vd_manager->subspaces.size()) {
                 // overflow
                 break;
             }
@@ -633,9 +633,9 @@ TEST_CASE("keyboard layout", "[input]")
         vd_manager->setCount(2);
 
         // Switching to it should result in going to default.
-        subspaces = vd_manager->subspaces();
+        subspaces = vd_manager->subspaces;
         QCOMPARE(subspaces.size(), 2);
-        QCOMPARE(subspaces.front(), vd_manager->current_subspace());
+        QCOMPARE(subspaces.front(), vd_manager->current);
 
         vd_manager->setCurrent(subspaces.back());
         QCOMPARE(xkb->layout_name(), "English (US)");

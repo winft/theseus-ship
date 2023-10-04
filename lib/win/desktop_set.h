@@ -75,7 +75,7 @@ void set_subspace(Win& win, int subspace)
     }
 
     // Check range.
-    subspace = std::clamp<int>(subspace, 1, win.space.subspace_manager->count());
+    subspace = std::clamp<int>(subspace, 1, win.space.subspace_manager->subspaces.size());
     set_subspaces(win, {win.space.subspace_manager->subspace_for_x11id(subspace)});
 }
 
@@ -89,7 +89,7 @@ void set_on_all_subspaces(Win& win, bool set)
     if (set) {
         set_subspaces(win, {});
     } else {
-        set_subspaces(win, {win.space.subspace_manager->current_subspace()});
+        set_subspaces(win, {win.space.subspace_manager->current});
     }
 }
 
@@ -109,7 +109,7 @@ template<typename Win>
 void leave_subspace(Win& win, subspace* sub)
 {
     auto subspaces
-        = win.topo.subspaces.empty() ? win.space.subspace_manager->subspaces() : win.topo.subspaces;
+        = win.topo.subspaces.empty() ? win.space.subspace_manager->subspaces : win.topo.subspaces;
 
     auto it = std::ranges::find(subspaces, sub);
     if (it == subspaces.end()) {

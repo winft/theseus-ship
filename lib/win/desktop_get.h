@@ -45,7 +45,7 @@ bool on_subspace(Win const& win, int sub)
 template<typename Win>
 bool on_current_subspace(Win const& win)
 {
-    return on_subspace(win, win.space.subspace_manager->current());
+    return on_subspace(win, win.space.subspace_manager->current);
 }
 
 template<typename Win>

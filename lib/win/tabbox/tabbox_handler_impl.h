@@ -61,7 +61,7 @@ public:
 
     int current_desktop() const override
     {
-        return m_tabbox->space.subspace_manager->current();
+        return m_tabbox->space.subspace_manager->current_x11id();
     }
 
     QString desktop_name(tabbox_client* client) const override
@@ -71,7 +71,7 @@ public:
         if (auto c = get_client_impl(client)) {
             return std::visit(overload{[&](auto&& win) {
                                   if (on_all_subspaces(*win)) {
-                                      return vds->name(vds->current());
+                                      return vds->name(vds->current_x11id());
                                   } else {
                                       return vds->name(get_subspace(*win));
                                   }
@@ -79,7 +79,7 @@ public:
                               c->client());
         }
 
-        return vds->name(vds->current());
+        return vds->name(vds->current_x11id());
     }
 
     QString desktop_name(int subspace) const override
@@ -131,7 +131,7 @@ public:
 
     int number_of_desktops() const override
     {
-        return m_tabbox->space.subspace_manager->count();
+        return m_tabbox->space.subspace_manager->subspaces.size();
     }
 
     tabbox_client_list stacking_order() const override

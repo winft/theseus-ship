@@ -41,7 +41,7 @@ void popagate_subspace_change(Space& space, uint subspace)
 
     // Now propagate the change, after hiding, before showing.
     if (space.root_info) {
-        space.root_info->setCurrentDesktop(space.subspace_manager->current());
+        space.root_info->setCurrentDesktop(space.subspace_manager->current_x11id());
     }
 
     auto const& list = space.stacking.order.stack;

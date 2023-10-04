@@ -73,11 +73,9 @@ public:
     void setRootInfo(x11::net::root_info* info);
     void setConfig(KSharedConfig::Ptr config);
 
-    uint count() const;
     uint rows() const;
 
-    uint current() const;
-    subspace* current_subspace() const;
+    uint current_x11id() const;
 
     QString name(uint sub) const;
     bool isNavigationWrappingAround() const;
@@ -100,11 +98,6 @@ public:
 
     subspace* previous(subspace* desktop, bool wrap) const;
     uint previous(uint id, bool wrap) const;
-
-    std::vector<subspace*> subspaces() const
-    {
-        return m_subspaces;
-    }
 
     subspace* subspace_for_x11id(uint id) const;
     subspace* subspace_for_id(QString const& id) const;
@@ -152,21 +145,24 @@ public:
     {
         return m_swipeGestureReleasedX.get();
     }
-    QPointF m_current_desktop_offset() const
+    QPointF get_current_desktop_offset() const
     {
-        return m_currentDesktopOffset;
+        return current_desktop_offset;
     }
     void set_desktop_offset_x(qreal offsetX)
     {
-        m_currentDesktopOffset.setX(offsetX);
+        current_desktop_offset.setX(offsetX);
     }
     void set_desktop_offset_y(qreal offsetY)
     {
-        m_currentDesktopOffset.setY(offsetY);
+        current_desktop_offset.setY(offsetY);
     }
     void connect_gestures();
 
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement{nullptr};
+
+    std::vector<subspace*> subspaces;
+    QPointer<subspace> current;
 
 private:
     void updateRootInfo();
@@ -174,8 +170,6 @@ private:
 
     QString defaultName(int desktop) const;
 
-    std::vector<subspace*> m_subspaces;
-    QPointer<subspace> m_current;
     quint32 m_rows = 2;
     bool m_navigationWrapsAround{false};
     subspace_grid m_grid;
@@ -185,7 +179,7 @@ private:
 
     QScopedPointer<QAction> m_swipeGestureReleasedY;
     QScopedPointer<QAction> m_swipeGestureReleasedX;
-    QPointF m_currentDesktopOffset = QPointF(0, 0);
+    QPointF current_desktop_offset = QPointF(0, 0);
 
     subspaces_singleton singleton;
 };
@@ -193,11 +187,6 @@ private:
 inline uint subspace_manager::maximum()
 {
     return 20;
-}
-
-inline uint subspace_manager::count() const
-{
-    return m_subspaces.size();
 }
 
 inline bool subspace_manager::isNavigationWrappingAround() const

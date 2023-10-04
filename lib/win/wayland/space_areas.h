@@ -19,7 +19,7 @@ void update_space_areas(Window* win,
                         space_areas& areas)
 {
     auto const screens_count = win->space.base.outputs.size();
-    auto const subspaces_count = static_cast<int>(win->space.subspace_manager->count());
+    auto const subspaces_count = static_cast<int>(win->space.subspace_manager->subspaces.size());
 
     // Assuming that only docks have "struts" and that all docks have a strut.
     if (!win->hasStrut()) {

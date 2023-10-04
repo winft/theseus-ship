@@ -187,7 +187,7 @@ public:
             [this] {
                 if (this->get_keyboard()->layouts_count() > 1) {
                     auto const& subspaces
-                        = this->manager->redirect.space.subspace_manager->subspaces();
+                        = this->manager->redirect.space.subspace_manager->subspaces;
 
                     for (auto const subspace : subspaces) {
                         uint const layout = this->config.readEntry(
@@ -222,7 +222,7 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto desktop = this->manager->redirect.space.subspace_manager->current_subspace();
+        auto desktop = this->manager->redirect.space.subspace_manager->current;
         if (!desktop) {
             return;
         }
@@ -243,7 +243,7 @@ protected:
 private:
     void handle_desktop_change()
     {
-        if (auto desktop = this->manager->redirect.space.subspace_manager->current_subspace()) {
+        if (auto desktop = this->manager->redirect.space.subspace_manager->current) {
             this->set_layout(get_layout(layouts, desktop));
         }
     }

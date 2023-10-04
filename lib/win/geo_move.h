@@ -20,7 +20,7 @@ QRegion struts_to_region(Space const& space,
                          std::vector<win::strut_rects> const& struts)
 {
     if (subspace == x11_desktop_number_on_all || subspace == x11_desktop_number_undefined) {
-        subspace = space.subspace_manager->current();
+        subspace = space.subspace_manager->current_x11id();
     }
 
     QRegion region;

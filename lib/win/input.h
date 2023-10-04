@@ -46,7 +46,7 @@ bool is_most_recently_raised(Win* win)
 
     // The last toplevel in the unconstrained stacking order is the most recently raised one.
     auto last = top_client_in_subspace(
-        win->space, win->space.subspace_manager->current(), nullptr, true, false);
+        win->space, win->space.subspace_manager->current_x11id(), nullptr, true, false);
     return last == var_win(win);
 }
 
@@ -326,7 +326,7 @@ void enter_event(Win* win, const QPoint& globalPos)
     if (win->space.options->qobject->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
         && is_focus_change_allowed(space) && globalPos != space.focusMousePos) {
         auto top = top_client_in_subspace(space,
-                                          space.subspace_manager->current(),
+                                          space.subspace_manager->current_x11id(),
                                           win->space.options->qobject->isSeparateScreenFocus()
                                               ? win->topo.central_output
                                               : nullptr);

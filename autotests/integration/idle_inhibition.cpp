@@ -103,7 +103,7 @@ TEST_CASE("idle inhibition", "[win]")
 
         auto& vd_manager = setup.base->space->subspace_manager;
         vd_manager->setCount(2);
-        QCOMPARE(vd_manager->count(), 2u);
+        QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // Get reference to the idle interface.
         auto& idle = setup.base->input->idle;
@@ -126,7 +126,7 @@ TEST_CASE("idle inhibition", "[win]")
 
         // The test client should be only on the first subspace.
         QCOMPARE(c->topo.subspaces.size(), 1);
-        QCOMPARE(c->topo.subspaces.front(), vd_manager->subspaces().front());
+        QCOMPARE(c->topo.subspaces.front(), vd_manager->subspaces.front());
 
         // This should inhibit our server object.
         QCOMPARE(idle.inhibit_count, 1);
@@ -253,7 +253,7 @@ TEST_CASE("idle inhibition", "[win]")
 
         auto& vd_manager = setup.base->space->subspace_manager;
         vd_manager->setCount(2);
-        QCOMPARE(vd_manager->count(), 2u);
+        QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // Get reference to the idle interface.
         auto& idle = setup.base->input->idle;
@@ -276,23 +276,23 @@ TEST_CASE("idle inhibition", "[win]")
 
         // The test client should be only on the first subspace.
         QCOMPARE(c->topo.subspaces.size(), 1);
-        QCOMPARE(c->topo.subspaces.front(), vd_manager->subspaces().front());
+        QCOMPARE(c->topo.subspaces.front(), vd_manager->subspaces.front());
 
         // This should inhibit our server object.
         QCOMPARE(idle.inhibit_count, 1);
 
         // Let the client enter the second subspace.
-        win::enter_subspace(*c, vd_manager->subspaces().at(1));
+        win::enter_subspace(*c, vd_manager->subspaces.at(1));
         QCOMPARE(idle.inhibit_count, 1);
 
         // If the client leaves the first subspace, then the associated idle
         // inhibitor object should not be honored.
-        win::leave_subspace(*c, vd_manager->subspaces().at(0));
+        win::leave_subspace(*c, vd_manager->subspaces.at(0));
         QCOMPARE(idle.inhibit_count, 0);
 
         // If the client enters the first subspace, then the associated idle inhibitor
         // object should be honored back again.
-        win::enter_subspace(*c, vd_manager->subspaces().at(0));
+        win::enter_subspace(*c, vd_manager->subspaces.at(0));
         QCOMPARE(idle.inhibit_count, 1);
 
         // Destroy the test client.

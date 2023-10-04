@@ -818,7 +818,7 @@ private:
     {
         QPoint pos(cursorPos);
         auto& vds = edger->space.subspace_manager;
-        auto const oldDesktop = vds->current_subspace();
+        auto const oldDesktop = vds->current_x11id();
         auto desktop = oldDesktop;
         int const OFFSET = 2;
 
@@ -861,7 +861,7 @@ private:
 
         vds->setCurrent(desktop);
 
-        if (vds->current_subspace() != oldDesktop) {
+        if (vds->current_x11id() != oldDesktop) {
             push_back_is_blocked = true;
             edger->space.input->cursor->set_pos(pos);
 

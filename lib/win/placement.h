@@ -102,7 +102,7 @@ void place_smart(Win* window, QRect const& area)
 
     int possible;
     int subspace = get_subspace(*window) == 0 || on_all_subspaces(*window)
-        ? window->space.subspace_manager->current()
+        ? window->space.subspace_manager->current_x11id()
         : get_subspace(*window);
 
     // temp coords

@@ -65,7 +65,7 @@ public:
 
     bool isOnAllDesktopsAvailable() const override
     {
-        return space.subspace_manager->count() > 1;
+        return space.subspace_manager->subspaces.size() > 1;
     }
 
     bool isCloseOnDoubleClickOnMenu() const override

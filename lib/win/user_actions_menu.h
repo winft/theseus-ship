@@ -184,7 +184,7 @@ private:
         if (!m_client || !m_menu)
             return;
 
-        if (space.subspace_manager->count() == 1) {
+        if (space.subspace_manager->subspaces.size() == 1) {
             delete m_desktopMenu;
             m_desktopMenu = nullptr;
             delete m_multipleDesktopsMenu;
@@ -279,7 +279,7 @@ private:
 
         const uint BASE = 10;
 
-        for (uint i = 1; i <= subs_manager->count(); ++i) {
+        for (uint i = 1; i <= subs_manager->subspaces.size(); ++i) {
             QString basic_name(QStringLiteral("%1  %2"));
             if (i < BASE) {
                 basic_name.prepend(QLatin1Char('&'));
@@ -303,9 +303,9 @@ private:
         action = m_desktopMenu->addAction(
             i18nc("Create a new desktop and move the window there", "&New Desktop"));
         action->setIcon(QIcon::fromTheme(QStringLiteral("list-add")));
-        action->setData(subs_manager->count() + 1);
+        action->setData(static_cast<int>(subs_manager->subspaces.size() + 1));
 
-        if (subs_manager->count() >= subs_manager->maximum())
+        if (subs_manager->subspaces.size() >= subs_manager->maximum())
             action->setEnabled(false);
     }
 
@@ -339,7 +339,7 @@ private:
 
         const uint BASE = 10;
 
-        for (uint i = 1; i <= subs_manager->count(); ++i) {
+        for (uint i = 1; i <= subs_manager->subspaces.size(); ++i) {
             QString basic_name(QStringLiteral("%1  %2"));
             if (i < BASE) {
                 basic_name.prepend(QLatin1Char('&'));
@@ -360,7 +360,7 @@ private:
 
         m_multipleDesktopsMenu->addSeparator();
 
-        for (uint i = 1; i <= subs_manager->count(); ++i) {
+        for (uint i = 1; i <= subs_manager->subspaces.size(); ++i) {
             QString name = i18n("Move to %1 %2", i, subs_manager->name(i));
             QAction* action = m_multipleDesktopsMenu->addAction(name);
             action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{i, true}));
@@ -368,8 +368,8 @@ private:
 
         m_multipleDesktopsMenu->addSeparator();
 
-        bool allowNewDesktops = subs_manager->count() < subs_manager->maximum();
-        uint countPlusOne = subs_manager->count() + 1;
+        bool allowNewDesktops = subs_manager->subspaces.size() < subs_manager->maximum();
+        uint countPlusOne = subs_manager->subspaces.size() + 1;
 
         action = m_multipleDesktopsMenu->addAction(i18nc(
             "Create a new desktop and add the window to that desktop", "Add to &New Desktop"));
@@ -448,7 +448,7 @@ private:
                                set_on_all_subspaces(*win, !on_all_subspaces(*win));
                            }
                            return;
-                       } else if (desk > subs_manager->count()) {
+                       } else if (desk > subs_manager->subspaces.size()) {
                            subs_manager->setCount(desk);
                        }
 
@@ -480,7 +480,7 @@ private:
                            // the 'on_all_subspaces' menu entry
                            set_on_all_subspaces(*win, !on_all_subspaces(*win));
                            return;
-                       } else if (data.desktop > subs_manager->count()) {
+                       } else if (data.desktop > subs_manager->subspaces.size()) {
                            subs_manager->setCount(data.desktop);
                        }
 

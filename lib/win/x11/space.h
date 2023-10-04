@@ -84,7 +84,7 @@ public:
             &subspace_manager_qobject::subspace_removed,
             qobject.get(),
             [this] {
-                auto const subspace_count = static_cast<int>(subspace_manager->count());
+                auto const subspace_count = static_cast<int>(subspace_manager->subspaces.size());
                 for (auto const& window : windows) {
                     std::visit(overload{[&](auto&& win) {
                                    if (!win->control) {

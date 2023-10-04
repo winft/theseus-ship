@@ -205,8 +205,8 @@ void setup_plasma_management(Space* space, Win* win)
                      qtwin,
                      [win]() {
                          auto& vds = win->space.subspace_manager;
-                         vds->setCount(vds->count() + 1);
-                         enter_subspace(*win, vds->subspaces().back());
+                         vds->setCount(vds->subspaces.size() + 1);
+                         enter_subspace(*win, vds->subspaces.back());
                      });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::leavePlasmaVirtualDesktopRequested,
@@ -322,7 +322,7 @@ void setup_subspace_manager(Manager& manager,
                          manager.remove_subspace(id.c_str());
                      });
 
-    auto const& subspaces = manager.subspaces();
+    auto const& subspaces = manager.subspaces;
     std::for_each(subspaces.cbegin(), subspaces.cend(), createPlasmaVirtualDesktop);
 
     // Now we are sure all ids are there
@@ -333,7 +333,7 @@ void setup_subspace_manager(Manager& manager,
                      manager.m_virtualDesktopManagement,
                      [&manager]() {
                          for (auto deskInt : manager.m_virtualDesktopManagement->desktops()) {
-                             if (deskInt->id() == manager.current_subspace()->id().toStdString()) {
+                             if (deskInt->id() == manager.current->id().toStdString()) {
                                  deskInt->setActive(true);
                              } else {
                                  deskInt->setActive(false);

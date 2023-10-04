@@ -19,7 +19,7 @@ void update_work_areas(Space& space)
         return;
     }
 
-    for (uint subspace = 1; subspace <= space.subspace_manager->count(); subspace++) {
+    for (uint subspace = 1; subspace <= space.subspace_manager->subspaces.size(); subspace++) {
         x11::net::rect rect;
         rect.pos.x = space.areas.work[subspace].x();
         rect.pos.y = space.areas.work[subspace].y();
@@ -40,7 +40,7 @@ void update_space_areas(Window* win,
     }
 
     auto const& outputs = win->space.base.outputs;
-    auto const subspaces_count = static_cast<int>(win->space.subspace_manager->count());
+    auto const subspaces_count = static_cast<int>(win->space.subspace_manager->subspaces.size());
 
     auto client_area = adjusted_client_area(win, desktop_area, desktop_area);
 

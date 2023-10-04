@@ -28,7 +28,7 @@ void update_space_areas_impl(Space& space, bool force)
     auto& base = space.base;
     auto const& outputs = base.outputs;
     auto const screens_count = outputs.size();
-    auto const desktops_count = static_cast<int>(space.subspace_manager->count());
+    auto const desktops_count = static_cast<int>(space.subspace_manager->subspaces.size());
 
     // To be determined are new:
     // * work areas,

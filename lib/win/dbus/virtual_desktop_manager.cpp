@@ -32,7 +32,7 @@ subspace_manager::subspace_manager(win::subspace_manager* parent)
                      [this](uint previousDesktop, uint newDesktop) {
                          Q_UNUSED(previousDesktop);
                          Q_UNUSED(newDesktop);
-                         Q_EMIT currentChanged(m_manager->current_subspace()->id());
+                         Q_EMIT currentChanged(m_manager->current->id());
                      });
 
     QObject::connect(m_manager->qobject.get(),
@@ -55,8 +55,7 @@ subspace_manager::subspace_manager(win::subspace_manager* parent)
                      this,
                      &subspace_manager::rowsChanged);
 
-    auto const desks = m_manager->subspaces();
-    for (auto vd : desks) {
+    for (auto&& vd : m_manager->subspaces) {
         QObject::connect(vd, &win::subspace::x11DesktopNumberChanged, this, [this, vd]() {
             subspace_data data{
                 .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
@@ -103,7 +102,7 @@ subspace_manager::subspace_manager(win::subspace_manager* parent)
 
 uint subspace_manager::count() const
 {
-    return m_manager->count();
+    return m_manager->subspaces.size();
 }
 
 void subspace_manager::setRows(uint rows)
@@ -123,7 +122,7 @@ uint subspace_manager::rows() const
 
 void subspace_manager::setCurrent(const QString& id)
 {
-    if (m_manager->current_subspace()->id() == id) {
+    if (m_manager->current->id() == id) {
         return;
     }
 
@@ -135,7 +134,7 @@ void subspace_manager::setCurrent(const QString& id)
 
 QString subspace_manager::current() const
 {
-    return m_manager->current_subspace()->id();
+    return m_manager->current->id();
 }
 
 void subspace_manager::setNavigationWrappingAround(bool wraps)
@@ -154,11 +153,11 @@ bool subspace_manager::isNavigationWrappingAround() const
 
 subspace_data_vector subspace_manager::desktops() const
 {
-    auto const desks = m_manager->subspaces();
+    auto const& subs = m_manager->subspaces;
     subspace_data_vector desktopVect;
-    desktopVect.reserve(m_manager->count());
+    desktopVect.reserve(m_manager->subspaces.size());
 
-    std::transform(desks.cbegin(), desks.cend(), std::back_inserter(desktopVect), [](auto vd) {
+    std::transform(subs.cbegin(), subs.cend(), std::back_inserter(desktopVect), [](auto vd) {
         return subspace_data{
             .position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
     });

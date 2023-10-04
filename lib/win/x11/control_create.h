@@ -232,7 +232,7 @@ void control_create_set_subspaces(Win& win,
     using desks = std::vector<subspace*>;
 
     if (!subs.has_value()) {
-        subs = is_desktop(&win) ? desks{} : desks{win.space.subspace_manager->current_subspace()};
+        subs = is_desktop(&win) ? desks{} : desks{win.space.subspace_manager->current};
     }
 
     set_subspaces(win,
@@ -455,7 +455,7 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
         if (on_all) {
             initial_subspaces = desks{};
         } else if (on_current) {
-            initial_subspaces = desks{win.space.subspace_manager->current_subspace()};
+            initial_subspaces = desks{win.space.subspace_manager->current};
         } else if (maincl != nullptr) {
             initial_subspaces = maincl->topo.subspaces;
         }

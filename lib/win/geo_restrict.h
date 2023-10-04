@@ -692,7 +692,7 @@ QRect adjust_window_size(Space const& space, Win const& window, QRect moveResize
             for (auto win : space.windows) {
                 std::visit(
                     overload{[&](auto&& win) {
-                        if (!win->control || !on_subspace(*win, space.subspace_manager->current())
+                        if (!win->control || !on_subspace(*win, space.subspace_manager->current)
                             || win->control->minimized) {
                             return;
                         }

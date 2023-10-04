@@ -19,7 +19,7 @@ template<typename Space, typename Win>
 void send_window_to_subspace(Space& space, Win* window, int desk, bool dont_activate)
 {
     if ((desk < 1 && desk != x11_desktop_number_on_all)
-        || desk > static_cast<int>(space.subspace_manager->count())) {
+        || desk > static_cast<int>(space.subspace_manager->subspaces.size())) {
         return;
     }
 
@@ -35,7 +35,7 @@ void send_window_to_subspace(Space& space, Win* window, int desk, bool dont_acti
     // window did range checking.
     desk = get_subspace(*window);
 
-    if (on_subspace(*window, space.subspace_manager->current())) {
+    if (on_subspace(*window, space.subspace_manager->current_x11id())) {
         if (win::wants_tab_focus(window) && space.options->qobject->focusPolicyIsReasonable()
             && !was_on_subspace && // for stickyness changes
             !dont_activate) {

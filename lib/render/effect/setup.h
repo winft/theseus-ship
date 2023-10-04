@@ -173,7 +173,7 @@ void setup_handler(Handler& handler)
                      &win::space_qobject::current_subspace_changed,
                      &handler,
                      [&handler, space = ws](int old) {
-                         int const newDesktop = space->subspace_manager->current();
+                         int const newDesktop = space->subspace_manager->current_x11id();
                          if (old == 0 || newDesktop == old) {
                              return;
                          }

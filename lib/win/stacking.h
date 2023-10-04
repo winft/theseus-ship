@@ -277,7 +277,8 @@ void raise_or_lower_client(Space& space, Window* window)
     } else {
         topmost = top_client_in_subspace(
             space,
-            on_all_subspaces(*window) ? space.subspace_manager->current() : get_subspace(*window),
+            on_all_subspaces(*window) ? space.subspace_manager->current_x11id()
+                                      : get_subspace(*window),
             space.options->qobject->isSeparateScreenFocus() ? window->topo.central_output
                                                             : nullptr);
     }

@@ -617,7 +617,7 @@ bool activate_next_window(Space& space)
         return false;
     }
 
-    int const subspace = space.subspace_manager->current();
+    int const subspace = space.subspace_manager->current_x11id();
 
     if (space.showing_desktop) {
         // to not break the state
@@ -892,8 +892,9 @@ void activate_window_direction(Space& space, win::direction direction)
 
     std::visit(
         overload{[&](auto&& act_win) {
-            int subspaceNumber = on_all_subspaces(*act_win) ? space.subspace_manager->current()
-                                                            : get_subspace(*act_win);
+            int subspaceNumber = on_all_subspaces(*act_win)
+                ? space.subspace_manager->current_x11id()
+                : get_subspace(*act_win);
 
             // Centre of the active window
             auto curPos = QPoint(act_win->geo.pos().x() + act_win->geo.size().width() / 2,
@@ -995,7 +996,7 @@ void set_showing_desktop(Space& space, bool showing)
         std::visit(overload{[&](auto&& win) { request_focus(space, *win); }}, *topDesk);
     } else if (!space.showing_desktop && changed) {
         if (auto const window = focus_chain_get_for_activation_on_current_output(
-                space, space.subspace_manager->current())) {
+                space, space.subspace_manager->current_x11id())) {
             std::visit(overload{[&](auto&& win) { activate_window(space, *win); }}, *window);
         }
     }

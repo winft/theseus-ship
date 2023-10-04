@@ -173,8 +173,8 @@ void init_space(Space& space)
         win::update_space_areas(space);
 
         // NETWM spec says we have to set it to (0,0) if we don't support it
-        auto viewports = new net::point[subspaces->count()];
-        space.root_info->setDesktopViewport(subspaces->count(), *viewports);
+        auto viewports = new net::point[subspaces->subspaces.size()];
+        space.root_info->setDesktopViewport(subspaces->subspaces.size(), *viewports);
         delete[] viewports;
         QRect geom;
 
@@ -206,10 +206,11 @@ void init_space(Space& space)
     if (!new_active_win && !space.stacking.active && space.stacking.should_get_focus.empty()) {
         // No client activated in manage()
         if (!new_active_win) {
-            new_active_win = win::top_client_in_subspace(space, subspaces->current(), nullptr);
+            new_active_win
+                = win::top_client_in_subspace(space, subspaces->current_x11id(), nullptr);
         }
         if (!new_active_win) {
-            new_active_win = win::find_desktop(&space, true, subspaces->current());
+            new_active_win = win::find_desktop(&space, true, subspaces->current_x11id());
         }
     }
     if (new_active_win) {

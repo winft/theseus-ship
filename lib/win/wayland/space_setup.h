@@ -73,7 +73,7 @@ void space_setup_handle_subspace_removed(Space& space, subspace* sub)
                        send_window_to_subspace(
                            space,
                            win,
-                           qMin(sub->x11DesktopNumber(), space.subspace_manager->count()),
+                           qMin(sub->x11DesktopNumber(), space.subspace_manager->subspaces.size()),
                            true);
                    }},
                    win);

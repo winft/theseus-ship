@@ -197,7 +197,7 @@ TEST_CASE("screen edges", "[input],[win]")
         subs->setConfig(config);
         subs->load();
         subs->updateLayout();
-        QCOMPARE(subs->count(), 4u);
+        QCOMPARE(subs->subspaces.size(), 4u);
         QCOMPARE(subs->grid().width(), 4);
         QCOMPARE(subs->grid().height(), 1);
 
