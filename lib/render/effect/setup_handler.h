@@ -5,7 +5,9 @@
 */
 #pragma once
 
+#include <render/effect/setup_window.h>
 #include <render/x11/effect.h>
+#include <render/x11/effect/setup_window.h>
 #include <render/x11/property_notify_filter.h>
 #include <win/screen_edges.h>
 
@@ -20,139 +22,6 @@
 
 namespace KWin::effect
 {
-
-template<typename Handler, typename Win>
-void setup_handler_window_connections(Handler& handler, Win& window)
-{
-    auto qtwin = window.qobject.get();
-
-    QObject::connect(qtwin, &win::window_qobject::subspaces_changed, &handler, [&handler, &window] {
-        Q_EMIT handler.windowDesktopsChanged(window.render->effect.get());
-    });
-    QObject::connect(qtwin,
-                     &win::window_qobject::maximize_mode_changed,
-                     &handler,
-                     [&handler, &window](auto mode) { handler.slotClientMaximized(window, mode); });
-    QObject::connect(
-        qtwin, &win::window_qobject::clientStartUserMovedResized, &handler, [&handler, &window] {
-            Q_EMIT handler.windowStartUserMovedResized(window.render->effect.get());
-        });
-    QObject::connect(qtwin,
-                     &win::window_qobject::clientStepUserMovedResized,
-                     &handler,
-                     [&handler, &window](QRect const& geometry) {
-                         Q_EMIT handler.windowStepUserMovedResized(window.render->effect.get(),
-                                                                   geometry);
-                     });
-    QObject::connect(
-        qtwin, &win::window_qobject::clientFinishUserMovedResized, &handler, [&handler, &window] {
-            Q_EMIT handler.windowFinishUserMovedResized(window.render->effect.get());
-        });
-    QObject::connect(qtwin,
-                     &win::window_qobject::opacityChanged,
-                     &handler,
-                     [&handler, &window](auto old) { handler.slotOpacityChanged(window, old); });
-    QObject::connect(
-        qtwin, &win::window_qobject::clientMinimized, &handler, [&handler, &window](auto animate) {
-            // TODO: notify effects even if it should not animate?
-            if (animate) {
-                Q_EMIT handler.windowMinimized(window.render->effect.get());
-            }
-        });
-    QObject::connect(qtwin,
-                     &win::window_qobject::clientUnminimized,
-                     &handler,
-                     [&handler, &window](auto animate) {
-                         // TODO: notify effects even if it should not animate?
-                         if (animate) {
-                             Q_EMIT handler.windowUnminimized(window.render->effect.get());
-                         }
-                     });
-    QObject::connect(qtwin, &win::window_qobject::modalChanged, &handler, [&handler, &window] {
-        handler.slotClientModalityChanged(window);
-    });
-    QObject::connect(
-        qtwin,
-        &win::window_qobject::frame_geometry_changed,
-        &handler,
-        [&handler, &window](auto const& rect) { handler.slotFrameGeometryChanged(window, rect); });
-    QObject::connect(
-        qtwin, &win::window_qobject::damaged, &handler, [&handler, &window](auto const& rect) {
-            handler.slotWindowDamaged(window, rect);
-        });
-    QObject::connect(qtwin,
-                     &win::window_qobject::unresponsiveChanged,
-                     &handler,
-                     [&handler, &window](bool unresponsive) {
-                         Q_EMIT handler.windowUnresponsiveChanged(window.render->effect.get(),
-                                                                  unresponsive);
-                     });
-    QObject::connect(qtwin, &win::window_qobject::windowShown, &handler, [&handler, &window] {
-        Q_EMIT handler.windowShown(window.render->effect.get());
-    });
-    QObject::connect(qtwin, &win::window_qobject::windowHidden, &handler, [&handler, &window] {
-        Q_EMIT handler.windowHidden(window.render->effect.get());
-    });
-    QObject::connect(
-        qtwin, &win::window_qobject::keepAboveChanged, &handler, [&handler, &window](bool above) {
-            Q_UNUSED(above)
-            Q_EMIT handler.windowKeepAboveChanged(window.render->effect.get());
-        });
-    QObject::connect(
-        qtwin, &win::window_qobject::keepBelowChanged, &handler, [&handler, &window](bool below) {
-            Q_UNUSED(below)
-            Q_EMIT handler.windowKeepBelowChanged(window.render->effect.get());
-        });
-    QObject::connect(
-        qtwin, &win::window_qobject::fullScreenChanged, &handler, [&handler, &window]() {
-            Q_EMIT handler.windowFullScreenChanged(window.render->effect.get());
-        });
-    QObject::connect(
-        qtwin, &win::window_qobject::visible_geometry_changed, &handler, [&handler, &window]() {
-            Q_EMIT handler.windowExpandedGeometryChanged(window.render->effect.get());
-        });
-}
-
-template<typename Handler, typename Win>
-void setup_handler_x11_controlled_window_connections(Handler& handler, Win& window)
-{
-    setup_handler_window_connections(handler, window);
-    QObject::connect(
-        window.qobject.get(),
-        &win::window_qobject::paddingChanged,
-        &handler,
-        [&handler, &window](auto const& old) { handler.slotPaddingChanged(window, old); });
-}
-
-template<typename Handler, typename Win>
-void setup_handler_x11_unmanaged_window_connections(Handler& handler, Win& window)
-{
-    QObject::connect(window.qobject.get(),
-                     &win::window_qobject::opacityChanged,
-                     &handler,
-                     [&handler, &window](auto old) { handler.slotOpacityChanged(window, old); });
-    QObject::connect(
-        window.qobject.get(),
-        &win::window_qobject::frame_geometry_changed,
-        &handler,
-        [&handler, &window](auto const& old) { handler.slotFrameGeometryChanged(window, old); });
-    QObject::connect(
-        window.qobject.get(),
-        &win::window_qobject::paddingChanged,
-        &handler,
-        [&handler, &window](auto const& old) { handler.slotPaddingChanged(window, old); });
-    QObject::connect(
-        window.qobject.get(),
-        &win::window_qobject::damaged,
-        &handler,
-        [&handler, &window](auto const& region) { handler.slotWindowDamaged(window, region); });
-    QObject::connect(window.qobject.get(),
-                     &win::window_qobject::visible_geometry_changed,
-                     &handler,
-                     [&handler, &window]() {
-                         Q_EMIT handler.windowExpandedGeometryChanged(window.render->effect.get());
-                     });
-}
 
 template<typename Handler>
 void setup_handler(Handler& handler)
@@ -384,7 +253,8 @@ void setup_handler(Handler& handler)
         // TODO: Can we merge this with the one for Wayland XdgShellClients below?
         std::visit(overload{[&](typename Handler::space_t::x11_window* win) {
                                 if (win->control) {
-                                    setup_handler_x11_controlled_window_connections(handler, *win);
+                                    render::x11::effect_setup_controlled_window_connections(handler,
+                                                                                            *win);
                                 }
                             },
                             [](auto&&) {}},
@@ -392,7 +262,7 @@ void setup_handler(Handler& handler)
     }
     for (auto win : win::x11::get_unmanageds(*ws)) {
         std::visit(overload{[&](auto&& win) {
-                       setup_handler_x11_unmanaged_window_connections(handler, *win);
+                       render::x11::effect_setup_unmanaged_window_connections(handler, *win);
                    }},
                    win);
     }

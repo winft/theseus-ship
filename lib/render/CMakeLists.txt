@@ -53,6 +53,8 @@ target_sources(render
       effect/internal_win_properties.h
       effect/internal_win_update.h
       effect/screen_impl.h
+      effect/setup_handler.h
+      effect/setup_window.h
       effect/window_group_impl.h
       effect/window_impl.h
       gl/backend.h
@@ -187,6 +189,7 @@ target_sources(render-x11
       x11/compositor_selection_owner.h
       x11/compositor_start.h
       x11/effect.h
+      x11/effect/setup_window.h
       x11/effects.h
       x11/keyboard_intercept_filter.h
       x11/mouse_intercept_filter.h

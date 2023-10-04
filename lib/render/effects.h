@@ -13,7 +13,8 @@
 #include "options.h"
 #include "singleton_interface.h"
 #include "types.h"
-#include <render/effect/setup.h>
+#include <render/effect/setup_handler.h>
+#include <render/x11/effect/setup_window.h>
 
 #include "win/activation.h"
 #include "win/osd.h"
@@ -1097,7 +1098,7 @@ public:
     void slotUnmanagedShown(Win& window)
     { // regardless, unmanaged windows are -yet?- not synced anyway
         assert(!window.control);
-        effect::setup_handler_x11_unmanaged_window_connections(*this, window);
+        x11::effect_setup_unmanaged_window_connections(*this, window);
         Q_EMIT windowAdded(window.render->effect.get());
     }
 
