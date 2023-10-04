@@ -56,7 +56,6 @@ public:
         options = std::make_unique<win::options>(input.base.config.main);
         rule_book = std::make_unique<rules::book>();
         subspace_manager = std::make_unique<win::subspace_manager>();
-        session_manager = std::make_unique<x11::session_manager>();
 
         outline = render_outline_t::create(*render.compositor, [this] {
             return outline->create_visual(*this->base.render->compositor);

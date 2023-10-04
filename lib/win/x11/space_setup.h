@@ -46,6 +46,23 @@ void init_space(Space& space)
 {
     assert(space.base.x11_data.connection);
 
+    using session_manager_t = decltype(space.session_manager)::element_type;
+    space.session_manager = std::make_unique<session_manager_t>();
+    QObject::connect(space.session_manager.get(),
+                     &session_manager_t::loadSessionRequested,
+                     space.qobject.get(),
+                     [&](auto&& session_name) { x11::load_session_info(space, session_name); });
+    QObject::connect(
+        space.session_manager.get(),
+        &session_manager_t::prepareSessionSaveRequested,
+        space.qobject.get(),
+        [&](auto const& name) { x11::store_session(space, name, x11::sm_save_phase0); });
+    QObject::connect(
+        space.session_manager.get(),
+        &session_manager_t::finishSessionSaveRequested,
+        space.qobject.get(),
+        [&](auto const& name) { x11::store_session(space, name, x11::sm_save_phase2); });
+
     QObject::connect(&space.updateToolWindowsTimer, &QTimer::timeout, space.qobject.get(), [&] {
         x11::update_tool_windows_visibility(&space, true);
     });
