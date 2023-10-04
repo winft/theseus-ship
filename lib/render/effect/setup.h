@@ -170,7 +170,7 @@ void setup_handler(Handler& handler)
                      &handler,
                      &Handler::showingDesktopChanged);
     QObject::connect(ws->qobject.get(),
-                     &win::space_qobject::currentDesktopChanged,
+                     &win::space_qobject::current_subspace_changed,
                      &handler,
                      [&handler, space = ws](int old) {
                          int const newDesktop = space->subspace_manager->current();
@@ -189,7 +189,7 @@ void setup_handler(Handler& handler)
                          Q_EMIT handler.desktopChanged(old, newDesktop, eff_win);
                      });
     QObject::connect(ws->qobject.get(),
-                     &win::space_qobject::currentDesktopChanging,
+                     &win::space_qobject::current_subspace_changing,
                      &handler,
                      [&handler, space = ws](uint currentDesktop, QPointF offset) {
                          EffectWindow* eff_win{nullptr};
@@ -204,7 +204,7 @@ void setup_handler(Handler& handler)
                          Q_EMIT handler.desktopChanging(currentDesktop, offset, eff_win);
                      });
     QObject::connect(ws->qobject.get(),
-                     &win::space_qobject::currentDesktopChangingCancelled,
+                     &win::space_qobject::current_subspace_changing_cancelled,
                      &handler,
                      [&handler]() { Q_EMIT handler.desktopChangingCancelled(); });
     QObject::connect(ws->qobject.get(),

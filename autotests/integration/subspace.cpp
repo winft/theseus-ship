@@ -278,7 +278,7 @@ TEST_CASE("subspace", "[win]")
         REQUIRE(vd_manager->setCurrent(test_data.init) == (test_data.init != 1));
         QCOMPARE(vd_manager->current(), test_data.init);
 
-        QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::currentChanged);
+        QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::current_changed);
 
         QCOMPARE(vd_manager->setCurrent(test_data.request), test_data.signal);
         QCOMPARE(vd_manager->current(), test_data.result);
@@ -321,7 +321,7 @@ TEST_CASE("subspace", "[win]")
         vd_manager->setCount(test_data.init_count);
         vd_manager->setCurrent(test_data.init_current);
 
-        QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::currentChanged);
+        QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::current_changed);
 
         vd_manager->setCount(test_data.request);
         QCOMPARE(vd_manager->current(), test_data.current);

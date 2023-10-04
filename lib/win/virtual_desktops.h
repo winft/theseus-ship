@@ -114,15 +114,15 @@ Q_SIGNALS:
     void subspace_created(KWin::win::subspace*);
     void subspace_removed(KWin::win::subspace*);
 
-    void currentChanged(uint prev_sub, uint new_sub);
+    void current_changed(uint prev, uint next);
 
     /**
      * For realtime subspace switching animations. Offset is current total change in subspace
      * coordinate. x and y are negative if switching left/down. Example: x = 0.6 means 60% of the
      * way to the subspace to the right.
      */
-    void currentChanging(uint current_sub, QPointF offset);
-    void currentChangingCancelled();
+    void current_changing(uint current, QPointF offset);
+    void current_changing_cancelled();
 
     void layoutChanged(int columns, int rows);
     void navigationWrappingAroundChanged();

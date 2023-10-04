@@ -518,7 +518,7 @@ public:
                          this,
                          &space::desktopLayoutChanged);
         QObject::connect(vds->qobject.get(),
-                         &win::subspace_manager_qobject::currentChanged,
+                         &win::subspace_manager_qobject::current_changed,
                          this,
                          &space::currentDesktopChanged);
 

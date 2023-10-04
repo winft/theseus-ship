@@ -330,7 +330,7 @@ void setup_subspace_manager(Manager& manager,
     manager.save();
 
     QObject::connect(manager.qobject.get(),
-                     &subspace_manager_qobject::currentChanged,
+                     &subspace_manager_qobject::current_changed,
                      manager.m_virtualDesktopManagement,
                      [&manager]() {
                          for (auto deskInt : manager.m_virtualDesktopManagement->desktops()) {

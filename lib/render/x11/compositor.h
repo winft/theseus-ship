@@ -132,7 +132,7 @@ public:
                              this->qobject.get(),
                              [this] { full_repaint(*this); });
             QObject::connect(space.qobject.get(),
-                             &space_t::qobject_t::currentDesktopChanged,
+                             &space_t::qobject_t::current_subspace_changed,
                              this->qobject.get(),
                              [this] { full_repaint(*this); });
             QObject::connect(&this->platform.base,

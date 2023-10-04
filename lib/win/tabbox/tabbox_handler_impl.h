@@ -36,7 +36,7 @@ public:
                 m_desktop_focus_chain,
                 &tabbox_desktop_chain_manager::resize);
         connect(vds->qobject.get(),
-                &win::subspace_manager_qobject::currentChanged,
+                &win::subspace_manager_qobject::current_changed,
                 m_desktop_focus_chain,
                 &tabbox_desktop_chain_manager::add_desktop);
     }

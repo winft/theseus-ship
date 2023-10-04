@@ -37,7 +37,7 @@ void device_redirect_init(Dev* dev)
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
     QObject::connect(space.subspace_manager->qobject.get(),
-                     &win::subspace_manager_qobject::currentChanged,
+                     &win::subspace_manager_qobject::current_changed,
                      dev->qobject.get(),
                      [dev] { device_redirect_update(dev); });
 }

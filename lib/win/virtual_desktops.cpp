@@ -501,7 +501,7 @@ void subspace_manager::remove_subspace(subspace* sub)
     uint const newCurrent = qMin(oldCurrent, static_cast<uint>(m_subspaces.count()));
     m_current = m_subspaces.at(newCurrent - 1);
     if (oldCurrent != newCurrent) {
-        Q_EMIT qobject->currentChanged(oldCurrent, newCurrent);
+        Q_EMIT qobject->current_changed(oldCurrent, newCurrent);
     }
 
     updateRootInfo();
@@ -544,7 +544,7 @@ bool subspace_manager::setCurrent(subspace* newDesktop)
     uint const oldDesktop = current();
     m_current = newDesktop;
 
-    Q_EMIT qobject->currentChanged(oldDesktop, newDesktop->x11DesktopNumber());
+    Q_EMIT qobject->current_changed(oldDesktop, newDesktop->x11DesktopNumber());
     return true;
 }
 
@@ -559,7 +559,7 @@ QList<subspace*> subspace_manager::update_count(uint count)
             uint newCurrent = qMin(oldCurrent, count);
             m_current = m_subspaces.at(newCurrent - 1);
             if (oldCurrent != newCurrent) {
-                Q_EMIT qobject->currentChanged(oldCurrent, newCurrent);
+                Q_EMIT qobject->current_changed(oldCurrent, newCurrent);
             }
         }
         for (auto desktop : subspacesToRemove) {
@@ -849,7 +849,7 @@ void subspace_manager::connect_gestures()
         if (m_current != target) {
             setCurrent(target);
         } else {
-            Q_EMIT qobject->currentChangingCancelled();
+            Q_EMIT qobject->current_changing_cancelled();
         }
         m_currentDesktopOffset = QPointF(0, 0);
     });
@@ -867,7 +867,7 @@ void subspace_manager::connect_gestures()
         if (m_current != target) {
             setCurrent(target);
         } else {
-            Q_EMIT qobject->currentChangingCancelled();
+            Q_EMIT qobject->current_changing_cancelled();
         }
         m_currentDesktopOffset = QPointF(0, 0);
     });

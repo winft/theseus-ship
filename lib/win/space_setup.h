@@ -86,7 +86,7 @@ void init_space(Space& space)
         [&](auto prev, auto next) { focus_chain_resize(space.stacking.focus_chain, prev, next); });
     QObject::connect(
         space.subspace_manager->qobject.get(),
-        &win::subspace_manager_qobject::currentChanged,
+        &win::subspace_manager_qobject::current_changed,
         space.qobject.get(),
         [&](auto /*prev*/, auto next) { space.stacking.focus_chain.current_subspace = next; });
     QObject::connect(
@@ -105,7 +105,7 @@ void init_space(Space& space)
         [&](auto prev, auto next) { handle_subspace_count_changed(space, prev, next); });
 
     QObject::connect(subs_manager->qobject.get(),
-                     &win::subspace_manager_qobject::currentChanged,
+                     &win::subspace_manager_qobject::current_changed,
                      space.qobject.get(),
                      [&](auto prev, auto next) {
                          close_active_popup(space);
@@ -119,20 +119,20 @@ void init_space(Space& space)
                          }
 
                          activate_window_on_new_subspace(space, next);
-                         Q_EMIT space.qobject->currentDesktopChanged(prev);
+                         Q_EMIT space.qobject->current_subspace_changed(prev);
                      });
 
     QObject::connect(subs_manager->qobject.get(),
-                     &win::subspace_manager_qobject::currentChanging,
+                     &win::subspace_manager_qobject::current_changing,
                      space.qobject.get(),
                      [&](auto current_subspace, auto offset) {
                          close_active_popup(space);
-                         Q_EMIT space.qobject->currentDesktopChanging(current_subspace, offset);
+                         Q_EMIT space.qobject->current_subspace_changing(current_subspace, offset);
                      });
     QObject::connect(subs_manager->qobject.get(),
-                     &win::subspace_manager_qobject::currentChangingCancelled,
+                     &win::subspace_manager_qobject::current_changing_cancelled,
                      space.qobject.get(),
-                     [&]() { Q_EMIT space.qobject->currentDesktopChangingCancelled(); });
+                     [&]() { Q_EMIT space.qobject->current_subspace_changing_cancelled(); });
 
     subs_manager->setNavigationWrappingAround(space.options->qobject->isRollOverDesktops());
     QObject::connect(

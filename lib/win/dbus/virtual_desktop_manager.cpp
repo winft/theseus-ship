@@ -27,7 +27,7 @@ subspace_manager::subspace_manager(win::subspace_manager* parent)
         this);
 
     QObject::connect(m_manager->qobject.get(),
-                     &win::subspace_manager_qobject::currentChanged,
+                     &win::subspace_manager_qobject::current_changed,
                      this,
                      [this](uint previousDesktop, uint newDesktop) {
                          Q_UNUSED(previousDesktop);

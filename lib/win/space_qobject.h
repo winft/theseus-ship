@@ -23,9 +23,11 @@ public Q_SLOTS:
     void reconfigure();
 
 Q_SIGNALS:
-    void currentDesktopChanged(int);
-    void currentDesktopChanging(uint currentDesktop, QPointF delta); // for realtime animations
-    void currentDesktopChangingCancelled();
+    void current_subspace_changed(int old);
+
+    // for realtime animations
+    void current_subspace_changing(uint current, QPointF delta);
+    void current_subspace_changing_cancelled();
 
     // X11 window
     void clientAdded(quint32);

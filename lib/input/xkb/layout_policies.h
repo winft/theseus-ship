@@ -157,7 +157,7 @@ public:
     {
         auto& space = manager->redirect.space;
         QObject::connect(space.subspace_manager->qobject.get(),
-                         &win::subspace_manager_qobject::currentChanged,
+                         &win::subspace_manager_qobject::current_changed,
                          this->qobject.get(),
                          [this] { handle_desktop_change(); });
 
