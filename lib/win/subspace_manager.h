@@ -166,7 +166,6 @@ public:
 private:
     void updateRootInfo();
 
-    std::vector<subspace*> update_count(uint count);
     subspace* add_subspace(size_t position, QString const& id, QString const& name);
     void shrink_subspaces(uint count);
 

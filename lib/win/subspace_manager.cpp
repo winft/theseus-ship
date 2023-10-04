@@ -400,21 +400,6 @@ bool subspace_manager::setCurrent(subspace* newDesktop)
     return true;
 }
 
-std::vector<subspace*> subspace_manager::update_count(uint count)
-{
-    shrink_subspaces(count);
-
-    std::vector<subspace*> new_subspaces;
-
-    while (subspaces.size() < count) {
-        auto const position = subspaces.size();
-        auto subsp = add_subspace(position, "", defaultName(position + 1));
-        new_subspaces.push_back(subsp);
-    }
-
-    return new_subspaces;
-}
-
 subspace* subspace_manager::add_subspace(size_t position, QString const& id, QString const& name)
 {
     auto subsp = new subspace(id, qobject.get());
@@ -480,9 +465,14 @@ void subspace_manager::setCount(uint count)
         return;
     }
 
-    uint const oldCount = subspaces.size();
+    auto const oldCount = subspaces.size();
 
-    auto const new_subspaces = update_count(count);
+    shrink_subspaces(count);
+
+    while (subspaces.size() < count) {
+        auto const position = subspaces.size();
+        add_subspace(position, "", defaultName(position + 1));
+    }
 
     updateRootInfo();
     updateLayout();
@@ -490,8 +480,9 @@ void subspace_manager::setCount(uint count)
     if (!s_loadingDesktopSettings) {
         save();
     }
-    for (auto vd : new_subspaces) {
-        Q_EMIT qobject->subspace_created(vd);
+
+    for (auto index = oldCount; index < subspaces.size(); index++) {
+        Q_EMIT qobject->subspace_created(subspaces.at(index));
     }
 
     Q_EMIT qobject->countChanged(oldCount, subspaces.size());
