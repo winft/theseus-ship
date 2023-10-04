@@ -67,7 +67,7 @@ void subspace_manager::setRootInfo(x11::net::root_info* info)
 
 QString subspace_manager::name(uint sub) const
 {
-    if (uint(subspaces.size()) > sub - 1) {
+    if (subspaces.size() > sub - 1) {
         return subspaces[sub - 1]->name();
     }
 
@@ -299,11 +299,11 @@ subspace* subspace_manager::subspace_for_id(QString const& id) const
 subspace* subspace_manager::create_subspace(uint position, QString const& name)
 {
     // too many, can't insert new ones
-    if (static_cast<uint>(subspaces.size()) == subspace_manager::maximum()) {
+    if (subspaces.size() == subspace_manager::maximum()) {
         return nullptr;
     }
 
-    position = qBound(0u, position, static_cast<uint>(subspaces.size()));
+    position = std::clamp<uint>(0u, position, subspaces.size());
 
     QString desktopName = name;
     if (desktopName.isEmpty()) {
@@ -341,19 +341,19 @@ void subspace_manager::remove_subspace(subspace* sub)
 
     assert(current);
     auto old_subsp = current;
-    uint const oldCurrent = old_subsp->x11DesktopNumber();
+    auto const oldCurrent = old_subsp->x11DesktopNumber();
 
-    uint const i = sub->x11DesktopNumber() - 1;
+    auto const i = sub->x11DesktopNumber() - 1;
     subspaces.erase(subspaces.begin() + i);
 
-    for (uint j = i; j < static_cast<uint>(subspaces.size()); ++j) {
+    for (auto j = i; j < subspaces.size(); ++j) {
         subspaces[j]->setX11DesktopNumber(j + 1);
         if (m_rootInfo) {
             m_rootInfo->setDesktopName(j + 1, subspaces[j]->name().toUtf8().data());
         }
     }
 
-    uint const newCurrent = qMin(oldCurrent, static_cast<uint>(subspaces.size()));
+    auto const newCurrent = std::min<uint>(oldCurrent, subspaces.size());
     current = subspaces.at(newCurrent - 1);
 
     if (oldCurrent != newCurrent) {
@@ -442,8 +442,8 @@ void subspace_manager::shrink_subspaces(uint count)
 
     assert(current);
     auto old_subsp = current;
-    uint oldCurrent = current_x11id();
-    uint newCurrent = qMin(oldCurrent, count);
+    auto oldCurrent = current_x11id();
+    auto newCurrent = std::min<uint>(oldCurrent, count);
 
     current = subspaces.at(newCurrent - 1);
 
@@ -459,8 +459,8 @@ void subspace_manager::shrink_subspaces(uint count)
 
 void subspace_manager::setCount(uint count)
 {
-    count = qBound<uint>(1, count, subspace_manager::maximum());
-    if (count == uint(subspaces.size())) {
+    count = std::clamp<uint>(1, count, subspace_manager::maximum());
+    if (count == subspaces.size()) {
         // nothing to change
         return;
     }
@@ -500,7 +500,7 @@ void subspace_manager::setRows(uint rows)
     }
 
     m_rows = rows;
-    int columns = subspaces.size() / m_rows;
+    auto columns = subspaces.size() / m_rows;
 
     if (subspaces.size() % m_rows > 0) {
         columns++;
@@ -531,7 +531,7 @@ void subspace_manager::updateRootInfo()
 
 void subspace_manager::updateLayout()
 {
-    m_rows = qMin(m_rows, subspaces.size());
+    m_rows = std::min<uint>(m_rows, subspaces.size());
 
     int columns = subspaces.size() / m_rows;
     Qt::Orientation orientation = Qt::Horizontal;
@@ -539,7 +539,7 @@ void subspace_manager::updateLayout()
     if (m_rootInfo) {
         // TODO: Is there a sane way to avoid overriding the existing grid?
         columns = m_rootInfo->desktopLayoutColumnsRows().width();
-        m_rows = qMax(1, m_rootInfo->desktopLayoutColumnsRows().height());
+        m_rows = std::max<int>(1, m_rootInfo->desktopLayoutColumnsRows().height());
         orientation = m_rootInfo->desktopLayoutOrientation() == x11::net::OrientationHorizontal
             ? Qt::Horizontal
             : Qt::Vertical;
@@ -574,7 +574,7 @@ void subspace_manager::updateLayout()
         }
     }
 
-    m_rows = qMax(1u, m_rows);
+    m_rows = std::max<uint>(1u, m_rows);
     m_grid.update(QSize(columns, m_rows), orientation, subspaces);
 
     // TODO: why is there no call to m_rootInfo->setDesktopLayout?
@@ -632,7 +632,7 @@ void subspace_manager::load()
 
     Q_EMIT qobject->countChanged(oldCount, subspaces.size());
 
-    m_rows = qBound<int>(1, group.readEntry<int>("Rows", 2), subspaces.size());
+    m_rows = std::clamp<int>(1, group.readEntry<int>("Rows", 2), subspaces.size());
 
     s_loadingDesktopSettings = false;
 }
@@ -654,7 +654,7 @@ void subspace_manager::save()
 
     group.writeEntry("Number", static_cast<int>(subspaces.size()));
 
-    for (uint i = 1; i <= subspaces.size(); ++i) {
+    for (auto i = 1u; i <= subspaces.size(); ++i) {
         QString s = name(i);
         auto const defaultvalue = defaultName(i);
 
@@ -732,7 +732,7 @@ void subspace_manager::connect_gestures()
 void subspace_manager::slotSwitchTo(QAction& action)
 {
     bool ok = false;
-    uint const i = action.data().toUInt(&ok);
+    auto const i = action.data().toUInt(&ok);
     if (ok) {
         setCurrent(i);
     }

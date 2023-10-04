@@ -171,7 +171,7 @@ private:
 
     QString defaultName(int desktop) const;
 
-    quint32 m_rows = 2;
+    uint m_rows{2};
     bool m_navigationWrapsAround{false};
     subspace_grid m_grid;
     x11::net::root_info* m_rootInfo{nullptr};
