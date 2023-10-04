@@ -30,7 +30,7 @@ void init_space(Space& space)
     init_rule_book(*space.rule_book, space);
 
     // dbus interface
-    new dbus::subspace_manager(space.subspace_manager.get());
+    new dbus::subspace_manager(*space.subspace_manager);
 
 #if KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
