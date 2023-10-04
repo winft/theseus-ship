@@ -381,6 +381,7 @@ void subspace_manager::remove_subspace(subspace* sub)
 
     uint const newCurrent = qMin(oldCurrent, static_cast<uint>(subspaces.size()));
     current = subspaces.at(newCurrent - 1);
+
     if (oldCurrent != newCurrent) {
         Q_EMIT qobject->current_changed(oldCurrent, newCurrent);
     }
@@ -433,13 +434,14 @@ std::vector<subspace*> subspace_manager::update_count(uint count)
             = std::vector<subspace*>{subspaces.begin() + count, subspaces.end()};
         subspaces.resize(count);
 
-        if (current) {
-            uint oldCurrent = current_x11id();
-            uint newCurrent = qMin(oldCurrent, count);
-            current = subspaces.at(newCurrent - 1);
-            if (oldCurrent != newCurrent) {
-                Q_EMIT qobject->current_changed(oldCurrent, newCurrent);
-            }
+        assert(current);
+        uint oldCurrent = current_x11id();
+        uint newCurrent = qMin(oldCurrent, count);
+
+        current = subspaces.at(newCurrent - 1);
+
+        if (oldCurrent != newCurrent) {
+            Q_EMIT qobject->current_changed(oldCurrent, newCurrent);
         }
 
         for (auto desktop : subspacesToRemove) {
