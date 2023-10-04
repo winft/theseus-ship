@@ -13,7 +13,6 @@
 #include <KConfigGroup>
 #include <KLocalizedString>
 #include <QAction>
-#include <QUuid>
 #include <algorithm>
 
 namespace KWin::win
@@ -21,11 +20,6 @@ namespace KWin::win
 
 static bool s_loadingDesktopSettings = false;
 static const double GESTURE_SWITCH_THRESHOLD = .25;
-
-static QString generateDesktopId()
-{
-    return QUuid::createUuid().toString(QUuid::WithoutBraces);
-}
 
 subspace_manager_qobject::subspace_manager_qobject() = default;
 
@@ -316,30 +310,7 @@ subspace* subspace_manager::create_subspace(uint position, QString const& name)
         desktopName = defaultName(position + 1);
     }
 
-    auto vd = new subspace(qobject.get());
-    vd->setX11DesktopNumber(position + 1);
-    vd->setId(generateDesktopId());
-    vd->setName(desktopName);
-
-    QObject::connect(vd, &subspace::nameChanged, qobject.get(), [this, vd]() {
-        if (m_rootInfo) {
-            m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
-        }
-    });
-
-    if (m_rootInfo) {
-        m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
-    }
-
-    subspaces.insert(subspaces.begin() + position, vd);
-
-    // update the id of displaced subspaces
-    for (uint i = position + 1; i < static_cast<uint>(subspaces.size()); ++i) {
-        subspaces[i]->setX11DesktopNumber(i + 1);
-        if (m_rootInfo) {
-            m_rootInfo->setDesktopName(i + 1, subspaces[i]->name().toUtf8().data());
-        }
-    }
+    auto vd = add_subspace(position, "", desktopName);
 
     save();
     updateRootInfo();
@@ -431,58 +402,74 @@ bool subspace_manager::setCurrent(subspace* newDesktop)
 
 std::vector<subspace*> subspace_manager::update_count(uint count)
 {
-    // this explicit check makes it more readable
-    if (static_cast<uint>(subspaces.size()) > count) {
-        auto const subspacesToRemove
-            = std::vector<subspace*>{subspaces.begin() + count, subspaces.end()};
-        subspaces.resize(count);
-
-        assert(current);
-        auto old_subsp = current;
-        uint oldCurrent = current_x11id();
-        uint newCurrent = qMin(oldCurrent, count);
-
-        current = subspaces.at(newCurrent - 1);
-
-        if (oldCurrent != newCurrent) {
-            Q_EMIT qobject->current_changed(old_subsp, current);
-        }
-
-        for (auto desktop : subspacesToRemove) {
-            Q_EMIT qobject->subspace_removed(desktop);
-            desktop->deleteLater();
-        }
-
-        return {};
-    }
+    shrink_subspaces(count);
 
     std::vector<subspace*> new_subspaces;
 
-    while (uint(subspaces.size()) < count) {
-        auto vd = new subspace(qobject.get());
-        const int x11Number = subspaces.size() + 1;
-
-        vd->setX11DesktopNumber(x11Number);
-        vd->setName(defaultName(x11Number));
-
-        if (!s_loadingDesktopSettings) {
-            vd->setId(generateDesktopId());
-        }
-
-        subspaces.push_back(vd);
-        new_subspaces.push_back(vd);
-
-        QObject::connect(vd, &subspace::nameChanged, qobject.get(), [this, vd] {
-            if (m_rootInfo) {
-                m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
-            }
-        });
-        if (m_rootInfo) {
-            m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
-        }
+    while (subspaces.size() < count) {
+        auto const position = subspaces.size();
+        auto subsp = add_subspace(position, "", defaultName(position + 1));
+        new_subspaces.push_back(subsp);
     }
 
     return new_subspaces;
+}
+
+subspace* subspace_manager::add_subspace(size_t position, QString const& id, QString const& name)
+{
+    auto subsp = new subspace(id, qobject.get());
+    subsp->setX11DesktopNumber(position + 1);
+    subsp->setName(name);
+
+    subspaces.insert(subspaces.begin() + position, subsp);
+
+    QObject::connect(subsp, &subspace::nameChanged, qobject.get(), [this, subsp]() {
+        if (m_rootInfo) {
+            m_rootInfo->setDesktopName(subsp->x11DesktopNumber(), subsp->name().toUtf8().data());
+        }
+    });
+
+    if (m_rootInfo) {
+        m_rootInfo->setDesktopName(subsp->x11DesktopNumber(), subsp->name().toUtf8().data());
+    }
+
+    // update the id of displaced subspaces
+    for (size_t i = position + 1; i < subspaces.size(); ++i) {
+        auto& other = subspaces.at(i);
+        other->setX11DesktopNumber(i + 1);
+        if (m_rootInfo) {
+            m_rootInfo->setDesktopName(i + 1, other->name().toUtf8().data());
+        }
+    }
+
+    return subsp;
+}
+
+void subspace_manager::shrink_subspaces(uint count)
+{
+    if (count >= subspaces.size()) {
+        return;
+    }
+
+    auto const subspacesToRemove
+        = std::vector<subspace*>{subspaces.begin() + count, subspaces.end()};
+    subspaces.resize(count);
+
+    assert(current);
+    auto old_subsp = current;
+    uint oldCurrent = current_x11id();
+    uint newCurrent = qMin(oldCurrent, count);
+
+    current = subspaces.at(newCurrent - 1);
+
+    if (oldCurrent != newCurrent) {
+        Q_EMIT qobject->current_changed(old_subsp, current);
+    }
+
+    for (auto desktop : subspacesToRemove) {
+        Q_EMIT qobject->subspace_removed(desktop);
+        desktop->deleteLater();
+    }
 }
 
 void subspace_manager::setCount(uint count)
@@ -613,41 +600,48 @@ void subspace_manager::load()
     s_loadingDesktopSettings = true;
 
     KConfigGroup group(m_config, QStringLiteral("Desktops"));
-    const int n = group.readEntry("Number", 1);
 
-    uint const oldCount = subspaces.size();
-    auto const new_desktops = update_count(n);
+    size_t const oldCount = subspaces.size();
+    size_t const count = group.readEntry("Number", 1);
 
-    for (int i = 1; i <= n; i++) {
-        QString s = group.readEntry(QStringLiteral("Name_%1").arg(i), i18n("Desktop %1", i));
+    shrink_subspaces(count);
+
+    auto set_name = [&, this](auto index) {
+        auto const x11id = index + 1;
+        QString name
+            = group.readEntry(QStringLiteral("Name_%1").arg(x11id), i18n("Desktop %1", x11id));
         if (m_rootInfo) {
-            m_rootInfo->setDesktopName(i, s.toUtf8().data());
+            m_rootInfo->setDesktopName(x11id, name.toUtf8().data());
         }
-        subspaces[i - 1]->setName(s);
+        subspaces[index]->setName(name);
+    };
 
-        auto const sId = group.readEntry(QStringLiteral("Id_%1").arg(i), QString());
+    auto get_id = [&](auto index) {
+        return group.readEntry(QStringLiteral("Id_%1").arg(index + 1), QString());
+    };
 
-        if (subspaces[i - 1]->id().isEmpty()) {
-            subspaces[i - 1]->setId(sId.isEmpty() ? generateDesktopId() : sId);
-        } else {
-            Q_ASSERT(sId.isEmpty() || subspaces[i - 1]->id() == sId);
-        }
-
-        // TODO: update desktop focus chain, why?
-        //         m_desktopFocusChain.value()[i-1] = i;
+    for (size_t index = 1; index < std::min(oldCount, count); index++) {
+        assert(subspaces[index]->id() == get_id(index) || get_id(index).isEmpty());
+        set_name(index);
     }
+
+    for (size_t index = oldCount; index < count; index++) {
+        add_subspace(index, get_id(index), "");
+        set_name(index);
+    }
+
+    assert(count == subspaces.size());
 
     updateRootInfo();
     updateLayout();
 
-    for (auto vd : new_desktops) {
-        Q_EMIT qobject->subspace_created(vd);
+    for (size_t index = oldCount; index < subspaces.size(); index++) {
+        Q_EMIT qobject->subspace_created(subspaces.at(index));
     }
 
     Q_EMIT qobject->countChanged(oldCount, subspaces.size());
 
-    int rows = group.readEntry<int>("Rows", 2);
-    m_rows = qBound(1, rows, n);
+    m_rows = qBound<int>(1, group.readEntry<int>("Rows", 2), subspaces.size());
 
     s_loadingDesktopSettings = false;
 }

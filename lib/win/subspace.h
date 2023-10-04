@@ -22,9 +22,9 @@ class KWIN_EXPORT subspace : public QObject
 
 public:
     explicit subspace(QObject* parent = nullptr);
+    subspace(QString const& id, QObject* parent = nullptr);
     ~subspace() override;
 
-    void setId(QString const& id);
     QString id() const
     {
         return m_id;

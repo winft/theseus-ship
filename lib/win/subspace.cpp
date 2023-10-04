@@ -5,24 +5,33 @@
 */
 #include "subspace.h"
 
+#include <QUuid>
+
 namespace KWin::win
 {
 
-subspace::subspace(QObject* parent)
-    : QObject(parent)
+static QString generateDesktopId()
 {
+    return QUuid::createUuid().toString(QUuid::WithoutBraces);
+}
+
+subspace::subspace(QObject* parent)
+    : subspace(generateDesktopId(), parent)
+{
+}
+
+subspace::subspace(QString const& id, QObject* parent)
+    : QObject(parent)
+    , m_id{id}
+{
+    if (id.isEmpty()) {
+        m_id = generateDesktopId();
+    }
 }
 
 subspace::~subspace()
 {
     Q_EMIT aboutToBeDestroyed();
-}
-
-void subspace::setId(QString const& id)
-{
-    Q_ASSERT(m_id.isEmpty());
-    assert(!id.isEmpty());
-    m_id = id;
 }
 
 void subspace::setX11DesktopNumber(uint number)
