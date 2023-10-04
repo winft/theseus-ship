@@ -15,7 +15,6 @@
 #include <win/subspace.h>
 
 #include "input/gestures.h"
-#include <base/x11/data.h>
 
 #include <KConfigGroup>
 #include <KSharedConfig>
@@ -1250,66 +1249,6 @@ public:
                     edge->markAsTriggered(
                         event->globalPos(),
                         QDateTime::fromMSecsSinceEpoch(event->timestamp(), Qt::UTC));
-                }
-            }
-        }
-
-        return activated;
-    }
-
-    bool handleDndNotify(xcb_window_t window, QPoint const& point)
-    {
-        for (auto& edge : edges) {
-            if (!edge || edge->window_id() == XCB_WINDOW_NONE) {
-                continue;
-            }
-            if (edge->reserved_count > 0 && edge->window_id() == window) {
-                base::x11::update_time_from_clock(space.base);
-                edge->check(
-                    point, QDateTime::fromMSecsSinceEpoch(space.base.x11_data.time, Qt::UTC), true);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool handleEnterNotifiy(xcb_window_t window, QPoint const& point, QDateTime const& timestamp)
-    {
-        bool activated = false;
-        bool activatedForClient = false;
-
-        for (auto& edge : edges) {
-            if (!edge || edge->window_id() == XCB_WINDOW_NONE) {
-                continue;
-            }
-            if (edge->reserved_count == 0 || edge->is_blocked) {
-                continue;
-            }
-            if (!edge->activatesForPointer()) {
-                continue;
-            }
-
-            if (edge->window_id() == window) {
-                if (edge->check(point, timestamp)) {
-                    if (edge->client()) {
-                        activatedForClient = true;
-                    }
-                }
-                activated = true;
-                break;
-            }
-
-            if (edge->approachWindow() == window) {
-                edge->startApproaching();
-                // TODO: if it's a corner, it should also trigger for other windows
-                return true;
-            }
-        }
-
-        if (activatedForClient) {
-            for (auto& edge : edges) {
-                if (edge->client()) {
-                    edge->markAsTriggered(point, timestamp);
                 }
             }
         }

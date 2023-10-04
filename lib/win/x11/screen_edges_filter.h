@@ -7,9 +7,11 @@
 #pragma once
 
 #include "base/x11/event_filter.h"
+#include <base/x11/data.h>
 
 #include <QDateTime>
 #include <QWidget>
+#include <xcb/xcb.h>
 
 namespace KWin::win::x11
 {
@@ -46,19 +48,73 @@ public:
             break;
         }
         case XCB_ENTER_NOTIFY: {
-            const auto enter = reinterpret_cast<xcb_enter_notify_event_t*>(event);
-            return space.edges->handleEnterNotifiy(
-                enter->event,
-                QPoint(enter->root_x, enter->root_y),
-                QDateTime::fromMSecsSinceEpoch(enter->time, Qt::UTC));
+            auto const enter_event = reinterpret_cast<xcb_enter_notify_event_t*>(event);
+            auto const window = enter_event->event;
+            auto const point = QPoint(enter_event->root_x, enter_event->root_y);
+            auto const timestamp = QDateTime::fromMSecsSinceEpoch(enter_event->time, Qt::UTC);
+
+            bool activated = false;
+            bool activatedForClient = false;
+
+            for (auto& edge : space.edges->edges) {
+                if (!edge || edge->window_id() == XCB_WINDOW_NONE) {
+                    continue;
+                }
+                if (edge->reserved_count == 0 || edge->is_blocked) {
+                    continue;
+                }
+                if (!edge->activatesForPointer()) {
+                    continue;
+                }
+
+                if (edge->window_id() == window) {
+                    if (edge->check(point, timestamp)) {
+                        if (edge->client()) {
+                            activatedForClient = true;
+                        }
+                    }
+                    activated = true;
+                    break;
+                }
+
+                if (edge->approachWindow() == window) {
+                    edge->startApproaching();
+                    // TODO: if it's a corner, it should also trigger for other windows
+                    return true;
+                }
+            }
+
+            if (activatedForClient) {
+                for (auto& edge : space.edges->edges) {
+                    if (edge->client()) {
+                        edge->markAsTriggered(point, timestamp);
+                    }
+                }
+            }
+
+            return activated;
         }
         case XCB_CLIENT_MESSAGE: {
             const auto ce = reinterpret_cast<xcb_client_message_event_t*>(event);
             if (ce->type != space.atoms->xdnd_position) {
                 return false;
             }
-            return space.edges->handleDndNotify(
-                ce->window, QPoint(ce->data.data32[2] >> 16, ce->data.data32[2] & 0xffff));
+
+            auto const point = QPoint(ce->data.data32[2] >> 16, ce->data.data32[2] & 0xffff);
+
+            for (auto& edge : space.edges->edges) {
+                if (!edge || edge->window_id() == XCB_WINDOW_NONE) {
+                    continue;
+                }
+                if (edge->reserved_count > 0 && edge->window_id() == ce->window) {
+                    base::x11::update_time_from_clock(space.base);
+                    edge->check(point,
+                                QDateTime::fromMSecsSinceEpoch(space.base.x11_data.time, Qt::UTC),
+                                true);
+                    return true;
+                }
+            }
+            return false;
         }
         }
         return false;
