@@ -94,10 +94,9 @@ void tabbox_desktop_chain_manager::resize(uint previous_size, uint new_size)
     }
 }
 
-void tabbox_desktop_chain_manager::add_desktop(uint previous_desktop, uint current_desktop)
+void tabbox_desktop_chain_manager::add_desktop(win::subspace* /*prev*/, win::subspace* next)
 {
-    Q_UNUSED(previous_desktop)
-    m_current_chain.value().add(current_desktop);
+    m_current_chain.value().add(next->x11DesktopNumber());
 }
 
 void tabbox_desktop_chain_manager::use_chain(const QString& identifier)

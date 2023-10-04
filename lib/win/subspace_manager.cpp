@@ -368,7 +368,10 @@ void subspace_manager::remove_subspace(subspace* sub)
         return;
     }
 
-    uint const oldCurrent = current->x11DesktopNumber();
+    assert(current);
+    auto old_subsp = current;
+    uint const oldCurrent = old_subsp->x11DesktopNumber();
+
     uint const i = sub->x11DesktopNumber() - 1;
     subspaces.erase(subspaces.begin() + i);
 
@@ -383,7 +386,7 @@ void subspace_manager::remove_subspace(subspace* sub)
     current = subspaces.at(newCurrent - 1);
 
     if (oldCurrent != newCurrent) {
-        Q_EMIT qobject->current_changed(oldCurrent, newCurrent);
+        Q_EMIT qobject->current_changed(old_subsp, current);
     }
 
     updateRootInfo();
@@ -419,10 +422,10 @@ bool subspace_manager::setCurrent(subspace* newDesktop)
         return false;
     }
 
-    uint const oldDesktop = current_x11id();
+    auto old_subsp = current;
     current = newDesktop;
 
-    Q_EMIT qobject->current_changed(oldDesktop, newDesktop->x11DesktopNumber());
+    Q_EMIT qobject->current_changed(old_subsp, current);
     return true;
 }
 
@@ -435,13 +438,14 @@ std::vector<subspace*> subspace_manager::update_count(uint count)
         subspaces.resize(count);
 
         assert(current);
+        auto old_subsp = current;
         uint oldCurrent = current_x11id();
         uint newCurrent = qMin(oldCurrent, count);
 
         current = subspaces.at(newCurrent - 1);
 
         if (oldCurrent != newCurrent) {
-            Q_EMIT qobject->current_changed(oldCurrent, newCurrent);
+            Q_EMIT qobject->current_changed(old_subsp, current);
         }
 
         for (auto desktop : subspacesToRemove) {

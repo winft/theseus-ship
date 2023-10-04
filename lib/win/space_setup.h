@@ -84,11 +84,12 @@ void init_space(Space& space)
         &subspace_manager_qobject::countChanged,
         space.qobject.get(),
         [&](auto prev, auto next) { focus_chain_resize(space.stacking.focus_chain, prev, next); });
-    QObject::connect(
-        space.subspace_manager->qobject.get(),
-        &win::subspace_manager_qobject::current_changed,
-        space.qobject.get(),
-        [&](auto /*prev*/, auto next) { space.stacking.focus_chain.current_subspace = next; });
+    QObject::connect(space.subspace_manager->qobject.get(),
+                     &win::subspace_manager_qobject::current_changed,
+                     space.qobject.get(),
+                     [&](auto /*prev*/, auto next) {
+                         space.stacking.focus_chain.current_subspace = next->x11DesktopNumber();
+                     });
     QObject::connect(
         space.options->qobject.get(),
         &options_qobject::separateScreenFocusChanged,
@@ -111,14 +112,15 @@ void init_space(Space& space)
                          close_active_popup(space);
 
                          blocker block(space.stacking.order);
-                         update_client_visibility_on_subspace_change(&space, next);
+                         update_client_visibility_on_subspace_change(&space,
+                                                                     next->x11DesktopNumber());
 
                          if (space.showing_desktop) {
                              // Do this only after subspace change to avoid flicker.
                              set_showing_desktop(space, false);
                          }
 
-                         activate_window_on_new_subspace(space, next);
+                         activate_window_on_new_subspace(space, next->x11DesktopNumber());
                          Q_EMIT space.qobject->current_subspace_changed(prev);
                      });
 

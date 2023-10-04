@@ -29,11 +29,7 @@ subspace_manager::subspace_manager(win::subspace_manager* parent)
     QObject::connect(m_manager->qobject.get(),
                      &win::subspace_manager_qobject::current_changed,
                      this,
-                     [this](uint previousDesktop, uint newDesktop) {
-                         Q_UNUSED(previousDesktop);
-                         Q_UNUSED(newDesktop);
-                         Q_EMIT currentChanged(m_manager->current->id());
-                     });
+                     [this](auto /*prev*/, auto next) { Q_EMIT currentChanged(next->id()); });
 
     QObject::connect(m_manager->qobject.get(),
                      &win::subspace_manager_qobject::countChanged,

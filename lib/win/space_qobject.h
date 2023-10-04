@@ -6,6 +6,7 @@
 #pragma once
 
 #include "kwin_export.h"
+#include <subspace.h>
 
 #include <QObject>
 #include <functional>
@@ -23,10 +24,10 @@ public Q_SLOTS:
     void reconfigure();
 
 Q_SIGNALS:
-    void current_subspace_changed(int old);
+    void current_subspace_changed(win::subspace* old);
 
     // for realtime animations
-    void current_subspace_changing(uint current, QPointF delta);
+    void current_subspace_changing(win::subspace* current, QPointF delta);
     void current_subspace_changing_cancelled();
 
     // X11 window

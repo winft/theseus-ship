@@ -7,6 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_TABBOX_DESKTOP_CHAIN_H
 
 #include "kwin_export.h"
+#include <win/subspace.h>
 
 #include <QHash>
 #include <QObject>
@@ -93,7 +94,7 @@ public Q_SLOTS:
      * @param previous_desktop The previously used desktop, should be the top element of the chain
      * @param current_desktop The desktop which should be the new top element of the chain
      */
-    void add_desktop(uint previous_desktop, uint current_desktop);
+    void add_desktop(win::subspace* prev, win::subspace* next);
     /**
      * Resizes all managed desktop chains from @p previous_size to @p new_size.
      * @param previous_size The previously used size for the chains

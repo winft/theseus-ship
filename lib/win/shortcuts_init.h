@@ -172,14 +172,14 @@ void shortcuts_init_subspaces(Space& space)
     const auto left = [manager](qreal cb) {
         if (manager->grid().width() > 1) {
             manager->set_desktop_offset_x(cb);
-            Q_EMIT manager->qobject->current_changing(manager->current_x11id(),
+            Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->get_current_desktop_offset());
         }
     };
     const auto right = [manager](qreal cb) {
         if (manager->grid().width() > 1) {
             manager->set_desktop_offset_x(-cb);
-            Q_EMIT manager->qobject->current_changing(manager->current_x11id(),
+            Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->get_current_desktop_offset());
         }
     };
@@ -193,42 +193,42 @@ void shortcuts_init_subspaces(Space& space)
     register_touchpad_swipe(swipe_direction::left, 3, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
             manager->set_desktop_offset_x(cb);
-            Q_EMIT manager->qobject->current_changing(manager->current_x11id(),
+            Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->get_current_desktop_offset());
         }
     });
     register_touchpad_swipe(swipe_direction::right, 3, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
             manager->set_desktop_offset_x(-cb);
-            Q_EMIT manager->qobject->current_changing(manager->current_x11id(),
+            Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->get_current_desktop_offset());
         }
     });
     register_touchpad_swipe(swipe_direction::left, 4, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
             manager->set_desktop_offset_x(cb);
-            Q_EMIT manager->qobject->current_changing(manager->current_x11id(),
+            Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->get_current_desktop_offset());
         }
     });
     register_touchpad_swipe(swipe_direction::right, 4, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
             manager->set_desktop_offset_x(-cb);
-            Q_EMIT manager->qobject->current_changing(manager->current_x11id(),
+            Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->get_current_desktop_offset());
         }
     });
     register_touchpad_swipe(swipe_direction::down, 3, swipeGestureReleasedY, [manager](qreal cb) {
         if (manager->grid().height() > 1) {
             manager->set_desktop_offset_y(-cb);
-            Q_EMIT manager->qobject->current_changing(manager->current_x11id(),
+            Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->get_current_desktop_offset());
         }
     });
     register_touchpad_swipe(swipe_direction::up, 3, swipeGestureReleasedY, [manager](qreal cb) {
         if (manager->grid().height() > 1) {
             manager->set_desktop_offset_y(cb);
-            Q_EMIT manager->qobject->current_changing(manager->current_x11id(),
+            Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->get_current_desktop_offset());
         }
     });

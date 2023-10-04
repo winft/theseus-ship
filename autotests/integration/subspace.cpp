@@ -287,10 +287,12 @@ TEST_CASE("subspace", "[win]")
         if (!spy.isEmpty()) {
             QList<QVariant> arguments = spy.takeFirst();
             QCOMPARE(arguments.count(), 2);
-            QCOMPARE(arguments.at(0).type(), QVariant::UInt);
-            QCOMPARE(arguments.at(1).type(), QVariant::UInt);
-            QCOMPARE(arguments.at(0).toUInt(), test_data.init);
-            QCOMPARE(arguments.at(1).toUInt(), test_data.result);
+            QVERIFY(arguments.at(0).canConvert<win::subspace*>());
+            QVERIFY(arguments.at(1).canConvert<win::subspace*>());
+            QCOMPARE(arguments.at(0).value<win::subspace*>(),
+                     vd_manager->subspace_for_x11id(test_data.init));
+            QCOMPARE(arguments.at(1).value<win::subspace*>(),
+                     vd_manager->subspace_for_x11id(test_data.result));
         }
     }
 

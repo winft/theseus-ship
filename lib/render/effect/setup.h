@@ -172,9 +172,9 @@ void setup_handler(Handler& handler)
     QObject::connect(ws->qobject.get(),
                      &win::space_qobject::current_subspace_changed,
                      &handler,
-                     [&handler, space = ws](int old) {
-                         int const newDesktop = space->subspace_manager->current_x11id();
-                         if (old == 0 || newDesktop == old) {
+                     [&handler, space = ws](auto old) {
+                         auto const current = space->subspace_manager->current;
+                         if (!old || current == old) {
                              return;
                          }
                          EffectWindow* eff_win{nullptr};
@@ -186,12 +186,13 @@ void setup_handler(Handler& handler)
                                         }},
                                         *mov_res);
                          }
-                         Q_EMIT handler.desktopChanged(old, newDesktop, eff_win);
+                         Q_EMIT handler.desktopChanged(
+                             old->x11DesktopNumber(), current->x11DesktopNumber(), eff_win);
                      });
     QObject::connect(ws->qobject.get(),
                      &win::space_qobject::current_subspace_changing,
                      &handler,
-                     [&handler, space = ws](uint currentDesktop, QPointF offset) {
+                     [&handler, space = ws](auto current, QPointF offset) {
                          EffectWindow* eff_win{nullptr};
                          if (auto& mov_res = space->move_resize_window) {
                              std::visit(overload{[&](auto&& win) {
@@ -201,7 +202,8 @@ void setup_handler(Handler& handler)
                                         }},
                                         *mov_res);
                          }
-                         Q_EMIT handler.desktopChanging(currentDesktop, offset, eff_win);
+                         Q_EMIT handler.desktopChanging(
+                             current->x11DesktopNumber(), offset, eff_win);
                      });
     QObject::connect(ws->qobject.get(),
                      &win::space_qobject::current_subspace_changing_cancelled,
