@@ -9,6 +9,7 @@
 #include "rarray.h"
 
 #include "win/x11/extras.h"
+#include <win/meta.h>
 
 // For devicePixelRatio
 // TODO(romangg): remove!
@@ -2462,47 +2463,11 @@ net::fullscreen_monitors win_info::fullscreenMonitors() const
     return p->fullscreen_monitors;
 }
 
-bool typeMatchesMask(win::win_type type, win::window_type_mask mask)
-{
-    switch (type) {
-        // clang-format off
-#define CHECK_TYPE_MASK( type ) \
-case win::win_type::type: \
-    if( flags(mask & win::window_type_mask::type) ) \
-        return true; \
-    break;
-        // clang-format on
-        CHECK_TYPE_MASK(normal)
-        CHECK_TYPE_MASK(desktop)
-        CHECK_TYPE_MASK(dock)
-        CHECK_TYPE_MASK(toolbar)
-        CHECK_TYPE_MASK(menu)
-        CHECK_TYPE_MASK(dialog)
-        CHECK_TYPE_MASK(override)
-        CHECK_TYPE_MASK(top_menu)
-        CHECK_TYPE_MASK(utility)
-        CHECK_TYPE_MASK(splash)
-        CHECK_TYPE_MASK(dropdown_menu)
-        CHECK_TYPE_MASK(popup_menu)
-        CHECK_TYPE_MASK(tooltip)
-        CHECK_TYPE_MASK(notification)
-        CHECK_TYPE_MASK(combo_box)
-        CHECK_TYPE_MASK(dnd_icon)
-        CHECK_TYPE_MASK(on_screen_display)
-        CHECK_TYPE_MASK(critical_notification)
-        CHECK_TYPE_MASK(applet_popup)
-#undef CHECK_TYPE_MASK
-    default:
-        break;
-    }
-    return false;
-}
-
 win::win_type win_info::windowType(win::window_type_mask supported_types) const
 {
     for (int i = 0; i < p->types.size(); ++i) {
         // return the type only if the application supports it
-        if (typeMatchesMask(p->types[i], supported_types)) {
+        if (type_matches_mask(p->types[i], supported_types)) {
             return p->types[i];
         }
     }

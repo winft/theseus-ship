@@ -137,4 +137,38 @@ bool wants_tab_focus(Win const* win)
     return suitable_type && win->wantsInput();
 }
 
+inline bool type_matches_mask(win::win_type type, win::window_type_mask mask)
+{
+    switch (type) {
+#define CHECK_TYPE_MASK(type)                                                                      \
+    case win::win_type::type:                                                                      \
+        if (flags(mask & win::window_type_mask::type))                                             \
+            return true;                                                                           \
+        break;
+        CHECK_TYPE_MASK(normal)
+        CHECK_TYPE_MASK(desktop)
+        CHECK_TYPE_MASK(dock)
+        CHECK_TYPE_MASK(toolbar)
+        CHECK_TYPE_MASK(menu)
+        CHECK_TYPE_MASK(dialog)
+        CHECK_TYPE_MASK(override)
+        CHECK_TYPE_MASK(top_menu)
+        CHECK_TYPE_MASK(utility)
+        CHECK_TYPE_MASK(splash)
+        CHECK_TYPE_MASK(dropdown_menu)
+        CHECK_TYPE_MASK(popup_menu)
+        CHECK_TYPE_MASK(tooltip)
+        CHECK_TYPE_MASK(notification)
+        CHECK_TYPE_MASK(combo_box)
+        CHECK_TYPE_MASK(dnd_icon)
+        CHECK_TYPE_MASK(on_screen_display)
+        CHECK_TYPE_MASK(critical_notification)
+        CHECK_TYPE_MASK(applet_popup)
+#undef CHECK_TYPE_MASK
+    default:
+        break;
+    }
+    return false;
+}
+
 }

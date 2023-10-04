@@ -186,8 +186,6 @@ enum Action {
 };
 Q_DECLARE_FLAGS(Actions, Action)
 
-KWIN_EXPORT bool typeMatchesMask(win::win_type type, win::window_type_mask mask);
-
 /**
  Compares two X timestamps, taking into account wrapping and 64bit architectures.
  Return value is like with strcmp(), 0 for equal, -1 for time1 < time2, 1 for time1 > time2.
