@@ -183,7 +183,6 @@ if (KWIN_BUILD_TABBOX)
         tabbox/tabbox_handler_impl.h
         tabbox/tabbox_logging.h
         tabbox/tabbox_switcher_item.h
-        tabbox/tabbox_x11_filter.h
     PRIVATE
       tabbox/tabbox_client_model.cpp
       tabbox/tabbox_config.cpp
@@ -295,6 +294,7 @@ target_sources(win-x11
       x11/stacking.h
       x11/sync.h
       x11/sync_alarm_filter.h
+      x11/tabbox_filter.h
       x11/tool_windows.h
       x11/transient.h
       x11/types.h

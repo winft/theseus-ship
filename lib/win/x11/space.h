@@ -30,6 +30,7 @@
 #include <win/user_actions_menu.h>
 #include <win/x11/debug.h>
 #include <win/x11/netinfo_helpers.h>
+#include <win/x11/tabbox_filter.h>
 
 #include <vector>
 
@@ -195,6 +196,45 @@ public:
         x11::debug_support_info(*this, support);
     }
 
+    bool tabbox_grab()
+    {
+        base::x11::update_time_from_clock(base);
+        if (!base.input->grab_keyboard()) {
+            return false;
+        }
+
+        // Don't try to establish a global mouse grab using XGrabPointer, as that would prevent
+        // using Alt+Tab while DND (#44972). However force passive grabs on all windows in order to
+        // catch MouseRelease events and close the tabbox (#67416). All clients already have passive
+        // grabs in their wrapper windows, so check only the active client, which may not have it.
+        assert(!tabbox->grab.forced_global_mouse);
+        tabbox->grab.forced_global_mouse = true;
+
+        if (stacking.active) {
+            std::visit(overload{[&](auto&& win) { win->control->update_mouse_grab(); }},
+                       *stacking.active);
+        }
+
+        tabbox_filter = std::make_unique<x11::tabbox_filter<win::tabbox<type>>>(*tabbox);
+        return true;
+    }
+
+    void tabbox_ungrab()
+    {
+        base::x11::update_time_from_clock(base);
+        base.input->ungrab_keyboard();
+
+        assert(tabbox->grab.forced_global_mouse);
+        tabbox->grab.forced_global_mouse = false;
+
+        if (stacking.active) {
+            std::visit(overload{[](auto&& win) { win->control->update_mouse_grab(); }},
+                       *stacking.active);
+        }
+
+        tabbox_filter = {};
+    }
+
     base_t& base;
 
     std::unique_ptr<qobject_t> qobject;
@@ -285,6 +325,7 @@ public:
 
 private:
     std::unique_ptr<base::x11::event_filter> edges_filter;
+    std::unique_ptr<base::x11::event_filter> tabbox_filter;
 };
 
 /**

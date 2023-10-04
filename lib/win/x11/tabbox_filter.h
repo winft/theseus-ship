@@ -1,24 +1,23 @@
 /*
 SPDX-FileCopyrightText: 2017 Martin Flöser <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "tabbox_handler.h"
-
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/proto.h"
 #include "win/x11/key_server.h"
 
-namespace KWin::win
+namespace KWin::win::x11
 {
 
 template<typename Tabbox>
-class tabbox_x11_filter : public base::x11::event_filter
+class tabbox_filter : public base::x11::event_filter
 {
 public:
-    explicit tabbox_x11_filter(Tabbox& tabbox)
+    explicit tabbox_filter(Tabbox& tabbox)
         : base::x11::event_filter(*tabbox.space.base.x11_event_filters,
                                   QVector<int>{XCB_KEY_PRESS,
                                                XCB_KEY_RELEASE,
