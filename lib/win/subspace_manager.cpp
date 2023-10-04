@@ -701,7 +701,8 @@ void subspace_manager::connect_gestures()
     QObject::connect(m_swipeGestureReleasedX.get(), &QAction::triggered, qobject.get(), [this]() {
         // Note that if desktop wrapping is disabled and there's no desktop to left or right,
         // toLeft() and toRight() will return the current desktop.
-        subspace* target = current;
+        auto target = current;
+
         if (current_desktop_offset.x() <= -GESTURE_SWITCH_THRESHOLD) {
             target = toLeft(current, isNavigationWrappingAround());
         } else if (current_desktop_offset.x() >= GESTURE_SWITCH_THRESHOLD) {
@@ -716,6 +717,7 @@ void subspace_manager::connect_gestures()
         }
         current_desktop_offset = QPointF(0, 0);
     });
+
     QObject::connect(m_swipeGestureReleasedY.get(), &QAction::triggered, qobject.get(), [this]() {
         // Note that if desktop wrapping is disabled and there's no desktop above or below,
         // above() and below() will return the current desktop.

@@ -16,7 +16,6 @@
 #include <KSharedConfig>
 #include <QObject>
 #include <QPoint>
-#include <QPointer>
 #include <QSize>
 #include <vector>
 
@@ -162,7 +161,7 @@ public:
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement{nullptr};
 
     std::vector<subspace*> subspaces;
-    QPointer<subspace> current;
+    subspace* current{nullptr};
 
 private:
     void updateRootInfo();
@@ -173,7 +172,6 @@ private:
     quint32 m_rows = 2;
     bool m_navigationWrapsAround{false};
     subspace_grid m_grid;
-    // TODO: QPointer
     x11::net::root_info* m_rootInfo{nullptr};
     KSharedConfig::Ptr m_config;
 
