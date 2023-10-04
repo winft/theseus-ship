@@ -18,7 +18,6 @@
 namespace KWin::win
 {
 
-static bool s_loadingDesktopSettings = false;
 static const double GESTURE_SWITCH_THRESHOLD = .25;
 
 subspace_manager_qobject::subspace_manager_qobject() = default;
@@ -476,10 +475,7 @@ void subspace_manager::setCount(uint count)
 
     updateRootInfo();
     updateLayout();
-
-    if (!s_loadingDesktopSettings) {
-        save();
-    }
+    save();
 
     for (auto index = oldCount; index < subspaces.size(); index++) {
         Q_EMIT qobject->subspace_created(subspaces.at(index));
@@ -588,8 +584,6 @@ void subspace_manager::load()
         return;
     }
 
-    s_loadingDesktopSettings = true;
-
     KConfigGroup group(m_config, QStringLiteral("Desktops"));
 
     size_t const oldCount = subspaces.size();
@@ -633,18 +627,14 @@ void subspace_manager::load()
     Q_EMIT qobject->countChanged(oldCount, subspaces.size());
 
     m_rows = std::clamp<int>(1, group.readEntry<int>("Rows", 2), subspaces.size());
-
-    s_loadingDesktopSettings = false;
 }
 
 void subspace_manager::save()
 {
-    if (s_loadingDesktopSettings) {
-        return;
-    }
     if (!m_config) {
         return;
     }
+
     KConfigGroup group(m_config, QStringLiteral("Desktops"));
 
     for (int i = subspaces.size() + 1; group.hasKey(QStringLiteral("Id_%1").arg(i)); i++) {
