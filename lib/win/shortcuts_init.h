@@ -120,16 +120,16 @@ void shortcuts_init_subspaces(Space& space)
 
     shortcuts_init_switch_to_subspace(space);
 
-    Q_UNUSED(add_subspace_action(*manager,
-                                 input,
-                                 QStringLiteral("Switch to Next Desktop"),
-                                 i18n("Switch to Next Desktop"),
-                                 [manager] { manager->slotNext(); }))
-    Q_UNUSED(add_subspace_action(*manager,
-                                 input,
-                                 QStringLiteral("Switch to Previous Desktop"),
-                                 i18n("Switch to Previous Desktop"),
-                                 [manager] { manager->slotPrevious(); }))
+    add_subspace_action(*manager,
+                        input,
+                        QStringLiteral("Switch to Next Desktop"),
+                        i18n("Switch to Next Desktop"),
+                        [manager] { manager->slotNext(); });
+    add_subspace_action(*manager,
+                        input,
+                        QStringLiteral("Switch to Previous Desktop"),
+                        i18n("Switch to Previous Desktop"),
+                        [manager] { manager->slotPrevious(); });
 
     // shortcuts
     QAction* slotRightAction
