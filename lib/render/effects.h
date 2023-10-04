@@ -14,6 +14,7 @@
 #include "singleton_interface.h"
 #include "types.h"
 #include <render/effect/setup_handler.h>
+#include <render/x11/effect/setup_handler.h>
 #include <render/x11/effect/setup_window.h>
 
 #include "win/activation.h"
@@ -259,6 +260,7 @@ public:
         , scene{scene}
     {
         effect::setup_handler(*this);
+        render::x11::effect_setup_handler(*this);
     }
 
     ~effects_handler_impl() override
