@@ -11,6 +11,7 @@
 
 #include "base/wayland/server.h"
 #include "render/effects.h"
+#include <render/wayland/setup_window.h>
 #include <win/wayland/space_windows.h>
 
 namespace KWin::render::wayland
@@ -45,25 +46,13 @@ public:
         auto space = scene.compositor.platform.base.space.get();
 
         // TODO(romangg): We do this for every window here, even for windows that are not an
-        // xdg-shell
-        //                type window. Restrict that?
+        //                xdg-shell type window. Restrict that?
         QObject::connect(
             space->qobject.get(),
             &win::space_qobject::wayland_window_added,
             this,
             [this](auto win_id) {
-                std::visit(overload{[&](auto&& win) {
-                               if (win->render_data.ready_for_painting) {
-                                   this->slotXdgShellClientShown(*win);
-                                   return;
-                               }
-
-                               QObject::connect(
-                                   win->qobject.get(),
-                                   &win::window_qobject::windowShown,
-                                   this,
-                                   [this, win] { this->slotXdgShellClientShown(*win); });
-                           }},
+                std::visit(overload{[&](auto&& win) { effect_setup_window(*this, *win); }},
                            this->scene.compositor.platform.base.space->windows_map.at(win_id));
             });
 
@@ -71,17 +60,7 @@ public:
         for (auto win : space->windows) {
             using wayland_window =
                 typename Scene::compositor_t::platform_t::space_t::wayland_window;
-            std::visit(overload{[&](wayland_window* win) {
-                                    if (win->render_data.ready_for_painting) {
-                                        effect::setup_handler_window_connections(*this, *win);
-                                    } else {
-                                        QObject::connect(
-                                            win->qobject.get(),
-                                            &win::window_qobject::windowShown,
-                                            this,
-                                            [this, win] { this->slotXdgShellClientShown(*win); });
-                                    }
-                                },
+            std::visit(overload{[&](wayland_window* win) { effect_setup_window(*this, *win); },
                                 [](auto&&) {}},
                        win);
         }
