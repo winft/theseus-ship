@@ -249,6 +249,7 @@ target_sources(render-wl
       wayland/output.h
       wayland/platform.h
       wayland/presentation.h
+      wayland/setup_handler.h
       wayland/setup_window.h
       wayland/shadow.h
       wayland/utils.h

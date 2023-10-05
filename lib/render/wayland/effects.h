@@ -11,7 +11,7 @@
 
 #include "base/wayland/server.h"
 #include "render/effects.h"
-#include <render/wayland/setup_window.h>
+#include <render/wayland/setup_handler.h>
 #include <win/wayland/space_windows.h>
 
 namespace KWin::render::wayland
@@ -41,29 +41,7 @@ public:
         , contrast{*this, *scene.compositor.platform.base.server->display}
         , slide{*this, *scene.compositor.platform.base.server->display}
     {
-        this->reconfigure();
-
-        auto space = scene.compositor.platform.base.space.get();
-
-        // TODO(romangg): We do this for every window here, even for windows that are not an
-        //                xdg-shell type window. Restrict that?
-        QObject::connect(
-            space->qobject.get(),
-            &win::space_qobject::wayland_window_added,
-            this,
-            [this](auto win_id) {
-                std::visit(overload{[&](auto&& win) { effect_setup_window(*this, *win); }},
-                           this->scene.compositor.platform.base.space->windows_map.at(win_id));
-            });
-
-        // TODO(romangg): We do this here too for every window.
-        for (auto win : space->windows) {
-            using wayland_window =
-                typename Scene::compositor_t::platform_t::space_t::wayland_window;
-            std::visit(overload{[&](wayland_window* win) { effect_setup_window(*this, *win); },
-                                [](auto&&) {}},
-                       win);
-        }
+        effect_setup_handler(*this);
     }
 
     ~effects_handler_impl()
