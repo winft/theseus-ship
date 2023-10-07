@@ -83,13 +83,6 @@ setup::setup(std::string const& test_name,
 
 setup::~setup()
 {
-    assert(keyboard);
-    assert(pointer);
-    assert(touch);
-    wlr_keyboard_finish(keyboard);
-    wlr_pointer_finish(pointer);
-    wlr_touch_finish(touch);
-
     // TODO(romangg): can this be done in the end?
     clients.clear();
 
