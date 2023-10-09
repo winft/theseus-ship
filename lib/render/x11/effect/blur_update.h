@@ -22,14 +22,14 @@ effect::region_update get_blur_update(EffectIntegrator& effi, EffectWindow& wind
         return internal_upd;
     }
 
-    if (effi.atom == XCB_ATOM_NONE) {
+    if (effi.support.atom == XCB_ATOM_NONE) {
         return {};
     }
 
     effect::region_update upd;
     upd.base.window = &window;
 
-    auto const value = window.readProperty(effi.atom, XCB_ATOM_CARDINAL, 32);
+    auto const value = window.readProperty(effi.support.atom, XCB_ATOM_CARDINAL, 32);
     if (value.isNull()) {
         // Property was removed. Inform with an invalid update.
         upd.base.valid = false;

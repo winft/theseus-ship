@@ -22,7 +22,55 @@
 namespace KWin::render::wayland
 {
 
-template<typename Effects>
+struct slide_support {
+    template<typename EffectIntegrator>
+    void setup(EffectIntegrator& effi)
+    {
+        setup_effect_window_add(effi);
+        setup_effect_internal_window_add(effi);
+    }
+
+    template<typename EffectIntegrator>
+    void add(EffectIntegrator& effi,
+             Effect& effect,
+             typename EffectIntegrator::update_function const& update)
+    {
+        effi.registry.insert({&effect, update});
+
+        if (!effi.manager) {
+            effi.manager = std::make_unique<Wrapland::Server::SlideManager>(&effi.display);
+        }
+
+        auto const windows = effi.effects.stackingOrder();
+        for (auto window : windows) {
+            effi.update(*window);
+        }
+    }
+
+    template<typename EffectIntegrator>
+    void remove(EffectIntegrator& effi, Effect& effect)
+    {
+        effi.registry.erase(&effect);
+        if (effi.registry.empty()) {
+            effi.manager.reset();
+        }
+    }
+
+    template<typename EffectIntegrator>
+    void update(EffectIntegrator& effi, EffectWindow& window)
+    {
+        auto upd = get_slide_update(effi, window);
+        if (!upd.base.window) {
+            return;
+        }
+
+        for (auto const& [effect, update_call] : effi.registry) {
+            update_call(upd);
+        }
+    }
+};
+
+template<typename Effects, typename Support>
 class slide_integration : public effect::anim_integration
 {
 public:
@@ -31,55 +79,25 @@ public:
         , internal_properties{get_internal_slide_properties()}
         , display{display}
     {
-        setup_effect_window_add(*this);
-        setup_effect_internal_window_add(*this);
-        setup_effect_xwayland(*this);
+        support.setup(*this);
     }
 
     void add(Effect& effect, update_function const& update) override
     {
-        registry.insert({&effect, update});
-
-        if (!manager) {
-            manager = std::make_unique<Wrapland::Server::SlideManager>(&display);
-        }
-
-        // For Xwayland
-        atom = x11::announce_support_property(effects, &effect, atom_name.data());
-
-        auto const windows = effects.stackingOrder();
-        for (auto window : windows) {
-            this->update(*window);
-        }
+        support.add(*this, effect, update);
     }
 
     void remove(Effect& effect) override
     {
-        registry.erase(&effect);
-        x11::remove_support_property(effects, &effect, atom_name.data());
-
-        if (registry.empty()) {
-            manager.reset();
-        }
+        support.remove(*this, effect);
     }
 
     void update(EffectWindow& window)
     {
-        auto upd = get_slide_update(*this, window);
-        if (!upd.base.window) {
-            // Try Xwayland
-            upd = render::x11::get_slide_update(*this, window);
-        }
-        if (!upd.base.window) {
-            return;
-        }
-
-        auto const reg_cp = registry;
-        for (auto const& [effect, update_call] : reg_cp) {
-            update_call(upd);
-        }
+        support.update(*this, window);
     }
 
+    Support support;
     std::map<Effect*, update_function> registry;
     Effects& effects;
 
@@ -89,11 +107,6 @@ public:
         Wrapland::Server::surface_change::slide};
     decltype(get_internal_slide_properties()) const internal_properties;
 
-    // For Xwayland
-    long atom{0};
-    static constexpr std::string_view atom_name{"_KDE_SLIDE"};
-
-private:
     std::unique_ptr<Wrapland::Server::SlideManager> manager;
     Wrapland::Server::Display& display;
 };

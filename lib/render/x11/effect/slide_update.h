@@ -23,7 +23,7 @@ effect::anim_update get_slide_update(EffectIntegrator& effi, EffectWindow& windo
         return internal_upd;
     }
 
-    if (effi.atom == XCB_ATOM_NONE) {
+    if (effi.support.atom == XCB_ATOM_NONE) {
         return {};
     }
 
@@ -40,7 +40,7 @@ effect::anim_update get_slide_update(EffectIntegrator& effi, EffectWindow& windo
     // also used as slide out duration. I.e. if you provided only slide in
     // duration, then slide in duration == slide out duration.
 
-    auto const value = window.readProperty(effi.atom, effi.atom, 32);
+    auto const value = window.readProperty(effi.support.atom, effi.support.atom, 32);
 
     if (value.isEmpty()) {
         // We inform that the property was removed by sending an invalid update on the window.

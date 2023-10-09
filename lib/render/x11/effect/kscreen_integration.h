@@ -27,7 +27,7 @@ public:
     {
         QObject::connect(
             &effects, &Effects::propertyNotify, &effects, [this](auto window, long atom) {
-                if (!window && atom != XCB_ATOM_NONE && atom == this->atom) {
+                if (!window && atom != XCB_ATOM_NONE && atom == support.atom) {
                     this->update();
                 }
             });
@@ -37,14 +37,14 @@ public:
     void add(Effect& effect, update_function const& update) override
     {
         registry.insert({&effect, update});
-        atom = announce_support_property(effects, &effect, atom_name.data());
+        support.atom = announce_support_property(effects, &effect, support.atom_name.data());
         this->update();
     }
 
     void remove(Effect& effect) override
     {
         registry.erase(&effect);
-        remove_support_property(effects, &effect, atom_name.data());
+        remove_support_property(effects, &effect, support.atom_name.data());
     }
 
     void change_state([[maybe_unused]] Effect& effect, double state) override
@@ -67,8 +67,10 @@ public:
     std::map<Effect*, update_function> registry;
     Effects& effects;
 
-    long atom{0};
-    static constexpr std::string_view atom_name{"_KDE_KWIN_KSCREEN_SUPPORT"};
+    struct support_t {
+        long atom{0};
+        static constexpr std::string_view atom_name{"_KDE_KWIN_KSCREEN_SUPPORT"};
+    } support;
 };
 
 }

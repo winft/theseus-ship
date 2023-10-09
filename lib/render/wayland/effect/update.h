@@ -7,7 +7,6 @@
 
 #include "render/effect/integration.h"
 #include "render/effect/internal_win_update.h"
-#include "render/x11/effect/update.h"
 
 #include <Wrapland/Server/surface.h>
 
@@ -52,13 +51,6 @@ void setup_effect_window_add(EffectIntegrator& effi)
 
     // Also need to clean up again on remove.
     setup_effect_window_remove(effi);
-}
-
-template<typename EffectIntegrator>
-void setup_effect_xwayland(EffectIntegrator& effi)
-{
-    x11::setup_effect_property_notify(effi);
-    x11::setup_effect_connection_change(effi);
 }
 
 }

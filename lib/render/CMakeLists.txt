@@ -240,6 +240,7 @@ target_sources(render-wl
       wayland/effect/slide_integration.h
       wayland/effect/slide_update.h
       wayland/effect/update.h
+      wayland/effect/xwayland.h
       wayland/buffer.h
       wayland/compositor.h
       wayland/duration_record.h

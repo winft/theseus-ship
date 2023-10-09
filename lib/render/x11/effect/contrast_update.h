@@ -23,14 +23,14 @@ effect::color_update get_contrast_update(EffectIntegrator& effi, EffectWindow& w
         return internal_upd;
     }
 
-    if (effi.atom == XCB_ATOM_NONE) {
+    if (effi.support.atom == XCB_ATOM_NONE) {
         return {};
     }
 
     effect::color_update upd;
     upd.base.window = &window;
 
-    auto const value = window.readProperty(effi.atom, effi.atom, 32);
+    auto const value = window.readProperty(effi.support.atom, effi.support.atom, 32);
     if (value.isNull()) {
         upd.base.valid = false;
         return upd;

@@ -8,6 +8,7 @@
 #include "effect/blur_integration.h"
 #include "effect/contrast_integration.h"
 #include "effect/slide_integration.h"
+#include <render/wayland/effect/xwayland.h>
 
 #include "base/wayland/server.h"
 #include "render/effects.h"
@@ -91,9 +92,9 @@ public:
         return kscreen_dummy;
     }
 
-    blur_integration<effects_handler_impl> blur;
-    contrast_integration<effects_handler_impl> contrast;
-    slide_integration<effects_handler_impl> slide;
+    blur_integration<effects_handler_impl, xwl_blur_support> blur;
+    contrast_integration<effects_handler_impl, xwl_contrast_support> contrast;
+    slide_integration<effects_handler_impl, xwl_slide_support> slide;
 
 protected:
     void doStartMouseInterception(Qt::CursorShape shape) override
