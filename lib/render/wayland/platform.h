@@ -8,7 +8,6 @@
 #include "compositor.h"
 #include "effects.h"
 
-#include "render/platform.h"
 #include <render/gl/egl_data.h>
 #include <render/options.h>
 #include <render/post/night_color_manager.h>
@@ -20,7 +19,7 @@ namespace KWin::render::wayland
 {
 
 template<typename Base>
-class platform : public render::platform
+class platform
 {
 public:
     using type = platform<Base>;
@@ -41,7 +40,7 @@ public:
         singleton_interface::get_egl_data = [this] { return egl_data; };
     }
 
-    ~platform() override
+    virtual ~platform()
     {
         singleton_interface::get_egl_data = {};
     }

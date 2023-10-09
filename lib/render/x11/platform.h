@@ -11,7 +11,6 @@
 
 #include "render/backend/x11/deco_renderer.h"
 #include "render/gl/backend.h"
-#include "render/platform.h"
 #include <render/gl/egl_data.h>
 #include <render/options.h>
 #include <render/post/night_color_manager.h>
@@ -24,7 +23,7 @@ namespace KWin::render::x11
 {
 
 template<typename Base>
-class platform : public render::platform
+class platform
 {
 public:
     using type = platform<Base>;
@@ -45,7 +44,7 @@ public:
         singleton_interface::get_egl_data = [this] { return egl_data; };
     }
 
-    ~platform() override
+    virtual ~platform()
     {
         singleton_interface::get_egl_data = {};
     }

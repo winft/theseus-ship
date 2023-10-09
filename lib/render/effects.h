@@ -13,6 +13,7 @@
 #include "options.h"
 #include "singleton_interface.h"
 #include "types.h"
+#include <render/compositor.h>
 #include <render/effect/setup_handler.h>
 #include <render/x11/effect/setup_handler.h>
 #include <render/x11/effect/setup_window.h>

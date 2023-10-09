@@ -92,7 +92,6 @@ target_sources(render
       effect_loader.h
       options.h
       outline.h
-      platform.h
       scene.h
       shadow.h
       shortcuts_init.h

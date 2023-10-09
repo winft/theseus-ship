@@ -19,7 +19,6 @@
 #include "render/dbus/compositing.h"
 #include "render/effect/window_impl.h"
 #include "render/gl/scene.h"
-#include "render/platform.h"
 #include "win/remnant.h"
 #include "win/space_window_release.h"
 #include "win/stacking_order.h"

@@ -44,7 +44,7 @@ public:
     using internal_window_t = internal_window<type>;
     using window_t = std::variant<wayland_window*, internal_window_t*, x11_window*>;
     using window_group_t = x11::group<type>;
-    using render_outline_t = typename base_t::render_t::outline_t;
+    using render_outline_t = typename base_t::render_t::compositor_t::qobject_t::outline_t;
 
     space(Render& render, Input& input)
         : base{input.base}
