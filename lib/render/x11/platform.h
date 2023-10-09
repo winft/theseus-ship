@@ -60,16 +60,25 @@ public:
         return std::make_unique<backend::x11::deco_renderer>(this->base.x11_data, window);
     }
 
-    bool requiresCompositing() const override
+    bool requiresCompositing() const
     {
         return false;
     }
 
-    bool openGLCompositingIsBroken() const override
+    bool openGLCompositingIsBroken() const
     {
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
         return KConfigGroup(this->base.config.main, "Compositing").readEntry(unsafeKey, false);
     }
+
+    virtual bool compositingPossible() const = 0;
+    virtual QString compositingNotPossibleReason() const = 0;
+    virtual void createOpenGLSafePoint(opengl_safe_point safePoint) = 0;
+    virtual void invertScreen() = 0;
+    virtual bool is_sw_compositing() const = 0;
+
+    // TODO(romangg): Remove the boolean trap.
+    virtual void render_stop(bool on_shutdown) = 0;
 
     Base& base;
     std::unique_ptr<render::options> options;

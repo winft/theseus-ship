@@ -46,27 +46,27 @@ public:
         singleton_interface::get_egl_data = {};
     }
 
-    bool requiresCompositing() const override
+    bool requiresCompositing() const
     {
         return true;
     }
 
-    bool compositingPossible() const override
+    bool compositingPossible() const
     {
         return true;
     }
 
-    QString compositingNotPossibleReason() const override
+    QString compositingNotPossibleReason() const
     {
         return {};
     }
 
-    bool openGLCompositingIsBroken() const override
+    bool openGLCompositingIsBroken() const
     {
         return false;
     }
 
-    void createOpenGLSafePoint(opengl_safe_point /*safePoint*/) override
+    void createOpenGLSafePoint(opengl_safe_point /*safePoint*/)
     {
     }
 
@@ -76,17 +76,21 @@ public:
         return nullptr;
     }
 
+    void invertScreen()
+    {
+        assert(compositor->effects);
+        compositor->effects->invert_screen();
+    }
+
     virtual gl::backend<gl::scene<compositor_t>, type>* get_opengl_backend(compositor_t& compositor)
         = 0;
     virtual qpainter::backend<qpainter::scene<compositor_t>>*
     get_qpainter_backend(compositor_t& compositor)
         = 0;
+    virtual bool is_sw_compositing() const = 0;
 
-    void invertScreen() override
-    {
-        assert(compositor->effects);
-        compositor->effects->invert_screen();
-    }
+    // TODO(romangg): Remove the boolean trap.
+    virtual void render_stop(bool on_shutdown) = 0;
 
     Base& base;
     std::unique_ptr<render::options> options;
