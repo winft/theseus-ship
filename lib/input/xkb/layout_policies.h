@@ -108,27 +108,18 @@ public:
     global_layout_policy(Manager* manager, KConfigGroup const& config)
         : layout_policy<Manager>(manager, "Global", config)
     {
-        auto session_manager = manager->redirect.space.session_manager.get();
-        using session_manager_t = std::remove_pointer_t<decltype(session_manager)>;
+        if (this->get_keyboard()->layouts_count() > 1) {
+            this->set_layout(this->config.readEntry(this->get_config_key_name().c_str(), 0));
+        }
+    }
 
-        QObject::connect(session_manager,
-                         &session_manager_t::prepareSessionSaveRequested,
-                         this->qobject.get(),
-                         [this] {
-                             this->clear_layouts();
-                             if (auto const layout = this->get_keyboard()->layout) {
-                                 this->config.writeEntry(this->get_config_key_name().c_str(),
-                                                         layout);
-                             }
-                         });
+    ~global_layout_policy() override
+    {
+        this->clear_layouts();
 
-        QObject::connect(
-            session_manager, &session_manager_t::loadSessionRequested, this->qobject.get(), [this] {
-                if (this->get_keyboard()->layouts_count() > 1) {
-                    this->set_layout(
-                        this->config.readEntry(this->get_config_key_name().c_str(), 0));
-                }
-            });
+        if (auto const layout = this->get_keyboard()->layout) {
+            this->config.writeEntry(this->get_config_key_name().c_str(), layout);
+        }
     }
 
 protected:
@@ -150,49 +141,47 @@ public:
         : layout_policy<Manager>(manager, "Desktop", config)
     {
         auto& space = manager->redirect.space;
+
+        QObject::connect(space.subspace_manager->qobject.get(),
+                         &decltype(space.subspace_manager->qobject)::element_type::subspace_created,
+                         this->qobject.get(),
+                         [this](auto subspace) { handle_subspace_created(subspace); });
+        QObject::connect(space.subspace_manager->qobject.get(),
+                         &decltype(space.subspace_manager->qobject)::element_type::subspace_removed,
+                         this->qobject.get(),
+                         [this](auto subspace) { layouts.erase(subspace); });
         QObject::connect(space.subspace_manager->qobject.get(),
                          &decltype(space.subspace_manager->qobject)::element_type::current_changed,
                          this->qobject.get(),
                          [this] { handle_desktop_change(); });
 
-        auto session_manager = space.session_manager.get();
-        using session_manager_t = std::remove_pointer_t<decltype(session_manager)>;
+        auto const& cfg_entries = this->config.entryMap();
+        auto const key_prefix = get_config_key_prefix();
+        for (auto const& [key, val] : cfg_entries.asKeyValueRange()) {
+            if (key.startsWith(key_prefix.c_str())) {
+                restored_layouts.insert({key.toStdString(), val.toInt()});
+            }
+        }
 
-        QObject::connect(session_manager,
-                         &session_manager_t::prepareSessionSaveRequested,
-                         this->qobject.get(),
-                         [this] {
-                             this->clear_layouts();
+        if (this->get_keyboard()->layouts_count() > 1) {
+            auto const& subspaces = this->manager->redirect.space.subspace_manager->subspaces;
 
-                             for (auto const& [subspace, layout] : layouts) {
-                                 if (layout) {
-                                     this->config.writeEntry(get_config_key(subspace), layout);
-                                 }
-                             }
-                         });
+            for (auto const subspace : subspaces) {
+                handle_subspace_created(subspace);
+            }
 
-        QObject::connect(
-            session_manager, &session_manager_t::loadSessionRequested, this->qobject.get(), [this] {
-                if (this->get_keyboard()->layouts_count() > 1) {
-                    auto const& subspaces
-                        = this->manager->redirect.space.subspace_manager->subspaces;
+            handle_desktop_change();
+        }
+    }
 
-                    for (auto const subspace : subspaces) {
-                        uint const layout = this->config.readEntry(get_config_key(subspace), 0u);
-                        if (!layout) {
-                            continue;
-                        }
-
-                        layouts.insert({subspace, layout});
-                        QObject::connect(subspace,
-                                         &win::subspace::aboutToBeDestroyed,
-                                         this->qobject.get(),
-                                         [this, subspace] { layouts.erase(subspace); });
-                    }
-
-                    handle_desktop_change();
-                }
-            });
+    ~subspace_layout_policy() override
+    {
+        this->clear_layouts();
+        for (auto const& [subspace, layout] : layouts) {
+            if (layout) {
+                this->config.writeEntry(get_config_key(subspace).c_str(), layout);
+            }
+        }
     }
 
 protected:
@@ -212,20 +201,39 @@ protected:
 
         if (it == layouts.end()) {
             layouts.insert({desktop, index});
-            QObject::connect(desktop,
-                             &win::subspace::aboutToBeDestroyed,
-                             this->qobject.get(),
-                             [this, desktop] { layouts.erase(desktop); });
         } else {
             it->second = index;
         }
     }
 
 private:
-    QString get_config_key(auto&& subspace) const
+    std::string get_config_key_prefix() const
     {
-        return QString::fromStdString(this->get_config_key_name() + "_"
-                                      + std::to_string(subspace->x11DesktopNumber()));
+        return this->get_config_key_name() + "_";
+    }
+
+    std::string get_config_key(uint subspace_x11id) const
+    {
+        return get_config_key_prefix() + std::to_string(subspace_x11id);
+    }
+    std::string get_config_key(win::subspace* subspace) const
+    {
+        return get_config_key(subspace->x11DesktopNumber());
+    }
+
+    void handle_subspace_created(win::subspace* subspace)
+    {
+        auto it = restored_layouts.find(get_config_key(subspace));
+        if (it == restored_layouts.end()) {
+            return;
+        }
+
+        if (this->get_keyboard()->layouts_count() > 1) {
+            if (it->second) {
+                layouts.insert({subspace, it->second});
+            }
+        }
+        restored_layouts.erase(it);
     }
 
     void handle_desktop_change()
@@ -236,6 +244,7 @@ private:
     }
 
     std::unordered_map<win::subspace*, uint32_t> layouts;
+    std::unordered_map<std::string, uint32_t> restored_layouts;
 };
 
 template<typename Manager>
@@ -326,40 +335,23 @@ public:
                              }
                          });
 
-        auto session_manager = space.session_manager.get();
-        using session_manager_t = std::remove_pointer_t<decltype(session_manager)>;
+        if (this->get_keyboard()->layouts_count() > 1) {
+            auto const keyPrefix = this->get_config_key_prefix();
+            auto const keyList = this->config.keyList().filter(keyPrefix);
+            for (auto const& key : keyList) {
+                restored_layouts.insert({QStringView(key).mid(keyPrefix.size()).toLatin1(),
+                                         this->config.readEntry(key, 0)});
+            }
+        }
+    }
 
-        QObject::connect(
-            session_manager,
-            &session_manager_t::prepareSessionSaveRequested,
-            this->qobject.get(),
-            [this] {
-                this->clear_layouts();
+    ~application_layout_policy() override
+    {
+        this->clear_layouts();
 
-                for (auto const& [win, layout] : layouts) {
-                    if (!layout) {
-                        continue;
-                    }
-
-                    auto name = std::visit(
-                        overload{[](auto&& win) { return win->control->desktop_file_name; }}, win);
-                    if (!name.isEmpty()) {
-                        this->config.writeEntry(this->get_config_key_prefix() % QLatin1String(name),
-                                                layout);
-                    }
-                }
-            });
-        QObject::connect(
-            session_manager, &session_manager_t::loadSessionRequested, this->qobject.get(), [this] {
-                if (this->get_keyboard()->layouts_count() > 1) {
-                    auto const keyPrefix = this->get_config_key_prefix();
-                    auto const keyList = this->config.keyList().filter(keyPrefix);
-                    for (auto const& key : keyList) {
-                        restored_layouts.insert({QStringView(key).mid(keyPrefix.size()).toLatin1(),
-                                                 this->config.readEntry(key, 0)});
-                    }
-                }
-            });
+        for (auto const& [key, layout] : restored_layouts) {
+            this->config.writeEntry(this->get_config_key_prefix() % key, layout);
+        }
     }
 
 protected:
@@ -388,7 +380,14 @@ protected:
                            QObject::connect(window->qobject.get(),
                                             &win::window_qobject::closed,
                                             this->qobject.get(),
-                                            [this, window] { layouts.erase(window_t(window)); });
+                                            [this, window] {
+                                                if (window->control) {
+                                                    restored_layouts.insert(
+                                                        {window->control->desktop_file_name,
+                                                         layouts.at(window)});
+                                                }
+                                                layouts.erase(window_t(window));
+                                            });
                        } else {
                            if (it->second == index) {
                                return;
@@ -423,8 +422,7 @@ private:
             return;
         }
 
-        auto it = layouts.find(window);
-        if (it != layouts.end()) {
+        if (auto it = layouts.find(window); it != layouts.end()) {
             this->set_layout(it->second);
             return;
         }
@@ -444,7 +442,6 @@ private:
         if (auto restored_it = restored_layouts.find(window->control->desktop_file_name);
             restored_it != restored_layouts.end()) {
             restored_layout = restored_it->second;
-            restored_layouts.erase(restored_it);
         }
 
         this->set_layout(restored_layout);
