@@ -113,6 +113,11 @@ static ScreenShotFlags screenShotFlagsFromOptions(const QVariantMap& options)
         flags |= ScreenShotIncludeDecoration;
     }
 
+    const QVariant includeShadow = options.value(QStringLiteral("include-shadow"));
+    if (includeShadow.toBool()) {
+        flags |= ScreenShotIncludeShadow;
+    }
+
     const QVariant includeCursor = options.value(QStringLiteral("include-cursor"));
     if (includeCursor.toBool()) {
         flags |= ScreenShotIncludeCursor;
