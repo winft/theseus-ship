@@ -460,7 +460,8 @@ TEST_CASE("xkb", "[input],[unit]")
         data{Qt::Key_9, XKB_KEY_KP_9, Qt::KeypadModifier});
 
     input::xkb::keyboard xkb_keyboard(nullptr, nullptr);
-    REQUIRE(xkb_keyboard.to_qt_key(test_data.key_sym_x11) == test_data.key_sym_qt);
+    REQUIRE(xkb_keyboard.to_qt_key(test_data.key_sym_x11, 0, test_data.modifiers)
+            == test_data.key_sym_qt);
 }
 
 }
