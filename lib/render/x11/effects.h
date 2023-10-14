@@ -19,6 +19,8 @@
 #include "render/effects.h"
 #include "render/xrender/utils.h"
 #include "win/x11/space.h"
+#include <render/x11/effect/setup_handler.h>
+#include <render/x11/effect/setup_window.h>
 
 #include <memory.h>
 
@@ -30,14 +32,17 @@ class effects_handler_impl : public render::effects_handler_impl<Scene>
 {
 public:
     using type = effects_handler_impl<Scene>;
+    using abstract_type = render::effects_handler_impl<Scene>;
 
     effects_handler_impl(Scene& scene)
-        : render::effects_handler_impl<Scene>(scene)
+        : abstract_type(scene)
         , blur{*this}
         , contrast{*this}
         , slide{*this}
         , kscreen{*this}
     {
+        effect::setup_handler(*this);
+        x11::effect_setup_handler(*this);
         this->reconfigure();
 
         QObject::connect(
@@ -76,6 +81,39 @@ public:
         }
     }
 
+    EffectWindow* find_window_by_wid(WId id) const override
+    {
+        return x11::find_window_by_wid(this->get_space(), id);
+    }
+
+    xcb_connection_t* xcbConnection() const override
+    {
+        return this->scene.platform.base.x11_data.connection;
+    }
+
+    xcb_window_t x11RootWindow() const override
+    {
+        return this->scene.platform.base.x11_data.root_window;
+    }
+
+    SessionState sessionState() const override
+    {
+        return static_cast<SessionState>(this->get_space().session_manager->state());
+    }
+
+    QByteArray readRootProperty(long atom, long type, int format) const override
+    {
+        return x11::read_root_property(this->scene.platform.base, atom, type, format);
+    }
+
+    template<typename Win>
+    void slotUnmanagedShown(Win& window)
+    { // regardless, unmanaged windows are -yet?- not synced anyway
+        assert(!window.control);
+        x11::effect_setup_unmanaged_window_connections(*this, window);
+        Q_EMIT this->windowAdded(window.render->effect.get());
+    }
+
     effect::region_integration& get_blur_integration() override
     {
         return blur;
@@ -100,6 +138,9 @@ public:
     contrast_integration<effects_handler_impl> contrast;
     slide_integration<effects_handler_impl> slide;
     kscreen_integration<effects_handler_impl> kscreen;
+
+    std::unique_ptr<x11::property_notify_filter<type, typename abstract_type::space_t>>
+        x11_property_notify;
 
 protected:
     bool doGrabKeyboard() override

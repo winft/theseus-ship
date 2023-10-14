@@ -15,8 +15,6 @@
 #include "types.h"
 #include <render/compositor.h>
 #include <render/effect/setup_handler.h>
-#include <render/x11/effect/setup_handler.h>
-#include <render/x11/effect/setup_window.h>
 
 #include "win/activation.h"
 #include "win/osd.h"
@@ -260,8 +258,6 @@ public:
         : effects_handler_wrap(scene)
         , scene{scene}
     {
-        effect::setup_handler(*this);
-        render::x11::effect_setup_handler(*this);
     }
 
     ~effects_handler_impl() override
@@ -276,16 +272,6 @@ public:
     bool isScreenLocked() const override
     {
         return get_space().screen_locker_watcher->is_locked();
-    }
-
-    xcb_connection_t* xcbConnection() const override
-    {
-        return scene.platform.base.x11_data.connection;
-    }
-
-    xcb_window_t x11RootWindow() const override
-    {
-        return scene.platform.base.x11_data.root_window;
     }
 
     QPainter* scenePainter() override
@@ -724,11 +710,6 @@ public:
         return get_space().subspace_manager->name(desktop);
     }
 
-    EffectWindow* find_window_by_wid(WId id) const override
-    {
-        return x11::find_window_by_wid(get_space(), id);
-    }
-
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* /*surface*/) const override
     {
         return nullptr;
@@ -1046,16 +1027,6 @@ public:
         return get_space().options->qobject->isRollOverDesktops();
     }
 
-    SessionState sessionState() const override
-    {
-        return static_cast<SessionState>(get_space().session_manager->state());
-    }
-
-    QByteArray readRootProperty(long atom, long type, int format) const override
-    {
-        return x11::read_root_property(scene.platform.base, atom, type, format);
-    }
-
     KSharedConfigPtr config() const override
     {
         return scene.platform.base.config.main;
@@ -1092,14 +1063,6 @@ public:
     void slotXdgShellClientShown(Win& window)
     {
         effect::setup_handler_window_connections(*this, window);
-        Q_EMIT windowAdded(window.render->effect.get());
-    }
-
-    template<typename Win>
-    void slotUnmanagedShown(Win& window)
-    { // regardless, unmanaged windows are -yet?- not synced anyway
-        assert(!window.control);
-        x11::effect_setup_unmanaged_window_connections(*this, window);
         Q_EMIT windowAdded(window.render->effect.get());
     }
 
@@ -1195,7 +1158,6 @@ public:
 
     QList<EffectScreen*> m_effectScreens;
     int m_trackingCursorChanges{0};
-    std::unique_ptr<x11::property_notify_filter<type, space_t>> x11_property_notify;
     std::unordered_map<Effect*, std::unordered_map<ElectricBorder, uint32_t>> reserved_borders;
 };
 }

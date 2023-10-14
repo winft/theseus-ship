@@ -13,6 +13,8 @@
 #include "base/wayland/server.h"
 #include "render/effects.h"
 #include <render/wayland/setup_handler.h>
+#include <render/x11/effect/setup_handler.h>
+#include <render/x11/effect/setup_window.h>
 #include <win/wayland/space_windows.h>
 
 namespace KWin::render::wayland
@@ -36,12 +38,17 @@ template<typename Scene>
 class effects_handler_impl : public render::effects_handler_impl<Scene>
 {
 public:
+    using type = effects_handler_impl<Scene>;
+    using abstract_type = render::effects_handler_impl<Scene>;
+
     effects_handler_impl(Scene& scene)
-        : render::effects_handler_impl<Scene>(scene)
+        : abstract_type(scene)
         , blur{*this, *scene.platform.base.server->display}
         , contrast{*this, *scene.platform.base.server->display}
         , slide{*this, *scene.platform.base.server->display}
     {
+        effect::setup_handler(*this);
+        x11::effect_setup_handler(*this);
         effect_setup_handler(*this);
     }
 
@@ -67,9 +74,42 @@ public:
         return nullptr;
     }
 
+    EffectWindow* find_window_by_wid(WId id) const override
+    {
+        return x11::find_window_by_wid(this->get_space(), id);
+    }
+
     Wrapland::Server::Display* waylandDisplay() const override
     {
         return this->scene.platform.base.server->display.get();
+    }
+
+    xcb_connection_t* xcbConnection() const override
+    {
+        return this->scene.platform.base.x11_data.connection;
+    }
+
+    xcb_window_t x11RootWindow() const override
+    {
+        return this->scene.platform.base.x11_data.root_window;
+    }
+
+    SessionState sessionState() const override
+    {
+        return static_cast<SessionState>(this->get_space().session_manager->state());
+    }
+
+    QByteArray readRootProperty(long atom, long type, int format) const override
+    {
+        return x11::read_root_property(this->scene.platform.base, atom, type, format);
+    }
+
+    template<typename Win>
+    void slotUnmanagedShown(Win& window)
+    { // regardless, unmanaged windows are -yet?- not synced anyway
+        assert(!window.control);
+        x11::effect_setup_unmanaged_window_connections(*this, window);
+        Q_EMIT this->windowAdded(window.render->effect.get());
     }
 
     effect::region_integration& get_blur_integration() override
@@ -95,6 +135,9 @@ public:
     blur_integration<effects_handler_impl, xwl_blur_support> blur;
     contrast_integration<effects_handler_impl, xwl_contrast_support> contrast;
     slide_integration<effects_handler_impl, xwl_slide_support> slide;
+
+    std::unique_ptr<x11::property_notify_filter<type, typename abstract_type::space_t>>
+        x11_property_notify;
 
 protected:
     void doStartMouseInterception(Qt::CursorShape shape) override
