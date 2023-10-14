@@ -10,6 +10,7 @@
 
 #include <KQuickManagedConfigModule>
 #include <KSharedConfig>
+#include <QAbstractItemModel>
 
 class VirtualDesktopsSettings;
 
