@@ -7,7 +7,6 @@
 
 #include "win/geo.h"
 #include "win/wayland/input.h"
-#include "win/x11/stacking.h"
 
 namespace KWin::input
 {
@@ -82,10 +81,11 @@ auto find_window(Redirect const& redirect, QPoint const& pos)
         return {};
     }
 
-    auto const& unmanaged = win::x11::get_unmanageds(redirect.space);
-    for (auto const& win : unmanaged) {
+    // Check windows without control (important for Xwayland unmanageds).
+    for (auto const& win : redirect.space.windows) {
         if (std::visit(overload{[&](auto&& win) {
-                           return win::input_geometry(win).contains(pos)
+                           return !win->control && !win->remnant
+                               && win::input_geometry(win).contains(pos)
                                && win::wayland::accepts_input(win, pos);
                        }},
                        win)) {
