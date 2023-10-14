@@ -223,13 +223,15 @@ void ScreenShotEffect::takeScreenShot(effect::render_data& data, ScreenShotWindo
     auto window = screenshot->window;
     auto geometry = window->expandedGeometry();
     auto devicePixelRatio = 1.;
+    bool includeDecorations = (screenshot->flags & ScreenShotIncludeDecoration);
+    bool includeShadow = (screenshot->flags & ScreenShotIncludeShadow);
 
-    if (window->hasDecoration() && !(screenshot->flags & ScreenShotIncludeDecoration)) {
+    if (window->hasDecoration() && !includeDecorations) {
         geometry = window->clientGeometry();
-    }
-    if (window->hasDecoration() && !(screenshot->flags & ScreenShotIncludeShadow)) {
+    } else if (window->hasDecoration() && !includeShadow) {
         geometry = window->frameGeometry();
     }
+
     if (screenshot->flags & ScreenShotNativeResolution) {
         if (auto const screen = window->screen()) {
             devicePixelRatio = screen->devicePixelRatio();
