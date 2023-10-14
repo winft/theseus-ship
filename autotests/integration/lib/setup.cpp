@@ -77,7 +77,10 @@ setup::setup(std::string const& test_name,
                                                                             headless_backend);
 
     try {
-        base->render = std::make_unique<render::backend::wlroots::platform<base_t>>(*base);
+        using render_t
+            = render::backend::wlroots::platform<base_t,
+                                                 render::wayland::platform<base_t::abstract_type>>;
+        base->render = std::make_unique<render_t>(*base);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
         throw;
@@ -126,7 +129,7 @@ void setup::start()
     assert(touch);
 
     try {
-        static_cast<render::backend::wlroots::platform<base_t>&>(*base->render).init();
+        base->render->init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         return;

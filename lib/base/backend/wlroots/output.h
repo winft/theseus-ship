@@ -101,9 +101,8 @@ public:
                               modes,
                               current_mode.id != -1 ? &current_mode : nullptr);
 
-        using render_platform = render::backend::wlroots::platform<Platform>;
         this->render = std::make_unique<render_output>(
-            *this, static_cast<render_platform&>(*platform->render));
+            *this, static_cast<typename Platform::render_t&>(*platform->render));
     }
 
     ~output() override
@@ -176,6 +175,8 @@ public:
     Platform* platform;
 
 private:
+    using render_output = render::backend::wlroots::output<output, typename Platform::render_t>;
+
     base::event_receiver<output> destroy_rec;
 
     void set_native_mode(wlr_output* output, int mode_index)
@@ -194,9 +195,6 @@ private:
             count++;
         }
     }
-
-    using render_platform = render::backend::wlroots::platform<Platform>;
-    using render_output = render::backend::wlroots::output<output, render_platform>;
 
     template<typename AbstractRenderOutput>
     render_output* get_render(std::unique_ptr<AbstractRenderOutput>& output)

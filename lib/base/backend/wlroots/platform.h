@@ -36,6 +36,8 @@ public:
     using abstract_type = WaylandPlatform;
     using output_t = wlroots::output<type>;
 
+    using render_t = render::backend::wlroots::platform<type, typename abstract_type::render_t>;
+
     platform(base::config config,
              std::string const& socket_name,
              base::wayland::start_options flags,

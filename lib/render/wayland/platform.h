@@ -71,6 +71,8 @@ public:
         singleton_interface::get_egl_data = {};
     }
 
+    virtual void init() = 0;
+
     bool requiresCompositing() const
     {
         return true;

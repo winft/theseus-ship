@@ -5,7 +5,9 @@
 */
 #pragma once
 
-#include <render/backend/wlroots/platform.h>
+#include <base/backend/wlroots/output.h>
+#include <base/logging.h>
+#include <base/utils.h>
 
 namespace KWin::base::backend::wlroots
 {
@@ -23,9 +25,7 @@ static void handle_destroy(struct wl_listener* listener, void* /*data*/)
 template<typename Platform>
 void add_new_output(Platform& platform, wlr_output* native)
 {
-    using render_platform = render::backend::wlroots::platform<Platform>;
-
-    auto& render = static_cast<render_platform&>(*platform.render);
+    auto& render = static_cast<typename Platform::render_t&>(*platform.render);
     wlr_output_init_render(native, render.allocator, render.renderer);
 
     if (!wl_list_empty(&native->modes)) {

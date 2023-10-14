@@ -178,9 +178,10 @@ void ApplicationWayland::start(base::operation_mode mode,
     base->session.reset(session);
     session->take_control(base->server->display->native());
 
-    using render_t = render::backend::wlroots::platform<base_t>;
-
     try {
+        using render_t
+            = render::backend::wlroots::platform<base_t,
+                                                 render::wayland::platform<base_t::abstract_type>>;
         base->render = std::make_unique<render_t>(*base);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
@@ -193,7 +194,7 @@ void ApplicationWayland::start(base::operation_mode mode,
     base->input->install_shortcuts();
 
     try {
-        static_cast<render_t&>(*base->render).init();
+        base->render->init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         QCoreApplication::exit(1);
