@@ -56,8 +56,8 @@ class KWIN_EXPORT effects_handler_wrap : public EffectsHandler
 public:
     template<typename Scene>
     effects_handler_wrap(Scene& scene)
-        : loader(std::make_unique<effect_loader>(scene.compositor.platform))
-        , options{*scene.compositor.platform.options}
+        : loader(std::make_unique<effect_loader>(scene.platform))
+        , options{*scene.platform.options}
     {
         qRegisterMetaType<QVector<KWin::EffectWindow*>>();
 
@@ -252,8 +252,8 @@ class effects_handler_impl : public effects_handler_wrap
 public:
     using type = effects_handler_impl<Scene>;
     using scene_t = Scene;
-    using base_t = typename Scene::compositor_t::platform_t::base_t;
-    using space_t = typename Scene::compositor_t::platform_t::space_t;
+    using base_t = typename Scene::platform_t::base_t;
+    using space_t = typename Scene::platform_t::space_t;
     using effect_window_t = typename scene_t::effect_window_t;
 
     effects_handler_impl(Scene& scene)
@@ -280,12 +280,12 @@ public:
 
     xcb_connection_t* xcbConnection() const override
     {
-        return scene.compositor.platform.base.x11_data.connection;
+        return scene.platform.base.x11_data.connection;
     }
 
     xcb_window_t x11RootWindow() const override
     {
-        return scene.compositor.platform.base.x11_data.root_window;
+        return scene.platform.base.x11_data.root_window;
     }
 
     QPainter* scenePainter() override
@@ -315,22 +315,22 @@ public:
 
     void addRepaintFull() override
     {
-        full_repaint(scene.compositor);
+        full_repaint(scene.platform);
     }
 
     void addRepaint(const QRect& r) override
     {
-        scene.compositor.addRepaint(r);
+        scene.platform.addRepaint(r);
     }
 
     void addRepaint(const QRegion& r) override
     {
-        scene.compositor.addRepaint(r);
+        scene.platform.addRepaint(r);
     }
 
     void addRepaint(int x, int y, int w, int h) override
     {
-        scene.compositor.addRepaint(QRegion(x, y, w, h));
+        scene.platform.addRepaint(QRegion(x, y, w, h));
     }
 
     void final_paint_screen(paint_type mask, effect::screen_paint_data& data) override
@@ -379,18 +379,16 @@ public:
     QList<QKeySequence> registerGlobalShortcut(QList<QKeySequence> const& shortcut,
                                                QAction* action) override
     {
-        scene.compositor.platform.base.input->shortcuts->register_keyboard_shortcut(action,
-                                                                                    shortcut);
-        scene.compositor.platform.base.input->registerShortcut(
+        scene.platform.base.input->shortcuts->register_keyboard_shortcut(action, shortcut);
+        scene.platform.base.input->registerShortcut(
             shortcut.empty() ? QKeySequence() : shortcut.front(), action);
-        return scene.compositor.platform.base.input->shortcuts->get_keyboard_shortcut(action);
+        return scene.platform.base.input->shortcuts->get_keyboard_shortcut(action);
     }
 
     QList<QKeySequence> registerGlobalShortcutAndDefault(QList<QKeySequence> const& shortcut,
                                                          QAction* action) override
     {
-        scene.compositor.platform.base.input->shortcuts->register_keyboard_default_shortcut(
-            action, shortcut);
+        scene.platform.base.input->shortcuts->register_keyboard_default_shortcut(action, shortcut);
         return registerGlobalShortcut(shortcut, action);
     }
 
@@ -398,7 +396,7 @@ public:
                                  Qt::MouseButton pointerButtons,
                                  QAction* action) override
     {
-        scene.compositor.platform.base.input->shortcuts->registerPointerShortcut(
+        scene.platform.base.input->shortcuts->registerPointerShortcut(
             action, modifiers, pointerButtons);
     }
 
@@ -406,7 +404,7 @@ public:
                               PointerAxisDirection axis,
                               QAction* action) override
     {
-        scene.compositor.platform.base.input->shortcuts->registerAxisShortcut(
+        scene.platform.base.input->shortcuts->registerAxisShortcut(
             action, modifiers, static_cast<win::pointer_axis_direction>(axis));
     }
 
@@ -415,7 +413,7 @@ public:
                                        QAction* action,
                                        std::function<void(qreal)> progressCallback) override
     {
-        scene.compositor.platform.base.input->shortcuts->registerTouchpadSwipe(
+        scene.platform.base.input->shortcuts->registerTouchpadSwipe(
             static_cast<win::swipe_direction>(direction), fingerCount, action, progressCallback);
     }
 
@@ -424,7 +422,7 @@ public:
                                        QAction* action,
                                        std::function<void(qreal)> progressCallback) override
     {
-        scene.compositor.platform.base.input->shortcuts->registerTouchpadPinch(
+        scene.platform.base.input->shortcuts->registerTouchpadPinch(
             static_cast<win::pinch_direction>(direction), fingerCount, action, progressCallback);
     }
 
@@ -433,7 +431,7 @@ public:
                                           QAction* action,
                                           std::function<void(qreal)> progressCallback) override
     {
-        scene.compositor.platform.base.input->shortcuts->registerTouchscreenSwipe(
+        scene.platform.base.input->shortcuts->registerTouchscreenSwipe(
             action, progressCallback, static_cast<win::swipe_direction>(direction), fingerCount);
     }
 
@@ -546,7 +544,7 @@ public:
 
     QQmlEngine* qmlEngine() const override
     {
-        auto& script = scene.compositor.platform.base.script;
+        auto& script = scene.platform.base.script;
         return script ? script->qml_engine : nullptr;
     }
 
@@ -666,12 +664,12 @@ public:
 
     int workspaceWidth() const override
     {
-        return desktopGridWidth() * scene.compositor.platform.base.topology.size.width();
+        return desktopGridWidth() * scene.platform.base.topology.size.width();
     }
 
     int workspaceHeight() const override
     {
-        return desktopGridHeight() * scene.compositor.platform.base.topology.size.height();
+        return desktopGridHeight() * scene.platform.base.topology.size.height();
     }
 
     int desktopAtCoords(QPoint coords) const override
@@ -697,7 +695,7 @@ public:
             return QPoint(-1, -1);
         }
 
-        auto const& space_size = scene.compositor.platform.base.topology.size;
+        auto const& space_size = scene.platform.base.topology.size;
         return QPoint(coords.x() * space_size.width(), coords.y() * space_size.height());
     }
 
@@ -875,7 +873,7 @@ public:
 
     EffectScreen* screenAt(const QPoint& point) const override
     {
-        auto const& outputs = scene.compositor.platform.base.outputs;
+        auto const& outputs = scene.platform.base.outputs;
         auto output = base::get_nearest_output(outputs, point);
         if (!output) {
             return nullptr;
@@ -933,12 +931,12 @@ public:
 
     QSize virtualScreenSize() const override
     {
-        return scene.compositor.platform.base.topology.size;
+        return scene.platform.base.topology.size;
     }
 
     QRect virtualScreenGeometry() const override
     {
-        return QRect({}, scene.compositor.platform.base.topology.size);
+        return QRect({}, scene.platform.base.topology.size);
     }
 
     void reserveElectricBorder(ElectricBorder border, Effect* effect) override
@@ -1013,7 +1011,7 @@ public:
         }
 
         // Might be at shutdown with space already gone.
-        if (scene.compositor.platform.base.space && get_space().edges) {
+        if (scene.platform.base.space && get_space().edges) {
             for (auto& [key, id] : it->second) {
                 get_space().edges->unreserve(static_cast<win::electric_border>(key), id);
             }
@@ -1055,24 +1053,24 @@ public:
 
     QByteArray readRootProperty(long atom, long type, int format) const override
     {
-        return x11::read_root_property(scene.compositor.platform.base, atom, type, format);
+        return x11::read_root_property(scene.platform.base, atom, type, format);
     }
 
     KSharedConfigPtr config() const override
     {
-        return scene.compositor.platform.base.config.main;
+        return scene.platform.base.config.main;
     }
 
     KSharedConfigPtr inputConfig() const override
     {
-        return scene.compositor.platform.base.input->config.main;
+        return scene.platform.base.input->config.main;
     }
 
     void reconfigure_effect_impl(QString const& name) override
     {
         for (auto it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it)
             if ((*it).first == name) {
-                scene.compositor.platform.base.config.main->reparseConfiguration();
+                scene.platform.base.config.main->reparseConfiguration();
                 makeOpenGLContextCurrent();
                 (*it).second->reconfigure(Effect::ReconfigureAll);
                 return;
@@ -1192,7 +1190,7 @@ public:
 
     auto& get_space() const
     {
-        return *scene.compositor.platform.base.space;
+        return *scene.platform.base.space;
     }
 
     QList<EffectScreen*> m_effectScreens;

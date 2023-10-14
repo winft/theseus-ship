@@ -33,7 +33,7 @@ template<typename Window>
 class effects_window_impl : public EffectWindow
 {
 public:
-    using space_t = typename Window::scene_t::compositor_t::space_t;
+    using space_t = typename Window::scene_t::platform_t::space_t;
     using base_t = typename space_t::base_t;
 
     explicit effects_window_impl(Window& window)
@@ -272,10 +272,10 @@ public:
     {
         return std::visit(overload{[this](auto&& ref_win) -> EffectScreen* {
                               auto output = ref_win->topo.central_output;
-                              if (!output || !window.compositor.effects) {
+                              if (!output || !window.platform.effects) {
                                   return nullptr;
                               }
-                              return get_effect_screen(*window.compositor.effects, *output);
+                              return get_effect_screen(*window.platform.effects, *output);
                           }},
                           *window.ref_win);
     }

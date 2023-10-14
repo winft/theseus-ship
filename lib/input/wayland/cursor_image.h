@@ -306,7 +306,7 @@ private:
             setSource(CursorSource::WindowSelector);
             return;
         }
-        if (auto& effects = redirect.platform.base.render->compositor->effects;
+        if (auto& effects = redirect.platform.base.render->effects;
             effects && effects->isMouseInterception()) {
             setSource(CursorSource::EffectsOverride);
             return;

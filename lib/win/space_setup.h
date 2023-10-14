@@ -205,7 +205,7 @@ void clear_space(Space& space)
     for (auto const& s : space.session)
         delete s;
 
-    space.base.render->compositor->space = nullptr;
+    space.base.render->space = nullptr;
 }
 
 }

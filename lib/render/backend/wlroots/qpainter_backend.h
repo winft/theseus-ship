@@ -15,11 +15,11 @@ namespace KWin::render::backend::wlroots
 {
 
 template<typename Platform>
-class qpainter_backend : public qpainter::backend<qpainter::scene<typename Platform::compositor_t>>
+class qpainter_backend : public qpainter::backend<qpainter::scene<typename Platform::abstract_type>>
 {
 public:
     using type = qpainter_backend<Platform>;
-    using qpainter_scene = qpainter::scene<typename Platform::compositor_t>;
+    using qpainter_scene = qpainter::scene<typename Platform::abstract_type>;
     using abstract_type = qpainter::backend<qpainter_scene>;
     using output_t = typename Platform::output_t;
     using qpainter_output_t = qpainter_output<output_t>;

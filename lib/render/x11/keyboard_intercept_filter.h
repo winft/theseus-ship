@@ -20,7 +20,7 @@ class keyboard_intercept_filter : public base::x11::event_filter
 {
 public:
     keyboard_intercept_filter(Effects& effects, Xkb const& xkb)
-        : base::x11::event_filter(*effects.scene.compositor.platform.base.x11_event_filters,
+        : base::x11::event_filter(*effects.scene.platform.base.x11_event_filters,
                                   QVector<int>{XCB_KEY_PRESS, XCB_KEY_RELEASE})
         , xkb{xkb}
         , effects{effects}

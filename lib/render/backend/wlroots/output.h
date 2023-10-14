@@ -12,7 +12,6 @@
 
 #include "base/utils.h"
 #include "base/wayland/server.h"
-#include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
 #include "render/wayland/presentation.h"
 

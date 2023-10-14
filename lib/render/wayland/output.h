@@ -50,7 +50,7 @@ class output : public QObject
 {
 public:
     using space_t = typename Platform::space_t;
-    using window_t = typename Platform::compositor_t::window_t;
+    using window_t = typename Platform::window_t;
 
     output(Base& base, Platform& platform)
         : platform{platform}
@@ -61,9 +61,7 @@ public:
 
     virtual void reset()
     {
-        if (platform.compositor) {
-            platform.compositor->addRepaint(base.geometry());
-        }
+        platform.addRepaint(base.geometry());
     }
 
     void disable()
@@ -83,7 +81,7 @@ public:
 
     void set_delay(presentation_data const& data)
     {
-        auto& scene = platform.compositor->scene;
+        auto& scene = platform.scene;
         if (!scene->isOpenGl()) {
             return;
         }
@@ -91,7 +89,7 @@ public:
             return;
         }
 
-        static_cast<gl::scene<typename Platform::compositor_t>&>(*scene).backend()->makeCurrent();
+        static_cast<gl::scene<Platform>&>(*scene).backend()->makeCurrent();
 
         // First get the latest Gl timer queries.
         std::chrono::nanoseconds render_time_debug;
@@ -173,7 +171,7 @@ public:
             return;
         }
 
-        platform.compositor->presentation->template frame<var_win>(this, {var_win(window)});
+        platform.presentation->template frame<var_win>(this, {var_win(window)});
         frame_timer.start(
             std::chrono::duration_cast<std::chrono::milliseconds>(refresh_length()).count(), this);
     }
@@ -198,8 +196,8 @@ public:
         auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
 
         // Start the actual painting process.
-        auto const duration = std::chrono::nanoseconds(
-            platform.compositor->scene->paint_output(&base, repaints, windows, now));
+        auto const duration
+            = std::chrono::nanoseconds(platform.scene->paint_output(&base, repaints, windows, now));
 
 #if SWAP_TIME_DEBUG
         qDebug().noquote() << "RUN gap:" << to_ms(now_ns - swap_ref_time)
@@ -211,7 +209,7 @@ public:
         retard_next_run();
 
         if (!windows.empty()) {
-            platform.compositor->presentation->lock(this, windows);
+            platform.presentation->lock(this, windows);
         }
 
         for (auto win : windows) {
@@ -228,7 +226,7 @@ public:
 
     void dry_run()
     {
-        auto windows = win::render_stack(platform.compositor->space->stacking.order);
+        auto windows = win::render_stack(platform.space->stacking.order);
         std::deque<typename space_t::window_t> frame_windows;
 
         for (auto win : windows) {
@@ -248,18 +246,18 @@ public:
                        }},
                        win);
         }
-        platform.compositor->presentation->frame(this, frame_windows);
+        platform.presentation->frame(this, frame_windows);
     }
 
     void presented(presentation_data const& data)
     {
-        platform.compositor->presentation->presented(this, data);
+        platform.presentation->presented(this, data);
         last_presentation = data;
     }
 
     void frame()
     {
-        platform.compositor->presentation->presented(this, last_presentation);
+        platform.presentation->presented(this, last_presentation);
 
         if (!swap_pending) {
             qCWarning(KWIN_CORE)
@@ -321,12 +319,12 @@ private:
         if (swap_pending) {
             return false;
         }
-        if (platform.compositor->is_locked()) {
+        if (platform.is_locked()) {
             return false;
         }
 
         // Create a list of all windows in the stacking order
-        windows = win::render_stack(platform.compositor->space->stacking.order);
+        windows = win::render_stack(platform.space->stacking.order);
         bool has_window_repaints{false};
         std::deque<typename space_t::window_t> frame_windows;
 
@@ -383,7 +381,7 @@ private:
         }
 
         // Move elevated windows to the top of the stacking order
-        auto const elevated_windows = platform.compositor->effects->elevatedWindows();
+        auto const elevated_windows = platform.effects->elevatedWindows();
         for (auto effect_window : elevated_windows) {
             auto window
                 = static_cast<effects_window_impl<window_t>*>(effect_window)->window.ref_win;
@@ -394,14 +392,14 @@ private:
 
         if (repaints_region.isEmpty() && !has_window_repaints) {
             idle = true;
-            platform.compositor->check_idle();
+            platform.check_idle();
 
             // This means the next time we composite it is done without timer delay.
             delay = std::chrono::nanoseconds::zero();
 
             if (!frame_windows.empty()) {
                 // Some windows want a frame event still.
-                platform.compositor->presentation->frame(this, frame_windows);
+                platform.presentation->frame(this, frame_windows);
             }
             return false;
         }
@@ -443,7 +441,7 @@ private:
 
     void retard_next_run()
     {
-        if (platform.compositor->scene->hasSwapEvent()) {
+        if (platform.scene->hasSwapEvent()) {
             // We wait on an explicit callback from the backend to unlock next composition runs.
             return;
         }

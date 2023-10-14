@@ -527,11 +527,11 @@ void init_shortcuts(Space& space)
     def(kli18n("Kill Window"), Qt::META | Qt::CTRL | Qt::Key_Escape, start_window_killer<Space>);
     def6(kli18n("Suspend Compositing"),
          Qt::SHIFT | Qt::ALT | Qt::Key_F12,
-         space.base.render->compositor->qobject.get(),
-         [compositor = space.base.render->compositor.get()] { compositor->toggleCompositing(); });
+         space.base.render->qobject.get(),
+         [render = space.base.render.get()] { render->toggleCompositing(); });
     def6(kli18n("Invert Screen Colors"),
          0,
-         space.base.render->compositor->qobject.get(),
+         space.base.render->qobject.get(),
          [render = space.base.render.get()] { render->invertScreen(); });
 
 #if KWIN_BUILD_TABBOX

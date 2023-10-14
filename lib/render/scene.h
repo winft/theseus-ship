@@ -41,7 +41,7 @@ struct scene_windowing_integration {
  drawing of windows to pixmaps and XDamage extension is used to get informed
  about damage (changes) to window contents. This code is mostly in composite.cpp .
 
- Compositor::performCompositing() starts one painting pass. Painting is done
+ platform::performCompositing() starts one painting pass. Painting is done
  by painting the screen, which in turn paints every window. Painting can be affected
  using effects, which are chained. E.g. painting a screen means that actually
  paintScreen() of the first effect is called, which possibly does modifications
@@ -77,18 +77,18 @@ struct scene_windowing_integration {
  repaint certain parts can manually damage them during post-paint and repaint
  of these parts will be done during the next paint pass.
 */
-template<typename Compositor>
+template<typename Platform>
 class scene : public QObject
 {
 public:
-    using compositor_t = Compositor;
-    using window_t = typename compositor_t::window_t;
+    using platform_t = Platform;
+    using window_t = typename platform_t::window_t;
     using effect_window_t = typename window_t::effect_window_t;
     using buffer_t = buffer<window_t>;
-    using output_t = typename compositor_t::platform_t::base_t::output_t;
+    using output_t = typename platform_t::base_t::output_t;
 
-    explicit scene(Compositor& compositor)
-        : compositor{compositor}
+    explicit scene(platform_t& platform)
+        : platform{platform}
     {
         singleton_interface::supports_surfaceless_context
             = [this] { return supportsSurfacelessContext(); };
@@ -170,10 +170,6 @@ public:
      */
     virtual bool animationsSupported() const = 0;
 
-    /**
-     * The QPainter used by a QPainter based compositor scene.
-     * Default implementation returns @c nullptr;
-     */
     virtual QPainter* scenePainter() const
     {
         return nullptr;
@@ -202,7 +198,7 @@ public:
         ref_win->render->invalidateQuadsCache();
     }
 
-    Compositor& compositor;
+    platform_t& platform;
     scene_windowing_integration windowing_integration;
 
     uint32_t window_id{0};
@@ -233,12 +229,12 @@ public:
                      QRegion* validRegion,
                      std::chrono::milliseconds presentTime)
     {
-        auto const& space_size = compositor.platform.base.topology.size;
+        auto const& space_size = platform.base.topology.size;
         const QRegion displayRegion(0, 0, space_size.width(), space_size.height());
         mask = (damage == displayRegion) ? paint_type::none : paint_type::screen_region;
 
         assert(repaint_output);
-        auto effect_screen = compositor.effects->findScreen(repaint_output->name());
+        auto effect_screen = platform.effects->findScreen(repaint_output->name());
         assert(effect_screen);
 
         if (Q_UNLIKELY(presentTime < m_expectedPresentTimestamp)) {
@@ -251,7 +247,7 @@ public:
         }
 
         // preparation step
-        compositor.effects->startPaint();
+        platform.effects->startPaint();
 
         QRegion region = damage;
 
@@ -265,7 +261,7 @@ public:
             .present_time = m_expectedPresentTimestamp,
         };
 
-        compositor.effects->prePaintScreen(pre_data);
+        platform.effects->prePaintScreen(pre_data);
 
         mask = static_cast<paint_type>(pre_data.paint.mask);
         region = pre_data.paint.region;
@@ -302,14 +298,14 @@ public:
             .render = render,
         };
 
-        compositor.effects->paintScreen(data);
+        platform.effects->paintScreen(data);
         render.targets = data.render.targets;
 
         for (auto const& w : stacking_order) {
-            compositor.effects->postPaintWindow(w->effect.get());
+            platform.effects->postPaintWindow(w->effect.get());
         }
 
-        compositor.effects->postPaintScreen();
+        platform.effects->postPaintScreen();
 
         // make sure not to go outside of the screen area
         *updateRegion = damaged_region;
@@ -382,7 +378,7 @@ public:
             };
 
             // preparation step
-            compositor.effects->prePaintWindow(win_data);
+            platform.effects->prePaintWindow(win_data);
 
 #if !defined(QT_NO_DEBUG)
             if (win_data.quads.isTransformed()) {
@@ -401,7 +397,7 @@ public:
             paintWindow(data.render, data2.window, data2.mask, data2.region, data2.quads);
         }
 
-        auto const& space_size = compositor.platform.base.topology.size;
+        auto const& space_size = platform.base.topology.size;
         damaged_region = QRegion(0, 0, space_size.width(), space_size.height());
     }
 
@@ -464,7 +460,7 @@ public:
         data.quads = win->buildQuads();
 
         // preparation step
-        compositor.effects->prePaintWindow(data);
+        platform.effects->prePaintWindow(data);
 
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
@@ -512,7 +508,7 @@ public:
         const QRegion repaintClip = repaint_region - dirtyArea;
         dirtyArea |= repaint_region;
 
-        auto const& space_size = compositor.platform.base.topology.size;
+        auto const& space_size = platform.base.topology.size;
         const QRegion displayRegion(0, 0, space_size.width(), space_size.height());
         bool fullRepaint(dirtyArea == displayRegion); // spare some expensive region operations
         if (!fullRepaint) {
@@ -592,7 +588,7 @@ public:
     // called after all effects had their paintWindow() called, eventually by paintWindow() below
     void finalPaintWindow(effect::window_paint_data& data)
     {
-        compositor.effects->drawWindow(data);
+        platform.effects->drawWindow(data);
     }
 
     // shared implementation, starts painting the window
@@ -603,7 +599,7 @@ public:
                      WindowQuadList quads)
     {
         // no painting outside visible screen (and no transformations)
-        region &= QRect({}, compositor.platform.base.topology.size);
+        region &= QRect({}, platform.base.topology.size);
         if (region.isEmpty()) {
             // completely clipped
             return;
@@ -619,7 +615,7 @@ public:
             render_data,
         };
 
-        compositor.effects->paintWindow(data);
+        platform.effects->paintWindow(data);
         render_data.targets = data.render.targets;
     }
 
@@ -629,7 +625,7 @@ public:
         auto& eff_win = static_cast<effect_window_t&>(data.window);
         auto mask = static_cast<paint_type>(data.paint.mask);
 
-        if (base::wayland::is_screen_locked(compositor.platform.base)) {
+        if (base::wayland::is_screen_locked(platform.base)) {
             if (!std::visit(
                     overload{[](auto&& win) {
                         auto do_draw{false};

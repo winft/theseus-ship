@@ -41,7 +41,7 @@ TEST_CASE("window open close animation", "[effect]")
 
     setup.start();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -54,7 +54,7 @@ TEST_CASE("window open close animation", "[effect]")
         auto effectName = GENERATE(QString("fade"), QString("glide"), QString("scale"));
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
 
         // Load effect that will be tested.
@@ -98,7 +98,7 @@ TEST_CASE("window open close animation", "[effect]")
         auto effectName = GENERATE(QString("fade"), QString("glide"), QString("scale"));
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
 
         // Create the main window.

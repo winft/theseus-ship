@@ -38,9 +38,9 @@ class effects_handler_impl : public render::effects_handler_impl<Scene>
 public:
     effects_handler_impl(Scene& scene)
         : render::effects_handler_impl<Scene>(scene)
-        , blur{*this, *scene.compositor.platform.base.server->display}
-        , contrast{*this, *scene.compositor.platform.base.server->display}
-        , slide{*this, *scene.compositor.platform.base.server->display}
+        , blur{*this, *scene.platform.base.server->display}
+        , contrast{*this, *scene.platform.base.server->display}
+        , slide{*this, *scene.platform.base.server->display}
     {
         effect_setup_handler(*this);
     }
@@ -60,8 +60,8 @@ public:
 
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* surface) const override
     {
-        if (auto win = win::wayland::space_windows_find(*this->scene.compositor.platform.base.space,
-                                                        surface)) {
+        if (auto win
+            = win::wayland::space_windows_find(*this->scene.platform.base.space, surface)) {
             return win->render->effect.get();
         }
         return nullptr;
@@ -69,7 +69,7 @@ public:
 
     Wrapland::Server::Display* waylandDisplay() const override
     {
-        return this->scene.compositor.platform.base.server->display.get();
+        return this->scene.platform.base.server->display.get();
     }
 
     effect::region_integration& get_blur_integration() override
@@ -99,7 +99,7 @@ public:
 protected:
     void doStartMouseInterception(Qt::CursorShape shape) override
     {
-        auto& space = this->scene.compositor.platform.base.space;
+        auto& space = this->scene.platform.base.space;
         space->input->pointer->setEffectsOverrideCursor(shape);
         if (auto& mov_res = space->move_resize_window) {
             std::visit(overload{[&](auto&& win) { win::end_move_resize(win); }}, *mov_res);
@@ -108,7 +108,7 @@ protected:
 
     void doStopMouseInterception() override
     {
-        this->scene.compositor.platform.base.space->input->pointer->removeEffectsOverrideCursor();
+        this->scene.platform.base.space->input->pointer->removeEffectsOverrideCursor();
     }
 
     void handle_effect_destroy(Effect& effect) override

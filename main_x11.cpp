@@ -19,7 +19,6 @@
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/shortcuts_init.h"
-#include "render/x11/compositor.h"
 #include "script/platform.h"
 #include "win/shortcuts_init.h"
 #include "win/x11/space.h"
@@ -185,12 +184,13 @@ ApplicationX11::ApplicationX11(int &argc, char **argv)
 ApplicationX11::~ApplicationX11()
 {
     base.space.reset();
-    base.render->compositor.reset();
-    if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE)   // If there was no --replace (no new WM)
+    if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE) {
+        // If there was no --replace (no new WM)
         xcb_set_input_focus(base.x11_data.connection,
                             XCB_INPUT_FOCUS_POINTER_ROOT,
                             XCB_INPUT_FOCUS_POINTER_ROOT,
                             base.x11_data.time);
+    }
 }
 
 void ApplicationX11::setReplace(bool replace)
@@ -203,7 +203,7 @@ void ApplicationX11::lostSelection()
     sendPostedEvents();
     event_filter.reset();
     base.space.reset();
-    base.render->compositor.reset();
+    base.render.reset();
 
     // Remove windowmanager privileges
     base::x11::xcb::select_input(
@@ -261,8 +261,6 @@ void ApplicationX11::start()
             ::exit(1);
         }
 
-        render->compositor = std::make_unique<base_t::render_t::compositor_t>(*render);
-
         try {
             base.space = std::make_unique<base_t::space_t>(*base.render, *base.input);
         } catch(std::exception& ex) {
@@ -277,7 +275,7 @@ void ApplicationX11::start()
         installNativeEventFilter(event_filter.get());
 
         base.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
-        render->compositor->start(*base.space);
+        render->start(*base.space);
 
         // Trigger possible errors, there's still a chance to abort.
         base::x11::xcb::sync(base.x11_data.connection);

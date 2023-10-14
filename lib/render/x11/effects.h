@@ -70,7 +70,7 @@ public:
 
     void defineCursor(Qt::CursorShape shape) override
     {
-        auto const c = this->scene.compositor.platform.base.space->input->cursor->x11_cursor(shape);
+        auto const c = this->scene.platform.base.space->input->cursor->x11_cursor(shape);
         if (c != XCB_CURSOR_NONE) {
             mouse_intercept.window.define_cursor(c);
         }
@@ -104,12 +104,11 @@ public:
 protected:
     bool doGrabKeyboard() override
     {
-        if (!this->scene.compositor.platform.base.input->grab_keyboard()) {
+        if (!this->scene.platform.base.input->grab_keyboard()) {
             return false;
         }
 
-        auto xkb = this->scene.compositor.platform.base.space->input->xinput->fake_devices.keyboard
-                       ->xkb.get();
+        auto xkb = this->scene.platform.base.space->input->xinput->fake_devices.keyboard->xkb.get();
         using xkb_keyboard_t = std::remove_pointer_t<decltype(xkb)>;
         keyboard_intercept.filter
             = std::make_unique<keyboard_intercept_filter<type, xkb_keyboard_t>>(*this, *xkb);
@@ -119,13 +118,13 @@ protected:
 
     void doUngrabKeyboard() override
     {
-        this->scene.compositor.platform.base.input->ungrab_keyboard();
+        this->scene.platform.base.input->ungrab_keyboard();
         keyboard_intercept.filter.reset();
     }
 
     void doStartMouseInterception(Qt::CursorShape shape) override
     {
-        auto const& base = this->scene.compositor.platform.base;
+        auto const& base = this->scene.platform.base;
 
         // NOTE: it is intended to not perform an XPointerGrab on X11. See documentation in
         // kwineffects.h The mouse grab is implemented by using a full screen input only window
@@ -159,8 +158,7 @@ protected:
     {
         mouse_intercept.window.unmap();
         mouse_intercept.filter.reset();
-        win::x11::stack_screen_edges_under_override_redirect(
-            this->scene.compositor.platform.base.space.get());
+        win::x11::stack_screen_edges_under_override_redirect(this->scene.platform.base.space.get());
     }
 
     void doCheckInputWindowStacking() override
@@ -169,7 +167,7 @@ protected:
 
         // Raise electric border windows above the input windows so they can still be triggered.
         // TODO: Do both at once.
-        auto const& base = this->scene.compositor.platform.base;
+        auto const& base = this->scene.platform.base;
         base::x11::xcb::restack_windows_with_raise(
             base.x11_data.connection, win::x11::screen_edges_windows(*base.space->edges));
     }

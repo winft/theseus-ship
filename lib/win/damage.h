@@ -25,7 +25,7 @@ QRegion repaints(Win const& win)
 template<typename Win>
 void add_repaint(Win& win, QRegion const& region)
 {
-    if (!win.space.base.render->compositor->scene) {
+    if (!win.space.base.render->scene) {
         return;
     }
     win.render_data.repaints_region += region;
@@ -73,7 +73,7 @@ void set_ready_for_painting(Win& win)
 
     win.render_data.ready_for_painting = true;
 
-    if (win.space.base.render->compositor->scene) {
+    if (win.space.base.render->scene) {
         add_full_repaint(win);
         Q_EMIT win.qobject->windowShown();
     }

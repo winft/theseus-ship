@@ -123,9 +123,9 @@ TEST_CASE("scripted effects", "[effect]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render->compositor);
+    QVERIFY(setup.base->render);
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 

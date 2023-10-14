@@ -184,7 +184,6 @@ target_sources(render-x11
     FILES
       backend/x11/non_composited_outline.h
       x11/buffer.h
-      x11/compositor.h
       x11/compositor_selection_owner.h
       x11/compositor_start.h
       x11/effect.h
@@ -241,7 +240,6 @@ target_sources(render-wl
       wayland/effect/update.h
       wayland/effect/xwayland.h
       wayland/buffer.h
-      wayland/compositor.h
       wayland/duration_record.h
       wayland/effects.h
       wayland/egl.h

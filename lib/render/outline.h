@@ -63,12 +63,9 @@ public:
     {
         if (compositor.state == state::on) {
             return std::make_unique<composited_outline_visual>(
-                this,
-                *compositor.platform.base.script->qml_engine,
-                compositor.platform.base.config);
+                this, *compositor.base.script->qml_engine, compositor.base.config);
         } else {
-            return std::unique_ptr<outline_visual>(
-                compositor.platform.create_non_composited_outline(this));
+            return std::unique_ptr<outline_visual>(compositor.create_non_composited_outline(this));
         }
     }
 

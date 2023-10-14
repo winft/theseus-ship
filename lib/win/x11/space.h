@@ -48,7 +48,7 @@ public:
     using x11_window = window<type>;
     using window_t = std::variant<x11_window*>;
     using window_group_t = x11::group<type>;
-    using render_outline_t = typename base_t::render_t::compositor_t::qobject_t::outline_t;
+    using render_outline_t = typename base_t::render_t::qobject_t::outline_t;
 
     space(Render& render, Input& input)
         : base{input.base}
@@ -58,9 +58,8 @@ public:
         rule_book = std::make_unique<rules::book>();
         subspace_manager = std::make_unique<win::subspace_manager>();
 
-        outline = render_outline_t::create(*render.compositor, [this] {
-            return outline->create_visual(*this->base.render->compositor);
-        });
+        outline = render_outline_t::create(render,
+                                           [&, this] { return outline->create_visual(render); });
         deco = std::make_unique<deco::bridge<type>>(*this);
         appmenu = std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this));
         user_actions_menu = std::make_unique<win::user_actions_menu<type>>(*this);

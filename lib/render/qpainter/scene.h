@@ -18,12 +18,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::render::qpainter
 {
 
-template<typename Compositor>
-class scene : public render::scene<Compositor>
+template<typename Platform>
+class scene : public render::scene<Platform>
 {
 public:
-    using type = scene<Compositor>;
-    using abstract_type = render::scene<Compositor>;
+    using type = scene<Platform>;
+    using abstract_type = render::scene<Platform>;
 
     using window_t = typename abstract_type::window_t;
     using qpainter_window_t = qpainter::window<typename window_t::ref_t, type>;
@@ -32,9 +32,9 @@ public:
 
     using output_t = typename abstract_type::output_t;
 
-    explicit scene(Compositor& compositor)
-        : abstract_type(compositor)
-        , m_backend{compositor.platform.get_qpainter_backend(compositor)}
+    explicit scene(Platform& platform)
+        : abstract_type(platform)
+        , m_backend{platform.get_qpainter_backend()}
         , m_painter(new QPainter())
     {
         QQuickWindow::setSceneGraphBackend("software");
@@ -56,7 +56,7 @@ public:
         auto const needsFullRepaint = m_backend->needsFullRepaint();
         if (needsFullRepaint) {
             mask |= render::paint_type::screen_background_first;
-            damage = QRect({}, this->compositor.platform.base.topology.size);
+            damage = QRect({}, this->platform.base.topology.size);
         }
 
         auto const geometry = output->geometry();
@@ -109,7 +109,7 @@ public:
         m_painter->save();
         m_painter->translate(data.paint.geo.translation.x(), data.paint.geo.translation.y());
         m_painter->scale(data.paint.geo.scale.x(), data.paint.geo.scale.y());
-        render::scene<Compositor>::paintGenericScreen(mask, data);
+        render::scene<Platform>::paintGenericScreen(mask, data);
         m_painter->restore();
     }
 
@@ -164,7 +164,7 @@ protected:
 
     void paintCursor()
     {
-        auto cursor = this->compositor.software_cursor.get();
+        auto cursor = this->platform.software_cursor.get();
         if (!cursor->enabled) {
             return;
         }
@@ -172,7 +172,7 @@ protected:
         if (img.isNull()) {
             return;
         }
-        auto const cursorPos = this->compositor.platform.base.space->input->cursor->pos();
+        auto const cursorPos = this->platform.base.space->input->cursor->pos();
         auto const hotspot = cursor->hotspot();
         m_painter->drawImage(cursorPos - hotspot, img);
         cursor->mark_as_rendered();
@@ -180,7 +180,7 @@ protected:
 
     void paintEffectQuickView(EffectQuickView* view) override
     {
-        auto painter = this->compositor.effects->scenePainter();
+        auto painter = this->platform.effects->scenePainter();
         const QImage buffer = view->bufferAsImage();
         if (buffer.isNull()) {
             return;
@@ -196,11 +196,11 @@ private:
     QScopedPointer<QPainter> m_painter;
 };
 
-template<typename Compositor>
-std::unique_ptr<render::scene<Compositor>> create_scene(Compositor& compositor)
+template<typename Platform>
+std::unique_ptr<render::scene<Platform>> create_scene(Platform& platform)
 {
     qCDebug(KWIN_CORE) << "Creating QPainter scene.";
-    return std::make_unique<qpainter::scene<Compositor>>(compositor);
+    return std::make_unique<qpainter::scene<Platform>>(platform);
 }
 
 }

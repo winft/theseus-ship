@@ -163,7 +163,7 @@ public:
 
     void update_have_resize_effect()
     {
-        auto& effects = m_win->space.base.render->compositor->effects;
+        auto& effects = m_win->space.base.render->effects;
         have_resize_effect
             = effects && effects->provides_comp(static_cast<int>(effect_feature::Resize));
     }

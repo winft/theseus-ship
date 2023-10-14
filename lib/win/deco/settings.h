@@ -30,7 +30,7 @@ public:
         initButtons();
         readSettings();
 
-        auto comp_qobject = space.base.render->compositor->qobject.get();
+        auto comp_qobject = space.base.render->qobject.get();
         using comp_qobject_t = std::remove_pointer_t<decltype(comp_qobject)>;
 
         auto c = connect(comp_qobject,
@@ -58,7 +58,7 @@ public:
 
     bool isAlphaChannelSupported() const override
     {
-        auto comp = space.base.render->compositor.get();
+        auto comp = space.base.render.get();
         using comp_t = std::remove_pointer_t<decltype(comp)>;
         return comp->state == comp_t::state_t::on;
     }

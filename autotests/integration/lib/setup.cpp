@@ -75,7 +75,13 @@ setup::setup(std::string const& test_name,
 
     base->session = std::make_unique<base::seat::backend::wlroots::session>(base->wlroots_session,
                                                                             headless_backend);
-    base->render = std::make_unique<render::backend::wlroots::platform<base_t>>(*base);
+
+    try {
+        base->render = std::make_unique<render::backend::wlroots::platform<base_t>>(*base);
+    } catch (std::system_error const& exc) {
+        std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
+        throw;
+    }
 
     base->process_environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
     prepare_sys_env(socket_name);
@@ -89,7 +95,7 @@ setup::~setup()
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
     if (effects) {
-        base->render->compositor->effects->unloadAllEffects();
+        base->render->effects->unloadAllEffects();
     }
 
     // Kill Xwayland before terminating its connection.
@@ -98,10 +104,9 @@ setup::~setup()
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    base->render->compositor->lock();
+    base->render->lock();
 
     base->space.reset();
-    base->render->compositor.reset();
 
     current_setup = nullptr;
 }
@@ -142,20 +147,13 @@ void setup::start()
     metadata.physical_size = {1280, 1024};
     out->wrapland_output()->set_metadata(metadata);
 
-    try {
-        base->render->compositor = std::make_unique<base_t::render_t::compositor_t>(*base->render);
-    } catch (std::system_error const& exc) {
-        std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
-        return;
-    }
-
     base->space = std::make_unique<base_t::space_t>(*base->render, *base->input);
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     render::init_shortcuts(*base->render);
     base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
-    base->render->compositor->start(*base->space);
+    base->render->start(*base->space);
     base->server->create_addons([this] { handle_server_addons_created(); });
 
     TRY_REQUIRE_WITH_TIMEOUT(ready, 10000);

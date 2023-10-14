@@ -75,8 +75,8 @@ auto find_window(Redirect const& redirect, QPoint const& pos)
     // TODO: check whether the unmanaged wants input events at all
     if (!base::wayland::is_screen_locked(redirect.platform.base)) {
         // if an effect overrides the cursor we don't have a window to focus
-        if (redirect.platform.base.render->compositor->effects
-            && redirect.platform.base.render->compositor->effects->isMouseInterception()) {
+        if (redirect.platform.base.render->effects
+            && redirect.platform.base.render->effects->isMouseInterception()) {
             return {};
         }
 

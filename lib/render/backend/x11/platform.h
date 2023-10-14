@@ -34,7 +34,6 @@ public:
     using type = platform<Base>;
     using abstract_type = render::x11::platform<Base>;
     using scene_t = typename abstract_type::scene_t;
-    using compositor_t = typename abstract_type::compositor_t;
 
     platform(Base& base)
         : render::x11::platform<Base>(base)
@@ -50,6 +49,10 @@ public:
             m_openGLFreezeProtectionThread.reset();
         }
         XRenderUtils::cleanup();
+
+        // TODO(romangg): Should be in abstract platform. Still needs the gl backend though.
+        Q_EMIT this->qobject->aboutToDestroy();
+        compositor_stop(*this, true);
     }
 
     void init()
@@ -61,11 +64,10 @@ public:
         XRenderUtils::init(this->base.x11_data.connection, this->base.x11_data.root_window);
     }
 
-    gl::backend<gl::scene<compositor_t>, abstract_type>*
-    get_opengl_backend(compositor_t& compositor) override
+    gl::backend<gl::scene<abstract_type>, abstract_type>* get_opengl_backend() override
     {
         if (gl_backend) {
-            start_glx_backend(m_x11Display, compositor, *gl_backend);
+            start_glx_backend(m_x11Display, *gl_backend);
             return gl_backend.get();
         }
 
@@ -206,7 +208,7 @@ public:
     void invertScreen() override
     {
         // We prefer inversion via effects.
-        if (this->compositor->effects && this->compositor->effects->invert_screen()) {
+        if (this->effects && this->effects->invert_screen()) {
             return;
         }
 

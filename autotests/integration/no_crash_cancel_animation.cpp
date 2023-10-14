@@ -7,7 +7,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "lib/setup.h"
 
 #include "base/wayland/server.h"
-#include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "script/effect.h"
@@ -28,7 +27,7 @@ TEST_CASE("no crash cancel animation", "[render]")
     test::setup setup("no-crash-cancel-animation");
     setup.start();
 
-    REQUIRE(setup.base->render->compositor);
+    REQUIRE(setup.base->render);
     REQUIRE(effects);
 
     setup_wayland_connection();
@@ -42,8 +41,8 @@ TEST_CASE("no crash cancel animation", "[render]")
                                             *setup.base->render);
     QVERIFY(effect);
 
-    setup.base->render->compositor->effects->loader->effectLoaded(effect, "crashy");
-    QVERIFY(setup.base->render->compositor->effects->isEffectLoaded(QStringLiteral("crashy")));
+    setup.base->render->effects->loader->effectLoaded(effect, "crashy");
+    QVERIFY(setup.base->render->effects->isEffectLoaded(QStringLiteral("crashy")));
 
     using namespace Wrapland::Client;
 

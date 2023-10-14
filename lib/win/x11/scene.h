@@ -138,7 +138,7 @@ void set_opacity(Win& win, double new_opacity)
 
     win.net_info->setOpacity(static_cast<unsigned long>(new_opacity * 0xffffffff));
 
-    if (win.space.base.render->compositor->scene) {
+    if (win.space.base.render->scene) {
         add_full_repaint(win);
         Q_EMIT win.qobject->opacityChanged(old_opacity);
     }
@@ -150,7 +150,7 @@ void setup_compositing(Win& win)
     assert(!win.remnant);
     assert(win.damage.handle == XCB_NONE);
 
-    if (!win.space.base.render->compositor->scene) {
+    if (!win.space.base.render->scene) {
         return;
     }
 
@@ -161,7 +161,7 @@ void setup_compositing(Win& win)
     discard_shape(win);
     win.render_data.damage_region = QRect({}, win.geo.size());
 
-    add_scene_window(*win.space.base.render->compositor->scene, win);
+    add_scene_window(*win.space.base.render->scene, win);
 
     if (win.control) {
         // for internalKeep()
@@ -201,7 +201,7 @@ void set_blocking_compositing(Win& win, bool block)
 template<typename Win>
 void add_scene_window_addon(Win& win)
 {
-    win.space.base.render->compositor->integrate_shadow(win);
+    win.space.base.render->integrate_shadow(win);
 
     auto setup_buffer = [con = win.space.base.x11_data.connection](auto& buffer) {
         using buffer_integration_t = typename Win::space_t::base_t::render_t::buffer_t;

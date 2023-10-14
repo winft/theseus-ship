@@ -169,7 +169,7 @@ public:
 
         this->render->win_integration.setup_buffer = setup_buffer;
         this->render->win_integration.get_viewport = get_viewport;
-        space.base.render->compositor->integrate_shadow(*this);
+        space.base.render->integrate_shadow(*this);
 
         setup_scale_scene_notify(*this);
     }
@@ -539,7 +539,7 @@ public:
             this->control->destroy_plasma_wayland_integration();
         }
 
-        this->space.base.render->compositor->addRepaint(visible_rect(this));
+        this->space.base.render->addRepaint(visible_rect(this));
 
         if (this->control) {
             process_window_hidden(this->space, *this);
@@ -1010,7 +1010,7 @@ public:
         }
 
         if (hide) {
-            this->space.base.render->compositor->addRepaint(visible_rect(this));
+            this->space.base.render->addRepaint(visible_rect(this));
             process_window_hidden(this->space, *this);
             Q_EMIT this->qobject->windowHidden();
         } else {
@@ -1290,7 +1290,7 @@ public:
         if (auto const& damage = surface->state().damage; !damage.isEmpty()) {
             handle_surface_damage(*this, damage);
         } else if (surface->state().updates & Wrapland::Server::surface_change::frame) {
-            this->space.base.render->compositor->schedule_frame_callback(this);
+            this->space.base.render->schedule_frame_callback(this);
         }
 
         if (toplevel || popup) {

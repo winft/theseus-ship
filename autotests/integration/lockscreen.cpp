@@ -127,7 +127,7 @@ TEST_CASE("lockscreen", "[base]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 

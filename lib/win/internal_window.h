@@ -791,7 +791,7 @@ public:
             win::perform_move_resize(this);
         }
 
-        this->space.base.render->compositor->addRepaint(visible_rect(this));
+        this->space.base.render->addRepaint(visible_rect(this));
 
         Q_EMIT this->qobject->frame_geometry_changed(old_frame_geo);
     }

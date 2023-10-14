@@ -121,7 +121,7 @@ std::unique_ptr<Shadow> create_shadow(Win& win, base::x11::xcb::atom const& shad
                 return {};
             }
 
-            auto shadow = ref_win->space.base.render->compositor->scene->createShadow(&win);
+            auto shadow = ref_win->space.base.render->scene->createShadow(&win);
             if (!update_shadow(*shadow, ref_win->space.base.x11_data.connection, data)) {
                 return {};
             }

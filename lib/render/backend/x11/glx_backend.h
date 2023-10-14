@@ -29,20 +29,20 @@ namespace KWin::render::backend::x11
 
 /// OpenGL Backend using GLX over an X overlay window.
 template<typename Platform>
-class glx_backend : public gl::backend<gl::scene<typename Platform::compositor_t>,
+class glx_backend : public gl::backend<gl::scene<typename Platform::abstract_type>,
                                        typename Platform::abstract_type>
 {
 public:
     using type = glx_backend<Platform>;
-    using gl_scene = gl::scene<typename Platform::compositor_t>;
+    using platform_t = Platform;
+    using gl_scene = gl::scene<typename Platform::abstract_type>;
     using abstract_type = gl::backend<gl_scene, typename Platform::abstract_type>;
-    using x11_compositor_t = typename Platform::compositor_t;
 
     glx_backend(Display* display, Platform& platform)
         : abstract_type(platform)
         , platform{platform}
     {
-        start_glx_backend(display, static_cast<x11_compositor_t&>(*platform.compositor), *this);
+        start_glx_backend(display, *this);
     }
 
     ~glx_backend() override
@@ -206,8 +206,8 @@ public:
     glx_data data;
 
     Window window{None};
-    std::unique_ptr<typename x11_compositor_t::overlay_window_t> overlay_window;
-    std::unique_ptr<swap_event_filter<x11_compositor_t>> swap_filter;
+    std::unique_ptr<typename Platform::overlay_window_t> overlay_window;
+    std::unique_ptr<swap_event_filter<Platform>> swap_filter;
     std::unordered_map<xcb_visualid_t, fb_config_info*> fb_configs;
     std::unordered_map<xcb_visualid_t, int> visual_depth_hash;
 
@@ -230,7 +230,7 @@ private:
         if (canSwapBuffers) {
             if (supportsSwapEvents()) {
                 m_needsCompositeTimerStart = false;
-                platform.compositor->aboutToSwapBuffers();
+                platform.aboutToSwapBuffers();
             }
 
             glXSwapBuffers(data.display, data.window);

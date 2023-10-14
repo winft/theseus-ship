@@ -77,7 +77,7 @@ public:
         render::buffer<Window>::updateBuffer();
         auto b = win_integrate.external.get();
 
-        using internal_window = typename Window::scene_t::compositor_t::space_t::internal_window_t;
+        using internal_window = typename Window::scene_t::platform_t::space_t::internal_window_t;
 
         std::visit(overload{[&, this](internal_window*) { image = win_integrate.internal.image; },
                             [&, this](auto&& win) {

@@ -165,7 +165,7 @@ public:
             core.x11.atoms = nullptr;
             win::x11::net::reset_atoms();
 
-            space.base.render->compositor->selection_owner = {};
+            space.base.render->selection_owner = {};
             space.base.x11_data.connection = nullptr;
             Q_EMIT space.base.x11_reset();
         }

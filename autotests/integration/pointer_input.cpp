@@ -262,7 +262,7 @@ TEST_CASE("pointer input", "[input]")
         // is window view effect for top left screen edge loaded
         // TODO(romangg): Use OpenGl in this test and remove the expected fail once we can run tests
         // with OpenGl on CI. See https://gitlab.freedesktop.org/wlroots/wlroots/-/issues/2871.
-        REQUIRE_FALSE(setup.base->render->compositor->effects->isEffectLoaded("windowview"));
+        REQUIRE_FALSE(setup.base->render->effects->isEffectLoaded("windowview"));
         return;
 
         QVERIFY(movedSpy.isEmpty());
@@ -1545,7 +1545,7 @@ TEST_CASE("pointer input", "[input]")
 
         // unload the window view effect because it pushes back
         // pointer if it's at (0, 0)
-        setup.base->render->compositor->effects->unloadEffect(QStringLiteral("windowview"));
+        setup.base->render->effects->unloadEffect(QStringLiteral("windowview"));
 
         // setup screen layout
         auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024},

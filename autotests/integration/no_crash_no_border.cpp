@@ -41,7 +41,7 @@ TEST_CASE("no crash no border", "[win]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 

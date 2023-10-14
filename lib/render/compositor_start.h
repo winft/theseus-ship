@@ -30,7 +30,7 @@ bool compositor_prepare_scene(Compositor& comp)
     }
 
     comp.state = state::starting;
-    comp.platform.options->reloadCompositingSettings(true);
+    comp.options->reloadCompositingSettings(true);
 
     Q_EMIT comp.qobject->aboutToToggleCompositing();
     return true;
@@ -95,7 +95,7 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
                 var_win);
         }
 
-        if constexpr (requires(Compositor comp) { comp.unredirect(); }) {
+        if constexpr (requires { comp.unredirect(); }) {
             comp.unredirect();
         }
 
@@ -111,7 +111,7 @@ void compositor_stop(Compositor& comp, bool on_shutdown)
 
     assert(comp.scene);
     comp.scene.reset();
-    comp.platform.render_stop(on_shutdown);
+    comp.render_stop(on_shutdown);
 
     if constexpr (requires(Compositor& comp) { comp.compositeTimer; }) {
         comp.m_bufferSwapPending = false;
@@ -131,7 +131,7 @@ template<typename Compositor>
 void reinitialize_compositor(Compositor& comp)
 {
     // Reparse config. Config options will be reloaded by start()
-    comp.platform.base.config.main->reparseConfiguration();
+    comp.base.config.main->reparseConfiguration();
 
     // Restart compositing
     compositor_stop(comp, false);
@@ -148,11 +148,11 @@ void reinitialize_compositor(Compositor& comp)
 template<typename Compositor>
 void compositor_setup(Compositor& comp)
 {
-    QObject::connect(comp.platform.options->qobject.get(),
+    QObject::connect(comp.options->qobject.get(),
                      &render::options_qobject::configChanged,
                      comp.qobject.get(),
                      [&] { comp.configChanged(); });
-    QObject::connect(comp.platform.options->qobject.get(),
+    QObject::connect(comp.options->qobject.get(),
                      &render::options_qobject::animationSpeedChanged,
                      comp.qobject.get(),
                      [&] { comp.configChanged(); });

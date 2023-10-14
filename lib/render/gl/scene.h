@@ -29,12 +29,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::render::gl
 {
 
-template<typename Compositor>
-class scene : public render::scene<Compositor>
+template<typename Platform>
+class scene : public render::scene<Platform>
 {
 public:
-    using type = scene<Compositor>;
-    using abstract_type = render::scene<Compositor>;
+    using type = scene<Platform>;
+    using abstract_type = render::scene<Platform>;
 
     using window_t = typename abstract_type::window_t;
     using gl_window_t = gl::window<typename window_t::ref_t, type>;
@@ -42,17 +42,17 @@ public:
     // TODO(romangg): Why can't we use the one from the parent class?
     using effect_window_t = typename abstract_type::effect_window_t;
 
-    using backend_t = gl::backend<type, typename Compositor::platform_t>;
+    using backend_t = gl::backend<type, Platform>;
     using buffer_t = buffer<window_t, type>;
     using texture_t = gl::texture<backend_t>;
 
     using output_t = typename abstract_type::output_t;
 
-    explicit scene(Compositor& compositor)
-        : abstract_type(compositor)
-        , m_backend{compositor.platform.get_opengl_backend(compositor)}
+    explicit scene(Platform& platform)
+        : abstract_type(platform)
+        , m_backend{platform.get_opengl_backend()}
     {
-        if (!viewportLimitsMatched(compositor.platform.base.topology.size)) {
+        if (!viewportLimitsMatched(platform.base.topology.size)) {
             // TODO(romangg): throw?
             return;
         }
@@ -60,13 +60,12 @@ public:
         auto glPlatform = GLPlatform::instance();
 
         // set strict binding
-        if (compositor.platform.options->qobject->isGlStrictBindingFollowsDriver()) {
-            compositor.platform.options->qobject->setGlStrictBinding(
-                !glPlatform->supports(LooseBinding));
+        if (platform.options->qobject->isGlStrictBindingFollowsDriver()) {
+            platform.options->qobject->setGlStrictBinding(!glPlatform->supports(LooseBinding));
         }
 
-        if constexpr (requires(Compositor comp) { comp.create_sync(); }) {
-            compositor.create_sync();
+        if constexpr (requires(Platform platform) { platform.create_sync(); }) {
+            platform.create_sync();
         }
 
         // We only support the OpenGL 2+ shader API, not GL_ARB_shader_objects
@@ -96,8 +95,8 @@ public:
             lanczos = nullptr;
         }
 
-        if constexpr (requires(Compositor comp) { comp.sync; }) {
-            this->compositor.sync = {};
+        if constexpr (requires(Platform platform) { platform.sync; }) {
+            this->platform.sync = {};
         }
     }
 
@@ -147,9 +146,9 @@ public:
     {
         m_backend->try_present();
 
-        if constexpr (requires(Compositor comp) { comp.sync; }) {
-            if (this->compositor.sync && !this->compositor.sync->updateFences()) {
-                this->compositor.sync.reset();
+        if constexpr (requires(Platform platform) { platform.sync; }) {
+            if (this->platform.sync && !this->platform.sync->updateFences()) {
+                this->platform.sync.reset();
             }
         }
     }
@@ -200,9 +199,9 @@ public:
 
     void triggerFence() override
     {
-        if constexpr (requires(Compositor comp) { comp.sync; }) {
-            if (this->compositor.sync) {
-                this->compositor.sync->trigger();
+        if constexpr (requires(Platform platform) { platform.sync; }) {
+            if (this->platform.sync) {
+                this->platform.sync->trigger();
             }
         }
     }
@@ -214,9 +213,9 @@ public:
 
     void insertWait()
     {
-        if constexpr (requires(Compositor comp) { comp.sync; }) {
-            if (this->compositor.sync) {
-                this->compositor.sync->wait();
+        if constexpr (requires(Platform platform) { platform.sync; }) {
+            if (this->platform.sync) {
+                this->platform.sync->wait();
             }
         }
     }
@@ -227,7 +226,7 @@ public:
             makeOpenGLContextCurrent();
             m_backend->try_present();
         }
-        render::scene<Compositor>::idle();
+        render::scene<Platform>::idle();
     }
 
     /**
@@ -284,7 +283,7 @@ protected:
     {
         auto& eff_win = static_cast<effect_window_t&>(data.window);
 
-        if (base::wayland::is_screen_locked(this->compositor.platform.base)) {
+        if (base::wayland::is_screen_locked(this->platform.base)) {
             if (std::visit(overload{[&](auto&& win) {
                                if constexpr (requires(decltype(win) win) { win.isLockScreen(); }) {
                                    if (win->isLockScreen()) {
@@ -311,18 +310,18 @@ protected:
      */
     void paintCursor(effect::render_data const& render)
     {
-        if constexpr (requires(Compositor comp) { comp.software_cursor; }) {
-            auto cursor = this->compositor.software_cursor.get();
+        if constexpr (requires(Platform platform) { platform.software_cursor; }) {
+            auto cursor = this->platform.software_cursor.get();
 
             // don't paint if we use hardware cursor or the cursor is hidden
-            if (!cursor->enabled || this->compositor.platform.base.space->input->cursor->is_hidden()
+            if (!cursor->enabled || this->platform.base.space->input->cursor->is_hidden()
                 || cursor->image().isNull()) {
                 return;
             }
 
             // lazy init texture cursor only in case we need software rendering
             if (sw_cursor.dirty) {
-                auto const img = this->compositor.software_cursor->image();
+                auto const img = this->platform.software_cursor->image();
 
                 // If there was no new image we are still dirty and try to update again next paint
                 // cycle.
@@ -345,7 +344,7 @@ protected:
 
             // get cursor position in projection coordinates
             auto const cursorPos
-                = this->compositor.platform.base.space->input->cursor->pos() - cursor->hotspot();
+                = this->platform.base.space->input->cursor->pos() - cursor->hotspot();
             auto mvp = render.projection * render.view;
             mvp.translate(cursorPos.x(), cursorPos.y());
 
@@ -408,7 +407,7 @@ protected:
         if (m_backend->supportsBufferAge())
             return;
 
-        if (this->compositor.platform.base.operation_mode == base::operation_mode::x11
+        if (this->platform.base.operation_mode == base::operation_mode::x11
             && GLPlatform::instance()->driver() == Driver_NVidia) {
             // Nvidia's X11 driver supports fast full buffer copies. So no need to extend damage.
             // TODO: Do we really need to check this here? Could we just run it anyway or does maybe
@@ -416,7 +415,7 @@ protected:
             return;
         }
 
-        auto const& screenSize = this->compositor.platform.base.topology.size;
+        auto const& screenSize = this->platform.base.topology.size;
         const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
 
         uint damagedPixels = 0;
@@ -504,7 +503,7 @@ protected:
 
         qCDebug(KWIN_CORE) << "Attempting to reset compositing.";
         QMetaObject::invokeMethod(
-            this, [this] { this->compositor.reinitialize(); }, Qt::QueuedConnection);
+            this, [this] { this->platform.reinitialize(); }, Qt::QueuedConnection);
 
         KNotification::event(QStringLiteral("graphicsreset"),
                              i18n("Desktop effects were restarted due to a graphics reset"));
@@ -593,21 +592,21 @@ private:
     GLuint vao{0};
 };
 
-template<typename Compositor>
-std::unique_ptr<render::scene<Compositor>> create_scene(Compositor& compositor)
+template<typename Platform>
+std::unique_ptr<render::scene<Platform>> create_scene(Platform& platform)
 {
     qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
 
     // Some broken drivers crash on glXQuery() so to prevent constant KWin crashes:
-    if (compositor.platform.openGLCompositingIsBroken()) {
+    if (platform.openGLCompositingIsBroken()) {
         throw std::runtime_error("OpenGL library is unsafe to use");
     }
 
-    compositor.platform.createOpenGLSafePoint(opengl_safe_point::pre_init);
-    auto post = [&] { compositor.platform.createOpenGLSafePoint(opengl_safe_point::post_init); };
+    platform.createOpenGLSafePoint(opengl_safe_point::pre_init);
+    auto post = [&] { platform.createOpenGLSafePoint(opengl_safe_point::post_init); };
 
     try {
-        auto scene = std::make_unique<gl::scene<Compositor>>(compositor);
+        auto scene = std::make_unique<gl::scene<Platform>>(platform);
         post();
         return scene;
     } catch (std::runtime_error const& exc) {

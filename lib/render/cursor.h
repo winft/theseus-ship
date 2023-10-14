@@ -85,9 +85,8 @@ public:
 private:
     void rerender()
     {
-        auto& compositor = platform.compositor;
-        compositor->addRepaint(last_rendered_geometry);
-        compositor->addRepaint(
+        platform.addRepaint(last_rendered_geometry);
+        platform.addRepaint(
             QRect(platform.base.space->input->cursor->pos() - hotspot(), image().size()));
     }
 

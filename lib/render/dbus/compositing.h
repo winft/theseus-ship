@@ -143,14 +143,12 @@ public:
         , compositor{comp}
     {
         qobject->integration.active = [this] { return compositor.state == state::on; };
-        qobject->integration.required
-            = [this] { return compositor.platform.requiresCompositing(); };
-        qobject->integration.possible
-            = [this] { return compositor.platform.compositingPossible(); };
+        qobject->integration.required = [this] { return compositor.requiresCompositing(); };
+        qobject->integration.possible = [this] { return compositor.compositingPossible(); };
         qobject->integration.not_possible_reason
-            = [this] { return compositor.platform.compositingNotPossibleReason(); };
+            = [this] { return compositor.compositingNotPossibleReason(); };
         qobject->integration.opengl_broken
-            = [this] { return compositor.platform.openGLCompositingIsBroken(); };
+            = [this] { return compositor.openGLCompositingIsBroken(); };
         qobject->integration.type = [this] {
             if (!compositor.scene) {
                 return QStringLiteral("none");

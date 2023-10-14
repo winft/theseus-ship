@@ -22,11 +22,9 @@ void compositor_claim_selection(Compositor& comp)
 {
     if (!comp.selection_owner) {
         char selection_name[100];
-        sprintf(selection_name, "_NET_WM_CM_S%d", comp.platform.base.x11_data.screen_number);
+        sprintf(selection_name, "_NET_WM_CM_S%d", comp.base.x11_data.screen_number);
         comp.selection_owner = std::make_unique<x11::compositor_selection_owner>(
-            selection_name,
-            comp.platform.base.x11_data.connection,
-            comp.platform.base.x11_data.root_window);
+            selection_name, comp.base.x11_data.connection, comp.base.x11_data.root_window);
         if (comp.selection_owner) {
             QObject::connect(comp.selection_owner.get(),
                              &x11::compositor_selection_owner::lostOwnership,
@@ -46,14 +44,14 @@ void compositor_claim_selection(Compositor& comp)
 template<typename Compositor>
 void compositor_claim(Compositor& comp)
 {
-    auto con = comp.platform.base.x11_data.connection;
+    auto con = comp.base.x11_data.connection;
     if (!con) {
         comp.selection_owner = {};
         return;
     }
     compositor_claim_selection(comp);
     xcb_composite_redirect_subwindows(
-        con, comp.platform.base.x11_data.root_window, XCB_COMPOSITE_REDIRECT_MANUAL);
+        con, comp.base.x11_data.root_window, XCB_COMPOSITE_REDIRECT_MANUAL);
 }
 
 template<typename Compositor>

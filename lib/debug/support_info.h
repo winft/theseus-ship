@@ -159,7 +159,7 @@ QString get_support_info(Space const& space)
 
     support.append(QStringLiteral("\nCompositing\n"));
     support.append(QStringLiteral("===========\n"));
-    if (auto& effects = space.base.render->compositor->effects) {
+    if (auto& effects = space.base.render->effects) {
         support.append(QStringLiteral("Compositing is active\n"));
         if (effects->isOpenGLCompositing()) {
             auto platform = GLPlatform::instance();

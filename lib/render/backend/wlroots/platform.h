@@ -23,13 +23,19 @@ class platform : public wayland::platform<typename Base::abstract_type>
 public:
     using type = platform<Base>;
     using abstract_type = wayland::platform<typename Base::abstract_type>;
-    using compositor_t = typename abstract_type::compositor_t;
     using output_t = output<typename Base::output_t, type>;
 
     explicit platform(Base& base)
         : abstract_type(base)
         , base{base}
     {
+    }
+
+    ~platform() override
+    {
+        // TODO(romangg): Should be in abstract platform. Still needs the gl backend though.
+        Q_EMIT this->qobject->aboutToDestroy();
+        compositor_stop(*this, true);
     }
 
     void init()
@@ -54,16 +60,14 @@ public:
         return static_cast<bool>(qpainter);
     }
 
-    gl::backend<gl::scene<compositor_t>, abstract_type>*
-    get_opengl_backend(compositor_t& /*compositor*/) override
+    gl::backend<gl::scene<abstract_type>, abstract_type>* get_opengl_backend() override
     {
         assert(egl);
         egl->make_current();
         return egl.get();
     }
 
-    qpainter::backend<qpainter::scene<compositor_t>>*
-    get_qpainter_backend(compositor_t& /*compositor*/) override
+    qpainter::backend<qpainter::scene<abstract_type>>* get_qpainter_backend() override
     {
         assert(qpainter);
         return qpainter.get();

@@ -109,7 +109,7 @@ void create_decoration(Win* win)
     win->control->deco.decoration = decoration;
     win->geo.update.original.deco_margins = frame_margins(win);
 
-    auto comp = win->space.base.render->compositor.get();
+    auto comp = win->space.base.render.get();
     using comp_t = std::remove_pointer_t<decltype(comp)>;
 
     if (comp->state == comp_t::state_t::on) {

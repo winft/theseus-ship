@@ -80,7 +80,7 @@ public:
                          decoratedClient,
                          &KDecoration2::DecoratedClient::keepBelowChanged);
 
-        auto comp_qobject = m_client->space.base.render->compositor->qobject.get();
+        auto comp_qobject = m_client->space.base.render->qobject.get();
         using comp_qobject_t = std::remove_pointer_t<decltype(comp_qobject)>;
 
         QObject::connect(comp_qobject,

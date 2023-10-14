@@ -86,7 +86,7 @@ TEST_CASE("maximize animation", "[effect]")
 
         // Load effect that will be tested.
         const QString effectName = QStringLiteral("maximize");
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
         QVERIFY(effectsImpl->loadEffect(effectName));
         QCOMPARE(effectsImpl->loadedEffects().count(), 1);

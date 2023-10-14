@@ -165,9 +165,9 @@ private:
 template<typename Render>
 void add_effect_loader(Render& render)
 {
-    assert(render.compositor->effects);
+    assert(render.effects);
 
-    auto& effects = render.compositor->effects;
+    auto& effects = render.effects;
     effects->loader->add_loader(std::make_unique<effect_loader<Render>>(*effects, render));
 }
 

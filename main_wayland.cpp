@@ -20,7 +20,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/backend/wlroots/platform.h"
 #include "render/effects.h"
 #include "render/shortcuts_init.h"
-#include "render/wayland/compositor.h"
 #include "script/platform.h"
 #include "win/shortcuts_init.h"
 #include "win/wayland/space.h"
@@ -132,8 +131,8 @@ ApplicationWayland::~ApplicationWayland()
     }
 
     // need to unload all effects prior to destroying X connection as they might do X calls
-    if (base->render->compositor->effects) {
-        base->render->compositor->effects->unloadAllEffects();
+    if (base->render->effects) {
+        base->render->effects->unloadAllEffects();
     }
 
     if (exit_with_process && exit_with_process->state() != QProcess::NotRunning) {
@@ -147,14 +146,14 @@ ApplicationWayland::~ApplicationWayland()
     base->xwayland.reset();
     base->server->terminateClientConnections();
 
-    if (base->render->compositor) {
+    if (base->render) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
         // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-        base->render->compositor->lock();
+        base->render->lock();
     }
 
     base->space.reset();
-    base->render->compositor.reset();
+    base->render.reset();
 }
 
 void ApplicationWayland::start(base::operation_mode mode,
@@ -180,7 +179,13 @@ void ApplicationWayland::start(base::operation_mode mode,
     session->take_control(base->server->display->native());
 
     using render_t = render::backend::wlroots::platform<base_t>;
-    base->render = std::make_unique<render_t>(*base);
+
+    try {
+        base->render = std::make_unique<render_t>(*base);
+    } catch (std::system_error const& exc) {
+        std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
+        exit(exc.code().value());
+    }
 
     base->input = std::make_unique<input::backend::wlroots::platform<base_t>>(
         *base, base->backend, input::config(KConfig::NoGlobals));
@@ -194,19 +199,12 @@ void ApplicationWayland::start(base::operation_mode mode,
         QCoreApplication::exit(1);
     }
 
-    try {
-        base->render->compositor = std::make_unique<render_t::compositor_t>(*base->render);
-    } catch (std::system_error const& exc) {
-        std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
-        exit(exc.code().value());
-    }
-
     base->space = std::make_unique<base_t::space_t>(*base->render, *base->input);
     win::init_shortcuts(*base->space);
     render::init_shortcuts(*base->render);
     base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
-    base->render->compositor->start(*base->space);
+    base->render->start(*base->space);
 
     if (auto const& name = base->server->display->socket_name(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());

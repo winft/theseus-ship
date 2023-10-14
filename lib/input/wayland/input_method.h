@@ -186,11 +186,10 @@ private:
                          &Wrapland::Server::Surface::committed,
                          popup->qobject.get(),
                          [popup] { popup->handle_commit(); });
-        QObject::connect(
-            popup->qobject.get(),
-            &window_t::qobject_t::needsRepaint,
-            redirect.platform.base.render->compositor->qobject.get(),
-            [popup] { popup->space.base.render->compositor->schedule_repaint(popup); });
+        QObject::connect(popup->qobject.get(),
+                         &window_t::qobject_t::needsRepaint,
+                         redirect.platform.base.render->qobject.get(),
+                         [popup] { popup->space.base.render->schedule_repaint(popup); });
         QObject::connect(popup->qobject.get(),
                          &window_t::qobject_t::frame_geometry_changed,
                          popup->qobject.get(),

@@ -545,13 +545,13 @@ public:
     void setupCompositing()
     {
         assert(!this->remnant);
-        assert(this->space.base.render->compositor->scene);
+        assert(this->space.base.render->scene);
         assert(this->damage.handle == XCB_NONE);
 
         discard_shape(*this);
         this->render_data.damage_region = QRect({}, this->geo.size());
 
-        add_scene_window(*this->space.base.render->compositor->scene, *this);
+        add_scene_window(*this->space.base.render->scene, *this);
 
         if (this->control) {
             // for internalKeep()

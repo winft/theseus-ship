@@ -367,7 +367,7 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
         restore_session_stacking_order(&win.space, &win);
     }
 
-    if (!win.space.base.render->compositor->scene) {
+    if (!win.space.base.render->scene) {
         // set to true in case compositing is turned on later. bug #160393
         win.render_data.ready_for_painting = true;
     }
@@ -591,7 +591,7 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
     // only after manage() finishes because of blocking, but the window is shown sooner
     win.xcb_windows.outer.lower();
 
-    if (!win.space.base.render->compositor->scene) {
+    if (!win.space.base.render->scene) {
         // set to true in case compositing is turned on later. bug #160393
         win.render_data.ready_for_painting = true;
     }
@@ -654,14 +654,14 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     setup_space_window_connections(&space, win);
 
-    using compositor_t = typename Space::base_t::render_t::compositor_t;
-    if constexpr (requires(compositor_t comp) { comp.update_blocking(win); }) {
-        auto comp = space.base.render->compositor.get();
+    using render_t = typename Space::base_t::render_t;
+    if constexpr (requires(render_t render) { render.update_blocking(win); }) {
+        auto render = space.base.render.get();
         QObject::connect(
             win->qobject.get(),
             &Win::qobject_t::blockingCompositingChanged,
-            comp->qobject.get(),
-            [comp, win](auto blocks) { comp->update_blocking(blocks ? win : nullptr); });
+            render->qobject.get(),
+            [render, win](auto blocks) { render->update_blocking(blocks ? win : nullptr); });
     }
 
     QObject::connect(win->qobject.get(),
@@ -851,7 +851,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     read_show_on_screen_edge(win, showOnScreenEdgeCookie);
 
     // Forward all opacity values to the frame in case there'll be other CM running.
-    auto comp_qobject = win->space.base.render->compositor->qobject.get();
+    auto comp_qobject = win->space.base.render->qobject.get();
     using comp_qobject_t = std::remove_pointer_t<decltype(comp_qobject)>;
     QObject::connect(
         comp_qobject, &comp_qobject_t::compositingToggled, win->qobject.get(), [win](bool active) {

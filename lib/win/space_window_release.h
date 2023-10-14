@@ -36,9 +36,9 @@ void delete_window_from_space(Space& space, Win& win)
     remove_window_from_stacking_order(space, &win);
     remove_window_from_lists(space, &win);
 
-    using compositor_t = typename Space::base_t::render_t::compositor_t;
-    if constexpr (requires(compositor_t comp) { comp.update_blocking(nullptr); }) {
-        space.base.render->compositor->update_blocking(nullptr);
+    using render_t = typename Space::base_t::render_t;
+    if constexpr (requires(render_t render) { render.update_blocking(nullptr); }) {
+        space.base.render->update_blocking(nullptr);
     }
 
     Q_EMIT space.qobject->window_deleted(win.meta.signal_id);
@@ -71,8 +71,8 @@ void space_add_remnant(Win& source, Win& remnant)
 
     QObject::connect(remnant.qobject.get(),
                      &decltype(remnant.qobject)::element_type::needsRepaint,
-                     space.base.render->compositor->qobject.get(),
-                     [&] { remnant.space.base.render->compositor->schedule_repaint(&remnant); });
+                     space.base.render->qobject.get(),
+                     [&] { remnant.space.base.render->schedule_repaint(&remnant); });
 
     Q_EMIT space.qobject->remnant_created(remnant.meta.signal_id);
 }

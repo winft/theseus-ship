@@ -45,7 +45,7 @@ TEST_CASE("subspace switching animation", "[effect]")
 
     setup.start();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -69,7 +69,7 @@ TEST_CASE("subspace switching animation", "[effect]")
     QCOMPARE(client->topo.subspaces.front(), subs->subspaces.front());
 
     // Load effect that will be tested.
-    auto& effectsImpl = setup.base->render->compositor->effects;
+    auto& effectsImpl = setup.base->render->effects;
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);

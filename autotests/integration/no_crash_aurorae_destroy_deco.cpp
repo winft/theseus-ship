@@ -42,7 +42,7 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = app()->base->render->compositor->scene;
+    auto& scene = app()->base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 

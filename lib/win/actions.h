@@ -85,7 +85,7 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         }
 
         win->updateWindowRules(rules::type::minimize);
-        win->space.base.render->compositor->addRepaint(visible_rect(win));
+        win->space.base.render->addRepaint(visible_rect(win));
 
         // TODO: merge signal with s_minimized
         Q_EMIT win->qobject->clientMinimized(!avoid_animation);

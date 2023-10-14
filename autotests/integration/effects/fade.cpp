@@ -42,11 +42,11 @@ TEST_CASE("fade", "[effect]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render->compositor);
+    QVERIFY(setup.base->render);
     setup_wayland_connection();
 
     // load the translucency effect
-    auto& e = setup.base->render->compositor->effects;
+    auto& e = setup.base->render->effects;
 
     QSignalSpy effectLoadedSpy(e->loader.get(), &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());

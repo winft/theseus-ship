@@ -64,15 +64,15 @@ TEST_CASE("slidingpopups", "[effect]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render->compositor);
-    auto& effects_impl = setup.base->render->compositor->effects;
+    QVERIFY(setup.base->render);
+    auto& effects_impl = setup.base->render->effects;
     while (!effects_impl->loadedEffects().isEmpty()) {
         auto const effect = effects_impl->loadedEffects().constFirst();
         effects_impl->unloadEffect(effect);
         QVERIFY(!effects_impl->isEffectLoaded(effect));
     }
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -90,7 +90,7 @@ TEST_CASE("slidingpopups", "[effect]")
                        QStringList{QStringLiteral("slidingpopups"), QStringLiteral("scale")});
 
         // find the effectsloader
-        auto& e = setup.base->render->compositor->effects;
+        auto& e = setup.base->render->effects;
         auto effectloader = e->findChild<render::basic_effect_loader*>();
         QVERIFY(effectloader);
         QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);
@@ -229,7 +229,7 @@ TEST_CASE("slidingpopups", "[effect]")
                        QStringList{QStringLiteral("slidingpopups"), QStringLiteral("scale")});
 
         // find the effectsloader
-        auto& e = setup.base->render->compositor->effects;
+        auto& e = setup.base->render->effects;
         auto effectloader = e->findChild<render::basic_effect_loader*>();
         QVERIFY(effectloader);
         QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);

@@ -118,8 +118,8 @@ void set_subsurface_parent(Win* win, Lead* lead)
     //                stops rendering without this connection.
     QObject::connect(win->qobject.get(),
                      &window_qobject::needsRepaint,
-                     win->space.base.render->compositor->qobject.get(),
-                     [win] { win->space.base.render->compositor->schedule_repaint(win); });
+                     win->space.base.render->qobject.get(),
+                     [win] { win->space.base.render->schedule_repaint(win); });
 
     subsurface_set_pos(*win);
 

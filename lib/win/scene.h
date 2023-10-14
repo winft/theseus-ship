@@ -71,7 +71,7 @@ void acquire_repaint_outputs(Win& win, QRegion const& region)
 template<typename Win>
 void add_layer_repaint(Win& win, QRegion const& region)
 {
-    if (!win.space.base.render->compositor->scene) {
+    if (!win.space.base.render->scene) {
         return;
     }
     win.render_data.layer_repaints_region += region;
@@ -239,13 +239,13 @@ void elevate(Win* win, bool elevate)
     }
 
     win->render->effect->elevate(elevate);
-    win->space.base.render->compositor->addRepaint(visible_rect(win));
+    win->space.base.render->addRepaint(visible_rect(win));
 }
 
 template<typename Win>
 void add_full_damage(Win& win)
 {
-    if (!win.space.base.render->compositor->scene) {
+    if (!win.space.base.render->scene) {
         return;
     }
 
@@ -301,7 +301,7 @@ void scene_add_remnant(Win& win)
                          &std::remove_pointer_t<decltype(shadow)>::geometryChanged);
     }
 
-    if (auto& effects = win.space.base.render->compositor->effects) {
+    if (auto& effects = win.space.base.render->effects) {
         Q_EMIT effects->windowClosed(win.render->effect.get());
     }
 }

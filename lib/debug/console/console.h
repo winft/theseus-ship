@@ -114,7 +114,7 @@ public:
 
         connect(m_ui->quitButton, &QAbstractButton::clicked, this, &console::deleteLater);
 
-        initGLTab(*space.base.render->compositor->scene);
+        initGLTab(*space.base.render->scene);
     }
 
 protected:
@@ -135,7 +135,7 @@ protected:
     template<typename Scene>
     void initGLTab(Scene& scene)
     {
-        if (!scene.compositor.effects || !scene.compositor.effects->isOpenGLCompositing()) {
+        if (!scene.platform.effects || !scene.platform.effects->isOpenGLCompositing()) {
             m_ui->noOpenGLLabel->setVisible(true);
             m_ui->glInfoScrollArea->setVisible(false);
             return;

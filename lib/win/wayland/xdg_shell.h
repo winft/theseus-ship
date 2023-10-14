@@ -322,8 +322,8 @@ Win& create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
 
     QObject::connect(win.qobject.get(),
                      &Win::qobject_t::needsRepaint,
-                     win.space.base.render->compositor->qobject.get(),
-                     [&win] { win.space.base.render->compositor->schedule_repaint(&win); });
+                     win.space.base.render->qobject.get(),
+                     [&win] { win.space.base.render->schedule_repaint(&win); });
     QObject::connect(win.qobject.get(),
                      &Win::qobject_t::frame_geometry_changed,
                      win.qobject.get(),

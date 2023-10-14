@@ -53,7 +53,7 @@ TEST_CASE("popup open close animation", "[effect]")
         // to animate popups(e.g. popup menus, tooltips, etc).
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
 
         // Create the main window.
@@ -118,7 +118,7 @@ TEST_CASE("popup open close animation", "[effect]")
         // to animate the user actions popup.
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
 
         // Create the test client.
@@ -170,7 +170,7 @@ TEST_CASE("popup open close animation", "[effect]")
         // to animate decoration tooltips.
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
 
         // Create the test client.

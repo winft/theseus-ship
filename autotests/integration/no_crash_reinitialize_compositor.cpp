@@ -46,14 +46,14 @@ TEST_CASE("no crash reinit compositor", "[render]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
     auto effect_name = GENERATE(as<QString>{}, "fade", "glide", "scale");
 
     // Make sure that we have the right effects ptr.
-    auto& effectsImpl = setup.base->render->compositor->effects;
+    auto& effectsImpl = setup.base->render->effects;
     QVERIFY(effectsImpl);
 
     // Create the test client.
@@ -86,7 +86,7 @@ TEST_CASE("no crash reinit compositor", "[render]")
     QTRY_VERIFY(effect->isActive());
 
     // Re-initialize the compositor, effects will be destroyed and created again.
-    setup.base->render->compositor->reinitialize();
+    setup.base->render->reinitialize();
 
     // By this time the compositor should still be alive.
 }

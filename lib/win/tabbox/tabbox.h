@@ -351,7 +351,7 @@ public:
     {
         if (!is_natively_shown && is_displayed()) {
             // tabbox has been replaced, check effects
-            if (auto& effects = space.base.render->compositor->effects;
+            if (auto& effects = space.base.render->effects;
                 effects && effects->checkInputWindowEvent(event)) {
                 return true;
             }
@@ -383,7 +383,7 @@ public:
     {
         if (!is_natively_shown && is_displayed()) {
             // tabbox has been replaced, check effects
-            if (auto& effects = space.base.render->compositor->effects;
+            if (auto& effects = space.base.render->effects;
                 effects && effects->checkInputWindowEvent(event)) {
                 return true;
             }

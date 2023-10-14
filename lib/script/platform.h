@@ -157,12 +157,12 @@ public:
         qmlRegisterAnonymousType<win::subspace>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
 
-        if (auto& render = space.base.render; render->compositor->effects) {
+        if (auto& render = space.base.render; render->effects) {
             add_effect_loader(*render);
         }
 
-        QObject::connect(space.base.render->compositor->qobject.get(),
-                         &Space::base_t::render_t::compositor_t::qobject_t::compositingToggled,
+        QObject::connect(space.base.render->qobject.get(),
+                         &Space::base_t::render_t::qobject_t::compositingToggled,
                          this,
                          [this](bool on) {
                              if (on) {
