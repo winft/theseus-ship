@@ -72,7 +72,7 @@ void cursor::update_theme(QString const& name, int size)
     if (m_themeName != name || m_themeSize != size) {
         m_themeName = name;
         m_themeSize = size;
-        m_cursors.clear();
+        xcb_cursors.clear();
         Q_EMIT theme_changed();
     }
 }
@@ -174,15 +174,16 @@ xcb_cursor_t cursor::x11_cursor(win::cursor_shape shape)
     return x11_cursor(shape.name());
 }
 
-xcb_cursor_t cursor::x11_cursor(QByteArray const& name)
+xcb_cursor_t cursor::x11_cursor(std::string const& name)
 {
     assert(x11_data.connection);
-    auto it = m_cursors.constFind(name);
-    if (it != m_cursors.constEnd()) {
-        return it.value();
+
+    auto it = xcb_cursors.find(name);
+    if (it != xcb_cursors.end()) {
+        return it->second;
     }
 
-    if (name.isEmpty()) {
+    if (name.empty()) {
         return XCB_CURSOR_NONE;
     }
 
@@ -192,18 +193,18 @@ xcb_cursor_t cursor::x11_cursor(QByteArray const& name)
         return XCB_CURSOR_NONE;
     }
 
-    xcb_cursor_t cursor = xcb_cursor_load_cursor(ctx, name.constData());
+    xcb_cursor_t cursor = xcb_cursor_load_cursor(ctx, name.c_str());
     if (cursor == XCB_CURSOR_NONE) {
         const auto& names = cursor::alternative_names(name);
-        for (const QByteArray& cursorName : names) {
-            cursor = xcb_cursor_load_cursor(ctx, cursorName.constData());
+        for (auto const& cursorName : names) {
+            cursor = xcb_cursor_load_cursor(ctx, cursorName.c_str());
             if (cursor != XCB_CURSOR_NONE) {
                 break;
             }
         }
     }
     if (cursor != XCB_CURSOR_NONE) {
-        m_cursors.insert(name, cursor);
+        xcb_cursors.insert({name, cursor});
     }
 
     xcb_cursor_context_free(ctx);
@@ -266,283 +267,283 @@ void cursor::do_stop_image_tracking()
 {
 }
 
-QVector<QByteArray> cursor::alternative_names(QByteArray const& name) const
+std::vector<std::string> cursor::alternative_names(std::string const& name) const
 {
-    static QHash<QByteArray, QVector<QByteArray>> const alternatives = {
+    static std::unordered_map<std::string, std::vector<std::string>> const alternatives = {
         {
-            QByteArrayLiteral("left_ptr"),
+            "left_ptr",
             {
-                QByteArrayLiteral("arrow"),
-                QByteArrayLiteral("dnd-none"),
-                QByteArrayLiteral("op_left_arrow"),
+                "arrow",
+                "dnd-none",
+                "op_left_arrow",
             },
         },
         {
-            QByteArrayLiteral("cross"),
+            "cross",
             {
-                QByteArrayLiteral("crosshair"),
-                QByteArrayLiteral("diamond-cross"),
-                QByteArrayLiteral("cross-reverse"),
+                "crosshair",
+                "diamond-cross",
+                "cross-reverse",
             },
         },
         {
-            QByteArrayLiteral("up_arrow"),
+            "up_arrow",
             {
-                QByteArrayLiteral("center_ptr"),
-                QByteArrayLiteral("sb_up_arrow"),
-                QByteArrayLiteral("centre_ptr"),
+                "center_ptr",
+                "sb_up_arrow",
+                "centre_ptr",
             },
         },
         {
-            QByteArrayLiteral("wait"),
+            "wait",
             {
-                QByteArrayLiteral("watch"),
-                QByteArrayLiteral("progress"),
+                "watch",
+                "progress",
             },
         },
         {
-            QByteArrayLiteral("ibeam"),
+            "ibeam",
             {
-                QByteArrayLiteral("xterm"),
-                QByteArrayLiteral("text"),
+                "xterm",
+                "text",
             },
         },
         {
-            QByteArrayLiteral("size_all"),
+            "size_all",
             {
-                QByteArrayLiteral("fleur"),
+                "fleur",
             },
         },
         {
-            QByteArrayLiteral("pointing_hand"),
+            "pointing_hand",
             {
-                QByteArrayLiteral("hand2"),
-                QByteArrayLiteral("hand"),
-                QByteArrayLiteral("hand1"),
-                QByteArrayLiteral("pointer"),
-                QByteArrayLiteral("e29285e634086352946a0e7090d73106"),
-                QByteArrayLiteral("9d800788f1b08800ae810202380a0822"),
+                "hand2",
+                "hand",
+                "hand1",
+                "pointer",
+                "e29285e634086352946a0e7090d73106",
+                "9d800788f1b08800ae810202380a0822",
             },
         },
         {
-            QByteArrayLiteral("size_ver"),
+            "size_ver",
             {
-                QByteArrayLiteral("00008160000006810000408080010102"),
-                QByteArrayLiteral("sb_v_double_arrow"),
-                QByteArrayLiteral("v_double_arrow"),
-                QByteArrayLiteral("n-resize"),
-                QByteArrayLiteral("s-resize"),
-                QByteArrayLiteral("col-resize"),
-                QByteArrayLiteral("top_side"),
-                QByteArrayLiteral("bottom_side"),
-                QByteArrayLiteral("base_arrow_up"),
-                QByteArrayLiteral("base_arrow_down"),
-                QByteArrayLiteral("based_arrow_down"),
-                QByteArrayLiteral("based_arrow_up"),
+                "00008160000006810000408080010102",
+                "sb_v_double_arrow",
+                "v_double_arrow",
+                "n-resize",
+                "s-resize",
+                "col-resize",
+                "top_side",
+                "bottom_side",
+                "base_arrow_up",
+                "base_arrow_down",
+                "based_arrow_down",
+                "based_arrow_up",
             },
         },
         {
-            QByteArrayLiteral("size_hor"),
+            "size_hor",
             {
-                QByteArrayLiteral("028006030e0e7ebffc7f7070c0600140"),
-                QByteArrayLiteral("sb_h_double_arrow"),
-                QByteArrayLiteral("h_double_arrow"),
-                QByteArrayLiteral("e-resize"),
-                QByteArrayLiteral("w-resize"),
-                QByteArrayLiteral("row-resize"),
-                QByteArrayLiteral("right_side"),
-                QByteArrayLiteral("left_side"),
+                "028006030e0e7ebffc7f7070c0600140",
+                "sb_h_double_arrow",
+                "h_double_arrow",
+                "e-resize",
+                "w-resize",
+                "row-resize",
+                "right_side",
+                "left_side",
             },
         },
         {
-            QByteArrayLiteral("size_bdiag"),
+            "size_bdiag",
             {
-                QByteArrayLiteral("fcf1c3c7cd4491d801f1e1c78f100000"),
-                QByteArrayLiteral("fd_double_arrow"),
-                QByteArrayLiteral("bottom_left_corner"),
-                QByteArrayLiteral("top_right_corner"),
+                "fcf1c3c7cd4491d801f1e1c78f100000",
+                "fd_double_arrow",
+                "bottom_left_corner",
+                "top_right_corner",
             },
         },
         {
-            QByteArrayLiteral("size_fdiag"),
+            "size_fdiag",
             {
-                QByteArrayLiteral("c7088f0f3e6c8088236ef8e1e3e70000"),
-                QByteArrayLiteral("bd_double_arrow"),
-                QByteArrayLiteral("bottom_right_corner"),
-                QByteArrayLiteral("top_left_corner"),
+                "c7088f0f3e6c8088236ef8e1e3e70000",
+                "bd_double_arrow",
+                "bottom_right_corner",
+                "top_left_corner",
             },
         },
         {
-            QByteArrayLiteral("whats_this"),
+            "whats_this",
             {
-                QByteArrayLiteral("d9ce0ab605698f320427677b458ad60b"),
-                QByteArrayLiteral("left_ptr_help"),
-                QByteArrayLiteral("help"),
-                QByteArrayLiteral("question_arrow"),
-                QByteArrayLiteral("dnd-ask"),
-                QByteArrayLiteral("5c6cd98b3f3ebcb1f9c7f1c204630408"),
+                "d9ce0ab605698f320427677b458ad60b",
+                "left_ptr_help",
+                "help",
+                "question_arrow",
+                "dnd-ask",
+                "5c6cd98b3f3ebcb1f9c7f1c204630408",
             },
         },
         {
-            QByteArrayLiteral("split_h"),
+            "split_h",
             {
-                QByteArrayLiteral("14fef782d02440884392942c11205230"),
-                QByteArrayLiteral("size_hor"),
+                "14fef782d02440884392942c11205230",
+                "size_hor",
             },
         },
         {
-            QByteArrayLiteral("split_v"),
+            "split_v",
             {
-                QByteArrayLiteral("2870a09082c103050810ffdffffe0204"),
-                QByteArrayLiteral("size_ver"),
+                "2870a09082c103050810ffdffffe0204",
+                "size_ver",
             },
         },
         {
-            QByteArrayLiteral("forbidden"),
+            "forbidden",
             {
-                QByteArrayLiteral("03b6e0fcb3499374a867c041f52298f0"),
-                QByteArrayLiteral("circle"),
-                QByteArrayLiteral("dnd-no-drop"),
-                QByteArrayLiteral("not-allowed"),
+                "03b6e0fcb3499374a867c041f52298f0",
+                "circle",
+                "dnd-no-drop",
+                "not-allowed",
             },
         },
         {
-            QByteArrayLiteral("left_ptr_watch"),
+            "left_ptr_watch",
             {
-                QByteArrayLiteral("3ecb610c1bf2410f44200f48c40d3599"),
-                QByteArrayLiteral("00000000000000020006000e7e9ffc3f"),
-                QByteArrayLiteral("08e8e1c95fe2fc01f976f1e063a24ccd"),
+                "3ecb610c1bf2410f44200f48c40d3599",
+                "00000000000000020006000e7e9ffc3f",
+                "08e8e1c95fe2fc01f976f1e063a24ccd",
             },
         },
         {
-            QByteArrayLiteral("openhand"),
+            "openhand",
             {
-                QByteArrayLiteral("9141b49c8149039304290b508d208c40"),
-                QByteArrayLiteral("all_scroll"),
-                QByteArrayLiteral("all-scroll"),
+                "9141b49c8149039304290b508d208c40",
+                "all_scroll",
+                "all-scroll",
             },
         },
         {
-            QByteArrayLiteral("closedhand"),
+            "closedhand",
             {
-                QByteArrayLiteral("05e88622050804100c20044008402080"),
-                QByteArrayLiteral("4498f0e0c1937ffe01fd06f973665830"),
-                QByteArrayLiteral("9081237383d90e509aa00f00170e968f"),
-                QByteArrayLiteral("fcf21c00b30f7e3f83fe0dfd12e71cff"),
+                "05e88622050804100c20044008402080",
+                "4498f0e0c1937ffe01fd06f973665830",
+                "9081237383d90e509aa00f00170e968f",
+                "fcf21c00b30f7e3f83fe0dfd12e71cff",
             },
         },
         {
-            QByteArrayLiteral("dnd-link"),
+            "dnd-link",
             {
-                QByteArrayLiteral("link"),
-                QByteArrayLiteral("alias"),
-                QByteArrayLiteral("3085a0e285430894940527032f8b26df"),
-                QByteArrayLiteral("640fb0e74195791501fd1ed57b41487f"),
-                QByteArrayLiteral("a2a266d0498c3104214a47bd64ab0fc8"),
+                "link",
+                "alias",
+                "3085a0e285430894940527032f8b26df",
+                "640fb0e74195791501fd1ed57b41487f",
+                "a2a266d0498c3104214a47bd64ab0fc8",
             },
         },
         {
-            QByteArrayLiteral("dnd-copy"),
+            "dnd-copy",
             {
-                QByteArrayLiteral("copy"),
-                QByteArrayLiteral("1081e37283d90000800003c07f3ef6bf"),
-                QByteArrayLiteral("6407b0e94181790501fd1e167b474872"),
-                QByteArrayLiteral("b66166c04f8c3109214a4fbd64a50fc8"),
+                "copy",
+                "1081e37283d90000800003c07f3ef6bf",
+                "6407b0e94181790501fd1e167b474872",
+                "b66166c04f8c3109214a4fbd64a50fc8",
             },
         },
         {
-            QByteArrayLiteral("dnd-move"),
+            "dnd-move",
             {
-                QByteArrayLiteral("move"),
+                "move",
             },
         },
         {
-            QByteArrayLiteral("sw-resize"),
+            "sw-resize",
             {
-                QByteArrayLiteral("size_bdiag"),
-                QByteArrayLiteral("fcf1c3c7cd4491d801f1e1c78f100000"),
-                QByteArrayLiteral("fd_double_arrow"),
-                QByteArrayLiteral("bottom_left_corner"),
+                "size_bdiag",
+                "fcf1c3c7cd4491d801f1e1c78f100000",
+                "fd_double_arrow",
+                "bottom_left_corner",
             },
         },
         {
-            QByteArrayLiteral("se-resize"),
+            "se-resize",
             {
-                QByteArrayLiteral("size_fdiag"),
-                QByteArrayLiteral("c7088f0f3e6c8088236ef8e1e3e70000"),
-                QByteArrayLiteral("bd_double_arrow"),
-                QByteArrayLiteral("bottom_right_corner"),
+                "size_fdiag",
+                "c7088f0f3e6c8088236ef8e1e3e70000",
+                "bd_double_arrow",
+                "bottom_right_corner",
             },
         },
         {
-            QByteArrayLiteral("ne-resize"),
+            "ne-resize",
             {
-                QByteArrayLiteral("size_bdiag"),
-                QByteArrayLiteral("fcf1c3c7cd4491d801f1e1c78f100000"),
-                QByteArrayLiteral("fd_double_arrow"),
-                QByteArrayLiteral("top_right_corner"),
+                "size_bdiag",
+                "fcf1c3c7cd4491d801f1e1c78f100000",
+                "fd_double_arrow",
+                "top_right_corner",
             },
         },
         {
-            QByteArrayLiteral("nw-resize"),
+            "nw-resize",
             {
-                QByteArrayLiteral("size_fdiag"),
-                QByteArrayLiteral("c7088f0f3e6c8088236ef8e1e3e70000"),
-                QByteArrayLiteral("bd_double_arrow"),
-                QByteArrayLiteral("top_left_corner"),
+                "size_fdiag",
+                "c7088f0f3e6c8088236ef8e1e3e70000",
+                "bd_double_arrow",
+                "top_left_corner",
             },
         },
         {
-            QByteArrayLiteral("n-resize"),
+            "n-resize",
             {
-                QByteArrayLiteral("size_ver"),
-                QByteArrayLiteral("00008160000006810000408080010102"),
-                QByteArrayLiteral("sb_v_double_arrow"),
-                QByteArrayLiteral("v_double_arrow"),
-                QByteArrayLiteral("col-resize"),
-                QByteArrayLiteral("top_side"),
+                "size_ver",
+                "00008160000006810000408080010102",
+                "sb_v_double_arrow",
+                "v_double_arrow",
+                "col-resize",
+                "top_side",
             },
         },
         {
-            QByteArrayLiteral("e-resize"),
+            "e-resize",
             {
-                QByteArrayLiteral("size_hor"),
-                QByteArrayLiteral("028006030e0e7ebffc7f7070c0600140"),
-                QByteArrayLiteral("sb_h_double_arrow"),
-                QByteArrayLiteral("h_double_arrow"),
-                QByteArrayLiteral("row-resize"),
-                QByteArrayLiteral("left_side"),
+                "size_hor",
+                "028006030e0e7ebffc7f7070c0600140",
+                "sb_h_double_arrow",
+                "h_double_arrow",
+                "row-resize",
+                "left_side",
             },
         },
         {
-            QByteArrayLiteral("s-resize"),
+            "s-resize",
             {
-                QByteArrayLiteral("size_ver"),
-                QByteArrayLiteral("00008160000006810000408080010102"),
-                QByteArrayLiteral("sb_v_double_arrow"),
-                QByteArrayLiteral("v_double_arrow"),
-                QByteArrayLiteral("col-resize"),
-                QByteArrayLiteral("bottom_side"),
+                "size_ver",
+                "00008160000006810000408080010102",
+                "sb_v_double_arrow",
+                "v_double_arrow",
+                "col-resize",
+                "bottom_side",
             },
         },
         {
-            QByteArrayLiteral("w-resize"),
+            "w-resize",
             {
-                QByteArrayLiteral("size_hor"),
-                QByteArrayLiteral("028006030e0e7ebffc7f7070c0600140"),
-                QByteArrayLiteral("sb_h_double_arrow"),
-                QByteArrayLiteral("h_double_arrow"),
-                QByteArrayLiteral("right_side"),
+                "size_hor",
+                "028006030e0e7ebffc7f7070c0600140",
+                "sb_h_double_arrow",
+                "h_double_arrow",
+                "right_side",
             },
         },
     };
 
     auto it = alternatives.find(name);
     if (it != alternatives.end()) {
-        return it.value();
+        return it->second;
     }
 
-    return QVector<QByteArray>();
+    return {};
 }
 
 }

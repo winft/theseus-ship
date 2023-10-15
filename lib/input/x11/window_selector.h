@@ -115,7 +115,7 @@ private:
         if (cursorName.isEmpty()) {
             return redirect.cursor->x11_cursor(Qt::CrossCursor);
         }
-        auto cursor = redirect.cursor->x11_cursor(cursorName);
+        auto cursor = redirect.cursor->x11_cursor(cursorName.toStdString());
         if (cursor != XCB_CURSOR_NONE) {
             return cursor;
         }

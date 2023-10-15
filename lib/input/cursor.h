@@ -84,7 +84,7 @@ public:
     /**
      * @return list of alternative names for the cursor with @p name
      */
-    QVector<QByteArray> alternative_names(QByteArray const& name) const;
+    std::vector<std::string> alternative_names(std::string const& name) const;
 
     /**
      * Returns the current cursor position. This method does an update of the mouse position if
@@ -115,7 +115,7 @@ public:
      * Notice: if available always use the cursor_shape variant to avoid cache duplicates for
      * ambiguous cursor names in the non existing cursor name specification
      */
-    virtual xcb_cursor_t x11_cursor(QByteArray const& name);
+    virtual xcb_cursor_t x11_cursor(std::string const& name);
 
 Q_SIGNALS:
     void pos_changed(QPoint pos);
@@ -186,7 +186,7 @@ private:
     void update_theme(QString const& name, int size);
     void load_theme_from_kconfig();
 
-    QHash<QByteArray, xcb_cursor_t> m_cursors;
+    std::unordered_map<std::string, xcb_cursor_t> xcb_cursors;
     QPoint m_pos;
     int m_cursorTrackingCounter;
     QString m_themeName;

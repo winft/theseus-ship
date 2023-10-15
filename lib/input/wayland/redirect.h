@@ -156,7 +156,7 @@ public:
             return;
         }
         window_selector->start(callback);
-        pointer->setWindowSelectionCursor(cursorName);
+        pointer->setWindowSelectionCursor(cursorName.toStdString());
     }
 
     /**
@@ -178,7 +178,7 @@ public:
             return;
         }
         window_selector->start(callback);
-        pointer->setWindowSelectionCursor(QByteArray());
+        pointer->setWindowSelectionCursor({});
     }
 
     bool isSelectingWindow() const

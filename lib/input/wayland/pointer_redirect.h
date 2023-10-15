@@ -193,7 +193,7 @@ public:
         redirect->cursor->cursor_image->removeEffectsOverrideCursor();
     }
 
-    void setWindowSelectionCursor(QByteArray const& shape)
+    void setWindowSelectionCursor(std::string const& shape)
     {
         // send leave to current pointer focus window
         update_to_reset();

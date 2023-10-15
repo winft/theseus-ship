@@ -45,7 +45,7 @@ public:
     /**
      * @brief The name of a cursor shape in the theme.
      */
-    QByteArray name() const;
+    std::string name() const;
 
 private:
     int m_shape{Qt::ArrowCursor};

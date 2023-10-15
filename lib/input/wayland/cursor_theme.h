@@ -54,7 +54,7 @@ public:
         return get(shape.name());
     }
 
-    wl_cursor_image* get(const QByteArray& name)
+    wl_cursor_image* get(std::string const& name)
     {
         if (!m_theme) {
             loadTheme();
@@ -63,11 +63,11 @@ public:
             // loading cursor failed
             return nullptr;
         }
-        wl_cursor* c = wl_cursor_theme_get_cursor(m_theme, name.constData());
+        auto c = wl_cursor_theme_get_cursor(m_theme, name.c_str());
         if (!c || c->image_count <= 0) {
             const auto& names = cursor.alternative_names(name);
             for (auto it = names.begin(), end = names.end(); it != end; it++) {
-                c = wl_cursor_theme_get_cursor(m_theme, (*it).constData());
+                c = wl_cursor_theme_get_cursor(m_theme, (*it).c_str());
                 if (c && c->image_count > 0) {
                     break;
                 }
