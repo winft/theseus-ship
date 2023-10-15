@@ -82,11 +82,6 @@ QPixmap WindowSystem::icon(WId win, int width, int height, bool scale, int flags
     return QPixmap();
 }
 
-void WindowSystem::lowerWindow(WId win)
-{
-    Q_UNUSED(win)
-}
-
 bool WindowSystem::mapViewport()
 {
     return false;
@@ -106,11 +101,6 @@ int WindowSystem::numberOfDesktops()
 {
     // KWin internal should not use KWindowSystem to find number of desktops
     return 1;
-}
-
-void WindowSystem::raiseWindow(WId win)
-{
-    Q_UNUSED(win)
 }
 
 QString WindowSystem::readNameProperty(WId window, long unsigned int atom)
