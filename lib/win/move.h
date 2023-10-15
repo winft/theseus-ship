@@ -19,7 +19,6 @@
 
 #include "base/output_helpers.h"
 #include "base/platform.h"
-#include <base/x11/data.h>
 
 #include <QApplication>
 #include <QWidget>
@@ -663,9 +662,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
     }
 
     if (is_move(win)) {
-        win->space.edges->check(
-            globalPos,
-            base::x11::xcb_time_to_chrono(win->space.base.x11_data, win->space.base.x11_data.time));
+        win->space.edges->check(globalPos, std::chrono::system_clock::now());
     }
 }
 
