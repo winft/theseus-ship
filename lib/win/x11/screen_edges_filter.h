@@ -31,18 +31,16 @@ public:
     bool event(xcb_generic_event_t* event) override
     {
         const uint8_t eventType = event->response_type & ~0x80;
+        auto get_timepoint
+            = [&](auto time) { return base::x11::xcb_time_to_chrono(space.base.x11_data, time); };
         switch (eventType) {
         case XCB_MOTION_NOTIFY: {
             const auto mouseEvent = reinterpret_cast<xcb_motion_notify_event_t*>(event);
             const QPoint rootPos(mouseEvent->root_x, mouseEvent->root_y);
             if (QWidget::mouseGrabber()) {
-                space.edges->check(
-                    rootPos,
-                    QDateTime::fromMSecsSinceEpoch(space.base.x11_data.time, Qt::UTC),
-                    true);
+                space.edges->check(rootPos, get_timepoint(space.base.x11_data.time), true);
             } else {
-                space.edges->check(rootPos,
-                                   QDateTime::fromMSecsSinceEpoch(mouseEvent->time, Qt::UTC));
+                space.edges->check(rootPos, get_timepoint(mouseEvent->time));
             }
             // not filtered out
             break;
@@ -51,7 +49,6 @@ public:
             auto const enter_event = reinterpret_cast<xcb_enter_notify_event_t*>(event);
             auto const window = enter_event->event;
             auto const point = QPoint(enter_event->root_x, enter_event->root_y);
-            auto const timestamp = QDateTime::fromMSecsSinceEpoch(enter_event->time, Qt::UTC);
 
             bool activated = false;
             bool activatedForClient = false;
@@ -68,7 +65,7 @@ public:
                 }
 
                 if (edge->window_id() == window) {
-                    if (edge->check(point, timestamp)) {
+                    if (edge->check(point, get_timepoint(enter_event->time))) {
                         if (edge->client()) {
                             activatedForClient = true;
                         }
@@ -87,7 +84,7 @@ public:
             if (activatedForClient) {
                 for (auto& edge : space.edges->edges) {
                     if (edge->client()) {
-                        edge->markAsTriggered(point, timestamp);
+                        edge->markAsTriggered(point, get_timepoint(enter_event->time));
                     }
                 }
             }
@@ -108,9 +105,7 @@ public:
                 }
                 if (edge->reserved_count > 0 && edge->window_id() == ce->window) {
                     base::x11::update_time_from_clock(space.base);
-                    edge->check(point,
-                                QDateTime::fromMSecsSinceEpoch(space.base.x11_data.time, Qt::UTC),
-                                true);
+                    edge->check(point, get_timepoint(space.base.x11_data.time), true);
                     return true;
                 }
             }

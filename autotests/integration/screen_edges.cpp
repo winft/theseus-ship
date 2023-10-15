@@ -77,8 +77,8 @@ TEST_CASE("screen edges", "[input],[win]")
         auto& screenEdges = setup.base->space->edges;
         QCOMPARE(screenEdges->desktop_switching.always, false);
         QCOMPARE(screenEdges->desktop_switching.when_moving_client, false);
-        QCOMPARE(screenEdges->time_threshold, 150);
-        QCOMPARE(screenEdges->reactivate_threshold, 350);
+        REQUIRE(screenEdges->time_threshold == std::chrono::milliseconds(150));
+        REQUIRE(screenEdges->reactivate_threshold == std::chrono::milliseconds(350));
         QCOMPARE(screenEdges->cursor_push_back_distance, QSize(1, 1));
         QCOMPARE(screenEdges->actions.top_left, win::electric_border_action::none);
         QCOMPARE(screenEdges->actions.top, win::electric_border_action::none);
@@ -496,12 +496,12 @@ TEST_CASE("screen edges", "[input],[win]")
         border_ids.push_back(screenEdges->reserve(win::electric_border::left, cb));
 
         // check activating a different edge doesn't do anything
-        screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc(), true);
+        screenEdges->check(QPoint(50, 0), std::chrono::system_clock::now(), true);
         QVERIFY(spy.isEmpty());
 
         // try a direct activate without pushback
         cursor()->set_pos(0, 50);
-        screenEdges->check(QPoint(0, 50), QDateTime::currentDateTimeUtc(), true);
+        screenEdges->check(QPoint(0, 50), std::chrono::system_clock::now(), true);
 
         // TODO(romangg): Is twice on Wayland. Should be only one. Needs investigation.
         REQUIRE_FALSE(spy.count() == 1);
@@ -512,7 +512,7 @@ TEST_CASE("screen edges", "[input],[win]")
         // use a different edge, this time with pushback
         border_ids.push_back(screenEdges->reserve(win::electric_border::right, cb));
         cursor()->set_pos(99, 50);
-        screenEdges->check(QPoint(99, 50), QDateTime::currentDateTimeUtc());
+        screenEdges->check(QPoint(99, 50), std::chrono::system_clock::now());
 
         // TODO(romangg): Should have been triggered. Needs investigation.
         REQUIRE_FALSE(spy.count() == 2);
@@ -528,7 +528,7 @@ TEST_CASE("screen edges", "[input],[win]")
         // and trigger it again
         QTest::qWait(160);
         cursor()->set_pos(99, 50);
-        screenEdges->check(QPoint(99, 50), QDateTime::currentDateTimeUtc());
+        screenEdges->check(QPoint(99, 50), std::chrono::system_clock::now());
 
         // TODO(romangg): Should have been triggered once more. Needs investigation.
         REQUIRE_FALSE(spy.count() == 3);
@@ -623,7 +623,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
         // do the same without the event, but the check method
         cursor()->set_pos(trigger);
-        screenEdges->check(trigger, QDateTime::currentDateTimeUtc());
+        screenEdges->check(trigger, std::chrono::system_clock::now());
         QVERIFY(spy.isEmpty());
         QTEST(cursor()->pos(), "expected");
 #endif
@@ -836,7 +836,7 @@ TEST_CASE("screen edges", "[input],[win]")
         screenEdges->reserve(client, win::electric_border::top);
         QCOMPARE(client->isHiddenInternal(), true);
         cursor()->set_pos(50, 0);
-        screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc());
+        screenEdges->check(QPoint(50, 0), std::chrono::system_clock::now());
         QCOMPARE(client->isHiddenInternal(), false);
         QCOMPARE(cursor()->pos(), QPoint(50, 1));
 
@@ -845,7 +845,7 @@ TEST_CASE("screen edges", "[input],[win]")
         // check on previous edge again, should fail
         client->hideClient(true);
         cursor()->set_pos(50, 0);
-        screenEdges->check(QPoint(50, 0), QDateTime::currentDateTimeUtc());
+        screenEdges->check(QPoint(50, 0), std::chrono::system_clock::now());
         QCOMPARE(client->isHiddenInternal(), true);
         QCOMPARE(cursor()->pos(), QPoint(50, 0));
 
@@ -916,7 +916,7 @@ TEST_CASE("screen edges", "[input],[win]")
         setPos(QPoint(0, 50));
         QVERIFY(approachingSpy.isEmpty());
         // let's also verify the check
-        screenEdges->check(QPoint(0, 50), QDateTime::currentDateTimeUtc(), false);
+        screenEdges->check(QPoint(0, 50), std::chrono::system_clock::now(), false);
         QVERIFY(approachingSpy.isEmpty());
 
         screenEdges->gesture_recognizer->startSwipeGesture(QPoint(0, 50));

@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/proto.h"
 #include "win/x11/key_server.h"
+#include <base/x11/data.h>
 
 namespace KWin::win::x11
 {
@@ -92,15 +93,13 @@ private:
 
     void motion(xcb_generic_event_t* event)
     {
+        auto const& x11_data = tabbox.space.base.x11_data;
         auto* mouse_event = reinterpret_cast<xcb_motion_notify_event_t*>(event);
         const QPoint rootPos(mouse_event->root_x, mouse_event->root_y);
         // TODO: this should be in ScreenEdges directly
         tabbox.space.edges->check(
-            rootPos,
-            QDateTime::fromMSecsSinceEpoch(tabbox.space.base.x11_data.time, Qt::UTC),
-            true);
-        xcb_allow_events(
-            tabbox.space.base.x11_data.connection, XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
+            rootPos, base::x11::xcb_time_to_chrono(x11_data, x11_data.time), true);
+        xcb_allow_events(x11_data.connection, XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
     }
 
     void key_press(xcb_generic_event_t* event)

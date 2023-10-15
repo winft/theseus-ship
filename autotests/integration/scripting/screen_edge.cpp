@@ -46,8 +46,8 @@ TEST_CASE("screen edge script", "[script]")
     setup.start();
     QVERIFY(setup.base->script);
 
-    setup.base->space->edges->time_threshold = 0;
-    setup.base->space->edges->reactivate_threshold = 0;
+    setup.base->space->edges->time_threshold = {};
+    setup.base->space->edges->reactivate_threshold = {};
 
     auto triggerConfigReload = [&]() { win::space_reconfigure(*setup.base->space); };
 

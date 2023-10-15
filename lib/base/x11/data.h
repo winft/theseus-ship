@@ -10,6 +10,7 @@
 
 #include <QtGui/private/qtx11extras_p.h>
 #include <cerrno>
+#include <chrono>
 #include <unistd.h>
 #include <xcb/xcb.h>
 
@@ -81,6 +82,15 @@ void update_time_from_clock(Base& base)
         // Do not update the current X11 time stamp if it's the Wayland only session.
         break;
     }
+}
+
+inline std::chrono::system_clock::time_point xcb_time_to_chrono(x11::data const& data,
+                                                                xcb_timestamp_t time)
+{
+    using namespace std::chrono;
+    auto const offset
+        = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count() - data.time;
+    return system_clock::time_point(milliseconds(time + offset));
 }
 
 }

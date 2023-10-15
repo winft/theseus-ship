@@ -224,13 +224,15 @@ public:
         return true;
     }
 
-    bool check(QPoint const& cursorPos, QDateTime const& triggerTime, bool forceNoPushBack = false)
+    bool check(QPoint const& cursorPos,
+               std::chrono::system_clock::time_point triggerTime,
+               bool forceNoPushBack = false)
     {
         if (!triggersFor(cursorPos)) {
             return false;
         }
-        if (last_trigger_time.isValid()
-            && last_trigger_time.msecsTo(triggerTime)
+        if (last_trigger_time != std::chrono::system_clock::time_point()
+            && triggerTime - last_trigger_time
                 < edger->reactivate_threshold - edger->time_threshold) {
             // Still in cooldown. reset the time, so the user has to actually keep the mouse still
             // for this long to retrigger
@@ -254,12 +256,12 @@ public:
         return false;
     }
 
-    void markAsTriggered(const QPoint& cursorPos, QDateTime const& triggerTime)
+    void markAsTriggered(const QPoint& cursorPos, std::chrono::system_clock::time_point triggerTime)
     {
         last_trigger_time = triggerTime;
 
         // invalidate
-        last_reset_time = QDateTime();
+        last_reset_time = {};
         triggered_point = cursorPos;
     }
 
@@ -682,25 +684,25 @@ private:
         doDeactivate();
     }
 
-    bool canActivate(QPoint const& cursorPos, const QDateTime& triggerTime)
+    bool canActivate(QPoint const& cursorPos, std::chrono::system_clock::time_point triggerTime)
     {
         // we check whether either the timer has explicitly been invalidated (successful trigger) or
         // is bigger than the reactivation threshold (activation "aborted", usually due to moving
         // away the cursor from the corner after successful activation) either condition means that
         // "this is the first event in a new attempt"
-        if (!last_reset_time.isValid()
-            || last_reset_time.msecsTo(triggerTime) > edger->reactivate_threshold) {
+        if (last_reset_time == std::chrono::system_clock::time_point()
+            || triggerTime - last_reset_time > edger->reactivate_threshold) {
             last_reset_time = triggerTime;
             return false;
         }
 
-        if (last_trigger_time.isValid()
-            && last_trigger_time.msecsTo(triggerTime)
+        if (last_trigger_time != std::chrono::system_clock::time_point()
+            && triggerTime - last_trigger_time
                 < edger->reactivate_threshold - edger->time_threshold) {
             return false;
         }
 
-        if (last_reset_time.msecsTo(triggerTime) < edger->time_threshold) {
+        if (triggerTime - last_reset_time < edger->time_threshold) {
             return false;
         }
 
@@ -907,8 +909,8 @@ private:
     electric_border_action pointer_action{electric_border_action::none};
     electric_border_action touch_action{electric_border_action::none};
 
-    QDateTime last_trigger_time;
-    QDateTime last_reset_time;
+    std::chrono::system_clock::time_point last_trigger_time;
+    std::chrono::system_clock::time_point last_reset_time;
     QPoint triggered_point;
 
     int last_approaching_factor{0};
@@ -1037,7 +1039,9 @@ public:
      * @param forceNoPushBack needs to be called to workaround some DnD clients, don't use unless
      * you want to chek on a DnD event
      */
-    void check(QPoint const& pos, QDateTime const& now, bool forceNoPushBack = false)
+    void check(QPoint const& pos,
+               std::chrono::system_clock::time_point now,
+               bool forceNoPushBack = false)
     {
         bool activatedForClient = false;
 
@@ -1235,7 +1239,8 @@ public:
 
             if (edge->geometry.contains(event->globalPos())) {
                 if (edge->check(event->globalPos(),
-                                QDateTime::fromMSecsSinceEpoch(event->timestamp(), Qt::UTC))) {
+                                std::chrono::system_clock::time_point(
+                                    std::chrono::milliseconds(event->timestamp())))) {
                     if (edge->client()) {
                         activatedForClient = true;
                     }
@@ -1246,9 +1251,9 @@ public:
         if (activatedForClient) {
             for (auto& edge : edges) {
                 if (edge->client()) {
-                    edge->markAsTriggered(
-                        event->globalPos(),
-                        QDateTime::fromMSecsSinceEpoch(event->timestamp(), Qt::UTC));
+                    edge->markAsTriggered(event->globalPos(),
+                                          std::chrono::system_clock::time_point(
+                                              std::chrono::milliseconds(event->timestamp())));
                 }
             }
         }
@@ -1273,9 +1278,10 @@ public:
         // TODO: migrate settings to a group ScreenEdges
         auto windowsConfig = config->group("Windows");
 
-        time_threshold = windowsConfig.readEntry("ElectricBorderDelay", 150);
-        reactivate_threshold
-            = qMax(time_threshold + 50, windowsConfig.readEntry("ElectricBorderCooldown", 350));
+        time_threshold
+            = std::chrono::milliseconds(windowsConfig.readEntry("ElectricBorderDelay", 150));
+        reactivate_threshold = std::chrono::milliseconds(std::max<int>(
+            time_threshold.count() + 50, windowsConfig.readEntry("ElectricBorderCooldown", 350)));
 
         int desktopSwitching
             = windowsConfig.readEntry("ElectricBorders", static_cast<int>(ElectricDisabled));
@@ -1437,10 +1443,10 @@ public:
     } desktop_switching;
 
     /// Minimum time between the push back of the cursor and the activation by re-entering the edge.
-    int time_threshold{0};
+    std::chrono::milliseconds time_threshold{0};
 
     /// Minimum time between triggers
-    int reactivate_threshold{0};
+    std::chrono::milliseconds reactivate_threshold{0};
 
     uint32_t callback_id{0};
 
