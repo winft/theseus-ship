@@ -290,11 +290,9 @@ private:
             return;
         }
 
-        if (auto& cursor = space.input->cursor) {
-            base::x11::xcb::define_cursor(space.base.x11_data.connection,
-                                          space.base.x11_data.root_window,
-                                          cursor->x11_cursor(Qt::ArrowCursor));
-        }
+        base::x11::xcb::define_cursor(space.base.x11_data.connection,
+                                      space.base.x11_data.root_window,
+                                      win::x11::xcb_cursor_get(space, Qt::ArrowCursor));
 
         space.base.process_environment.insert(QStringLiteral("DISPLAY"),
                                               QString::fromUtf8(qgetenv("DISPLAY")));

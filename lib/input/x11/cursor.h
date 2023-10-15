@@ -7,9 +7,11 @@
 #pragma once
 
 #include "input/cursor.h"
+#include <base/x11/data.h>
 
 #include <memory>
 #include <utility>
+#include <xcb/xcb.h>
 
 class QTimer;
 
@@ -69,6 +71,7 @@ private:
     void mouse_polled();
     void about_to_block();
 
+    base::x11::data const& x11_data;
     xcb_timestamp_t m_timeStamp;
     uint16_t m_buttonMask;
     QTimer* m_resetTimeStampTimer;

@@ -22,7 +22,8 @@ namespace KWin::input::x11
 cursor::cursor(base::x11::data const& x11_data,
                base::x11::event_filter_manager& x11_event_manager,
                KSharedConfigPtr config)
-    : input::cursor(x11_data, config)
+    : input::cursor(config)
+    , x11_data{x11_data}
     , m_timeStamp(XCB_TIME_CURRENT_TIME)
     , m_buttonMask(0)
     , m_resetTimeStampTimer(new QTimer(this))

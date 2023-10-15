@@ -13,6 +13,7 @@
 #include "base/x11/xcb/proto.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window_find.h"
+#include <win/x11/xcb_cursor.h>
 
 #include <QPoint>
 #include <functional>
@@ -113,9 +114,9 @@ private:
     xcb_cursor_t createCursor(QByteArray const& cursorName)
     {
         if (cursorName.isEmpty()) {
-            return redirect.cursor->x11_cursor(Qt::CrossCursor);
+            return win::x11::xcb_cursor_get(redirect.space, Qt::CrossCursor);
         }
-        auto cursor = redirect.cursor->x11_cursor(cursorName.toStdString());
+        auto cursor = win::x11::xcb_cursor_get(redirect.space, cursorName.toStdString());
         if (cursor != XCB_CURSOR_NONE) {
             return cursor;
         }

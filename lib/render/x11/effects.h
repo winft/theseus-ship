@@ -21,6 +21,7 @@
 #include "win/x11/space.h"
 #include <render/x11/effect/setup_handler.h>
 #include <render/x11/effect/setup_window.h>
+#include <win/x11/xcb_cursor.h>
 
 #include <memory.h>
 
@@ -75,7 +76,7 @@ public:
 
     void defineCursor(Qt::CursorShape shape) override
     {
-        auto const c = this->scene.platform.base.space->input->cursor->x11_cursor(shape);
+        auto const c = win::x11::xcb_cursor_get(*this->scene.platform.base.space, shape);
         if (c != XCB_CURSOR_NONE) {
             mouse_intercept.window.define_cursor(c);
         }

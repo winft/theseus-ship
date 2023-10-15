@@ -65,7 +65,7 @@ public:
         }
         auto c = wl_cursor_theme_get_cursor(m_theme, name.c_str());
         if (!c || c->image_count <= 0) {
-            const auto& names = cursor.alternative_names(name);
+            const auto& names = win::cursor_shape_get_alternative_names(name);
             for (auto it = names.begin(), end = names.end(); it != end; it++) {
                 c = wl_cursor_theme_get_cursor(m_theme, (*it).c_str());
                 if (c && c->image_count > 0) {

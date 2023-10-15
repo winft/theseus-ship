@@ -28,7 +28,7 @@ public:
     using cursor_image_t = wayland::cursor_image<type, Redirect>;
 
     cursor(Redirect& redirect)
-        : input::cursor(redirect.platform.base.x11_data, redirect.platform.config.main)
+        : input::cursor(redirect.platform.config.main)
         , cursor_image{std::make_unique<cursor_image_t>(redirect)}
         , redirect{redirect}
     {
@@ -44,6 +44,10 @@ public:
                          &redirect_qobject::keyboardModifiersChanged,
                          this,
                          &type::slot_modifiers_changed);
+
+        QObject::connect(this, &cursor::theme_changed, redirect.space.qobject.get(), [this] {
+            this->redirect.space.xcb_cursors.clear();
+        });
     }
 
     QImage image() const override

@@ -6,7 +6,6 @@
 */
 #pragma once
 
-#include "base/x11/data.h"
 #include "win/cursor_shape.h"
 
 #include "kwin_export.h"
@@ -14,7 +13,6 @@
 #include <KSharedConfig>
 #include <QObject>
 #include <QPoint>
-#include <xcb/xcb.h>
 
 namespace KWin::input
 {
@@ -40,7 +38,7 @@ class KWIN_EXPORT cursor : public QObject
 {
     Q_OBJECT
 public:
-    cursor(base::x11::data const& x11_data, KSharedConfigPtr config);
+    cursor(KSharedConfigPtr config);
     ~cursor() override;
 
     /**
@@ -82,11 +80,6 @@ public:
     int theme_size() const;
 
     /**
-     * @return list of alternative names for the cursor with @p name
-     */
-    std::vector<std::string> alternative_names(std::string const& name) const;
-
-    /**
      * Returns the current cursor position. This method does an update of the mouse position if
      * needed. It's save to call it multiple times.
      *
@@ -108,14 +101,6 @@ public:
     bool is_hidden() const;
     void show();
     void hide();
-
-    virtual xcb_cursor_t x11_cursor(win::cursor_shape shape);
-
-    /**
-     * Notice: if available always use the cursor_shape variant to avoid cache duplicates for
-     * ambiguous cursor names in the non existing cursor name specification
-     */
-    virtual xcb_cursor_t x11_cursor(std::string const& name);
 
 Q_SIGNALS:
     void pos_changed(QPoint pos);
@@ -176,8 +161,6 @@ protected:
     void update_pos(QPoint const& pos);
     void update_pos(int x, int y);
 
-    base::x11::data const& x11_data;
-
 private Q_SLOTS:
     void kglobal_settings_notify_change(int type, int arg);
 
@@ -186,7 +169,6 @@ private:
     void update_theme(QString const& name, int size);
     void load_theme_from_kconfig();
 
-    std::unordered_map<std::string, xcb_cursor_t> xcb_cursors;
     QPoint m_pos;
     int m_cursorTrackingCounter;
     QString m_themeName;

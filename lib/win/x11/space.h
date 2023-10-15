@@ -303,6 +303,7 @@ public:
     std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
     std::unique_ptr<input_t> input;
+    std::unordered_map<std::string, xcb_cursor_t> xcb_cursors;
 
     std::unique_ptr<win::tabbox<type>> tabbox;
     std::unique_ptr<osd_notification<input_t>> osd;

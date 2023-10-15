@@ -25,6 +25,7 @@
 #include "win/options.h"
 #include "win/rules/find.h"
 #include <win/tabbox/tabbox_client_impl.h>
+#include <win/x11/xcb_cursor.h>
 
 namespace KWin::win::x11
 {
@@ -50,7 +51,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
         0,        // back_pixmap
         0,        // border_pixel
         colormap, // colormap
-        win->space.input->cursor->x11_cursor(Qt::ArrowCursor),
+        xcb_cursor_get(win->space, Qt::ArrowCursor),
     };
 
     auto const cw_mask = XCB_CW_BACK_PIXMAP | XCB_CW_BORDER_PIXEL | XCB_CW_COLORMAP | XCB_CW_CURSOR;
@@ -698,7 +699,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      &window_qobject::moveResizeCursorChanged,
                      win->qobject.get(),
                      [win](auto cursor) {
-                         auto nativeCursor = win->space.input->cursor->x11_cursor(cursor);
+                         auto nativeCursor = xcb_cursor_get(win->space, cursor);
                          win->xcb_windows.outer.define_cursor(nativeCursor);
                          if (win->xcb_windows.input.is_valid()) {
                              win->xcb_windows.input.define_cursor(nativeCursor);
