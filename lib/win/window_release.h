@@ -86,7 +86,9 @@ void transfer_remnant_data(Win& source, Win& dest)
     dest.geo.frame = source.geo.frame;
     dest.render_data.bit_depth = source.render_data.bit_depth;
 
-    dest.window_type = source.windowType();
+    if constexpr (requires(Win dest) { dest.window_type; }) {
+        dest.window_type = source.windowType();
+    }
 
     dest.render_data.ready_for_painting = source.render_data.ready_for_painting;
     dest.render_data.damage_region = source.render_data.damage_region;
