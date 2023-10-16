@@ -104,6 +104,5 @@
     },
     "X-KDE-PluginKeyword": "minimizeall",
     "X-KWin-Border-Activate": "true",
-    "X-Plasma-API": "javascript",
-    "X-Plasma-MainScript": "code/main.js"
+    "X-Plasma-API": "javascript"
 }
