@@ -20,16 +20,8 @@ class KWIN_EXPORT wayland_console_model : public console_model
 {
     Q_OBJECT
 public:
+    explicit wayland_console_model(QObject* parent = nullptr);
     ~wayland_console_model();
-
-    template<typename Space>
-    static wayland_console_model* create(Space& space, QObject* parent = nullptr)
-    {
-        auto model = new wayland_console_model(parent);
-        model_setup_connections(*model, space);
-        wayland_model_setup_connections(*model, space);
-        return model;
-    }
 
     bool get_client_count(int parent_id, int& count) const override;
     bool get_property_count(QModelIndex const& parent, int& count) const override;
@@ -49,9 +41,6 @@ public:
 
     std::vector<std::unique_ptr<win::property_window>> m_shellClients;
     std::vector<std::unique_ptr<win::property_window>> internal_windows;
-
-private:
-    explicit wayland_console_model(QObject* parent = nullptr);
 };
 
 class KWIN_EXPORT wayland_console_delegate : public console_delegate
@@ -71,7 +60,12 @@ public:
         : console<Space>(space)
     {
         this->m_ui->windowsView->setItemDelegate(new wayland_console_delegate(this));
-        this->m_ui->windowsView->setModel(wayland_console_model::create(space, this));
+
+        auto windows_model = new wayland_console_model(this);
+        model_setup_connections(*windows_model, space);
+        wayland_model_setup_connections(*windows_model, space);
+        this->m_ui->windowsView->setModel(windows_model);
+
         this->m_ui->surfacesView->setModel(new surface_tree_model(space, this));
 
         auto device_model = new input_device_model(this);

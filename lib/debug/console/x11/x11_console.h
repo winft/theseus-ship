@@ -18,7 +18,10 @@ public:
         : console<Space>(space)
     {
         this->m_ui->windowsView->setItemDelegate(new console_delegate(this));
-        this->m_ui->windowsView->setModel(console_model::create(space, this));
+
+        auto model = new console_model(this);
+        model_setup_connections(*model, space);
+        this->m_ui->windowsView->setModel(model);
 
         this->m_ui->tabWidget->setTabEnabled(1, false);
         this->m_ui->tabWidget->setTabEnabled(2, false);
