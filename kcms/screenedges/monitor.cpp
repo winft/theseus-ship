@@ -55,6 +55,9 @@ Monitor::Monitor(QWidget* parent)
         grp[ i ] = new QActionGroup(this);
     }
     QRect avail = screenFromWidget(this)->geometry();
+
+    // 3 buttons in a row and some spacing between them
+    setMinimumContentWidth(20 * 3 + 5 * 2);
     setRatio((qreal)avail.width() / (qreal)avail.height());
     checkSize();
 }

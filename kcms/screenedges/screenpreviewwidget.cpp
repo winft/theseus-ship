@@ -22,9 +22,11 @@ class ScreenPreviewWidgetPrivate
 {
 public:
     ScreenPreviewWidgetPrivate(ScreenPreviewWidget *screen)
-          : q(screen),
-            ratio(1)
-    {}
+        : q(screen)
+        , ratio(1)
+        , minimumContentWidth(0)
+    {
+    }
 
     ~ScreenPreviewWidgetPrivate()
     {}
@@ -46,6 +48,11 @@ public:
             return;
         }
 
+        const auto minFrameWidth = minimumContentWidth + screenGraphics->marginSize(KSvg::FrameSvg::LeftMargin) + screenGraphics->marginSize(KSvg::FrameSvg::RightMargin);
+        if (monitorSize.width() < minFrameWidth) {
+            monitorSize.setWidth(minFrameWidth);
+        }
+
         monitorRect = QRect(QPoint(0, 0), monitorSize.toSize());
         monitorRect.moveCenter(bounds.center());
 
@@ -61,6 +68,7 @@ public:
     QPixmap preview;
     QRect monitorRect;
     qreal ratio;
+    qreal minimumContentWidth;
     QRect previewRect;
 };
 
@@ -102,6 +110,17 @@ void ScreenPreviewWidget::setRatio(const qreal ratio)
 qreal ScreenPreviewWidget::ratio() const
 {
     return d->ratio;
+}
+
+void ScreenPreviewWidget::setMinimumContentWidth(const qreal minw)
+{
+    d->minimumContentWidth = minw;
+    d->updateScreenGraphics();
+}
+
+qreal ScreenPreviewWidget::minimumContentWidth() const
+{
+    return d->minimumContentWidth;
 }
 
 QRect ScreenPreviewWidget::previewRect() const
