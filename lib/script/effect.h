@@ -111,18 +111,14 @@ public:
     static effect* create(const KPluginMetaData& effect, EffectsHandler& effects, Render& render)
     {
         auto const name = effect.pluginId();
-        auto const scriptName = effect.value(QStringLiteral("X-Plasma-MainScript"));
-        if (scriptName.isEmpty()) {
-            qCDebug(KWIN_SCRIPTING) << "X-Plasma-MainScript not set";
-            return nullptr;
-        }
         auto const scriptFile = QStandardPaths::locate(
             QStandardPaths::GenericDataLocation,
-            QLatin1String(KWIN_NAME "/effects/") + name + QLatin1String("/contents/") + scriptName);
-        if (scriptFile.isNull()) {
-            qCDebug(KWIN_SCRIPTING) << "Could not locate the effect script";
+            QLatin1String("kwin/effects/") + name + QLatin1String("/contents/code/main.js"));
+        if (scriptFile.isEmpty()) {
+            qCDebug(KWIN_SCRIPTING) << "Could not locate effect script" << name;
             return nullptr;
         }
+
         return effect::create(name,
                               scriptFile,
                               effect.value(QStringLiteral("X-KDE-Ordering")).toInt(),
