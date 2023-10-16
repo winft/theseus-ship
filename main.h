@@ -37,7 +37,6 @@ inline void app_init()
     }
 
     qRegisterMetaType<KWin::EffectWindow*>();
-    qRegisterMetaType<Wrapland::Server::Surface*>("Wrapland::Server::Surface*");
 
     // We want all QQuickWindows with an alpha buffer, do here as a later Workspace might create
     // QQuickWindows.

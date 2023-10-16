@@ -7,28 +7,28 @@
 */
 #pragma once
 
-#include "control.h"
-#include "desktop_set.h"
-#include "geo_block.h"
-#include "placement.h"
-#include "rules/update.h"
-#include "shortcut_set.h"
-#include "singleton_interface.h"
-#include "space_areas_helpers.h"
-#include "wayland/scene.h"
-#include "wayland/surface.h"
-#include "window_geometry.h"
-#include "window_metadata.h"
-#include "window_qobject.h"
-#include "window_release.h"
-#include "window_render_data.h"
-#include "window_topology.h"
+#include <win/control.h>
+#include <win/desktop_set.h>
+#include <win/geo_block.h>
+#include <win/placement.h>
+#include <win/rules/update.h>
+#include <win/shortcut_set.h>
+#include <win/singleton_interface.h>
+#include <win/space_areas_helpers.h>
+#include <win/wayland/scene.h>
+#include <win/wayland/surface.h>
+#include <win/window_geometry.h>
+#include <win/window_metadata.h>
+#include <win/window_qobject.h>
+#include <win/window_release.h>
+#include <win/window_render_data.h>
+#include <win/window_topology.h>
 
-namespace KWin::win
+namespace KWin::win::wayland
 {
 
 template<typename Window>
-class internal_control : public control<Window>
+class internal_control : public win::control<Window>
 {
 public:
     using control_t = win::control<Window>;
@@ -183,7 +183,7 @@ public:
 
     void setupCompositing()
     {
-        wayland::setup_compositing(*this);
+        setup_compositing(*this);
     }
 
     void add_scene_window_addon()
@@ -595,7 +595,7 @@ public:
 
         remove_window_from_lists(this->space, this);
         this->space.stacking.order.update_count();
-        update_space_areas(this->space);
+        win::update_space_areas(this->space);
         Q_EMIT this->space.qobject->internalClientRemoved(this->meta.signal_id);
 
         m_internalWindow = nullptr;
@@ -764,7 +764,7 @@ public:
         }
 
         this->space.stacking.order.update_count();
-        update_space_areas(this->space);
+        win::update_space_areas(this->space);
 
         Q_EMIT this->space.qobject->internalClientAdded(this->meta.signal_id);
     }

@@ -22,7 +22,6 @@
 #include "desktop/screen_locker_watcher.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
-#include "win/internal_window.h"
 #include "win/screen_edges.h"
 #include "win/stacking_order.h"
 #include <win/space_reconfigure.h>

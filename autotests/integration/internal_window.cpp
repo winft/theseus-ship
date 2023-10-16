@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/cursor.h"
 #include "render/effects.h"
 #include "win/deco.h"
-#include "win/internal_window.h"
 #include "win/move.h"
 #include "win/net.h"
 #include "win/space_reconfigure.h"

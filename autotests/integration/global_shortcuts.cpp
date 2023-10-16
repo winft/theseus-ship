@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/xkb/helpers.h"
 #include "win/active_window.h"
 #include "win/input.h"
-#include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/shortcut_dialog.h"
 #include "win/user_actions_menu.h"

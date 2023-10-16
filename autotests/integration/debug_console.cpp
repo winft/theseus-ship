@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/x11/xcb/window.h"
 #include "win/control.h"
 #include "win/deco.h"
-#include "win/internal_window.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>

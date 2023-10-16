@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "backingstore.h"
 #include "window.h"
 
-#include "win/internal_window.h"
+#include <win/wayland/internal_window.h>
 
 namespace KWin
 {

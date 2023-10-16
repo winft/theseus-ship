@@ -13,7 +13,6 @@
 
 #include "desktop/screen_locker_watcher.h"
 #include "win/input.h"
-#include "win/internal_window.h"
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
@@ -23,6 +22,7 @@
 #include <debug/console/wayland/xwl_console.h>
 #include <win/stacking_state.h>
 #include <win/subspace_manager.h>
+#include <win/wayland/internal_window.h>
 #include <win/x11/debug.h>
 #include <win/x11/netinfo_helpers.h>
 

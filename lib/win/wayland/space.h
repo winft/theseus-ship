@@ -12,12 +12,12 @@
 #include "debug/console/wayland/wayland_console.h"
 #include "desktop/screen_locker_watcher.h"
 #include "win/input.h"
-#include "win/internal_window.h"
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
 #include <win/stacking_state.h>
 #include <win/subspace_manager.h>
+#include <win/wayland/internal_window.h>
 
 #include <memory>
 

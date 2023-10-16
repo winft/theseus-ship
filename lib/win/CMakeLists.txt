@@ -81,7 +81,6 @@ target_sources(win
       geo_move.h
       geo_restrict.h
       input.h
-      internal_window.h
       kill_window.h
       layers.h
       maximize.h
@@ -334,6 +333,7 @@ target_sources(win-wl
       wayland/desktop_set.h
       wayland/idle.h
       wayland/input.h
+      wayland/internal_window.h
       wayland/layer_shell.h
       wayland/plasma_shell.h
       wayland/plasma_window.h

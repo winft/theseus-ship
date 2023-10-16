@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/deco/bridge.h"
 #include "win/deco/client_impl.h"
 #include "win/deco/settings.h"
-#include "win/internal_window.h"
 #include "win/move.h"
 #include "win/screen_edges.h"
 #include "win/space_reconfigure.h"
