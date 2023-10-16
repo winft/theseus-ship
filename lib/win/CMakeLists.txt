@@ -17,9 +17,6 @@ target_link_libraries(win
     Qt::OpenGL
     Qt::Quick
 
-    # TODO(romangg): For now needed because of surface include.
-    WraplandServer
-
     XCB::KEYSYMS
     ${X11_LIBRARIES}
     base
@@ -320,6 +317,7 @@ add_library(win-wl SHARED)
 target_link_libraries(win-wl
   PUBLIC
     win
+    WraplandServer
 )
 
 target_sources(win-wl

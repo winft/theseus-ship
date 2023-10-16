@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 add_library(base SHARED)
+target_compile_options (base PUBLIC -fexceptions)
 
 target_link_libraries(base
   PUBLIC
