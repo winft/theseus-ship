@@ -31,6 +31,7 @@ class KWIN_EXPORT QuickSceneView : public EffectQuickView
     Q_OBJECT
     Q_PROPERTY(QuickSceneEffect* effect READ effect CONSTANT)
     Q_PROPERTY(EffectScreen const* screen READ screen CONSTANT)
+    Q_PROPERTY(QQuickItem* rootItem READ rootItem CONSTANT)
 
 public:
     explicit QuickSceneView(QuickSceneEffect* effect, EffectScreen const* screen);
