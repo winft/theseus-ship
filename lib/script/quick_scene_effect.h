@@ -64,6 +64,7 @@ public:
 
     void setMetaData(const KPluginMetaData& metaData, KSharedConfigPtr const& config);
 
+    void reconfigure(ReconfigureFlags flags) override;
     int requestedEffectChainPosition() const override;
 
     bool isVisible() const;

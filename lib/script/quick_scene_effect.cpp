@@ -22,6 +22,12 @@ ScriptedQuickSceneEffect::~ScriptedQuickSceneEffect()
 {
 }
 
+void ScriptedQuickSceneEffect::reconfigure(ReconfigureFlags flags)
+{
+    m_configLoader->load();
+    Q_EMIT m_configLoader->configChanged();
+}
+
 int ScriptedQuickSceneEffect::requestedEffectChainPosition() const
 {
     return m_requestedEffectChainPosition;
