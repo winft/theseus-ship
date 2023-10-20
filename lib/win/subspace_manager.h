@@ -135,33 +135,18 @@ public:
     void slotUp();
     void slotDown();
 
-    /// Called when gesture ended, the thing that actually switches the desktop.
-    QAction* swipe_gesture_released_y() const
-    {
-        return m_swipeGestureReleasedY.get();
-    }
-    QAction* swipe_gesture_released_x() const
-    {
-        return m_swipeGestureReleasedX.get();
-    }
-    QPointF get_current_desktop_offset() const
-    {
-        return current_desktop_offset;
-    }
-    void set_desktop_offset_x(qreal offsetX)
-    {
-        current_desktop_offset.setX(offsetX);
-    }
-    void set_desktop_offset_y(qreal offsetY)
-    {
-        current_desktop_offset.setY(offsetY);
-    }
     void connect_gestures();
 
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement{nullptr};
 
     std::vector<subspace*> subspaces;
     subspace* current{nullptr};
+
+    struct {
+        std::unique_ptr<QAction> released_x;
+        std::unique_ptr<QAction> released_y;
+    } swipe_gesture;
+    QPointF current_desktop_offset{0, 0};
 
 private:
     void updateRootInfo();
@@ -176,10 +161,6 @@ private:
     subspace_grid m_grid;
     x11::net::root_info* m_rootInfo{nullptr};
     KSharedConfig::Ptr m_config;
-
-    QScopedPointer<QAction> m_swipeGestureReleasedY;
-    QScopedPointer<QAction> m_swipeGestureReleasedX;
-    QPointF current_desktop_offset = QPointF(0, 0);
 
     subspaces_singleton singleton;
 };

@@ -24,8 +24,6 @@ subspace_manager_qobject::subspace_manager_qobject() = default;
 
 subspace_manager::subspace_manager()
     : qobject{std::make_unique<subspace_manager_qobject>()}
-    , m_swipeGestureReleasedY(new QAction(qobject.get()))
-    , m_swipeGestureReleasedX(new QAction(qobject.get()))
     , singleton{qobject.get(),
                 [this] { return subspaces; },
                 [this](auto pos, auto const& name) { return create_subspace(pos, name); },
@@ -34,6 +32,9 @@ subspace_manager::subspace_manager()
 
 {
     singleton_interface::subspaces = &singleton;
+
+    swipe_gesture.released_x = std::make_unique<QAction>();
+    swipe_gesture.released_y = std::make_unique<QAction>();
 }
 
 subspace_manager::~subspace_manager()
@@ -679,7 +680,7 @@ QString subspace_manager::defaultName(int desktop) const
 
 void subspace_manager::connect_gestures()
 {
-    QObject::connect(m_swipeGestureReleasedX.get(), &QAction::triggered, qobject.get(), [this]() {
+    QObject::connect(swipe_gesture.released_x.get(), &QAction::triggered, qobject.get(), [this]() {
         // Note that if desktop wrapping is disabled and there's no desktop to left or right,
         // toLeft() and toRight() will return the current desktop.
         auto target = current;
@@ -699,7 +700,7 @@ void subspace_manager::connect_gestures()
         current_desktop_offset = QPointF(0, 0);
     });
 
-    QObject::connect(m_swipeGestureReleasedY.get(), &QAction::triggered, qobject.get(), [this]() {
+    QObject::connect(swipe_gesture.released_y.get(), &QAction::triggered, qobject.get(), [this]() {
         // Note that if desktop wrapping is disabled and there's no desktop above or below,
         // above() and below() will return the current desktop.
         subspace* target = current;

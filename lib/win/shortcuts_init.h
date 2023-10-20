@@ -166,21 +166,21 @@ void shortcuts_init_subspaces(Space& space)
     // These connections decide which desktop to end on after gesture ends
     manager->connect_gestures();
 
-    auto swipeGestureReleasedX = manager->swipe_gesture_released_x();
-    auto swipeGestureReleasedY = manager->swipe_gesture_released_y();
+    auto swipeGestureReleasedX = manager->swipe_gesture.released_x.get();
+    auto swipeGestureReleasedY = manager->swipe_gesture.released_y.get();
 
     const auto left = [manager](qreal cb) {
         if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(cb);
+            manager->current_desktop_offset.setX(cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
-                                                      manager->get_current_desktop_offset());
+                                                      manager->current_desktop_offset);
         }
     };
     const auto right = [manager](qreal cb) {
         if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(-cb);
+            manager->current_desktop_offset.setX(-cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
-                                                      manager->get_current_desktop_offset());
+                                                      manager->current_desktop_offset);
         }
     };
 
@@ -192,44 +192,44 @@ void shortcuts_init_subspaces(Space& space)
 
     register_touchpad_swipe(swipe_direction::left, 3, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(cb);
+            manager->current_desktop_offset.setX(cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
-                                                      manager->get_current_desktop_offset());
+                                                      manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::right, 3, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(-cb);
+            manager->current_desktop_offset.setX(-cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
-                                                      manager->get_current_desktop_offset());
+                                                      manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::left, 4, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(cb);
+            manager->current_desktop_offset.setX(cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
-                                                      manager->get_current_desktop_offset());
+                                                      manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::right, 4, swipeGestureReleasedX, [manager](qreal cb) {
         if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(-cb);
+            manager->current_desktop_offset.setX(-cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
-                                                      manager->get_current_desktop_offset());
+                                                      manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::down, 3, swipeGestureReleasedY, [manager](qreal cb) {
         if (manager->grid().height() > 1) {
-            manager->set_desktop_offset_y(-cb);
+            manager->current_desktop_offset.setY(-cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
-                                                      manager->get_current_desktop_offset());
+                                                      manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::up, 3, swipeGestureReleasedY, [manager](qreal cb) {
         if (manager->grid().height() > 1) {
-            manager->set_desktop_offset_y(cb);
+            manager->current_desktop_offset.setY(cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
-                                                      manager->get_current_desktop_offset());
+                                                      manager->current_desktop_offset);
         }
     });
 
