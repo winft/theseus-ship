@@ -176,28 +176,45 @@ target_sources(render-x11
   PUBLIC
     FILE_SET HEADERS
     FILES
-      backend/x11/non_composited_outline.h
-      x11/buffer.h
       x11/compositor_selection_owner.h
-      x11/compositor_start.h
-      x11/effect.h
       x11/effect/setup_handler.h
       x11/effect/setup_window.h
-      x11/effects.h
       x11/keyboard_intercept_filter.h
       x11/mouse_intercept_filter.h
-      x11/overlay_window.h
-      x11/platform.h
       x11/property_notify_filter.h
       x11/shadow.h
       x11/support_properties.h
-      x11/sync.h
       x11/types.h
+  PRIVATE
+    x11/compositor_selection_owner.cpp
+)
+
+add_library(render-x11-backend SHARED)
+
+target_link_libraries(render-x11-backend
+  PUBLIC
+    base-x11
+    render-x11
+  PRIVATE
+    XCB::IMAGE
+)
+
+target_sources(render-x11-backend
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      backend/x11/non_composited_outline.h
+      x11/buffer.h
+      x11/compositor_start.h
+      x11/effect.h
+      x11/effects.h
+      x11/overlay_window.h
+      x11/platform.h
+      x11/sync.h
       xrender/utils.h
   PRIVATE
     backend/x11/glx_context_attribute_builder.cpp
     backend/x11/non_composited_outline.cpp
-    x11/compositor_selection_owner.cpp
     xrender/utils.cpp
 )
 
@@ -242,7 +259,7 @@ target_sources(render-wl
       wayland/xwl_platform.h
 )
 
-set_target_properties(render render-x11 render-wl PROPERTIES
+set_target_properties(render render-x11 render-x11-backend render-wl PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
   PREFIX libkwinft-
@@ -264,7 +281,7 @@ install(
 install(DIRECTORY qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
 install(DIRECTORY qml/frames/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/frames)
 
-install(TARGETS render render-x11 render-wl
+install(TARGETS render render-x11 render-x11-backend render-wl
   EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/render

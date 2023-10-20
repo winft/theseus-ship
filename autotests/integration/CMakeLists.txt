@@ -116,8 +116,8 @@ target_compile_definitions(tests PRIVATE USE_XWL=1)
 target_link_libraries(tests
 PRIVATE
   desktop-kde
+  kwinft::wayland
   script
-  wlroots
   Qt::Test
   Catch2::Catch2WithMain
   KF6::Crash
@@ -196,8 +196,8 @@ target_compile_definitions(tests-wl PRIVATE USE_XWL=0)
 target_link_libraries(tests-wl
 PRIVATE
   desktop-kde
+  kwinft::wayland
   script
-  wlroots
   Qt::Test
   Catch2::Catch2WithMain
   KF6::Crash

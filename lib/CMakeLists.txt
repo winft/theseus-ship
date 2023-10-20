@@ -13,9 +13,35 @@ add_subdirectory(xwl)
 add_subdirectory(debug)
 add_subdirectory(desktop)
 
-add_library(wlroots SHARED)
+add_library(x11 SHARED)
+add_library(kwinft::x11 ALIAS x11)
 
-target_link_libraries(wlroots
+target_link_libraries(x11
+  PUBLIC
+    base-x11
+    debug-common
+    desktop-kde
+    input-x11-backend
+    render-x11-backend
+
+    # TODO(romangg): Linking against script lib is needed at the moment because in the base platform
+    #                the script platform is composited, but in the future it should be made possible
+    #                to build the wlroots backend lib without it.
+    script
+    win-x11-backend
+)
+
+target_sources(x11
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      base/x11/platform.h
+)
+
+add_library(wayland SHARED)
+add_library(kwinft::wayland ALIAS wayland)
+
+target_link_libraries(wayland
   PUBLIC
     debug-wl
     input-wl
@@ -34,7 +60,7 @@ target_link_libraries(wlroots
     xwl
 )
 
-target_sources(wlroots
+target_sources(wayland
   PUBLIC
     FILE_SET HEADERS
     FILES
@@ -73,19 +99,19 @@ target_sources(wlroots
    input/backend/wlroots/control/touch.cpp
 )
 
-set_target_properties(wlroots PROPERTIES
+set_target_properties(x11 wayland PROPERTIES
    VERSION ${CMAKE_PROJECT_VERSION}
    SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
    PREFIX libkwinft-
 )
 
-target_compile_definitions(wlroots PUBLIC WLR_USE_UNSTABLE)
+target_compile_definitions(wayland PUBLIC WLR_USE_UNSTABLE)
 
-kcoreaddons_target_static_plugins(wlroots
+kcoreaddons_target_static_plugins(wayland
   NAMESPACE "kwin/effects/plugins"
 )
 
-install(TARGETS wlroots
+install(TARGETS x11 wayland
   EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft

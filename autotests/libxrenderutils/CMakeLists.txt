@@ -6,7 +6,7 @@ add_executable(blendPictureTest blendpicture_test.cpp)
 set_target_properties(blendPictureTest PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
 add_test(NAME xrenderutils-blendPictureTest COMMAND blendPictureTest)
 target_link_libraries(blendPictureTest
-    render-x11
+    render-x11-backend
     Qt::Test
     Qt::Gui
     Qt::GuiPrivate

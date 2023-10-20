@@ -16,9 +16,7 @@ target_link_libraries(win
     Qt::Concurrent
     Qt::OpenGL
     Qt::Quick
-
     XCB::KEYSYMS
-    ${X11_LIBRARIES}
     base
 )
 
@@ -48,11 +46,6 @@ target_sources(win
       rules/types.h
       rules/update.h
       rules/window.h
-      x11/client_machine.h
-      x11/extras.h
-      x11/key_server.h
-      x11/net/root_info.h
-      x11/net/win_info.h
       actions.h
       activation.h
       active_window.h
@@ -156,13 +149,6 @@ target_sources(win
     space_qobject.cpp
     subspace.cpp
     subspace_grid.cpp
-    x11/client_machine.cpp
-    x11/extras.cpp
-    x11/key_server.cpp
-    x11/session_manager.cpp
-    x11/net/atoms.cpp
-    x11/net/root_info.cpp
-    x11/net/win_info.cpp
 )
 
 if (KWIN_BUILD_TABBOX)
@@ -198,11 +184,6 @@ qt6_add_dbus_adaptor(win_dbus_src
   dbus/virtual_desktop_manager.h
   KWin::win::dbus::subspace_manager_wrap
 )
-qt6_add_dbus_adaptor(win_dbus_src
-  dbus/org.kde.KWin.Session.xml
-  x11/session_manager.h
-  KWin::win::x11::session_manager
-)
 qt6_add_dbus_interface(win_dbus_src dbus/org.kde.kappmenu.xml appmenu_interface)
 qt6_add_dbus_interface(win_dbus_src
   ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf6_org.freedesktop.ScreenSaver.xml
@@ -234,12 +215,18 @@ target_link_libraries(win-x11
   PUBLIC
     win
     XCB::ICCCM
+    ${X11_LIBRARIES}
 )
 
 target_sources(win-x11
   PUBLIC
     FILE_SET HEADERS
     FILES
+      x11/client_machine.h
+      x11/extras.h
+      x11/key_server.h
+      x11/net/root_info.h
+      x11/net/win_info.h
       x11/net/atoms_p.h
       x11/net/geo.h
       x11/net/info_p.h
@@ -279,7 +266,6 @@ target_sources(win-x11
       x11/session.h
       x11/session_manager.h
       x11/shortcut.h
-      x11/space.h
       x11/space_areas.h
       x11/space_event.h
       x11/space_setup.h
@@ -301,6 +287,36 @@ target_sources(win-x11
       x11/xcb.h
       x11/xcb_event_filter.h
       x11/xcb_windows.h
+  PRIVATE
+    x11/client_machine.cpp
+    x11/extras.cpp
+    x11/key_server.cpp
+    x11/session_manager.cpp
+    x11/net/atoms.cpp
+    x11/net/root_info.cpp
+    x11/net/win_info.cpp
+)
+
+qt6_add_dbus_adaptor(win_x11_dbus_src
+  dbus/org.kde.KWin.Session.xml
+  x11/session_manager.h
+  KWin::win::x11::session_manager
+)
+
+target_sources(win-x11 PRIVATE ${win_x11_dbus_src})
+
+add_library(win-x11-backend SHARED)
+
+target_link_libraries(win-x11-backend
+  PUBLIC
+    win-x11
+)
+
+target_sources(win-x11-backend
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      x11/space.h
 )
 
 add_library(win-wl SHARED)
@@ -345,7 +361,7 @@ target_sources(win-wl
       wayland/xwl_window.h
 )
 
-set_target_properties(win win-x11 win-wl PROPERTIES
+set_target_properties(win win-x11 win-x11-backend win-wl PROPERTIES
    VERSION ${CMAKE_PROJECT_VERSION}
    SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
    PREFIX libkwinft-
@@ -360,7 +376,7 @@ install(
   DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/onscreennotification
 )
 
-install(TARGETS win win-x11 win-wl
+install(TARGETS win win-x11 win-x11-backend win-wl
   EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/win

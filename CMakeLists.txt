@@ -329,15 +329,8 @@ endif()
 
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
 target_link_libraries(kwin_x11
-  base-x11
-  debug-common
-  desktop-kde
-  input-x11
-  render-x11
-  script
-  win-x11
+  kwinft::x11
   KF6::Crash
-  ${XKBX11_LIBRARIES}
 )
 
 install(TARGETS kwin_x11)
@@ -347,8 +340,8 @@ kcoreaddons_target_static_plugins(kwin_x11 NAMESPACE "kwin/effects/plugins")
 add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
   desktop-kde
+  kwinft::wayland
   script
-  wlroots
   KF6IdleTimeKWinPlugin
   KF6WindowSystemKWinPlugin
   KWinQpaPlugin

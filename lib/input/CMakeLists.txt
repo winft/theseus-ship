@@ -77,17 +77,19 @@ target_sources(input
     xkb/keymap.cpp
 )
 
-add_library(input-x11 SHARED)
+add_library(input-x11-backend SHARED)
 
-target_link_libraries(input-x11
+target_link_libraries(input-x11-backend
   PUBLIC
     base-x11
     input
+    win-x11
     KF6::GlobalAccel
     X11::Xi
+    ${XKBX11_LIBRARIES}
 )
 
-target_sources(input-x11
+target_sources(input-x11-backend
   PUBLIC
     FILE_SET HEADERS
     FILES
@@ -182,7 +184,7 @@ target_sources(input-wl
     xkb/layout_policies.cpp
 )
 
-set_target_properties(input input-x11 input-wl PROPERTIES
+set_target_properties(input input-x11-backend input-wl PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
   PREFIX libkwinft-
@@ -199,7 +201,7 @@ install(
   DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
 
-install(TARGETS input input-x11 input-wl
+install(TARGETS input input-x11-backend input-wl
   EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/input
