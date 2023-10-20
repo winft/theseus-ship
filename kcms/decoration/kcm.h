@@ -10,11 +10,8 @@
 #include "utils.h"
 
 #include <KQuickManagedConfigModule>
-
-
-class QAbstractItemModel;
-class QSortFilterProxyModel;
-class QQuickItem;
+#include <QAbstractListModel>
+#include <QSortFilterProxyModel>
 
 namespace KDecoration2
 {

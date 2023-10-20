@@ -80,11 +80,6 @@ protected:
                     window,
                     window.m_internalWindow->property(internal_skip_close_animation_name).toBool());
             }
-            if (pe->propertyName() == "kwin_windowType") {
-                window.window_type = static_cast<win::win_type>(
-                    window.m_internalWindow->property("kwin_windowType").template value<int>());
-                update_space_areas(window.space);
-            }
         }
         return false;
     }
@@ -159,11 +154,6 @@ public:
         QObject::connect(qwin.get(), &window_qobject::opacityChanged, qwin.get(), [this] {
             add_full_repaint(*this);
         });
-
-        const QVariant windowType = m_internalWindow->property("kwin_windowType");
-        if (!windowType.isNull()) {
-            window_type = static_cast<win::win_type>(windowType.value<int>());
-        }
 
         setCaption(m_internalWindow->title());
         this->control->icon = QIcon::fromTheme(QStringLiteral("kwin"));
@@ -242,12 +232,12 @@ public:
 
     win::win_type windowType() const
     {
-        return window_type;
+        return win_type::normal;
     }
 
     win::win_type get_window_type_direct() const
     {
-        return window_type;
+        return win_type::normal;
     }
 
     // TODO(romangg): Remove
@@ -841,7 +831,6 @@ public:
     QWindow* m_internalWindow = nullptr;
     QRect synced_geo;
     double m_opacity = 1.0;
-    win::win_type window_type{win_type::normal};
     Qt::WindowFlags m_internalWindowFlags = Qt::WindowFlags();
     bool m_userNoBorder = false;
     bool is_outline{false};

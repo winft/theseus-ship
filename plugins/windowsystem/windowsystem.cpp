@@ -82,11 +82,6 @@ QPixmap WindowSystem::icon(WId win, int width, int height, bool scale, int flags
     return QPixmap();
 }
 
-void WindowSystem::lowerWindow(WId win)
-{
-    Q_UNUSED(win)
-}
-
 bool WindowSystem::mapViewport()
 {
     return false;
@@ -106,11 +101,6 @@ int WindowSystem::numberOfDesktops()
 {
     // KWin internal should not use KWindowSystem to find number of desktops
     return 1;
-}
-
-void WindowSystem::raiseWindow(WId win)
-{
-    Q_UNUSED(win)
 }
 
 QString WindowSystem::readNameProperty(WId window, long unsigned int atom)
@@ -209,17 +199,9 @@ void WindowSystem::setState(WId win, NET::States state)
     Q_UNUSED(state)
 }
 
-void WindowSystem::setType(WId win, NET::WindowType windowType)
+void WindowSystem::setType(WId /*win*/, NET::WindowType /*windowType*/)
 {
-    const auto windows = qApp->allWindows();
-    auto it = std::find_if(windows.begin(), windows.end(), [win](QWindow* w) {
-        return w->handle() && w->winId() == win;
-    });
-    if (it == windows.end()) {
-        return;
-    }
-
-    (*it)->setProperty("kwin_windowType", QVariant::fromValue(windowType));
+    // Internal windows don't support types.
 }
 
 bool WindowSystem::showingDesktop()

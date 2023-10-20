@@ -306,21 +306,7 @@ Qt::Key keyboard::to_qt_key(xkb_keysym_t keysym,
                             Qt::KeyboardModifiers modifiers,
                             bool superAsMeta) const
 {
-    // FIXME: passing superAsMeta doesn't have impact due to bug in the Qt function, so handle it
-    // below
-    Qt::Key qtKey
-        = Qt::Key(QXkbCommon::keysymToQtKey(keysym, modifiers, state, scanCode + 8, superAsMeta));
-
-    // FIXME: workarounds for symbols currently wrong/not mappable via keysymToQtKey()
-    if (superAsMeta && (qtKey == Qt::Key_Super_L || qtKey == Qt::Key_Super_R)) {
-        // translate Super/Hyper keys to Meta if we're using them as the MetaModifier
-        qtKey = Qt::Key_Meta;
-    } else if (qtKey > 0xff && keysym <= 0xff) {
-        // XKB_KEY_mu, XKB_KEY_ydiaeresis go here
-        qtKey = Qt::Key(keysym);
-    }
-
-    return qtKey;
+    return Qt::Key(QXkbCommon::keysymToQtKey(keysym, modifiers, state, scanCode + 8, superAsMeta));
 }
 
 bool keyboard::should_key_repeat(uint32_t key) const

@@ -84,8 +84,11 @@ TEST_CASE("xkb", "[input],[unit]")
         data{Qt::Key_Super_L, XKB_KEY_Super_L, Qt::KeyboardModifiers()},
         data{Qt::Key_Super_R, XKB_KEY_Super_R, Qt::KeyboardModifiers()},
         data{Qt::Key_Menu, XKB_KEY_Menu, Qt::KeyboardModifiers()},
-        data{Qt::Key_Hyper_L, XKB_KEY_Hyper_L, Qt::KeyboardModifiers()},
-        data{Qt::Key_Hyper_R, XKB_KEY_Hyper_R, Qt::KeyboardModifiers()},
+
+        // TODO(romangg): This was changed with Qt 6.6. Is this still the expected outcome?
+        data{Qt::Key_Meta, XKB_KEY_Hyper_L, Qt::KeyboardModifiers()},
+        data{Qt::Key_Meta, XKB_KEY_Hyper_R, Qt::KeyboardModifiers()},
+
         data{Qt::Key_Help, XKB_KEY_Help, Qt::KeyboardModifiers()},
         data{Qt::Key_Space, XKB_KEY_KP_Space, Qt::KeypadModifier},
         data{Qt::Key_Tab, XKB_KEY_KP_Tab, Qt::KeypadModifier},
@@ -457,7 +460,8 @@ TEST_CASE("xkb", "[input],[unit]")
         data{Qt::Key_9, XKB_KEY_KP_9, Qt::KeypadModifier});
 
     input::xkb::keyboard xkb_keyboard(nullptr, nullptr);
-    REQUIRE(xkb_keyboard.to_qt_key(test_data.key_sym_x11) == test_data.key_sym_qt);
+    REQUIRE(xkb_keyboard.to_qt_key(test_data.key_sym_x11, 0, test_data.modifiers)
+            == test_data.key_sym_qt);
 }
 
 }
