@@ -87,12 +87,10 @@ kcoreaddons_target_static_plugins(wlroots
 
 install(TARGETS wlroots
   EXPORT wlroots-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft
 )
 install(EXPORT wlroots-export
   NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
   DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )

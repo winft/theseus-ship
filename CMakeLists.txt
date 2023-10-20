@@ -340,7 +340,7 @@ target_link_libraries(kwin_x11
   ${XKBX11_LIBRARIES}
 )
 
-install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS kwin_x11)
 
 kcoreaddons_target_static_plugins(kwin_x11 NAMESPACE "kwin/effects/plugins")
 
@@ -356,7 +356,7 @@ target_link_libraries(kwin_wayland
   KF6::DBusAddons
 )
 
-install(TARGETS kwin_wayland ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS kwin_wayland)
 if (HAVE_LIBCAP)
     install(
     CODE "execute_process(
