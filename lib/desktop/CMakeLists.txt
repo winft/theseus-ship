@@ -30,12 +30,6 @@ target_sources(desktop
     ${desktop_dbus_src}
 )
 
-set_target_properties(desktop PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-desktop"
-)
-
 add_library(desktop-kde SHARED)
 
 qt6_add_dbus_adaptor(desktop_kde_dbus_src
@@ -62,10 +56,10 @@ target_sources(desktop-kde
     ${desktop_kde_dbus_src}
 )
 
-set_target_properties(desktop-kde PROPERTIES
+set_target_properties(desktop desktop-kde PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-desktop-kde"
+  PREFIX libkwinft-
 )
 
 # TODO(romangg): Below should only be installed as part of a consumer install linking desktop-kde.
@@ -104,22 +98,8 @@ ecm_install_configured_files(
   @ONLY DESTINATION ${KDE_INSTALL_SYSTEMDUSERUNITDIR}
 )
 
-install(TARGETS desktop
-  EXPORT desktop-export
+install(TARGETS desktop desktop-kde
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/desktop
-)
-install(TARGETS desktop-kde
-  EXPORT desktop-kde-export
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/desktop
-)
-
-install(EXPORT desktop-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT desktop-kde-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )

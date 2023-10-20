@@ -217,12 +217,6 @@ kconfig_add_kcfg_files(win rules/kconfig/rules_book_settings_base.kcfgc)
 
 ki18n_wrap_ui(win shortcut_dialog.ui)
 
-set_target_properties(win PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-win"
-)
-
 # Target killer helper
 add_executable(kwin_killer_helper x11/helpers/killer.cpp)
 
@@ -309,12 +303,6 @@ target_sources(win-x11
       x11/xcb_windows.h
 )
 
-set_target_properties(win-x11 PROPERTIES
-   VERSION ${CMAKE_PROJECT_VERSION}
-   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-   OUTPUT_NAME "kwin-win-x11"
-)
-
 add_library(win-wl SHARED)
 
 target_link_libraries(win-wl
@@ -357,10 +345,10 @@ target_sources(win-wl
       wayland/xwl_window.h
 )
 
-set_target_properties(win-wl PROPERTIES
+set_target_properties(win win-x11 win-wl PROPERTIES
    VERSION ${CMAKE_PROJECT_VERSION}
    SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-   OUTPUT_NAME "kwin-win-wl"
+   PREFIX libkwinft-
 )
 
 install(
@@ -372,33 +360,10 @@ install(
   DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/onscreennotification
 )
 
-install(TARGETS win
-  EXPORT win-export
+install(TARGETS win win-x11 win-wl
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/win
-)
-install(TARGETS win-x11
-  EXPORT win-x11-export
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/win
-)
-install(TARGETS win-wl
-  EXPORT win-wl-export
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/win
-)
-
-install(EXPORT win-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT win-x11-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT win-wl-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )
 
 install(TARGETS kwin_killer_helper DESTINATION ${KDE_INSTALL_LIBEXECDIR})

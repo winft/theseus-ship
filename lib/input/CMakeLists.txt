@@ -77,12 +77,6 @@ target_sources(input
     xkb/keymap.cpp
 )
 
-set_target_properties(input PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-input"
-)
-
 add_library(input-x11 SHARED)
 
 target_link_libraries(input-x11
@@ -114,12 +108,6 @@ target_sources(input-x11
     x11/cursor.cpp
     x11/global_shortcuts_manager.cpp
     x11/xfixes_cursor_event_filter.cpp
-)
-
-set_target_properties(input-x11 PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-input-x11"
 )
 
 add_library(input-wl SHARED)
@@ -194,10 +182,10 @@ target_sources(input-wl
     xkb/layout_policies.cpp
 )
 
-set_target_properties(input-wl PROPERTIES
+set_target_properties(input input-x11 input-wl PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-input-wl"
+  PREFIX libkwinft-
 )
 
 qt6_generate_dbus_interface(dbus/device.h org.kde.kwin.InputDevice.xml OPTIONS -A)
@@ -211,31 +199,8 @@ install(
   DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
 
-install(TARGETS input
-  EXPORT input-export
+install(TARGETS input input-x11 input-wl
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/input
-)
-install(TARGETS input-x11
-  EXPORT input-x11-export
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/input
-)
-install(TARGETS input-wl
-  EXPORT input-wl-export
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/input
-)
-
-install(EXPORT input-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT input-x11-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT input-wl-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )

@@ -40,12 +40,6 @@ ki18n_wrap_ui(debug-common
   console/debug_console.ui
 )
 
-set_target_properties(debug-common PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-debug-common"
-)
-
 add_library(debug-wl SHARED)
 
 target_link_libraries(debug-wl
@@ -70,28 +64,14 @@ target_sources(debug-wl
     console/wayland/wayland_console.cpp
 )
 
-set_target_properties(debug-wl PROPERTIES
+set_target_properties(debug-common debug-wl PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-debug-wl"
+  PREFIX libkwinft-
 )
 
-install(TARGETS debug-common
-  EXPORT debug-common-export
+install(TARGETS debug-common debug-wl
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/debug
-)
-install(TARGETS debug-wl
-  EXPORT debug-wl-export
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/debug
-)
-
-install(EXPORT debug-common-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT debug-wl-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )

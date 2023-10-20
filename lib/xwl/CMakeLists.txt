@@ -44,15 +44,11 @@ target_sources(xwl
 set_target_properties(xwl PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-xwl"
+  PREFIX libkwinft-
 )
 
 install(TARGETS xwl
-  EXPORT xwl-export
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/xwl
-)
-install(EXPORT xwl-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )

@@ -76,7 +76,7 @@ target_sources(wlroots
 set_target_properties(wlroots PROPERTIES
    VERSION ${CMAKE_PROJECT_VERSION}
    SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-   OUTPUT_NAME "kwin-wlroots"
+   PREFIX libkwinft-
 )
 
 target_compile_definitions(wlroots PUBLIC WLR_USE_UNSTABLE)
@@ -86,11 +86,12 @@ kcoreaddons_target_static_plugins(wlroots
 )
 
 install(TARGETS wlroots
-  EXPORT wlroots-export
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft
 )
-install(EXPORT wlroots-export
+
+install(EXPORT kwinft-export
   NAMESPACE kwinft::
   DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )

@@ -162,12 +162,6 @@ target_sources(render
     ${render_dbus_SRCS}
 )
 
-set_target_properties(render PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-render"
-)
-
 add_library(render-x11 SHARED)
 
 target_link_libraries(render-x11
@@ -205,12 +199,6 @@ target_sources(render-x11
     backend/x11/non_composited_outline.cpp
     x11/compositor_selection_owner.cpp
     xrender/utils.cpp
-)
-
-set_target_properties(render-x11 PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-render-x11"
 )
 
 add_library(render-wl SHARED)
@@ -254,10 +242,10 @@ target_sources(render-wl
       wayland/xwl_platform.h
 )
 
-set_target_properties(render-wl PROPERTIES
+set_target_properties(render render-x11 render-wl PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-render-wl"
+  PREFIX libkwinft-
 )
 
 install(
@@ -276,31 +264,8 @@ install(
 install(DIRECTORY qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
 install(DIRECTORY qml/frames/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/frames)
 
-install(TARGETS render
-  EXPORT render-export
+install(TARGETS render render-x11 render-wl
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/render
-)
-install(TARGETS render-x11
-  EXPORT render-x11-export
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/render
-)
-install(TARGETS render-wl
-  EXPORT render-wl-export
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/render
-)
-
-install(EXPORT render-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT render-x11-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT render-wl-export
-  NAMESPACE kwinft::
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )
