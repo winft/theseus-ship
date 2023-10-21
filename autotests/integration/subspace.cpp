@@ -25,7 +25,7 @@ struct subspace_above {
         : manager{manager}
     {
     }
-    win::subspace* operator()(win::subspace* subspace, bool wrap)
+    win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
         return manager.above(subspace, wrap);
     }
@@ -38,7 +38,7 @@ struct subspace_below {
         : manager{manager}
     {
     }
-    win::subspace* operator()(win::subspace* subspace, bool wrap)
+    win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
         return manager.below(subspace, wrap);
     }
@@ -51,7 +51,7 @@ struct subspace_left {
         : manager{manager}
     {
     }
-    win::subspace* operator()(win::subspace* subspace, bool wrap)
+    win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
         return manager.toLeft(subspace, wrap);
     }
@@ -64,7 +64,7 @@ struct subspace_right {
         : manager{manager}
     {
     }
-    win::subspace* operator()(win::subspace* subspace, bool wrap)
+    win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
         return manager.toRight(subspace, wrap);
     }
@@ -77,7 +77,7 @@ struct subspace_next {
         : manager{manager}
     {
     }
-    win::subspace* operator()(win::subspace* subspace, bool wrap)
+    win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
         return manager.next(subspace, wrap);
     }
@@ -90,7 +90,7 @@ struct subspace_previous {
         : manager{manager}
     {
     }
-    win::subspace* operator()(win::subspace* subspace, bool wrap)
+    win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
         return manager.previous(subspace, wrap);
     }
@@ -108,7 +108,7 @@ void test_direction(test::setup& setup, Data const& test_data, std::string const
     vd_manager->setCurrent(test_data.init_current);
 
     Functor functor(*vd_manager);
-    QCOMPARE(functor(nullptr, test_data.wrap)->x11DesktopNumber(), test_data.result);
+    QCOMPARE(functor(*vd_manager->current, test_data.wrap).x11DesktopNumber(), test_data.result);
 
     vd_manager->set_nav_wraps(test_data.wrap);
 
@@ -119,9 +119,10 @@ void test_direction(test::setup& setup, Data const& test_data, std::string const
     QCOMPARE(vd_manager->current_x11id(), test_data.result);
 
     auto init_subspace = vd_manager->subspace_for_x11id(test_data.init_current);
-    auto result = functor(init_subspace, test_data.wrap);
-    QVERIFY(result);
-    QCOMPARE(result->x11DesktopNumber(), test_data.result);
+    QVERIFY(init_subspace);
+
+    auto& result = functor(*init_subspace, test_data.wrap);
+    QCOMPARE(result.x11DesktopNumber(), test_data.result);
 }
 
 TEST_CASE("subspace", "[win]")
@@ -848,7 +849,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // switch to last subspace
-        vd_manager->setCurrent(vd_manager->subspaces.back());
+        vd_manager->setCurrent(*vd_manager->subspaces.back());
         QCOMPARE(vd_manager->current_x11id(), 2u);
 
         // now create a window on this subspace
@@ -883,7 +884,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->subspaces.size(), 3u);
 
         // switch to last subspace
-        vd_manager->setCurrent(vd_manager->subspaces.back());
+        vd_manager->setCurrent(*vd_manager->subspaces.back());
         QCOMPARE(vd_manager->current_x11id(), 3u);
 
         // now create a window on this subspace
@@ -967,7 +968,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->subspaces.size(), 3u);
 
         // switch to last subspace
-        vd_manager->setCurrent(vd_manager->subspaces.back());
+        vd_manager->setCurrent(*vd_manager->subspaces.back());
         QCOMPARE(vd_manager->current_x11id(), 3u);
 
         // now create a window on this subspace

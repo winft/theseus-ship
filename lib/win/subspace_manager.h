@@ -81,21 +81,21 @@ public:
     const subspace_grid& grid() const;
 
     uint above(uint id, bool wrap) const;
-    subspace* above(subspace* desktop, bool wrap) const;
+    subspace& above(subspace& desktop, bool wrap) const;
 
     uint toRight(uint id, bool wrap) const;
-    subspace* toRight(subspace* desktop, bool wrap) const;
+    subspace& toRight(subspace& desktop, bool wrap) const;
 
     uint below(uint id, bool wrap) const;
-    subspace* below(subspace* desktop, bool wrap) const;
+    subspace& below(subspace& desktop, bool wrap) const;
 
     uint toLeft(uint id, bool wrap) const;
-    subspace* toLeft(subspace* desktop, bool wrap) const;
+    subspace& toLeft(subspace& desktop, bool wrap) const;
 
-    subspace* next(subspace* desktop, bool wrap) const;
+    subspace& next(subspace& desktop, bool wrap) const;
     uint next(uint id, bool wrap) const;
 
-    subspace* previous(subspace* desktop, bool wrap) const;
+    subspace& previous(subspace& desktop, bool wrap) const;
     uint previous(uint id, bool wrap) const;
 
     subspace* subspace_for_x11id(uint id) const;
@@ -116,7 +116,7 @@ public:
 
     void setCount(uint count);
     bool setCurrent(uint current);
-    bool setCurrent(subspace* current);
+    bool setCurrent(subspace& subsp);
 
     void setRows(uint rows);
     void updateLayout();

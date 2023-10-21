@@ -84,55 +84,42 @@ bool subspace_manager::get_nav_wraps() const
 
 uint subspace_manager::above(uint id, bool wrap) const
 {
-    auto vd = above(subspace_for_x11id(id), wrap);
-    return vd ? vd->x11DesktopNumber() : 0;
+    auto const subsp = subspace_for_x11id(id);
+    return above(subsp ? *subsp : *current, wrap).x11DesktopNumber();
 }
 
-subspace* subspace_manager::above(subspace* desktop, bool wrap) const
+subspace& subspace_manager::above(subspace& desktop, bool wrap) const
 {
-    Q_ASSERT(current);
-
-    if (!desktop) {
-        desktop = current;
-    }
-
-    QPoint coords = m_grid.gridCoords(desktop);
+    QPoint coords = m_grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
 
     while (true) {
         coords.ry()--;
+
         if (coords.y() < 0) {
-            if (wrap) {
-                coords.setY(m_grid.height() - 1);
-            } else {
+            if (!wrap) {
                 // Already at the top-most desktop
                 return desktop;
             }
+
+            coords.setY(m_grid.height() - 1);
         }
 
         if (auto vd = m_grid.at(coords)) {
-            return vd;
+            return *vd;
         }
     }
-
-    return nullptr;
 }
 
 uint subspace_manager::toRight(uint id, bool wrap) const
 {
-    auto vd = toRight(subspace_for_x11id(id), wrap);
-    return vd ? vd->x11DesktopNumber() : 0;
+    auto const subsp = subspace_for_x11id(id);
+    return toRight(subsp ? *subsp : *current, wrap).x11DesktopNumber();
 }
 
-subspace* subspace_manager::toRight(subspace* desktop, bool wrap) const
+subspace& subspace_manager::toRight(subspace& desktop, bool wrap) const
 {
-    Q_ASSERT(current);
-
-    if (!desktop) {
-        desktop = current;
-    }
-
-    QPoint coords = m_grid.gridCoords(desktop);
+    QPoint coords = m_grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
 
     while (true) {
@@ -147,28 +134,20 @@ subspace* subspace_manager::toRight(subspace* desktop, bool wrap) const
         }
 
         if (auto vd = m_grid.at(coords)) {
-            return vd;
+            return *vd;
         }
     }
-
-    return nullptr;
 }
 
 uint subspace_manager::below(uint id, bool wrap) const
 {
-    auto vd = below(subspace_for_x11id(id), wrap);
-    return vd ? vd->x11DesktopNumber() : 0;
+    auto const subsp = subspace_for_x11id(id);
+    return below(subsp ? *subsp : *current, wrap).x11DesktopNumber();
 }
 
-subspace* subspace_manager::below(subspace* desktop, bool wrap) const
+subspace& subspace_manager::below(subspace& desktop, bool wrap) const
 {
-    Q_ASSERT(current);
-
-    if (!desktop) {
-        desktop = current;
-    }
-
-    QPoint coords = m_grid.gridCoords(desktop);
+    QPoint coords = m_grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
 
     while (true) {
@@ -183,28 +162,20 @@ subspace* subspace_manager::below(subspace* desktop, bool wrap) const
         }
 
         if (auto vd = m_grid.at(coords)) {
-            return vd;
+            return *vd;
         }
     }
-
-    return nullptr;
 }
 
 uint subspace_manager::toLeft(uint id, bool wrap) const
 {
-    auto vd = toLeft(subspace_for_x11id(id), wrap);
-    return vd ? vd->x11DesktopNumber() : 0;
+    auto const subsp = subspace_for_x11id(id);
+    return toLeft(subsp ? *subsp : *current, wrap).x11DesktopNumber();
 }
 
-subspace* subspace_manager::toLeft(subspace* desktop, bool wrap) const
+subspace& subspace_manager::toLeft(subspace& desktop, bool wrap) const
 {
-    Q_ASSERT(current);
-
-    if (!desktop) {
-        desktop = current;
-    }
-
-    QPoint coords = m_grid.gridCoords(desktop);
+    QPoint coords = m_grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
 
     while (true) {
@@ -213,72 +184,61 @@ subspace* subspace_manager::toLeft(subspace* desktop, bool wrap) const
             if (wrap) {
                 coords.setX(m_grid.width() - 1);
             } else {
-                return desktop; // Already at the left-most desktop
+                // Already at the left-most desktop
+                return desktop;
             }
         }
 
         if (auto vd = m_grid.at(coords)) {
-            return vd;
+            return *vd;
         }
     }
-
-    return nullptr;
 }
 
-subspace* subspace_manager::next(subspace* desktop, bool wrap) const
+subspace& subspace_manager::next(subspace& desktop, bool wrap) const
 {
-    Q_ASSERT(current);
-    if (!desktop) {
-        desktop = current;
-    }
-
-    auto it = std::find(subspaces.begin(), subspaces.end(), desktop);
+    auto it = std::find(subspaces.begin(), subspaces.end(), &desktop);
     Q_ASSERT(it != subspaces.end());
     it++;
 
-    if (it == subspaces.end()) {
-        if (wrap) {
-            return subspaces.front();
-        } else {
-            return desktop;
-        }
+    if (it != subspaces.end()) {
+        return **it;
     }
 
-    return *it;
+    if (wrap) {
+        return *subspaces.front();
+    }
+
+    return desktop;
 }
 
 uint subspace_manager::next(uint id, bool wrap) const
 {
-    auto vd = next(subspace_for_x11id(id), wrap);
-    return vd ? vd->x11DesktopNumber() : 0;
+    auto const subsp = subspace_for_x11id(id);
+    return next(subsp ? *subsp : *current, wrap).x11DesktopNumber();
 }
 
-subspace* subspace_manager::previous(subspace* desktop, bool wrap) const
+subspace& subspace_manager::previous(subspace& desktop, bool wrap) const
 {
-    Q_ASSERT(current);
-    if (!desktop) {
-        desktop = current;
-    }
-
-    auto it = std::find(subspaces.begin(), subspaces.end(), desktop);
+    auto it = std::find(subspaces.begin(), subspaces.end(), &desktop);
     Q_ASSERT(it != subspaces.end());
 
-    if (it == subspaces.begin()) {
-        if (wrap) {
-            return subspaces.back();
-        } else {
-            return desktop;
-        }
+    if (it != subspaces.begin()) {
+        it--;
+        return **it;
     }
 
-    it--;
-    return *it;
+    if (wrap) {
+        return *subspaces.back();
+    }
+
+    return desktop;
 }
 
 uint subspace_manager::previous(uint id, bool wrap) const
 {
-    auto vd = previous(subspace_for_x11id(id), wrap);
-    return vd ? vd->x11DesktopNumber() : 0;
+    auto const subsp = subspace_for_x11id(id);
+    return previous(subsp ? *subsp : *current, wrap).x11DesktopNumber();
 }
 
 subspace* subspace_manager::subspace_for_x11id(uint id) const
@@ -388,18 +348,17 @@ bool subspace_manager::setCurrent(uint newDesktop)
 
     auto d = subspace_for_x11id(newDesktop);
     Q_ASSERT(d);
-    return setCurrent(d);
+    return setCurrent(*d);
 }
 
-bool subspace_manager::setCurrent(subspace* newDesktop)
+bool subspace_manager::setCurrent(subspace& subsp)
 {
-    Q_ASSERT(newDesktop);
-    if (current == newDesktop) {
+    if (current == &subsp) {
         return false;
     }
 
     auto old_subsp = current;
-    current = newDesktop;
+    current = &subsp;
 
     Q_EMIT qobject->current_changed(old_subsp, current);
     return true;
@@ -691,14 +650,14 @@ void subspace_manager::connect_gestures()
         auto target = current;
 
         if (current_desktop_offset.x() <= -GESTURE_SWITCH_THRESHOLD) {
-            target = toLeft(current, get_nav_wraps());
+            target = &toLeft(*current, get_nav_wraps());
         } else if (current_desktop_offset.x() >= GESTURE_SWITCH_THRESHOLD) {
-            target = toRight(current, get_nav_wraps());
+            target = &toRight(*current, get_nav_wraps());
         }
 
         // If the current desktop has not changed, consider that the gesture has been canceled.
         if (current != target) {
-            setCurrent(target);
+            setCurrent(*target);
         } else {
             Q_EMIT qobject->current_changing_cancelled();
         }
@@ -710,14 +669,14 @@ void subspace_manager::connect_gestures()
         // above() and below() will return the current desktop.
         subspace* target = current;
         if (current_desktop_offset.y() <= -GESTURE_SWITCH_THRESHOLD) {
-            target = above(current, get_nav_wraps());
+            target = &above(*current, get_nav_wraps());
         } else if (current_desktop_offset.y() >= GESTURE_SWITCH_THRESHOLD) {
-            target = below(current, get_nav_wraps());
+            target = &below(*current, get_nav_wraps());
         }
 
         // If the current desktop has not changed, consider that the gesture has been canceled.
         if (current != target) {
-            setCurrent(target);
+            setCurrent(*target);
         } else {
             Q_EMIT qobject->current_changing_cancelled();
         }
@@ -746,32 +705,38 @@ void subspace_manager::set_nav_wraps(bool enabled)
 
 void subspace_manager::slotDown()
 {
-    setCurrent(below(nullptr, get_nav_wraps()));
+    assert(current);
+    setCurrent(below(*current, get_nav_wraps()));
 }
 
 void subspace_manager::slotLeft()
 {
-    setCurrent(toLeft(nullptr, get_nav_wraps()));
+    assert(current);
+    setCurrent(toLeft(*current, get_nav_wraps()));
 }
 
 void subspace_manager::slotPrevious()
 {
-    setCurrent(previous(nullptr, get_nav_wraps()));
+    assert(current);
+    setCurrent(previous(*current, get_nav_wraps()));
 }
 
 void subspace_manager::slotNext()
 {
-    setCurrent(next(nullptr, get_nav_wraps()));
+    assert(current);
+    setCurrent(next(*current, get_nav_wraps()));
 }
 
 void subspace_manager::slotRight()
 {
-    setCurrent(toRight(nullptr, get_nav_wraps()));
+    assert(current);
+    setCurrent(toRight(*current, get_nav_wraps()));
 }
 
 void subspace_manager::slotUp()
 {
-    setCurrent(above(nullptr, get_nav_wraps()));
+    assert(current);
+    setCurrent(above(*current, get_nav_wraps()));
 }
 
 }

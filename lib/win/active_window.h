@@ -304,11 +304,11 @@ void active_window_to_prev_subspace(Space& space)
 }
 
 template<typename Space>
-void active_window_to_subspace(Space& space, subspace* sub)
+void active_window_to_subspace(Space& space, subspace& sub)
 {
     auto& vds = space.subspace_manager;
 
-    if (sub == vds->current) {
+    if (&sub == vds->current) {
         return;
     }
 
@@ -326,7 +326,8 @@ void active_window_to_right_subspace(Space& space)
     if (has_usable_active_window(space)) {
         active_window_to_subspace(
             space,
-            space.subspace_manager->toRight(nullptr, space.subspace_manager->get_nav_wraps()));
+            space.subspace_manager->toRight(*space.subspace_manager->current,
+                                            space.subspace_manager->get_nav_wraps()));
     }
 }
 
@@ -336,7 +337,8 @@ void active_window_to_left_subspace(Space& space)
     if (has_usable_active_window(space)) {
         active_window_to_subspace(
             space,
-            space.subspace_manager->toLeft(nullptr, space.subspace_manager->get_nav_wraps()));
+            space.subspace_manager->toLeft(*space.subspace_manager->current,
+                                           space.subspace_manager->get_nav_wraps()));
     }
 }
 
@@ -345,7 +347,9 @@ void active_window_to_above_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
         active_window_to_subspace(
-            space, space.subspace_manager->above(nullptr, space.subspace_manager->get_nav_wraps()));
+            space,
+            space.subspace_manager->above(*space.subspace_manager->current,
+                                          space.subspace_manager->get_nav_wraps()));
     }
 }
 
@@ -354,7 +358,9 @@ void active_window_to_below_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
         active_window_to_subspace(
-            space, space.subspace_manager->below(nullptr, space.subspace_manager->get_nav_wraps()));
+            space,
+            space.subspace_manager->below(*space.subspace_manager->current,
+                                          space.subspace_manager->get_nav_wraps()));
     }
 }
 

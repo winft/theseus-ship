@@ -561,7 +561,8 @@ public:
 
     void setCurrentDesktop(win::subspace* desktop) override
     {
-        ref_space->subspace_manager->setCurrent(desktop);
+        assert(desktop);
+        ref_space->subspace_manager->setCurrent(*desktop);
     }
 
     std::vector<window*> get_windows() const override
@@ -922,32 +923,32 @@ protected:
     void switch_desktop_next_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->next(nullptr, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->next(*vdm->current, vdm->get_nav_wraps()));
     }
     void switch_desktop_previous_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->previous(nullptr, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->previous(*vdm->current, vdm->get_nav_wraps()));
     }
     void switch_desktop_left_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->toLeft(nullptr, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->toLeft(*vdm->current, vdm->get_nav_wraps()));
     }
     void switch_desktop_right_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->toRight(nullptr, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->toRight(*vdm->current, vdm->get_nav_wraps()));
     }
     void switch_desktop_up_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->above(nullptr, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->above(*vdm->current, vdm->get_nav_wraps()));
     }
     void switch_desktop_down_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->below(nullptr, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->below(*vdm->current, vdm->get_nav_wraps()));
     }
 
     QString supportInformation() const override

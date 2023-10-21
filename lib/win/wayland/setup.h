@@ -278,7 +278,7 @@ void setup_subspace_manager(Manager& manager,
         QObject::connect(pvd,
                          &PlasmaVirtualDesktop::activateRequested,
                          manager.qobject.get(),
-                         [&manager, desktop] { manager.setCurrent(desktop); });
+                         [&manager, desktop] { manager.setCurrent(*desktop); });
     };
 
     QObject::connect(manager.qobject.get(),

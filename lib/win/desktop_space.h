@@ -85,7 +85,7 @@ void handle_subspace_count_changed(Space& space, unsigned int /*prev*/, unsigned
 }
 
 template<typename Win>
-void window_to_subspace(Win& window, subspace* sub)
+void window_to_subspace(Win& window, subspace& sub)
 {
     auto& ws = window.space;
     auto& vds = ws.subspace_manager;
@@ -101,14 +101,17 @@ template<typename Win>
 void window_to_next_subspace(Win& window)
 {
     // TODO: why is get_nav_wraps not honored?
-    window_to_subspace(window, window.space.subspace_manager->next(nullptr, true));
+    window_to_subspace(
+        window, window.space.subspace_manager->next(*window.space.subspace_manager->current, true));
 }
 
 template<typename Win>
 void window_to_prev_subspace(Win& window)
 {
     // TODO: why is get_nav_wraps not honored?
-    window_to_subspace(window, window.space.subspace_manager->previous(nullptr, true));
+    window_to_subspace(
+        window,
+        window.space.subspace_manager->previous(*window.space.subspace_manager->current, true));
 }
 
 template<typename Space>

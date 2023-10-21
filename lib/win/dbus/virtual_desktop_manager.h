@@ -131,9 +131,8 @@ public:
             return;
         }
 
-        auto sub = manager->subspace_for_id(id);
-        if (sub) {
-            manager->setCurrent(sub);
+        if (auto sub = manager->subspace_for_id(id)) {
+            manager->setCurrent(*sub);
         }
     }
 
