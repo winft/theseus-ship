@@ -731,40 +731,4 @@ void subspace_manager::set_nav_wraps(bool enabled)
     Q_EMIT qobject->nav_wraps_changed();
 }
 
-void subspace_manager::slotDown()
-{
-    assert(current);
-    setCurrent(get_south_of_current());
-}
-
-void subspace_manager::slotLeft()
-{
-    assert(current);
-    setCurrent(get_west_of_current());
-}
-
-void subspace_manager::slotPrevious()
-{
-    assert(current);
-    setCurrent(get_predecessor_of_current());
-}
-
-void subspace_manager::slotNext()
-{
-    assert(current);
-    setCurrent(get_successor_of_current());
-}
-
-void subspace_manager::slotRight()
-{
-    assert(current);
-    setCurrent(get_east_of_current());
-}
-
-void subspace_manager::slotUp()
-{
-    assert(current);
-    setCurrent(get_north_of_current());
-}
-
 }

@@ -134,12 +134,6 @@ public:
     std::unique_ptr<subspace_manager_qobject> qobject;
 
     void slotSwitchTo(QAction& action);
-    void slotNext();
-    void slotPrevious();
-    void slotRight();
-    void slotLeft();
-    void slotUp();
-    void slotDown();
 
     void connect_gestures();
 
