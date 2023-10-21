@@ -326,7 +326,7 @@ void active_window_to_right_subspace(Space& space)
     if (has_usable_active_window(space)) {
         active_window_to_subspace(
             space,
-            space.subspace_manager->toRight(nullptr, space.options->qobject->isRollOverDesktops()));
+            space.subspace_manager->toRight(nullptr, space.subspace_manager->get_nav_wraps()));
     }
 }
 
@@ -336,7 +336,7 @@ void active_window_to_left_subspace(Space& space)
     if (has_usable_active_window(space)) {
         active_window_to_subspace(
             space,
-            space.subspace_manager->toLeft(nullptr, space.options->qobject->isRollOverDesktops()));
+            space.subspace_manager->toLeft(nullptr, space.subspace_manager->get_nav_wraps()));
     }
 }
 
@@ -345,8 +345,7 @@ void active_window_to_above_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
         active_window_to_subspace(
-            space,
-            space.subspace_manager->above(nullptr, space.options->qobject->isRollOverDesktops()));
+            space, space.subspace_manager->above(nullptr, space.subspace_manager->get_nav_wraps()));
     }
 }
 
@@ -355,8 +354,7 @@ void active_window_to_below_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
         active_window_to_subspace(
-            space,
-            space.subspace_manager->below(nullptr, space.options->qobject->isRollOverDesktops()));
+            space, space.subspace_manager->below(nullptr, space.subspace_manager->get_nav_wraps()));
     }
 }
 

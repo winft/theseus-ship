@@ -922,32 +922,32 @@ protected:
     void switch_desktop_next_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->next(nullptr, ref_space->options->qobject->isRollOverDesktops()));
+        vdm->setCurrent(vdm->next(nullptr, vdm->get_nav_wraps()));
     }
     void switch_desktop_previous_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->previous(nullptr, ref_space->options->qobject->isRollOverDesktops()));
+        vdm->setCurrent(vdm->previous(nullptr, vdm->get_nav_wraps()));
     }
     void switch_desktop_left_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->toLeft(nullptr, ref_space->options->qobject->isRollOverDesktops()));
+        vdm->setCurrent(vdm->toLeft(nullptr, vdm->get_nav_wraps()));
     }
     void switch_desktop_right_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->toRight(nullptr, ref_space->options->qobject->isRollOverDesktops()));
+        vdm->setCurrent(vdm->toRight(nullptr, vdm->get_nav_wraps()));
     }
     void switch_desktop_up_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->above(nullptr, ref_space->options->qobject->isRollOverDesktops()));
+        vdm->setCurrent(vdm->above(nullptr, vdm->get_nav_wraps()));
     }
     void switch_desktop_down_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->below(nullptr, ref_space->options->qobject->isRollOverDesktops()));
+        vdm->setCurrent(vdm->below(nullptr, vdm->get_nav_wraps()));
     }
 
     QString supportInformation() const override

@@ -100,14 +100,14 @@ void window_to_subspace(Win& window, subspace* sub)
 template<typename Win>
 void window_to_next_subspace(Win& window)
 {
-    // TODO: why is win.space.options->isRollOverDesktops() not honored?
+    // TODO: why is get_nav_wraps not honored?
     window_to_subspace(window, window.space.subspace_manager->next(nullptr, true));
 }
 
 template<typename Win>
 void window_to_prev_subspace(Win& window)
 {
-    // TODO: why is win.space.options->isRollOverDesktops() not honored?
+    // TODO: why is get_nav_wraps not honored?
     window_to_subspace(window, window.space.subspace_manager->previous(nullptr, true));
 }
 
