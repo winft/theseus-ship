@@ -243,7 +243,7 @@ public:
             handler->create_model();
 
             if (!partial_reset) {
-                set_current_desktop(space.subspace_manager->current_x11id());
+                set_current_desktop(subspaces_get_current_x11id(*space.subspace_manager));
             }
             break;
         }
@@ -651,7 +651,7 @@ public:
             grab.tab = old_tab_grab;
             if (desktop != -1) {
                 set_current_desktop(desktop);
-                space.subspace_manager->setCurrent(desktop);
+                subspaces_set_current(*space.subspace_manager, desktop);
             }
         }
     }

@@ -8,6 +8,9 @@
 
 #include "kwin_export.h"
 #include "virtual_desktop_types.h"
+#include <win/subspace_manager.h>
+#include <win/subspaces_get.h>
+#include <win/subspaces_set.h>
 
 #include <QObject>
 #include <QtDBus>
@@ -131,8 +134,8 @@ public:
             return;
         }
 
-        if (auto sub = manager->subspace_for_id(id)) {
-            manager->setCurrent(*sub);
+        if (auto sub = subspaces_get_for_id(*manager, id)) {
+            subspaces_set_current(*manager, *sub);
         }
     }
 
@@ -143,12 +146,12 @@ public:
 
     void setNavigationWrappingAround(bool wraps) override
     {
-        manager->set_nav_wraps(wraps);
+        subspace_manager_set_nav_wraps(*manager, wraps);
     }
 
     bool isNavigationWrappingAround() const override
     {
-        return manager->get_nav_wraps();
+        return manager->nav_wraps;
     }
 
     subspace_data_vector desktops() const override
@@ -171,7 +174,7 @@ public:
 
     void setDesktopName(QString const& id, QString const& name) override
     {
-        auto sub = manager->subspace_for_id(id);
+        auto sub = subspaces_get_for_id(*manager, id);
         if (!sub || sub->name() == name) {
             return;
         }

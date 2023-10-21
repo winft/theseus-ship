@@ -33,7 +33,7 @@ QRect space_window_area(Space const& space,
     auto const& outputs = space.base.outputs;
 
     if (subspace == x11_desktop_number_on_all || subspace == 0) {
-        subspace = space.subspace_manager->current_x11id();
+        subspace = subspaces_get_current_x11id(*space.subspace_manager);
     }
     if (!output) {
         output = get_current_output(space);

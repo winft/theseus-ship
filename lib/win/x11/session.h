@@ -242,7 +242,7 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
         // but both Qt and KDE treat phase1 and phase2 separately,
         // which results in different sessionkey and different config file :(
         space.session_active_client = active_client;
-        space.session_desktop = space.subspace_manager->current_x11id();
+        space.session_desktop = subspaces_get_current_x11id(*space.subspace_manager);
     } else if (phase == sm_save_phase2) {
         cg.writeEntry("count", count);
         cg.writeEntry("active", space.session_active_client);
@@ -251,7 +251,7 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
         // SMSavePhase2Full
         cg.writeEntry("count", count);
         cg.writeEntry("active", space.session_active_client);
-        cg.writeEntry("desktop", space.subspace_manager->current_x11id());
+        cg.writeEntry("desktop", subspaces_get_current_x11id(*space.subspace_manager));
     }
 
     // it previously did some "revert to defaults" stuff for phase1 I think

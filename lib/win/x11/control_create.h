@@ -265,7 +265,8 @@ bool init_controlled_window_from_session(Win& win, bool isMapped)
 
     if (session->onAllDesktops) {
         initial_subspaces = desks{};
-    } else if (auto subspace = win.space.subspace_manager->subspace_for_x11id(session->desktop)) {
+    } else if (auto subspace
+               = subspaces_get_for_x11id(*win.space.subspace_manager, session->desktop)) {
         initial_subspaces = desks{subspace};
     }
 
@@ -470,7 +471,7 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
             if (subspace_id == net::OnAllDesktops) {
                 initial_subspaces = desks{};
             } else if (auto subspace
-                       = win.space.subspace_manager->subspace_for_x11id(subspace_id)) {
+                       = subspaces_get_for_x11id(*win.space.subspace_manager, subspace_id)) {
                 initial_subspaces = desks{subspace};
             }
         }
@@ -603,7 +604,7 @@ void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
         if (!on_current_subspace(win) && !isMapped && (allow || isSessionSaving)) {
-            win.space.subspace_manager->setCurrent(get_subspace(win));
+            subspaces_set_current(*win.space.subspace_manager, get_subspace(win));
         }
 
         if (on_current_subspace(win) && !isMapped && !allow) {

@@ -121,6 +121,8 @@ target_sources(win
       subspace.h
       subspace_grid.h
       subspace_manager.h
+      subspaces_get.h
+      subspaces_set.h
       window_area.h
       window_find.h
       window_geometry.h

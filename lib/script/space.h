@@ -562,7 +562,7 @@ public:
     void setCurrentDesktop(win::subspace* desktop) override
     {
         assert(desktop);
-        ref_space->subspace_manager->setCurrent(*desktop);
+        win::subspaces_set_current(*ref_space->subspace_manager, *desktop);
     }
 
     std::vector<window*> get_windows() const override
@@ -915,7 +915,7 @@ protected:
     }
     void remove_desktop_impl(int position) const override
     {
-        if (auto vd = ref_space->subspace_manager->subspace_for_x11id(position + 1)) {
+        if (auto vd = win::subspaces_get_for_x11id(*ref_space->subspace_manager, position + 1)) {
             ref_space->subspace_manager->remove_subspace(vd->id());
         }
     }
@@ -923,32 +923,32 @@ protected:
     void switch_desktop_next_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->get_successor_of_current());
+        win::subspaces_set_current(*vdm, win::subspaces_get_successor_of_current(*vdm));
     }
     void switch_desktop_previous_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->get_predecessor_of_current());
+        win::subspaces_set_current(*vdm, win::subspaces_get_predecessor_of_current(*vdm));
     }
     void switch_desktop_left_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->get_west_of_current());
+        win::subspaces_set_current(*vdm, win::subspaces_get_west_of_current(*vdm));
     }
     void switch_desktop_right_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->get_east_of_current());
+        win::subspaces_set_current(*vdm, win::subspaces_get_east_of_current(*vdm));
     }
     void switch_desktop_up_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->get_north_of_current());
+        win::subspaces_set_current(*vdm, win::subspaces_get_north_of_current(*vdm));
     }
     void switch_desktop_down_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->get_south_of_current());
+        win::subspaces_set_current(*vdm, win::subspaces_get_south_of_current(*vdm));
     }
 
     QString supportInformation() const override

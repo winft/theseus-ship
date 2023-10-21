@@ -224,10 +224,11 @@ void init_space(Space& space)
         // No client activated in manage()
         if (!new_active_win) {
             new_active_win
-                = win::top_client_in_subspace(space, subspaces->current_x11id(), nullptr);
+                = top_client_in_subspace(space, subspaces_get_current_x11id(*subspaces), nullptr);
         }
         if (!new_active_win) {
-            new_active_win = win::find_desktop(&space, true, subspaces->current_x11id());
+            new_active_win
+                = win::find_desktop(&space, true, subspaces_get_current_x11id(*subspaces));
         }
     }
     if (new_active_win) {

@@ -828,24 +828,24 @@ private:
         // means that we always pick the north/south one in the end. Is this what we want?
 
         if (isLeft()) {
-            subsp = &vds->get_west_of_current();
+            subsp = &subspaces_get_west_of_current(*vds);
             if (old_subsp != subsp) {
                 pos.setX(edger->space.base.topology.size.width() - 1 - OFFSET);
             }
         } else if (isRight()) {
-            subsp = &vds->get_east_of_current();
+            subsp = &subspaces_get_east_of_current(*vds);
             if (old_subsp != subsp) {
                 pos.setX(OFFSET);
             }
         }
 
         if (isTop()) {
-            subsp = &vds->get_north_of_current();
+            subsp = &subspaces_get_north_of_current(*vds);
             if (old_subsp != subsp) {
                 pos.setY(edger->space.base.topology.size.height() - 1 - OFFSET);
             }
         } else if (isBottom()) {
-            subsp = &vds->get_south_of_current();
+            subsp = &subspaces_get_south_of_current(*vds);
             if (old_subsp != subsp) {
                 pos.setY(OFFSET);
             }
@@ -868,7 +868,7 @@ private:
             return;
         }
 
-        vds->setCurrent(*subsp);
+        subspaces_set_current(*vds, *subsp);
         push_back_is_blocked = true;
         edger->space.input->cursor->set_pos(pos);
 

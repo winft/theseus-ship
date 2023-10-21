@@ -587,7 +587,8 @@ public:
                                continue;
                            }
 
-                           auto sub = get_space().subspace_manager->subspace_for_x11id(x11Id);
+                           auto sub
+                               = win::subspaces_get_for_x11id(*get_space().subspace_manager, x11Id);
                            Q_ASSERT(sub);
 
                            if (contains(subs, sub)) {
@@ -625,7 +626,7 @@ public:
 
     int currentDesktop() const override
     {
-        return get_space().subspace_manager->current_x11id();
+        return win::subspaces_get_current_x11id(*get_space().subspace_manager);
     }
 
     int numberOfDesktops() const override
@@ -635,7 +636,7 @@ public:
 
     void setCurrentDesktop(int desktop) override
     {
-        get_space().subspace_manager->setCurrent(desktop);
+        win::subspaces_set_current(*get_space().subspace_manager, desktop);
     }
 
     void setNumberOfDesktops(int desktops) override
@@ -669,13 +670,13 @@ public:
     QPoint desktopGridCoords(int id) const override
     {
         auto& mgr = get_space().subspace_manager;
-        return mgr->grid.gridCoords(mgr->subspace_for_x11id(id));
+        return mgr->grid.gridCoords(win::subspaces_get_for_x11id(*mgr, id));
     }
 
     QPoint desktopCoords(int id) const override
     {
         auto& mgr = get_space().subspace_manager;
-        auto coords = mgr->grid.gridCoords(mgr->subspace_for_x11id(id));
+        auto coords = mgr->grid.gridCoords(win::subspaces_get_for_x11id(*mgr, id));
 
         if (coords.x() == -1) {
             return QPoint(-1, -1);
@@ -687,22 +688,22 @@ public:
 
     int desktopAbove(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().subspace_manager->get_north_of(desktop, wrap);
+        return win::subspaces_get_north_of(*get_space().subspace_manager, desktop, wrap);
     }
 
     int desktopToRight(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().subspace_manager->get_east_of(desktop, wrap);
+        return win::subspaces_get_east_of(*get_space().subspace_manager, desktop, wrap);
     }
 
     int desktopBelow(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().subspace_manager->get_south_of(desktop, wrap);
+        return win::subspaces_get_south_of(*get_space().subspace_manager, desktop, wrap);
     }
 
     int desktopToLeft(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().subspace_manager->get_west_of(desktop, wrap);
+        return win::subspaces_get_west_of(*get_space().subspace_manager, desktop, wrap);
     }
 
     QString desktopName(int desktop) const override
@@ -900,7 +901,7 @@ public:
                                   get_space(),
                                   static_cast<win::area_option>(opt),
                                   win->geo.frame.center(),
-                                  get_space().subspace_manager->current_x11id());
+                                  win::subspaces_get_current_x11id(*get_space().subspace_manager));
                           }},
                           *static_cast<effect_window_t const*>(eff_win)->window.ref_win);
     }

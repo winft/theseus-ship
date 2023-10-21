@@ -39,7 +39,7 @@ int get_pack_position_left(Space const& space, Win const* window, int oldX, bool
     }
 
     const int subspace = get_subspace(*window) == 0 || on_all_subspaces(*window)
-        ? space.subspace_manager->current_x11id()
+        ? subspaces_get_current_x11id(*space.subspace_manager)
         : get_subspace(*window);
 
     for (auto win : space.windows) {
@@ -88,7 +88,7 @@ int get_pack_position_right(Space const& space, Win const* window, int oldX, boo
     }
 
     int const subspace = get_subspace(*window) == 0 || on_all_subspaces(*window)
-        ? space.subspace_manager->current_x11id()
+        ? subspaces_get_current_x11id(*space.subspace_manager)
         : get_subspace(*window);
 
     for (auto win : space.windows) {
@@ -129,7 +129,7 @@ int get_pack_position_up(Space const& space, Win const* window, int oldY, bool t
     }
 
     int const subspace = get_subspace(*window) == 0 || on_all_subspaces(*window)
-        ? space.subspace_manager->current_x11id()
+        ? subspaces_get_current_x11id(*space.subspace_manager)
         : get_subspace(*window);
 
     for (auto win : space.windows) {
@@ -177,7 +177,7 @@ int get_pack_position_down(Space const& space, Win const* window, int oldY, bool
     }
 
     int const subspace = get_subspace(*window) == 0 || on_all_subspaces(*window)
-        ? space.subspace_manager->current_x11id()
+        ? subspaces_get_current_x11id(*space.subspace_manager)
         : get_subspace(*window);
 
     for (auto win : space.windows) {

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <utils/algorithm.h>
-#include <win/subspace.h>
+#include <win/subspaces_get.h>
 #include <win/types.h>
 
 namespace KWin::win
@@ -39,7 +39,7 @@ bool on_subspace(Win const& win, subspace* sub)
 template<typename Win>
 bool on_subspace(Win const& win, int sub)
 {
-    return on_subspace(win, win.space.subspace_manager->subspace_for_x11id(sub));
+    return on_subspace(win, subspaces_get_for_x11id(*win.space.subspace_manager, sub));
 }
 
 template<typename Win>

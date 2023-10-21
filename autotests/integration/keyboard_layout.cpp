@@ -611,7 +611,7 @@ TEST_CASE("keyboard layout", "[input]")
         uint desktop, layout;
         for (desktop = 0; desktop < get_subsp_mgr()->subspaces.size(); ++desktop) {
             // Switch to another virtual desktop.
-            get_subsp_mgr()->setCurrent(*subspaces.at(desktop));
+            win::subspaces_set_current(*get_subsp_mgr(), *subspaces.at(desktop));
             QCOMPARE(subspaces.at(desktop), get_subsp_mgr()->current);
 
             // Should be reset to English.
@@ -629,7 +629,8 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(get_subsp_mgr()->subspaces.size(), 4u);
 
         subspaces = get_subsp_mgr()->subspaces;
-        get_subsp_mgr()->setCurrent(*subspaces.at(get_subsp_mgr()->subspaces.size() - 1));
+        win::subspaces_set_current(*get_subsp_mgr(),
+                                   *subspaces.at(get_subsp_mgr()->subspaces.size() - 1));
 
         // check layout set on desktop switching as intended
         for (--desktop;;) {
@@ -642,7 +643,7 @@ TEST_CASE("keyboard layout", "[input]")
                 // overflow
                 break;
             }
-            get_subsp_mgr()->setCurrent(*subspaces.at(desktop));
+            win::subspaces_set_current(*get_subsp_mgr(), *subspaces.at(desktop));
         }
 
         // Remove subspaces.
@@ -661,7 +662,7 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(subspaces.size(), 2);
         QCOMPARE(subspaces.front(), get_subsp_mgr()->current);
 
-        get_subsp_mgr()->setCurrent(*subspaces.back());
+        win::subspaces_set_current(*get_subsp_mgr(), *subspaces.back());
         QCOMPARE(get_xkb_keys()->layout_name(), "English (US)");
 
         // Check there are no more layouts left in config than the last actual non-default layouts

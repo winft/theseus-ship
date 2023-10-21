@@ -472,7 +472,7 @@ bool ruling::applyDesktops(subspace_manager const& manager,
         vds = {};
 
         for (auto id : desktops.data) {
-            if (auto vd = manager.subspace_for_id(id)) {
+            if (auto vd = subspaces_get_for_id(manager, id)) {
                 vds.push_back(vd);
             }
         }

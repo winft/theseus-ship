@@ -27,7 +27,7 @@ struct subspace_north {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.get_north_of(subspace, wrap);
+        return win::subspaces_get_north_of(manager, subspace, wrap);
     }
 
     win::subspace_manager& manager;
@@ -40,7 +40,7 @@ struct subspace_south {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.get_south_of(subspace, wrap);
+        return win::subspaces_get_south_of(manager, subspace, wrap);
     }
 
     win::subspace_manager& manager;
@@ -53,7 +53,7 @@ struct subspace_west {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.get_west_of(subspace, wrap);
+        return win::subspaces_get_west_of(manager, subspace, wrap);
     }
 
     win::subspace_manager& manager;
@@ -66,7 +66,7 @@ struct subspace_east {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.get_east_of(subspace, wrap);
+        return win::subspaces_get_east_of(manager, subspace, wrap);
     }
 
     win::subspace_manager& manager;
@@ -79,7 +79,7 @@ struct subspace_successor {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.get_successor_of(subspace, wrap);
+        return win::subspaces_get_successor_of(manager, subspace, wrap);
     }
 
     win::subspace_manager& manager;
@@ -92,7 +92,7 @@ struct subspace_predecessor {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.get_predecessor_of(subspace, wrap);
+        return win::subspaces_get_predecessor_of(manager, subspace, wrap);
     }
 
     win::subspace_manager& manager;
@@ -105,20 +105,20 @@ void test_direction(test::setup& setup, Data const& test_data, std::string const
 
     vd_manager->setCount(test_data.init_count);
     vd_manager->setRows(2);
-    vd_manager->setCurrent(test_data.init_current);
+    win::subspaces_set_current(*vd_manager, test_data.init_current);
 
     Functor functor(*vd_manager);
     QCOMPARE(functor(*vd_manager->current, test_data.wrap).x11DesktopNumber(), test_data.result);
 
-    vd_manager->set_nav_wraps(test_data.wrap);
+    win::subspace_manager_set_nav_wraps(*vd_manager, test_data.wrap);
 
     auto action = vd_manager->qobject->findChild<QAction*>(QString::fromStdString(action_name));
     QVERIFY(action);
     action->trigger();
 
-    QCOMPARE(vd_manager->current_x11id(), test_data.result);
+    QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), test_data.result);
 
-    auto init_subspace = vd_manager->subspace_for_x11id(test_data.init_current);
+    auto init_subspace = win::subspaces_get_for_x11id(*vd_manager, test_data.init_current);
     QVERIFY(init_subspace);
 
     auto& result = functor(*init_subspace, test_data.wrap);
@@ -161,7 +161,7 @@ TEST_CASE("subspace", "[win]")
     setup_wayland_connection();
     auto& vd_manager = setup.base->space->subspace_manager;
     vd_manager->setCount(1);
-    vd_manager->setCurrent(0u);
+    win::subspaces_set_current(*vd_manager, 0u);
 
     SECTION("count")
     {
@@ -241,16 +241,16 @@ TEST_CASE("subspace", "[win]")
             // keep disabled
             data{false, false, false, false});
 
-        QCOMPARE(vd_manager->get_nav_wraps(), true);
+        QCOMPARE(vd_manager->nav_wraps, true);
 
         // set to init value
-        vd_manager->set_nav_wraps(test_data.init);
-        QCOMPARE(vd_manager->get_nav_wraps(), test_data.init);
+        win::subspace_manager_set_nav_wraps(*vd_manager, test_data.init);
+        QCOMPARE(vd_manager->nav_wraps, test_data.init);
 
         QSignalSpy spy(vd_manager->qobject.get(),
                        &win::subspace_manager_qobject::nav_wraps_changed);
-        vd_manager->set_nav_wraps(test_data.request);
-        QCOMPARE(vd_manager->get_nav_wraps(), test_data.result);
+        win::subspace_manager_set_nav_wraps(*vd_manager, test_data.request);
+        QCOMPARE(vd_manager->nav_wraps, test_data.result);
         QCOMPARE(spy.isEmpty(), !test_data.signal);
     }
 
@@ -280,16 +280,16 @@ TEST_CASE("subspace", "[win]")
             // unchanged
             data{4, 2, 2, 2, false});
 
-        QCOMPARE(vd_manager->current_x11id(), 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         vd_manager->setCount(test_data.count);
-        REQUIRE(vd_manager->setCurrent(test_data.init) == (test_data.init != 1));
-        QCOMPARE(vd_manager->current_x11id(), test_data.init);
+        REQUIRE(win::subspaces_set_current(*vd_manager, test_data.init) == (test_data.init != 1));
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), test_data.init);
 
         QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::current_changed);
 
-        QCOMPARE(vd_manager->setCurrent(test_data.request), test_data.signal);
-        QCOMPARE(vd_manager->current_x11id(), test_data.result);
+        QCOMPARE(win::subspaces_set_current(*vd_manager, test_data.request), test_data.signal);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), test_data.result);
         QCOMPARE(spy.isEmpty(), !test_data.signal);
 
         if (!spy.isEmpty()) {
@@ -298,9 +298,9 @@ TEST_CASE("subspace", "[win]")
             QVERIFY(arguments.at(0).canConvert<win::subspace*>());
             QVERIFY(arguments.at(1).canConvert<win::subspace*>());
             QCOMPARE(arguments.at(0).value<win::subspace*>(),
-                     vd_manager->subspace_for_x11id(test_data.init));
+                     win::subspaces_get_for_x11id(*vd_manager, test_data.init));
             QCOMPARE(arguments.at(1).value<win::subspace*>(),
-                     vd_manager->subspace_for_x11id(test_data.result));
+                     win::subspaces_get_for_x11id(*vd_manager, test_data.result));
         }
     }
 
@@ -329,12 +329,12 @@ TEST_CASE("subspace", "[win]")
             data{4, 2, 1, 1, true});
 
         vd_manager->setCount(test_data.init_count);
-        vd_manager->setCurrent(test_data.init_current);
+        win::subspaces_set_current(*vd_manager, test_data.init_current);
 
         QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::current_changed);
 
         vd_manager->setCount(test_data.request);
-        QCOMPARE(vd_manager->current_x11id(), test_data.current);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), test_data.current);
         QCOMPARE(spy.isEmpty(), !test_data.signal);
     }
 
@@ -589,10 +589,11 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(grid.width(), test_data.size.width());
         QCOMPARE(grid.height(), test_data.size.height());
 
-        QCOMPARE(grid.at(test_data.coords), vd_manager->subspace_for_x11id(test_data.subspace));
+        QCOMPARE(grid.at(test_data.coords),
+                 win::subspaces_get_for_x11id(*vd_manager, test_data.subspace));
 
         if (test_data.subspace != 0) {
-            QCOMPARE(grid.gridCoords(vd_manager->subspace_for_x11id(test_data.subspace)),
+            QCOMPARE(grid.gridCoords(win::subspaces_get_for_x11id(*vd_manager, test_data.subspace)),
                      test_data.coords);
         }
     }
@@ -679,9 +680,9 @@ TEST_CASE("subspace", "[win]")
     SECTION("switch to shortcut")
     {
         vd_manager->setCount(vd_manager->max_count);
-        vd_manager->setCurrent(vd_manager->max_count);
+        win::subspaces_set_current(*vd_manager, vd_manager->max_count);
 
-        QCOMPARE(vd_manager->current_x11id(), vd_manager->max_count);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), vd_manager->max_count);
         //    vd_manager->initShortcuts();
         auto const toDesktop = QStringLiteral("Switch to Desktop %1");
 
@@ -690,11 +691,11 @@ TEST_CASE("subspace", "[win]")
             QAction* action = vd_manager->qobject->findChild<QAction*>(desktop);
             QVERIFY2(action, desktop.toUtf8().constData());
             action->trigger();
-            QCOMPARE(vd_manager->current_x11id(), i);
+            QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), i);
         }
 
         // should still be on max
-        QCOMPARE(vd_manager->current_x11id(), vd_manager->max_count);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), vd_manager->max_count);
     }
 
     SECTION("change rows")
@@ -792,7 +793,7 @@ TEST_CASE("subspace", "[win]")
         QVERIFY(ok);
 
         // go to subspace 2
-        vd_manager->setCurrent(2);
+        win::subspaces_set_current(*vd_manager, 2);
         currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
                                                   0,
                                                   setup.base->x11_data.root_window,
@@ -804,7 +805,7 @@ TEST_CASE("subspace", "[win]")
         QVERIFY(ok);
 
         // go to subspace 3
-        vd_manager->setCurrent(3);
+        win::subspaces_set_current(*vd_manager, 3);
         currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
                                                   0,
                                                   setup.base->x11_data.root_window,
@@ -816,7 +817,7 @@ TEST_CASE("subspace", "[win]")
         QVERIFY(ok);
 
         // go to subspace 4
-        vd_manager->setCurrent(4);
+        win::subspaces_set_current(*vd_manager, 4);
         currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
                                                   0,
                                                   setup.base->x11_data.root_window,
@@ -828,7 +829,7 @@ TEST_CASE("subspace", "[win]")
         QVERIFY(ok);
 
         // and back to first
-        vd_manager->setCurrent(1);
+        win::subspaces_set_current(*vd_manager, 1);
         currentDesktop = base::x11::xcb::property(setup.base->x11_data.connection,
                                                   0,
                                                   setup.base->x11_data.root_window,
@@ -849,8 +850,8 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // switch to last subspace
-        vd_manager->setCurrent(*vd_manager->subspaces.back());
-        QCOMPARE(vd_manager->current_x11id(), 2u);
+        win::subspaces_set_current(*vd_manager, *vd_manager->subspaces.back());
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2u);
 
         // now create a window on this subspace
         std::unique_ptr<Surface> surface(create_surface());
@@ -884,8 +885,8 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->subspaces.size(), 3u);
 
         // switch to last subspace
-        vd_manager->setCurrent(*vd_manager->subspaces.back());
-        QCOMPARE(vd_manager->current_x11id(), 3u);
+        win::subspaces_set_current(*vd_manager, *vd_manager->subspaces.back());
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 3u);
 
         // now create a window on this subspace
         std::unique_ptr<Surface> surface(create_surface());
@@ -901,7 +902,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->current, client->topo.subspaces.front());
 
         // Set the window on subspace 2 as well
-        win::enter_subspace(*client, vd_manager->subspace_for_x11id(2));
+        win::enter_subspace(*client, win::subspaces_get_for_x11id(*vd_manager, 2));
         QCOMPARE(client->topo.subspaces.size(), 2u);
         QCOMPARE(vd_manager->subspaces.at(2), client->topo.subspaces.at(0));
         QCOMPARE(vd_manager->subspaces.at(1), client->topo.subspaces.at(1));
@@ -909,52 +910,52 @@ TEST_CASE("subspace", "[win]")
         QVERIFY(win::on_subspace(*client, 3));
 
         // leave subspace 3
-        win::leave_subspace(*client, vd_manager->subspace_for_x11id(3));
+        win::leave_subspace(*client, win::subspaces_get_for_x11id(*vd_manager, 3));
         QCOMPARE(client->topo.subspaces.size(), 1u);
 
         // leave subspace 2
-        win::leave_subspace(*client, vd_manager->subspace_for_x11id(2));
+        win::leave_subspace(*client, win::subspaces_get_for_x11id(*vd_manager, 2));
         QCOMPARE(client->topo.subspaces.size(), 0u);
 
         // we should be on all subspaces now
         QVERIFY(win::on_all_subspaces(*client));
 
         // put on subspace 1
-        win::enter_subspace(*client, vd_manager->subspace_for_x11id(1));
+        win::enter_subspace(*client, win::subspaces_get_for_x11id(*vd_manager, 1));
         QVERIFY(win::on_subspace(*client, 1));
         QVERIFY(!win::on_subspace(*client, 2));
         QVERIFY(!win::on_subspace(*client, 3));
         QCOMPARE(client->topo.subspaces.size(), 1u);
 
         // put on subspace 2
-        win::enter_subspace(*client, vd_manager->subspace_for_x11id(2));
+        win::enter_subspace(*client, win::subspaces_get_for_x11id(*vd_manager, 2));
         QVERIFY(win::on_subspace(*client, 1));
         QVERIFY(win::on_subspace(*client, 2));
         QVERIFY(!win::on_subspace(*client, 3));
         QCOMPARE(client->topo.subspaces.size(), 2u);
 
         // put on subspace 3
-        win::enter_subspace(*client, vd_manager->subspace_for_x11id(3));
+        win::enter_subspace(*client, win::subspaces_get_for_x11id(*vd_manager, 3));
         QVERIFY(win::on_subspace(*client, 1));
         QVERIFY(win::on_subspace(*client, 2));
         QVERIFY(win::on_subspace(*client, 3));
         QCOMPARE(client->topo.subspaces.size(), 3u);
 
         // entering twice dooes nothing
-        win::enter_subspace(*client, vd_manager->subspace_for_x11id(3));
+        win::enter_subspace(*client, win::subspaces_get_for_x11id(*vd_manager, 3));
         QCOMPARE(client->topo.subspaces.size(), 3u);
 
         // adding to "all subspaces" results in just that one subspace
         win::set_on_all_subspaces(*client, true);
         QCOMPARE(client->topo.subspaces.size(), 0u);
-        win::enter_subspace(*client, vd_manager->subspace_for_x11id(3));
+        win::enter_subspace(*client, win::subspaces_get_for_x11id(*vd_manager, 3));
         QVERIFY(win::on_subspace(*client, 3));
         QCOMPARE(client->topo.subspaces.size(), 1u);
 
         // leaving a subspace on "all subspaces" puts on everything else
         win::set_on_all_subspaces(*client, true);
         QCOMPARE(client->topo.subspaces.size(), 0u);
-        win::leave_subspace(*client, vd_manager->subspace_for_x11id(3));
+        win::leave_subspace(*client, win::subspaces_get_for_x11id(*vd_manager, 3));
         QVERIFY(win::on_subspace(*client, 1));
         QVERIFY(win::on_subspace(*client, 2));
         QCOMPARE(client->topo.subspaces.size(), 2u);
@@ -968,8 +969,8 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->subspaces.size(), 3u);
 
         // switch to last subspace
-        vd_manager->setCurrent(*vd_manager->subspaces.back());
-        QCOMPARE(vd_manager->current_x11id(), 3u);
+        win::subspaces_set_current(*vd_manager, *vd_manager->subspaces.back());
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 3u);
 
         // now create a window on this subspace
         std::unique_ptr<Surface> surface(create_surface());

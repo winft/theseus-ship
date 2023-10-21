@@ -7,6 +7,7 @@
 
 #include "strut_rect.h"
 #include "types.h"
+#include <win/subspaces_get.h>
 
 #include <QRegion>
 
@@ -20,7 +21,7 @@ QRegion struts_to_region(Space const& space,
                          std::vector<win::strut_rects> const& struts)
 {
     if (subspace == x11_desktop_number_on_all || subspace == x11_desktop_number_undefined) {
-        subspace = space.subspace_manager->current_x11id();
+        subspace = subspaces_get_current_x11id(*space.subspace_manager);
     }
 
     QRegion region;

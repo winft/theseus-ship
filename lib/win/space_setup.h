@@ -122,11 +122,12 @@ void init_space(Space& space)
                      space.qobject.get(),
                      [&]() { Q_EMIT space.qobject->current_subspace_changing_cancelled(); });
 
-    subs_manager->set_nav_wraps(space.options->qobject->isRollOverDesktops());
-    QObject::connect(space.options->qobject.get(),
-                     &options_qobject::rollOverDesktopsChanged,
-                     subs_manager->qobject.get(),
-                     [&subs_manager](auto enabled) { subs_manager->set_nav_wraps(enabled); });
+    subspace_manager_set_nav_wraps(*subs_manager, space.options->qobject->isRollOverDesktops());
+    QObject::connect(
+        space.options->qobject.get(),
+        &options_qobject::rollOverDesktopsChanged,
+        subs_manager->qobject.get(),
+        [&subs_manager](auto enabled) { subspace_manager_set_nav_wraps(*subs_manager, enabled); });
 
     subs_manager->config = space.base.config.main;
 
@@ -139,8 +140,8 @@ void init_space(Space& space)
     // load is needed to be called again when starting xwayalnd to sync to RootInfo, see BUG 385260
     subs_manager->save();
 
-    if (!subs_manager->setCurrent(space.initial_subspace)) {
-        subs_manager->setCurrent(1);
+    if (!subspaces_set_current(*subs_manager, space.initial_subspace)) {
+        subspaces_set_current(*subs_manager, 1);
     }
 
     space.reconfigureTimer.setSingleShot(true);

@@ -196,8 +196,9 @@ void setup_plasma_management(Space* space, Win* win)
                      &Wrapland::Server::PlasmaWindow::enterPlasmaVirtualDesktopRequested,
                      qtwin,
                      [win](const QString& desktopId) {
-                         if (auto vd = win->space.subspace_manager->subspace_for_id(desktopId)) {
-                             enter_subspace(*win, vd);
+                         if (auto subsp
+                             = subspaces_get_for_id(*win->space.subspace_manager, desktopId)) {
+                             enter_subspace(*win, subsp);
                          }
                      });
     QObject::connect(plasma_win,
@@ -212,8 +213,9 @@ void setup_plasma_management(Space* space, Win* win)
                      &Wrapland::Server::PlasmaWindow::leavePlasmaVirtualDesktopRequested,
                      qtwin,
                      [win](const QString& desktopId) {
-                         if (auto vd = win->space.subspace_manager->subspace_for_id(desktopId)) {
-                             leave_subspace(*win, vd);
+                         if (auto subsp
+                             = subspaces_get_for_id(*win->space.subspace_manager, desktopId)) {
+                             leave_subspace(*win, subsp);
                          }
                      });
     QObject::connect(plasma_win,
@@ -278,7 +280,7 @@ void setup_subspace_manager(Manager& manager,
         QObject::connect(pvd,
                          &PlasmaVirtualDesktop::activateRequested,
                          manager.qobject.get(),
-                         [&manager, desktop] { manager.setCurrent(*desktop); });
+                         [&manager, desktop] { subspaces_set_current(manager, *desktop); });
     };
 
     QObject::connect(manager.qobject.get(),

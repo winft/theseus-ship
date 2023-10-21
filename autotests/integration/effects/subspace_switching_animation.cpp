@@ -52,7 +52,7 @@ TEST_CASE("subspace switching animation", "[effect]")
     // We need at least 2 subspaces for the test.
     auto& subs = setup.base->space->subspace_manager;
     subs->setCount(2);
-    QCOMPARE(subs->current_x11id(), 1u);
+    QCOMPARE(win::subspaces_get_current_x11id(*subs), 1u);
     QCOMPARE(subs->subspaces.size(), 2u);
 
     setup_wayland_connection();
@@ -79,8 +79,8 @@ TEST_CASE("subspace switching animation", "[effect]")
     QVERIFY(!effect->isActive());
 
     // Switch to the second subspace.
-    subs->setCurrent(2u);
-    QCOMPARE(subs->current_x11id(), 2u);
+    win::subspaces_set_current(*subs, 2u);
+    QCOMPARE(win::subspaces_get_current_x11id(*subs), 2u);
     QVERIFY(effect->isActive());
     QCOMPARE(effects->activeFullScreenEffect(), effect);
 

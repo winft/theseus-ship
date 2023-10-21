@@ -178,7 +178,7 @@ TEST_CASE("scripted effects", "[effect]")
         waitFor("windowClosed - WindowA");
 
         // desktop management
-        setup.base->space->subspace_manager->setCurrent(2);
+        win::subspaces_set_current(*setup.base->space->subspace_manager, 2);
         waitFor("desktopChanged - 1 2");
     }
 
@@ -348,7 +348,7 @@ TEST_CASE("scripted effects", "[effect]")
         QCOMPARE(effectMain->isActiveFullScreenEffect(), false);
 
         // trigger animation
-        setup.base->space->subspace_manager->setCurrent(2);
+        win::subspaces_set_current(*setup.base->space->subspace_manager, 2);
 
         QCOMPARE(effects->activeFullScreenEffect(), effectMain);
         QCOMPARE(effects->hasActiveFullScreenEffect(), true);
@@ -362,7 +362,7 @@ TEST_CASE("scripted effects", "[effect]")
 
         // after 500ms trigger another full screen animation
         QTest::qWait(500);
-        setup.base->space->subspace_manager->setCurrent(1);
+        win::subspaces_set_current(*setup.base->space->subspace_manager, 1);
         QCOMPARE(effects->activeFullScreenEffect(), effectMain);
 
         // after 1000ms (+a safety margin for time based tests) we should still be the active full

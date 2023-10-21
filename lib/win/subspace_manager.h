@@ -9,10 +9,13 @@
 #include "singleton_interface.h"
 #include <win/subspace.h>
 #include <win/subspace_grid.h>
+#include <win/subspaces_get.h>
+#include <win/subspaces_set.h>
 
 #include "kwin_export.h"
 
 #include <KConfig>
+#include <KLocalizedString>
 #include <KSharedConfig>
 #include <QObject>
 #include <QPoint>
@@ -20,7 +23,6 @@
 #include <vector>
 
 class KLocalizedString;
-class QAction;
 class Options;
 
 namespace Wrapland::Server
@@ -73,37 +75,7 @@ public:
 
     uint rows() const;
 
-    uint current_x11id() const;
-
     QString name(uint sub) const;
-    bool get_nav_wraps() const;
-
-    subspace& get_north_of_current() const;
-    uint get_north_of(uint id, bool wrap) const;
-    subspace& get_north_of(subspace& desktop, bool wrap) const;
-
-    subspace& get_east_of_current() const;
-    uint get_east_of(uint id, bool wrap) const;
-    subspace& get_east_of(subspace& desktop, bool wrap) const;
-
-    subspace& get_south_of_current() const;
-    uint get_south_of(uint id, bool wrap) const;
-    subspace& get_south_of(subspace& desktop, bool wrap) const;
-
-    subspace& get_west_of_current() const;
-    uint get_west_of(uint id, bool wrap) const;
-    subspace& get_west_of(subspace& desktop, bool wrap) const;
-
-    subspace& get_successor_of_current() const;
-    subspace& get_successor_of(subspace& desktop, bool wrap) const;
-    uint get_successor_of(uint id, bool wrap) const;
-
-    subspace& get_predecessor_of_current() const;
-    subspace& get_predecessor_of(subspace& desktop, bool wrap) const;
-    uint get_predecessor_of(uint id, bool wrap) const;
-
-    subspace* subspace_for_x11id(uint id) const;
-    subspace* subspace_for_id(QString const& id) const;
 
     /**
      * Create a new virtual desktop at the requested position. The difference with setCount is that
@@ -117,27 +89,20 @@ public:
     void remove_subspace(subspace* sub);
 
     void setCount(uint count);
-    bool setCurrent(uint current);
-    bool setCurrent(subspace& subsp);
 
     void setRows(uint rows);
     void updateLayout();
-    void set_nav_wraps(bool enabled);
 
     void load();
     void save();
 
     std::unique_ptr<subspace_manager_qobject> qobject;
-
-    void slotSwitchTo(QAction& action);
-
-    void connect_gestures();
-
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement{nullptr};
 
     std::vector<subspace*> subspaces;
     subspace_grid grid;
     subspace* current{nullptr};
+    bool nav_wraps{false};
 
     struct {
         std::unique_ptr<QAction> released_x;
@@ -152,15 +117,103 @@ private:
     void updateRootInfo();
 
     subspace* add_subspace(size_t position, QString const& id, QString const& name);
-    void shrink_subspaces(uint count);
-
-    QString defaultName(int desktop) const;
 
     uint m_rows{2};
-    bool nav_wraps{false};
     x11::net::root_info* m_rootInfo{nullptr};
 
     subspaces_singleton singleton;
 };
+
+inline QString subspace_manager_get_default_subspace_name(int x11id)
+{
+    return i18n("Desktop %1", x11id);
+}
+
+template<typename Manager>
+void subspace_manager_set_nav_wraps(Manager& mgr, bool enabled)
+{
+    if (enabled == mgr.nav_wraps) {
+        return;
+    }
+
+    mgr.nav_wraps = enabled;
+    Q_EMIT mgr.qobject->nav_wraps_changed();
+}
+
+template<typename Manager>
+void subspace_manager_shrink_subspaces(Manager& mgr, uint count)
+{
+    if (count >= mgr.subspaces.size()) {
+        return;
+    }
+
+    auto const subspaces_to_remove
+        = std::vector<subspace*>{mgr.subspaces.begin() + count, mgr.subspaces.end()};
+    mgr.subspaces.resize(count);
+
+    assert(mgr.current);
+    auto old_subsp = mgr.current;
+    auto old_current = subspaces_get_current_x11id(mgr);
+    auto new_current = std::min<uint>(old_current, count);
+
+    mgr.current = mgr.subspaces.at(new_current - 1);
+
+    if (old_current != new_current) {
+        Q_EMIT mgr.qobject->current_changed(old_subsp, mgr.current);
+    }
+
+    for (auto desktop : subspaces_to_remove) {
+        Q_EMIT mgr.qobject->subspace_removed(desktop);
+        desktop->deleteLater();
+    }
+}
+
+template<typename Manager>
+void subspace_manager_connect_gestures(Manager& mgr)
+{
+    static constexpr double gesture_switch_threshold{.25};
+
+    QObject::connect(
+        mgr.swipe_gesture.released_x.get(), &QAction::triggered, mgr.qobject.get(), [&]() {
+            // Note that if desktop wrapping is disabled and there's no desktop to left or right,
+            // toLeft() and toRight() will return the current desktop.
+            auto target = mgr.current;
+
+            if (mgr.current_desktop_offset.x() <= -gesture_switch_threshold) {
+                target = &subspaces_get_west_of_current(mgr);
+            } else if (mgr.current_desktop_offset.x() >= gesture_switch_threshold) {
+                target = &subspaces_get_east_of_current(mgr);
+            }
+
+            // If the current subspace has not changed, consider that the gesture has been canceled.
+            if (mgr.current != target) {
+                subspaces_set_current(mgr, *target);
+            } else {
+                Q_EMIT mgr.qobject->current_changing_cancelled();
+            }
+
+            mgr.current_desktop_offset = {0, 0};
+        });
+
+    QObject::connect(
+        mgr.swipe_gesture.released_y.get(), &QAction::triggered, mgr.qobject.get(), [&]() {
+            auto target = mgr.current;
+
+            if (mgr.current_desktop_offset.y() <= -gesture_switch_threshold) {
+                target = &subspaces_get_north_of_current(mgr);
+            } else if (mgr.current_desktop_offset.y() >= gesture_switch_threshold) {
+                target = &subspaces_get_south_of_current(mgr);
+            }
+
+            // If the current subspace has not changed, consider that the gesture has been canceled.
+            if (mgr.current != target) {
+                subspaces_set_current(mgr, *target);
+            } else {
+                Q_EMIT mgr.qobject->current_changing_cancelled();
+            }
+
+            mgr.current_desktop_offset = {0, 0};
+        });
+}
 
 }

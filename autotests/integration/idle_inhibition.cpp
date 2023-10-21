@@ -132,14 +132,14 @@ TEST_CASE("idle inhibition", "[win]")
         QCOMPARE(idle.inhibit_count, 1);
 
         // Switch to the second subspace.
-        vd_manager->setCurrent(2);
+        win::subspaces_set_current(*vd_manager, 2);
 
         // The surface is no longer visible, so the compositor don't have to honor the
         // idle inhibitor object.
         QCOMPARE(idle.inhibit_count, 0);
 
         // Switch back to the first subspace.
-        vd_manager->setCurrent(1);
+        win::subspaces_set_current(*vd_manager, 1);
 
         // The test client became visible again, so the compositor has to honor the idle
         // inhibitor object back again.

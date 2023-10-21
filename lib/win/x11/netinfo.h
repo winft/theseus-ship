@@ -190,7 +190,7 @@ protected:
 
     void changeCurrentDesktop(int d) override
     {
-        space.subspace_manager->setCurrent(d);
+        subspaces_set_current(*space.subspace_manager, d);
     }
 
     void changeActiveWindow(xcb_window_t w,

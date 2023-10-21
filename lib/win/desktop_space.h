@@ -35,7 +35,7 @@ void send_window_to_subspace(Space& space, Win* window, int desk, bool dont_acti
     // window did range checking.
     desk = get_subspace(*window);
 
-    if (on_subspace(*window, space.subspace_manager->current_x11id())) {
+    if (on_subspace(*window, subspaces_get_current_x11id(*space.subspace_manager))) {
         if (win::wants_tab_focus(window) && space.options->qobject->focusPolicyIsReasonable()
             && !was_on_subspace && // for stickyness changes
             !dont_activate) {
@@ -92,7 +92,7 @@ void window_to_subspace(Win& window, subspace& sub)
 
     if (!is_desktop(&window) && !is_dock(&window)) {
         set_move_resize_window(ws, window);
-        vds->setCurrent(sub);
+        subspaces_set_current(*vds, sub);
         unset_move_resize_window(ws);
     }
 }
@@ -100,13 +100,14 @@ void window_to_subspace(Win& window, subspace& sub)
 template<typename Win>
 void window_to_next_subspace(Win& window)
 {
-    window_to_subspace(window, window.space.subspace_manager->get_successor_of_current());
+    window_to_subspace(window, subspaces_get_successor_of_current(*window.space.subspace_manager));
 }
 
 template<typename Win>
 void window_to_prev_subspace(Win& window)
 {
-    window_to_subspace(window, window.space.subspace_manager->get_predecessor_of_current());
+    window_to_subspace(window,
+                       subspaces_get_predecessor_of_current(*window.space.subspace_manager));
 }
 
 template<typename Space>

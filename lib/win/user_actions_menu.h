@@ -488,7 +488,8 @@ private:
                        if (data.move_to_single) {
                            set_subspace(*win, data.desktop);
                        } else {
-                           auto virtualDesktop = subs_manager->subspace_for_x11id(data.desktop);
+                           auto virtualDesktop
+                               = subspaces_get_for_x11id(*subs_manager, data.desktop);
                            if (contains(win->topo.subspaces, virtualDesktop)) {
                                leave_subspace(*win, virtualDesktop);
                            } else {

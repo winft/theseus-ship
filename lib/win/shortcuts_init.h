@@ -81,33 +81,33 @@ void shortcuts_init_switch_to_subspace(Space& space)
                         toDesktopLabel,
                         1,
                         QKeySequence(Qt::CTRL | Qt::Key_F1),
-                        [manager](auto& action) { manager->slotSwitchTo(action); });
+                        [manager](auto& action) { subspaces_set_current(*manager, action); });
     add_subspace_action(*manager,
                         input,
                         toDesktop,
                         toDesktopLabel,
                         2,
                         QKeySequence(Qt::CTRL | Qt::Key_F2),
-                        [manager](auto& action) { manager->slotSwitchTo(action); });
+                        [manager](auto& action) { subspaces_set_current(*manager, action); });
     add_subspace_action(*manager,
                         input,
                         toDesktop,
                         toDesktopLabel,
                         3,
                         QKeySequence(Qt::CTRL | Qt::Key_F3),
-                        [manager](auto& action) { manager->slotSwitchTo(action); });
+                        [manager](auto& action) { subspaces_set_current(*manager, action); });
     add_subspace_action(*manager,
                         input,
                         toDesktop,
                         toDesktopLabel,
                         4,
                         QKeySequence(Qt::CTRL | Qt::Key_F4),
-                        [manager](auto& action) { manager->slotSwitchTo(action); });
+                        [manager](auto& action) { subspaces_set_current(*manager, action); });
 
     for (uint i = 5; i <= manager->max_count; ++i) {
         add_subspace_action(
             *manager, input, toDesktop, toDesktopLabel, i, QKeySequence(), [manager](auto& action) {
-                manager->slotSwitchTo(action);
+                subspaces_set_current(*manager, action);
             });
     }
 }
@@ -124,50 +124,55 @@ void shortcuts_init_subspaces(Space& space)
                         input,
                         QStringLiteral("Switch to Next Desktop"),
                         i18n("Switch to Next Desktop"),
-                        [manager] { manager->setCurrent(manager->get_successor_of_current()); });
+                        [manager] {
+                            subspaces_set_current(*manager,
+                                                  subspaces_get_successor_of_current(*manager));
+                        });
     add_subspace_action(*manager,
                         input,
                         QStringLiteral("Switch to Previous Desktop"),
                         i18n("Switch to Previous Desktop"),
-                        [manager] { manager->setCurrent(manager->get_predecessor_of_current()); });
+                        [manager] {
+                            subspaces_set_current(*manager,
+                                                  subspaces_get_predecessor_of_current(*manager));
+                        });
 
     // shortcuts
-    QAction* slotRightAction
-        = add_subspace_action(*manager,
-                              input,
-                              QStringLiteral("Switch One Desktop to the Right"),
-                              i18n("Switch One Desktop to the Right"),
-                              [manager] { manager->setCurrent(manager->get_east_of_current()); });
+    QAction* slotRightAction = add_subspace_action(
+        *manager,
+        input,
+        QStringLiteral("Switch One Desktop to the Right"),
+        i18n("Switch One Desktop to the Right"),
+        [manager] { subspaces_set_current(*manager, subspaces_get_east_of_current(*manager)); });
     set_global_shortcut_with_default(
         input, *slotRightAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Right));
-    QAction* slotLeftAction
-        = add_subspace_action(*manager,
-                              input,
-                              QStringLiteral("Switch One Desktop to the Left"),
-                              i18n("Switch One Desktop to the Left"),
-                              [manager] { manager->setCurrent(manager->get_west_of_current()); });
+    QAction* slotLeftAction = add_subspace_action(
+        *manager,
+        input,
+        QStringLiteral("Switch One Desktop to the Left"),
+        i18n("Switch One Desktop to the Left"),
+        [manager] { subspaces_set_current(*manager, subspaces_get_west_of_current(*manager)); });
     set_global_shortcut_with_default(
         input, *slotLeftAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Left));
-    QAction* slotUpAction
-        = add_subspace_action(*manager,
-                              input,
-                              QStringLiteral("Switch One Desktop Up"),
-                              i18n("Switch One Desktop Up"),
-                              [manager] { manager->setCurrent(manager->get_north_of_current()); });
+    QAction* slotUpAction = add_subspace_action(
+        *manager,
+        input,
+        QStringLiteral("Switch One Desktop Up"),
+        i18n("Switch One Desktop Up"),
+        [manager] { subspaces_set_current(*manager, subspaces_get_north_of_current(*manager)); });
     set_global_shortcut_with_default(
         input, *slotUpAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Up));
-    QAction* slotDownAction
-        = add_subspace_action(*manager,
-                              input,
-                              QStringLiteral("Switch One Desktop Down"),
-                              i18n("Switch One Desktop Down"),
-                              [manager] { manager->setCurrent(manager->get_south_of_current()); });
+    QAction* slotDownAction = add_subspace_action(
+        *manager,
+        input,
+        QStringLiteral("Switch One Desktop Down"),
+        i18n("Switch One Desktop Down"),
+        [manager] { subspaces_set_current(*manager, subspaces_get_south_of_current(*manager)); });
     set_global_shortcut_with_default(
         input, *slotDownAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Down));
 
     // Gestures
-    // These connections decide which desktop to end on after gesture ends
-    manager->connect_gestures();
+    subspace_manager_connect_gestures(*manager);
 
     auto swipeGestureReleasedX = manager->swipe_gesture.released_x.get();
     auto swipeGestureReleasedY = manager->swipe_gesture.released_y.get();

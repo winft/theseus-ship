@@ -186,7 +186,7 @@ public:
 
     int current_desktop_impl() override
     {
-        return space.subspace_manager->current_x11id();
+        return win::subspaces_get_current_x11id(*space.subspace_manager);
     }
 
     void show_desktop_impl(bool show) override
@@ -196,19 +196,23 @@ public:
 
     bool set_current_desktop_impl(int desktop) override
     {
-        return space.subspace_manager->setCurrent(desktop);
+        return win::subspaces_set_current(*space.subspace_manager, desktop);
     }
 
     void next_desktop_impl() override
     {
-        space.subspace_manager->setCurrent(
-            space.subspace_manager->get_successor_of(*space.subspace_manager->current, false));
+        win::subspaces_set_current(*space.subspace_manager,
+                                   win::subspaces_get_successor_of(*space.subspace_manager,
+                                                                   *space.subspace_manager->current,
+                                                                   false));
     }
 
     void previous_desktop_impl() override
     {
-        space.subspace_manager->setCurrent(
-            space.subspace_manager->get_predecessor_of(*space.subspace_manager->current, false));
+        win::subspaces_set_current(
+            *space.subspace_manager,
+            win::subspaces_get_predecessor_of(
+                *space.subspace_manager, *space.subspace_manager->current, false));
     }
 
     void show_debug_console_impl() override

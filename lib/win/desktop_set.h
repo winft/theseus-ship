@@ -76,7 +76,7 @@ void set_subspace(Win& win, int subspace)
 
     // Check range.
     subspace = std::clamp<int>(subspace, 1, win.space.subspace_manager->subspaces.size());
-    set_subspaces(win, {win.space.subspace_manager->subspace_for_x11id(subspace)});
+    set_subspaces(win, {subspaces_get_for_x11id(*win.space.subspace_manager, subspace)});
 }
 
 template<typename Win>

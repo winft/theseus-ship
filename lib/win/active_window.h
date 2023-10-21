@@ -159,8 +159,8 @@ void active_window_lower(Space& space)
                 return;
             }
 
-            if (auto top
-                = top_client_in_subspace(space, space.subspace_manager->current_x11id(), nullptr)) {
+            if (auto top = top_client_in_subspace(
+                    space, subspaces_get_current_x11id(*space.subspace_manager), nullptr)) {
                 std::visit(overload{[&](auto&& top) { activate_window(space, *top); }}, *top);
                 return;
             }
@@ -316,7 +316,7 @@ void active_window_to_subspace(Space& space, subspace& sub)
     std::visit(overload{[&](auto&& win) { set_move_resize_window(space, *win); }},
                *space.stacking.active);
 
-    vds->setCurrent(sub);
+    subspaces_set_current(*vds, sub);
     unset_move_resize_window(space);
 }
 
@@ -324,7 +324,7 @@ template<typename Space>
 void active_window_to_right_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_subspace(space, space.subspace_manager->get_east_of_current());
+        active_window_to_subspace(space, subspaces_get_east_of_current(*space.subspace_manager));
     }
 }
 
@@ -332,7 +332,7 @@ template<typename Space>
 void active_window_to_left_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_subspace(space, space.subspace_manager->get_west_of_current());
+        active_window_to_subspace(space, subspaces_get_west_of_current(*space.subspace_manager));
     }
 }
 
@@ -340,7 +340,7 @@ template<typename Space>
 void active_window_to_above_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_subspace(space, space.subspace_manager->get_north_of_current());
+        active_window_to_subspace(space, subspaces_get_north_of_current(*space.subspace_manager));
     }
 }
 
@@ -348,7 +348,7 @@ template<typename Space>
 void active_window_to_below_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_subspace(space, space.subspace_manager->get_south_of_current());
+        active_window_to_subspace(space, subspaces_get_south_of_current(*space.subspace_manager));
     }
 }
 

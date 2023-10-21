@@ -301,7 +301,7 @@ Win& create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
                      win.qobject.get(),
                      configure);
 
-    set_subspace(win, win.space.subspace_manager->current_x11id());
+    set_subspace(win, subspaces_get_current_x11id(*win.space.subspace_manager));
     set_color_scheme(&win, QString());
 
     QObject::connect(win.surface, &Wrapland::Server::Surface::committed, win.qobject.get(), [&win] {
