@@ -817,38 +817,42 @@ private:
 
     void switchDesktop(QPoint const& cursorPos)
     {
-        QPoint pos(cursorPos);
+        auto pos = cursorPos;
+
         auto& vds = edger->space.subspace_manager;
-        auto const oldDesktop = vds->current_x11id();
-        auto desktop = oldDesktop;
+        auto const old_subsp = vds->current;
+        auto subsp = vds->current;
         int const OFFSET = 2;
 
+        // TODO(romangg): In case a screen edge in on a vertical and horizontal axis, this logic
+        // means that we always pick the north/south one in the end. Is this what we want?
+
         if (isLeft()) {
-            auto const interimDesktop = desktop;
-            desktop = vds->get_west_of(desktop, vds->get_nav_wraps());
-            if (desktop != interimDesktop)
+            subsp = &vds->get_west_of_current();
+            if (old_subsp != subsp) {
                 pos.setX(edger->space.base.topology.size.width() - 1 - OFFSET);
+            }
         } else if (isRight()) {
-            auto const interimDesktop = desktop;
-            desktop = vds->get_east_of(desktop, vds->get_nav_wraps());
-            if (desktop != interimDesktop)
+            subsp = &vds->get_east_of_current();
+            if (old_subsp != subsp) {
                 pos.setX(OFFSET);
+            }
         }
 
         if (isTop()) {
-            auto const interimDesktop = desktop;
-            desktop = vds->get_north_of(desktop, vds->get_nav_wraps());
-            if (desktop != interimDesktop)
+            subsp = &vds->get_north_of_current();
+            if (old_subsp != subsp) {
                 pos.setY(edger->space.base.topology.size.height() - 1 - OFFSET);
+            }
         } else if (isBottom()) {
-            auto const interimDesktop = desktop;
-            desktop = vds->get_south_of(desktop, vds->get_nav_wraps());
-            if (desktop != interimDesktop)
+            subsp = &vds->get_south_of_current();
+            if (old_subsp != subsp) {
                 pos.setY(OFFSET);
+            }
         }
 
         if (auto& mov_res = edger->space.move_resize_window) {
-            std::vector<subspace*> subs{desktop};
+            std::vector<subspace*> subs{subsp};
             if (std::visit(overload{[&](auto&& win) {
                                return win->control->rules.checkDesktops(
                                    *edger->space.subspace_manager, subs);
@@ -860,23 +864,24 @@ private:
             }
         }
 
-        vds->setCurrent(desktop);
-
-        if (vds->current_x11id() != oldDesktop) {
-            push_back_is_blocked = true;
-            edger->space.input->cursor->set_pos(pos);
-
-            QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
-            *me = QObject::connect(
-                QCoreApplication::eventDispatcher(),
-                &QAbstractEventDispatcher::aboutToBlock,
-                qobject.get(),
-                [this, me]() {
-                    QObject::disconnect(*me);
-                    const_cast<QSharedPointer<QMetaObject::Connection>*>(&me)->reset(nullptr);
-                    push_back_is_blocked = false;
-                });
+        if (subsp == old_subsp) {
+            return;
         }
+
+        vds->setCurrent(*subsp);
+        push_back_is_blocked = true;
+        edger->space.input->cursor->set_pos(pos);
+
+        QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
+        *me = QObject::connect(QCoreApplication::eventDispatcher(),
+                               &QAbstractEventDispatcher::aboutToBlock,
+                               qobject.get(),
+                               [this, me]() {
+                                   QObject::disconnect(*me);
+                                   const_cast<QSharedPointer<QMetaObject::Connection>*>(&me)->reset(
+                                       nullptr);
+                                   push_back_is_blocked = false;
+                               });
     }
 
     void pushCursorBack(QPoint const& cursorPos)
