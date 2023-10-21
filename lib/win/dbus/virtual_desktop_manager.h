@@ -125,7 +125,7 @@ public:
 
     uint rows() const override
     {
-        return manager->rows();
+        return manager->rows;
     }
 
     void setCurrent(QString const& id) override

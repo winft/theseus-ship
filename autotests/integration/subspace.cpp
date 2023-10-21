@@ -702,10 +702,10 @@ TEST_CASE("subspace", "[win]")
     {
         vd_manager->setCount(4);
         vd_manager->setRows(4);
-        QCOMPARE(vd_manager->rows(), 4);
+        QCOMPARE(vd_manager->rows, 4);
 
         vd_manager->setRows(5);
-        QCOMPARE(vd_manager->rows(), 4);
+        QCOMPARE(vd_manager->rows, 4);
 
         vd_manager->setCount(2);
 
@@ -713,10 +713,10 @@ TEST_CASE("subspace", "[win]")
         //                seems to be the update from root info in
         //                win::subspace_manager::updateLayout.
         if (operation_mode == base::operation_mode::wayland) {
-            REQUIRE(vd_manager->rows() == 2);
+            REQUIRE(vd_manager->rows == 2);
         } else {
             REQUIRE(operation_mode == base::operation_mode::xwayland);
-            REQUIRE(vd_manager->rows() == 4);
+            REQUIRE(vd_manager->rows == 4);
         }
     }
 

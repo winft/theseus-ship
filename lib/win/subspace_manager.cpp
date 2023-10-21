@@ -51,13 +51,13 @@ void subspace_manager::setRootInfo(x11::net::root_info* info)
         return;
     }
 
-    int columns = subspaces.size() / m_rows;
-    if (subspaces.size() % m_rows > 0) {
+    int columns = subspaces.size() / rows;
+    if (subspaces.size() % rows > 0) {
         columns++;
     }
 
     root_info->setDesktopLayout(
-        x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
+        x11::net::OrientationHorizontal, columns, rows, x11::net::DesktopLayoutCornerTopLeft);
 
     updateRootInfo();
     updateLayout();
@@ -191,27 +191,22 @@ void subspace_manager::setCount(uint count)
     Q_EMIT qobject->countChanged(oldCount, subspaces.size());
 }
 
-uint subspace_manager::rows() const
-{
-    return m_rows;
-}
-
 void subspace_manager::setRows(uint rows)
 {
-    if (rows == 0 || rows > subspaces.size() || rows == m_rows) {
+    if (rows == 0 || rows > subspaces.size() || rows == this->rows) {
         return;
     }
 
-    m_rows = rows;
-    auto columns = subspaces.size() / m_rows;
+    this->rows = rows;
+    auto columns = subspaces.size() / rows;
 
-    if (subspaces.size() % m_rows > 0) {
+    if (subspaces.size() % rows > 0) {
         columns++;
     }
 
     if (root_info) {
         root_info->setDesktopLayout(
-            x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
+            x11::net::OrientationHorizontal, columns, rows, x11::net::DesktopLayoutCornerTopLeft);
         root_info->activate();
     }
 
@@ -234,15 +229,15 @@ void subspace_manager::updateRootInfo()
 
 void subspace_manager::updateLayout()
 {
-    m_rows = std::min<uint>(m_rows, subspaces.size());
+    rows = std::min<uint>(rows, subspaces.size());
 
-    int columns = subspaces.size() / m_rows;
+    int columns = subspaces.size() / rows;
     Qt::Orientation orientation = Qt::Horizontal;
 
     if (root_info) {
         // TODO: Is there a sane way to avoid overriding the existing grid?
         columns = root_info->desktopLayoutColumnsRows().width();
-        m_rows = std::max<int>(1, root_info->desktopLayoutColumnsRows().height());
+        rows = std::max<int>(1, root_info->desktopLayoutColumnsRows().height());
         orientation = root_info->desktopLayoutOrientation() == x11::net::OrientationHorizontal
             ? Qt::Horizontal
             : Qt::Vertical;
@@ -250,39 +245,39 @@ void subspace_manager::updateLayout()
 
     if (columns == 0) {
         // Not given, set default layout
-        m_rows = subspaces.size() == 1u ? 1 : 2;
-        columns = subspaces.size() / m_rows;
+        rows = subspaces.size() == 1u ? 1 : 2;
+        columns = subspaces.size() / rows;
     }
 
     // Patch to make desktop grid size equal 1 when 1 desktop for desktop switching animations
     if (subspaces.size() == 1) {
-        m_rows = 1;
+        rows = 1;
         columns = 1;
     }
 
     // Calculate valid grid size
-    Q_ASSERT(columns > 0 || m_rows > 0);
+    Q_ASSERT(columns > 0 || rows > 0);
 
-    if ((columns <= 0) && (m_rows > 0)) {
-        columns = (subspaces.size() + m_rows - 1) / m_rows;
-    } else if ((m_rows <= 0) && (columns > 0)) {
-        m_rows = (subspaces.size() + columns - 1) / columns;
+    if ((columns <= 0) && (rows > 0)) {
+        columns = (subspaces.size() + rows - 1) / rows;
+    } else if ((rows <= 0) && (columns > 0)) {
+        rows = (subspaces.size() + columns - 1) / columns;
     }
 
-    while (columns * m_rows < subspaces.size()) {
+    while (columns * rows < subspaces.size()) {
         if (orientation == Qt::Horizontal) {
             ++columns;
         } else {
-            ++m_rows;
+            ++rows;
         }
     }
 
-    m_rows = std::max<uint>(1u, m_rows);
-    grid.update(QSize(columns, m_rows), orientation, subspaces);
+    rows = std::max<uint>(1u, rows);
+    grid.update(QSize(columns, rows), orientation, subspaces);
 
     // TODO: why is there no call to root_info->setDesktopLayout?
-    Q_EMIT qobject->layoutChanged(columns, m_rows);
-    Q_EMIT qobject->rowsChanged(m_rows);
+    Q_EMIT qobject->layoutChanged(columns, rows);
+    Q_EMIT qobject->rowsChanged(rows);
 }
 
 void subspace_manager::load()
@@ -330,7 +325,7 @@ void subspace_manager::load()
 
     Q_EMIT qobject->countChanged(oldCount, subspaces.size());
 
-    m_rows = std::clamp<int>(1, group.readEntry<int>("Rows", 2), subspaces.size());
+    rows = std::clamp<int>(1, group.readEntry<int>("Rows", 2), subspaces.size());
 }
 
 void subspace_manager::save()
@@ -368,7 +363,7 @@ void subspace_manager::save()
         group.writeEntry(QStringLiteral("Id_%1").arg(i), subspaces[i - 1]->id());
     }
 
-    group.writeEntry("Rows", m_rows);
+    group.writeEntry("Rows", rows);
 
     // Save to disk
     group.sync();

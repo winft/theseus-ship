@@ -73,8 +73,6 @@ public:
 
     void setRootInfo(x11::net::root_info* info);
 
-    uint rows() const;
-
     QString name(uint sub) const;
 
     /**
@@ -99,6 +97,7 @@ public:
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement{nullptr};
 
     std::vector<subspace*> subspaces;
+    uint rows{2};
     subspace_grid grid;
     subspace* current{nullptr};
     bool nav_wraps{false};
@@ -117,8 +116,6 @@ private:
     void updateRootInfo();
 
     subspace* add_subspace(size_t position, QString const& id, QString const& name);
-
-    uint m_rows{2};
 
     subspaces_singleton singleton;
 };
