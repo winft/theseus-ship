@@ -21,6 +21,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/screen.h"
 #include <kwin_export.h>
 #include <win/subspace.h>
+#include <win/subspace_manager.h>
 
 #include <QObject>
 #include <QQmlEngine>
@@ -907,16 +908,16 @@ protected:
 
     QString desktop_name_impl(int desktop) const override
     {
-        return ref_space->subspace_manager->name(desktop);
+        return win::subspace_manager_get_subspace_name(*ref_space->subspace_manager, desktop);
     }
     void create_desktop_impl(int position, QString const& name) const override
     {
-        ref_space->subspace_manager->create_subspace(position, name);
+        win::subspace_manager_create_subspace(*ref_space->subspace_manager, position, name);
     }
     void remove_desktop_impl(int position) const override
     {
         if (auto vd = win::subspaces_get_for_x11id(*ref_space->subspace_manager, position + 1)) {
-            ref_space->subspace_manager->remove_subspace(vd);
+            win::subspace_manager_remove_subspace(*ref_space->subspace_manager, vd);
         }
     }
 

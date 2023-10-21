@@ -641,7 +641,7 @@ public:
 
     void setNumberOfDesktops(int desktops) override
     {
-        get_space().subspace_manager->setCount(desktops);
+        win::subspace_manager_set_count(*get_space().subspace_manager, desktops);
     }
 
     QSize desktopGridSize() const override
@@ -708,7 +708,7 @@ public:
 
     QString desktopName(int desktop) const override
     {
-        return get_space().subspace_manager->name(desktop);
+        return win::subspace_manager_get_subspace_name(*get_space().subspace_manager, desktop);
     }
 
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* /*surface*/) const override

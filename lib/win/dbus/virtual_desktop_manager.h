@@ -119,8 +119,8 @@ public:
             return;
         }
 
-        manager->setRows(rows);
-        manager->save();
+        subspace_manager_set_rows(*manager, rows);
+        subspace_manager_save(*manager);
     }
 
     uint rows() const override
@@ -169,7 +169,7 @@ public:
 
     void createDesktop(uint position, QString const& name) override
     {
-        manager->create_subspace(position, name);
+        subspace_manager_create_subspace(*manager, position, name);
     }
 
     void setDesktopName(QString const& id, QString const& name) override
@@ -180,13 +180,13 @@ public:
         }
 
         sub->setName(name);
-        manager->save();
+        subspace_manager_save(*manager);
     }
 
     void removeDesktop(QString const& id) override
     {
         if (auto sub = subspaces_get_for_id(*manager, id)) {
-            manager->remove_subspace(sub);
+            subspace_manager_remove_subspace(*manager, sub);
         }
     }
 

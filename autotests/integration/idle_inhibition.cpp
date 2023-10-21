@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/desktop_set.h"
 #include "win/screen.h"
 #include "win/wayland/window.h"
+#include <win/subspace_manager.h>
 
 #include <Wrapland/Client/idle_notify_v1.h>
 #include <Wrapland/Client/idleinhibit.h>
@@ -102,7 +103,7 @@ TEST_CASE("idle inhibition", "[win]")
         // the associated surface is not on the current subspace.
 
         auto& vd_manager = setup.base->space->subspace_manager;
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // Get reference to the idle interface.
@@ -252,7 +253,7 @@ TEST_CASE("idle inhibition", "[win]")
         // when the associated surface leaves the current subspace.
 
         auto& vd_manager = setup.base->space->subspace_manager;
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // Get reference to the idle interface.

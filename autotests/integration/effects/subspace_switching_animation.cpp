@@ -51,7 +51,7 @@ TEST_CASE("subspace switching animation", "[effect]")
 
     // We need at least 2 subspaces for the test.
     auto& subs = setup.base->space->subspace_manager;
-    subs->setCount(2);
+    win::subspace_manager_set_count(*subs, 2);
     QCOMPARE(win::subspaces_get_current_x11id(*subs), 1u);
     QCOMPARE(subs->subspaces.size(), 2u);
 

@@ -1640,7 +1640,7 @@ TEST_CASE("xdg-shell rules", "[win]")
     SECTION("subspace dont affect")
     {
         // We need at least two subspaces for this test.
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
         win::subspaces_set_current(*vd_manager, 1);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
@@ -1677,7 +1677,7 @@ TEST_CASE("xdg-shell rules", "[win]")
     SECTION("subspace apply")
     {
         // We need at least two subspace for this test.
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
         win::subspaces_set_current(*vd_manager, 1);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
@@ -1730,7 +1730,7 @@ TEST_CASE("xdg-shell rules", "[win]")
     SECTION("subspace remember")
     {
         // We need at least two subspace for this test.
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
         win::subspaces_set_current(*vd_manager, 1);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
@@ -1780,7 +1780,7 @@ TEST_CASE("xdg-shell rules", "[win]")
     {
         // We need at least two subspaces for this test.
         auto& vd_manager = setup.base->space->subspace_manager;
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
         win::subspaces_set_current(*vd_manager, 1);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
@@ -1833,7 +1833,7 @@ TEST_CASE("xdg-shell rules", "[win]")
     SECTION("subspace apply now")
     {
         // We need at least two subspaces for this test.
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
         win::subspaces_set_current(*vd_manager, 1);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
@@ -1882,7 +1882,7 @@ TEST_CASE("xdg-shell rules", "[win]")
     SECTION("subspace force temporarily")
     {
         // We need at least two subspaces for this test.
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
         win::subspaces_set_current(*vd_manager, 1);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);

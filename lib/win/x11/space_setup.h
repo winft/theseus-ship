@@ -120,7 +120,7 @@ void init_space(Space& space)
 
     space.root_info = x11::root_info<Space>::create(space);
     auto& subspaces = space.subspace_manager;
-    subspaces->setRootInfo(space.root_info.get());
+    win::subspace_manager_set_root_info(*subspaces, space.root_info.get());
     space.root_info->activate();
 
     // TODO(romangg): Do we need this still?

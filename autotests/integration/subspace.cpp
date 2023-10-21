@@ -103,8 +103,8 @@ void test_direction(test::setup& setup, Data const& test_data, std::string const
 {
     auto& vd_manager = setup.base->space->subspace_manager;
 
-    vd_manager->setCount(test_data.init_count);
-    vd_manager->setRows(2);
+    win::subspace_manager_set_count(*vd_manager, test_data.init_count);
+    win::subspace_manager_set_rows(*vd_manager, 2);
     win::subspaces_set_current(*vd_manager, test_data.init_current);
 
     Functor functor(*vd_manager);
@@ -160,7 +160,7 @@ TEST_CASE("subspace", "[win]")
 
     setup_wayland_connection();
     auto& vd_manager = setup.base->space->subspace_manager;
-    vd_manager->setCount(1);
+    win::subspace_manager_set_count(*vd_manager, 1);
     win::subspaces_set_current(*vd_manager, 0u);
 
     SECTION("count")
@@ -193,7 +193,7 @@ TEST_CASE("subspace", "[win]")
 
         // start with a useful subspace count
         auto const count_init_value = 2;
-        vd_manager->setCount(count_init_value);
+        win::subspace_manager_set_count(*vd_manager, count_init_value);
 
         QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::countChanged);
         QSignalSpy subspacesRemoved(vd_manager->qobject.get(),
@@ -201,7 +201,7 @@ TEST_CASE("subspace", "[win]")
 
         auto vdToRemove = vd_manager->subspaces.back();
 
-        vd_manager->setCount(test_data.request);
+        win::subspace_manager_set_count(*vd_manager, test_data.request);
         QCOMPARE(vd_manager->subspaces.size(), test_data.result);
         QCOMPARE(spy.isEmpty(), !test_data.signal);
 
@@ -282,7 +282,7 @@ TEST_CASE("subspace", "[win]")
 
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
-        vd_manager->setCount(test_data.count);
+        win::subspace_manager_set_count(*vd_manager, test_data.count);
         REQUIRE(win::subspaces_set_current(*vd_manager, test_data.init) == (test_data.init != 1));
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), test_data.init);
 
@@ -328,12 +328,12 @@ TEST_CASE("subspace", "[win]")
             // multiple decrement
             data{4, 2, 1, 1, true});
 
-        vd_manager->setCount(test_data.init_count);
+        win::subspace_manager_set_count(*vd_manager, test_data.init_count);
         win::subspaces_set_current(*vd_manager, test_data.init_current);
 
         QSignalSpy spy(vd_manager->qobject.get(), &win::subspace_manager_qobject::current_changed);
 
-        vd_manager->setCount(test_data.request);
+        win::subspace_manager_set_count(*vd_manager, test_data.request);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), test_data.current);
         QCOMPARE(spy.isEmpty(), !test_data.signal);
     }
@@ -578,7 +578,7 @@ TEST_CASE("subspace", "[win]")
                                   data{4, {2, 2}, Qt::Horizontal, {1, 1}, 4},
                                   data{4, {2, 2}, Qt::Horizontal, {0, 3}, 0});
 
-        vd_manager->setCount(test_data.init_count);
+        win::subspace_manager_set_count(*vd_manager, test_data.init_count);
 
         win::subspace_grid grid;
 
@@ -633,11 +633,11 @@ TEST_CASE("subspace", "[win]")
 
         if (test_data.subspace == 1) {
             // Must be changed back and forth from our default so the spy fires.
-            vd_manager->setCount(2);
+            win::subspace_manager_set_count(*vd_manager, 2);
         }
 
-        vd_manager->setCount(test_data.subspace);
-        vd_manager->setRows(2);
+        win::subspace_manager_set_count(*vd_manager, test_data.subspace);
+        win::subspace_manager_set_rows(*vd_manager, 2);
 
         QCOMPARE(vd_manager->grid.size(), test_data.result);
         QVERIFY(!spy.empty());
@@ -649,7 +649,7 @@ TEST_CASE("subspace", "[win]")
         spy.clear();
 
         // calling update layout again should not change anything
-        vd_manager->updateLayout();
+        win::subspace_manager_update_layout(*vd_manager);
         QCOMPARE(vd_manager->grid.size(), test_data.result);
         QCOMPARE(spy.count(), 1);
 
@@ -672,14 +672,14 @@ TEST_CASE("subspace", "[win]")
                                   data{4, 4, "Desktop 4"},
                                   data{5, 5, "Desktop 5"});
 
-        vd_manager->setCount(test_data.init_count);
-        REQUIRE(vd_manager->name(test_data.subspace)
+        win::subspace_manager_set_count(*vd_manager, test_data.init_count);
+        REQUIRE(win::subspace_manager_get_subspace_name(*vd_manager, test_data.subspace)
                 == QString::fromStdString(test_data.subspace_name));
     }
 
     SECTION("switch to shortcut")
     {
-        vd_manager->setCount(vd_manager->max_count);
+        win::subspace_manager_set_count(*vd_manager, vd_manager->max_count);
         win::subspaces_set_current(*vd_manager, vd_manager->max_count);
 
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), vd_manager->max_count);
@@ -700,14 +700,14 @@ TEST_CASE("subspace", "[win]")
 
     SECTION("change rows")
     {
-        vd_manager->setCount(4);
-        vd_manager->setRows(4);
+        win::subspace_manager_set_count(*vd_manager, 4);
+        win::subspace_manager_set_rows(*vd_manager, 4);
         QCOMPARE(vd_manager->rows, 4);
 
-        vd_manager->setRows(5);
+        win::subspace_manager_set_rows(*vd_manager, 5);
         QCOMPARE(vd_manager->rows, 4);
 
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
 
         // TODO(romangg): Fails when run in Xwayland mode and passes otherwise. The root cause
         //                seems to be the update from root info in
@@ -723,32 +723,32 @@ TEST_CASE("subspace", "[win]")
     SECTION("load")
     {
         // No config yet, load should not change anything.
-        vd_manager->load();
+        win::subspace_manager_load(*vd_manager);
         QCOMPARE(vd_manager->subspaces.size(), 1);
 
         // Empty config should create one subspace.
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
         vd_manager->config = config;
-        vd_manager->load();
+        win::subspace_manager_load(*vd_manager);
         QCOMPARE(vd_manager->subspaces.size(), 1);
 
         // Setting a sensible number.
         config->group("Desktops").writeEntry("Number", 4);
-        vd_manager->load();
+        win::subspace_manager_load(*vd_manager);
         QCOMPARE(vd_manager->subspaces.size(), 4);
 
         // Setting the config value and reloading should update.
         config->group("Desktops").writeEntry("Number", 5);
-        vd_manager->load();
+        win::subspace_manager_load(*vd_manager);
         QCOMPARE(vd_manager->subspaces.size(), 5);
     }
 
     SECTION("save")
     {
-        vd_manager->setCount(4);
+        win::subspace_manager_set_count(*vd_manager, 4);
 
         // No config yet, just to ensure it actually works.
-        vd_manager->save();
+        win::subspace_manager_save(*vd_manager);
 
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
         vd_manager->config = config;
@@ -756,7 +756,7 @@ TEST_CASE("subspace", "[win]")
         REQUIRE(config->hasGroup("Desktops"));
 
         // Now save should create the group "Desktops".
-        vd_manager->save();
+        win::subspace_manager_save(*vd_manager);
         QCOMPARE(config->hasGroup("Desktops"), true);
 
         auto subspaces = config->group("Desktops");
@@ -775,7 +775,7 @@ TEST_CASE("subspace", "[win]")
         }
 
         QCOMPARE(vd_manager->subspaces.size(), 1u);
-        vd_manager->setCount(4);
+        win::subspace_manager_set_count(*vd_manager, 4);
         QCOMPARE(vd_manager->subspaces.size(), 4u);
 
         base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP",
@@ -846,7 +846,7 @@ TEST_CASE("subspace", "[win]")
     {
         // first create a new subspace
         QCOMPARE(vd_manager->subspaces.size(), 1u);
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // switch to last subspace
@@ -867,7 +867,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->current, client->topo.subspaces.front());
 
         // and remove last subspace
-        vd_manager->setCount(1);
+        win::subspace_manager_set_count(*vd_manager, 1);
         QCOMPARE(vd_manager->subspaces.size(), 1u);
 
         // now the client should be moved as well
@@ -881,7 +881,7 @@ TEST_CASE("subspace", "[win]")
     {
         // first create two new subspaces
         QCOMPARE(vd_manager->subspaces.size(), 1u);
-        vd_manager->setCount(3);
+        win::subspace_manager_set_count(*vd_manager, 3);
         QCOMPARE(vd_manager->subspaces.size(), 3u);
 
         // switch to last subspace
@@ -965,7 +965,7 @@ TEST_CASE("subspace", "[win]")
     {
         // first create two new subspaces
         QCOMPARE(vd_manager->subspaces.size(), 1u);
-        vd_manager->setCount(3);
+        win::subspace_manager_set_count(*vd_manager, 3);
         QCOMPARE(vd_manager->subspaces.size(), 3u);
 
         // switch to last subspace
@@ -994,13 +994,13 @@ TEST_CASE("subspace", "[win]")
         QVERIFY(win::on_subspace(*client, 3));
 
         // remove subspace 3
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(client->topo.subspaces.size(), 1u);
         // window is only on subspace 2
         QCOMPARE(vd_manager->subspaces[1], client->topo.subspaces.at(0));
 
         // Again 3 subspaces
-        vd_manager->setCount(3);
+        win::subspace_manager_set_count(*vd_manager, 3);
         // move window to be only on subspace 3
         win::enter_subspace(*client, vd_manager->subspaces.at(2));
         win::leave_subspace(*client, vd_manager->subspaces.at(1));
@@ -1009,7 +1009,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->subspaces.at(2), client->topo.subspaces.at(0));
 
         // remove subspace 3
-        vd_manager->setCount(2);
+        win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(client->topo.subspaces.size(), 1u);
         // window is only on subspace 2
         QCOMPARE(vd_manager->subspaces.at(1), client->topo.subspaces.at(0));

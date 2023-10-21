@@ -602,7 +602,7 @@ TEST_CASE("keyboard layout", "[input]")
 
         auto get_subsp_mgr = [&] { return setup->base->space->subspace_manager.get(); };
 
-        get_subsp_mgr()->setCount(4);
+        win::subspace_manager_set_count(*get_subsp_mgr(), 4);
         QCOMPARE(get_subsp_mgr()->subspaces.size(), 4u);
         auto subspaces = get_subsp_mgr()->subspaces;
         QCOMPARE(subspaces.size(), 4);
@@ -625,7 +625,7 @@ TEST_CASE("keyboard layout", "[input]")
 
         // imitate app restart to test layouts saving feature
         reset_setup();
-        get_subsp_mgr()->setCount(4);
+        win::subspace_manager_set_count(*get_subsp_mgr(), 4);
         QCOMPARE(get_subsp_mgr()->subspaces.size(), 4u);
 
         subspaces = get_subsp_mgr()->subspaces;
@@ -649,13 +649,13 @@ TEST_CASE("keyboard layout", "[input]")
         // Remove subspaces.
         desktop = 0;
         auto const deletedDesktop = subspaces.back();
-        get_subsp_mgr()->setCount(1);
+        win::subspace_manager_set_count(*get_subsp_mgr(), 1);
         REQUIRE(get_xkb_keys()->layout
                 == (layout = (desktop + 1) % get_xkb_keys()->layouts_count()));
         QCOMPARE(get_xkb_keys()->layout_name(), "German");
 
         // Add another desktop.
-        get_subsp_mgr()->setCount(2);
+        win::subspace_manager_set_count(*get_subsp_mgr(), 2);
 
         // Switching to it should result in going to default.
         subspaces = get_subsp_mgr()->subspaces;

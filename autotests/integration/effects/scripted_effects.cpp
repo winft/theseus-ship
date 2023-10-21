@@ -134,7 +134,7 @@ TEST_CASE("scripted effects", "[effect]")
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
-    setup.base->space->subspace_manager->setCount(2);
+    win::subspace_manager_set_count(*setup.base->space->subspace_manager, 2);
 
     setup_wayland_connection();
 

@@ -14,6 +14,7 @@
 #include "win/screen.h"
 #include "win/stacking.h"
 #include "win/util.h"
+#include <win/subspace_manager.h>
 
 namespace KWin::win
 {
@@ -70,20 +71,22 @@ public:
         if (auto c = get_client_impl(client)) {
             return std::visit(overload{[&](auto&& win) {
                                   if (on_all_subspaces(*win)) {
-                                      return vds->name(subspaces_get_current_x11id(*vds));
+                                      return subspace_manager_get_subspace_name(
+                                          *vds, subspaces_get_current_x11id(*vds));
                                   } else {
-                                      return vds->name(get_subspace(*win));
+                                      return subspace_manager_get_subspace_name(*vds,
+                                                                                get_subspace(*win));
                                   }
                               }},
                               c->client());
         }
 
-        return vds->name(subspaces_get_current_x11id(*vds));
+        return subspace_manager_get_subspace_name(*vds, subspaces_get_current_x11id(*vds));
     }
 
     QString desktop_name(int subspace) const override
     {
-        return m_tabbox->space.subspace_manager->name(subspace);
+        return subspace_manager_get_subspace_name(*m_tabbox->space.subspace_manager, subspace);
     }
 
     bool is_kwin_compositing() const override

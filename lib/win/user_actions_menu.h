@@ -13,6 +13,7 @@
 #include "net.h"
 #include "screen.h"
 #include "window_operation.h"
+#include <win/subspace_manager.h>
 
 #include "base/logging.h"
 
@@ -284,8 +285,9 @@ private:
             if (i < BASE) {
                 basic_name.prepend(QLatin1Char('&'));
             }
-            action = m_desktopMenu->addAction(basic_name.arg(i).arg(
-                subs_manager->name(i).replace(QLatin1Char('&'), QStringLiteral("&&"))));
+            action = m_desktopMenu->addAction(
+                basic_name.arg(i).arg(subspace_manager_get_subspace_name(*subs_manager, i)
+                                          .replace(QLatin1Char('&'), QStringLiteral("&&"))));
             action->setData(i);
             action->setCheckable(true);
             group->addAction(action);
@@ -346,8 +348,9 @@ private:
                 basic_name.prepend(QLatin1Char('&'));
             }
 
-            QAction* action = m_multipleDesktopsMenu->addAction(basic_name.arg(i).arg(
-                subs_manager->name(i).replace(QLatin1Char('&'), QStringLiteral("&&"))));
+            QAction* action = m_multipleDesktopsMenu->addAction(
+                basic_name.arg(i).arg(subspace_manager_get_subspace_name(*subs_manager, i)
+                                          .replace(QLatin1Char('&'), QStringLiteral("&&"))));
             action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{i, false}));
             action->setCheckable(true);
             if (m_client
@@ -362,7 +365,8 @@ private:
         m_multipleDesktopsMenu->addSeparator();
 
         for (uint i = 1; i <= subs_manager->subspaces.size(); ++i) {
-            QString name = i18n("Move to %1 %2", i, subs_manager->name(i));
+            QString name
+                = i18n("Move to %1 %2", i, subspace_manager_get_subspace_name(*subs_manager, i));
             QAction* action = m_multipleDesktopsMenu->addAction(name);
             action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{i, true}));
         }
@@ -450,7 +454,7 @@ private:
                            }
                            return;
                        } else if (desk > subs_manager->subspaces.size()) {
-                           subs_manager->setCount(desk);
+                           subspace_manager_set_count(*subs_manager, desk);
                        }
 
                        send_window_to_subspace(space, win, desk, false);
@@ -482,7 +486,7 @@ private:
                            set_on_all_subspaces(*win, !on_all_subspaces(*win));
                            return;
                        } else if (data.desktop > subs_manager->subspaces.size()) {
-                           subs_manager->setCount(data.desktop);
+                           subspace_manager_set_count(*subs_manager, data.desktop);
                        }
 
                        if (data.move_to_single) {

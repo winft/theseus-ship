@@ -185,7 +185,7 @@ public:
 protected:
     void changeNumberOfDesktops(int n) override
     {
-        space.subspace_manager->setCount(n);
+        subspace_manager_set_count(*space.subspace_manager, n);
     }
 
     void changeCurrentDesktop(int d) override

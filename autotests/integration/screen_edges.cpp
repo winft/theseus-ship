@@ -195,8 +195,8 @@ TEST_CASE("screen edges", "[input],[win]")
         config->sync();
         auto& subs = setup.base->space->subspace_manager;
         subs->config = config;
-        subs->load();
-        subs->updateLayout();
+        win::subspace_manager_load(*subs);
+        win::subspace_manager_update_layout(*subs);
         QCOMPARE(subs->subspaces.size(), 4u);
         QCOMPARE(subs->grid.width(), 4);
         QCOMPARE(subs->grid.height(), 1);

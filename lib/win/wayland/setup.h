@@ -11,6 +11,7 @@
 #include "win/move.h"
 #include "win/screen.h"
 #include "win/types.h"
+#include <win/subspace_manager.h>
 
 #include <Wrapland/Server/plasma_virtual_desktop.h>
 #include <Wrapland/Server/plasma_window.h>
@@ -206,7 +207,7 @@ void setup_plasma_management(Space* space, Win* win)
                      qtwin,
                      [win]() {
                          auto& vds = win->space.subspace_manager;
-                         vds->setCount(vds->subspaces.size() + 1);
+                         subspace_manager_set_count(*vds, vds->subspaces.size() + 1);
                          enter_subspace(*win, vds->subspaces.back());
                      });
     QObject::connect(plasma_win,
@@ -310,7 +311,8 @@ void setup_subspace_manager(Manager& manager,
                      &PlasmaVirtualDesktopManager::desktopCreateRequested,
                      manager.qobject.get(),
                      [&manager](auto const& name, quint32 position) {
-                         manager.create_subspace(position, QString::fromStdString(name));
+                         subspace_manager_create_subspace(
+                             manager, position, QString::fromStdString(name));
                      });
 
     // remove when the client asks to
@@ -319,7 +321,7 @@ void setup_subspace_manager(Manager& manager,
                      manager.qobject.get(),
                      [&manager](auto const& id) {
                          if (auto sub = subspaces_get_for_id(manager, id.c_str())) {
-                             manager.remove_subspace(sub);
+                             subspace_manager_remove_subspace(manager, sub);
                          }
                      });
 
@@ -327,7 +329,7 @@ void setup_subspace_manager(Manager& manager,
     std::for_each(subspaces.cbegin(), subspaces.cend(), createPlasmaVirtualDesktop);
 
     // Now we are sure all ids are there
-    manager.save();
+    subspace_manager_save(manager);
 
     QObject::connect(manager.qobject.get(),
                      &decltype(manager.qobject)::element_type::current_changed,

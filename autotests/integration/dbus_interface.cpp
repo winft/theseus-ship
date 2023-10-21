@@ -63,7 +63,7 @@ TEST_CASE("dbus interface", "[base]")
 {
     test::setup setup("dbus-interface", base::operation_mode::xwayland);
     setup.start();
-    setup.base->space->subspace_manager->setCount(4);
+    win::subspace_manager_set_count(*setup.base->space->subspace_manager, 4);
 
     setup_wayland_connection();
 

@@ -180,7 +180,7 @@ TEST_CASE("bindings", "[input],[win]")
 
         QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
 
-        vd_manager->setCount(subspace);
+        win::subspace_manager_set_count(*vd_manager, subspace);
 
         // now trigger the shortcut
         auto invokeShortcut = [](int subspace) {

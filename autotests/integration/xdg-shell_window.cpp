@@ -952,7 +952,7 @@ TEST_CASE("xdg-shell window", "[win]")
         // this test verifies that when sending a client to a subspace all transients are also send
         // to that subspace
 
-        setup.base->space->subspace_manager->setCount(2);
+        win::subspace_manager_set_count(*setup.base->space->subspace_manager, 2);
         std::unique_ptr<Surface> surface{create_surface()};
         std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
 
