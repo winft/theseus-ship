@@ -14,20 +14,10 @@ subspace_manager_qobject::subspace_manager_qobject() = default;
 
 subspace_manager::subspace_manager()
     : qobject{std::make_unique<subspace_manager_qobject>()}
-    , singleton{qobject.get(),
-                [this] { return subspaces; },
-                [this](auto pos, auto const& name) {
-                    return subspace_manager_create_subspace(*this, pos, name);
-                },
-                [this](auto id) {
-                    if (auto sub = subspaces_get_for_id(*this, id)) {
-                        subspace_manager_remove_subspace(*this, sub);
-                    }
-                },
-                [this] { return current; }}
+    , singleton{subspace_manager_create_singleton(*this)}
 
 {
-    singleton_interface::subspaces = &singleton;
+    singleton_interface::subspaces = singleton.get();
 
     swipe_gesture.released_x = std::make_unique<QAction>();
     swipe_gesture.released_y = std::make_unique<QAction>();

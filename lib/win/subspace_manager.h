@@ -88,7 +88,7 @@ public:
     static constexpr size_t max_count{20};
 
 private:
-    subspaces_singleton singleton;
+    std::unique_ptr<subspaces_singleton> singleton;
 };
 
 inline QString subspace_manager_get_default_subspace_name(int x11id)
@@ -535,6 +535,23 @@ void subspace_manager_connect_gestures(Manager& mgr)
 
             mgr.current_desktop_offset = {0, 0};
         });
+}
+
+template<typename Manager>
+std::unique_ptr<subspaces_singleton> subspace_manager_create_singleton(Manager& mgr)
+{
+    return std::make_unique<subspaces_singleton>(
+        mgr.qobject.get(),
+        [&] { return mgr.subspaces; },
+        [&](auto pos, auto const& name) {
+            return subspace_manager_create_subspace(mgr, pos, name);
+        },
+        [&](auto id) {
+            if (auto sub = subspaces_get_for_id(mgr, id)) {
+                subspace_manager_remove_subspace(mgr, sub);
+            }
+        },
+        [&] { return mgr.current; });
 }
 
 }
