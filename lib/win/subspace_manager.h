@@ -109,6 +109,7 @@ public:
     } swipe_gesture;
     QPointF current_desktop_offset{0, 0};
 
+    x11::net::root_info* root_info{nullptr};
     KSharedConfig::Ptr config;
     static constexpr size_t max_count{20};
 
@@ -118,7 +119,6 @@ private:
     subspace* add_subspace(size_t position, QString const& id, QString const& name);
 
     uint m_rows{2};
-    x11::net::root_info* root_info{nullptr};
 
     subspaces_singleton singleton;
 };
@@ -126,6 +126,20 @@ private:
 inline QString subspace_manager_get_default_subspace_name(int x11id)
 {
     return i18n("Desktop %1", x11id);
+}
+
+template<typename Manager>
+void subspace_manager_update_subspace_meta(Manager& mgr,
+                                           subspace* subsp,
+                                           QString const& name,
+                                           size_t x11id)
+{
+    subsp->setName(name);
+    subsp->setX11DesktopNumber(x11id);
+
+    if (mgr.root_info) {
+        mgr.root_info->setDesktopName(x11id, name.toUtf8().data());
+    }
 }
 
 template<typename Manager>

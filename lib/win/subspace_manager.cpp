@@ -123,10 +123,8 @@ void subspace_manager::remove_subspace(subspace* sub)
     subspaces.erase(subspaces.begin() + i);
 
     for (auto j = i; j < subspaces.size(); ++j) {
-        subspaces[j]->setX11DesktopNumber(j + 1);
-        if (root_info) {
-            root_info->setDesktopName(j + 1, subspaces[j]->name().toUtf8().data());
-        }
+        auto subsp = subspaces.at(j);
+        subspace_manager_update_subspace_meta(*this, subsp, subsp->name(), j + 1);
     }
 
     auto const newCurrent = std::min<uint>(oldCurrent, subspaces.size());
@@ -149,28 +147,17 @@ void subspace_manager::remove_subspace(subspace* sub)
 subspace* subspace_manager::add_subspace(size_t position, QString const& id, QString const& name)
 {
     auto subsp = new subspace(id, qobject.get());
-    subsp->setX11DesktopNumber(position + 1);
-    subsp->setName(name);
-
     subspaces.insert(subspaces.begin() + position, subsp);
+    subspace_manager_update_subspace_meta(*this, subsp, name, position + 1);
 
     QObject::connect(subsp, &subspace::nameChanged, qobject.get(), [this, subsp]() {
-        if (root_info) {
-            root_info->setDesktopName(subsp->x11DesktopNumber(), subsp->name().toUtf8().data());
-        }
+        subspace_manager_update_subspace_meta(
+            *this, subsp, subsp->name(), subsp->x11DesktopNumber());
     });
 
-    if (root_info) {
-        root_info->setDesktopName(subsp->x11DesktopNumber(), subsp->name().toUtf8().data());
-    }
-
     // update the id of displaced subspaces
-    for (size_t i = position + 1; i < subspaces.size(); ++i) {
-        auto& other = subspaces.at(i);
-        other->setX11DesktopNumber(i + 1);
-        if (root_info) {
-            root_info->setDesktopName(i + 1, other->name().toUtf8().data());
-        }
+    for (auto i = position + 1; i < subspaces.size(); ++i) {
+        subspace_manager_update_subspace_meta(*this, subsp, subsp->name(), i + 1);
     }
 
     return subsp;
@@ -315,10 +302,7 @@ void subspace_manager::load()
         auto const x11id = index + 1;
         QString name
             = group.readEntry(QStringLiteral("Name_%1").arg(x11id), i18n("Desktop %1", x11id));
-        if (root_info) {
-            root_info->setDesktopName(x11id, name.toUtf8().data());
-        }
-        subspaces[index]->setName(name);
+        subspace_manager_update_subspace_meta(*this, subspaces.at(index), name, x11id);
     };
 
     auto get_id = [&](auto index) {
@@ -370,9 +354,7 @@ void subspace_manager::save()
 
         if (s.isEmpty()) {
             s = defaultvalue;
-            if (root_info) {
-                root_info->setDesktopName(i, s.toUtf8().data());
-            }
+            subspace_manager_update_subspace_meta(*this, subspaces.at(i - 1), s, i);
         }
 
         if (s != defaultvalue) {
