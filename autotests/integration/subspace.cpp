@@ -72,27 +72,27 @@ struct subspace_east {
     win::subspace_manager& manager;
 };
 
-struct subspace_next {
-    subspace_next(win::subspace_manager& manager)
+struct subspace_successor {
+    subspace_successor(win::subspace_manager& manager)
         : manager{manager}
     {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.next(subspace, wrap);
+        return manager.get_successor_of(subspace, wrap);
     }
 
     win::subspace_manager& manager;
 };
 
-struct subspace_previous {
-    subspace_previous(win::subspace_manager& manager)
+struct subspace_predecessor {
+    subspace_predecessor(win::subspace_manager& manager)
         : manager{manager}
     {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.previous(subspace, wrap);
+        return manager.get_predecessor_of(subspace, wrap);
     }
 
     win::subspace_manager& manager;
@@ -361,7 +361,7 @@ TEST_CASE("subspace", "[win]")
             // subspaces at end, no wrap
             data{4, 4, false, 4});
 
-        test_direction<subspace_next>(setup, test_data, "Switch to Next Desktop");
+        test_direction<subspace_successor>(setup, test_data, "Switch to Next Desktop");
     }
 
     SECTION("previous")
@@ -387,7 +387,7 @@ TEST_CASE("subspace", "[win]")
             // subspaces at start, no wrap
             data{4, 1, false, 1});
 
-        test_direction<subspace_previous>(setup, test_data, "Switch to Previous Desktop");
+        test_direction<subspace_predecessor>(setup, test_data, "Switch to Previous Desktop");
     }
 
     SECTION("left")

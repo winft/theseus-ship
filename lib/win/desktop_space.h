@@ -101,17 +101,18 @@ template<typename Win>
 void window_to_next_subspace(Win& window)
 {
     // TODO: why is get_nav_wraps not honored?
-    window_to_subspace(
-        window, window.space.subspace_manager->next(*window.space.subspace_manager->current, true));
+    window_to_subspace(window,
+                       window.space.subspace_manager->get_successor_of(
+                           *window.space.subspace_manager->current, true));
 }
 
 template<typename Win>
 void window_to_prev_subspace(Win& window)
 {
     // TODO: why is get_nav_wraps not honored?
-    window_to_subspace(
-        window,
-        window.space.subspace_manager->previous(*window.space.subspace_manager->current, true));
+    window_to_subspace(window,
+                       window.space.subspace_manager->get_predecessor_of(
+                           *window.space.subspace_manager->current, true));
 }
 
 template<typename Space>

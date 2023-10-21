@@ -215,7 +215,12 @@ subspace& subspace_manager::get_west_of(subspace& desktop, bool wrap) const
     }
 }
 
-subspace& subspace_manager::next(subspace& desktop, bool wrap) const
+subspace& subspace_manager::get_successor_of_current() const
+{
+    return get_successor_of(*current, get_nav_wraps());
+}
+
+subspace& subspace_manager::get_successor_of(subspace& desktop, bool wrap) const
 {
     auto it = std::find(subspaces.begin(), subspaces.end(), &desktop);
     Q_ASSERT(it != subspaces.end());
@@ -232,13 +237,18 @@ subspace& subspace_manager::next(subspace& desktop, bool wrap) const
     return desktop;
 }
 
-uint subspace_manager::next(uint id, bool wrap) const
+uint subspace_manager::get_successor_of(uint id, bool wrap) const
 {
     auto const subsp = subspace_for_x11id(id);
-    return next(subsp ? *subsp : *current, wrap).x11DesktopNumber();
+    return get_successor_of(subsp ? *subsp : *current, wrap).x11DesktopNumber();
 }
 
-subspace& subspace_manager::previous(subspace& desktop, bool wrap) const
+subspace& subspace_manager::get_predecessor_of_current() const
+{
+    return get_predecessor_of(*current, get_nav_wraps());
+}
+
+subspace& subspace_manager::get_predecessor_of(subspace& desktop, bool wrap) const
 {
     auto it = std::find(subspaces.begin(), subspaces.end(), &desktop);
     Q_ASSERT(it != subspaces.end());
@@ -255,10 +265,10 @@ subspace& subspace_manager::previous(subspace& desktop, bool wrap) const
     return desktop;
 }
 
-uint subspace_manager::previous(uint id, bool wrap) const
+uint subspace_manager::get_predecessor_of(uint id, bool wrap) const
 {
     auto const subsp = subspace_for_x11id(id);
-    return previous(subsp ? *subsp : *current, wrap).x11DesktopNumber();
+    return get_predecessor_of(subsp ? *subsp : *current, wrap).x11DesktopNumber();
 }
 
 subspace* subspace_manager::subspace_for_x11id(uint id) const
@@ -736,13 +746,13 @@ void subspace_manager::slotLeft()
 void subspace_manager::slotPrevious()
 {
     assert(current);
-    setCurrent(previous(*current, get_nav_wraps()));
+    setCurrent(get_predecessor_of_current());
 }
 
 void subspace_manager::slotNext()
 {
     assert(current);
-    setCurrent(next(*current, get_nav_wraps()));
+    setCurrent(get_successor_of_current());
 }
 
 void subspace_manager::slotRight()

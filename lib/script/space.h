@@ -923,12 +923,12 @@ protected:
     void switch_desktop_next_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->next(*vdm->current, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->get_successor_of_current());
     }
     void switch_desktop_previous_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->previous(*vdm->current, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->get_predecessor_of_current());
     }
     void switch_desktop_left_impl() const override
     {

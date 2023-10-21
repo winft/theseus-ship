@@ -202,13 +202,13 @@ public:
     void next_desktop_impl() override
     {
         space.subspace_manager->setCurrent(
-            space.subspace_manager->next(*space.subspace_manager->current, false));
+            space.subspace_manager->get_successor_of(*space.subspace_manager->current, false));
     }
 
     void previous_desktop_impl() override
     {
         space.subspace_manager->setCurrent(
-            space.subspace_manager->previous(*space.subspace_manager->current, false));
+            space.subspace_manager->get_predecessor_of(*space.subspace_manager->current, false));
     }
 
     void show_debug_console_impl() override

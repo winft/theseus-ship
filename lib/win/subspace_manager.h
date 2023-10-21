@@ -96,11 +96,13 @@ public:
     uint get_west_of(uint id, bool wrap) const;
     subspace& get_west_of(subspace& desktop, bool wrap) const;
 
-    subspace& next(subspace& desktop, bool wrap) const;
-    uint next(uint id, bool wrap) const;
+    subspace& get_successor_of_current() const;
+    subspace& get_successor_of(subspace& desktop, bool wrap) const;
+    uint get_successor_of(uint id, bool wrap) const;
 
-    subspace& previous(subspace& desktop, bool wrap) const;
-    uint previous(uint id, bool wrap) const;
+    subspace& get_predecessor_of_current() const;
+    subspace& get_predecessor_of(subspace& desktop, bool wrap) const;
+    uint get_predecessor_of(uint id, bool wrap) const;
 
     subspace* subspace_for_x11id(uint id) const;
     subspace* subspace_for_id(QString const& id) const;
