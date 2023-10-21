@@ -62,6 +62,66 @@ Q_SIGNALS:
     void nav_wraps_changed();
 };
 
+struct subspace_manager_backend {
+    QString get_subspace_name(uint x11id) const
+    {
+        assert(data);
+        return QString::fromUtf8(data->desktopName(x11id));
+    }
+
+    void get_layout(uint& columns, uint& rows, Qt::Orientation& orientation) const
+    {
+        if (!data) {
+            return;
+        }
+
+        // TODO: Is there a sane way to avoid overriding the existing grid?
+        columns = data->desktopLayoutColumnsRows().width();
+        rows = std::max<int>(1, data->desktopLayoutColumnsRows().height());
+        orientation = data->desktopLayoutOrientation() == x11::net::OrientationHorizontal
+            ? Qt::Horizontal
+            : Qt::Vertical;
+    }
+
+    void update_subspace_meta(size_t x11id, QString const& name)
+    {
+        if (data) {
+            data->setDesktopName(x11id, name.toUtf8().data());
+        }
+    }
+
+    void set_layout(uint columns, uint rows)
+    {
+        if (data) {
+            data->setDesktopLayout(x11::net::OrientationHorizontal,
+                                   columns,
+                                   rows,
+                                   x11::net::DesktopLayoutCornerTopLeft);
+            data->activate();
+        }
+    }
+
+    void set_current(uint x11id)
+    {
+        data->setCurrentDesktop(x11id);
+    }
+
+    void update_size(size_t size)
+    {
+        if (!data) {
+            return;
+        }
+
+        data->setNumberOfDesktops(size);
+
+        auto viewports = new x11::net::point[size];
+        data->setDesktopViewport(size, *viewports);
+        delete[] viewports;
+    }
+
+    x11::net::root_info* data{nullptr};
+};
+
 class KWIN_EXPORT subspace_manager
 {
 public:
@@ -83,7 +143,7 @@ public:
     } swipe_gesture;
     QPointF current_desktop_offset{0, 0};
 
-    x11::net::root_info* root_info{nullptr};
+    subspace_manager_backend backend;
     KSharedConfig::Ptr config;
     static constexpr size_t max_count{20};
 
@@ -105,9 +165,7 @@ void subspace_manager_update_subspace_meta(Manager& mgr,
     subsp->setName(name);
     subsp->setX11DesktopNumber(x11id);
 
-    if (mgr.root_info) {
-        mgr.root_info->setDesktopName(x11id, name.toUtf8().data());
-    }
+    mgr.backend.update_subspace_meta(x11id, name);
 }
 
 template<typename Manager>
@@ -135,17 +193,10 @@ void subspace_manager_update_layout(Manager& mgr)
 {
     mgr.rows = std::min<uint>(mgr.rows, mgr.subspaces.size());
 
-    int columns = mgr.subspaces.size() / mgr.rows;
+    uint columns = mgr.subspaces.size() / mgr.rows;
     auto orientation = Qt::Horizontal;
 
-    if (mgr.root_info) {
-        // TODO: Is there a sane way to avoid overriding the existing grid?
-        columns = mgr.root_info->desktopLayoutColumnsRows().width();
-        mgr.rows = std::max<int>(1, mgr.root_info->desktopLayoutColumnsRows().height());
-        orientation = mgr.root_info->desktopLayoutOrientation() == x11::net::OrientationHorizontal
-            ? Qt::Horizontal
-            : Qt::Vertical;
-    }
+    mgr.backend.get_layout(columns, mgr.rows, orientation);
 
     if (columns == 0) {
         // Not given, set default layout
@@ -179,7 +230,7 @@ void subspace_manager_update_layout(Manager& mgr)
     mgr.rows = std::max<uint>(1u, mgr.rows);
     mgr.grid.update(QSize(columns, mgr.rows), orientation, mgr.subspaces);
 
-    // TODO: why is there no call to root_info->setDesktopLayout?
+    // TODO: why is there no call to mgr.backend.set_layout?
     Q_EMIT mgr.qobject->layoutChanged(columns, mgr.rows);
     Q_EMIT mgr.qobject->rowsChanged(mgr.rows);
 }
@@ -198,12 +249,7 @@ void subspace_manager_set_rows(Manager& mgr, uint rows)
         columns++;
     }
 
-    if (mgr.root_info) {
-        mgr.root_info->setDesktopLayout(
-            x11::net::OrientationHorizontal, columns, rows, x11::net::DesktopLayoutCornerTopLeft);
-        mgr.root_info->activate();
-    }
-
+    mgr.backend.set_layout(columns, rows);
     subspace_manager_update_layout(mgr);
 }
 
@@ -247,27 +293,12 @@ void subspace_manager_shrink_subspaces(Manager& mgr, uint count)
 }
 
 template<typename Manager>
-void subspace_manager_update_root_info(Manager& mgr)
-{
-    if (!mgr.root_info) {
-        return;
-    }
-
-    auto const n = mgr.subspaces.size();
-    mgr.root_info->setNumberOfDesktops(n);
-
-    auto viewports = new x11::net::point[n];
-    mgr.root_info->setDesktopViewport(n, *viewports);
-    delete[] viewports;
-}
-
-template<typename Manager>
 void subspace_manager_set_root_info(Manager& mgr, x11::net::root_info* info)
 {
-    mgr.root_info = info;
+    mgr.backend.data = info;
 
     // Nothing will be connected to rootInfo
-    if (!mgr.root_info) {
+    if (!mgr.backend.data) {
         return;
     }
 
@@ -276,15 +307,14 @@ void subspace_manager_set_root_info(Manager& mgr, x11::net::root_info* info)
         columns++;
     }
 
-    mgr.root_info->setDesktopLayout(
-        x11::net::OrientationHorizontal, columns, mgr.rows, x11::net::DesktopLayoutCornerTopLeft);
+    mgr.backend.set_layout(columns, mgr.rows);
 
-    subspace_manager_update_root_info(mgr);
+    mgr.backend.update_size(mgr.subspaces.size());
     subspace_manager_update_layout(mgr);
-    mgr.root_info->setCurrentDesktop(subspaces_get_current_x11id(mgr));
+    mgr.backend.set_current(subspaces_get_current_x11id(mgr));
 
     for (auto vd : mgr.subspaces) {
-        mgr.root_info->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
+        mgr.backend.update_subspace_meta(vd->x11DesktopNumber(), vd->name());
     }
 }
 
@@ -295,10 +325,11 @@ QString subspace_manager_get_subspace_name(Manager const& mgr, uint sub)
         return mgr.subspaces.at(sub - 1)->name();
     }
 
-    if (!mgr.root_info) {
-        return subspace_manager_get_default_subspace_name(sub);
+    if (mgr.backend.data) {
+        return mgr.backend.get_subspace_name(sub);
     }
-    return QString::fromUtf8(mgr.root_info->desktopName(sub));
+
+    return subspace_manager_get_default_subspace_name(sub);
 }
 
 template<typename Manager>
@@ -338,7 +369,7 @@ void subspace_manager_load(Manager& mgr)
 
     assert(count == mgr.subspaces.size());
 
-    subspace_manager_update_root_info(mgr);
+    mgr.backend.update_size(mgr.subspaces.size());
     subspace_manager_update_layout(mgr);
 
     for (auto index = oldCount; index < mgr.subspaces.size(); index++) {
@@ -410,7 +441,7 @@ subspace* subspace_manager_create_subspace(Manager& mgr, uint position, QString 
     auto vd = subspace_manager_add_subspace(mgr, position, "", desktopName);
 
     subspace_manager_save(mgr);
-    subspace_manager_update_root_info(mgr);
+    mgr.backend.update_size(mgr.subspaces.size());
     subspace_manager_update_layout(mgr);
 
     Q_EMIT mgr.qobject->subspace_created(vd);
@@ -448,7 +479,7 @@ void subspace_manager_remove_subspace(Manager& mgr, subspace* sub)
         Q_EMIT mgr.qobject->current_changed(old_subsp, mgr.current);
     }
 
-    subspace_manager_update_root_info(mgr);
+    mgr.backend.update_size(mgr.subspaces.size());
     subspace_manager_update_layout(mgr);
     subspace_manager_save(mgr);
 
@@ -478,7 +509,7 @@ void subspace_manager_set_count(Manager& mgr, uint count)
             mgr, position, "", subspace_manager_get_default_subspace_name(position + 1));
     }
 
-    subspace_manager_update_root_info(mgr);
+    mgr.backend.update_size(mgr.subspaces.size());
     subspace_manager_update_layout(mgr);
     subspace_manager_save(mgr);
 
