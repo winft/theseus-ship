@@ -933,22 +933,22 @@ protected:
     void switch_desktop_left_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->toLeft(*vdm->current, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->get_west_of_current());
     }
     void switch_desktop_right_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->toRight(*vdm->current, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->get_east_of_current());
     }
     void switch_desktop_up_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->above(*vdm->current, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->get_north_of_current());
     }
     void switch_desktop_down_impl() const override
     {
         auto& vdm = ref_space->subspace_manager;
-        vdm->setCurrent(vdm->below(*vdm->current, vdm->get_nav_wraps()));
+        vdm->setCurrent(vdm->get_south_of_current());
     }
 
     QString supportInformation() const override

@@ -324,10 +324,7 @@ template<typename Space>
 void active_window_to_right_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_subspace(
-            space,
-            space.subspace_manager->toRight(*space.subspace_manager->current,
-                                            space.subspace_manager->get_nav_wraps()));
+        active_window_to_subspace(space, space.subspace_manager->get_east_of_current());
     }
 }
 
@@ -335,10 +332,7 @@ template<typename Space>
 void active_window_to_left_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_subspace(
-            space,
-            space.subspace_manager->toLeft(*space.subspace_manager->current,
-                                           space.subspace_manager->get_nav_wraps()));
+        active_window_to_subspace(space, space.subspace_manager->get_west_of_current());
     }
 }
 
@@ -346,10 +340,7 @@ template<typename Space>
 void active_window_to_above_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_subspace(
-            space,
-            space.subspace_manager->above(*space.subspace_manager->current,
-                                          space.subspace_manager->get_nav_wraps()));
+        active_window_to_subspace(space, space.subspace_manager->get_north_of_current());
     }
 }
 
@@ -357,10 +348,7 @@ template<typename Space>
 void active_window_to_below_subspace(Space& space)
 {
     if (has_usable_active_window(space)) {
-        active_window_to_subspace(
-            space,
-            space.subspace_manager->below(*space.subspace_manager->current,
-                                          space.subspace_manager->get_nav_wraps()));
+        active_window_to_subspace(space, space.subspace_manager->get_south_of_current());
     }
 }
 

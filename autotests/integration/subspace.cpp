@@ -20,53 +20,53 @@ using namespace Wrapland::Client;
 namespace KWin::detail::test
 {
 
-struct subspace_above {
-    subspace_above(win::subspace_manager& manager)
+struct subspace_north {
+    subspace_north(win::subspace_manager& manager)
         : manager{manager}
     {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.above(subspace, wrap);
+        return manager.get_north_of(subspace, wrap);
     }
 
     win::subspace_manager& manager;
 };
 
-struct subspace_below {
-    subspace_below(win::subspace_manager& manager)
+struct subspace_south {
+    subspace_south(win::subspace_manager& manager)
         : manager{manager}
     {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.below(subspace, wrap);
+        return manager.get_south_of(subspace, wrap);
     }
 
     win::subspace_manager& manager;
 };
 
-struct subspace_left {
-    subspace_left(win::subspace_manager& manager)
+struct subspace_west {
+    subspace_west(win::subspace_manager& manager)
         : manager{manager}
     {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.toLeft(subspace, wrap);
+        return manager.get_west_of(subspace, wrap);
     }
 
     win::subspace_manager& manager;
 };
 
-struct subspace_right {
-    subspace_right(win::subspace_manager& manager)
+struct subspace_east {
+    subspace_east(win::subspace_manager& manager)
         : manager{manager}
     {
     }
     win::subspace& operator()(win::subspace& subspace, bool wrap)
     {
-        return manager.toRight(subspace, wrap);
+        return manager.get_east_of(subspace, wrap);
     }
 
     win::subspace_manager& manager;
@@ -427,7 +427,7 @@ TEST_CASE("subspace", "[win]")
             // non symmetric, end, wrap
             data{5, 4, true, 5});
 
-        test_direction<subspace_left>(setup, test_data, "Switch One Desktop to the Left");
+        test_direction<subspace_west>(setup, test_data, "Switch One Desktop to the Left");
     }
 
     SECTION("right")
@@ -467,7 +467,7 @@ TEST_CASE("subspace", "[win]")
             // non symmetric, end, wrap
             data{5, 5, true, 4});
 
-        test_direction<subspace_right>(setup, test_data, "Switch One Desktop to the Right");
+        test_direction<subspace_east>(setup, test_data, "Switch One Desktop to the Right");
     }
 
     SECTION("above")
@@ -501,7 +501,7 @@ TEST_CASE("subspace", "[win]")
             // subspaces at start, no wrap, 2nd column
             data{4, 2, false, 2});
 
-        test_direction<subspace_above>(setup, test_data, "Switch One Desktop Up");
+        test_direction<subspace_north>(setup, test_data, "Switch One Desktop Up");
     }
 
     SECTION("below")
@@ -535,7 +535,7 @@ TEST_CASE("subspace", "[win]")
             // subspaces at start, no wrap, 2nd column
             data{4, 4, false, 4});
 
-        test_direction<subspace_below>(setup, test_data, "Switch One Desktop Down");
+        test_direction<subspace_south>(setup, test_data, "Switch One Desktop Down");
     }
 
     SECTION("update grid")

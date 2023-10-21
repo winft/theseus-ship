@@ -687,22 +687,22 @@ public:
 
     int desktopAbove(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().subspace_manager->above(desktop, wrap);
+        return get_space().subspace_manager->get_north_of(desktop, wrap);
     }
 
     int desktopToRight(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().subspace_manager->toRight(desktop, wrap);
+        return get_space().subspace_manager->get_east_of(desktop, wrap);
     }
 
     int desktopBelow(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().subspace_manager->below(desktop, wrap);
+        return get_space().subspace_manager->get_south_of(desktop, wrap);
     }
 
     int desktopToLeft(int desktop = 0, bool wrap = true) const override
     {
-        return get_space().subspace_manager->toLeft(desktop, wrap);
+        return get_space().subspace_manager->get_west_of(desktop, wrap);
     }
 
     QString desktopName(int desktop) const override

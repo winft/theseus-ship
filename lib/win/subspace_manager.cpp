@@ -82,13 +82,18 @@ bool subspace_manager::get_nav_wraps() const
     return nav_wraps;
 }
 
-uint subspace_manager::above(uint id, bool wrap) const
+subspace& subspace_manager::get_north_of_current() const
 {
-    auto const subsp = subspace_for_x11id(id);
-    return above(subsp ? *subsp : *current, wrap).x11DesktopNumber();
+    return get_north_of(*current, get_nav_wraps());
 }
 
-subspace& subspace_manager::above(subspace& desktop, bool wrap) const
+uint subspace_manager::get_north_of(uint id, bool wrap) const
+{
+    auto const subsp = subspace_for_x11id(id);
+    return get_north_of(subsp ? *subsp : *current, wrap).x11DesktopNumber();
+}
+
+subspace& subspace_manager::get_north_of(subspace& desktop, bool wrap) const
 {
     QPoint coords = m_grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
@@ -111,13 +116,18 @@ subspace& subspace_manager::above(subspace& desktop, bool wrap) const
     }
 }
 
-uint subspace_manager::toRight(uint id, bool wrap) const
+subspace& subspace_manager::get_east_of_current() const
 {
-    auto const subsp = subspace_for_x11id(id);
-    return toRight(subsp ? *subsp : *current, wrap).x11DesktopNumber();
+    return get_east_of(*current, get_nav_wraps());
 }
 
-subspace& subspace_manager::toRight(subspace& desktop, bool wrap) const
+uint subspace_manager::get_east_of(uint id, bool wrap) const
+{
+    auto const subsp = subspace_for_x11id(id);
+    return get_east_of(subsp ? *subsp : *current, wrap).x11DesktopNumber();
+}
+
+subspace& subspace_manager::get_east_of(subspace& desktop, bool wrap) const
 {
     QPoint coords = m_grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
@@ -139,13 +149,18 @@ subspace& subspace_manager::toRight(subspace& desktop, bool wrap) const
     }
 }
 
-uint subspace_manager::below(uint id, bool wrap) const
+subspace& subspace_manager::get_south_of_current() const
 {
-    auto const subsp = subspace_for_x11id(id);
-    return below(subsp ? *subsp : *current, wrap).x11DesktopNumber();
+    return get_south_of(*current, get_nav_wraps());
 }
 
-subspace& subspace_manager::below(subspace& desktop, bool wrap) const
+uint subspace_manager::get_south_of(uint id, bool wrap) const
+{
+    auto const subsp = subspace_for_x11id(id);
+    return get_south_of(subsp ? *subsp : *current, wrap).x11DesktopNumber();
+}
+
+subspace& subspace_manager::get_south_of(subspace& desktop, bool wrap) const
 {
     QPoint coords = m_grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
@@ -167,13 +182,18 @@ subspace& subspace_manager::below(subspace& desktop, bool wrap) const
     }
 }
 
-uint subspace_manager::toLeft(uint id, bool wrap) const
+subspace& subspace_manager::get_west_of_current() const
 {
-    auto const subsp = subspace_for_x11id(id);
-    return toLeft(subsp ? *subsp : *current, wrap).x11DesktopNumber();
+    return get_west_of(*current, get_nav_wraps());
 }
 
-subspace& subspace_manager::toLeft(subspace& desktop, bool wrap) const
+uint subspace_manager::get_west_of(uint id, bool wrap) const
+{
+    auto const subsp = subspace_for_x11id(id);
+    return get_west_of(subsp ? *subsp : *current, wrap).x11DesktopNumber();
+}
+
+subspace& subspace_manager::get_west_of(subspace& desktop, bool wrap) const
 {
     QPoint coords = m_grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
@@ -650,9 +670,9 @@ void subspace_manager::connect_gestures()
         auto target = current;
 
         if (current_desktop_offset.x() <= -GESTURE_SWITCH_THRESHOLD) {
-            target = &toLeft(*current, get_nav_wraps());
+            target = &get_west_of_current();
         } else if (current_desktop_offset.x() >= GESTURE_SWITCH_THRESHOLD) {
-            target = &toRight(*current, get_nav_wraps());
+            target = &get_east_of_current();
         }
 
         // If the current desktop has not changed, consider that the gesture has been canceled.
@@ -665,13 +685,11 @@ void subspace_manager::connect_gestures()
     });
 
     QObject::connect(swipe_gesture.released_y.get(), &QAction::triggered, qobject.get(), [this]() {
-        // Note that if desktop wrapping is disabled and there's no desktop above or below,
-        // above() and below() will return the current desktop.
         subspace* target = current;
         if (current_desktop_offset.y() <= -GESTURE_SWITCH_THRESHOLD) {
-            target = &above(*current, get_nav_wraps());
+            target = &get_north_of_current();
         } else if (current_desktop_offset.y() >= GESTURE_SWITCH_THRESHOLD) {
-            target = &below(*current, get_nav_wraps());
+            target = &get_south_of_current();
         }
 
         // If the current desktop has not changed, consider that the gesture has been canceled.
@@ -706,13 +724,13 @@ void subspace_manager::set_nav_wraps(bool enabled)
 void subspace_manager::slotDown()
 {
     assert(current);
-    setCurrent(below(*current, get_nav_wraps()));
+    setCurrent(get_south_of_current());
 }
 
 void subspace_manager::slotLeft()
 {
     assert(current);
-    setCurrent(toLeft(*current, get_nav_wraps()));
+    setCurrent(get_west_of_current());
 }
 
 void subspace_manager::slotPrevious()
@@ -730,13 +748,13 @@ void subspace_manager::slotNext()
 void subspace_manager::slotRight()
 {
     assert(current);
-    setCurrent(toRight(*current, get_nav_wraps()));
+    setCurrent(get_east_of_current());
 }
 
 void subspace_manager::slotUp()
 {
     assert(current);
-    setCurrent(above(*current, get_nav_wraps()));
+    setCurrent(get_north_of_current());
 }
 
 }

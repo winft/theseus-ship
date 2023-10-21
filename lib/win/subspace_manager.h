@@ -80,17 +80,21 @@ public:
     bool get_nav_wraps() const;
     const subspace_grid& grid() const;
 
-    uint above(uint id, bool wrap) const;
-    subspace& above(subspace& desktop, bool wrap) const;
+    subspace& get_north_of_current() const;
+    uint get_north_of(uint id, bool wrap) const;
+    subspace& get_north_of(subspace& desktop, bool wrap) const;
 
-    uint toRight(uint id, bool wrap) const;
-    subspace& toRight(subspace& desktop, bool wrap) const;
+    subspace& get_east_of_current() const;
+    uint get_east_of(uint id, bool wrap) const;
+    subspace& get_east_of(subspace& desktop, bool wrap) const;
 
-    uint below(uint id, bool wrap) const;
-    subspace& below(subspace& desktop, bool wrap) const;
+    subspace& get_south_of_current() const;
+    uint get_south_of(uint id, bool wrap) const;
+    subspace& get_south_of(subspace& desktop, bool wrap) const;
 
-    uint toLeft(uint id, bool wrap) const;
-    subspace& toLeft(subspace& desktop, bool wrap) const;
+    subspace& get_west_of_current() const;
+    uint get_west_of(uint id, bool wrap) const;
+    subspace& get_west_of(subspace& desktop, bool wrap) const;
 
     subspace& next(subspace& desktop, bool wrap) const;
     uint next(uint id, bool wrap) const;
