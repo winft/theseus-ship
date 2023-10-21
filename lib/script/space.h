@@ -591,7 +591,7 @@ public:
 
     QSize desktopGridSize() const override
     {
-        return ref_space->subspace_manager->grid().size();
+        return ref_space->subspace_manager->grid.size();
     }
 
     QSize displaySize() const override

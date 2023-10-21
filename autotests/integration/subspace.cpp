@@ -180,10 +180,10 @@ TEST_CASE("subspace", "[win]")
             // Normal value
             data{10, 10, true, false},
             // Maximum
-            data{win::subspace_manager::maximum(), win::subspace_manager::maximum(), true, false},
+            data{win::subspace_manager::max_count, win::subspace_manager::max_count, true, false},
             // Above maximum
-            data{win::subspace_manager::maximum() + 1,
-                 win::subspace_manager::maximum(),
+            data{win::subspace_manager::max_count + 1,
+                 win::subspace_manager::max_count,
                  true,
                  false},
             // Unchanged
@@ -638,7 +638,7 @@ TEST_CASE("subspace", "[win]")
         vd_manager->setCount(test_data.subspace);
         vd_manager->setRows(2);
 
-        QCOMPARE(vd_manager->grid().size(), test_data.result);
+        QCOMPARE(vd_manager->grid.size(), test_data.result);
         QVERIFY(!spy.empty());
 
         auto const& arguments = spy.back();
@@ -649,7 +649,7 @@ TEST_CASE("subspace", "[win]")
 
         // calling update layout again should not change anything
         vd_manager->updateLayout();
-        QCOMPARE(vd_manager->grid().size(), test_data.result);
+        QCOMPARE(vd_manager->grid.size(), test_data.result);
         QCOMPARE(spy.count(), 1);
 
         auto const& arguments2 = spy.back();
@@ -678,14 +678,14 @@ TEST_CASE("subspace", "[win]")
 
     SECTION("switch to shortcut")
     {
-        vd_manager->setCount(vd_manager->maximum());
-        vd_manager->setCurrent(vd_manager->maximum());
+        vd_manager->setCount(vd_manager->max_count);
+        vd_manager->setCurrent(vd_manager->max_count);
 
-        QCOMPARE(vd_manager->current_x11id(), vd_manager->maximum());
+        QCOMPARE(vd_manager->current_x11id(), vd_manager->max_count);
         //    vd_manager->initShortcuts();
         auto const toDesktop = QStringLiteral("Switch to Desktop %1");
 
-        for (uint i = 1; i <= vd_manager->maximum(); ++i) {
+        for (uint i = 1; i <= vd_manager->max_count; ++i) {
             const QString desktop(toDesktop.arg(i));
             QAction* action = vd_manager->qobject->findChild<QAction*>(desktop);
             QVERIFY2(action, desktop.toUtf8().constData());
@@ -694,7 +694,7 @@ TEST_CASE("subspace", "[win]")
         }
 
         // should still be on max
-        QCOMPARE(vd_manager->current_x11id(), vd_manager->maximum());
+        QCOMPARE(vd_manager->current_x11id(), vd_manager->max_count);
     }
 
     SECTION("change rows")
@@ -727,7 +727,7 @@ TEST_CASE("subspace", "[win]")
 
         // Empty config should create one subspace.
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-        vd_manager->setConfig(config);
+        vd_manager->config = config;
         vd_manager->load();
         QCOMPARE(vd_manager->subspaces.size(), 1);
 
@@ -750,7 +750,7 @@ TEST_CASE("subspace", "[win]")
         vd_manager->save();
 
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-        vd_manager->setConfig(config);
+        vd_manager->config = config;
 
         REQUIRE(config->hasGroup("Desktops"));
 

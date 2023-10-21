@@ -128,8 +128,7 @@ void init_space(Space& space)
                      subs_manager->qobject.get(),
                      [&subs_manager](auto enabled) { subs_manager->set_nav_wraps(enabled); });
 
-    auto config = space.base.config.main;
-    subs_manager->setConfig(config);
+    subs_manager->config = space.base.config.main;
 
     // positioning object needs to be created before the virtual subspaces are loaded.
     subs_manager->load();

@@ -112,7 +112,7 @@ public:
 
     void setRows(uint rows) override
     {
-        if (static_cast<uint>(manager->grid().height()) == rows) {
+        if (static_cast<uint>(manager->grid.height()) == rows) {
             return;
         }
 

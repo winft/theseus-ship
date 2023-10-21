@@ -1343,7 +1343,7 @@ public:
     /// Updates virtual desktops layout, adjusts reserved borders in case of vd switching on edges.
     void updateLayout()
     {
-        auto const desktopMatrix = space.subspace_manager->grid().size();
+        auto const desktopMatrix = space.subspace_manager->grid.size();
         Qt::Orientations newLayout = {};
         if (desktopMatrix.width() > 1) {
             newLayout |= Qt::Horizontal;

@@ -104,7 +104,7 @@ void shortcuts_init_switch_to_subspace(Space& space)
                         QKeySequence(Qt::CTRL | Qt::Key_F4),
                         [manager](auto& action) { manager->slotSwitchTo(action); });
 
-    for (uint i = 5; i <= manager->maximum(); ++i) {
+    for (uint i = 5; i <= manager->max_count; ++i) {
         add_subspace_action(
             *manager, input, toDesktop, toDesktopLabel, i, QKeySequence(), [manager](auto& action) {
                 manager->slotSwitchTo(action);
@@ -173,14 +173,14 @@ void shortcuts_init_subspaces(Space& space)
     auto swipeGestureReleasedY = manager->swipe_gesture.released_y.get();
 
     const auto left = [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
+        if (manager->grid.width() > 1) {
             manager->current_desktop_offset.setX(cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->current_desktop_offset);
         }
     };
     const auto right = [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
+        if (manager->grid.width() > 1) {
             manager->current_desktop_offset.setX(-cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->current_desktop_offset);
@@ -194,42 +194,42 @@ void shortcuts_init_subspaces(Space& space)
           };
 
     register_touchpad_swipe(swipe_direction::left, 3, swipeGestureReleasedX, [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
+        if (manager->grid.width() > 1) {
             manager->current_desktop_offset.setX(cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::right, 3, swipeGestureReleasedX, [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
+        if (manager->grid.width() > 1) {
             manager->current_desktop_offset.setX(-cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::left, 4, swipeGestureReleasedX, [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
+        if (manager->grid.width() > 1) {
             manager->current_desktop_offset.setX(cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::right, 4, swipeGestureReleasedX, [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
+        if (manager->grid.width() > 1) {
             manager->current_desktop_offset.setX(-cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::down, 3, swipeGestureReleasedY, [manager](qreal cb) {
-        if (manager->grid().height() > 1) {
+        if (manager->grid.height() > 1) {
             manager->current_desktop_offset.setY(-cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::up, 3, swipeGestureReleasedY, [manager](qreal cb) {
-        if (manager->grid().height() > 1) {
+        if (manager->grid.height() > 1) {
             manager->current_desktop_offset.setY(cb);
             Q_EMIT manager->qobject->current_changing(manager->current,
                                                       manager->current_desktop_offset);

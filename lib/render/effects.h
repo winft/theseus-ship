@@ -645,7 +645,7 @@ public:
 
     QSize desktopGridSize() const override
     {
-        return get_space().subspace_manager->grid().size();
+        return get_space().subspace_manager->grid.size();
     }
 
     int workspaceWidth() const override
@@ -660,7 +660,7 @@ public:
 
     int desktopAtCoords(QPoint coords) const override
     {
-        if (auto vd = get_space().subspace_manager->grid().at(coords)) {
+        if (auto vd = get_space().subspace_manager->grid.at(coords)) {
             return vd->x11DesktopNumber();
         }
         return 0;
@@ -669,13 +669,13 @@ public:
     QPoint desktopGridCoords(int id) const override
     {
         auto& mgr = get_space().subspace_manager;
-        return mgr->grid().gridCoords(mgr->subspace_for_x11id(id));
+        return mgr->grid.gridCoords(mgr->subspace_for_x11id(id));
     }
 
     QPoint desktopCoords(int id) const override
     {
         auto& mgr = get_space().subspace_manager;
-        auto coords = mgr->grid().gridCoords(mgr->subspace_for_x11id(id));
+        auto coords = mgr->grid.gridCoords(mgr->subspace_for_x11id(id));
 
         if (coords.x() == -1) {
             return QPoint(-1, -1);

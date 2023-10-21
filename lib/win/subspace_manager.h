@@ -70,7 +70,6 @@ public:
     ~subspace_manager();
 
     void setRootInfo(x11::net::root_info* info);
-    void setConfig(KSharedConfig::Ptr config);
 
     uint rows() const;
 
@@ -78,7 +77,6 @@ public:
 
     QString name(uint sub) const;
     bool get_nav_wraps() const;
-    const subspace_grid& grid() const;
 
     subspace& get_north_of_current() const;
     uint get_north_of(uint id, bool wrap) const;
@@ -118,8 +116,6 @@ public:
     void remove_subspace(QString const& id);
     void remove_subspace(subspace* sub);
 
-    static uint maximum();
-
     void setCount(uint count);
     bool setCurrent(uint current);
     bool setCurrent(subspace& subsp);
@@ -140,6 +136,7 @@ public:
     Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement{nullptr};
 
     std::vector<subspace*> subspaces;
+    subspace_grid grid;
     subspace* current{nullptr};
 
     struct {
@@ -147,6 +144,9 @@ public:
         std::unique_ptr<QAction> released_y;
     } swipe_gesture;
     QPointF current_desktop_offset{0, 0};
+
+    KSharedConfig::Ptr config;
+    static constexpr size_t max_count{20};
 
 private:
     void updateRootInfo();
@@ -158,26 +158,9 @@ private:
 
     uint m_rows{2};
     bool nav_wraps{false};
-    subspace_grid m_grid;
     x11::net::root_info* m_rootInfo{nullptr};
-    KSharedConfig::Ptr m_config;
 
     subspaces_singleton singleton;
 };
-
-inline uint subspace_manager::maximum()
-{
-    return 20;
-}
-
-inline void subspace_manager::setConfig(KSharedConfig::Ptr config)
-{
-    m_config = std::move(config);
-}
-
-inline subspace_grid const& subspace_manager::grid() const
-{
-    return m_grid;
-}
 
 }

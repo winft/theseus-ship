@@ -305,8 +305,9 @@ private:
         action->setIcon(QIcon::fromTheme(QStringLiteral("list-add")));
         action->setData(static_cast<int>(subs_manager->subspaces.size() + 1));
 
-        if (subs_manager->subspaces.size() >= subs_manager->maximum())
+        if (subs_manager->subspaces.size() >= subs_manager->max_count) {
             action->setEnabled(false);
+        }
     }
 
     /**
@@ -368,7 +369,7 @@ private:
 
         m_multipleDesktopsMenu->addSeparator();
 
-        bool allowNewDesktops = subs_manager->subspaces.size() < subs_manager->maximum();
+        auto allowNewDesktops = subs_manager->subspaces.size() < subs_manager->max_count;
         uint countPlusOne = subs_manager->subspaces.size() + 1;
 
         action = m_multipleDesktopsMenu->addAction(i18nc(

@@ -95,7 +95,7 @@ uint subspace_manager::get_north_of(uint id, bool wrap) const
 
 subspace& subspace_manager::get_north_of(subspace& desktop, bool wrap) const
 {
-    QPoint coords = m_grid.gridCoords(&desktop);
+    QPoint coords = grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
 
     while (true) {
@@ -107,10 +107,10 @@ subspace& subspace_manager::get_north_of(subspace& desktop, bool wrap) const
                 return desktop;
             }
 
-            coords.setY(m_grid.height() - 1);
+            coords.setY(grid.height() - 1);
         }
 
-        if (auto vd = m_grid.at(coords)) {
+        if (auto vd = grid.at(coords)) {
             return *vd;
         }
     }
@@ -129,12 +129,12 @@ uint subspace_manager::get_east_of(uint id, bool wrap) const
 
 subspace& subspace_manager::get_east_of(subspace& desktop, bool wrap) const
 {
-    QPoint coords = m_grid.gridCoords(&desktop);
+    QPoint coords = grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
 
     while (true) {
         coords.rx()++;
-        if (coords.x() >= m_grid.width()) {
+        if (coords.x() >= grid.width()) {
             if (wrap) {
                 coords.setX(0);
             } else {
@@ -143,7 +143,7 @@ subspace& subspace_manager::get_east_of(subspace& desktop, bool wrap) const
             }
         }
 
-        if (auto vd = m_grid.at(coords)) {
+        if (auto vd = grid.at(coords)) {
             return *vd;
         }
     }
@@ -162,12 +162,12 @@ uint subspace_manager::get_south_of(uint id, bool wrap) const
 
 subspace& subspace_manager::get_south_of(subspace& desktop, bool wrap) const
 {
-    QPoint coords = m_grid.gridCoords(&desktop);
+    QPoint coords = grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
 
     while (true) {
         coords.ry()++;
-        if (coords.y() >= m_grid.height()) {
+        if (coords.y() >= grid.height()) {
             if (wrap) {
                 coords.setY(0);
             } else {
@@ -176,7 +176,7 @@ subspace& subspace_manager::get_south_of(subspace& desktop, bool wrap) const
             }
         }
 
-        if (auto vd = m_grid.at(coords)) {
+        if (auto vd = grid.at(coords)) {
             return *vd;
         }
     }
@@ -195,21 +195,21 @@ uint subspace_manager::get_west_of(uint id, bool wrap) const
 
 subspace& subspace_manager::get_west_of(subspace& desktop, bool wrap) const
 {
-    QPoint coords = m_grid.gridCoords(&desktop);
+    QPoint coords = grid.gridCoords(&desktop);
     Q_ASSERT(coords.x() >= 0);
 
     while (true) {
         coords.rx()--;
         if (coords.x() < 0) {
             if (wrap) {
-                coords.setX(m_grid.width() - 1);
+                coords.setX(grid.width() - 1);
             } else {
                 // Already at the left-most desktop
                 return desktop;
             }
         }
 
-        if (auto vd = m_grid.at(coords)) {
+        if (auto vd = grid.at(coords)) {
             return *vd;
         }
     }
@@ -294,7 +294,7 @@ subspace* subspace_manager::subspace_for_id(QString const& id) const
 subspace* subspace_manager::create_subspace(uint position, QString const& name)
 {
     // too many, can't insert new ones
-    if (subspaces.size() == subspace_manager::maximum()) {
+    if (subspaces.size() == subspace_manager::max_count) {
         return nullptr;
     }
 
@@ -453,7 +453,7 @@ void subspace_manager::shrink_subspaces(uint count)
 
 void subspace_manager::setCount(uint count)
 {
-    count = std::clamp<uint>(1, count, subspace_manager::maximum());
+    count = std::clamp<uint>(1, count, subspace_manager::max_count);
     if (count == subspaces.size()) {
         // nothing to change
         return;
@@ -566,7 +566,7 @@ void subspace_manager::updateLayout()
     }
 
     m_rows = std::max<uint>(1u, m_rows);
-    m_grid.update(QSize(columns, m_rows), orientation, subspaces);
+    grid.update(QSize(columns, m_rows), orientation, subspaces);
 
     // TODO: why is there no call to m_rootInfo->setDesktopLayout?
     Q_EMIT qobject->layoutChanged(columns, m_rows);
@@ -575,11 +575,11 @@ void subspace_manager::updateLayout()
 
 void subspace_manager::load()
 {
-    if (!m_config) {
+    if (!config) {
         return;
     }
 
-    KConfigGroup group(m_config, QStringLiteral("Desktops"));
+    KConfigGroup group(config, QStringLiteral("Desktops"));
 
     size_t const oldCount = subspaces.size();
     size_t const count = group.readEntry("Number", 1);
@@ -626,11 +626,11 @@ void subspace_manager::load()
 
 void subspace_manager::save()
 {
-    if (!m_config) {
+    if (!config) {
         return;
     }
 
-    KConfigGroup group(m_config, QStringLiteral("Desktops"));
+    KConfigGroup group(config, QStringLiteral("Desktops"));
 
     for (int i = subspaces.size() + 1; group.hasKey(QStringLiteral("Id_%1").arg(i)); i++) {
         group.deleteEntry(QStringLiteral("Id_%1").arg(i));

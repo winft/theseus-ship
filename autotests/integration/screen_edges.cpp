@@ -194,12 +194,12 @@ TEST_CASE("screen edges", "[input],[win]")
         config->group("Desktops").writeEntry("Number", 4);
         config->sync();
         auto& subs = setup.base->space->subspace_manager;
-        subs->setConfig(config);
+        subs->config = config;
         subs->load();
         subs->updateLayout();
         QCOMPARE(subs->subspaces.size(), 4u);
-        QCOMPARE(subs->grid().width(), 4);
-        QCOMPARE(subs->grid().height(), 1);
+        QCOMPARE(subs->grid.width(), 4);
+        QCOMPARE(subs->grid.height(), 1);
 
         // approach windows for edges not created as screen too small
         screenEdges->updateLayout();
