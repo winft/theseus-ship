@@ -118,7 +118,7 @@ private:
     subspace* add_subspace(size_t position, QString const& id, QString const& name);
 
     uint m_rows{2};
-    x11::net::root_info* m_rootInfo{nullptr};
+    x11::net::root_info* root_info{nullptr};
 
     subspaces_singleton singleton;
 };

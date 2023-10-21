@@ -44,24 +44,27 @@ subspace_manager::~subspace_manager()
 
 void subspace_manager::setRootInfo(x11::net::root_info* info)
 {
-    m_rootInfo = info;
+    root_info = info;
 
     // Nothing will be connected to rootInfo
-    if (m_rootInfo) {
-        int columns = subspaces.size() / m_rows;
-        if (subspaces.size() % m_rows > 0) {
-            columns++;
-        }
+    if (!root_info) {
+        return;
+    }
 
-        m_rootInfo->setDesktopLayout(
-            x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
-        updateRootInfo();
-        updateLayout();
-        m_rootInfo->setCurrentDesktop(subspaces_get_current_x11id(*this));
+    int columns = subspaces.size() / m_rows;
+    if (subspaces.size() % m_rows > 0) {
+        columns++;
+    }
 
-        for (auto vd : qAsConst(subspaces)) {
-            m_rootInfo->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
-        }
+    root_info->setDesktopLayout(
+        x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
+
+    updateRootInfo();
+    updateLayout();
+    root_info->setCurrentDesktop(subspaces_get_current_x11id(*this));
+
+    for (auto vd : qAsConst(subspaces)) {
+        root_info->setDesktopName(vd->x11DesktopNumber(), vd->name().toUtf8().data());
     }
 }
 
@@ -71,10 +74,10 @@ QString subspace_manager::name(uint sub) const
         return subspaces[sub - 1]->name();
     }
 
-    if (!m_rootInfo) {
+    if (!root_info) {
         return subspace_manager_get_default_subspace_name(sub);
     }
-    return QString::fromUtf8(m_rootInfo->desktopName(sub));
+    return QString::fromUtf8(root_info->desktopName(sub));
 }
 
 subspace* subspace_manager::create_subspace(uint position, QString const& name)
@@ -121,8 +124,8 @@ void subspace_manager::remove_subspace(subspace* sub)
 
     for (auto j = i; j < subspaces.size(); ++j) {
         subspaces[j]->setX11DesktopNumber(j + 1);
-        if (m_rootInfo) {
-            m_rootInfo->setDesktopName(j + 1, subspaces[j]->name().toUtf8().data());
+        if (root_info) {
+            root_info->setDesktopName(j + 1, subspaces[j]->name().toUtf8().data());
         }
     }
 
@@ -152,21 +155,21 @@ subspace* subspace_manager::add_subspace(size_t position, QString const& id, QSt
     subspaces.insert(subspaces.begin() + position, subsp);
 
     QObject::connect(subsp, &subspace::nameChanged, qobject.get(), [this, subsp]() {
-        if (m_rootInfo) {
-            m_rootInfo->setDesktopName(subsp->x11DesktopNumber(), subsp->name().toUtf8().data());
+        if (root_info) {
+            root_info->setDesktopName(subsp->x11DesktopNumber(), subsp->name().toUtf8().data());
         }
     });
 
-    if (m_rootInfo) {
-        m_rootInfo->setDesktopName(subsp->x11DesktopNumber(), subsp->name().toUtf8().data());
+    if (root_info) {
+        root_info->setDesktopName(subsp->x11DesktopNumber(), subsp->name().toUtf8().data());
     }
 
     // update the id of displaced subspaces
     for (size_t i = position + 1; i < subspaces.size(); ++i) {
         auto& other = subspaces.at(i);
         other->setX11DesktopNumber(i + 1);
-        if (m_rootInfo) {
-            m_rootInfo->setDesktopName(i + 1, other->name().toUtf8().data());
+        if (root_info) {
+            root_info->setDesktopName(i + 1, other->name().toUtf8().data());
         }
     }
 
@@ -219,10 +222,10 @@ void subspace_manager::setRows(uint rows)
         columns++;
     }
 
-    if (m_rootInfo) {
-        m_rootInfo->setDesktopLayout(
+    if (root_info) {
+        root_info->setDesktopLayout(
             x11::net::OrientationHorizontal, columns, m_rows, x11::net::DesktopLayoutCornerTopLeft);
-        m_rootInfo->activate();
+        root_info->activate();
     }
 
     updateLayout();
@@ -230,15 +233,15 @@ void subspace_manager::setRows(uint rows)
 
 void subspace_manager::updateRootInfo()
 {
-    if (!m_rootInfo) {
+    if (!root_info) {
         return;
     }
 
     const int n = subspaces.size();
-    m_rootInfo->setNumberOfDesktops(n);
+    root_info->setNumberOfDesktops(n);
 
     auto viewports = new x11::net::point[n];
-    m_rootInfo->setDesktopViewport(n, *viewports);
+    root_info->setDesktopViewport(n, *viewports);
     delete[] viewports;
 }
 
@@ -249,11 +252,11 @@ void subspace_manager::updateLayout()
     int columns = subspaces.size() / m_rows;
     Qt::Orientation orientation = Qt::Horizontal;
 
-    if (m_rootInfo) {
+    if (root_info) {
         // TODO: Is there a sane way to avoid overriding the existing grid?
-        columns = m_rootInfo->desktopLayoutColumnsRows().width();
-        m_rows = std::max<int>(1, m_rootInfo->desktopLayoutColumnsRows().height());
-        orientation = m_rootInfo->desktopLayoutOrientation() == x11::net::OrientationHorizontal
+        columns = root_info->desktopLayoutColumnsRows().width();
+        m_rows = std::max<int>(1, root_info->desktopLayoutColumnsRows().height());
+        orientation = root_info->desktopLayoutOrientation() == x11::net::OrientationHorizontal
             ? Qt::Horizontal
             : Qt::Vertical;
     }
@@ -290,7 +293,7 @@ void subspace_manager::updateLayout()
     m_rows = std::max<uint>(1u, m_rows);
     grid.update(QSize(columns, m_rows), orientation, subspaces);
 
-    // TODO: why is there no call to m_rootInfo->setDesktopLayout?
+    // TODO: why is there no call to root_info->setDesktopLayout?
     Q_EMIT qobject->layoutChanged(columns, m_rows);
     Q_EMIT qobject->rowsChanged(m_rows);
 }
@@ -312,8 +315,8 @@ void subspace_manager::load()
         auto const x11id = index + 1;
         QString name
             = group.readEntry(QStringLiteral("Name_%1").arg(x11id), i18n("Desktop %1", x11id));
-        if (m_rootInfo) {
-            m_rootInfo->setDesktopName(x11id, name.toUtf8().data());
+        if (root_info) {
+            root_info->setDesktopName(x11id, name.toUtf8().data());
         }
         subspaces[index]->setName(name);
     };
@@ -367,8 +370,8 @@ void subspace_manager::save()
 
         if (s.isEmpty()) {
             s = defaultvalue;
-            if (m_rootInfo) {
-                m_rootInfo->setDesktopName(i, s.toUtf8().data());
+            if (root_info) {
+                root_info->setDesktopName(i, s.toUtf8().data());
             }
         }
 
