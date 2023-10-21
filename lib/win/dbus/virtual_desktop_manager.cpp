@@ -39,10 +39,9 @@ subspace_manager_wrap::subspace_manager_wrap(win::subspace_manager_qobject* pare
                          Q_EMIT desktopsChanged(desktops());
                      });
 
-    QObject::connect(
-        parent, &win::subspace_manager_qobject::navigationWrappingAroundChanged, this, [this]() {
-            Q_EMIT navigationWrappingAroundChanged(isNavigationWrappingAround());
-        });
+    QObject::connect(parent, &win::subspace_manager_qobject::nav_wraps_changed, this, [this]() {
+        Q_EMIT navigationWrappingAroundChanged(isNavigationWrappingAround());
+    });
 
     QObject::connect(parent,
                      &win::subspace_manager_qobject::rowsChanged,

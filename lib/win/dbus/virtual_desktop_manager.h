@@ -144,14 +144,12 @@ public:
 
     void setNavigationWrappingAround(bool wraps) override
     {
-        if (manager->isNavigationWrappingAround() != wraps) {
-            manager->setNavigationWrappingAround(wraps);
-        }
+        manager->set_nav_wraps(wraps);
     }
 
     bool isNavigationWrappingAround() const override
     {
-        return manager->isNavigationWrappingAround();
+        return manager->get_nav_wraps();
     }
 
     subspace_data_vector desktops() const override

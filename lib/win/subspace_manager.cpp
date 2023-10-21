@@ -77,6 +77,11 @@ QString subspace_manager::name(uint sub) const
     return QString::fromUtf8(m_rootInfo->desktopName(sub));
 }
 
+bool subspace_manager::get_nav_wraps() const
+{
+    return nav_wraps;
+}
+
 uint subspace_manager::above(uint id, bool wrap) const
 {
     auto vd = above(subspace_for_x11id(id), wrap);
@@ -686,9 +691,9 @@ void subspace_manager::connect_gestures()
         auto target = current;
 
         if (current_desktop_offset.x() <= -GESTURE_SWITCH_THRESHOLD) {
-            target = toLeft(current, isNavigationWrappingAround());
+            target = toLeft(current, get_nav_wraps());
         } else if (current_desktop_offset.x() >= GESTURE_SWITCH_THRESHOLD) {
-            target = toRight(current, isNavigationWrappingAround());
+            target = toRight(current, get_nav_wraps());
         }
 
         // If the current desktop has not changed, consider that the gesture has been canceled.
@@ -705,9 +710,9 @@ void subspace_manager::connect_gestures()
         // above() and below() will return the current desktop.
         subspace* target = current;
         if (current_desktop_offset.y() <= -GESTURE_SWITCH_THRESHOLD) {
-            target = above(current, isNavigationWrappingAround());
+            target = above(current, get_nav_wraps());
         } else if (current_desktop_offset.y() >= GESTURE_SWITCH_THRESHOLD) {
-            target = below(current, isNavigationWrappingAround());
+            target = below(current, get_nav_wraps());
         }
 
         // If the current desktop has not changed, consider that the gesture has been canceled.
@@ -729,44 +734,44 @@ void subspace_manager::slotSwitchTo(QAction& action)
     }
 }
 
-void subspace_manager::setNavigationWrappingAround(bool enabled)
+void subspace_manager::set_nav_wraps(bool enabled)
 {
-    if (enabled == m_navigationWrapsAround) {
+    if (enabled == nav_wraps) {
         return;
     }
 
-    m_navigationWrapsAround = enabled;
-    Q_EMIT qobject->navigationWrappingAroundChanged();
+    nav_wraps = enabled;
+    Q_EMIT qobject->nav_wraps_changed();
 }
 
 void subspace_manager::slotDown()
 {
-    setCurrent(below(nullptr, isNavigationWrappingAround()));
+    setCurrent(below(nullptr, get_nav_wraps()));
 }
 
 void subspace_manager::slotLeft()
 {
-    setCurrent(toLeft(nullptr, isNavigationWrappingAround()));
+    setCurrent(toLeft(nullptr, get_nav_wraps()));
 }
 
 void subspace_manager::slotPrevious()
 {
-    setCurrent(previous(nullptr, isNavigationWrappingAround()));
+    setCurrent(previous(nullptr, get_nav_wraps()));
 }
 
 void subspace_manager::slotNext()
 {
-    setCurrent(next(nullptr, isNavigationWrappingAround()));
+    setCurrent(next(nullptr, get_nav_wraps()));
 }
 
 void subspace_manager::slotRight()
 {
-    setCurrent(toRight(nullptr, isNavigationWrappingAround()));
+    setCurrent(toRight(nullptr, get_nav_wraps()));
 }
 
 void subspace_manager::slotUp()
 {
-    setCurrent(above(nullptr, isNavigationWrappingAround()));
+    setCurrent(above(nullptr, get_nav_wraps()));
 }
 
 }

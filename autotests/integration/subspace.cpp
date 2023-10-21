@@ -110,7 +110,7 @@ void test_direction(test::setup& setup, Data const& test_data, std::string const
     Functor functor(*vd_manager);
     QCOMPARE(functor(nullptr, test_data.wrap)->x11DesktopNumber(), test_data.result);
 
-    vd_manager->setNavigationWrappingAround(test_data.wrap);
+    vd_manager->set_nav_wraps(test_data.wrap);
 
     auto action = vd_manager->qobject->findChild<QAction*>(QString::fromStdString(action_name));
     QVERIFY(action);
@@ -240,16 +240,16 @@ TEST_CASE("subspace", "[win]")
             // keep disabled
             data{false, false, false, false});
 
-        QCOMPARE(vd_manager->isNavigationWrappingAround(), true);
+        QCOMPARE(vd_manager->get_nav_wraps(), true);
 
         // set to init value
-        vd_manager->setNavigationWrappingAround(test_data.init);
-        QCOMPARE(vd_manager->isNavigationWrappingAround(), test_data.init);
+        vd_manager->set_nav_wraps(test_data.init);
+        QCOMPARE(vd_manager->get_nav_wraps(), test_data.init);
 
         QSignalSpy spy(vd_manager->qobject.get(),
-                       &win::subspace_manager_qobject::navigationWrappingAroundChanged);
-        vd_manager->setNavigationWrappingAround(test_data.request);
-        QCOMPARE(vd_manager->isNavigationWrappingAround(), test_data.result);
+                       &win::subspace_manager_qobject::nav_wraps_changed);
+        vd_manager->set_nav_wraps(test_data.request);
+        QCOMPARE(vd_manager->get_nav_wraps(), test_data.result);
         QCOMPARE(spy.isEmpty(), !test_data.signal);
     }
 

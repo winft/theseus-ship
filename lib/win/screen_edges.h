@@ -825,24 +825,24 @@ private:
 
         if (isLeft()) {
             auto const interimDesktop = desktop;
-            desktop = vds->toLeft(desktop, vds->isNavigationWrappingAround());
+            desktop = vds->toLeft(desktop, vds->get_nav_wraps());
             if (desktop != interimDesktop)
                 pos.setX(edger->space.base.topology.size.width() - 1 - OFFSET);
         } else if (isRight()) {
             auto const interimDesktop = desktop;
-            desktop = vds->toRight(desktop, vds->isNavigationWrappingAround());
+            desktop = vds->toRight(desktop, vds->get_nav_wraps());
             if (desktop != interimDesktop)
                 pos.setX(OFFSET);
         }
 
         if (isTop()) {
             auto const interimDesktop = desktop;
-            desktop = vds->above(desktop, vds->isNavigationWrappingAround());
+            desktop = vds->above(desktop, vds->get_nav_wraps());
             if (desktop != interimDesktop)
                 pos.setY(edger->space.base.topology.size.height() - 1 - OFFSET);
         } else if (isBottom()) {
             auto const interimDesktop = desktop;
-            desktop = vds->below(desktop, vds->isNavigationWrappingAround());
+            desktop = vds->below(desktop, vds->get_nav_wraps());
             if (desktop != interimDesktop)
                 pos.setY(OFFSET);
         }

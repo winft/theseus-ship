@@ -60,7 +60,7 @@ Q_SIGNALS:
     void current_changing_cancelled();
 
     void layoutChanged(int columns, int rows);
-    void navigationWrappingAroundChanged();
+    void nav_wraps_changed();
 };
 
 class KWIN_EXPORT subspace_manager
@@ -77,7 +77,7 @@ public:
     uint current_x11id() const;
 
     QString name(uint sub) const;
-    bool isNavigationWrappingAround() const;
+    bool get_nav_wraps() const;
     const subspace_grid& grid() const;
 
     uint above(uint id, bool wrap) const;
@@ -120,7 +120,7 @@ public:
 
     void setRows(uint rows);
     void updateLayout();
-    void setNavigationWrappingAround(bool enabled);
+    void set_nav_wraps(bool enabled);
 
     void load();
     void save();
@@ -157,7 +157,7 @@ private:
     QString defaultName(int desktop) const;
 
     uint m_rows{2};
-    bool m_navigationWrapsAround{false};
+    bool nav_wraps{false};
     subspace_grid m_grid;
     x11::net::root_info* m_rootInfo{nullptr};
     KSharedConfig::Ptr m_config;
@@ -168,11 +168,6 @@ private:
 inline uint subspace_manager::maximum()
 {
     return 20;
-}
-
-inline bool subspace_manager::isNavigationWrappingAround() const
-{
-    return m_navigationWrapsAround;
 }
 
 inline void subspace_manager::setConfig(KSharedConfig::Ptr config)

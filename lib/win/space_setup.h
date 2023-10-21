@@ -122,12 +122,11 @@ void init_space(Space& space)
                      space.qobject.get(),
                      [&]() { Q_EMIT space.qobject->current_subspace_changing_cancelled(); });
 
-    subs_manager->setNavigationWrappingAround(space.options->qobject->isRollOverDesktops());
-    QObject::connect(
-        space.options->qobject.get(),
-        &options_qobject::rollOverDesktopsChanged,
-        subs_manager->qobject.get(),
-        [&subs_manager](auto enabled) { subs_manager->setNavigationWrappingAround(enabled); });
+    subs_manager->set_nav_wraps(space.options->qobject->isRollOverDesktops());
+    QObject::connect(space.options->qobject.get(),
+                     &options_qobject::rollOverDesktopsChanged,
+                     subs_manager->qobject.get(),
+                     [&subs_manager](auto enabled) { subs_manager->set_nav_wraps(enabled); });
 
     auto config = space.base.config.main;
     subs_manager->setConfig(config);
