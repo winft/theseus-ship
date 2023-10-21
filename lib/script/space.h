@@ -916,7 +916,7 @@ protected:
     void remove_desktop_impl(int position) const override
     {
         if (auto vd = win::subspaces_get_for_x11id(*ref_space->subspace_manager, position + 1)) {
-            ref_space->subspace_manager->remove_subspace(vd->id());
+            ref_space->subspace_manager->remove_subspace(vd);
         }
     }
 

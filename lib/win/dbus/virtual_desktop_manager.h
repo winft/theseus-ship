@@ -185,7 +185,9 @@ public:
 
     void removeDesktop(QString const& id) override
     {
-        manager->remove_subspace(id);
+        if (auto sub = subspaces_get_for_id(*manager, id)) {
+            manager->remove_subspace(sub);
+        }
     }
 
 private:

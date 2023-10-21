@@ -85,7 +85,6 @@ public:
      */
     subspace* create_subspace(uint position, QString const& name);
 
-    void remove_subspace(QString const& id);
     void remove_subspace(subspace* sub);
 
     void setCount(uint count);

@@ -23,7 +23,11 @@ subspace_manager::subspace_manager()
     , singleton{qobject.get(),
                 [this] { return subspaces; },
                 [this](auto pos, auto const& name) { return create_subspace(pos, name); },
-                [this](auto id) { return remove_subspace(id); },
+                [this](auto id) {
+                    if (auto sub = subspaces_get_for_id(*this, id)) {
+                        remove_subspace(sub);
+                    }
+                },
                 [this] { return current; }}
 
 {
@@ -97,14 +101,6 @@ subspace* subspace_manager::create_subspace(uint position, QString const& name)
     Q_EMIT qobject->countChanged(subspaces.size() - 1, subspaces.size());
 
     return vd;
-}
-
-void subspace_manager::remove_subspace(QString const& id)
-{
-    auto sub = subspaces_get_for_id(*this, id);
-    if (sub) {
-        remove_subspace(sub);
-    }
 }
 
 void subspace_manager::remove_subspace(subspace* sub)

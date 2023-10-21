@@ -318,10 +318,9 @@ void setup_subspace_manager(Manager& manager,
                      &PlasmaVirtualDesktopManager::desktopRemoveRequested,
                      manager.qobject.get(),
                      [&manager](auto const& id) {
-                         // here there can be some nice kauthorized check?
-                         // remove only from subspace_manager, the other connections will
-                         // remove it from m_virtualDesktopManagement as well
-                         manager.remove_subspace(id.c_str());
+                         if (auto sub = subspaces_get_for_id(manager, id.c_str())) {
+                             manager.remove_subspace(sub);
+                         }
                      });
 
     auto const& subspaces = manager.subspaces;
