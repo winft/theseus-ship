@@ -12,6 +12,7 @@
 #include "win/placement.h"
 #include <win/activation.h>
 #include <win/space_qobject.h>
+#include <win/subspaces_set.h>
 
 #include <QObject>
 #include <QtDBus>

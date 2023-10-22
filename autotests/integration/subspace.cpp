@@ -10,7 +10,7 @@
 #include "win/desktop_set.h"
 #include "win/screen.h"
 #include "win/wayland/window.h"
-#include <win/subspace_manager.h>
+#include <win/wayland/subspace_manager.h>
 
 #include <Wrapland/Client/surface.h>
 #include <catch2/generators/catch_generators.hpp>
@@ -21,7 +21,7 @@ namespace KWin::detail::test
 {
 
 struct subspace_north {
-    subspace_north(win::subspace_manager& manager)
+    subspace_north(win::wayland::subspace_manager& manager)
         : manager{manager}
     {
     }
@@ -30,11 +30,11 @@ struct subspace_north {
         return win::subspaces_get_north_of(manager, subspace, wrap);
     }
 
-    win::subspace_manager& manager;
+    win::wayland::subspace_manager& manager;
 };
 
 struct subspace_south {
-    subspace_south(win::subspace_manager& manager)
+    subspace_south(win::wayland::subspace_manager& manager)
         : manager{manager}
     {
     }
@@ -43,11 +43,11 @@ struct subspace_south {
         return win::subspaces_get_south_of(manager, subspace, wrap);
     }
 
-    win::subspace_manager& manager;
+    win::wayland::subspace_manager& manager;
 };
 
 struct subspace_west {
-    subspace_west(win::subspace_manager& manager)
+    subspace_west(win::wayland::subspace_manager& manager)
         : manager{manager}
     {
     }
@@ -56,11 +56,11 @@ struct subspace_west {
         return win::subspaces_get_west_of(manager, subspace, wrap);
     }
 
-    win::subspace_manager& manager;
+    win::wayland::subspace_manager& manager;
 };
 
 struct subspace_east {
-    subspace_east(win::subspace_manager& manager)
+    subspace_east(win::wayland::subspace_manager& manager)
         : manager{manager}
     {
     }
@@ -69,11 +69,11 @@ struct subspace_east {
         return win::subspaces_get_east_of(manager, subspace, wrap);
     }
 
-    win::subspace_manager& manager;
+    win::wayland::subspace_manager& manager;
 };
 
 struct subspace_successor {
-    subspace_successor(win::subspace_manager& manager)
+    subspace_successor(win::wayland::subspace_manager& manager)
         : manager{manager}
     {
     }
@@ -82,11 +82,11 @@ struct subspace_successor {
         return win::subspaces_get_successor_of(manager, subspace, wrap);
     }
 
-    win::subspace_manager& manager;
+    win::wayland::subspace_manager& manager;
 };
 
 struct subspace_predecessor {
-    subspace_predecessor(win::subspace_manager& manager)
+    subspace_predecessor(win::wayland::subspace_manager& manager)
         : manager{manager}
     {
     }
@@ -95,7 +95,7 @@ struct subspace_predecessor {
         return win::subspaces_get_predecessor_of(manager, subspace, wrap);
     }
 
-    win::subspace_manager& manager;
+    win::wayland::subspace_manager& manager;
 };
 
 template<typename Functor, typename Data>
@@ -139,7 +139,9 @@ TEST_CASE("subspace", "[win]")
     test::setup setup("subspace", operation_mode);
     setup.start();
 
-#if USE_XWL
+// Deactivated for now. We don't set the properties anymore via Xwayland since it's assumed there
+// are no valid use cases.
+#if 0
     if (setup.base->x11_data.connection) {
         // verify the current desktop x11 property on startup, see BUG: 391034
         base::x11::xcb::atom currentDesktopAtom("_NET_CURRENT_DESKTOP",
@@ -180,10 +182,13 @@ TEST_CASE("subspace", "[win]")
             // Normal value
             data{10, 10, true, false},
             // Maximum
-            data{win::subspace_manager::max_count, win::subspace_manager::max_count, true, false},
+            data{win::wayland::subspace_manager::max_count,
+                 win::wayland::subspace_manager::max_count,
+                 true,
+                 false},
             // Above maximum
-            data{win::subspace_manager::max_count + 1,
-                 win::subspace_manager::max_count,
+            data{win::wayland::subspace_manager::max_count + 1,
+                 win::wayland::subspace_manager::max_count,
                  true,
                  false},
             // Unchanged
@@ -708,16 +713,7 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->rows, 4);
 
         win::subspace_manager_set_count(*vd_manager, 2);
-
-        // TODO(romangg): Fails when run in Xwayland mode and passes otherwise. The root cause
-        //                seems to be the update from root info in
-        //                win::subspace_manager::updateLayout.
-        if (operation_mode == base::operation_mode::wayland) {
-            REQUIRE(vd_manager->rows == 2);
-        } else {
-            REQUIRE(operation_mode == base::operation_mode::xwayland);
-            REQUIRE(vd_manager->rows == 4);
-        }
+        REQUIRE(vd_manager->rows == 2);
     }
 
     SECTION("load")
@@ -767,7 +763,9 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(subspaces.hasKey("Name_4"), false);
     }
 
-#if USE_XWL
+// Deactivated for now. We don't set the properties anymore via Xwayland since it's assumed there
+// are no valid use cases.
+#if 0
     SECTION("net current desktop")
     {
         if (!setup.base->x11_data.connection) {

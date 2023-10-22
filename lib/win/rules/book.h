@@ -8,6 +8,7 @@
 
 #include "window.h"
 
+#include <QTimer>
 #include <deque>
 
 namespace KWin::win::rules

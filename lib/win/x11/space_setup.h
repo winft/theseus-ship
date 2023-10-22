@@ -41,6 +41,32 @@ inline static void select_wm_input_event_mask(base::x11::data const& data)
             XCB_EVENT_MASK_EXPOSURE);
 }
 
+template<typename Manager>
+void subspace_manager_set_root_info(Manager& mgr, x11::net::root_info* info)
+{
+    mgr.backend.data = info;
+
+    // Nothing will be connected to rootInfo
+    if (!mgr.backend.data) {
+        return;
+    }
+
+    int columns = mgr.subspaces.size() / mgr.rows;
+    if (mgr.subspaces.size() % mgr.rows > 0) {
+        columns++;
+    }
+
+    mgr.backend.set_layout(columns, mgr.rows);
+
+    mgr.backend.update_size(mgr.subspaces.size());
+    subspace_manager_update_layout(mgr);
+    mgr.backend.set_current(subspaces_get_current_x11id(mgr));
+
+    for (auto vd : mgr.subspaces) {
+        mgr.backend.update_subspace_meta(vd->x11DesktopNumber(), vd->name());
+    }
+}
+
 template<typename Space>
 void init_space(Space& space)
 {
@@ -120,7 +146,11 @@ void init_space(Space& space)
 
     space.root_info = x11::root_info<Space>::create(space);
     auto& subspaces = space.subspace_manager;
-    win::subspace_manager_set_root_info(*subspaces, space.root_info.get());
+
+    if constexpr (requires { subspaces->backend; }) {
+        subspace_manager_set_root_info(*subspaces, space.root_info.get());
+    }
+
     space.root_info->activate();
 
     // TODO(romangg): Do we need this still?

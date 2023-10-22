@@ -15,6 +15,7 @@
 #include "stacking_order.h"
 #include "transient.h"
 #include "window_find.h"
+#include <win/subspaces_set.h>
 
 #include "utils/blocker.h"
 #include <base/logging.h>

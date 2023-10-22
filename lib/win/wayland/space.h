@@ -16,8 +16,8 @@
 #include "win/setup.h"
 #include "win/stacking_order.h"
 #include <win/stacking_state.h>
-#include <win/subspace_manager.h>
 #include <win/wayland/internal_window.h>
+#include <win/wayland/subspace_manager.h>
 
 #include <memory>
 
@@ -124,7 +124,7 @@ public:
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<win::strut_rects> oldrestrictedmovearea;
 
-    std::unique_ptr<win::subspace_manager> subspace_manager;
+    std::unique_ptr<wayland::subspace_manager> subspace_manager;
 
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};

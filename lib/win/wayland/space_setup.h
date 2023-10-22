@@ -15,6 +15,7 @@
 #include <win/wayland/plasma_shell.h>
 #include <win/wayland/plasma_window.h>
 #include <win/wayland/setup.h>
+#include <win/wayland/subspace_manager.h>
 #include <win/wayland/window.h>
 #include <win/wayland/xdg_activation.h>
 #include <win/wayland/xdg_shell.h>
@@ -90,7 +91,7 @@ void space_setup_init(Space& space, Render& render, Input& input)
         = std::make_unique<space_qobject>([&space] { space_start_reconfigure_timer(space); });
     space.options = std::make_unique<win::options>(input.base.config.main);
     space.rule_book = std::make_unique<rules::book>();
-    space.subspace_manager = std::make_unique<win::subspace_manager>();
+    space.subspace_manager = std::make_unique<subspace_manager>();
     space.outline = Space::render_outline_t::create(
         render, [&space] { return space.outline->create_visual(*space.base.render); });
     space.deco = std::make_unique<deco::bridge<Space>>(space);

@@ -14,7 +14,7 @@
 #include "space_areas.h"
 #include "space_setup.h"
 #include "window.h"
-#include <win/subspace_manager.h>
+#include <win/x11/subspace_manager.h>
 
 #include "base/x11/xcb/helpers.h"
 #include "debug/console/x11/x11_console.h"
@@ -55,7 +55,7 @@ public:
         qobject = std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); });
         options = std::make_unique<win::options>(input.base.config.main);
         rule_book = std::make_unique<rules::book>();
-        subspace_manager = std::make_unique<win::subspace_manager>();
+        subspace_manager = std::make_unique<x11::subspace_manager>();
 
         outline = render_outline_t::create(render,
                                            [&, this] { return outline->create_visual(render); });
@@ -260,7 +260,7 @@ public:
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<win::strut_rects> oldrestrictedmovearea;
 
-    std::unique_ptr<win::subspace_manager> subspace_manager;
+    std::unique_ptr<x11::subspace_manager> subspace_manager;
     std::unique_ptr<x11::session_manager> session_manager;
 
     QTimer* m_quickTileCombineTimer{nullptr};

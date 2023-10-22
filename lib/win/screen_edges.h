@@ -1014,7 +1014,7 @@ public:
                          qobject.get(),
                          [this] { reconfigure(); });
         QObject::connect(space.subspace_manager->qobject.get(),
-                         &subspace_manager_qobject::layoutChanged,
+                         &decltype(space.subspace_manager->qobject)::element_type::layoutChanged,
                          qobject.get(),
                          [this] { updateLayout(); });
 

@@ -12,7 +12,7 @@
 
 #include "base/options.h"
 #include "win/types.h"
-#include <win/subspace_manager.h>
+#include <win/subspace.h>
 
 class QDebug;
 
@@ -53,8 +53,22 @@ public:
     bool applyOpacityActive(int& s) const;
     bool applyOpacityInactive(int& s) const;
     bool applyIgnoreGeometry(bool& ignore, bool init) const;
-    bool
-    applyDesktops(subspace_manager const& manager, std::vector<subspace*>& vds, bool init) const;
+
+    template<typename Manager>
+    bool applyDesktops(Manager const& manager, std::vector<subspace*>& vds, bool init) const
+    {
+        if (checkSetRule(desktops.rule, init)) {
+            vds = {};
+
+            for (auto id : desktops.data) {
+                if (auto vd = subspaces_get_for_id(manager, id)) {
+                    vds.push_back(vd);
+                }
+            }
+        }
+        return checkSetStop(desktops.rule);
+    }
+
     bool applyScreen(int& screen, bool init) const;
     bool applyType(win_type& type) const;
     bool applyMaximizeVert(win::maximize_mode& mode, bool init) const;

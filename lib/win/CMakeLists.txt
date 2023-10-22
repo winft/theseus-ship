@@ -290,6 +290,7 @@ target_sources(win-x11
       x11/space_event.h
       x11/space_setup.h
       x11/stacking.h
+      x11/subspace_manager.h
       x11/sync.h
       x11/sync_alarm_filter.h
       x11/tabbox_filter.h
@@ -342,6 +343,7 @@ target_sources(win-wl
       wayland/setup.h
       wayland/space.h
       wayland/space_areas.h
+      wayland/subspace_manager.h
       wayland/subsurface.h
       wayland/surface.h
       wayland/transient.h

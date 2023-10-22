@@ -21,8 +21,8 @@
 #include "xwl/surface.h"
 #include <debug/console/wayland/xwl_console.h>
 #include <win/stacking_state.h>
-#include <win/subspace_manager.h>
 #include <win/wayland/internal_window.h>
+#include <win/wayland/subspace_manager.h>
 #include <win/x11/debug.h>
 #include <win/x11/netinfo_helpers.h>
 
@@ -190,7 +190,7 @@ public:
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<win::strut_rects> oldrestrictedmovearea;
 
-    std::unique_ptr<win::subspace_manager> subspace_manager;
+    std::unique_ptr<wayland::subspace_manager> subspace_manager;
     std::unique_ptr<x11::session_manager> session_manager;
 
     QTimer* m_quickTileCombineTimer{nullptr};
