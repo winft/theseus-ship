@@ -21,6 +21,7 @@
 #include "win/window_release.h"
 #include <win/x11/user_time.h>
 
+#include <QWindow>
 #include <csignal>
 #include <xcb/xcb_icccm.h>
 
@@ -31,9 +32,9 @@ template<typename Win>
 QWindow* find_internal_window(Win const& win)
 {
     auto const windows = qApp->topLevelWindows();
-    for (auto xcb_win : windows) {
-        if (xcb_win->handle() && xcb_win->winId() == win.xcb_windows.client) {
-            return xcb_win;
+    for (auto qwin : windows) {
+        if (qwin->handle() && qwin->winId() == win.xcb_windows.client) {
+            return qwin;
         }
     }
     return nullptr;
