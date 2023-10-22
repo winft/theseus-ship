@@ -65,13 +65,15 @@ void init_space(Space& space)
                      &Space::qobject_t::clientActivated,
                      space.qobject.get(),
                      [&] { space.stacking.focus_chain.active_window = space.stacking.active; });
+
+    using subspace_manager_qobject_t = decltype(space.subspace_manager->qobject)::element_type;
     QObject::connect(
         space.subspace_manager->qobject.get(),
-        &subspace_manager_qobject::countChanged,
+        &subspace_manager_qobject_t::countChanged,
         space.qobject.get(),
         [&](auto prev, auto next) { focus_chain_resize(space.stacking.focus_chain, prev, next); });
     QObject::connect(space.subspace_manager->qobject.get(),
-                     &win::subspace_manager_qobject::current_changed,
+                     &subspace_manager_qobject_t::current_changed,
                      space.qobject.get(),
                      [&](auto /*prev*/, auto next) {
                          space.stacking.focus_chain.current_subspace = next->x11DesktopNumber();
@@ -87,12 +89,12 @@ void init_space(Space& space)
     auto& subs_manager = space.subspace_manager;
     QObject::connect(
         subs_manager->qobject.get(),
-        &win::subspace_manager_qobject::countChanged,
+        &subspace_manager_qobject_t::countChanged,
         space.qobject.get(),
         [&](auto prev, auto next) { handle_subspace_count_changed(space, prev, next); });
 
     QObject::connect(subs_manager->qobject.get(),
-                     &win::subspace_manager_qobject::current_changed,
+                     &subspace_manager_qobject_t::current_changed,
                      space.qobject.get(),
                      [&](auto prev, auto next) {
                          close_active_popup(space);
@@ -111,14 +113,14 @@ void init_space(Space& space)
                      });
 
     QObject::connect(subs_manager->qobject.get(),
-                     &win::subspace_manager_qobject::current_changing,
+                     &subspace_manager_qobject_t::current_changing,
                      space.qobject.get(),
                      [&](auto current_subspace, auto offset) {
                          close_active_popup(space);
                          Q_EMIT space.qobject->current_subspace_changing(current_subspace, offset);
                      });
     QObject::connect(subs_manager->qobject.get(),
-                     &win::subspace_manager_qobject::current_changing_cancelled,
+                     &subspace_manager_qobject_t::current_changing_cancelled,
                      space.qobject.get(),
                      [&]() { Q_EMIT space.qobject->current_subspace_changing_cancelled(); });
 

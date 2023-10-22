@@ -11,43 +11,13 @@
 #include <win/subspaces_get.h>
 #include <win/subspaces_set.h>
 
-#include "kwin_export.h"
-
 #include <KConfigGroup>
 #include <KLocalizedString>
 #include <QObject>
-#include <QPointF>
 #include <QSize>
 
 namespace KWin::win
 {
-
-class KWIN_EXPORT subspace_manager_qobject : public QObject
-{
-    Q_OBJECT
-public:
-    subspace_manager_qobject();
-
-Q_SIGNALS:
-    void countChanged(uint previousCount, uint newCount);
-    void rowsChanged(uint rows);
-
-    void subspace_created(KWin::win::subspace*);
-    void subspace_removed(KWin::win::subspace*);
-
-    void current_changed(KWin::win::subspace* prev, KWin::win::subspace* next);
-
-    /**
-     * For realtime subspace switching animations. Offset is current total change in subspace
-     * coordinate. x and y are negative if switching left/down. Example: x = 0.6 means 60% of the
-     * way to the subspace to the right.
-     */
-    void current_changing(KWin::win::subspace* current, QPointF offset);
-    void current_changing_cancelled();
-
-    void layoutChanged(int columns, int rows);
-    void nav_wraps_changed();
-};
 
 inline QString subspace_manager_get_default_subspace_name(int x11id)
 {

@@ -9,6 +9,7 @@
 #include <win/subspace.h>
 #include <win/subspace_grid.h>
 #include <win/subspace_manager.h>
+#include <win/subspace_manager_qobject.h>
 #include <win/subspaces_get.h>
 #include <win/subspaces_set.h>
 

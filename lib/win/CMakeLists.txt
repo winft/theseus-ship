@@ -121,6 +121,7 @@ target_sources(win
       subspace.h
       subspace_grid.h
       subspace_manager.h
+      subspace_manager_qobject.h
       subspaces_get.h
       subspaces_set.h
       window_area.h
@@ -155,7 +156,6 @@ target_sources(win
     space_qobject.cpp
     subspace.cpp
     subspace_grid.cpp
-    subspace_manager.cpp
     x11/client_machine.cpp
     x11/extras.cpp
     x11/key_server.cpp

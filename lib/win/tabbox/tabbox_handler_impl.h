@@ -32,11 +32,11 @@ public:
         // connects for DesktopFocusChainManager
         auto& vds = tabbox->space.subspace_manager;
         connect(vds->qobject.get(),
-                &win::subspace_manager_qobject::countChanged,
+                &decltype(vds->qobject)::element_type::countChanged,
                 m_desktop_focus_chain,
                 &tabbox_desktop_chain_manager::resize);
         connect(vds->qobject.get(),
-                &win::subspace_manager_qobject::current_changed,
+                &decltype(vds->qobject)::element_type::current_changed,
                 m_desktop_focus_chain,
                 &tabbox_desktop_chain_manager::add_desktop);
     }

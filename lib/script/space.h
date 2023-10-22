@@ -511,15 +511,15 @@ public:
 
         auto& vds = ref_space->subspace_manager;
         QObject::connect(vds->qobject.get(),
-                         &win::subspace_manager_qobject::countChanged,
+                         &decltype(vds->qobject)::element_type::countChanged,
                          this,
                          &space::desktopsChanged);
         QObject::connect(vds->qobject.get(),
-                         &win::subspace_manager_qobject::layoutChanged,
+                         &decltype(vds->qobject)::element_type::layoutChanged,
                          this,
                          &space::desktopLayoutChanged);
         QObject::connect(vds->qobject.get(),
-                         &win::subspace_manager_qobject::current_changed,
+                         &decltype(vds->qobject)::element_type::current_changed,
                          this,
                          &space::currentDesktopChanged);
 

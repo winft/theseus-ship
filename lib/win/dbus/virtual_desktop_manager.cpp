@@ -8,7 +8,7 @@
 
 #include "virtualdesktopmanageradaptor.h"
 
-#include <win/subspace_manager.h>
+#include <win/subspace_manager_qobject.h>
 
 namespace KWin::win::dbus
 {

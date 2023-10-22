@@ -153,11 +153,11 @@ void setup_handler(Handler& handler)
     }
 
     QObject::connect(vds->qobject.get(),
-                     &win::subspace_manager_qobject::countChanged,
+                     &decltype(vds->qobject)::element_type::countChanged,
                      &handler,
                      &EffectsHandler::numberDesktopsChanged);
     QObject::connect(vds->qobject.get(),
-                     &win::subspace_manager_qobject::layoutChanged,
+                     &decltype(vds->qobject)::element_type::layoutChanged,
                      &handler,
                      [&handler](int width, int height) {
                          Q_EMIT handler.desktopGridSizeChanged(QSize(width, height));
