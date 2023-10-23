@@ -17,6 +17,7 @@
 #include <KLocalizedString>
 #include <KPluginFactory>
 #include <KWindowSystem>
+#include <netwm_def.h>
 
 
 namespace KWin

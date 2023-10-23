@@ -7,6 +7,7 @@
 
 #include <win/singleton_interface.h>
 
+#include <KWaylandExtras>
 #include <KWindowSystem>
 #include <QGuiApplication>
 #include <QTimer>
@@ -250,8 +251,8 @@ void WindowSystem::requestToken(QWindow* /*win*/, uint32_t serial, QString const
 
     // Ensure that xdgActivationTokenArrived is always emitted asynchronously
     QTimer::singleShot(0, [serial, token] {
-        Q_EMIT KWindowSystem::self()->xdgActivationTokenArrived(serial,
-                                                                QString::fromStdString(token));
+        Q_EMIT KWaylandExtras::self()->xdgActivationTokenArrived(serial,
+                                                                 QString::fromStdString(token));
     });
 }
 
