@@ -47,12 +47,12 @@ public:
      * Construct a new KWinQuickView
      * Export mode will be determined by the current effectsHandler
      */
-    EffectQuickView(QObject* parent);
+    EffectQuickView(QObject* parent = nullptr);
 
     /**
      * Construct a new KWinQuickView explicitly stating an export mode
      */
-    EffectQuickView(ExportMode exportMode, QObject* parent);
+    EffectQuickView(ExportMode exportMode, QObject* parent = nullptr);
 
     /**
      * Note that this may change the current GL Context
@@ -151,8 +151,8 @@ private:
 class KWIN_EXPORT EffectQuickScene : public EffectQuickView
 {
 public:
-    EffectQuickScene(QObject* parent);
-    EffectQuickScene(ExportMode exportMode, QObject* parent);
+    EffectQuickScene(QObject* parent = nullptr);
+    EffectQuickScene(ExportMode exportMode, QObject* parent = nullptr);
     ~EffectQuickScene();
 
     /** top level item in the given source*/
