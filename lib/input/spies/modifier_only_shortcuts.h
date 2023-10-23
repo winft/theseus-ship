@@ -26,8 +26,6 @@ namespace KWin::input
 
 class KWIN_EXPORT modifier_only_shortcuts_spy_qobject : public QObject
 {
-public:
-    ~modifier_only_shortcuts_spy_qobject();
 };
 
 template<typename Redirect>

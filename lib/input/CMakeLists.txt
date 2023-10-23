@@ -68,7 +68,6 @@ target_sources(input
     platform_qobject.cpp
     redirect_qobject.cpp
     singleton_interface.cpp
-    spies/modifier_only_shortcuts.cpp
     switch.cpp
     cursor.cpp
     logging.cpp
