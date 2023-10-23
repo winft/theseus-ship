@@ -117,6 +117,7 @@ target_link_libraries(tests
 PRIVATE
   desktop-kde
   kwinft::wayland
+  kwinft::xwayland
   script
   Qt::Test
   Catch2::Catch2WithMain

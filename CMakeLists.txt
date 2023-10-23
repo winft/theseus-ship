@@ -341,6 +341,7 @@ add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
   desktop-kde
   kwinft::wayland
+  kwinft::xwayland
   script
   KF6IdleTimeKWinPlugin
   KF6WindowSystemKWinPlugin
