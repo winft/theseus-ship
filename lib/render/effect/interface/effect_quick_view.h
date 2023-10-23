@@ -52,7 +52,7 @@ public:
     /**
      * Construct a new KWinQuickView explicitly stating an export mode
      */
-    EffectQuickView(ExportMode exportMode, QObject* parent = nullptr);
+    EffectQuickView(ExportMode exportMode = ExportMode::Texture, QObject* parent = nullptr);
 
     /**
      * Note that this may change the current GL Context

@@ -75,7 +75,7 @@ public:
 };
 
 EffectQuickView::EffectQuickView(QObject* parent)
-    : EffectQuickView(effects ? ExportMode::Texture : ExportMode::Image, parent)
+    : EffectQuickView(ExportMode::Texture, parent)
 {
 }
 
