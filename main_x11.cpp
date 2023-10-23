@@ -15,7 +15,6 @@
 #include "base/seat/backend/logind/session.h"
 #include "base/x11/selection_owner.h"
 #include "base/x11/xcb/helpers.h"
-#include "desktop/screen_locker_watcher.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/shortcuts_init.h"
@@ -24,6 +23,7 @@
 #include "win/x11/space.h"
 #include "win/x11/space_event.h"
 #include "win/x11/xcb_event_filter.h"
+#include <desktop/kde/platform.h>
 
 #include <KConfigGroup>
 #include <KCrash>
@@ -268,6 +268,8 @@ void ApplicationX11::start()
             exit(1);
         }
 
+        base.space->desktop
+            = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base.space);
         win::init_shortcuts(*base.space);
         render::init_shortcuts(*base.render);
 

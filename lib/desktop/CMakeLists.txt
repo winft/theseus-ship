@@ -24,6 +24,7 @@ target_sources(desktop
   PUBLIC
     FILE_SET HEADERS
     FILES
+      platform.h
       screen_locker_watcher.h
   PRIVATE
     screen_locker_watcher.cpp
@@ -50,6 +51,7 @@ target_sources(desktop-kde
   PUBLIC
     FILE_SET HEADERS
     FILES
+      kde/platform.h
       kde/service_utils.h
   PRIVATE
     kde/dbus/kwin.cpp

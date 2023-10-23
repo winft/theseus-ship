@@ -209,7 +209,7 @@ void setup_handler(Handler& handler)
                              static_cast<ElectricBorder>(border), factor, geometry);
                      });
 
-    auto screen_locker_watcher = ws->base.space->screen_locker_watcher.get();
+    auto screen_locker_watcher = ws->base.space->desktop->screen_locker_watcher.get();
     using screen_locker_watcher_t = std::remove_pointer_t<decltype(screen_locker_watcher)>;
     QObject::connect(screen_locker_watcher,
                      &screen_locker_watcher_t::locked,

@@ -11,7 +11,6 @@
 #include <win/wayland/space_setup.h>
 #include <win/x11/space_setup.h>
 
-#include "desktop/screen_locker_watcher.h"
 #include "win/input.h"
 #include "win/screen.h"
 #include "win/setup.h"
@@ -20,6 +19,7 @@
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
 #include <debug/console/wayland/xwl_console.h>
+#include <desktop/platform.h>
 #include <win/stacking_state.h>
 #include <win/wayland/internal_window.h>
 #include <win/wayland/subspace_manager.h>
@@ -239,9 +239,7 @@ public:
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-
-    std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
-    std::unique_ptr<desktop::kde::kwin_impl<type>> dbus;
+    std::unique_ptr<desktop::platform> desktop;
 
     std::unique_ptr<Wrapland::Server::Compositor> compositor;
     std::unique_ptr<Wrapland::Server::Subcompositor> subcompositor;

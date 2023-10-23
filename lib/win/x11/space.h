@@ -18,12 +18,12 @@
 
 #include "base/x11/xcb/helpers.h"
 #include "debug/console/x11/x11_console.h"
-#include "desktop/kde/dbus/kwin.h"
-#include "desktop/screen_locker_watcher.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
 #include "win/screen_edges.h"
 #include "win/stacking_order.h"
+#include <desktop/platform.h>
+#include <win/kill_window.h>
 #include <win/space_reconfigure.h>
 #include <win/stacking_state.h>
 #include <win/user_actions_menu.h>
@@ -62,7 +62,6 @@ public:
         deco = std::make_unique<deco::bridge<type>>(*this);
         appmenu = std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this));
         user_actions_menu = std::make_unique<win::user_actions_menu<type>>(*this);
-        screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
 
         win::init_space(*this);
 
@@ -75,7 +74,6 @@ public:
 
         atoms = std::make_unique<base::x11::atoms>(base.x11_data.connection);
         edges = std::make_unique<edger_t>(*this);
-        dbus = std::make_unique<desktop::kde::kwin_impl<type>>(*this);
 
         QObject::connect(
             subspace_manager->qobject.get(),
@@ -308,9 +306,7 @@ public:
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-
-    std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
-    std::unique_ptr<desktop::kde::kwin_impl<type>> dbus;
+    std::unique_ptr<desktop::platform> desktop;
 
     std::vector<window_t> windows;
     std::unordered_map<uint32_t, window_t> windows_map;

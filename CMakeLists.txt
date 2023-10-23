@@ -329,6 +329,7 @@ endif()
 
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
 target_link_libraries(kwin_x11
+  desktop-kde
   kwinft::x11
   KF6::Crash
 )

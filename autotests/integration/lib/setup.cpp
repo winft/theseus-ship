@@ -11,6 +11,7 @@
 #include "render/backend/wlroots/platform.h"
 #include "render/shortcuts_init.h"
 #include "win/shortcuts_init.h"
+#include <desktop/kde/platform.h>
 
 extern "C" {
 #include <wlr/backend/headless.h>
@@ -158,6 +159,7 @@ void setup::start()
     out->wrapland_output()->set_metadata(metadata);
 
     base->space = std::make_unique<base_t::space_t>(*base->render, *base->input);
+    base->space->desktop = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->space);
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     render::init_shortcuts(*base->render);

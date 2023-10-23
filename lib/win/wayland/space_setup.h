@@ -97,7 +97,6 @@ void space_setup_init(Space& space, Render& render, Input& input)
     space.deco = std::make_unique<deco::bridge<Space>>(space);
     space.appmenu = std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(space));
     space.user_actions_menu = std::make_unique<win::user_actions_menu<Space>>(space);
-    space.screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
     space.compositor
         = std::make_unique<Wrapland::Server::Compositor>(space.base.server->display.get());
     space.subcompositor
@@ -139,7 +138,6 @@ void space_setup_init(Space& space, Render& render, Input& input)
     };
 
     space.input = input.integrate_space(space);
-    space.dbus = std::make_unique<desktop::kde::kwin_impl<Space>>(space);
     space.edges = std::make_unique<typename Space::edger_t>(space);
 
     space.plasma_window_manager->setShowingDesktopState(

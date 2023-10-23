@@ -36,8 +36,8 @@ public:
         : event_spy<Redirect>(redirect)
         , qobject{std::make_unique<modifier_only_shortcuts_spy_qobject>()}
     {
-        QObject::connect(redirect.space.screen_locker_watcher.get(),
-                         &desktop::screen_locker_watcher::locked,
+        QObject::connect(redirect.space.qobject.get(),
+                         &decltype(redirect.space.qobject)::element_type::screen_locked,
                          qobject.get(),
                          [this] { reset(); });
     }
@@ -52,7 +52,7 @@ public:
             const bool wasEmpty = m_pressedKeys.isEmpty();
             m_pressedKeys.insert(event.keycode);
             if (wasEmpty && m_pressedKeys.size() == 1
-                && !this->redirect.space.screen_locker_watcher->is_locked()
+                && !this->redirect.space.desktop->screen_locker_watcher->is_locked()
                 && m_pressedButtons == Qt::NoButton && m_cachedMods == Qt::NoModifier) {
                 m_modifier = Qt::KeyboardModifier(int(mods));
             } else {

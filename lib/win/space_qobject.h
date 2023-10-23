@@ -52,6 +52,8 @@ Q_SIGNALS:
     void internalClientRemoved(quint32 client);
     void surface_id_changed(quint32, quint32);
 
+    void screen_locked(bool);
+
 private:
     std::function<void()> reconfigure_callback;
 };

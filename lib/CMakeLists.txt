@@ -20,7 +20,7 @@ target_link_libraries(x11
   PUBLIC
     base-x11
     debug-common
-    desktop-kde
+    desktop
     input-x11-backend
     render-x11-backend
 
@@ -44,6 +44,7 @@ add_library(kwinft::wayland ALIAS wayland)
 target_link_libraries(wayland
   PUBLIC
     debug-wl
+    desktop
     input-wl
     render-wl
     win-wl
