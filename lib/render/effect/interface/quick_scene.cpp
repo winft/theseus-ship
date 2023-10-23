@@ -88,7 +88,8 @@ bool QuickSceneEffectPrivate::isItemOnScreen(QQuickItem* item, EffectScreen cons
 }
 
 QuickSceneView::QuickSceneView(QuickSceneEffect* effect, EffectScreen const* screen)
-    : m_effect(effect)
+    : EffectQuickView(ExportMode::Texture, false)
+    , m_effect(effect)
     , m_screen(screen)
 {
     setGeometry(screen->geometry());
