@@ -75,11 +75,11 @@ public:
 };
 
 EffectQuickView::EffectQuickView(QObject* parent)
-    : EffectQuickView(parent, effects ? ExportMode::Texture : ExportMode::Image)
+    : EffectQuickView(effects ? ExportMode::Texture : ExportMode::Image, parent)
 {
 }
 
-EffectQuickView::EffectQuickView(QObject* parent, ExportMode exportMode)
+EffectQuickView::EffectQuickView(ExportMode exportMode, QObject* parent)
     : QObject(parent)
     , d(new EffectQuickView::Private)
 {
@@ -580,8 +580,8 @@ EffectQuickScene::EffectQuickScene(QObject* parent)
 {
 }
 
-EffectQuickScene::EffectQuickScene(QObject* parent, EffectQuickView::ExportMode exportMode)
-    : EffectQuickView(parent, exportMode)
+EffectQuickScene::EffectQuickScene(EffectQuickView::ExportMode exportMode, QObject* parent)
+    : EffectQuickView(exportMode, parent)
     , d(new EffectQuickScene::Private)
 {
 }

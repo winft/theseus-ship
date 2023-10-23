@@ -316,8 +316,8 @@ bool Decoration::init()
         m_item->setParentItem(visualParent.value<QQuickItem*>());
         visualParent.value<QQuickItem*>()->setProperty("drawBackground", false);
     } else {
-        m_view = std::make_unique<KWin::EffectQuickView>(this,
-                                                         KWin::EffectQuickView::ExportMode::Image);
+        m_view = std::make_unique<KWin::EffectQuickView>(KWin::EffectQuickView::ExportMode::Image,
+                                                         this);
         m_item->setParentItem(m_view->contentItem());
         auto updateSize = [this]() { m_item->setSize(m_view->contentItem()->size()); };
         updateSize();
