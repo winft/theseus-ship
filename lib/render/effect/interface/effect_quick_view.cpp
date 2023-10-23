@@ -74,14 +74,8 @@ public:
     QScopedPointer<QQuickItem> quickItem;
 };
 
-EffectQuickView::EffectQuickView(QObject* parent)
-    : EffectQuickView(ExportMode::Texture, parent)
-{
-}
-
-EffectQuickView::EffectQuickView(ExportMode exportMode, QObject* parent)
-    : QObject(parent)
-    , d(new EffectQuickView::Private)
+EffectQuickView::EffectQuickView(ExportMode exportMode)
+    : d(new EffectQuickView::Private)
 {
     d->m_renderControl = new QQuickRenderControl();
 
@@ -574,14 +568,8 @@ void EffectQuickView::Private::updateTouchState(Qt::TouchPointState state,
     // that the current touch points are in.
 }
 
-EffectQuickScene::EffectQuickScene(QObject* parent)
-    : EffectQuickView(parent)
-    , d(new EffectQuickScene::Private)
-{
-}
-
-EffectQuickScene::EffectQuickScene(EffectQuickView::ExportMode exportMode, QObject* parent)
-    : EffectQuickView(exportMode, parent)
+EffectQuickScene::EffectQuickScene(EffectQuickView::ExportMode exportMode)
+    : EffectQuickView(exportMode)
     , d(new EffectQuickScene::Private)
 {
 }

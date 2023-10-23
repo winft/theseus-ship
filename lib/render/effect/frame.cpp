@@ -18,10 +18,8 @@ namespace KWin::render
 effect_frame_quick_scene::effect_frame_quick_scene(EffectFrameStyle style,
                                                    bool staticSize,
                                                    QPoint position,
-                                                   Qt::Alignment alignment,
-                                                   QObject* parent)
-    : EffectQuickScene(parent)
-    , m_style(style)
+                                                   Qt::Alignment alignment)
+    : m_style(style)
     , m_static(staticSize)
     , m_point(position)
     , m_alignment(alignment)
@@ -241,10 +239,8 @@ effect_frame_impl::effect_frame_impl(EffectsHandler& effects,
                                      bool staticSize,
                                      QPoint position,
                                      Qt::Alignment alignment)
-    : QObject(nullptr)
-    , EffectFrame()
-    , effects{effects}
-    , m_view{new effect_frame_quick_scene(style, staticSize, position, alignment, nullptr)}
+    : effects{effects}
+    , m_view{new effect_frame_quick_scene(style, staticSize, position, alignment)}
 {
     connect(m_view, &EffectQuickView::repaintNeeded, this, [this] {
         this->effects.addRepaint(geometry());
