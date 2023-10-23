@@ -6,7 +6,6 @@ add_library(input SHARED)
 
 target_link_libraries(input
   PUBLIC
-    WraplandServer
     XCB::CURSOR
     win
 )
@@ -35,7 +34,6 @@ target_sources(input
       filters/window_action.h
       filters/window_selector.h
       spies/activity.h
-      spies/keyboard_repeat.h
       spies/modifier_only_shortcuts.h
       spies/tablet_mode_switch.h
       spies/touch_hide_cursor.h
@@ -140,6 +138,7 @@ target_sources(input-wl
       dbus/keyboard_layout.h
       dbus/keyboard_layouts_v2.h
       dbus/tablet_mode_manager.h
+      spies/keyboard_repeat.h
       wayland/cursor.h
       wayland/cursor_image.h
       wayland/cursor_theme.h
