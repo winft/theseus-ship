@@ -14,7 +14,6 @@
 #include <KConfigGroup>
 #include <QDBusConnection>
 #include <QHash>
-#include <xcb/xcb_cursor.h>
 
 namespace KWin::input
 {

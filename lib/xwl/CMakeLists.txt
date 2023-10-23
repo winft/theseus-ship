@@ -11,6 +11,7 @@ target_link_libraries(xwayland
     render-x11
     win-x11
     WraplandServer
+    XCB::CURSOR
 )
 
 target_sources(xwayland

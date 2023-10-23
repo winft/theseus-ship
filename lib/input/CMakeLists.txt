@@ -6,7 +6,6 @@ add_library(input SHARED)
 
 target_link_libraries(input
   PUBLIC
-    XCB::CURSOR
     win
 )
 
@@ -83,6 +82,7 @@ target_link_libraries(input-x11-backend
     win-x11
     KF6::GlobalAccel
     X11::Xi
+    XCB::CURSOR
     ${XKBX11_LIBRARIES}
 )
 

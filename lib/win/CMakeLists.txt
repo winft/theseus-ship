@@ -16,7 +16,6 @@ target_link_libraries(win
     Qt::Concurrent
     Qt::OpenGL
     Qt::Quick
-    XCB::KEYSYMS
     base
 )
 
@@ -215,6 +214,7 @@ target_link_libraries(win-x11
   PUBLIC
     win
     XCB::ICCCM
+    XCB::KEYSYMS
     ${X11_LIBRARIES}
 )
 
