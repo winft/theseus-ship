@@ -263,12 +263,6 @@ public:
         = 0;
 
     /**
-     * Moves the window to the specific desktop
-     * Setting desktop to NET::OnAllDesktops will set the window on all desktops
-     */
-    Q_SCRIPTABLE virtual void windowToDesktop(KWin::EffectWindow* w, int desktop) = 0;
-
-    /**
      * Moves a window to the given desktops
      * On X11, the window will end up on the last window in the list
      * Setting this to an empty list will set the window on all desktops

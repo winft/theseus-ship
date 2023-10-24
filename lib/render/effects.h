@@ -563,16 +563,6 @@ public:
                    *static_cast<effect_window_t*>(w)->window.ref_win);
     }
 
-    void windowToDesktop(EffectWindow* w, int subspace) override
-    {
-        std::visit(overload{[&, this](auto&& win) {
-                       if (win->control && !win::is_desktop(win) && !win::is_dock(win)) {
-                           win::send_window_to_subspace(get_space(), win, subspace, true);
-                       }
-                   }},
-                   *static_cast<effect_window_t*>(w)->window.ref_win);
-    }
-
     void windowToDesktops(EffectWindow* w, const QVector<uint>& desktopIds) override
     {
         std::visit(overload{[&](auto&& win) {

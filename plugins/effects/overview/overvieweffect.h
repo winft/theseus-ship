@@ -65,7 +65,7 @@ public:
     void reconfigure(ReconfigureFlags flags) override;
     void grabbedKeyboardEvent(QKeyEvent* keyEvent) override;
 
-    Q_INVOKABLE void swapDesktops(int from, int to);
+    Q_INVOKABLE void swapDesktops(uint from, uint to);
 
 Q_SIGNALS:
     void animationDurationChanged();
