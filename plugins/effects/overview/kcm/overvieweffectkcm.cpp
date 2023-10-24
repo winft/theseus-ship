@@ -72,12 +72,6 @@ OverviewEffectConfig::OverviewEffectConfig(QObject* parent, const KPluginMetaDat
     connect(ui.shortcutsEditor, &KShortcutsEditor::keyChange, this, &KCModule::markAsChanged);
 }
 
-OverviewEffectConfig::~OverviewEffectConfig()
-{
-    // If save() is called, undo() has no effect.
-    ui.shortcutsEditor->undo();
-}
-
 void OverviewEffectConfig::save()
 {
     KCModule::save();
