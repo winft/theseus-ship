@@ -137,14 +137,14 @@ OverviewEffect::OverviewEffect()
     connect(effects,
             &EffectsHandler::desktopChanging,
             this,
-            [this](uint old, QPointF desktopOffset, EffectWindow* with) {
+            [this](auto old, QPointF desktopOffset, EffectWindow* with) {
                 m_desktopOffset = desktopOffset;
                 Q_EMIT desktopOffsetChanged();
             });
     connect(effects,
             &EffectsHandler::desktopChanged,
             this,
-            [this](int old, int current, EffectWindow* with) {
+            [this](auto old, auto current, EffectWindow* with) {
                 m_desktopOffset = QPointF(0, 0);
                 Q_EMIT desktopOffsetChanged();
             });
@@ -405,7 +405,7 @@ void OverviewEffect::grabbedKeyboardEvent(QKeyEvent* keyEvent)
     QuickSceneEffect::grabbedKeyboardEvent(keyEvent);
 }
 
-void OverviewEffect::swapDesktops(uint from, uint to)
+void OverviewEffect::swapDesktops(win::subspace* from, win::subspace* to)
 {
     QList<EffectWindow*> fromList;
     QList<EffectWindow*> toList;

@@ -9,6 +9,7 @@
 #include <render/effect/interface/effect_integration.h>
 #include <render/effect/interface/paint_data.h>
 #include <render/effect/interface/types.h>
+#include <win/subspace.h>
 
 #include <KSharedConfig>
 
@@ -45,7 +46,8 @@ class WindowQuadList;
 class KWIN_EXPORT EffectsHandler : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int currentDesktop READ currentDesktop WRITE setCurrentDesktop NOTIFY desktopChanged)
+    Q_PROPERTY(KWin::win::subspace* currentDesktop READ currentDesktop WRITE setCurrentDesktop
+                   NOTIFY desktopChanged)
     Q_PROPERTY(QString currentActivity READ currentActivity NOTIFY currentActivityChanged)
     Q_PROPERTY(KWin::EffectWindow* activeWindow READ activeWindow WRITE activateWindow NOTIFY
                    windowActivated)
@@ -54,11 +56,7 @@ class KWIN_EXPORT EffectsHandler : public QObject
     Q_PROPERTY(int desktopGridHeight READ desktopGridHeight NOTIFY desktopGridHeightChanged)
     Q_PROPERTY(int workspaceWidth READ workspaceWidth)
     Q_PROPERTY(int workspaceHeight READ workspaceHeight)
-    /**
-     * The number of desktops currently used. Minimum number of desktops is 1, maximum 20.
-     */
-    Q_PROPERTY(
-        int desktops READ numberOfDesktops WRITE setNumberOfDesktops NOTIFY numberDesktopsChanged)
+    Q_PROPERTY(QList<KWin::win::subspace*> desktops READ desktops)
     Q_PROPERTY(bool optionRollOverDesktops READ optionRollOverDesktops)
     Q_PROPERTY(KWin::EffectScreen* activeScreen READ activeScreen)
     /**
@@ -271,7 +269,7 @@ public:
      * a valid desktop X11Id
      */
     Q_SCRIPTABLE virtual void windowToDesktops(KWin::EffectWindow* w,
-                                               const QVector<uint>& desktopIds)
+                                               QVector<win::subspace*> const& desktopIds)
         = 0;
 
     Q_SCRIPTABLE virtual void windowToScreen(KWin::EffectWindow* w, EffectScreen* screen) = 0;
@@ -286,19 +284,15 @@ public:
     /**
      * @returns The ID of the current desktop.
      */
-    virtual int currentDesktop() const = 0;
+    virtual win::subspace* currentDesktop() const = 0;
     /**
      * @returns Total number of desktops currently in existence.
      */
-    virtual int numberOfDesktops() const = 0;
+    virtual QList<win::subspace*> desktops() const = 0;
     /**
      * Set the current desktop to @a desktop.
      */
-    virtual void setCurrentDesktop(int desktop) = 0;
-    /**
-     * Sets the total number of desktops to @a desktops.
-     */
-    virtual void setNumberOfDesktops(int desktops) = 0;
+    virtual void setCurrentDesktop(win::subspace* subsp) = 0;
     /**
      * @returns The size of desktop layout in grid units.
      */
@@ -323,42 +317,52 @@ public:
      * @returns The ID of the desktop at the point @a coords or 0 if no desktop exists at that
      * point. @a coords is to be in grid units.
      */
-    virtual int desktopAtCoords(QPoint coords) const = 0;
+    virtual win::subspace* desktopAtCoords(QPoint coords) const = 0;
     /**
      * @returns The coords of desktop @a id in grid units.
      */
-    virtual QPoint desktopGridCoords(int id) const = 0;
+    virtual QPoint desktopGridCoords(win::subspace* subsp) const = 0;
     /**
      * @returns The coords of the top-left corner of desktop @a id in pixels.
      */
-    virtual QPoint desktopCoords(int id) const = 0;
+    virtual QPoint desktopCoords(win::subspace* subsp) const = 0;
     /**
      * @returns The ID of the desktop above desktop @a id. Wraps around to the bottom of
      * the layout if @a wrap is set. If @a id is not set use the current one.
      */
-    Q_SCRIPTABLE virtual int desktopAbove(int desktop = 0, bool wrap = true) const = 0;
+    Q_SCRIPTABLE virtual KWin::win::subspace* desktopAbove(KWin::win::subspace* subsp = nullptr,
+                                                           bool wrap = true) const
+        = 0;
     /**
      * @returns The ID of the desktop to the right of desktop @a id. Wraps around to the
      * left of the layout if @a wrap is set. If @a id is not set use the current one.
      */
-    Q_SCRIPTABLE virtual int desktopToRight(int desktop = 0, bool wrap = true) const = 0;
+    Q_SCRIPTABLE virtual KWin::win::subspace* desktopToRight(KWin::win::subspace* subsp = nullptr,
+                                                             bool wrap = true) const
+        = 0;
     /**
      * @returns The ID of the desktop below desktop @a id. Wraps around to the top of the
      * layout if @a wrap is set. If @a id is not set use the current one.
      */
-    Q_SCRIPTABLE virtual int desktopBelow(int desktop = 0, bool wrap = true) const = 0;
+    Q_SCRIPTABLE virtual KWin::win::subspace* desktopBelow(KWin::win::subspace* subsp = nullptr,
+                                                           bool wrap = true) const
+        = 0;
     /**
      * @returns The ID of the desktop to the left of desktop @a id. Wraps around to the
      * right of the layout if @a wrap is set. If @a id is not set use the current one.
      */
-    Q_SCRIPTABLE virtual int desktopToLeft(int desktop = 0, bool wrap = true) const = 0;
-    Q_SCRIPTABLE virtual QString desktopName(int desktop) const = 0;
+    Q_SCRIPTABLE virtual KWin::win::subspace* desktopToLeft(KWin::win::subspace* subsp = nullptr,
+                                                            bool wrap = true) const
+        = 0;
+    Q_SCRIPTABLE virtual QString desktopName(KWin::win::subspace* subsp) const = 0;
     virtual bool optionRollOverDesktops() const = 0;
 
     virtual EffectScreen* activeScreen() const = 0; // Xinerama
-    virtual QRect clientArea(clientAreaOption, EffectScreen const* screen, int desktop) const = 0;
+    virtual QRect
+    clientArea(clientAreaOption, EffectScreen const* screen, win::subspace* subsp) const
+        = 0;
     virtual QRect clientArea(clientAreaOption, const EffectWindow* c) const = 0;
-    virtual QRect clientArea(clientAreaOption, const QPoint& p, int desktop) const = 0;
+    virtual QRect clientArea(clientAreaOption, const QPoint& p, win::subspace* subsp) const = 0;
 
     /**
      * The bounding size of all screens combined. Overlapping areas
@@ -694,7 +698,9 @@ Q_SIGNALS:
      * @param with The window which is taken over to the new desktop, can be NULL
      * @since 4.9
      */
-    void desktopChanged(int oldDesktop, int newDesktop, KWin::EffectWindow* with);
+    void desktopChanged(KWin::win::subspace* oldDesktop,
+                        KWin::win::subspace* newDesktop,
+                        KWin::EffectWindow* with);
 
     /**
      * Signal emmitted while desktop is changing for animation.
@@ -703,8 +709,11 @@ Q_SIGNALS:
      * offset.x() = .6 means 60% of the way to the desktop to the right.
      * Positive Values means Up and Right.
      */
-    void desktopChanging(uint currentDesktop, QPointF offset, KWin::EffectWindow* with);
+    void
+    desktopChanging(KWin::win::subspace* currentDesktop, QPointF offset, KWin::EffectWindow* with);
     void desktopChangingCancelled();
+    void desktopAdded(KWin::win::subspace* subsp);
+    void desktopRemoved(KWin::win::subspace* subsp);
 
     /**
      * Emitted when the virtual desktop grid layout changes
@@ -724,13 +733,6 @@ Q_SIGNALS:
      * @since 5.25
      */
     void desktopGridHeightChanged(int height);
-    /**
-     * Signal emitted when the number of currently existing desktops is changed.
-     * @param old The previous number of desktops in used.
-     * @see EffectsHandler::numberOfDesktops.
-     * @since 4.7
-     */
-    void numberDesktopsChanged(uint old);
     /**
      * Signal emitted when the desktop showing ("dashboard") state changed
      * The desktop is risen to the keepAbove layer, you may want to elevate

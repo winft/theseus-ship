@@ -153,7 +153,7 @@ private:
     void paintSphereCap();
     bool loadShader();
     void rotateCube();
-    void rotateToDesktop(int desktop);
+    void rotateToDesktop(win::subspace* desktop);
     void setActive(bool active);
     QImage loadCubeCap(const QString& capPath);
     QImage loadWallPaper(const QString& file);
@@ -169,8 +169,8 @@ private:
     QList<ElectricBorder> borderActivate;
     QList<ElectricBorder> borderActivateCylinder;
     QList<ElectricBorder> borderActivateSphere;
-    int painting_desktop;
-    int frontDesktop;
+    win::subspace* painting_desktop{nullptr};
+    win::subspace* frontDesktop{nullptr};
     float cubeOpacity;
     bool opacityDesktopOnly;
     bool displayDesktopName;
@@ -190,7 +190,7 @@ private:
     // Horizontal/start/stop
     float startAngle;
     float currentAngle;
-    int startFrontDesktop;
+    win::subspace* startFrontDesktop{nullptr};
     AnimationState animationState;
     TimeLine timeLine;
     QQueue<AnimationState> animations;

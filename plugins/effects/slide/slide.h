@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <render/effect/interface/effect_window_visible_ref.h>
 #include <render/effect/interface/time_line.h>
 #include <render/effect/interface/types.h>
+#include <win/subspace.h>
 
 #include <unordered_map>
 
@@ -78,8 +79,8 @@ public:
     bool slideBackground() const;
 
 private Q_SLOTS:
-    void desktopChanged(int old, int current, EffectWindow* with);
-    void desktopChanging(uint old, QPointF desktopOffset, EffectWindow* with);
+    void desktopChanged(win::subspace* old, win::subspace* current, EffectWindow* with);
+    void desktopChanging(win::subspace* old, QPointF desktopOffset, EffectWindow* with);
     void desktopChangingCancelled();
     void windowAdded(EffectWindow* w);
     void windowDeleted(EffectWindow* w);
@@ -94,7 +95,9 @@ private:
     QPointF forcePositivePosition(QPointF p) const;
     void optimizePath(); // Find the best path to target desktop
 
-    void startAnimation(int old, int current, EffectWindow* movingWindow = nullptr);
+    void startAnimation(win::subspace* old,
+                        win::subspace* current,
+                        EffectWindow* movingWindow = nullptr);
     void prepareSwitching();
     void finishedSwitching();
 
@@ -125,7 +128,7 @@ private:
 
     struct {
         bool wrap;
-        QVector<int> visibleDesktops;
+        QList<win::subspace*> visibleDesktops;
     } m_paintCtx;
 
     EffectWindowList m_elevatedWindows;

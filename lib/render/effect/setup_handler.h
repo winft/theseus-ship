@@ -51,8 +51,7 @@ void setup_handler(Handler& handler)
                                         }},
                                         *mov_res);
                          }
-                         Q_EMIT handler.desktopChanged(
-                             old->x11DesktopNumber(), current->x11DesktopNumber(), eff_win);
+                         Q_EMIT handler.desktopChanged(old, current, eff_win);
                      });
     QObject::connect(ws->qobject.get(),
                      &win::space_qobject::current_subspace_changing,
@@ -67,8 +66,7 @@ void setup_handler(Handler& handler)
                                         }},
                                         *mov_res);
                          }
-                         Q_EMIT handler.desktopChanging(
-                             current->x11DesktopNumber(), offset, eff_win);
+                         Q_EMIT handler.desktopChanging(current, offset, eff_win);
                      });
     QObject::connect(ws->qobject.get(),
                      &win::space_qobject::current_subspace_changing_cancelled,
@@ -153,9 +151,13 @@ void setup_handler(Handler& handler)
     }
 
     QObject::connect(vds->qobject.get(),
-                     &decltype(vds->qobject)::element_type::countChanged,
+                     &decltype(vds->qobject)::element_type::subspace_created,
                      &handler,
-                     &EffectsHandler::numberDesktopsChanged);
+                     &EffectsHandler::desktopAdded);
+    QObject::connect(vds->qobject.get(),
+                     &decltype(vds->qobject)::element_type::subspace_removed,
+                     &handler,
+                     &EffectsHandler::desktopRemoved);
     QObject::connect(vds->qobject.get(),
                      &decltype(vds->qobject)::element_type::layoutChanged,
                      &handler,

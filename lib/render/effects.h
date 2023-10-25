@@ -563,7 +563,7 @@ public:
                    *static_cast<effect_window_t*>(w)->window.ref_win);
     }
 
-    void windowToDesktops(EffectWindow* w, const QVector<uint>& desktopIds) override
+    void windowToDesktops(EffectWindow* w, QVector<win::subspace*> const& subspaces) override
     {
         std::visit(overload{[&](auto&& win) {
                        if (!win->control || win::is_desktop(win) || win::is_dock(win)) {
@@ -571,17 +571,10 @@ public:
                        }
 
                        std::vector<win::subspace*> subs;
-                       subs.reserve(desktopIds.count());
+                       subs.reserve(subspaces.size());
 
-                       for (uint x11Id : desktopIds) {
-                           if (x11Id > get_space().subspace_manager->subspaces.size()) {
-                               continue;
-                           }
-
-                           auto sub
-                               = win::subspaces_get_for_x11id(*get_space().subspace_manager, x11Id);
-                           Q_ASSERT(sub);
-
+                       for (auto subsp : subspaces) {
+                           auto sub = &get_subspace_ref(subsp);
                            if (contains(subs, sub)) {
                                continue;
                            }
@@ -615,24 +608,25 @@ public:
         win::set_showing_desktop(get_space(), showing);
     }
 
-    int currentDesktop() const override
+    win::subspace* currentDesktop() const override
     {
-        return win::subspaces_get_current_x11id(*get_space().subspace_manager);
+        return get_space().subspace_manager->current;
     }
 
-    int numberOfDesktops() const override
+    QList<win::subspace*> desktops() const override
     {
-        return get_space().subspace_manager->subspaces.size();
+        auto const& subs = get_space().subspace_manager->subspaces;
+        QList<win::subspace*> ret;
+        ret.reserve(subs.size());
+        std::copy(subs.cbegin(), subs.cend(), std::back_inserter(ret));
+        return ret;
     }
 
-    void setCurrentDesktop(int desktop) override
+    void setCurrentDesktop(win::subspace* desktop) override
     {
-        win::subspaces_set_current(*get_space().subspace_manager, desktop);
-    }
-
-    void setNumberOfDesktops(int desktops) override
-    {
-        win::subspace_manager_set_count(*get_space().subspace_manager, desktops);
+        if (desktop) {
+            win::subspaces_set_current(*get_space().subspace_manager, *desktop);
+        }
     }
 
     QSize desktopGridSize() const override
@@ -650,24 +644,20 @@ public:
         return desktopGridHeight() * scene.platform.base.topology.size.height();
     }
 
-    int desktopAtCoords(QPoint coords) const override
+    win::subspace* desktopAtCoords(QPoint coords) const override
     {
-        if (auto vd = get_space().subspace_manager->grid.at(coords)) {
-            return vd->x11DesktopNumber();
-        }
-        return 0;
+        return get_space().subspace_manager->grid.at(coords);
     }
 
-    QPoint desktopGridCoords(int id) const override
+    QPoint desktopGridCoords(win::subspace* subsp) const override
     {
-        auto& mgr = get_space().subspace_manager;
-        return mgr->grid.gridCoords(win::subspaces_get_for_x11id(*mgr, id));
+        return get_space().subspace_manager->grid.gridCoords(subsp);
     }
 
-    QPoint desktopCoords(int id) const override
+    QPoint desktopCoords(win::subspace* subsp) const override
     {
         auto& mgr = get_space().subspace_manager;
-        auto coords = mgr->grid.gridCoords(win::subspaces_get_for_x11id(*mgr, id));
+        auto coords = mgr->grid.gridCoords(subsp);
 
         if (coords.x() == -1) {
             return QPoint(-1, -1);
@@ -677,29 +667,34 @@ public:
         return QPoint(coords.x() * space_size.width(), coords.y() * space_size.height());
     }
 
-    int desktopAbove(int desktop = 0, bool wrap = true) const override
+    win::subspace* desktopAbove(win::subspace* subsp, bool wrap = true) const override
     {
-        return win::subspaces_get_north_of(*get_space().subspace_manager, desktop, wrap);
+        return &win::subspaces_get_north_of(
+            *get_space().subspace_manager, get_subspace_ref(subsp), wrap);
     }
 
-    int desktopToRight(int desktop = 0, bool wrap = true) const override
+    win::subspace* desktopToRight(win::subspace* subsp, bool wrap = true) const override
     {
-        return win::subspaces_get_east_of(*get_space().subspace_manager, desktop, wrap);
+        return &win::subspaces_get_east_of(
+            *get_space().subspace_manager, get_subspace_ref(subsp), wrap);
     }
 
-    int desktopBelow(int desktop = 0, bool wrap = true) const override
+    win::subspace* desktopBelow(win::subspace* subsp, bool wrap = true) const override
     {
-        return win::subspaces_get_south_of(*get_space().subspace_manager, desktop, wrap);
+        return &win::subspaces_get_south_of(
+            *get_space().subspace_manager, get_subspace_ref(subsp), wrap);
     }
 
-    int desktopToLeft(int desktop = 0, bool wrap = true) const override
+    win::subspace* desktopToLeft(win::subspace* subsp, bool wrap = true) const override
     {
-        return win::subspaces_get_west_of(*get_space().subspace_manager, desktop, wrap);
+        return &win::subspaces_get_west_of(
+            *get_space().subspace_manager, get_subspace_ref(subsp), wrap);
     }
 
-    QString desktopName(int desktop) const override
+    QString desktopName(win::subspace* subsp) const override
     {
-        return win::subspace_manager_get_subspace_name(*get_space().subspace_manager, desktop);
+        auto x11id = subsp ? subsp->x11DesktopNumber() : currentDesktop()->x11DesktopNumber();
+        return win::subspace_manager_get_subspace_name(*get_space().subspace_manager, x11id);
     }
 
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* /*surface*/) const override
@@ -844,15 +839,19 @@ public:
         return m_effectScreens.value(screenId);
     }
 
-    QRect clientArea(clientAreaOption opt, EffectScreen const* screen, int desktop) const override
+    QRect clientArea(clientAreaOption opt,
+                     EffectScreen const* screen,
+                     win::subspace* subsp) const override
     {
         typename base_t::output_t const* output = nullptr;
         if (screen) {
             auto screenImpl = static_cast<effect_screen_impl<base::output> const*>(screen);
             output = static_cast<typename base_t::output_t*>(screenImpl->platformOutput());
         }
-        return win::space_window_area(
-            get_space(), static_cast<win::area_option>(opt), output, desktop);
+        return win::space_window_area(get_space(),
+                                      static_cast<win::area_option>(opt),
+                                      output,
+                                      get_subspace_ref(subsp).x11DesktopNumber());
     }
 
     QRect clientArea(clientAreaOption opt, const EffectWindow* eff_win) const override
@@ -872,9 +871,12 @@ public:
                           *static_cast<effect_window_t const*>(eff_win)->window.ref_win);
     }
 
-    QRect clientArea(clientAreaOption opt, const QPoint& p, int desktop) const override
+    QRect clientArea(clientAreaOption opt, const QPoint& p, win::subspace* subsp) const override
     {
-        return win::space_window_area(get_space(), static_cast<win::area_option>(opt), p, desktop);
+        return win::space_window_area(get_space(),
+                                      static_cast<win::area_option>(opt),
+                                      p,
+                                      get_subspace_ref(subsp).x11DesktopNumber());
     }
 
     QSize virtualScreenSize() const override
@@ -1056,5 +1058,14 @@ public:
     QList<EffectScreen*> m_effectScreens;
     int m_trackingCursorChanges{0};
     std::unordered_map<Effect*, std::unordered_map<ElectricBorder, uint32_t>> reserved_borders;
+
+private:
+    win::subspace& get_subspace_ref(win::subspace* subsp) const
+    {
+        if (subsp) {
+            return *subsp;
+        }
+        return *get_space().subspace_manager->current;
+    }
 };
 }

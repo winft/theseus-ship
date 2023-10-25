@@ -8,6 +8,7 @@
 #include "render/effect/interface/effect_screen.h"
 #include <kwin_export.h>
 #include <render/effect/interface/types.h>
+#include <win/subspace.h>
 
 #include <QIcon>
 #include <QObject>
@@ -58,7 +59,7 @@ class KWIN_EXPORT EffectWindow : public QObject
     Q_PROPERTY(int width READ width)
     Q_PROPERTY(int x READ x)
     Q_PROPERTY(int y READ y)
-    Q_PROPERTY(QVector<uint> desktops READ desktops)
+    Q_PROPERTY(QVector<KWin::win::subspace*> desktops READ desktops)
     Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops)
     Q_PROPERTY(bool onCurrentDesktop READ isOnCurrentDesktop)
     Q_PROPERTY(QRect rect READ rect)
@@ -376,7 +377,7 @@ public:
     bool isOnAllActivities() const;
     virtual QStringList activities() const = 0;
 
-    Q_SCRIPTABLE bool isOnDesktop(int d) const;
+    Q_SCRIPTABLE bool isOnDesktop(KWin::win::subspace* subspace) const;
     bool isOnCurrentDesktop() const;
     bool isOnAllDesktops() const;
     /**
@@ -384,7 +385,7 @@ public:
      * a length of 1, on Wayland can be any subset.
      * If the list is empty it means the window is on all desktops
      */
-    virtual QVector<uint> desktops() const = 0;
+    virtual QVector<KWin::win::subspace*> desktops() const = 0;
 
     virtual int x() const = 0;
     virtual int y() const = 0;

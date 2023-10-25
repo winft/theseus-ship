@@ -118,10 +118,10 @@ TEST_CASE("translucency", "[effect]")
         QVERIFY(!translucency_effect->isActive());
 
         // let's send the window to subspace 2
-        effects->setNumberOfDesktops(2);
-        QCOMPARE(effects->numberOfDesktops(), 2);
+        win::subspace_manager_set_count(*setup.base->space->subspace_manager, 2);
+        QCOMPARE(effects->desktops().size(), 2);
         win::send_window_to_subspace(*setup.base->space, client, 2, false);
-        effects->setCurrentDesktop(2);
+        effects->setCurrentDesktop(effects->desktops().back());
         QVERIFY(!translucency_effect->isActive());
         cursor()->set_pos(client->geo.frame.center());
         win::perform_window_operation(client, win::win_op::move);

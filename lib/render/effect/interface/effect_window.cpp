@@ -63,10 +63,10 @@ bool EffectWindow::isOnCurrentDesktop() const
     return isOnDesktop(effects->currentDesktop());
 }
 
-bool EffectWindow::isOnDesktop(int d) const
+bool EffectWindow::isOnDesktop(win::subspace* subspace) const
 {
-    const QVector<uint> ds = desktops();
-    return ds.isEmpty() || ds.contains(d);
+    auto const ds = desktops();
+    return ds.isEmpty() || ds.contains(subspace);
 }
 
 bool EffectWindow::isOnAllDesktops() const

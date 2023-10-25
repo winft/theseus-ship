@@ -7,6 +7,7 @@
 
 #include <render/effect/interface/effect_togglable_state.h>
 #include <render/effect/interface/quick_scene.h>
+#include <win/subspace.h>
 
 namespace KWin
 {
@@ -65,7 +66,7 @@ public:
     void reconfigure(ReconfigureFlags flags) override;
     void grabbedKeyboardEvent(QKeyEvent* keyEvent) override;
 
-    Q_INVOKABLE void swapDesktops(uint from, uint to);
+    Q_INVOKABLE void swapDesktops(KWin::win::subspace* from, KWin::win::subspace* to);
 
 Q_SIGNALS:
     void animationDurationChanged();
