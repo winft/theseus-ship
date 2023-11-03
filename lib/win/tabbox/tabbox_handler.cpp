@@ -9,11 +9,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "tabbox_config.h"
 #include "tabbox_desktop_model.h"
 
-#include "base/x11/xcb/helpers.h"
 #include "script/platform.h"
 #include "tabbox_logging.h"
 #include "tabbox_switcher_item.h"
-#include "win/space.h"
 
 #include <QKeyEvent>
 #include <QModelIndex>
@@ -349,12 +347,9 @@ void tabbox_handler_private::show()
  * TabBoxHandler
  ***********************************************/
 
-tabbox_handler::tabbox_handler(std::function<QQmlEngine*(void)> qml_engine,
-                               xcb_connection_t* x11_con,
-                               QObject* parent)
+tabbox_handler::tabbox_handler(std::function<QQmlEngine*(void)> qml_engine, QObject* parent)
     : QObject(parent)
     , qml_engine{qml_engine}
-    , x11_con{x11_con}
 {
     KWin::win::tabbox_handle = this;
     d = new tabbox_handler_private(this);
@@ -385,9 +380,8 @@ void tabbox_handler::show()
         d->show();
     }
     if (d->config.is_highlight_windows()) {
-        if (x11_con) {
-            base::x11::xcb::sync(x11_con);
-        }
+        // TODO(romangg): Do we need to sync here with base::x11::xcb::sync like before?
+
         // TODO this should be
         // QMetaObject::invokeMethod(this, "init_highlight_windows", Qt::QueuedConnection);
         // but we somehow need to cross > 1 event cycle (likely because of queued invocation in the

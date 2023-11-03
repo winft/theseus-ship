@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/scene.h"
 #include "win/active_window.h"
 #include "win/control.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/surface.h>
@@ -27,7 +26,12 @@ TEST_CASE("maximize animation", "[effect]")
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("maximize-animation", operation_mode);
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
@@ -87,7 +91,7 @@ TEST_CASE("maximize animation", "[effect]")
 
         // Load effect that will be tested.
         const QString effectName = QStringLiteral("maximize");
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
         QVERIFY(effectsImpl->loadEffect(effectName));
         QCOMPARE(effectsImpl->loadedEffects().count(), 1);

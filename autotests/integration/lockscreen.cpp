@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/move.h"
 #include "win/screen.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/wayland/space.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -128,7 +127,7 @@ TEST_CASE("lockscreen", "[base]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -162,7 +161,7 @@ TEST_CASE("lockscreen", "[base]")
     {
         // This test verifies that the lockscreen greeter is placed above other windows.
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         LOCK QVERIFY(clientAddedSpy.wait());

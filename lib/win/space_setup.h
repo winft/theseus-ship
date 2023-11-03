@@ -10,8 +10,8 @@
 #include "dbus/virtual_desktop_manager.h"
 #include "rules.h"
 #include "tabbox/tabbox.h"
-#include "x11/space_setup.h"
-#include "x11/stacking.h"
+#include <win/options.h>
+#include <win/space_reconfigure.h>
 
 #include "base/platform.h"
 
@@ -29,7 +29,7 @@ void init_space(Space& space)
     init_rule_book(*space.rule_book, space);
 
     // dbus interface
-    new dbus::virtual_desktop_manager(space.virtual_desktop_manager.get());
+    new dbus::subspace_manager(*space.subspace_manager);
 
 #if KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
@@ -41,19 +41,6 @@ void init_space(Space& space)
                      &Space::qobject_t::configChanged,
                      space.deco->qobject.get(),
                      [&] { space.deco->reconfigure(); });
-
-    QObject::connect(space.session_manager.get(),
-                     &session_manager::loadSessionRequested,
-                     space.qobject.get(),
-                     [&](auto&& session_name) { load_session_info(space, session_name); });
-    QObject::connect(space.session_manager.get(),
-                     &session_manager::prepareSessionSaveRequested,
-                     space.qobject.get(),
-                     [&](auto const& name) { store_session(space, name, sm_save_phase0); });
-    QObject::connect(space.session_manager.get(),
-                     &session_manager::finishSessionSaveRequested,
-                     space.qobject.get(),
-                     [&](auto const& name) { store_session(space, name, sm_save_phase2); });
 
     QObject::connect(&space.base,
                      &base::platform::topology_changed,
@@ -78,16 +65,19 @@ void init_space(Space& space)
                      &Space::qobject_t::clientActivated,
                      space.qobject.get(),
                      [&] { space.stacking.focus_chain.active_window = space.stacking.active; });
+
+    using subspace_manager_qobject_t = decltype(space.subspace_manager->qobject)::element_type;
     QObject::connect(
-        space.virtual_desktop_manager->qobject.get(),
-        &virtual_desktop_manager_qobject::countChanged,
+        space.subspace_manager->qobject.get(),
+        &subspace_manager_qobject_t::countChanged,
         space.qobject.get(),
         [&](auto prev, auto next) { focus_chain_resize(space.stacking.focus_chain, prev, next); });
-    QObject::connect(
-        space.virtual_desktop_manager->qobject.get(),
-        &win::virtual_desktop_manager_qobject::currentChanged,
-        space.qobject.get(),
-        [&](auto /*prev*/, auto next) { space.stacking.focus_chain.current_desktop = next; });
+    QObject::connect(space.subspace_manager->qobject.get(),
+                     &subspace_manager_qobject_t::current_changed,
+                     space.qobject.get(),
+                     [&](auto /*prev*/, auto next) {
+                         space.stacking.focus_chain.current_subspace = next->x11DesktopNumber();
+                     });
     QObject::connect(
         space.options->qobject.get(),
         &options_qobject::separateScreenFocusChanged,
@@ -96,63 +86,64 @@ void init_space(Space& space)
     space.stacking.focus_chain.has_separate_screen_focus
         = space.options->qobject->isSeparateScreenFocus();
 
-    auto& vds = space.virtual_desktop_manager;
+    auto& subs_manager = space.subspace_manager;
     QObject::connect(
-        vds->qobject.get(),
-        &win::virtual_desktop_manager_qobject::countChanged,
+        subs_manager->qobject.get(),
+        &subspace_manager_qobject_t::countChanged,
         space.qobject.get(),
-        [&](auto prev, auto next) { handle_desktop_count_changed(space, prev, next); });
+        [&](auto prev, auto next) { handle_subspace_count_changed(space, prev, next); });
 
-    QObject::connect(vds->qobject.get(),
-                     &win::virtual_desktop_manager_qobject::currentChanged,
+    QObject::connect(subs_manager->qobject.get(),
+                     &subspace_manager_qobject_t::current_changed,
                      space.qobject.get(),
                      [&](auto prev, auto next) {
                          close_active_popup(space);
 
                          blocker block(space.stacking.order);
-                         update_client_visibility_on_desktop_change(&space, next);
+                         update_client_visibility_on_subspace_change(&space,
+                                                                     next->x11DesktopNumber());
 
                          if (space.showing_desktop) {
-                             // Do this only after desktop change to avoid flicker.
+                             // Do this only after subspace change to avoid flicker.
                              set_showing_desktop(space, false);
                          }
 
-                         activate_window_on_new_desktop(space, next);
-                         Q_EMIT space.qobject->currentDesktopChanged(prev);
+                         activate_window_on_new_subspace(space, next->x11DesktopNumber());
+                         Q_EMIT space.qobject->current_subspace_changed(prev);
                      });
 
-    QObject::connect(vds->qobject.get(),
-                     &win::virtual_desktop_manager_qobject::currentChanging,
+    QObject::connect(subs_manager->qobject.get(),
+                     &subspace_manager_qobject_t::current_changing,
                      space.qobject.get(),
-                     [&](auto currentDesktop, auto offset) {
+                     [&](auto current_subspace, auto offset) {
                          close_active_popup(space);
-                         Q_EMIT space.qobject->currentDesktopChanging(currentDesktop, offset);
+                         Q_EMIT space.qobject->current_subspace_changing(current_subspace, offset);
                      });
-    QObject::connect(vds->qobject.get(),
-                     &win::virtual_desktop_manager_qobject::currentChangingCancelled,
+    QObject::connect(subs_manager->qobject.get(),
+                     &subspace_manager_qobject_t::current_changing_cancelled,
                      space.qobject.get(),
-                     [&]() { Q_EMIT space.qobject->currentDesktopChangingCancelled(); });
+                     [&]() { Q_EMIT space.qobject->current_subspace_changing_cancelled(); });
 
-    vds->setNavigationWrappingAround(space.options->qobject->isRollOverDesktops());
-    QObject::connect(space.options->qobject.get(),
-                     &options_qobject::rollOverDesktopsChanged,
-                     vds->qobject.get(),
-                     [&vds](auto enabled) { vds->setNavigationWrappingAround(enabled); });
+    subspace_manager_set_nav_wraps(*subs_manager, space.options->qobject->isRollOverDesktops());
+    QObject::connect(
+        space.options->qobject.get(),
+        &options_qobject::rollOverDesktopsChanged,
+        subs_manager->qobject.get(),
+        [&subs_manager](auto enabled) { subspace_manager_set_nav_wraps(*subs_manager, enabled); });
 
-    auto config = space.base.config.main;
-    vds->setConfig(config);
+    subs_manager->config = space.base.config.main;
 
-    // positioning object needs to be created before the virtual desktops are loaded.
-    vds->load();
-    vds->updateLayout();
+    // positioning object needs to be created before the virtual subspaces are loaded.
+    subspace_manager_load(*subs_manager);
+    subspace_manager_update_layout(*subs_manager);
 
     // makes sure any autogenerated id is saved, necessary as in case of xwayland, load will be
     // called 2 times
     // load is needed to be called again when starting xwayalnd to sync to RootInfo, see BUG 385260
-    vds->save();
+    subspace_manager_save(*subs_manager);
 
-    if (!vds->setCurrent(space.m_initialDesktop)) {
-        vds->setCurrent(1);
+    if (!subspaces_set_current(*subs_manager, space.initial_subspace)) {
+        subspaces_set_current(*subs_manager, 1);
     }
 
     space.reconfigureTimer.setSingleShot(true);
@@ -160,9 +151,6 @@ void init_space(Space& space)
 
     QObject::connect(&space.reconfigureTimer, &QTimer::timeout, space.qobject.get(), [&] {
         space_reconfigure(space);
-    });
-    QObject::connect(&space.updateToolWindowsTimer, &QTimer::timeout, space.qobject.get(), [&] {
-        x11::update_tool_windows_visibility(&space, true);
     });
 
     // TODO: do we really need to reconfigure everything when fonts change?
@@ -175,44 +163,28 @@ void init_space(Space& space)
                                           SLOT(reconfigure()));
 
     space.stacking.active = {};
-    QObject::connect(space.stacking.order.qobject.get(),
-                     &stacking_order_qobject::changed,
-                     space.qobject.get(),
-                     [&](auto count_changed) {
-                         x11::propagate_clients(space, count_changed);
-                         if (space.stacking.active) {
-                             std::visit(
-                                 overload{[](auto&& win) { win->control->update_mouse_grab(); }},
-                                 *space.stacking.active);
-                         }
-                     });
-    QObject::connect(space.stacking.order.qobject.get(),
-                     &stacking_order_qobject::render_restack,
-                     space.qobject.get(),
-                     [&] { x11::render_stack_unmanaged_windows(space); });
 }
 
 template<typename Space>
 void clear_space(Space& space)
 {
-    space.stacking.order.lock();
-
-    // TODO: grabXServer();
-
-    x11::clear_space(space);
-
     using var_win = typename Space::window_t;
 
-    if constexpr (requires { Space::internal_window_t; }) {
+    space.stacking.order.lock();
+
+    if constexpr (requires { typename Space::internal_window_t; }) {
         using int_win = typename Space::internal_window_t;
         auto const windows_copy = space.windows;
         for (auto const& window : windows_copy) {
-            std::visit(overload{[&](int_win* win) {
-                           if (!win->remnant) {
-                               win->destroyClient();
-                               remove_all(space.windows, var_win(win));
-                           }
-                       }},
+            std::visit(overload{
+                           [&](int_win* win) {
+                               if (!win->remnant) {
+                                   win->destroyClient();
+                                   remove_all(space.windows, var_win(win));
+                               }
+                           },
+                           [](auto&&) {},
+                       },
                        window);
         }
     }
@@ -232,15 +204,15 @@ void clear_space(Space& space)
     space.rule_book.reset();
     space.base.config.main->sync();
 
-    space.root_info.reset();
+    if constexpr (requires(Space space) { space.root_info; }) {
+        space.root_info.reset();
+        for (auto const& s : space.session) {
+            delete s;
+        }
+    }
+
     delete space.client_keys_dialog;
-    for (auto const& s : space.session)
-        delete s;
-
-    // TODO: ungrabXServer();
-
-    base::x11::xcb::extensions::destroy();
-    space.base.render->compositor->space = nullptr;
+    space.base.render->space = nullptr;
 }
 
 }

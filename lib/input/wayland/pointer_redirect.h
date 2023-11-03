@@ -14,6 +14,7 @@
 #include "input/event_spy.h"
 #include "input/qt_event.h"
 #include "utils/blocker.h"
+#include <win/input.h>
 
 #include <KScreenLocker/KsldApp>
 #include <QObject>
@@ -192,7 +193,7 @@ public:
         redirect->cursor->cursor_image->removeEffectsOverrideCursor();
     }
 
-    void setWindowSelectionCursor(QByteArray const& shape)
+    void setWindowSelectionCursor(std::string const& shape)
     {
         // send leave to current pointer focus window
         update_to_reset();
@@ -715,13 +716,11 @@ public:
         if (!now_surface || focus.deco.client) {
             // Clean up focused pointer surface if there's no client to take focus,
             // or the pointer is on a client without surface or on a decoration.
-            warp_xcb_on_surface_left(nullptr);
             seat->pointers().set_focused_surface(nullptr);
             return;
         }
 
         // TODO: add convenient API to update global pos together with updating focused surface
-        warp_xcb_on_surface_left(now_surface);
 
         // TODO: why? in order to reset the cursor icon?
         cursor_update_blocking = true;
@@ -895,36 +894,6 @@ private:
         }
 
         Q_EMIT redirect->qobject->pointerButtonStateChanged(event.key, event.state);
-    }
-
-    void warp_xcb_on_surface_left(Wrapland::Server::Surface* newSurface)
-    {
-        auto xc = redirect->platform.base.server->xwayland_connection();
-        if (!xc) {
-            // No XWayland, no point in warping the x cursor
-            return;
-        }
-        auto const c = redirect->platform.base.x11_data.connection;
-        if (!c) {
-            return;
-        }
-        static bool s_hasXWayland119 = xcb_get_setup(c)->release_number >= 11900000;
-        if (s_hasXWayland119) {
-            return;
-        }
-        if (newSurface && newSurface->client() == xc) {
-            // new window is an X window
-            return;
-        }
-        auto s = redirect->platform.base.server->seat()->pointers().get_focus().surface;
-        if (!s || s->client() != xc) {
-            // pointer was not on an X window
-            return;
-        }
-        // warp pointer to 0/0 to trigger leave events on previously focused X window
-        xcb_warp_pointer(
-            c, XCB_WINDOW_NONE, redirect->platform.base.x11_data.root_window, 0, 0, 0, 0, 0, 0),
-            xcb_flush(c);
     }
 
     void apply_pointer_confinement(QPointF& pos) const

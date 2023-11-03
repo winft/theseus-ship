@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "win/placement.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
@@ -55,7 +54,12 @@ const char* policy_to_string(win::placement policy)
 
 TEST_CASE("placement", "[win]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("placement", operation_mode);
     setup.start();
     setup.set_outputs(2);
@@ -74,7 +78,7 @@ TEST_CASE("placement", "[win]")
         PlaceWindowResult rc;
 
         QSignalSpy window_spy(setup.base->space->qobject.get(),
-                              &win::space::qobject_t::wayland_window_added);
+                              &space::qobject_t::wayland_window_added);
         assert(window_spy.isValid());
 
         // create a new window

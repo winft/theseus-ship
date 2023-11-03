@@ -8,6 +8,7 @@
 #include "net/net.h"
 
 #include "base/x11/event_filter.h"
+#include <win/subspace_manager.h>
 
 namespace KWin::win::x11
 {
@@ -30,10 +31,10 @@ public:
         info->event(event, &dirtyProtocols, &dirtyProtocols2);
 
         if (dirtyProtocols & net::DesktopNames) {
-            info->space.virtual_desktop_manager->save();
+            subspace_manager_save(*info->space.subspace_manager);
         }
         if (dirtyProtocols2 & net::WM2DesktopLayout) {
-            info->space.virtual_desktop_manager->updateLayout();
+            subspace_manager_update_layout(*info->space.subspace_manager);
         }
         return false;
     }

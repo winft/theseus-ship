@@ -17,11 +17,11 @@ namespace KWin::render::x11
 template<typename EffectIntegrator>
 effect::fade_update get_kscreen_update(EffectIntegrator& effi)
 {
-    if (effi.atom == XCB_ATOM_NONE) {
+    if (effi.support.atom == XCB_ATOM_NONE) {
         return {{nullptr, false}, 0};
     }
 
-    auto const value = effi.effects.readRootProperty(effi.atom, XCB_ATOM_CARDINAL, 32);
+    auto const value = effi.effects.readRootProperty(effi.support.atom, XCB_ATOM_CARDINAL, 32);
     if (value.isEmpty()) {
         // Property was deleted. Screen should be faded in.
         return {{nullptr, true}, 1};
@@ -59,7 +59,7 @@ effect::fade_update get_kscreen_update(EffectIntegrator& effi)
 template<typename EffectIntegrator>
 void kscreen_update_state(EffectIntegrator& effi, double state)
 {
-    if (effi.atom == XCB_ATOM_NONE) {
+    if (effi.support.atom == XCB_ATOM_NONE) {
         return;
     }
 
@@ -78,7 +78,7 @@ void kscreen_update_state(EffectIntegrator& effi, double state)
     xcb_change_property(effi.effects.xcbConnection(),
                         XCB_PROP_MODE_REPLACE,
                         effi.effects.x11RootWindow(),
-                        effi.atom,
+                        effi.support.atom,
                         XCB_ATOM_CARDINAL,
                         32,
                         1,

@@ -12,6 +12,7 @@
 #include "screen.h"
 #include "stacking_order.h"
 #include "types.h"
+#include <win/activation.h>
 
 #include "base/options.h"
 #include "utils/blocker.h"
@@ -44,8 +45,11 @@ bool is_most_recently_raised(Win* win)
     using var_win = typename Win::space_t::window_t;
 
     // The last toplevel in the unconstrained stacking order is the most recently raised one.
-    auto last = top_client_on_desktop(
-        win->space, win->space.virtual_desktop_manager->current(), nullptr, true, false);
+    auto last = top_client_in_subspace(win->space,
+                                       subspaces_get_current_x11id(*win->space.subspace_manager),
+                                       nullptr,
+                                       true,
+                                       false);
     return last == var_win(win);
 }
 
@@ -145,7 +149,7 @@ bool perform_mouse_command(Win& win, mouse_cmd cmd, QPoint const& globalPos)
                                    // Can never raise above "it".
                                    return;
                                }
-                               mustReplay = !(on_current_desktop(cmp_win)
+                               mustReplay = !(on_current_subspace(*cmp_win)
                                               && cmp_win->geo.frame.intersects(win.geo.frame));
                            }},
                            *it);
@@ -208,10 +212,10 @@ bool perform_mouse_command(Win& win, mouse_cmd cmd, QPoint const& globalPos)
         break;
     }
     case mouse_cmd::previous_desktop:
-        window_to_prev_desktop(win);
+        window_to_prev_subspace(win);
         break;
     case mouse_cmd::next_desktop:
-        window_to_next_desktop(win);
+        window_to_next_subspace(win);
         break;
     case mouse_cmd::opacity_more:
         // No point in changing the opacity of the desktop.
@@ -324,11 +328,11 @@ void enter_event(Win* win, const QPoint& globalPos)
 
     if (win->space.options->qobject->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
         && is_focus_change_allowed(space) && globalPos != space.focusMousePos) {
-        auto top = top_client_on_desktop(space,
-                                         space.virtual_desktop_manager->current(),
-                                         win->space.options->qobject->isSeparateScreenFocus()
-                                             ? win->topo.central_output
-                                             : nullptr);
+        auto top = top_client_in_subspace(space,
+                                          subspaces_get_current_x11id(*space.subspace_manager),
+                                          win->space.options->qobject->isSeparateScreenFocus()
+                                              ? win->topo.central_output
+                                              : nullptr);
         if (top != var_win(win)) {
             win->control->start_auto_raise();
         }

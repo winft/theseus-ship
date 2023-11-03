@@ -592,7 +592,7 @@ TEST_CASE("quick tiling", "[win]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -683,7 +683,7 @@ TEST_CASE("quick tiling", "[win]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 

@@ -6,7 +6,6 @@
 #include "lib/setup.h"
 
 #include "input/wayland/platform.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>

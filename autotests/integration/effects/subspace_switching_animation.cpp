@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "render/scene.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/surface.h>
@@ -21,10 +20,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::detail::test
 {
 
-TEST_CASE("desktop switching animation", "[effect]")
+TEST_CASE("subspace switching animation", "[effect]")
 {
-    // This test verifies that virtual desktop switching animation effects actually
-    // try to animate switching between desktops.
+    // This test verifies that subspace switching animation effects actually
+    // try to animate switching between subspaces.
     using namespace Wrapland::Client;
 
     auto effectName = GENERATE(QString("cubeslide"), QString("fadedesktop"), QString("slide"));
@@ -33,7 +32,7 @@ TEST_CASE("desktop switching animation", "[effect]")
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    test::setup setup("desktop-switching-animation");
+    test::setup setup("subspace-switching-animation");
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
@@ -46,15 +45,15 @@ TEST_CASE("desktop switching animation", "[effect]")
 
     setup.start();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
-    // We need at least 2 virtual desktops for the test.
-    auto& vd_manager = setup.base->space->virtual_desktop_manager;
-    vd_manager->setCount(2);
-    QCOMPARE(vd_manager->current(), 1u);
-    QCOMPARE(vd_manager->count(), 2u);
+    // We need at least 2 subspaces for the test.
+    auto& subs = setup.base->space->subspace_manager;
+    win::subspace_manager_set_count(*subs, 2);
+    QCOMPARE(win::subspaces_get_current_x11id(*subs), 1u);
+    QCOMPARE(subs->subspaces.size(), 2u);
 
     setup_wayland_connection();
 
@@ -66,11 +65,11 @@ TEST_CASE("desktop switching animation", "[effect]")
     QVERIFY(shellSurface);
     auto client = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
-    QCOMPARE(client->topo.desktops.count(), 1);
-    QCOMPARE(client->topo.desktops.constFirst(), vd_manager->desktops().first());
+    QCOMPARE(client->topo.subspaces.size(), 1);
+    QCOMPARE(client->topo.subspaces.front(), subs->subspaces.front());
 
     // Load effect that will be tested.
-    auto& effectsImpl = setup.base->render->compositor->effects;
+    auto& effectsImpl = setup.base->render->effects;
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
@@ -79,9 +78,9 @@ TEST_CASE("desktop switching animation", "[effect]")
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
-    // Switch to the second virtual desktop.
-    vd_manager->setCurrent(2u);
-    QCOMPARE(vd_manager->current(), 2u);
+    // Switch to the second subspace.
+    win::subspaces_set_current(*subs, 2u);
+    QCOMPARE(win::subspaces_get_current_x11id(*subs), 2u);
     QVERIFY(effect->isActive());
     QCOMPARE(effects->activeFullScreenEffect(), effect);
 

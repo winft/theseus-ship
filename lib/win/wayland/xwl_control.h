@@ -23,10 +23,10 @@ public:
     {
     }
 
-    void set_desktops(QVector<virtual_desktop*> desktops) override
+    void set_subspaces(std::vector<subspace*> subs) override
     {
-        wayland::set_desktops(*window, desktops);
-        x11::control<Win>::set_desktops(desktops);
+        wayland::subspaces_announce(*window, subs);
+        x11::control<Win>::set_subspaces(subs);
     }
 
     void destroy_plasma_wayland_integration() override

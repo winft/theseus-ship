@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/shadow.h"
 #include "render/window.h"
 #include "win/deco.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 
 #include <KDecoration2/Decoration>
@@ -109,7 +108,7 @@ TEST_CASE("opengl shadow", "[render]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render->compositor);
+    QVERIFY(setup.base->render);
 
     // Add directory with fake decorations to the plugin search path.
     QCoreApplication::addLibraryPath(
@@ -121,7 +120,7 @@ TEST_CASE("opengl shadow", "[render]")
     group.sync();
     win::space_reconfigure(*setup.base->space);
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 

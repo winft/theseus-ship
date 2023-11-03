@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "win/geo.h"
-#include "win/space.h"
 
 #include <KConfigGroup>
 

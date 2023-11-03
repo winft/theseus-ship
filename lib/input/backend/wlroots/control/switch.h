@@ -13,7 +13,7 @@
 namespace KWin::input::backend::wlroots
 {
 
-class switch_control : public input::control::switch_device
+class KWIN_EXPORT switch_control : public input::control::switch_device
 {
     Q_OBJECT
 public:

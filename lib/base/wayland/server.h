@@ -31,6 +31,7 @@
 #include <Wrapland/Server/output_manager.h>
 #include <Wrapland/Server/pointer_constraints_v1.h>
 #include <Wrapland/Server/pointer_gestures_v1.h>
+#include <Wrapland/Server/primary_selection.h>
 #include <Wrapland/Server/relative_pointer_v1.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/viewporter.h>

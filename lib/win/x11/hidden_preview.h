@@ -9,6 +9,8 @@
 
 #include "base/x11/xcb/extensions.h"
 
+#include <xcb/shape.h>
+
 namespace KWin::win::x11
 {
 

@@ -6,7 +6,7 @@
 #pragma once
 
 #include "utils/algorithm.h"
-#include "win/virtual_desktops.h"
+#include <win/subspace.h>
 
 #include <Wrapland/Server/plasma_window.h>
 
@@ -14,14 +14,14 @@ namespace KWin::win::wayland
 {
 
 template<typename Win>
-void set_desktops(Win& win, QVector<virtual_desktop*> desktops)
+void subspaces_announce(Win& win, std::vector<subspace*> subs)
 {
     auto management = win.control->plasma_wayland_integration;
     if (!management) {
         return;
     }
 
-    if (desktops.isEmpty()) {
+    if (subs.empty()) {
         management->setOnAllDesktops(true);
         return;
     }
@@ -29,8 +29,8 @@ void set_desktops(Win& win, QVector<virtual_desktop*> desktops)
     management->setOnAllDesktops(false);
 
     auto currentDesktops = management->plasmaVirtualDesktops();
-    for (auto desktop : desktops) {
-        auto id = desktop->id().toStdString();
+    for (auto sub : subs) {
+        auto id = sub->id().toStdString();
         if (!contains(currentDesktops, id)) {
             management->addPlasmaVirtualDesktop(id);
         } else {

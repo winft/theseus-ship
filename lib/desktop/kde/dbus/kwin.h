@@ -10,6 +10,9 @@
 #include "kwin_export.h"
 #include "win/kill_window.h"
 #include "win/placement.h"
+#include <win/activation.h>
+#include <win/space_qobject.h>
+#include <win/subspaces_set.h>
 
 #include <QObject>
 #include <QtDBus>
@@ -165,7 +168,7 @@ public:
 
     void unclutter_desktop_impl() override
     {
-        win::unclutter_desktop(space);
+        win::unclutter_subspace(space);
     }
 
     QString support_information_impl() override
@@ -184,7 +187,7 @@ public:
 
     int current_desktop_impl() override
     {
-        return space.virtual_desktop_manager->current();
+        return win::subspaces_get_current_x11id(*space.subspace_manager);
     }
 
     void show_desktop_impl(bool show) override
@@ -194,17 +197,23 @@ public:
 
     bool set_current_desktop_impl(int desktop) override
     {
-        return space.virtual_desktop_manager->setCurrent(desktop);
+        return win::subspaces_set_current(*space.subspace_manager, desktop);
     }
 
     void next_desktop_impl() override
     {
-        space.virtual_desktop_manager->template moveTo<win::virtual_desktop_next>();
+        win::subspaces_set_current(*space.subspace_manager,
+                                   win::subspaces_get_successor_of(*space.subspace_manager,
+                                                                   *space.subspace_manager->current,
+                                                                   false));
     }
 
     void previous_desktop_impl() override
     {
-        space.virtual_desktop_manager->template moveTo<win::virtual_desktop_previous>();
+        win::subspaces_set_current(
+            *space.subspace_manager,
+            win::subspaces_get_predecessor_of(
+                *space.subspace_manager, *space.subspace_manager->current, false));
     }
 
     void show_debug_console_impl() override
@@ -301,7 +310,7 @@ private:
             {QStringLiteral("y"), win->geo.pos().y()},
             {QStringLiteral("width"), win->geo.size().width()},
             {QStringLiteral("height"), win->geo.size().height()},
-            {QStringLiteral("desktops"), win::desktop_ids(win)},
+            {QStringLiteral("desktops"), win::subspaces_ids(*win)},
             {QStringLiteral("minimized"), win->control->minimized},
             {QStringLiteral("shaded"), false},
             {QStringLiteral("fullscreen"), win->control->fullscreen},

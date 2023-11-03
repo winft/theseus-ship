@@ -12,10 +12,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/xkb/helpers.h"
 #include "win/active_window.h"
 #include "win/input.h"
-#include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/shortcut_dialog.h"
-#include "win/space.h"
 #include "win/user_actions_menu.h"
 #include "win/x11/window.h"
 
@@ -318,7 +316,7 @@ TEST_CASE("global shortcuts", "[input]")
         xcb_flush(c.get());
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -424,7 +422,7 @@ TEST_CASE("global shortcuts", "[input]")
         QCOMPARE(client->control->shortcut, QKeySequence());
 
         QSignalSpy shortcutDialogAddedSpy(setup.base->space->qobject.get(),
-                                          &win::space::qobject_t::internalClientAdded);
+                                          &space::qobject_t::internalClientAdded);
         QVERIFY(shortcutDialogAddedSpy.isValid());
         win::active_window_setup_window_shortcut(*setup.base->space);
         QTRY_COMPARE(shortcutDialogAddedSpy.count(), 1);

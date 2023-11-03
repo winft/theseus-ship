@@ -39,6 +39,10 @@ public:
         , space{space}
         , xinput{std::make_unique<xinput_integration<type>>(QX11Info::display(), *this)}
     {
+        QObject::connect(cursor.get(), &cursor::theme_changed, space.qobject.get(), [&space] {
+            space.xcb_cursors.clear();
+        });
+
         platform.xkb.reconfigure();
     }
 

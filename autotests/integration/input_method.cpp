@@ -122,7 +122,8 @@ TEST_CASE("input method", "[input],[win]")
         popup.server_popup_surface
             = popup_spy.front().front().value<Wrapland::Server::input_method_popup_surface_v2*>();
 
-        popup.window = setup.base->space->find_window(popup.server_popup_surface->surface());
+        popup.window = win::wayland::space_windows_find(*setup.base->space,
+                                                        popup.server_popup_surface->surface());
         QVERIFY(popup.window);
 
         popup.shown_spy = std::make_unique<QSignalSpy>(popup.window->qobject.get(),
@@ -240,11 +241,11 @@ TEST_CASE("input method", "[input],[win]")
          * drawn with acceptable geometry and the window is destroyed on release.
          */
         QSignalSpy window_added_spy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::wayland_window_added);
+                                    &space::qobject_t::wayland_window_added);
         QVERIFY(window_added_spy.isValid());
 
         QSignalSpy window_removed_spy(setup.base->space->qobject.get(),
-                                      &win::space::qobject_t::wayland_window_removed);
+                                      &space::qobject_t::wayland_window_removed);
         QVERIFY(window_removed_spy.isValid());
 
         QSignalSpy done_spy(input_method.get(), &Wrapland::Client::input_method_v2::done);
@@ -299,11 +300,11 @@ TEST_CASE("input method", "[input],[win]")
          * drawn with acceptable geometry and the window is destroyed on release.
          */
         QSignalSpy window_added_spy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::wayland_window_added);
+                                    &space::qobject_t::wayland_window_added);
         QVERIFY(window_added_spy.isValid());
 
         QSignalSpy window_removed_spy(setup.base->space->qobject.get(),
-                                      &win::space::qobject_t::wayland_window_removed);
+                                      &space::qobject_t::wayland_window_removed);
         QVERIFY(window_removed_spy.isValid());
 
         QSignalSpy done_spy(input_method.get(), &Wrapland::Client::input_method_v2::done);

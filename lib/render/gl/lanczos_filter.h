@@ -64,7 +64,7 @@ public:
                              return win::space_window_area(*m_scene->platform.base.space,
                                                            win::area_option::screen,
                                                            output,
-                                                           win::get_desktop(*win));
+                                                           win::get_subspace(*win));
                          }},
                          *eff_win.window.ref_win);
 

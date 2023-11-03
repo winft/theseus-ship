@@ -7,7 +7,7 @@
 
 #include "strut_rect.h"
 #include "types.h"
-#include "x11/net/win_info.h"
+#include <win/subspaces_get.h>
 
 #include <QRegion>
 
@@ -16,16 +16,16 @@ namespace KWin::win
 
 template<typename Space>
 QRegion struts_to_region(Space const& space,
-                         int desktop,
+                         int subspace,
                          win::strut_area areas,
                          std::vector<win::strut_rects> const& struts)
 {
-    if (desktop == x11::net::win_info::OnAllDesktops || desktop == 0) {
-        desktop = space.virtual_desktop_manager->current();
+    if (subspace == x11_desktop_number_on_all || subspace == x11_desktop_number_undefined) {
+        subspace = subspaces_get_current_x11id(*space.subspace_manager);
     }
 
     QRegion region;
-    auto const& rects = struts[desktop];
+    auto const& rects = struts[subspace];
 
     for (auto const& rect : rects) {
         if (flags(areas & rect.area())) {

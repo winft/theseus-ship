@@ -6,6 +6,7 @@
 #pragma once
 
 #include "xdg_shell.h"
+#include <win/wayland/space_windows.h>
 
 namespace KWin::win::wayland
 {
@@ -13,7 +14,7 @@ namespace KWin::win::wayland
 template<typename Space>
 void handle_new_plasma_shell_surface(Space* space, Wrapland::Server::PlasmaShellSurface* surface)
 {
-    if (auto win = space->find_window(surface->surface())) {
+    if (auto win = space_windows_find(*space, surface->surface())) {
         assert(win->toplevel || win->popup || win->layer_surface);
         install_plasma_shell_surface(*win, surface);
     } else {

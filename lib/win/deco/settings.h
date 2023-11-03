@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "bridge_qobject.h"
 
 #include "win/space_qobject.h"
-#include "win/virtual_desktops.h"
 
 #include <KConfigGroup>
 #include <KDecoration2/Private/DecorationSettingsPrivate>
@@ -31,15 +30,15 @@ public:
         initButtons();
         readSettings();
 
-        auto comp_qobject = space.base.render->compositor->qobject.get();
+        auto comp_qobject = space.base.render->qobject.get();
         using comp_qobject_t = std::remove_pointer_t<decltype(comp_qobject)>;
 
         auto c = connect(comp_qobject,
                          &comp_qobject_t::compositingToggled,
                          parent,
                          &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
-        connect(space.virtual_desktop_manager->qobject.get(),
-                &win::virtual_desktop_manager_qobject::countChanged,
+        connect(space.subspace_manager->qobject.get(),
+                &decltype(space.subspace_manager->qobject)::element_type::countChanged,
                 this,
                 [parent](uint previous, uint current) {
                     if (previous != 1 && current != 1) {
@@ -59,14 +58,14 @@ public:
 
     bool isAlphaChannelSupported() const override
     {
-        auto comp = space.base.render->compositor.get();
+        auto comp = space.base.render.get();
         using comp_t = std::remove_pointer_t<decltype(comp)>;
         return comp->state == comp_t::state_t::on;
     }
 
     bool isOnAllDesktopsAvailable() const override
     {
-        return space.virtual_desktop_manager->count() > 1;
+        return space.subspace_manager->subspaces.size() > 1;
     }
 
     bool isCloseOnDoubleClickOnMenu() const override

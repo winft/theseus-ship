@@ -53,6 +53,8 @@ target_sources(render
       effect/internal_win_properties.h
       effect/internal_win_update.h
       effect/screen_impl.h
+      effect/setup_handler.h
+      effect/setup_window.h
       effect/window_group_impl.h
       effect/window_impl.h
       gl/backend.h
@@ -90,12 +92,10 @@ target_sources(render
       effect_loader.h
       options.h
       outline.h
-      platform.h
       scene.h
       shadow.h
       shortcuts_init.h
       singleton_interface.h
-      support_properties.h
       types.h
       window.h
   PRIVATE
@@ -162,12 +162,6 @@ target_sources(render
     ${render_dbus_SRCS}
 )
 
-set_target_properties(render PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-render"
-)
-
 add_library(render-x11 SHARED)
 
 target_link_libraries(render-x11
@@ -182,31 +176,46 @@ target_sources(render-x11
   PUBLIC
     FILE_SET HEADERS
     FILES
-      backend/x11/non_composited_outline.h
-      x11/buffer.h
-      x11/compositor.h
       x11/compositor_selection_owner.h
-      x11/effect.h
-      x11/effects.h
+      x11/effect/setup_handler.h
+      x11/effect/setup_window.h
       x11/keyboard_intercept_filter.h
       x11/mouse_intercept_filter.h
-      x11/overlay_window.h
-      x11/platform.h
       x11/property_notify_filter.h
       x11/shadow.h
+      x11/support_properties.h
       x11/types.h
+  PRIVATE
+    x11/compositor_selection_owner.cpp
+)
+
+add_library(render-x11-backend SHARED)
+
+target_link_libraries(render-x11-backend
+  PUBLIC
+    base-x11
+    render-x11
+  PRIVATE
+    XCB::IMAGE
+)
+
+target_sources(render-x11-backend
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      backend/x11/non_composited_outline.h
+      x11/buffer.h
+      x11/compositor_start.h
+      x11/effect.h
+      x11/effects.h
+      x11/overlay_window.h
+      x11/platform.h
+      x11/sync.h
       xrender/utils.h
   PRIVATE
     backend/x11/glx_context_attribute_builder.cpp
     backend/x11/non_composited_outline.cpp
-    x11/compositor_selection_owner.cpp
     xrender/utils.cpp
-)
-
-set_target_properties(render-x11 PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-render-x11"
 )
 
 add_library(render-wl SHARED)
@@ -234,23 +243,26 @@ target_sources(render-wl
       wayland/effect/slide_integration.h
       wayland/effect/slide_update.h
       wayland/effect/update.h
+      wayland/effect/xwayland.h
       wayland/buffer.h
-      wayland/compositor.h
       wayland/duration_record.h
       wayland/effects.h
       wayland/egl.h
       wayland/egl_data.h
       wayland/output.h
-      wayland/platform.h
       wayland/presentation.h
+      wayland/setup_handler.h
+      wayland/setup_window.h
       wayland/shadow.h
       wayland/utils.h
+      wayland/xwl_effects.h
+      wayland/xwl_platform.h
 )
 
-set_target_properties(render-wl PROPERTIES
+set_target_properties(render render-x11 render-x11-backend render-wl PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-render-wl"
+  PREFIX libkwinft-
 )
 
 install(
@@ -269,37 +281,8 @@ install(
 install(DIRECTORY qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
 install(DIRECTORY qml/frames/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/frames)
 
-install(TARGETS render
-  EXPORT render-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
+install(TARGETS render render-x11 render-x11-backend render-wl
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/render
-)
-install(TARGETS render-x11
-  EXPORT render-x11-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/render
-)
-install(TARGETS render-wl
-  EXPORT render-wl-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/render
-)
-
-install(EXPORT render-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT render-x11-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT render-wl-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )

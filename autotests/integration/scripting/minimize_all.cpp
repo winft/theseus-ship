@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "script/platform.h"
 #include "script/script.h"
 #include "win/control.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <KPackage/PackageLoader>
@@ -52,7 +51,12 @@ TEST_CASE("minimize all", "[script]")
 
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("minimize-all", operation_mode);
     setup.start();
     setup.set_outputs(2);

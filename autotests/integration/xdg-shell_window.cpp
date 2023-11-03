@@ -19,7 +19,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/screen.h"
-#include "win/space.h"
 #include "win/transient.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
@@ -70,7 +69,7 @@ TEST_CASE("xdg-shell window", "[win]")
     {
         // this test verifies that mapping a previously mapped window works correctly
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
         QVERIFY(effectsWindowShownSpy.isValid());
@@ -110,7 +109,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(deletedUuid.isNull(), true);
 
         QObject::connect(client->space.qobject.get(),
-                         &win::space::qobject_t::remnant_created,
+                         &space::qobject_t::remnant_created,
                          client->qobject.get(),
                          [&setup, &deletedUuid](auto win_id) {
                              auto remnant_win
@@ -121,8 +120,7 @@ TEST_CASE("xdg-shell window", "[win]")
         // now unmap
         QSignalSpy hiddenSpy(client->qobject.get(), &win::window_qobject::windowHidden);
         QVERIFY(hiddenSpy.isValid());
-        QSignalSpy windowClosedSpy(client->space.qobject.get(),
-                                   &win::space::qobject_t::remnant_created);
+        QSignalSpy windowClosedSpy(client->space.qobject.get(), &space::qobject_t::remnant_created);
         QVERIFY(windowClosedSpy.isValid());
         surface->attachBuffer(Buffer::Ptr());
         surface->commit(Surface::CommitFlag::None);
@@ -828,7 +826,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QString const kill = QFINDTESTDATA(QStringLiteral("kill"));
         QVERIFY(!kill.isEmpty());
         QSignalSpy shellClientAddedSpy(setup.base->space->qobject.get(),
-                                       &win::space::qobject_t::wayland_window_added);
+                                       &space::qobject_t::wayland_window_added);
         QVERIFY(shellClientAddedSpy.isValid());
 
         std::unique_ptr<QProcess> process(new QProcess);
@@ -949,12 +947,12 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(win::decoration(c));
     }
 
-    SECTION("send window with transient to desktop")
+    SECTION("send window with transient to subspace")
     {
-        // this test verifies that when sending a client to a desktop all transients are also send
-        // to that desktop
+        // this test verifies that when sending a client to a subspace all transients are also send
+        // to that subspace
 
-        setup.base->space->virtual_desktop_manager->setCount(2);
+        win::subspace_manager_set_count(*setup.base->space->subspace_manager, 2);
         std::unique_ptr<Surface> surface{create_surface()};
         std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
 
@@ -973,28 +971,28 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(transient->transient->lead(), c);
         QVERIFY(contains(c->transient->children, transient));
 
-        QCOMPARE(win::get_desktop(*c), 1);
-        QVERIFY(!win::on_all_desktops(c));
-        QCOMPARE(win::get_desktop(*transient), 1);
-        QVERIFY(!win::on_all_desktops(transient));
-        win::active_window_to_desktop(*setup.base->space, 2);
+        QCOMPARE(win::get_subspace(*c), 1);
+        QVERIFY(!win::on_all_subspaces(*c));
+        QCOMPARE(win::get_subspace(*transient), 1);
+        QVERIFY(!win::on_all_subspaces(*transient));
+        win::active_window_to_subspace(*setup.base->space, 2);
 
-        QCOMPARE(win::get_desktop(*c), 1);
-        QCOMPARE(win::get_desktop(*transient), 2);
+        QCOMPARE(win::get_subspace(*c), 1);
+        QCOMPARE(win::get_subspace(*transient), 2);
 
         // activate c
         win::activate_window(*setup.base->space, *c);
         QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
         QVERIFY(c->control->active);
 
-        // and send it to the desktop it's already on
-        QCOMPARE(win::get_desktop(*c), 1);
-        QCOMPARE(win::get_desktop(*transient), 2);
-        win::active_window_to_desktop(*setup.base->space, 1);
+        // and send it to the subspace it's already on
+        QCOMPARE(win::get_subspace(*c), 1);
+        QCOMPARE(win::get_subspace(*transient), 2);
+        win::active_window_to_subspace(*setup.base->space, 1);
 
-        // which should move the transient back to the desktop
-        QCOMPARE(win::get_desktop(*c), 1);
-        QCOMPARE(win::get_desktop(*transient), 1);
+        // which should move the transient back to the subspace
+        QCOMPARE(win::get_subspace(*c), 1);
+        QCOMPARE(win::get_subspace(*transient), 1);
     }
 
     SECTION("minimize window with transients")

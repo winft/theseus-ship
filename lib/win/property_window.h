@@ -6,7 +6,7 @@
 #pragma once
 
 #include "kwin_export.h"
-#include "virtual_desktops.h"
+#include <win/subspace.h>
 
 #include <QObject>
 
@@ -58,7 +58,7 @@ class KWIN_EXPORT property_window : public QObject
 
     Q_PROPERTY(bool fullScreen READ isFullScreen WRITE setFullScreen NOTIFY fullScreenChanged)
 
-    Q_PROPERTY(QVector<KWin::win::virtual_desktop*> desktops READ desktops WRITE setDesktops NOTIFY
+    Q_PROPERTY(QVector<KWin::win::subspace*> desktops READ desktops WRITE setDesktops NOTIFY
                    desktopsChanged)
     Q_PROPERTY(
         bool onAllDesktops READ isOnAllDesktops WRITE setOnAllDesktops NOTIFY desktopsChanged)
@@ -170,8 +170,8 @@ public:
     virtual bool isFullScreen() const = 0;
     virtual void setFullScreen(bool set) = 0;
 
-    virtual QVector<win::virtual_desktop*> desktops() const = 0;
-    virtual void setDesktops(QVector<win::virtual_desktop*> desktops) = 0;
+    virtual QVector<win::subspace*> desktops() const = 0;
+    virtual void setDesktops(QVector<win::subspace*> desktops) = 0;
     virtual bool isOnAllDesktops() const = 0;
     virtual void setOnAllDesktops(bool set) = 0;
 

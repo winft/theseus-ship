@@ -8,7 +8,6 @@
 #include "layers.h"
 #include "rules/types.h"
 #include "scene.h"
-#include "x11/net/net.h"
 
 namespace KWin::win
 {
@@ -23,29 +22,23 @@ void set_keep_above(Win* win, bool keep)
     if (keep && !win->control->rules.checkKeepBelow(false)) {
         set_keep_below(win, false);
     }
+
     if (keep == win->control->keep_above) {
         // force hint change if different
-        if constexpr (requires(Win win) { win.net_info; }) {
-            if (static_cast<bool>(win->net_info->state() & x11::net::KeepAbove) != keep) {
-                win->net_info->setState(keep ? x11::net::KeepAbove : x11::net::States(),
-                                        x11::net::KeepAbove);
-            }
+        if constexpr (requires(Win win, bool keep) { win.set_state_keep_above(keep); }) {
+            win->set_state_keep_above(keep);
         }
         return;
     }
+
     win->control->keep_above = keep;
 
-    if constexpr (requires(Win win) { win.net_info; }) {
-        win->net_info->setState(keep ? x11::net::KeepAbove : x11::net::States(),
-                                x11::net::KeepAbove);
+    if constexpr (requires(Win win, bool keep) { win.set_state_keep_above(keep); }) {
+        win->set_state_keep_above(keep);
     }
 
     update_layer(win);
     win->updateWindowRules(rules::type::above);
-
-    if constexpr (requires(Win* win) { win->doSetKeepAbove(); }) {
-        win->doSetKeepAbove();
-    }
 
     Q_EMIT win->qobject->keepAboveChanged(keep);
 }
@@ -57,30 +50,24 @@ void set_keep_below(Win* win, bool keep)
     if (keep && !win->control->rules.checkKeepAbove(false)) {
         set_keep_above(win, false);
     }
+
     if (keep == win->control->keep_below) {
         // force hint change if different
-        if constexpr (requires(Win win) { win.net_info; }) {
-            if (static_cast<bool>(win->net_info->state() & x11::net::KeepBelow) != keep) {
-                win->net_info->setState(keep ? x11::net::KeepBelow : x11::net::States(),
-                                        x11::net::KeepBelow);
-            }
+        if constexpr (requires(Win win, bool keep) { win.set_state_keep_below(keep); }) {
+            win->set_state_keep_below(keep);
         }
 
         return;
     }
+
     win->control->keep_below = keep;
 
-    if constexpr (requires(Win win) { win.net_info; }) {
-        win->net_info->setState(keep ? x11::net::KeepBelow : x11::net::States(),
-                                x11::net::KeepBelow);
+    if constexpr (requires(Win win, bool keep) { win.set_state_keep_below(keep); }) {
+        win->set_state_keep_below(keep);
     }
 
     update_layer(win);
     win->updateWindowRules(rules::type::below);
-
-    if constexpr (requires(Win* win) { win->doSetKeepBelow(); }) {
-        win->doSetKeepBelow();
-    }
 
     Q_EMIT win->qobject->keepBelowChanged(keep);
 }
@@ -98,7 +85,7 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         }
 
         win->updateWindowRules(rules::type::minimize);
-        win->space.base.render->compositor->addRepaint(visible_rect(win));
+        win->space.base.render->addRepaint(visible_rect(win));
 
         // TODO: merge signal with s_minimized
         Q_EMIT win->qobject->clientMinimized(!avoid_animation);

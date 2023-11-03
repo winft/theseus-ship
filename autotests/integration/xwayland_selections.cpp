@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/wayland/server.h"
 #include "win/activation.h"
-#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
@@ -56,11 +55,10 @@ TEST_CASE("xwayland selections", "[win],[xwl]")
         const QString paste = QFINDTESTDATA(QStringLiteral("paste"));
         QVERIFY(!paste.isEmpty());
 
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::clientAdded);
+        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
         QVERIFY(clientAddedSpy.isValid());
         QSignalSpy shellClientAddedSpy(setup.base->space->qobject.get(),
-                                       &win::space::qobject_t::wayland_window_added);
+                                       &space::qobject_t::wayland_window_added);
         QVERIFY(shellClientAddedSpy.isValid());
 
         QSignalSpy clipboardChangedSpy = [&setup, &clipboard_mode]() {
@@ -146,7 +144,7 @@ TEST_CASE("xwayland selections", "[win],[xwl]")
 
         if (setup.base->space->stacking.active != pasteClient) {
             QSignalSpy clientActivatedSpy(setup.base->space->qobject.get(),
-                                          &win::space::qobject_t::clientActivated);
+                                          &space::qobject_t::clientActivated);
             QVERIFY(clientActivatedSpy.isValid());
             std::visit(
                 overload{[&setup](auto&& win) { win::activate_window(*setup.base->space, *win); }},

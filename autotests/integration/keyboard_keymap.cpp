@@ -7,7 +7,6 @@
 
 #include "input/cursor.h"
 #include "win/activation.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>

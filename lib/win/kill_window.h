@@ -9,6 +9,7 @@
 #pragma once
 
 #include "osd.h"
+#include <utils/algorithm.h>
 
 #include <KLocalizedString>
 
@@ -40,17 +41,20 @@ public:
                     return;
                 }
 
-                std::visit(overload{[&](auto&& win) {
-                               if (win->control) {
-                                   win->killWindow();
-                                   return;
-                               }
-                               if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
-                                   xcb_kill_client(space.base.x11_data.connection,
-                                                   win->xcb_windows.client);
-                               }
-                           }},
-                           *window);
+                std::visit(
+                    overload{[&](auto&& win) {
+                        if (win->control) {
+                            win->killWindow();
+                            return;
+                        }
+                        if constexpr (requires(Space space) { space.base.x11_data.connection; }) {
+                            if constexpr (requires(decltype(win) win) { win->xcb_windows; }) {
+                                xcb_kill_client(space.base.x11_data.connection,
+                                                win->xcb_windows.client);
+                            }
+                        }
+                    }},
+                    *window);
             },
             QByteArrayLiteral("pirate"));
     }

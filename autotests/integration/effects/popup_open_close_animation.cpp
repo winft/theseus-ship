@@ -11,9 +11,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effects.h"
 #include "win/deco.h"
 #include "win/deco/client_impl.h"
-#include "win/internal_window.h"
 #include "win/net.h"
-#include "win/space.h"
 #include "win/transient.h"
 #include "win/user_actions_menu.h"
 
@@ -32,9 +30,13 @@ TEST_CASE("popup open close animation", "[effect]")
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
-    test::setup setup("popup-open-close-animation", operation_mode);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
 
+    test::setup setup("popup-open-close-animation", operation_mode);
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
@@ -54,7 +56,7 @@ TEST_CASE("popup open close animation", "[effect]")
         // to animate popups(e.g. popup menus, tooltips, etc).
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
 
         // Create the main window.
@@ -119,7 +121,7 @@ TEST_CASE("popup open close animation", "[effect]")
         // to animate the user actions popup.
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
 
         // Create the test client.
@@ -171,7 +173,7 @@ TEST_CASE("popup open close animation", "[effect]")
         // to animate decoration tooltips.
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
 
         // Create the test client.

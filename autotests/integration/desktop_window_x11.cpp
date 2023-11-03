@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/cursor.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
@@ -115,8 +114,7 @@ TEST_CASE("x11 desktop window", "[xwl],[win]")
     QCOMPARE(geo->depth, uint8_t(32));
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                &win::space::qobject_t::clientAdded);
+    QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 

@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/scene.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
@@ -36,7 +35,7 @@ TEST_CASE("no crash empty deco", "[win]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -64,8 +63,7 @@ TEST_CASE("no crash empty deco", "[win]")
     xcb_flush(c);
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                &win::space::qobject_t::clientAdded);
+    QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 

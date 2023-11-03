@@ -12,9 +12,8 @@
 
 #include "move.h"
 #include "singleton_interface.h"
-#include "virtual_desktops.h"
+#include <win/subspace.h>
 
-#include "base/x11/xcb/helpers.h"
 #include "input/gestures.h"
 
 #include <KConfigGroup>
@@ -225,13 +224,15 @@ public:
         return true;
     }
 
-    bool check(QPoint const& cursorPos, QDateTime const& triggerTime, bool forceNoPushBack = false)
+    bool check(QPoint const& cursorPos,
+               std::chrono::system_clock::time_point triggerTime,
+               bool forceNoPushBack = false)
     {
         if (!triggersFor(cursorPos)) {
             return false;
         }
-        if (last_trigger_time.isValid()
-            && last_trigger_time.msecsTo(triggerTime)
+        if (last_trigger_time != std::chrono::system_clock::time_point()
+            && triggerTime - last_trigger_time
                 < edger->reactivate_threshold - edger->time_threshold) {
             // Still in cooldown. reset the time, so the user has to actually keep the mouse still
             // for this long to retrigger
@@ -255,12 +256,12 @@ public:
         return false;
     }
 
-    void markAsTriggered(const QPoint& cursorPos, QDateTime const& triggerTime)
+    void markAsTriggered(const QPoint& cursorPos, std::chrono::system_clock::time_point triggerTime)
     {
         last_trigger_time = triggerTime;
 
         // invalidate
-        last_reset_time = QDateTime();
+        last_reset_time = {};
         triggered_point = cursorPos;
     }
 
@@ -474,8 +475,8 @@ public:
         auto window = edger->space.stacking.active;
 
         auto newValue = !edger->remainActiveOnFullscreen() && window
-            && !(edger->space.base.render->compositor->effects
-                 && edger->space.base.render->compositor->effects->hasActiveFullScreenEffect());
+            && !(edger->space.base.render->effects
+                 && edger->space.base.render->effects->hasActiveFullScreenEffect());
         if (newValue) {
             newValue = std::visit(overload{[&](auto&& win) {
                                       return win->control->fullscreen
@@ -683,25 +684,25 @@ private:
         doDeactivate();
     }
 
-    bool canActivate(QPoint const& cursorPos, const QDateTime& triggerTime)
+    bool canActivate(QPoint const& cursorPos, std::chrono::system_clock::time_point triggerTime)
     {
         // we check whether either the timer has explicitly been invalidated (successful trigger) or
         // is bigger than the reactivation threshold (activation "aborted", usually due to moving
         // away the cursor from the corner after successful activation) either condition means that
         // "this is the first event in a new attempt"
-        if (!last_reset_time.isValid()
-            || last_reset_time.msecsTo(triggerTime) > edger->reactivate_threshold) {
+        if (last_reset_time == std::chrono::system_clock::time_point()
+            || triggerTime - last_reset_time > edger->reactivate_threshold) {
             last_reset_time = triggerTime;
             return false;
         }
 
-        if (last_trigger_time.isValid()
-            && last_trigger_time.msecsTo(triggerTime)
+        if (last_trigger_time != std::chrono::system_clock::time_point()
+            && triggerTime - last_trigger_time
                 < edger->reactivate_threshold - edger->time_threshold) {
             return false;
         }
 
-        if (last_reset_time.msecsTo(triggerTime) < edger->time_threshold) {
+        if (triggerTime - last_reset_time < edger->time_threshold) {
             return false;
         }
 
@@ -816,66 +817,71 @@ private:
 
     void switchDesktop(QPoint const& cursorPos)
     {
-        QPoint pos(cursorPos);
-        auto& vds = edger->space.virtual_desktop_manager;
-        auto const oldDesktop = vds->currentDesktop();
-        auto desktop = oldDesktop;
+        auto pos = cursorPos;
+
+        auto& vds = edger->space.subspace_manager;
+        auto const old_subsp = vds->current;
+        auto subsp = vds->current;
         int const OFFSET = 2;
 
+        // TODO(romangg): In case a screen edge in on a vertical and horizontal axis, this logic
+        // means that we always pick the north/south one in the end. Is this what we want?
+
         if (isLeft()) {
-            auto const interimDesktop = desktop;
-            desktop = vds->toLeft(desktop, vds->isNavigationWrappingAround());
-            if (desktop != interimDesktop)
+            subsp = &subspaces_get_west_of_current(*vds);
+            if (old_subsp != subsp) {
                 pos.setX(edger->space.base.topology.size.width() - 1 - OFFSET);
+            }
         } else if (isRight()) {
-            auto const interimDesktop = desktop;
-            desktop = vds->toRight(desktop, vds->isNavigationWrappingAround());
-            if (desktop != interimDesktop)
+            subsp = &subspaces_get_east_of_current(*vds);
+            if (old_subsp != subsp) {
                 pos.setX(OFFSET);
+            }
         }
 
         if (isTop()) {
-            auto const interimDesktop = desktop;
-            desktop = vds->above(desktop, vds->isNavigationWrappingAround());
-            if (desktop != interimDesktop)
+            subsp = &subspaces_get_north_of_current(*vds);
+            if (old_subsp != subsp) {
                 pos.setY(edger->space.base.topology.size.height() - 1 - OFFSET);
+            }
         } else if (isBottom()) {
-            auto const interimDesktop = desktop;
-            desktop = vds->below(desktop, vds->isNavigationWrappingAround());
-            if (desktop != interimDesktop)
+            subsp = &subspaces_get_south_of_current(*vds);
+            if (old_subsp != subsp) {
                 pos.setY(OFFSET);
+            }
         }
 
         if (auto& mov_res = edger->space.move_resize_window) {
-            QVector<virtual_desktop*> desktops{desktop};
+            std::vector<subspace*> subs{subsp};
             if (std::visit(overload{[&](auto&& win) {
                                return win->control->rules.checkDesktops(
-                                   *edger->space.virtual_desktop_manager, desktops);
+                                   *edger->space.subspace_manager, subs);
                            }},
                            *mov_res)
-                != desktops) {
+                != subs) {
                 // User tries to move a client to another desktop where it is ruleforced to not be.
                 return;
             }
         }
 
-        vds->setCurrent(desktop);
-
-        if (vds->currentDesktop() != oldDesktop) {
-            push_back_is_blocked = true;
-            edger->space.input->cursor->set_pos(pos);
-
-            QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
-            *me = QObject::connect(
-                QCoreApplication::eventDispatcher(),
-                &QAbstractEventDispatcher::aboutToBlock,
-                qobject.get(),
-                [this, me]() {
-                    QObject::disconnect(*me);
-                    const_cast<QSharedPointer<QMetaObject::Connection>*>(&me)->reset(nullptr);
-                    push_back_is_blocked = false;
-                });
+        if (subsp == old_subsp) {
+            return;
         }
+
+        subspaces_set_current(*vds, *subsp);
+        push_back_is_blocked = true;
+        edger->space.input->cursor->set_pos(pos);
+
+        QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
+        *me = QObject::connect(QCoreApplication::eventDispatcher(),
+                               &QAbstractEventDispatcher::aboutToBlock,
+                               qobject.get(),
+                               [this, me]() {
+                                   QObject::disconnect(*me);
+                                   const_cast<QSharedPointer<QMetaObject::Connection>*>(&me)->reset(
+                                       nullptr);
+                                   push_back_is_blocked = false;
+                               });
     }
 
     void pushCursorBack(QPoint const& cursorPos)
@@ -908,8 +914,8 @@ private:
     electric_border_action pointer_action{electric_border_action::none};
     electric_border_action touch_action{electric_border_action::none};
 
-    QDateTime last_trigger_time;
-    QDateTime last_reset_time;
+    std::chrono::system_clock::time_point last_trigger_time;
+    std::chrono::system_clock::time_point last_reset_time;
     QPoint triggered_point;
 
     int last_approaching_factor{0};
@@ -1007,8 +1013,8 @@ public:
                          &base::options_qobject::configChanged,
                          qobject.get(),
                          [this] { reconfigure(); });
-        QObject::connect(space.virtual_desktop_manager->qobject.get(),
-                         &virtual_desktop_manager_qobject::layoutChanged,
+        QObject::connect(space.subspace_manager->qobject.get(),
+                         &decltype(space.subspace_manager->qobject)::element_type::layoutChanged,
                          qobject.get(),
                          [this] { updateLayout(); });
 
@@ -1038,7 +1044,9 @@ public:
      * @param forceNoPushBack needs to be called to workaround some DnD clients, don't use unless
      * you want to chek on a DnD event
      */
-    void check(QPoint const& pos, QDateTime const& now, bool forceNoPushBack = false)
+    void check(QPoint const& pos,
+               std::chrono::system_clock::time_point now,
+               bool forceNoPushBack = false)
     {
         bool activatedForClient = false;
 
@@ -1197,25 +1205,14 @@ public:
             if (edge->isCorner()) {
                 isToReserve ? edge->reserve() : edge->unreserve();
             } else {
-                if ((virtual_desktop_layout & Qt::Horizontal)
-                    && (edge->isLeft() || edge->isRight())) {
+                if ((subspace_layout & Qt::Horizontal) && (edge->isLeft() || edge->isRight())) {
                     isToReserve ? edge->reserve() : edge->unreserve();
                 }
-                if ((virtual_desktop_layout & Qt::Vertical)
-                    && (edge->isTop() || edge->isBottom())) {
+                if ((subspace_layout & Qt::Vertical) && (edge->isTop() || edge->isBottom())) {
                     isToReserve ? edge->reserve() : edge->unreserve();
                 }
             }
         }
-    }
-
-    /**
-     * Raise electric border windows to the real top of the screen. We only need
-     * to do this if an effect input window is active.
-     */
-    void ensureOnTop()
-    {
-        base::x11::xcb::restack_windows_with_raise(space.base.x11_data.connection, windows());
     }
 
     bool isEntered(QMouseEvent* event)
@@ -1247,7 +1244,8 @@ public:
 
             if (edge->geometry.contains(event->globalPos())) {
                 if (edge->check(event->globalPos(),
-                                QDateTime::fromMSecsSinceEpoch(event->timestamp(), Qt::UTC))) {
+                                std::chrono::system_clock::time_point(
+                                    std::chrono::milliseconds(event->timestamp())))) {
                     if (edge->client()) {
                         activatedForClient = true;
                     }
@@ -1258,94 +1256,9 @@ public:
         if (activatedForClient) {
             for (auto& edge : edges) {
                 if (edge->client()) {
-                    edge->markAsTriggered(
-                        event->globalPos(),
-                        QDateTime::fromMSecsSinceEpoch(event->timestamp(), Qt::UTC));
-                }
-            }
-        }
-
-        return activated;
-    }
-
-    /**
-     * Returns a std::vector of all existing screen edge windows
-     * @return all existing screen edge windows in a std::vector
-     */
-    std::vector<xcb_window_t> windows() const
-    {
-        std::vector<xcb_window_t> wins;
-
-        for (auto& edge : edges) {
-            xcb_window_t w = edge->window_id();
-            if (w != XCB_WINDOW_NONE) {
-                wins.push_back(w);
-            }
-
-            // TODO:  lambda
-            w = edge->approachWindow();
-
-            if (w != XCB_WINDOW_NONE) {
-                wins.push_back(w);
-            }
-        }
-
-        return wins;
-    }
-
-    bool handleDndNotify(xcb_window_t window, QPoint const& point)
-    {
-        for (auto& edge : edges) {
-            if (!edge || edge->window_id() == XCB_WINDOW_NONE) {
-                continue;
-            }
-            if (edge->reserved_count > 0 && edge->window_id() == window) {
-                base::x11::update_time_from_clock(space.base);
-                edge->check(
-                    point, QDateTime::fromMSecsSinceEpoch(space.base.x11_data.time, Qt::UTC), true);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool handleEnterNotifiy(xcb_window_t window, QPoint const& point, QDateTime const& timestamp)
-    {
-        bool activated = false;
-        bool activatedForClient = false;
-
-        for (auto& edge : edges) {
-            if (!edge || edge->window_id() == XCB_WINDOW_NONE) {
-                continue;
-            }
-            if (edge->reserved_count == 0 || edge->is_blocked) {
-                continue;
-            }
-            if (!edge->activatesForPointer()) {
-                continue;
-            }
-
-            if (edge->window_id() == window) {
-                if (edge->check(point, timestamp)) {
-                    if (edge->client()) {
-                        activatedForClient = true;
-                    }
-                }
-                activated = true;
-                break;
-            }
-
-            if (edge->approachWindow() == window) {
-                edge->startApproaching();
-                // TODO: if it's a corner, it should also trigger for other windows
-                return true;
-            }
-        }
-
-        if (activatedForClient) {
-            for (auto& edge : edges) {
-                if (edge->client()) {
-                    edge->markAsTriggered(point, timestamp);
+                    edge->markAsTriggered(event->globalPos(),
+                                          std::chrono::system_clock::time_point(
+                                              std::chrono::milliseconds(event->timestamp())));
                 }
             }
         }
@@ -1370,9 +1283,10 @@ public:
         // TODO: migrate settings to a group ScreenEdges
         auto windowsConfig = config->group("Windows");
 
-        time_threshold = windowsConfig.readEntry("ElectricBorderDelay", 150);
-        reactivate_threshold
-            = qMax(time_threshold + 50, windowsConfig.readEntry("ElectricBorderCooldown", 350));
+        time_threshold
+            = std::chrono::milliseconds(windowsConfig.readEntry("ElectricBorderDelay", 150));
+        reactivate_threshold = std::chrono::milliseconds(std::max<int>(
+            time_threshold.count() + 50, windowsConfig.readEntry("ElectricBorderCooldown", 350)));
 
         int desktopSwitching
             = windowsConfig.readEntry("ElectricBorders", static_cast<int>(ElectricDisabled));
@@ -1429,7 +1343,7 @@ public:
     /// Updates virtual desktops layout, adjusts reserved borders in case of vd switching on edges.
     void updateLayout()
     {
-        auto const desktopMatrix = space.virtual_desktop_manager->grid().size();
+        auto const desktopMatrix = space.subspace_manager->grid.size();
         Qt::Orientations newLayout = {};
         if (desktopMatrix.width() > 1) {
             newLayout |= Qt::Horizontal;
@@ -1437,15 +1351,15 @@ public:
         if (desktopMatrix.height() > 1) {
             newLayout |= Qt::Vertical;
         }
-        if (newLayout == virtual_desktop_layout) {
+        if (newLayout == subspace_layout) {
             return;
         }
         if (desktop_switching.always) {
-            reserveDesktopSwitching(false, virtual_desktop_layout);
+            reserveDesktopSwitching(false, subspace_layout);
         }
-        virtual_desktop_layout = newLayout;
+        subspace_layout = newLayout;
         if (desktop_switching.always) {
-            reserveDesktopSwitching(true, virtual_desktop_layout);
+            reserveDesktopSwitching(true, subspace_layout);
         }
     }
 
@@ -1534,10 +1448,10 @@ public:
     } desktop_switching;
 
     /// Minimum time between the push back of the cursor and the activation by re-entering the edge.
-    int time_threshold{0};
+    std::chrono::milliseconds time_threshold{0};
 
     /// Minimum time between triggers
-    int reactivate_threshold{0};
+    std::chrono::milliseconds reactivate_threshold{0};
 
     uint32_t callback_id{0};
 
@@ -1556,7 +1470,7 @@ private:
             return;
         }
         desktop_switching.always = enable;
-        reserveDesktopSwitching(enable, virtual_desktop_layout);
+        reserveDesktopSwitching(enable, subspace_layout);
     }
 
     // How large the touch target of the area recognizing touch gestures is
@@ -1666,12 +1580,10 @@ private:
             if (edge->isCorner()) {
                 edge->reserve();
             } else {
-                if ((virtual_desktop_layout & Qt::Horizontal)
-                    && (edge->isLeft() || edge->isRight())) {
+                if ((subspace_layout & Qt::Horizontal) && (edge->isLeft() || edge->isRight())) {
                     edge->reserve();
                 }
-                if ((virtual_desktop_layout & Qt::Vertical)
-                    && (edge->isTop() || edge->isBottom())) {
+                if ((subspace_layout & Qt::Vertical) && (edge->isTop() || edge->isBottom())) {
                     edge->reserve();
                 }
             }
@@ -2039,7 +1951,7 @@ private:
         return true;
     }
 
-    Qt::Orientations virtual_desktop_layout{};
+    Qt::Orientations subspace_layout{};
 
     QMap<electric_border, electric_border_action> touch_call_backs;
     bool m_remainActiveOnFullscreen{false};

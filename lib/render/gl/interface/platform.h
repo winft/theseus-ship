@@ -11,8 +11,6 @@
 #include <QByteArray>
 #include <QSet>
 
-struct xcb_connection_t;
-
 namespace KWin
 {
 // forward declare method
@@ -207,7 +205,7 @@ public:
      */
     void printResults() const;
 
-    static GLPlatform* create(xcb_connection_t* x11_connection);
+    static GLPlatform* create();
     static GLPlatform* instance();
 
     /**
@@ -234,16 +232,6 @@ public:
      * Returns the Gallium version if the driver is a Gallium driver, and 0 otherwise.
      */
     qint64 galliumVersion() const;
-
-    /**
-     * Returns the X server version.
-     *
-     * Note that the version number changed from 7.2 to 1.3 in the first release
-     * following the doupling of the X server from the katamari.
-     *
-     * For non X.org servers, this method returns 0.
-     */
-    qint64 serverVersion() const;
 
     /**
      * Returns the Linux kernel version.
@@ -405,11 +393,6 @@ public:
      */
     gl_interface platformInterface() const;
 
-    xcb_connection_t* x11_connection() const
-    {
-        return x11_con;
-    }
-
     /**
      * @returns a human readable form of the @p version as a QString.
      * @since 4.9
@@ -419,7 +402,6 @@ public:
      * @see mesaVersion
      * @see galliumVersion
      * @see kernelVersion
-     * @see serverVersion
      */
     static QString versionToString(qint64 version);
     /**
@@ -431,7 +413,6 @@ public:
      * @see mesaVersion
      * @see galliumVersion
      * @see kernelVersion
-     * @see serverVersion
      */
     static QByteArray versionToString8(qint64 version);
 
@@ -462,7 +443,7 @@ public:
     static QByteArray chipClassToString8(ChipClass chipClass);
 
 private:
-    GLPlatform(xcb_connection_t* x11_connection);
+    GLPlatform();
     friend void KWin::cleanupGL();
     static void cleanup();
 
@@ -481,7 +462,6 @@ private:
     qint64 m_mesaVersion;
     qint64 m_driverVersion;
     qint64 m_galliumVersion;
-    qint64 m_serverVersion;
     qint64 m_kernelVersion;
     bool m_looseBinding : 1;
     bool m_supportsGLSL : 1;
@@ -493,15 +473,14 @@ private:
     bool m_preferBufferSubData : 1;
     gl_interface m_platformInterface{gl_interface::unknown};
     bool m_gles : 1;
-    xcb_connection_t* x11_con{nullptr};
 
     static GLPlatform* s_platform;
 };
 
-inline GLPlatform* GLPlatform::create(xcb_connection_t* x11_connection)
+inline GLPlatform* GLPlatform::create()
 {
     assert(!s_platform);
-    s_platform = new GLPlatform(x11_connection);
+    s_platform = new GLPlatform();
     return s_platform;
 }
 

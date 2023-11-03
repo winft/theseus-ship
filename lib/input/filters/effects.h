@@ -103,7 +103,7 @@ public:
 private:
     auto& get_effects()
     {
-        return this->redirect.platform.base.render->compositor->effects;
+        return this->redirect.platform.base.render->effects;
     }
 };
 

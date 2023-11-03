@@ -13,6 +13,7 @@
 #include "win/wayland/popup_placement.h"
 #include "win/wayland/window_release.h"
 #include "win/window_area.h"
+#include <win/wayland/space_windows.h>
 
 #include <QObject>
 #include <Wrapland/Server/display.h>
@@ -185,11 +186,10 @@ private:
                          &Wrapland::Server::Surface::committed,
                          popup->qobject.get(),
                          [popup] { popup->handle_commit(); });
-        QObject::connect(
-            popup->qobject.get(),
-            &window_t::qobject_t::needsRepaint,
-            redirect.platform.base.render->compositor->qobject.get(),
-            [popup] { popup->space.base.render->compositor->schedule_repaint(popup); });
+        QObject::connect(popup->qobject.get(),
+                         &window_t::qobject_t::needsRepaint,
+                         redirect.platform.base.render->qobject.get(),
+                         [popup] { popup->space.base.render->schedule_repaint(popup); });
         QObject::connect(popup->qobject.get(),
                          &window_t::qobject_t::frame_geometry_changed,
                          popup->qobject.get(),
@@ -210,7 +210,7 @@ private:
                          });
 
         if (popup->render_data.ready_for_painting) {
-            redirect.space.handle_window_added(popup);
+            win::wayland::space_windows_add(redirect.space, *popup);
         }
 
         if (auto text_input = redirect.platform.base.server->seat()->text_inputs().v3.text_input) {

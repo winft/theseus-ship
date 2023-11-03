@@ -111,7 +111,7 @@ private:
             m_configGroup.config()->reparseConfiguration();
             const QString policyKey
                 = m_configGroup.readEntry("SwitchMode", QStringLiteral("Global"));
-            if (!m_policy || m_policy->name() != policyKey) {
+            if (!m_policy || m_policy->name.c_str() != policyKey) {
                 m_policy = create_layout_policy(this, m_configGroup, policyKey);
             }
         }

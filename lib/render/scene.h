@@ -26,7 +26,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <chrono>
 #include <deque>
 #include <memory>
-#include <xcb/render.h>
 
 namespace KWin::render
 {
@@ -42,7 +41,7 @@ struct scene_windowing_integration {
  drawing of windows to pixmaps and XDamage extension is used to get informed
  about damage (changes) to window contents. This code is mostly in composite.cpp .
 
- Compositor::performCompositing() starts one painting pass. Painting is done
+ platform::performCompositing() starts one painting pass. Painting is done
  by painting the screen, which in turn paints every window. Painting can be affected
  using effects, which are chained. E.g. painting a screen means that actually
  paintScreen() of the first effect is called, which possibly does modifications
@@ -83,14 +82,12 @@ class scene : public QObject
 {
 public:
     using platform_t = Platform;
-    using space_t = typename Platform::base_t::space_t;
-    using window_t = typename Platform::compositor_t::window_t;
+    using window_t = typename platform_t::window_t;
     using effect_window_t = typename window_t::effect_window_t;
-    using effect_window_group_t = effect_window_group_impl<typename space_t::window_group_t>;
     using buffer_t = buffer<window_t>;
-    using output_t = typename Platform::base_t::output_t;
+    using output_t = typename platform_t::base_t::output_t;
 
-    explicit scene(Platform& platform)
+    explicit scene(platform_t& platform)
         : platform{platform}
     {
         singleton_interface::supports_surfaceless_context
@@ -173,10 +170,6 @@ public:
      */
     virtual bool animationsSupported() const = 0;
 
-    /**
-     * The QPainter used by a QPainter based compositor scene.
-     * Default implementation returns @c nullptr;
-     */
     virtual QPainter* scenePainter() const
     {
         return nullptr;
@@ -205,7 +198,7 @@ public:
         ref_win->render->invalidateQuadsCache();
     }
 
-    Platform& platform;
+    platform_t& platform;
     scene_windowing_integration windowing_integration;
 
     uint32_t window_id{0};
@@ -241,7 +234,7 @@ public:
         mask = (damage == displayRegion) ? paint_type::none : paint_type::screen_region;
 
         assert(repaint_output);
-        auto effect_screen = platform.compositor->effects->findScreen(repaint_output->name());
+        auto effect_screen = platform.effects->findScreen(repaint_output->name());
         assert(effect_screen);
 
         if (Q_UNLIKELY(presentTime < m_expectedPresentTimestamp)) {
@@ -254,7 +247,7 @@ public:
         }
 
         // preparation step
-        platform.compositor->effects->startPaint();
+        platform.effects->startPaint();
 
         QRegion region = damage;
 
@@ -268,7 +261,7 @@ public:
             .present_time = m_expectedPresentTimestamp,
         };
 
-        platform.compositor->effects->prePaintScreen(pre_data);
+        platform.effects->prePaintScreen(pre_data);
 
         mask = static_cast<paint_type>(pre_data.paint.mask);
         region = pre_data.paint.region;
@@ -305,14 +298,14 @@ public:
             .render = render,
         };
 
-        platform.compositor->effects->paintScreen(data);
+        platform.effects->paintScreen(data);
         render.targets = data.render.targets;
 
         for (auto const& w : stacking_order) {
-            platform.compositor->effects->postPaintWindow(w->effect.get());
+            platform.effects->postPaintWindow(w->effect.get());
         }
 
-        platform.compositor->effects->postPaintScreen();
+        platform.effects->postPaintScreen();
 
         // make sure not to go outside of the screen area
         *updateRegion = damaged_region;
@@ -385,7 +378,7 @@ public:
             };
 
             // preparation step
-            platform.compositor->effects->prePaintWindow(win_data);
+            platform.effects->prePaintWindow(win_data);
 
 #if !defined(QT_NO_DEBUG)
             if (win_data.quads.isTransformed()) {
@@ -467,7 +460,7 @@ public:
         data.quads = win->buildQuads();
 
         // preparation step
-        platform.compositor->effects->prePaintWindow(data);
+        platform.effects->prePaintWindow(data);
 
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
@@ -595,7 +588,7 @@ public:
     // called after all effects had their paintWindow() called, eventually by paintWindow() below
     void finalPaintWindow(effect::window_paint_data& data)
     {
-        platform.compositor->effects->drawWindow(data);
+        platform.effects->drawWindow(data);
     }
 
     // shared implementation, starts painting the window
@@ -622,7 +615,7 @@ public:
             render_data,
         };
 
-        platform.compositor->effects->paintWindow(data);
+        platform.effects->paintWindow(data);
         render_data.targets = data.render.targets;
     }
 

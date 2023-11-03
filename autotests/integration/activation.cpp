@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/active_window.h"
 #include "win/control.h"
 #include "win/move.h"
-#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
 
@@ -23,7 +22,12 @@ namespace KWin::detail::test
 
 TEST_CASE("activation", "[win]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("activation", operation_mode);
     setup.start();
     setup.set_outputs(2);

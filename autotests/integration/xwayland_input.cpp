@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/cursor.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
 
@@ -138,7 +137,7 @@ TEST_CASE("xwayland input", "[input],[xwl]")
         xcb_flush(c.get());
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 

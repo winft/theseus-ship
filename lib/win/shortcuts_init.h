@@ -28,11 +28,11 @@ void set_global_shortcut_with_default(Input& input, QAction& action, QKeySequenc
 }
 
 template<typename Manager, typename Input, typename Slot>
-QAction* add_virtual_desktop_action(Manager& manager,
-                                    Input& input,
-                                    QString const& name,
-                                    QString const& label,
-                                    Slot slot)
+QAction* add_subspace_action(Manager& manager,
+                             Input& input,
+                             QString const& name,
+                             QString const& label,
+                             Slot slot)
 {
     auto a = new QAction(manager.qobject.get());
     a->setProperty("componentName", QStringLiteral(KWIN_NAME));
@@ -46,13 +46,13 @@ QAction* add_virtual_desktop_action(Manager& manager,
 }
 
 template<typename Manager, typename Input, typename Slot>
-QAction* add_virtual_desktop_action(Manager& manager,
-                                    Input& input,
-                                    QString const& name,
-                                    KLocalizedString const& label,
-                                    uint value,
-                                    const QKeySequence& key,
-                                    Slot slot)
+QAction* add_subspace_action(Manager& manager,
+                             Input& input,
+                             QString const& name,
+                             KLocalizedString const& label,
+                             uint value,
+                             const QKeySequence& key,
+                             Slot slot)
 {
     auto a = new QAction(manager.qobject.get());
     a->setProperty("componentName", QStringLiteral(KWIN_NAME));
@@ -67,121 +67,128 @@ QAction* add_virtual_desktop_action(Manager& manager,
 }
 
 template<typename Space>
-void shortcuts_init_switch_to_virtual_desktop(Space& space)
+void shortcuts_init_switch_to_subspace(Space& space)
 {
-    auto manager = space.virtual_desktop_manager.get();
+    auto manager = space.subspace_manager.get();
     auto& input = *space.base.input;
 
     auto const toDesktop = QStringLiteral("Switch to Desktop %1");
     KLocalizedString const toDesktopLabel = ki18n("Switch to Desktop %1");
 
-    add_virtual_desktop_action(*manager,
-                               input,
-                               toDesktop,
-                               toDesktopLabel,
-                               1,
-                               QKeySequence(Qt::CTRL | Qt::Key_F1),
-                               [manager](auto& action) { manager->slotSwitchTo(action); });
-    add_virtual_desktop_action(*manager,
-                               input,
-                               toDesktop,
-                               toDesktopLabel,
-                               2,
-                               QKeySequence(Qt::CTRL | Qt::Key_F2),
-                               [manager](auto& action) { manager->slotSwitchTo(action); });
-    add_virtual_desktop_action(*manager,
-                               input,
-                               toDesktop,
-                               toDesktopLabel,
-                               3,
-                               QKeySequence(Qt::CTRL | Qt::Key_F3),
-                               [manager](auto& action) { manager->slotSwitchTo(action); });
-    add_virtual_desktop_action(*manager,
-                               input,
-                               toDesktop,
-                               toDesktopLabel,
-                               4,
-                               QKeySequence(Qt::CTRL | Qt::Key_F4),
-                               [manager](auto& action) { manager->slotSwitchTo(action); });
+    add_subspace_action(*manager,
+                        input,
+                        toDesktop,
+                        toDesktopLabel,
+                        1,
+                        QKeySequence(Qt::CTRL | Qt::Key_F1),
+                        [manager](auto& action) { subspaces_set_current(*manager, action); });
+    add_subspace_action(*manager,
+                        input,
+                        toDesktop,
+                        toDesktopLabel,
+                        2,
+                        QKeySequence(Qt::CTRL | Qt::Key_F2),
+                        [manager](auto& action) { subspaces_set_current(*manager, action); });
+    add_subspace_action(*manager,
+                        input,
+                        toDesktop,
+                        toDesktopLabel,
+                        3,
+                        QKeySequence(Qt::CTRL | Qt::Key_F3),
+                        [manager](auto& action) { subspaces_set_current(*manager, action); });
+    add_subspace_action(*manager,
+                        input,
+                        toDesktop,
+                        toDesktopLabel,
+                        4,
+                        QKeySequence(Qt::CTRL | Qt::Key_F4),
+                        [manager](auto& action) { subspaces_set_current(*manager, action); });
 
-    for (uint i = 5; i <= manager->maximum(); ++i) {
-        add_virtual_desktop_action(
+    for (uint i = 5; i <= manager->max_count; ++i) {
+        add_subspace_action(
             *manager, input, toDesktop, toDesktopLabel, i, QKeySequence(), [manager](auto& action) {
-                manager->slotSwitchTo(action);
+                subspaces_set_current(*manager, action);
             });
     }
 }
 
 template<typename Space>
-void shortcuts_init_virtual_desktops(Space& space)
+void shortcuts_init_subspaces(Space& space)
 {
-    auto manager = space.virtual_desktop_manager.get();
+    auto manager = space.subspace_manager.get();
     auto& input = *space.base.input;
 
-    shortcuts_init_switch_to_virtual_desktop(space);
+    shortcuts_init_switch_to_subspace(space);
 
-    Q_UNUSED(add_virtual_desktop_action(*manager,
-                                        input,
-                                        QStringLiteral("Switch to Next Desktop"),
-                                        i18n("Switch to Next Desktop"),
-                                        [manager] { manager->slotNext(); }))
-    Q_UNUSED(add_virtual_desktop_action(*manager,
-                                        input,
-                                        QStringLiteral("Switch to Previous Desktop"),
-                                        i18n("Switch to Previous Desktop"),
-                                        [manager] { manager->slotPrevious(); }))
+    add_subspace_action(*manager,
+                        input,
+                        QStringLiteral("Switch to Next Desktop"),
+                        i18n("Switch to Next Desktop"),
+                        [manager] {
+                            subspaces_set_current(*manager,
+                                                  subspaces_get_successor_of_current(*manager));
+                        });
+    add_subspace_action(*manager,
+                        input,
+                        QStringLiteral("Switch to Previous Desktop"),
+                        i18n("Switch to Previous Desktop"),
+                        [manager] {
+                            subspaces_set_current(*manager,
+                                                  subspaces_get_predecessor_of_current(*manager));
+                        });
 
     // shortcuts
-    QAction* slotRightAction
-        = add_virtual_desktop_action(*manager,
-                                     input,
-                                     QStringLiteral("Switch One Desktop to the Right"),
-                                     i18n("Switch One Desktop to the Right"),
-                                     [manager] { manager->slotRight(); });
+    QAction* slotRightAction = add_subspace_action(
+        *manager,
+        input,
+        QStringLiteral("Switch One Desktop to the Right"),
+        i18n("Switch One Desktop to the Right"),
+        [manager] { subspaces_set_current(*manager, subspaces_get_east_of_current(*manager)); });
     set_global_shortcut_with_default(
         input, *slotRightAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Right));
-    QAction* slotLeftAction
-        = add_virtual_desktop_action(*manager,
-                                     input,
-                                     QStringLiteral("Switch One Desktop to the Left"),
-                                     i18n("Switch One Desktop to the Left"),
-                                     [manager] { manager->slotLeft(); });
+    QAction* slotLeftAction = add_subspace_action(
+        *manager,
+        input,
+        QStringLiteral("Switch One Desktop to the Left"),
+        i18n("Switch One Desktop to the Left"),
+        [manager] { subspaces_set_current(*manager, subspaces_get_west_of_current(*manager)); });
     set_global_shortcut_with_default(
         input, *slotLeftAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Left));
-    QAction* slotUpAction = add_virtual_desktop_action(*manager,
-                                                       input,
-                                                       QStringLiteral("Switch One Desktop Up"),
-                                                       i18n("Switch One Desktop Up"),
-                                                       [manager] { manager->slotUp(); });
+    QAction* slotUpAction = add_subspace_action(
+        *manager,
+        input,
+        QStringLiteral("Switch One Desktop Up"),
+        i18n("Switch One Desktop Up"),
+        [manager] { subspaces_set_current(*manager, subspaces_get_north_of_current(*manager)); });
     set_global_shortcut_with_default(
         input, *slotUpAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Up));
-    QAction* slotDownAction = add_virtual_desktop_action(*manager,
-                                                         input,
-                                                         QStringLiteral("Switch One Desktop Down"),
-                                                         i18n("Switch One Desktop Down"),
-                                                         [manager] { manager->slotDown(); });
+    QAction* slotDownAction = add_subspace_action(
+        *manager,
+        input,
+        QStringLiteral("Switch One Desktop Down"),
+        i18n("Switch One Desktop Down"),
+        [manager] { subspaces_set_current(*manager, subspaces_get_south_of_current(*manager)); });
     set_global_shortcut_with_default(
         input, *slotDownAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Down));
 
     // Gestures
-    // These connections decide which desktop to end on after gesture ends
-    manager->connect_gestures();
+    subspace_manager_connect_gestures(*manager);
 
-    auto swipeGestureReleasedX = manager->swipe_gesture_released_x();
-    auto swipeGestureReleasedY = manager->swipe_gesture_released_y();
+    auto swipeGestureReleasedX = manager->swipe_gesture.released_x.get();
+    auto swipeGestureReleasedY = manager->swipe_gesture.released_y.get();
 
     const auto left = [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(cb);
-            Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                     manager->m_current_desktop_offset());
+        if (manager->grid.width() > 1) {
+            manager->current_desktop_offset.setX(cb);
+            Q_EMIT manager->qobject->current_changing(manager->current,
+                                                      manager->current_desktop_offset);
         }
     };
     const auto right = [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(-cb);
-            Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                     manager->m_current_desktop_offset());
+        if (manager->grid.width() > 1) {
+            manager->current_desktop_offset.setX(-cb);
+            Q_EMIT manager->qobject->current_changing(manager->current,
+                                                      manager->current_desktop_offset);
         }
     };
 
@@ -192,45 +199,45 @@ void shortcuts_init_virtual_desktops(Space& space)
           };
 
     register_touchpad_swipe(swipe_direction::left, 3, swipeGestureReleasedX, [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(cb);
-            Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                     manager->m_current_desktop_offset());
+        if (manager->grid.width() > 1) {
+            manager->current_desktop_offset.setX(cb);
+            Q_EMIT manager->qobject->current_changing(manager->current,
+                                                      manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::right, 3, swipeGestureReleasedX, [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(-cb);
-            Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                     manager->m_current_desktop_offset());
+        if (manager->grid.width() > 1) {
+            manager->current_desktop_offset.setX(-cb);
+            Q_EMIT manager->qobject->current_changing(manager->current,
+                                                      manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::left, 4, swipeGestureReleasedX, [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(cb);
-            Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                     manager->m_current_desktop_offset());
+        if (manager->grid.width() > 1) {
+            manager->current_desktop_offset.setX(cb);
+            Q_EMIT manager->qobject->current_changing(manager->current,
+                                                      manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::right, 4, swipeGestureReleasedX, [manager](qreal cb) {
-        if (manager->grid().width() > 1) {
-            manager->set_desktop_offset_x(-cb);
-            Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                     manager->m_current_desktop_offset());
+        if (manager->grid.width() > 1) {
+            manager->current_desktop_offset.setX(-cb);
+            Q_EMIT manager->qobject->current_changing(manager->current,
+                                                      manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::down, 3, swipeGestureReleasedY, [manager](qreal cb) {
-        if (manager->grid().height() > 1) {
-            manager->set_desktop_offset_y(-cb);
-            Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                     manager->m_current_desktop_offset());
+        if (manager->grid.height() > 1) {
+            manager->current_desktop_offset.setY(-cb);
+            Q_EMIT manager->qobject->current_changing(manager->current,
+                                                      manager->current_desktop_offset);
         }
     });
     register_touchpad_swipe(swipe_direction::up, 3, swipeGestureReleasedY, [manager](qreal cb) {
-        if (manager->grid().height() > 1) {
-            manager->set_desktop_offset_y(cb);
-            Q_EMIT manager->qobject->currentChanging(manager->current(),
-                                                     manager->m_current_desktop_offset());
+        if (manager->grid.height() > 1) {
+            manager->current_desktop_offset.setY(cb);
+            Q_EMIT manager->qobject->current_changing(manager->current,
+                                                      manager->current_desktop_offset);
         }
     });
 
@@ -494,22 +501,22 @@ void init_shortcuts(Space& space)
     def2("Window On All Desktops",
          kli18n("Keep Window on All Desktops"),
          0,
-         active_window_set_on_all_desktops<Space>);
+         active_window_set_on_all_subspaces<Space>);
 
     for (int i = 1; i < 21; ++i) {
         def5(
             kli18n("Window to Desktop %1"),
             0,
-            [&space, i] { active_window_to_desktop(space, i); },
+            [&space, i] { active_window_to_subspace(space, i); },
             i);
     }
 
-    def(kli18n("Window to Next Desktop"), 0, active_window_to_next_desktop<Space>);
-    def(kli18n("Window to Previous Desktop"), 0, active_window_to_prev_desktop<Space>);
-    def(kli18n("Window One Desktop to the Right"), 0, active_window_to_right_desktop<Space>);
-    def(kli18n("Window One Desktop to the Left"), 0, active_window_to_left_desktop<Space>);
-    def(kli18n("Window One Desktop Up"), 0, active_window_to_above_desktop<Space>);
-    def(kli18n("Window One Desktop Down"), 0, active_window_to_below_desktop<Space>);
+    def(kli18n("Window to Next Desktop"), 0, active_window_to_next_subspace<Space>);
+    def(kli18n("Window to Previous Desktop"), 0, active_window_to_prev_subspace<Space>);
+    def(kli18n("Window One Desktop to the Right"), 0, active_window_to_right_subspace<Space>);
+    def(kli18n("Window One Desktop to the Left"), 0, active_window_to_left_subspace<Space>);
+    def(kli18n("Window One Desktop Up"), 0, active_window_to_above_subspace<Space>);
+    def(kli18n("Window One Desktop Down"), 0, active_window_to_below_subspace<Space>);
 
     for (int i = 0; i < 8; ++i) {
         def3(kli18n("Move Window to Screen %1"), 0, active_window_to_output<Space>, i);
@@ -528,17 +535,17 @@ void init_shortcuts(Space& space)
     def(kli18n("Kill Window"), Qt::META | Qt::CTRL | Qt::Key_Escape, start_window_killer<Space>);
     def6(kli18n("Suspend Compositing"),
          Qt::SHIFT | Qt::ALT | Qt::Key_F12,
-         space.base.render->compositor->qobject.get(),
-         [compositor = space.base.render->compositor.get()] { compositor->toggleCompositing(); });
+         space.base.render->qobject.get(),
+         [render = space.base.render.get()] { render->toggleCompositing(); });
     def6(kli18n("Invert Screen Colors"),
          0,
-         space.base.render->compositor->qobject.get(),
+         space.base.render->qobject.get(),
          [render = space.base.render.get()] { render->invertScreen(); });
 
 #if KWIN_BUILD_TABBOX
     space.tabbox->init_shortcuts();
 #endif
-    shortcuts_init_virtual_desktops(space);
+    shortcuts_init_subspaces(space);
 
     // so that it's recreated next time
     space.user_actions_menu->discard();

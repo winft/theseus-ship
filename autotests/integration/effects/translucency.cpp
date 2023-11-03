@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effects.h"
 #include "win/desktop_space.h"
 #include "win/move.h"
-#include "win/space.h"
 #include "win/x11/window.h"
 
 #include <KConfigGroup>
@@ -54,10 +53,10 @@ TEST_CASE("translucency", "[effect]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render->compositor);
+    QVERIFY(setup.base->render);
 
     // load the translucency effect
-    auto& e = setup.base->render->compositor->effects;
+    auto& e = setup.base->render->effects;
     QSignalSpy effectLoadedSpy(e->loader.get(), &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());
 
@@ -69,7 +68,7 @@ TEST_CASE("translucency", "[effect]")
     auto translucency_effect = effectLoadedSpy.first().first().value<Effect*>();
     QVERIFY(translucency_effect);
 
-    SECTION("move after desktop change")
+    SECTION("move after subspace change")
     {
         // test tries to simulate the condition of bug 366081
         QVERIFY(!translucency_effect->isActive());
@@ -105,7 +104,7 @@ TEST_CASE("translucency", "[effect]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -117,10 +116,11 @@ TEST_CASE("translucency", "[effect]")
 
         QVERIFY(windowAddedSpy.wait());
         QVERIFY(!translucency_effect->isActive());
-        // let's send the window to desktop 2
+
+        // let's send the window to subspace 2
         effects->setNumberOfDesktops(2);
         QCOMPARE(effects->numberOfDesktops(), 2);
-        win::send_window_to_desktop(*setup.base->space, client, 2, false);
+        win::send_window_to_subspace(*setup.base->space, client, 2, false);
         effects->setCurrentDesktop(2);
         QVERIFY(!translucency_effect->isActive());
         cursor()->set_pos(client->geo.frame.center());
@@ -190,7 +190,7 @@ TEST_CASE("translucency", "[effect]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 

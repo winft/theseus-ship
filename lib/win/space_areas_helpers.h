@@ -7,9 +7,6 @@
 
 #include "move.h"
 #include "space_areas.h"
-#include "x11/net/geo.h"
-
-#include "base/platform.h"
 
 namespace KWin::win
 {
@@ -31,7 +28,7 @@ void update_space_areas_impl(Space& space, bool force)
     auto& base = space.base;
     auto const& outputs = base.outputs;
     auto const screens_count = outputs.size();
-    auto const desktops_count = static_cast<int>(space.virtual_desktop_manager->count());
+    auto const desktops_count = static_cast<int>(space.subspace_manager->subspaces.size());
 
     // To be determined are new:
     // * work areas,
@@ -76,15 +73,8 @@ void update_space_areas_impl(Space& space, bool force)
         space.oldrestrictedmovearea = space.areas.restrictedmove;
         space.areas = new_areas;
 
-        if (space.root_info) {
-            x11::net::rect rect;
-            for (int desktop = 1; desktop <= desktops_count; desktop++) {
-                rect.pos.x = space.areas.work[desktop].x();
-                rect.pos.y = space.areas.work[desktop].y();
-                rect.size.width = space.areas.work[desktop].width();
-                rect.size.height = space.areas.work[desktop].height();
-                space.root_info->setWorkArea(desktop, rect);
-            }
+        if constexpr (requires(Space space) { space.update_work_area(); }) {
+            space.update_work_area();
         }
 
         for (auto win : space.windows) {

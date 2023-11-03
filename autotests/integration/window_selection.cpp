@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/wayland/device_redirect.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -34,7 +33,12 @@ TEST_CASE("window selection", "[win]")
 {
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("window-selection", operation_mode);
     setup.start();
     setup.set_outputs(2);

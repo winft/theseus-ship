@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/cursor.h"
 #include "input/xkb/helpers.h"
 #include "win/control.h"
-#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/tabbox/tabbox.h"
 #include "win/wayland/window.h"
@@ -30,7 +29,12 @@ TEST_CASE("tabbox", "[win]")
 {
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("tabbox", operation_mode);
 
     auto c = setup.base->config.main;

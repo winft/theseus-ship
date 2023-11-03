@@ -10,6 +10,7 @@
 #include "base/utils.h"
 #include "config-kwin.h"
 #include "input/pointer.h"
+#include <input/backend/wlroots/device_helpers.h>
 
 extern "C" {
 #include <wlr/backend/libinput.h>

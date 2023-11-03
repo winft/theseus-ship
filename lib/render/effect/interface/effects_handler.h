@@ -11,11 +11,12 @@
 #include <render/effect/interface/types.h>
 
 #include <KSharedConfig>
-#include <xcb/xcb.h>
 
 class QAction;
 class QKeyEvent;
 class QQmlEngine;
+
+struct xcb_connection_t;
 
 namespace Wrapland::Server
 {
@@ -460,38 +461,6 @@ public:
     virtual void reconfigure() = 0;
 
     virtual QByteArray readRootProperty(long atom, long type, int format) const = 0;
-    /**
-     * @brief Announces support for the feature with the given name. If no other Effect
-     * has announced support for this feature yet, an X11 property will be installed on
-     * the root window.
-     *
-     * The Effect will be notified for events through the signal propertyNotify().
-     *
-     * To remove the support again use removeSupportProperty. When an Effect is
-     * destroyed it is automatically taken care of removing the support. It is not
-     * required to call removeSupportProperty in the Effect's cleanup handling.
-     *
-     * @param propertyName The name of the property to announce support for
-     * @param effect The effect which announces support
-     * @return xcb_atom_t The created X11 atom
-     * @see removeSupportProperty
-     * @since 4.11
-     */
-    virtual xcb_atom_t announceSupportProperty(const QByteArray& propertyName, Effect* effect) = 0;
-    /**
-     * @brief Removes support for the feature with the given name. If there is no other Effect left
-     * which has announced support for the given property, the property will be removed from the
-     * root window.
-     *
-     * In case the Effect had not registered support, calling this function does not change
-     * anything.
-     *
-     * @param propertyName The name of the property to remove support for
-     * @param effect The effect which had registered the property.
-     * @see announceSupportProperty
-     * @since 4.11
-     */
-    virtual void removeSupportProperty(const QByteArray& propertyName, Effect* effect) = 0;
 
     /**
      * Returns @a true if the active window decoration has shadow API hooks.
@@ -560,7 +529,7 @@ public:
     virtual void doneOpenGLContextCurrent() = 0;
 
     virtual xcb_connection_t* xcbConnection() const = 0;
-    virtual xcb_window_t x11RootWindow() const = 0;
+    virtual uint32_t x11RootWindow() const = 0;
 
     /**
      * Interface to the Wayland display: this is relevant only
@@ -991,17 +960,6 @@ Q_SIGNALS:
      * need it anymore, disconnect from it to stop cursor event filtering
      */
     void cursorShapeChanged();
-    /**
-     * Receives events registered for using registerPropertyType.
-     * Use readProperty() to get the property data.
-     * Note that the property may be already set on the window, so doing the same
-     * processing from windowAdded() (e.g. simply calling propertyNotify() from it)
-     * is usually needed.
-     * @param w The window whose property changed, is @c null if it is a root window property
-     * @param atom The property
-     * @since 4.7
-     */
-    void propertyNotify(KWin::EffectWindow* w, long atom);
 
     /**
      * Signal emitted after the screen geometry changed (e.g. add of a monitor).
@@ -1114,18 +1072,6 @@ Q_SIGNALS:
      * @since 5.8.4
      */
     void windowDataChanged(KWin::EffectWindow* w, int role);
-
-    /**
-     * The xcb connection changed, either a new xcbConnection got created or the existing one
-     * got destroyed.
-     * Effects can use this to refetch the properties they want to set.
-     *
-     * When the xcbConnection changes also the x11RootWindow becomes invalid.
-     * @see xcbConnection
-     * @see x11RootWindow
-     * @since 5.11
-     */
-    void xcbConnectionChanged();
 
     /**
      * This signal is emitted when active fullscreen effect changed.

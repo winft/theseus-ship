@@ -12,7 +12,7 @@
 #include "structs.h"
 #include "tabbox/tabbox_client_impl.h"
 #include "types.h"
-#include "virtual_desktops.h"
+#include <win/subspace.h>
 
 #include "rules/window.h"
 
@@ -57,7 +57,7 @@ public:
         assert(deco.decoration == nullptr);
     }
 
-    virtual void set_desktops(QVector<virtual_desktop*> desktops) = 0;
+    virtual void set_subspaces(std::vector<subspace*> subs) = 0;
 
     bool skip_pager() const
     {
@@ -163,7 +163,7 @@ public:
 
     void update_have_resize_effect()
     {
-        auto& effects = m_win->space.base.render->compositor->effects;
+        auto& effects = m_win->space.base.render->effects;
         have_resize_effect
             = effects && effects->provides_comp(static_cast<int>(effect_feature::Resize));
     }

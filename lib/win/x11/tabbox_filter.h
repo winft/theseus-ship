@@ -1,24 +1,24 @@
 /*
 SPDX-FileCopyrightText: 2017 Martin Flöser <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "tabbox_handler.h"
-
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/proto.h"
 #include "win/x11/key_server.h"
+#include <base/x11/data.h>
 
-namespace KWin::win
+namespace KWin::win::x11
 {
 
 template<typename Tabbox>
-class tabbox_x11_filter : public base::x11::event_filter
+class tabbox_filter : public base::x11::event_filter
 {
 public:
-    explicit tabbox_x11_filter(Tabbox& tabbox)
+    explicit tabbox_filter(Tabbox& tabbox)
         : base::x11::event_filter(*tabbox.space.base.x11_event_filters,
                                   QVector<int>{XCB_KEY_PRESS,
                                                XCB_KEY_RELEASE,
@@ -42,7 +42,7 @@ public:
             xcb_allow_events(
                 tabbox.space.base.x11_data.connection, XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
             if (!tabbox.is_shown() && tabbox.is_displayed()) {
-                if (auto& effects = tabbox.space.base.render->compositor->effects;
+                if (auto& effects = tabbox.space.base.render->effects;
                     effects && effects->isMouseInterception()) {
                     // pass on to effects, effects will filter out the event
                     return false;
@@ -93,15 +93,13 @@ private:
 
     void motion(xcb_generic_event_t* event)
     {
+        auto const& x11_data = tabbox.space.base.x11_data;
         auto* mouse_event = reinterpret_cast<xcb_motion_notify_event_t*>(event);
         const QPoint rootPos(mouse_event->root_x, mouse_event->root_y);
         // TODO: this should be in ScreenEdges directly
         tabbox.space.edges->check(
-            rootPos,
-            QDateTime::fromMSecsSinceEpoch(tabbox.space.base.x11_data.time, Qt::UTC),
-            true);
-        xcb_allow_events(
-            tabbox.space.base.x11_data.connection, XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
+            rootPos, base::x11::xcb_time_to_chrono(x11_data, x11_data.time), true);
+        xcb_allow_events(x11_data.connection, XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
     }
 
     void key_press(xcb_generic_event_t* event)

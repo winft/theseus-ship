@@ -24,13 +24,13 @@ void handle_desktop_resize(Info* info, QSize const& size)
 }
 
 template<typename Space>
-void popagate_desktop_change(Space& space, uint desktop)
+void popagate_subspace_change(Space& space, uint subspace)
 {
     using window_t = typename Space::x11_window;
 
     for (auto const& var_win : space.stacking.order.stack) {
         std::visit(overload{[&](window_t* win) {
-                                if (win->control && !on_desktop(win, desktop)
+                                if (win->control && !on_subspace(*win, subspace)
                                     && var_win != space.move_resize_window) {
                                     update_visibility(win);
                                 }
@@ -41,13 +41,13 @@ void popagate_desktop_change(Space& space, uint desktop)
 
     // Now propagate the change, after hiding, before showing.
     if (space.root_info) {
-        space.root_info->setCurrentDesktop(space.virtual_desktop_manager->current());
+        space.root_info->setCurrentDesktop(subspaces_get_current_x11id(*space.subspace_manager));
     }
 
     auto const& list = space.stacking.order.stack;
     for (int i = list.size() - 1; i >= 0; --i) {
         std::visit(overload{[&](window_t* win) {
-                                if (win->control && on_desktop(win, desktop)) {
+                                if (win->control && on_subspace(*win, subspace)) {
                                     update_visibility(win);
                                 }
                             },

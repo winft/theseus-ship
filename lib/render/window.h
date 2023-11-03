@@ -29,21 +29,21 @@ struct window_win_integration {
     std::function<QRectF(typename Win::ref_t, QRectF const&)> get_viewport;
 };
 
-template<typename RefWin, typename Compositor>
+template<typename RefWin, typename Platform>
 class window
 {
 public:
     using ref_t = RefWin;
-    using type = window<ref_t, Compositor>;
+    using type = window<ref_t, Platform>;
     using effect_window_t = effects_window_impl<type>;
-    using scene_t = typename Compositor::scene_t;
+    using scene_t = typename Platform::scene_t;
 
-    window(RefWin ref_win, Compositor& compositor)
+    window(RefWin ref_win, Platform& platform)
         : ref_win{ref_win}
-        , compositor{compositor}
+        , platform{platform}
         , filter(image_filter_type::fast)
         , cached_quad_list(nullptr)
-        , m_id{compositor.scene->window_id++}
+        , m_id{platform.scene->window_id++}
     {
     }
 
@@ -95,7 +95,7 @@ public:
         }
 
         return std::visit(overload{[](auto&& ref_win) {
-                              if (ref_win->remnant || !win::on_current_desktop(ref_win)) {
+                              if (ref_win->remnant || !win::on_current_subspace(*ref_win)) {
                                   return false;
                               }
                               if (ref_win->control
@@ -114,7 +114,7 @@ public:
                               if (ref_win->remnant) {
                                   return false;
                               }
-                              if (!win::on_current_desktop(ref_win)) {
+                              if (!win::on_current_subspace(*ref_win)) {
                                   return false;
                               }
                               if (!ref_win->control) {
@@ -194,7 +194,7 @@ public:
             }},
             *ref_win);
 
-        compositor.effects->buildQuads(effect.get(), ret);
+        platform.effects->buildQuads(effect.get(), ret);
         cached_quad_list.reset(new WindowQuadList(ret));
         return ret;
     }
@@ -258,7 +258,7 @@ public:
     std::unique_ptr<effects_window_impl<type>> effect;
     window_win_integration<type> win_integration;
     shadow_windowing_integration<type> shadow_windowing;
-    Compositor& compositor;
+    Platform& platform;
 
 protected:
     WindowQuadList

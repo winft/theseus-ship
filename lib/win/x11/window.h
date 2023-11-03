@@ -456,7 +456,7 @@ public:
         return belongs_to_desktop(*this);
     }
 
-    void doSetDesktop(int /*desktop*/, int /*was_desk*/)
+    void do_set_subspace()
     {
         update_visibility(this);
     }
@@ -508,6 +508,39 @@ public:
     void debug(QDebug& stream) const
     {
         print_window_debug_info(*this, stream);
+    }
+
+    void set_state_keep_below(bool keep)
+    {
+        if (static_cast<bool>(net_info->state() & net::KeepBelow) == keep) {
+            return;
+        }
+        net_info->setState(keep ? net::KeepBelow : net::States(), net::KeepBelow);
+    }
+
+    void set_state_keep_above(bool keep)
+    {
+        if (static_cast<bool>(net_info->state() & net::KeepAbove) == keep) {
+            return;
+        }
+        net_info->setState(keep ? net::KeepAbove : net::States(), net::KeepAbove);
+    }
+
+    void set_state_demands_attention(bool demand)
+    {
+        net_info->setState(demand ? net::DemandsAttention : net::States(), net::DemandsAttention);
+    }
+
+    void set_state_maximize(maximize_mode mode)
+    {
+        auto net_state = net::States();
+        if (flags(mode & maximize_mode::horizontal)) {
+            net_state |= net::MaxHoriz;
+        }
+        if (flags(mode & maximize_mode::vertical)) {
+            net_state |= net::MaxVert;
+        }
+        net_info->setState(net_state, net::Max);
     }
 
     std::unique_ptr<qobject_t> qobject;

@@ -6,9 +6,8 @@
 */
 #include "virtual_desktop_types.h"
 
-// Marshall the virtual_desktop_data into a D-BUS argument
-QDBusArgument const& operator<<(QDBusArgument& argument,
-                                KWin::win::dbus::virtual_desktop_data const& desk)
+// Marshall the subspace_data into a D-BUS argument
+QDBusArgument const& operator<<(QDBusArgument& argument, KWin::win::dbus::subspace_data const& desk)
 {
     argument.beginStructure();
     argument << desk.position;
@@ -19,8 +18,7 @@ QDBusArgument const& operator<<(QDBusArgument& argument,
 }
 
 // Retrieve
-QDBusArgument const& operator>>(QDBusArgument const& argument,
-                                KWin::win::dbus::virtual_desktop_data& desk)
+QDBusArgument const& operator>>(QDBusArgument const& argument, KWin::win::dbus::subspace_data& desk)
 {
     argument.beginStructure();
     argument >> desk.position;
@@ -31,9 +29,9 @@ QDBusArgument const& operator>>(QDBusArgument const& argument,
 }
 
 const QDBusArgument& operator<<(QDBusArgument& argument,
-                                KWin::win::dbus::virtual_desktop_data_vector const& deskVector)
+                                KWin::win::dbus::subspace_data_vector const& deskVector)
 {
-    argument.beginArray(qMetaTypeId<KWin::win::dbus::virtual_desktop_data>());
+    argument.beginArray(qMetaTypeId<KWin::win::dbus::subspace_data>());
 
     for (int i = 0; i < deskVector.size(); ++i) {
         argument << deskVector[i];
@@ -44,13 +42,13 @@ const QDBusArgument& operator<<(QDBusArgument& argument,
 }
 
 const QDBusArgument& operator>>(QDBusArgument const& argument,
-                                KWin::win::dbus::virtual_desktop_data_vector& deskVector)
+                                KWin::win::dbus::subspace_data_vector& deskVector)
 {
     argument.beginArray();
     deskVector.clear();
 
     while (!argument.atEnd()) {
-        KWin::win::dbus::virtual_desktop_data element;
+        KWin::win::dbus::subspace_data element;
         argument >> element;
         deskVector.append(element);
     }

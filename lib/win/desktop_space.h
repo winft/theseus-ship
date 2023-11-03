@@ -16,28 +16,28 @@ namespace KWin::win
 {
 
 template<typename Space, typename Win>
-void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activate)
+void send_window_to_subspace(Space& space, Win* window, int desk, bool dont_activate)
 {
-    if ((desk < 1 && desk != x11::net::win_info::OnAllDesktops)
-        || desk > static_cast<int>(space.virtual_desktop_manager->count())) {
+    if ((desk < 1 && desk != x11_desktop_number_on_all)
+        || desk > static_cast<int>(space.subspace_manager->subspaces.size())) {
         return;
     }
 
-    auto old_desktop = get_desktop(*window);
-    auto was_on_desktop = on_desktop(window, desk) || on_all_desktops(window);
-    set_desktop(window, desk);
+    auto old_subspace = get_subspace(*window);
+    auto was_on_subspace = on_subspace(*window, desk) || on_all_subspaces(*window);
+    set_subspace(*window, desk);
 
-    if (get_desktop(*window) != desk) {
-        // No change or desktop forced
+    if (get_subspace(*window) != desk) {
+        // No change or subspace forced
         return;
     }
 
     // window did range checking.
-    desk = get_desktop(*window);
+    desk = get_subspace(*window);
 
-    if (on_desktop(window, space.virtual_desktop_manager->current())) {
+    if (on_subspace(*window, subspaces_get_current_x11id(*space.subspace_manager))) {
         if (win::wants_tab_focus(window) && space.options->qobject->focusPolicyIsReasonable()
-            && !was_on_desktop && // for stickyness changes
+            && !was_on_subspace && // for stickyness changes
             !dont_activate) {
             request_focus(space, *window);
         } else {
@@ -47,13 +47,13 @@ void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activ
         raise_window(space, window);
     }
 
-    check_workspace_position(window, QRect(), old_desktop);
+    check_workspace_position(window, QRect(), old_subspace);
 
     auto const transients_stacking_order
         = restacked_by_space_stacking_order(space, window->transient->children);
     for (auto const& transient : transients_stacking_order) {
         if (transient->control) {
-            send_window_to_desktop(space, transient, desk, dont_activate);
+            send_window_to_subspace(space, transient, desk, dont_activate);
         }
     }
 
@@ -61,56 +61,53 @@ void send_window_to_desktop(Space& space, Win* window, int desk, bool dont_activ
 }
 
 template<typename Space>
-void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
+void update_client_visibility_on_subspace_change(Space* space, uint subspace)
 {
-    // Restore the focus on this desktop afterwards.
+    // Restore the focus on this subspace afterwards.
     focus_blocker<Space> blocker(*space);
 
     if (auto& mov_res = space->move_resize_window) {
         std::visit(overload{[&](auto&& win) {
-                       if (!on_desktop(win, newDesktop)) {
-                           win::set_desktop(win, newDesktop);
+                       if (!on_subspace(*win, subspace)) {
+                           win::set_subspace(*win, subspace);
                        }
                    }},
                    *mov_res);
     }
 
-    space->handle_desktop_changed(newDesktop);
+    space->handle_subspace_changed(subspace);
 }
 
 template<typename Space>
-void handle_desktop_count_changed(Space& space, unsigned int /*prev*/, unsigned int next)
+void handle_subspace_count_changed(Space& space, unsigned int /*prev*/, unsigned int next)
 {
     reset_space_areas(space, next);
 }
 
-template<typename Direction, typename Win>
-void window_to_desktop(Win& window)
+template<typename Win>
+void window_to_subspace(Win& window, subspace& sub)
 {
     auto& ws = window.space;
-    auto& vds = ws.virtual_desktop_manager;
-    Direction functor(*vds);
-
-    // TODO: why is win.space.options->isRollOverDesktops() not honored?
-    auto const desktop = functor(nullptr, true);
+    auto& vds = ws.subspace_manager;
 
     if (!is_desktop(&window) && !is_dock(&window)) {
         set_move_resize_window(ws, window);
-        vds->setCurrent(desktop);
+        subspaces_set_current(*vds, sub);
         unset_move_resize_window(ws);
     }
 }
 
 template<typename Win>
-void window_to_next_desktop(Win& window)
+void window_to_next_subspace(Win& window)
 {
-    window_to_desktop<win::virtual_desktop_next>(window);
+    window_to_subspace(window, subspaces_get_successor_of_current(*window.space.subspace_manager));
 }
 
 template<typename Win>
-void window_to_prev_desktop(Win& window)
+void window_to_prev_subspace(Win& window)
 {
-    window_to_desktop<win::virtual_desktop_previous>(window);
+    window_to_subspace(window,
+                       subspaces_get_predecessor_of_current(*window.space.subspace_manager));
 }
 
 template<typename Space>
@@ -139,7 +136,7 @@ void handle_desktop_resize(Space& space, QSize const& size)
     // TODO: emit a signal instead and remove the deep function calls into edges and effects
     space.edges->recreateEdges();
 
-    if (auto& effects = space.base.render->compositor->effects) {
+    if (auto& effects = space.base.render->effects) {
         effects->desktopResized(size);
     }
 }

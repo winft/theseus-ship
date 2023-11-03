@@ -12,8 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "script/script.h"
 #include "win/control.h"
 #include "win/move.h"
-#include "win/space.h"
-#include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
 
 #include <QDBusConnection>
@@ -30,7 +28,12 @@ namespace KWin::detail::test
 
 TEST_CASE("bindings", "[input],[win]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("bindings", operation_mode);
     setup.start();
     setup_wayland_connection();
@@ -160,11 +163,11 @@ TEST_CASE("bindings", "[input],[win]")
 
     SECTION("switch window script")
     {
-        auto desktop = GENERATE(range(2, 20));
+        auto subspace = GENERATE(range(2, 20));
 
-        // first go to desktop one
-        auto& vd_manager = setup.base->space->virtual_desktop_manager;
-        vd_manager->setCurrent(vd_manager->desktops().first());
+        // first go to subspace one
+        auto& vd_manager = setup.base->space->subspace_manager;
+        win::subspaces_set_current(*vd_manager, *vd_manager->subspaces.front());
 
         // now create a window
         auto surface = create_surface();
@@ -172,37 +175,37 @@ TEST_CASE("bindings", "[input],[win]")
 
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
-        QSignalSpy desktopsChangedSpy(c->qobject.get(), &win::window_qobject::desktopsChanged);
-        QVERIFY(desktopsChangedSpy.isValid());
+        QSignalSpy subspacesChangedSpy(c->qobject.get(), &win::window_qobject::subspaces_changed);
+        QVERIFY(subspacesChangedSpy.isValid());
 
         QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
 
-        vd_manager->setCount(desktop);
+        win::subspace_manager_set_count(*vd_manager, subspace);
 
         // now trigger the shortcut
-        auto invokeShortcut = [](int desktop) {
+        auto invokeShortcut = [](int subspace) {
             auto msg
                 = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
                                                  QStringLiteral("/component/kwin"),
                                                  QStringLiteral("org.kde.kglobalaccel.Component"),
                                                  QStringLiteral("invokeShortcut"));
-            msg.setArguments(QList<QVariant>{QStringLiteral("Window to Desktop %1").arg(desktop)});
+            msg.setArguments(QList<QVariant>{QStringLiteral("Window to Desktop %1").arg(subspace)});
             QDBusConnection::sessionBus().asyncCall(msg);
         };
 
-        invokeShortcut(desktop);
-        QVERIFY(desktopsChangedSpy.wait());
-        QCOMPARE(win::get_desktop(*c), desktop);
+        invokeShortcut(subspace);
+        QVERIFY(subspacesChangedSpy.wait());
+        QCOMPARE(win::get_subspace(*c), subspace);
 
-        // back to desktop 1
+        // back to subspace 1
         invokeShortcut(1);
-        QVERIFY(desktopsChangedSpy.wait());
-        QCOMPARE(win::get_desktop(*c), 1);
+        QVERIFY(subspacesChangedSpy.wait());
+        QCOMPARE(win::get_subspace(*c), 1);
 
-        // invoke with one desktop too many
-        invokeShortcut(desktop + 1);
+        // invoke with one subspace too many
+        invokeShortcut(subspace + 1);
         // that should fail
-        QVERIFY(!desktopsChangedSpy.wait(100));
+        QVERIFY(!subspacesChangedSpy.wait(100));
     }
 }
 

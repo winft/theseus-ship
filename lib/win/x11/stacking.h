@@ -8,7 +8,9 @@
 #include "client.h"
 #include "focus_stealing.h"
 #include "hide.h"
+#include "screen_edges.h"
 #include "window_find.h"
+#include <win/x11/user_time.h>
 
 #include "base/output_helpers.h"
 #include "base/x11/xcb/helpers.h"
@@ -98,7 +100,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
     // windows (e.g. popups).
     stack.push_back(space.root_info->supportWindow());
 
-    auto const edges_wins = space.edges->windows();
+    auto const edges_wins = screen_edges_windows(*space.edges);
     stack.insert(stack.end(), edges_wins.begin(), edges_wins.end());
     stack.insert(stack.end(), order.manual_overlays.begin(), order.manual_overlays.end());
 
@@ -163,8 +165,7 @@ void propagate_clients(Space& space, bool propagate_new_clients)
                        win);
         }
 
-        /// Desktop windows are always on the bottom, so copy the non-desktop windows to the
-        /// end/top.
+        // Desktop windows are always on the bottom, so copy the non-desktop windows to the end/top.
         std::copy(non_desktops.begin(), non_desktops.end(), std::back_inserter(clients));
         space.root_info->setClientList(clients.data(), clients.size());
     }
@@ -360,7 +361,7 @@ void restack_window(Win* win,
 
             auto above_win = std::get<Win*>(*it);
 
-            if (!(is_normal(above_win) && above_win->isShown() && on_current_desktop(above_win)
+            if (!(is_normal(above_win) && above_win->isShown() && on_current_subspace(*above_win)
                   && on_screen(above_win, win->topo.central_output))) {
                 continue;
             }

@@ -48,7 +48,7 @@ QRect get_maximizing_area(Win* win)
 
     if (win->control->electric_maximizing) {
         area = space_window_area(
-            win->space, area_option::maximize, win->space.input->cursor->pos(), get_desktop(*win));
+            win->space, area_option::maximize, win->space.input->cursor->pos(), get_subspace(*win));
     } else {
         area = space_window_area(win->space, area_option::maximize, win);
     }
@@ -113,8 +113,8 @@ void maximize_restore(Win* win)
     geometry_updates_blocker blocker(win);
     win->apply_restore_geometry(final_restore_geo);
 
-    if constexpr (requires(Win win) { win.net_info; }) {
-        win->net_info->setState(x11::net::States(), x11::net::Max);
+    if constexpr (requires(Win win, maximize_mode m) { win.set_state_maximize(m); }) {
+        win->set_state_maximize(maximize_mode::restore);
     }
 
     win->geo.update.max_mode = maximize_mode::restore;
@@ -138,10 +138,8 @@ void maximize_vertically(Win* win)
     geometry_updates_blocker blocker(win);
     win->setFrameGeometry(QRect(pos, size));
 
-    if constexpr (requires(Win win) { win.net_info; }) {
-        auto net_state = flags(geo_update.max_mode & maximize_mode::horizontal) ? x11::net::Max
-                                                                                : x11::net::MaxVert;
-        win->net_info->setState(net_state, x11::net::Max);
+    if constexpr (requires(Win win, maximize_mode m) { win.set_state_maximize(m); }) {
+        win->set_state_maximize(geo_update.max_mode);
     }
 
     geo_update.max_mode |= maximize_mode::vertical;
@@ -165,10 +163,8 @@ void maximize_horizontally(Win* win)
     geometry_updates_blocker blocker(win);
     win->setFrameGeometry(QRect(pos, size));
 
-    if constexpr (requires(Win win) { win.net_info; }) {
-        auto net_state = flags(geo_update.max_mode & maximize_mode::vertical) ? x11::net::Max
-                                                                              : x11::net::MaxHoriz;
-        win->net_info->setState(net_state, x11::net::Max);
+    if constexpr (requires(Win win, maximize_mode m) { win.set_state_maximize(m); }) {
+        win->set_state_maximize(geo_update.max_mode);
     }
 
     geo_update.max_mode |= maximize_mode::horizontal;

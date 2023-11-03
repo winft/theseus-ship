@@ -29,69 +29,69 @@ cursor_shape::operator int() const
     return m_shape;
 }
 
-QByteArray cursor_shape::name() const
+std::string cursor_shape::name() const
 {
     switch (m_shape) {
     case Qt::ArrowCursor:
-        return QByteArrayLiteral("left_ptr");
+        return "left_ptr";
     case Qt::UpArrowCursor:
-        return QByteArrayLiteral("up_arrow");
+        return "up_arrow";
     case Qt::CrossCursor:
-        return QByteArrayLiteral("cross");
+        return "cross";
     case Qt::WaitCursor:
-        return QByteArrayLiteral("wait");
+        return "wait";
     case Qt::IBeamCursor:
-        return QByteArrayLiteral("ibeam");
+        return "ibeam";
     case Qt::SizeVerCursor:
-        return QByteArrayLiteral("size_ver");
+        return "size_ver";
     case Qt::SizeHorCursor:
-        return QByteArrayLiteral("size_hor");
+        return "size_hor";
     case Qt::SizeBDiagCursor:
-        return QByteArrayLiteral("size_bdiag");
+        return "size_bdiag";
     case Qt::SizeFDiagCursor:
-        return QByteArrayLiteral("size_fdiag");
+        return "size_fdiag";
     case Qt::SizeAllCursor:
-        return QByteArrayLiteral("size_all");
+        return "size_all";
     case Qt::SplitVCursor:
-        return QByteArrayLiteral("split_v");
+        return "split_v";
     case Qt::SplitHCursor:
-        return QByteArrayLiteral("split_h");
+        return "split_h";
     case Qt::PointingHandCursor:
-        return QByteArrayLiteral("pointing_hand");
+        return "pointing_hand";
     case Qt::ForbiddenCursor:
-        return QByteArrayLiteral("forbidden");
+        return "forbidden";
     case Qt::OpenHandCursor:
-        return QByteArrayLiteral("openhand");
+        return "openhand";
     case Qt::ClosedHandCursor:
-        return QByteArrayLiteral("closedhand");
+        return "closedhand";
     case Qt::WhatsThisCursor:
-        return QByteArrayLiteral("whats_this");
+        return "whats_this";
     case Qt::BusyCursor:
-        return QByteArrayLiteral("left_ptr_watch");
+        return "left_ptr_watch";
     case Qt::DragMoveCursor:
-        return QByteArrayLiteral("dnd-move");
+        return "dnd-move";
     case Qt::DragCopyCursor:
-        return QByteArrayLiteral("dnd-copy");
+        return "dnd-copy";
     case Qt::DragLinkCursor:
-        return QByteArrayLiteral("dnd-link");
+        return "dnd-link";
     case extended_cursor::SizeNorthEast:
-        return QByteArrayLiteral("ne-resize");
+        return "ne-resize";
     case extended_cursor::SizeNorth:
-        return QByteArrayLiteral("n-resize");
+        return "n-resize";
     case extended_cursor::SizeNorthWest:
-        return QByteArrayLiteral("nw-resize");
+        return "nw-resize";
     case extended_cursor::SizeEast:
-        return QByteArrayLiteral("e-resize");
+        return "e-resize";
     case extended_cursor::SizeWest:
-        return QByteArrayLiteral("w-resize");
+        return "w-resize";
     case extended_cursor::SizeSouthEast:
-        return QByteArrayLiteral("se-resize");
+        return "se-resize";
     case extended_cursor::SizeSouth:
-        return QByteArrayLiteral("s-resize");
+        return "s-resize";
     case extended_cursor::SizeSouthWest:
-        return QByteArrayLiteral("sw-resize");
+        return "sw-resize";
     default:
-        return QByteArray();
+        return "";
     }
 }
 

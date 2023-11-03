@@ -430,7 +430,7 @@ public:
         return x11::belongs_to_desktop(*this);
     }
 
-    void doSetDesktop(int /*desktop*/, int /*was_desk*/)
+    void do_set_subspace()
     {
         x11::update_visibility(this);
     }
@@ -545,18 +545,52 @@ public:
     void setupCompositing()
     {
         assert(!this->remnant);
-        assert(this->space.base.render->compositor->scene);
+        assert(this->space.base.render->scene);
         assert(this->damage.handle == XCB_NONE);
 
         discard_shape(*this);
         this->render_data.damage_region = QRect({}, this->geo.size());
 
-        add_scene_window(*this->space.base.render->compositor->scene, *this);
+        add_scene_window(*this->space.base.render->scene, *this);
 
         if (this->control) {
             // for internalKeep()
             x11::update_visibility(this);
         }
+    }
+
+    void set_state_keep_below(bool keep)
+    {
+        if (static_cast<bool>(net_info->state() & x11::net::KeepBelow) == keep) {
+            return;
+        }
+        net_info->setState(keep ? x11::net::KeepBelow : x11::net::States(), x11::net::KeepBelow);
+    }
+
+    void set_state_keep_above(bool keep)
+    {
+        if (static_cast<bool>(net_info->state() & x11::net::KeepAbove) == keep) {
+            return;
+        }
+        net_info->setState(keep ? x11::net::KeepAbove : x11::net::States(), x11::net::KeepAbove);
+    }
+
+    void set_state_demands_attention(bool demand)
+    {
+        net_info->setState(demand ? x11::net::DemandsAttention : x11::net::States(),
+                           x11::net::DemandsAttention);
+    }
+
+    void set_state_maximize(maximize_mode mode)
+    {
+        auto net_state = x11::net::States();
+        if (flags(mode & maximize_mode::horizontal)) {
+            net_state |= x11::net::MaxHoriz;
+        }
+        if (flags(mode & maximize_mode::vertical)) {
+            net_state |= x11::net::MaxVert;
+        }
+        net_info->setState(net_state, x11::net::Max);
     }
 
     std::unique_ptr<qobject_t> qobject;

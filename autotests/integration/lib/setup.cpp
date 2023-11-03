@@ -11,6 +11,7 @@
 #include "render/backend/wlroots/platform.h"
 #include "render/shortcuts_init.h"
 #include "win/shortcuts_init.h"
+#include <desktop/kde/platform.h>
 
 extern "C" {
 #include <wlr/backend/headless.h>
@@ -63,11 +64,10 @@ setup::setup(std::string const& test_name,
     qunsetenv("XKB_DEFAULT_VARIANT");
     qunsetenv("XKB_DEFAULT_OPTIONS");
 
-    base = std::make_unique<base::backend::wlroots::platform>(
-        base::config(KConfig::OpenFlag::SimpleConfig, ""),
-        socket_name,
-        flags,
-        base::backend::wlroots::start_options::headless);
+    base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::SimpleConfig, ""),
+                                    socket_name,
+                                    flags,
+                                    base::backend::wlroots::start_options::headless);
     base->operation_mode = mode;
 
     auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend);
@@ -76,7 +76,21 @@ setup::setup(std::string const& test_name,
 
     base->session = std::make_unique<base::seat::backend::wlroots::session>(base->wlroots_session,
                                                                             headless_backend);
-    base->render = std::make_unique<render::backend::wlroots::platform<base_t>>(*base);
+
+    try {
+#if USE_XWL
+        using render_t = render::backend::wlroots::
+            platform<base_t, render::wayland::xwl_platform<base_t::abstract_type>>;
+#else
+        using render_t
+            = render::backend::wlroots::platform<base_t,
+                                                 render::wayland::platform<base_t::abstract_type>>;
+#endif
+        base->render = std::make_unique<render_t>(*base);
+    } catch (std::system_error const& exc) {
+        std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
+        throw;
+    }
 
     base->process_environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
     prepare_sys_env(socket_name);
@@ -84,32 +98,26 @@ setup::setup(std::string const& test_name,
 
 setup::~setup()
 {
-    assert(keyboard);
-    assert(pointer);
-    assert(touch);
-    wlr_keyboard_finish(keyboard);
-    wlr_pointer_finish(pointer);
-    wlr_touch_finish(touch);
-
     // TODO(romangg): can this be done in the end?
     clients.clear();
 
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
     if (effects) {
-        base->render->compositor->effects->unloadAllEffects();
+        base->render->effects->unloadAllEffects();
     }
 
+#if USE_XWL
     // Kill Xwayland before terminating its connection.
     base->xwayland.reset();
+#endif
     base->server->terminateClientConnections();
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    base->render->compositor->lock();
+    base->render->lock();
 
     base->space.reset();
-    base->render->compositor.reset();
 
     current_setup = nullptr;
 }
@@ -117,8 +125,8 @@ setup::~setup()
 void setup::start()
 {
     base->options = base::create_options(base->operation_mode, base->config.main);
-    base->input = std::make_unique<input::backend::wlroots::platform>(
-        *base, input::config(KConfig::SimpleConfig));
+    base->input = std::make_unique<input::backend::wlroots::platform<base_t>>(
+        *base, base->backend, input::config(KConfig::SimpleConfig));
     base->input->install_shortcuts();
 
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
@@ -129,7 +137,7 @@ void setup::start()
     assert(touch);
 
     try {
-        static_cast<render::backend::wlroots::platform<base_t>&>(*base->render).init();
+        base->render->init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         return;
@@ -150,20 +158,14 @@ void setup::start()
     metadata.physical_size = {1280, 1024};
     out->wrapland_output()->set_metadata(metadata);
 
-    try {
-        base->render->compositor = std::make_unique<base_t::render_t::compositor_t>(*base->render);
-    } catch (std::system_error const& exc) {
-        std::cerr << "FATAL ERROR: compositor creation failed: " << exc.what() << std::endl;
-        return;
-    }
-
     base->space = std::make_unique<base_t::space_t>(*base->render, *base->input);
+    base->space->desktop = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->space);
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     render::init_shortcuts(*base->render);
     base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
-    base->render->compositor->start(*base->space);
+    base->render->start(*base->space);
     base->server->create_addons([this] { handle_server_addons_created(); });
 
     TRY_REQUIRE_WITH_TIMEOUT(ready, 10000);
@@ -219,16 +221,19 @@ void setup::add_client(global_selection globals)
 
 void setup::handle_server_addons_created()
 {
+#if USE_XWL
     if (base->operation_mode == base::operation_mode::xwayland) {
         create_xwayland();
         return;
     }
+#endif
 
     ready = true;
 }
 
 void setup::create_xwayland()
 {
+#if USE_XWL
     auto status_callback = [this](auto error) {
         if (error) {
             std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
@@ -244,6 +249,7 @@ void setup::create_xwayland()
     } catch (std::exception const& exc) {
         std::cerr << "Exception creating Xwayland: " << exc.what() << std::endl;
     }
+#endif
 }
 
 setup* app()

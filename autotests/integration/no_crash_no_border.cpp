@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/scene.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>
@@ -42,7 +41,7 @@ TEST_CASE("no crash no border", "[win]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 

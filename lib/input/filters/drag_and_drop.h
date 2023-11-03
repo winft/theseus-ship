@@ -64,12 +64,15 @@ public:
 
         // TODO: use InputDeviceHandler::at() here and check isClient()?
         auto window = find_controlled_window(this->redirect, pos.toPoint());
-        if (auto& xwl = this->redirect.platform.base.xwayland) {
-            const auto ret = xwl->drag_move_filter(window, pos.toPoint());
-            if (ret == xwl::drag_event_reply::ignore) {
-                return false;
-            } else if (ret == xwl::drag_event_reply::take) {
-                return true;
+
+        if constexpr (requires(Redirect redirect) { redirect.platform.base.xwayland; }) {
+            if (auto& xwl = this->redirect.platform.base.xwayland) {
+                const auto ret = xwl->drag_move_filter(window, pos.toPoint());
+                if (ret == xwl::drag_event_reply::ignore) {
+                    return false;
+                } else if (ret == xwl::drag_event_reply::take) {
+                    return true;
+                }
             }
         }
 

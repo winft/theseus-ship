@@ -21,42 +21,42 @@ template<typename Manager, typename Win>
 void focus_chain_remove(Manager& manager, Win* window)
 {
     using var_win = typename Win::space_t::window_t;
-    for (auto& [key, chain] : manager.chains.desktops) {
+    for (auto& [key, chain] : manager.chains.subspaces) {
         remove_all(chain, var_win(window));
     }
     remove_all(manager.chains.latest_use, var_win(window));
 }
 
 /**
- * @brief Resizes the per virtual desktop focus chains from @p prev_size to @p next_size.
+ * @brief Resizes the per subspace focus chains from @p prev_size to @p next_size.
  *
- * This means that for each virtual desktop between previous and new size a new focus chain is
+ * This means that for each subspace between previous and new size a new focus chain is
  * created and in case the number is reduced the focus chains are destroyed.
  *
- * @param prev_size The previous number of virtual desktops
- * @param next_size The new number of virtual desktops
+ * @param prev_size The previous number of virtual subspaces
+ * @param next_size The new number of virtual subspaces
  * @return void
  */
 template<typename Manager>
 void focus_chain_resize(Manager& manager, unsigned int prev_size, unsigned int next_size)
 {
     for (auto i = prev_size + 1; i <= next_size; ++i) {
-        manager.chains.desktops.insert({i, decltype(manager.chains.latest_use)()});
+        manager.chains.subspaces.insert({i, decltype(manager.chains.latest_use)()});
     }
     for (auto i = prev_size; i > next_size; --i) {
-        manager.chains.desktops.erase(i);
+        manager.chains.subspaces.erase(i);
     }
 }
 
 /**
- * Checks whether the focus chain for the given @p desktop contains the given @p window.
+ * Checks whether the focus chain for the given @p subspace contains the given @p window.
  * Does not consider the most recently used focus chain.
  */
 template<typename Manager, typename VarWin>
-bool focus_chain_at_desktop_contains(Manager& manager, VarWin window, unsigned int desktop)
+bool focus_chain_at_subspace_contains(Manager& manager, VarWin window, unsigned int subspace)
 {
-    auto it = manager.chains.desktops.find(desktop);
-    if (it == manager.chains.desktops.end()) {
+    auto it = manager.chains.subspaces.find(subspace);
+    if (it == manager.chains.subspaces.end()) {
         return false;
     }
     return contains(it->second, window);
@@ -114,13 +114,12 @@ void focus_chain_update_window_in_chain(Win* window,
  * @brief Updates the position of the @p window according to the requested @p change in the
  * focus chain.
  *
- * This method affects both the most recently used focus chain and the per virtual desktop focus
- * chain.
+ * This method affects both the most recently used focus chain and the per subspace focus chain.
  *
  * In case the client does no longer want to get focus, it is removed from all chains. In case
- * the client is on all virtual desktops it is ensured that it is present in each of the virtual
- * desktops focus chain. In case it's on exactly one virtual desktop it is ensured that it is
- * only in the focus chain for that virtual desktop.
+ * the client is on all virtual subspaces it is ensured that it is present in each of the virtual
+ * subspaces focus chain. In case it's on exactly one subspace it is ensured that it is
+ * only in the focus chain for that subspace.
  *
  * Depending on @p change the window is inserted at different positions in the focus chain. In
  * case of @c focus_chain_change::make_first it is moved to the first position of the chain, in case
@@ -143,11 +142,11 @@ void focus_chain_update(Manager& manager, Win* window, focus_chain_change change
         return;
     }
 
-    if (on_all_desktops(window)) {
-        // Now on all desktops, add it to focus chains it is not already in.
-        for (auto& [key, chain] : manager.chains.desktops) {
-            // Making first/last works only on current desktop, don't affect all desktops
-            if (key == manager.current_desktop
+    if (on_all_subspaces(*window)) {
+        // Now on all subspaces, add it to focus chains it is not already in.
+        for (auto& [key, chain] : manager.chains.subspaces) {
+            // Making first/last works only on current subspace, don't affect all subspaces
+            if (key == manager.current_subspace
                 && (change == focus_chain_change::make_first
                     || change == focus_chain_change::make_last)) {
                 if (change == focus_chain_change::make_first) {
@@ -160,9 +159,9 @@ void focus_chain_update(Manager& manager, Win* window, focus_chain_change change
             }
         }
     } else {
-        // Now only on desktop, remove it anywhere else
-        for (auto& [key, chain] : manager.chains.desktops) {
-            if (on_desktop(window, key)) {
+        // Now only on subspace, remove it anywhere else
+        for (auto& [key, chain] : manager.chains.subspaces) {
+            if (on_subspace(*window, key)) {
                 focus_chain_update_window_in_chain(window, change, chain, manager.active_window);
             } else {
                 remove_all(chain, var_win(window));
@@ -273,8 +272,8 @@ void focus_chain_move_window_after(Manager& manager, Win* window, RefWin* refere
         return;
     }
 
-    for (auto& [key, chain] : manager.chains.desktops) {
-        if (!on_desktop(window, key)) {
+    for (auto& [key, chain] : manager.chains.subspaces) {
+        if (!on_subspace(*window, key)) {
             continue;
         }
         focus_chain_move_window_after_in_chain(chain, window, reference);

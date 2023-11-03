@@ -2,16 +2,19 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-add_library(xwl SHARED)
+add_library(xwayland SHARED)
+add_library(kwinft::xwayland ALIAS xwayland)
 
-target_link_libraries(xwl
+target_link_libraries(xwayland
   PUBLIC
     base-x11
     render-x11
+    win-x11
     WraplandServer
+    XCB::CURSOR
 )
 
-target_sources(xwl
+target_sources(xwayland
   PUBLIC
     FILE_SET HEADERS
     FILES
@@ -41,20 +44,14 @@ target_sources(xwl
     transfer.cpp
 )
 
-set_target_properties(xwl PROPERTIES
+set_target_properties(xwayland PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-xwl"
+  PREFIX libkwinft-
 )
 
-install(TARGETS xwl
-  EXPORT xwl-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
+install(TARGETS xwayland
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/xwl
-)
-install(EXPORT xwl-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )

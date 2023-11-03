@@ -11,8 +11,6 @@
 #include "output_topology.h"
 #include "seat/session.h"
 #include "types.h"
-#include "x11/data.h"
-#include "x11/event_filter_manager.h"
 
 #include "kwin_export.h"
 
@@ -27,22 +25,11 @@ class KWIN_EXPORT platform : public QObject
 {
     Q_OBJECT
 public:
-    platform(base::config config);
     ~platform() override;
 
     virtual clockid_t get_clockid() const;
 
-    base::operation_mode operation_mode;
     output_topology topology;
-    base::config config;
-    base::x11::data x11_data;
-
-    std::unique_ptr<base::options> options;
-    std::unique_ptr<base::seat::session> session;
-    std::unique_ptr<x11::event_filter_manager> x11_event_filters;
-
-private:
-    Q_DISABLE_COPY(platform)
 
 Q_SIGNALS:
     void output_added(KWin::base::output*);
@@ -58,5 +45,20 @@ Q_SIGNALS:
     // TODO(romangg): Move to Wayland platform?
     void x11_reset();
 };
+
+template<typename Platform>
+void init_platform(Platform& platform)
+{
+    QObject::connect(&platform, &Platform::output_added, &platform, [&platform](auto output) {
+        if (!platform.topology.current) {
+            platform.topology.current = output;
+        }
+    });
+    QObject::connect(&platform, &platform::output_removed, &platform, [&platform](auto output) {
+        if (output == platform.topology.current) {
+            platform.topology.current = nullptr;
+        }
+    });
+}
 
 }

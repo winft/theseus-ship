@@ -13,6 +13,7 @@
 #include "net.h"
 #include "screen.h"
 #include "window_operation.h"
+#include <win/subspace_manager.h>
 
 #include "base/logging.h"
 
@@ -184,7 +185,7 @@ private:
         if (!m_client || !m_menu)
             return;
 
-        if (space.virtual_desktop_manager->count() == 1) {
+        if (space.subspace_manager->subspaces.size() == 1) {
             delete m_desktopMenu;
             m_desktopMenu = nullptr;
             delete m_multipleDesktopsMenu;
@@ -255,7 +256,7 @@ private:
     {
         if (!m_desktopMenu)
             return;
-        auto const vds = space.virtual_desktop_manager.get();
+        auto const subs_manager = space.subspace_manager.get();
 
         m_desktopMenu->clear();
 
@@ -272,27 +273,28 @@ private:
         group->addAction(action);
 
         if (m_client
-            && std::visit(overload{[](auto&& win) { return on_all_desktops(win); }}, *m_client)) {
+            && std::visit(overload{[](auto&& win) { return on_all_subspaces(*win); }}, *m_client)) {
             action->setChecked(true);
         }
         m_desktopMenu->addSeparator();
 
         const uint BASE = 10;
 
-        for (uint i = 1; i <= vds->count(); ++i) {
+        for (uint i = 1; i <= subs_manager->subspaces.size(); ++i) {
             QString basic_name(QStringLiteral("%1  %2"));
             if (i < BASE) {
                 basic_name.prepend(QLatin1Char('&'));
             }
-            action = m_desktopMenu->addAction(basic_name.arg(i).arg(
-                vds->name(i).replace(QLatin1Char('&'), QStringLiteral("&&"))));
+            action = m_desktopMenu->addAction(
+                basic_name.arg(i).arg(subspace_manager_get_subspace_name(*subs_manager, i)
+                                          .replace(QLatin1Char('&'), QStringLiteral("&&"))));
             action->setData(i);
             action->setCheckable(true);
             group->addAction(action);
 
             if (m_client
                 && std::visit(overload{[&](auto&& win) {
-                                  return !on_all_desktops(win) && on_desktop(win, i);
+                                  return !on_all_subspaces(*win) && on_subspace(*win, i);
                               }},
                               *m_client)) {
                 action->setChecked(true);
@@ -303,10 +305,11 @@ private:
         action = m_desktopMenu->addAction(
             i18nc("Create a new desktop and move the window there", "&New Desktop"));
         action->setIcon(QIcon::fromTheme(QStringLiteral("list-add")));
-        action->setData(vds->count() + 1);
+        action->setData(static_cast<int>(subs_manager->subspaces.size() + 1));
 
-        if (vds->count() >= vds->maximum())
+        if (subs_manager->subspaces.size() >= subs_manager->max_count) {
             action->setEnabled(false);
+        }
     }
 
     /**
@@ -317,7 +320,7 @@ private:
     {
         if (!m_multipleDesktopsMenu)
             return;
-        auto const vds = space.virtual_desktop_manager.get();
+        auto const subs_manager = space.subspace_manager.get();
 
         m_multipleDesktopsMenu->clear();
         if (m_client) {
@@ -331,7 +334,7 @@ private:
         action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{0, false}));
         action->setCheckable(true);
         if (m_client
-            && std::visit(overload{[](auto&& win) { return on_all_desktops(win); }}, *m_client)) {
+            && std::visit(overload{[](auto&& win) { return on_all_subspaces(*win); }}, *m_client)) {
             action->setChecked(true);
         }
 
@@ -339,19 +342,20 @@ private:
 
         const uint BASE = 10;
 
-        for (uint i = 1; i <= vds->count(); ++i) {
+        for (uint i = 1; i <= subs_manager->subspaces.size(); ++i) {
             QString basic_name(QStringLiteral("%1  %2"));
             if (i < BASE) {
                 basic_name.prepend(QLatin1Char('&'));
             }
 
-            QAction* action = m_multipleDesktopsMenu->addAction(basic_name.arg(i).arg(
-                vds->name(i).replace(QLatin1Char('&'), QStringLiteral("&&"))));
+            QAction* action = m_multipleDesktopsMenu->addAction(
+                basic_name.arg(i).arg(subspace_manager_get_subspace_name(*subs_manager, i)
+                                          .replace(QLatin1Char('&'), QStringLiteral("&&"))));
             action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{i, false}));
             action->setCheckable(true);
             if (m_client
                 && std::visit(overload{[&](auto&& win) {
-                                  return !on_all_desktops(win) && on_desktop(win, i);
+                                  return !on_all_subspaces(*win) && on_subspace(*win, i);
                               }},
                               *m_client)) {
                 action->setChecked(true);
@@ -360,16 +364,17 @@ private:
 
         m_multipleDesktopsMenu->addSeparator();
 
-        for (uint i = 1; i <= vds->count(); ++i) {
-            QString name = i18n("Move to %1 %2", i, vds->name(i));
+        for (uint i = 1; i <= subs_manager->subspaces.size(); ++i) {
+            QString name
+                = i18n("Move to %1 %2", i, subspace_manager_get_subspace_name(*subs_manager, i));
             QAction* action = m_multipleDesktopsMenu->addAction(name);
             action->setData(QVariant::fromValue(user_actions_menu_desktop_action_data{i, true}));
         }
 
         m_multipleDesktopsMenu->addSeparator();
 
-        bool allowNewDesktops = vds->count() < vds->maximum();
-        uint countPlusOne = vds->count() + 1;
+        auto allowNewDesktops = subs_manager->subspaces.size() < subs_manager->max_count;
+        uint countPlusOne = subs_manager->subspaces.size() + 1;
 
         action = m_multipleDesktopsMenu->addAction(i18nc(
             "Create a new desktop and add the window to that desktop", "Add to &New Desktop"));
@@ -441,18 +446,18 @@ private:
         }
 
         std::visit(overload{[this, desk](auto&& win) {
-                       auto& vds = space.virtual_desktop_manager;
+                       auto& subs_manager = space.subspace_manager;
                        if (desk == 0) {
                            // the 'on_all_desktops' menu entry
                            if (win) {
-                               set_on_all_desktops(win, !on_all_desktops(win));
+                               set_on_all_subspaces(*win, !on_all_subspaces(*win));
                            }
                            return;
-                       } else if (desk > vds->count()) {
-                           vds->setCount(desk);
+                       } else if (desk > subs_manager->subspaces.size()) {
+                           subspace_manager_set_count(*subs_manager, desk);
                        }
 
-                       send_window_to_desktop(space, win, desk, false);
+                       send_window_to_subspace(space, win, desk, false);
                    }},
                    *m_client);
     }
@@ -473,25 +478,26 @@ private:
         }
         auto data = action->data().value<user_actions_menu_desktop_action_data>();
 
-        auto vds = space.virtual_desktop_manager.get();
+        auto subs_manager = space.subspace_manager.get();
 
         std::visit(overload{[&](auto&& win) {
                        if (data.desktop == 0) {
-                           // the 'on_all_desktops' menu entry
-                           set_on_all_desktops(win, !on_all_desktops(win));
+                           // the 'on_all_subspaces' menu entry
+                           set_on_all_subspaces(*win, !on_all_subspaces(*win));
                            return;
-                       } else if (data.desktop > vds->count()) {
-                           vds->setCount(data.desktop);
+                       } else if (data.desktop > subs_manager->subspaces.size()) {
+                           subspace_manager_set_count(*subs_manager, data.desktop);
                        }
 
                        if (data.move_to_single) {
-                           set_desktop(win, data.desktop);
+                           set_subspace(*win, data.desktop);
                        } else {
-                           auto virtualDesktop = vds->desktopForX11Id(data.desktop);
-                           if (win->topo.desktops.contains(virtualDesktop)) {
-                               leave_desktop(win, virtualDesktop);
+                           auto virtualDesktop
+                               = subspaces_get_for_x11id(*subs_manager, data.desktop);
+                           if (contains(win->topo.subspaces, virtualDesktop)) {
+                               leave_subspace(*win, virtualDesktop);
                            } else {
-                               enter_desktop(win, virtualDesktop);
+                               enter_subspace(*win, virtualDesktop);
                            }
                        }
                    }},

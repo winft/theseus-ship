@@ -12,26 +12,26 @@
 namespace KWin::win::dbus
 {
 
-struct virtual_desktop_data {
+struct subspace_data {
     uint position;
     QString id;
     QString name;
 };
 
-using virtual_desktop_data_vector = QVector<virtual_desktop_data>;
+using subspace_data_vector = QVector<subspace_data>;
 
 }
 
 KWIN_EXPORT QDBusArgument const& operator<<(QDBusArgument& argument,
-                                            KWin::win::dbus::virtual_desktop_data const& desk);
+                                            KWin::win::dbus::subspace_data const& desk);
 KWIN_EXPORT QDBusArgument const& operator>>(QDBusArgument const& argument,
-                                            KWin::win::dbus::virtual_desktop_data& desk);
+                                            KWin::win::dbus::subspace_data& desk);
 
-Q_DECLARE_METATYPE(KWin::win::dbus::virtual_desktop_data)
+Q_DECLARE_METATYPE(KWin::win::dbus::subspace_data)
 
 KWIN_EXPORT QDBusArgument const&
-operator<<(QDBusArgument& argument, KWin::win::dbus::virtual_desktop_data_vector const& deskVector);
-KWIN_EXPORT QDBusArgument const&
-operator>>(QDBusArgument const& argument, KWin::win::dbus::virtual_desktop_data_vector& deskVector);
+operator<<(QDBusArgument& argument, KWin::win::dbus::subspace_data_vector const& deskVector);
+KWIN_EXPORT QDBusArgument const& operator>>(QDBusArgument const& argument,
+                                            KWin::win::dbus::subspace_data_vector& deskVector);
 
-Q_DECLARE_METATYPE(KWin::win::dbus::virtual_desktop_data_vector)
+Q_DECLARE_METATYPE(KWin::win::dbus::subspace_data_vector)

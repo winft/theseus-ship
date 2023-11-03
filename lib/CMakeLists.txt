@@ -13,13 +13,41 @@ add_subdirectory(xwl)
 add_subdirectory(debug)
 add_subdirectory(desktop)
 
-add_library(wlroots SHARED)
+add_library(x11 SHARED)
+add_library(kwinft::x11 ALIAS x11)
 
-target_link_libraries(wlroots
+target_link_libraries(x11
+  PUBLIC
+    base-x11
+    debug-common
+    desktop
+    input-x11-backend
+    render-x11-backend
+
+    # TODO(romangg): Linking against script lib is needed at the moment because in the base platform
+    #                the script platform is composited, but in the future it should be made possible
+    #                to build the wlroots backend lib without it.
+    script
+    win-x11-backend
+)
+
+target_sources(x11
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      base/x11/platform.h
+)
+
+add_library(wayland SHARED)
+add_library(kwinft::wayland ALIAS wayland)
+
+target_link_libraries(wayland
   PUBLIC
     debug-wl
+    desktop
     input-wl
-    win-x11
+    render-wl
+    win-wl
 
     # TODO(romangg): Linking against script lib is needed at the moment because in the base platform
     #                the script platform is composited, but in the future it should be made possible
@@ -31,10 +59,9 @@ target_link_libraries(wlroots
     wlroots::wlroots
     Wayland::Server
     WraplandClient
-    xwl
 )
 
-target_sources(wlroots
+target_sources(wayland
   PUBLIC
     FILE_SET HEADERS
     FILES
@@ -42,7 +69,9 @@ target_sources(wlroots
       base/backend/wlroots/non_desktop_output.h
       base/backend/wlroots/output.h
       base/backend/wlroots/platform.h
+      base/backend/wlroots/platform_events.h
       base/backend/wlroots/platform_helpers.h
+      input/backend/wlroots/device_helpers.h
       input/backend/wlroots/keyboard.h
       input/backend/wlroots/platform.h
       input/backend/wlroots/pointer.h
@@ -63,11 +92,7 @@ target_sources(wlroots
       render/backend/wlroots/wlr_non_owning_data_buffer.h
   PRIVATE
    base/backend/wlroots/drm_lease.cpp
-   base/backend/wlroots/non_desktop_output.cpp
-   base/backend/wlroots/output.cpp
-   base/backend/wlroots/platform.cpp
    base/seat/backend/wlroots/session.cpp
-   input/backend/wlroots/platform.cpp
    input/backend/wlroots/control/headless/keyboard.cpp
    input/backend/wlroots/control/keyboard.cpp
    input/backend/wlroots/control/pointer.cpp
@@ -75,26 +100,25 @@ target_sources(wlroots
    input/backend/wlroots/control/touch.cpp
 )
 
-set_target_properties(wlroots PROPERTIES
+set_target_properties(x11 wayland PROPERTIES
    VERSION ${CMAKE_PROJECT_VERSION}
    SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-   OUTPUT_NAME "kwin-wlroots"
+   PREFIX libkwinft-
 )
 
-target_compile_definitions(wlroots PUBLIC WLR_USE_UNSTABLE)
+target_compile_definitions(wayland PUBLIC WLR_USE_UNSTABLE)
 
-kcoreaddons_target_static_plugins(wlroots
+kcoreaddons_target_static_plugins(wayland
   NAMESPACE "kwin/effects/plugins"
 )
 
-install(TARGETS wlroots
-  EXPORT wlroots-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
+install(TARGETS x11 wayland
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft
 )
-install(EXPORT wlroots-export
+
+install(EXPORT kwinft-export
   NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
   DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )

@@ -13,8 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effects.h"
 #include "script/effect.h"
 #include "win/actions.h"
-#include "win/space.h"
-#include "win/virtual_desktops.h"
 
 #include <QJSValue>
 #include <QQmlEngine>
@@ -110,7 +108,12 @@ TEST_CASE("scripted effects", "[effect]")
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("scripted-effects", operation_mode);
 
     // disable all effects - we don't want to have it interact with the rendering
@@ -125,13 +128,13 @@ TEST_CASE("scripted effects", "[effect]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render->compositor);
+    QVERIFY(setup.base->render);
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
-    setup.base->space->virtual_desktop_manager->setCount(2);
+    win::subspace_manager_set_count(*setup.base->space->subspace_manager, 2);
 
     setup_wayland_connection();
 
@@ -175,7 +178,7 @@ TEST_CASE("scripted effects", "[effect]")
         waitFor("windowClosed - WindowA");
 
         // desktop management
-        setup.base->space->virtual_desktop_manager->setCurrent(2);
+        win::subspaces_set_current(*setup.base->space->subspace_manager, 2);
         waitFor("desktopChanged - 1 2");
     }
 
@@ -345,7 +348,7 @@ TEST_CASE("scripted effects", "[effect]")
         QCOMPARE(effectMain->isActiveFullScreenEffect(), false);
 
         // trigger animation
-        setup.base->space->virtual_desktop_manager->setCurrent(2);
+        win::subspaces_set_current(*setup.base->space->subspace_manager, 2);
 
         QCOMPARE(effects->activeFullScreenEffect(), effectMain);
         QCOMPARE(effects->hasActiveFullScreenEffect(), true);
@@ -359,7 +362,7 @@ TEST_CASE("scripted effects", "[effect]")
 
         // after 500ms trigger another full screen animation
         QTest::qWait(500);
-        setup.base->space->virtual_desktop_manager->setCurrent(1);
+        win::subspaces_set_current(*setup.base->space->subspace_manager, 1);
         QCOMPARE(effects->activeFullScreenEffect(), effectMain);
 
         // after 1000ms (+a safety margin for time based tests) we should still be the active full
@@ -418,7 +421,7 @@ TEST_CASE("scripted effects", "[effect]")
             // the test effect doesn't keep the window alive, so it should be
             // removed immediately
             QSignalSpy deletedRemovedSpy(setup.base->space->qobject.get(),
-                                         &win::space::qobject_t::window_deleted);
+                                         &space::qobject_t::window_deleted);
             QVERIFY(deletedRemovedSpy.isValid());
             TRY_REQUIRE_WITH_TIMEOUT(deletedRemovedSpy.count() == 1, 100);
             QCOMPARE(effect->state().count(), 0);

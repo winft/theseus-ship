@@ -24,16 +24,11 @@ target_sources(desktop
   PUBLIC
     FILE_SET HEADERS
     FILES
+      platform.h
       screen_locker_watcher.h
   PRIVATE
     screen_locker_watcher.cpp
     ${desktop_dbus_src}
-)
-
-set_target_properties(desktop PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-desktop"
 )
 
 add_library(desktop-kde SHARED)
@@ -56,16 +51,17 @@ target_sources(desktop-kde
   PUBLIC
     FILE_SET HEADERS
     FILES
+      kde/platform.h
       kde/service_utils.h
   PRIVATE
     kde/dbus/kwin.cpp
     ${desktop_kde_dbus_src}
 )
 
-set_target_properties(desktop-kde PROPERTIES
+set_target_properties(desktop desktop-kde PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-desktop-kde"
+  PREFIX libkwinft-
 )
 
 # TODO(romangg): Below should only be installed as part of a consumer install linking desktop-kde.
@@ -104,26 +100,8 @@ ecm_install_configured_files(
   @ONLY DESTINATION ${KDE_INSTALL_SYSTEMDUSERUNITDIR}
 )
 
-install(TARGETS desktop
-  EXPORT desktop-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
+install(TARGETS desktop desktop-kde
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/desktop
-)
-install(TARGETS desktop-kde
-  EXPORT desktop-kde-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/desktop
-)
-
-install(EXPORT desktop-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT desktop-kde-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )

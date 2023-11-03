@@ -9,6 +9,7 @@
 #include "window_release.h"
 
 #include "win/transient.h"
+#include <win/wayland/space_windows.h>
 
 #include <Wrapland/Server/subcompositor.h>
 #include <Wrapland/Server/surface.h>
@@ -117,8 +118,8 @@ void set_subsurface_parent(Win* win, Lead* lead)
     //                stops rendering without this connection.
     QObject::connect(win->qobject.get(),
                      &window_qobject::needsRepaint,
-                     win->space.base.render->compositor->qobject.get(),
-                     [win] { win->space.base.render->compositor->schedule_repaint(win); });
+                     win->space.base.render->qobject.get(),
+                     [win] { win->space.base.render->schedule_repaint(win); });
 
     subsurface_set_pos(*win);
 
@@ -157,7 +158,7 @@ void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurfac
                                     }
                                     win::wayland::set_subsurface_parent(window, win);
                                     if (window->render_data.ready_for_painting) {
-                                        space->handle_window_added(window);
+                                        space_windows_add(*space, *window);
                                         adopt_transient_children(space, window);
                                     }
                                     return true;

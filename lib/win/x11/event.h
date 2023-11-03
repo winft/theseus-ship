@@ -128,7 +128,7 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
     if (win->control->minimized) {
         win::set_minimized(win, false);
     }
-    if (!on_current_desktop(win)) {
+    if (!on_current_subspace(*win)) {
         if (allow_window_activation(win->space, win)) {
             activate_window(win->space, *win);
         } else {
@@ -661,7 +661,7 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
     if (e->detail == XCB_NOTIFY_DETAIL_POINTER) {
         return;
     }
-    if (!win->isShown() || !on_current_desktop(win)) {
+    if (!win->isShown() || !on_current_subspace(*win)) {
         // we unmapped it, but it got focus meanwhile ->
         // activateNextClient() already transferred focus elsewhere
         return;
@@ -846,7 +846,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             update_user_time(win, win->net_info->userTime());
         }
         if (dirtyProperties2 & net::WM2Opacity) {
-            if (win->space.base.render->compositor->scene) {
+            if (win->space.base.render->scene) {
                 add_full_repaint(*win);
                 Q_EMIT win->qobject->opacityChanged(old_opacity);
             } else {
@@ -1013,7 +1013,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         break;
     case XCB_EXPOSE: {
         auto event = reinterpret_cast<xcb_expose_event_t*>(e);
-        auto comp = win->space.base.render->compositor.get();
+        auto comp = win->space.base.render.get();
         using comp_t = std::remove_pointer_t<decltype(comp)>;
         if (event->window == win->frameId() && comp->state != comp_t::state_t::on) {
             // TODO: only repaint required areas

@@ -12,9 +12,6 @@
 #include "utils/algorithm.h"
 #include "utils/geo.h"
 #include "win/setup.h"
-#include "win/space.h"
-#include "win/x11/client_machine.h"
-#include "win/x11/net/net.h"
 
 #include <QFileInfo>
 #include <QRegularExpression>
@@ -286,8 +283,9 @@ bool ruling::matchType(win_type match_type) const
             // win_type::Unknown->win_type::Normal is only here for matching
             match_type = win_type::normal;
         }
-        if (!x11::net::typeMatchesMask(match_type, types))
+        if (!win::type_matches_mask(match_type, types)) {
             return false;
+        }
     }
     return true;
 }
@@ -464,22 +462,6 @@ bool ruling::applyKeepBelow(bool& below, bool init) const
 bool ruling::applyFullScreen(bool& fs, bool init) const
 {
     return apply_set(fs, this->fullscreen, init);
-}
-
-bool ruling::applyDesktops(virtual_desktop_manager const& manager,
-                           QVector<virtual_desktop*>& vds,
-                           bool init) const
-{
-    if (checkSetRule(desktops.rule, init)) {
-        vds.clear();
-
-        for (auto id : desktops.data) {
-            if (auto vd = manager.desktopForId(id)) {
-                vds << vd;
-            }
-        }
-    }
-    return checkSetStop(desktops.rule);
 }
 
 bool ruling::applyScreen(int& screen, bool init) const

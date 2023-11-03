@@ -9,21 +9,27 @@
 
 #include "desktop_space.h"
 #include "screen_edge.h"
+#include "screen_edges.h"
 #include "screen_edges_filter.h"
 #include "space_areas.h"
 #include "space_setup.h"
 #include "window.h"
+#include <win/x11/subspace_manager.h>
 
 #include "base/x11/xcb/helpers.h"
 #include "debug/console/x11/x11_console.h"
-#include "desktop/kde/dbus/kwin.h"
-#include "desktop/screen_locker_watcher.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
-#include "win/internal_window.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/stacking_order.h"
+#include <desktop/platform.h>
+#include <win/kill_window.h>
+#include <win/space_reconfigure.h>
+#include <win/stacking_state.h>
+#include <win/user_actions_menu.h>
+#include <win/x11/debug.h>
+#include <win/x11/netinfo_helpers.h>
+#include <win/x11/tabbox_filter.h>
 
 #include <vector>
 
@@ -31,28 +37,32 @@ namespace KWin::win::x11
 {
 
 template<typename Render, typename Input>
-class space : public win::space
+class space
 {
 public:
     using type = space<Render, Input>;
+    using qobject_t = space_qobject;
     using base_t = typename Input::base_t;
     using input_t = typename Input::redirect_t;
     using x11_window = window<type>;
     using window_t = std::variant<x11_window*>;
     using window_group_t = x11::group<type>;
-    using render_outline_t = typename base_t::render_t::outline_t;
+    using render_outline_t = typename base_t::render_t::qobject_t::outline_t;
 
     space(Render& render, Input& input)
-        : win::space(input.base.config.main)
-        , base{input.base}
-        , outline{render_outline_t::create(
-              *render.compositor,
-              [this] { return outline->create_visual(*this->base.render->compositor); })}
-        , deco{std::make_unique<deco::bridge<type>>(*this)}
-        , appmenu{std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this))}
-        , user_actions_menu{std::make_unique<win::user_actions_menu<type>>(*this)}
-        , screen_locker_watcher{std::make_unique<desktop::screen_locker_watcher>()}
+        : base{input.base}
     {
+        qobject = std::make_unique<space_qobject>([this] { space_start_reconfigure_timer(*this); });
+        options = std::make_unique<win::options>(input.base.config.main);
+        rule_book = std::make_unique<rules::book>();
+        subspace_manager = std::make_unique<x11::subspace_manager>();
+
+        outline = render_outline_t::create(render,
+                                           [&, this] { return outline->create_visual(render); });
+        deco = std::make_unique<deco::bridge<type>>(*this);
+        appmenu = std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(*this));
+        user_actions_menu = std::make_unique<win::user_actions_menu<type>>(*this);
+
         win::init_space(*this);
 
         singleton_interface::get_current_output_geometry = [this] {
@@ -64,26 +74,25 @@ public:
 
         atoms = std::make_unique<base::x11::atoms>(base.x11_data.connection);
         edges = std::make_unique<edger_t>(*this);
-        dbus = std::make_unique<desktop::kde::kwin_impl<type>>(*this);
 
         QObject::connect(
-            virtual_desktop_manager->qobject.get(),
-            &virtual_desktop_manager_qobject::desktopRemoved,
+            subspace_manager->qobject.get(),
+            &subspace_manager_qobject::subspace_removed,
             qobject.get(),
             [this] {
-                auto const desktop_count = static_cast<int>(virtual_desktop_manager->count());
+                auto const subspace_count = static_cast<int>(subspace_manager->subspaces.size());
                 for (auto const& window : windows) {
                     std::visit(overload{[&](auto&& win) {
                                    if (!win->control) {
                                        return;
                                    }
-                                   if (on_all_desktops(win)) {
+                                   if (on_all_subspaces(*win)) {
                                        return;
                                    }
-                                   if (get_desktop(*win) <= desktop_count) {
+                                   if (get_subspace(*win) <= subspace_count) {
                                        return;
                                    }
-                                   send_window_to_desktop(*this, win, desktop_count, true);
+                                   send_window_to_subspace(*this, win, subspace_count, true);
                                }},
                                window);
                 }
@@ -92,20 +101,21 @@ public:
         x11::init_space(*this);
     }
 
-    ~space() override
+    virtual ~space()
     {
+        x11::clear_space(*this);
         win::clear_space(*this);
     }
 
-    void resize(QSize const& size) override
+    void resize(QSize const& size)
     {
         handle_desktop_resize(root_info.get(), size);
         win::handle_desktop_resize(*this, size);
     }
 
-    void handle_desktop_changed(uint desktop) override
+    void handle_subspace_changed(uint subspace)
     {
-        x11::popagate_desktop_change(*this, desktop);
+        x11::popagate_subspace_change(*this, subspace);
     }
 
     /// On X11 an internal window is an unmanaged and mapped by the window id.
@@ -134,7 +144,7 @@ public:
 
     void update_space_area_from_windows(QRect const& desktop_area,
                                         std::vector<QRect> const& screens_geos,
-                                        win::space_areas& areas) override
+                                        win::space_areas& areas)
     {
         for (auto const& win : windows) {
             std::visit(overload{[&](x11_window* win) {
@@ -146,13 +156,141 @@ public:
         }
     }
 
-    void show_debug_console() override
+    void show_debug_console()
     {
         auto console = new debug::x11_console(*this);
         console->show();
     }
 
+    void update_work_area() const
+    {
+        x11::update_work_areas(*this);
+    }
+
+    void update_tool_windows_visibility(bool also_hide)
+    {
+        x11::update_tool_windows_visibility(this, also_hide);
+    }
+
+    template<typename Win>
+    void set_active_window(Win& window)
+    {
+        if (root_info) {
+            x11::root_info_set_active_window(*root_info, window);
+        }
+    }
+
+    void unset_active_window()
+    {
+        if (root_info) {
+            x11::root_info_unset_active_window(*root_info);
+        }
+    }
+
+    void debug(QString& support) const
+    {
+        x11::debug_support_info(*this, support);
+    }
+
+    bool tabbox_grab()
+    {
+        base::x11::update_time_from_clock(base);
+        if (!base.input->grab_keyboard()) {
+            return false;
+        }
+
+        // Don't try to establish a global mouse grab using XGrabPointer, as that would prevent
+        // using Alt+Tab while DND (#44972). However force passive grabs on all windows in order to
+        // catch MouseRelease events and close the tabbox (#67416). All clients already have passive
+        // grabs in their wrapper windows, so check only the active client, which may not have it.
+        assert(!tabbox->grab.forced_global_mouse);
+        tabbox->grab.forced_global_mouse = true;
+
+        if (stacking.active) {
+            std::visit(overload{[&](auto&& win) { win->control->update_mouse_grab(); }},
+                       *stacking.active);
+        }
+
+        tabbox_filter = std::make_unique<x11::tabbox_filter<win::tabbox<type>>>(*tabbox);
+        return true;
+    }
+
+    void tabbox_ungrab()
+    {
+        base::x11::update_time_from_clock(base);
+        base.input->ungrab_keyboard();
+
+        assert(tabbox->grab.forced_global_mouse);
+        tabbox->grab.forced_global_mouse = false;
+
+        if (stacking.active) {
+            std::visit(overload{[](auto&& win) { win->control->update_mouse_grab(); }},
+                       *stacking.active);
+        }
+
+        tabbox_filter = {};
+    }
+
     base_t& base;
+
+    std::unique_ptr<qobject_t> qobject;
+    std::unique_ptr<win::options> options;
+
+    win::space_areas areas;
+    std::unique_ptr<base::x11::atoms> atoms;
+    std::unique_ptr<rules::book> rule_book;
+
+    std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;
+    std::unique_ptr<base::x11::event_filter> m_movingClientFilter;
+    std::unique_ptr<base::x11::event_filter> m_syncAlarmFilter;
+
+    int initial_subspace{1};
+    std::unique_ptr<base::x11::xcb::window> m_nullFocus;
+
+    int block_focus{0};
+
+    QPoint focusMousePos;
+
+    // Timer to collect requests for 'reconfigure'
+    QTimer reconfigureTimer;
+    QTimer updateToolWindowsTimer;
+
+    // Array of the previous restricted areas that window cannot be moved into
+    std::vector<win::strut_rects> oldrestrictedmovearea;
+
+    std::unique_ptr<x11::subspace_manager> subspace_manager;
+    std::unique_ptr<x11::session_manager> session_manager;
+
+    QTimer* m_quickTileCombineTimer{nullptr};
+    win::quicktiles m_lastTilingMode{win::quicktiles::none};
+
+    QWidget* active_popup{nullptr};
+
+    std::vector<session_info*> session;
+
+    // Delay(ed) window focus timer and client
+    QTimer* delayFocusTimer{nullptr};
+
+    bool showing_desktop{false};
+    bool was_user_interaction{false};
+
+    int session_active_client;
+    int session_desktop;
+
+    win::shortcut_dialog* client_keys_dialog{nullptr};
+    bool global_shortcuts_disabled{false};
+
+    // array of previous sizes of xinerama screens
+    std::vector<QRect> oldscreensizes;
+
+    // previous sizes od displayWidth()/displayHeight()
+    QSize olddisplaysize;
+
+    int set_active_client_recursion{0};
+
+    base::x11::xcb::window shape_helper_window;
+
+    uint32_t window_id{0};
 
     std::unique_ptr<render_outline_t> outline;
     std::unique_ptr<edger_t> edges;
@@ -162,14 +300,13 @@ public:
     std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
     std::unique_ptr<input_t> input;
+    std::unordered_map<std::string, xcb_cursor_t> xcb_cursors;
 
     std::unique_ptr<win::tabbox<type>> tabbox;
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-
-    std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
-    std::unique_ptr<desktop::kde::kwin_impl<type>> dbus;
+    std::unique_ptr<desktop::platform> desktop;
 
     std::vector<window_t> windows;
     std::unordered_map<uint32_t, window_t> windows_map;
@@ -183,6 +320,7 @@ public:
 
 private:
     std::unique_ptr<base::x11::event_filter> edges_filter;
+    std::unique_ptr<base::x11::event_filter> tabbox_filter;
 };
 
 /**
@@ -202,7 +340,7 @@ void stack_screen_edges_under_override_redirect(Space* space)
     std::vector<xcb_window_t> windows;
     windows.push_back(space->root_info->supportWindow());
 
-    auto const edges_wins = space->edges->windows();
+    auto const edges_wins = screen_edges_windows(*space->edges);
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
 
     base::x11::xcb::restack_windows(space->base.x11_data.connection, windows);

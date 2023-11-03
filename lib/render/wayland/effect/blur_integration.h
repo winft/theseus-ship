@@ -8,9 +8,6 @@
 #include "blur_update.h"
 #include "update.h"
 
-#include "render/x11/effect.h"
-#include "render/x11/effect/blur_update.h"
-
 #include <render/effect/interface/effect_integration.h>
 
 #include <Wrapland/Server/blur.h>
@@ -22,7 +19,56 @@
 namespace KWin::render::wayland
 {
 
-template<typename Effects>
+struct blur_support {
+    template<typename EffectIntegrator>
+    void setup(EffectIntegrator& effi)
+    {
+        setup_effect_window_add(effi);
+        setup_effect_internal_window_add(effi);
+        setup_effect_screen_geometry_changes(effi);
+    }
+
+    template<typename EffectIntegrator>
+    void add(EffectIntegrator& effi,
+             Effect& effect,
+             typename EffectIntegrator::update_function const& update)
+    {
+        effi.registry.insert({&effect, update});
+
+        if (!effi.manager) {
+            effi.manager = std::make_unique<Wrapland::Server::BlurManager>(&effi.display);
+        }
+
+        auto const windows = effi.effects.stackingOrder();
+        for (auto window : windows) {
+            effi.update(*window);
+        }
+    }
+
+    template<typename EffectIntegrator>
+    void remove(EffectIntegrator& effi, Effect& effect)
+    {
+        effi.registry.erase(&effect);
+        if (effi.registry.empty()) {
+            effi.manager.reset();
+        }
+    }
+
+    template<typename EffectIntegrator>
+    void update(EffectIntegrator& effi, EffectWindow& window)
+    {
+        auto upd = get_blur_update(effi, window);
+        if (!upd.base.window) {
+            return;
+        }
+
+        for (auto const& [effect, update_call] : effi.registry) {
+            update_call(upd);
+        }
+    }
+};
+
+template<typename Effects, typename Support>
 class blur_integration : public effect::region_integration
 {
 public:
@@ -31,37 +77,17 @@ public:
         , internal_properties{get_internal_blur_properties()}
         , display{display}
     {
-        setup_effect_window_add(*this);
-        setup_effect_internal_window_add(*this);
-        setup_effect_screen_geometry_changes(*this);
-        setup_effect_xwayland(*this);
+        support.setup(*this);
     }
 
     void add(Effect& effect, update_function const& update) override
     {
-        registry.insert({&effect, update});
-
-        if (!manager) {
-            manager = std::make_unique<Wrapland::Server::BlurManager>(&display);
-        }
-
-        // For Xwayland
-        atom = x11::announce_support_property(effects, &effect, atom_name.data());
-
-        auto const windows = effects.stackingOrder();
-        for (auto window : windows) {
-            this->update(*window);
-        }
+        support.add(*this, effect, update);
     }
 
     void remove(Effect& effect) override
     {
-        registry.erase(&effect);
-        x11::remove_support_property(effects, &effect, atom_name.data());
-
-        if (registry.empty()) {
-            manager.reset();
-        }
+        support.remove(*this, effect);
     }
 
     void reset()
@@ -74,20 +100,10 @@ public:
 
     void update(EffectWindow& window)
     {
-        auto upd = get_blur_update(*this, window);
-        if (!upd.base.window) {
-            // Try Xwayland
-            upd = render::x11::get_blur_update(*this, window);
-        }
-        if (!upd.base.window) {
-            return;
-        }
-
-        for (auto const& [effect, update_call] : registry) {
-            update_call(upd);
-        }
+        support.update(*this, window);
     }
 
+    Support support;
     std::map<Effect*, update_function> registry;
     Effects& effects;
 
@@ -98,11 +114,6 @@ public:
 
     decltype(get_internal_blur_properties()) const internal_properties;
 
-    // For Xwayland
-    long atom{0};
-    static constexpr std::string_view atom_name{"_KDE_NET_WM_BLUR_BEHIND_REGION"};
-
-private:
     std::unique_ptr<Wrapland::Server::BlurManager> manager;
     Wrapland::Server::Display& display;
 };

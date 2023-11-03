@@ -13,7 +13,7 @@
 namespace KWin::input::backend::wlroots
 {
 
-class keyboard_control : public input::control::keyboard
+class KWIN_EXPORT keyboard_control : public input::control::keyboard
 {
     Q_OBJECT
 

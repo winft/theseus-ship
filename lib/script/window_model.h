@@ -53,8 +53,8 @@ class KWIN_EXPORT window_filter_model : public QSortFilterProxyModel
         window_model* windowModel READ windowModel WRITE setWindowModel NOTIFY windowModelChanged)
     Q_PROPERTY(
         QString activity READ activity WRITE setActivity RESET resetActivity NOTIFY activityChanged)
-    Q_PROPERTY(KWin::win::virtual_desktop* desktop READ desktop WRITE setDesktop RESET resetDesktop
-                   NOTIFY desktopChanged)
+    Q_PROPERTY(KWin::win::subspace* desktop READ desktop WRITE setDesktop RESET resetDesktop NOTIFY
+                   desktopChanged)
     Q_PROPERTY(QString filter READ filter WRITE setFilter NOTIFY filterChanged)
     Q_PROPERTY(QString screenName READ screenName WRITE setScreenName RESET resetScreenName NOTIFY
                    screenNameChanged)
@@ -84,8 +84,8 @@ public:
     void setActivity(const QString& activity);
     void resetActivity();
 
-    win::virtual_desktop* desktop() const;
-    void setDesktop(win::virtual_desktop* desktop);
+    win::subspace* desktop() const;
+    void setDesktop(win::subspace* desktop);
     void resetDesktop();
 
     QString filter() const;
@@ -119,7 +119,7 @@ private:
 
     window_model* m_windowModel = nullptr;
     base::output* m_output = nullptr;
-    win::virtual_desktop* m_desktop = nullptr;
+    win::subspace* m_desktop = nullptr;
     QString m_filter;
     std::optional<WindowTypes> m_windowType;
     bool m_showMinimizedWindows = true;

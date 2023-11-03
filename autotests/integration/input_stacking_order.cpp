@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/cursor.h"
 #include "win/move.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/stacking.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
@@ -33,7 +32,12 @@ namespace KWin::detail::test
 
 TEST_CASE("input stacking order", "[win]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("input-stacking-order", operation_mode);
     setup.start();
     setup.set_outputs(2);
@@ -67,7 +71,7 @@ TEST_CASE("input stacking order", "[win]")
 
         // now create the two windows and make them overlap
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface1 = create_surface();
         QVERIFY(surface1);

@@ -15,9 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/rules/book.h"
 #include "win/rules/ruling.h"
 #include "win/setup.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
-#include "win/virtual_desktops.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
@@ -39,8 +37,8 @@ TEST_CASE("xdg-shell rules", "[win]")
     test_outputs_default();
     setup_wayland_connection(global_selection::xdg_decoration);
 
-    auto& vd_manager = setup.base->space->virtual_desktop_manager;
-    vd_manager->setCurrent(vd_manager->desktops().first());
+    auto& vd_manager = setup.base->space->subspace_manager;
+    win::subspaces_set_current(*vd_manager, *vd_manager->subspaces.front());
 
     auto get_config = [&]() -> std::tuple<KSharedConfigPtr, KConfigGroup> {
         auto config = setup.base->config.main;
@@ -1639,17 +1637,18 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(wait_for_destroyed(client));
     }
 
-    SECTION("desktop dont affect")
+    SECTION("subspace dont affect")
     {
-        // We need at least two virtual desktop for this test.
-        vd_manager->setCount(2);
-        QCOMPARE(vd_manager->count(), 2u);
-        vd_manager->setCurrent(1);
-        QCOMPARE(vd_manager->current(), 1);
+        // We need at least two subspaces for this test.
+        win::subspace_manager_set_count(*vd_manager, 2);
+        QCOMPARE(vd_manager->subspaces.size(), 2u);
+        win::subspaces_set_current(*vd_manager, 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Initialize RuleBook with the test rule.
         auto [config, group] = get_config();
-        group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+        group.writeEntry("desktops",
+                         QStringList{win::subspaces_get_for_x11id(*vd_manager, 2)->id()});
         group.writeEntry("desktopsrule", enum_index(win::rules::action::dont_affect));
         group.writeEntry("wmclass", "org.kde.foo");
         group.writeEntry("wmclasscomplete", false);
@@ -1665,9 +1664,9 @@ TEST_CASE("xdg-shell rules", "[win]")
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
         QVERIFY(client);
 
-        // The client should appear on the current virtual desktop.
-        QCOMPARE(win::get_desktop(*client), 1);
-        QCOMPARE(vd_manager->current(), 1);
+        // The client should appear on the current subspace.
+        QCOMPARE(win::get_subspace(*client), 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Destroy the client.
         shellSurface.reset();
@@ -1675,17 +1674,18 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(wait_for_destroyed(client));
     }
 
-    SECTION("desktop apply")
+    SECTION("subspace apply")
     {
-        // We need at least two virtual desktop for this test.
-        vd_manager->setCount(2);
-        QCOMPARE(vd_manager->count(), 2u);
-        vd_manager->setCurrent(1);
-        QCOMPARE(vd_manager->current(), 1);
+        // We need at least two subspace for this test.
+        win::subspace_manager_set_count(*vd_manager, 2);
+        QCOMPARE(vd_manager->subspaces.size(), 2u);
+        win::subspaces_set_current(*vd_manager, 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Initialize RuleBook with the test rule.
         auto [config, group] = get_config();
-        group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+        group.writeEntry("desktops",
+                         QStringList{win::subspaces_get_for_x11id(*vd_manager, 2)->id()});
         group.writeEntry("desktopsrule", enum_index(win::rules::action::apply));
         group.writeEntry("wmclass", "org.kde.foo");
         group.writeEntry("wmclasscomplete", false);
@@ -1701,25 +1701,25 @@ TEST_CASE("xdg-shell rules", "[win]")
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
         QVERIFY(client);
 
-        // The client should appear on the second virtual desktop.
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(vd_manager->current(), 2);
+        // The client should appear on the second subspace.
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
-        // We still should be able to move the client between desktops.
-        win::send_window_to_desktop(*setup.base->space, client, 1, true);
-        QCOMPARE(win::get_desktop(*client), 1);
-        QCOMPARE(vd_manager->current(), 2);
+        // We still should be able to move the client between subspaces.
+        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        QCOMPARE(win::get_subspace(*client), 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
-        // If we re-open the client, it should appear on the second virtual desktop again.
+        // If we re-open the client, it should appear on the second subspace again.
         shellSurface.reset();
         surface.reset();
         QVERIFY(wait_for_destroyed(client));
-        vd_manager->setCurrent(1);
-        QCOMPARE(vd_manager->current(), 1);
+        win::subspaces_set_current(*vd_manager, 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
         QVERIFY(client);
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(vd_manager->current(), 2);
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
         // Destroy the client.
         shellSurface.reset();
@@ -1727,17 +1727,18 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(wait_for_destroyed(client));
     }
 
-    SECTION("desktop remember")
+    SECTION("subspace remember")
     {
-        // We need at least two virtual desktop for this test.
-        vd_manager->setCount(2);
-        QCOMPARE(vd_manager->count(), 2u);
-        vd_manager->setCurrent(1);
-        QCOMPARE(vd_manager->current(), 1);
+        // We need at least two subspace for this test.
+        win::subspace_manager_set_count(*vd_manager, 2);
+        QCOMPARE(vd_manager->subspaces.size(), 2u);
+        win::subspaces_set_current(*vd_manager, 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Initialize RuleBook with the test rule.
         auto [config, group] = get_config();
-        group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+        group.writeEntry("desktops",
+                         QStringList{win::subspaces_get_for_x11id(*vd_manager, 2)->id()});
         group.writeEntry("desktopsrule", enum_index(win::rules::action::remember));
         group.writeEntry("wmclass", "org.kde.foo");
         group.writeEntry("wmclasscomplete", false);
@@ -1752,22 +1753,22 @@ TEST_CASE("xdg-shell rules", "[win]")
         std::unique_ptr<XdgShellToplevel> shellSurface;
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
         QVERIFY(client);
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(vd_manager->current(), 2);
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
-        // Move the client to the first virtual desktop.
-        win::send_window_to_desktop(*setup.base->space, client, 1, true);
-        QCOMPARE(win::get_desktop(*client), 1);
-        QCOMPARE(vd_manager->current(), 2);
+        // Move the client to the first subspace.
+        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        QCOMPARE(win::get_subspace(*client), 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
-        // If we create the client again, it should appear on the first virtual desktop.
+        // If we create the client again, it should appear on the first subspace.
         shellSurface.reset();
         surface.reset();
         QVERIFY(wait_for_destroyed(client));
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
         QVERIFY(client);
-        QCOMPARE(win::get_desktop(*client), 1);
-        QCOMPARE(vd_manager->current(), 1);
+        QCOMPARE(win::get_subspace(*client), 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Destroy the client.
         shellSurface.reset();
@@ -1775,18 +1776,19 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(wait_for_destroyed(client));
     }
 
-    SECTION("desktop force")
+    SECTION("subspace force")
     {
-        // We need at least two virtual desktop for this test.
-        auto& vd_manager = setup.base->space->virtual_desktop_manager;
-        vd_manager->setCount(2);
-        QCOMPARE(vd_manager->count(), 2u);
-        vd_manager->setCurrent(1);
-        QCOMPARE(vd_manager->current(), 1);
+        // We need at least two subspaces for this test.
+        auto& vd_manager = setup.base->space->subspace_manager;
+        win::subspace_manager_set_count(*vd_manager, 2);
+        QCOMPARE(vd_manager->subspaces.size(), 2u);
+        win::subspaces_set_current(*vd_manager, 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Initialize RuleBook with the test rule.
         auto [config, group] = get_config();
-        group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+        group.writeEntry("desktops",
+                         QStringList{win::subspaces_get_for_x11id(*vd_manager, 2)->id()});
         group.writeEntry("desktopsrule", enum_index(win::rules::action::force));
         group.writeEntry("wmclass", "org.kde.foo");
         group.writeEntry("wmclasscomplete", false);
@@ -1802,25 +1804,25 @@ TEST_CASE("xdg-shell rules", "[win]")
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
         QVERIFY(client);
 
-        // The client should appear on the second virtual desktop.
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(vd_manager->current(), 2);
+        // The client should appear on the second subspace.
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
-        // Any attempt to move the client to another virtual desktop should fail.
-        win::send_window_to_desktop(*setup.base->space, client, 1, true);
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(vd_manager->current(), 2);
+        // Any attempt to move the client to another subspace should fail.
+        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
-        // If we re-open the client, it should appear on the second virtual desktop again.
+        // If we re-open the client, it should appear on the second subspace again.
         shellSurface.reset();
         surface.reset();
         QVERIFY(wait_for_destroyed(client));
-        vd_manager->setCurrent(1);
-        QCOMPARE(vd_manager->current(), 1);
+        win::subspaces_set_current(*vd_manager, 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
         QVERIFY(client);
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(vd_manager->current(), 2);
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
         // Destroy the client.
         shellSurface.reset();
@@ -1828,13 +1830,13 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(wait_for_destroyed(client));
     }
 
-    SECTION("desktop apply now")
+    SECTION("subspace apply now")
     {
-        // We need at least two virtual desktop for this test.
-        vd_manager->setCount(2);
-        QCOMPARE(vd_manager->count(), 2u);
-        vd_manager->setCurrent(1);
-        QCOMPARE(vd_manager->current(), 1);
+        // We need at least two subspaces for this test.
+        win::subspace_manager_set_count(*vd_manager, 2);
+        QCOMPARE(vd_manager->subspaces.size(), 2u);
+        win::subspaces_set_current(*vd_manager, 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Create the test client.
         wayland_window* client;
@@ -1842,12 +1844,13 @@ TEST_CASE("xdg-shell rules", "[win]")
         std::unique_ptr<XdgShellToplevel> shellSurface;
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
         QVERIFY(client);
-        QCOMPARE(win::get_desktop(*client), 1);
-        QCOMPARE(vd_manager->current(), 1);
+        QCOMPARE(win::get_subspace(*client), 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Initialize RuleBook with the test rule.
         auto [config, group] = get_config();
-        group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+        group.writeEntry("desktops",
+                         QStringList{win::subspaces_get_for_x11id(*vd_manager, 2)->id()});
         group.writeEntry("desktopsrule", enum_index(win::rules::action::apply_now));
         group.writeEntry("wmclass", "org.kde.foo");
         group.writeEntry("wmclasscomplete", false);
@@ -1856,19 +1859,19 @@ TEST_CASE("xdg-shell rules", "[win]")
         setup.base->space->rule_book->config = config;
         win::space_reconfigure(*setup.base->space);
 
-        // The client should have been moved to the second virtual desktop.
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(vd_manager->current(), 1);
+        // The client should have been moved to the second subspace.
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
-        // One should still be able to move the client between desktops.
-        win::send_window_to_desktop(*setup.base->space, client, 1, true);
-        QCOMPARE(win::get_desktop(*client), 1);
-        QCOMPARE(vd_manager->current(), 1);
+        // One should still be able to move the client between subspaces.
+        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        QCOMPARE(win::get_subspace(*client), 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // The rule should not be applied again.
         win::rules::evaluate_rules(client);
-        QCOMPARE(win::get_desktop(*client), 1);
-        QCOMPARE(vd_manager->current(), 1);
+        QCOMPARE(win::get_subspace(*client), 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Destroy the client.
         shellSurface.reset();
@@ -1876,17 +1879,18 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(wait_for_destroyed(client));
     }
 
-    SECTION("desktop force temporarily")
+    SECTION("subspace force temporarily")
     {
-        // We need at least two virtual desktop for this test.
-        vd_manager->setCount(2);
-        QCOMPARE(vd_manager->count(), 2u);
-        vd_manager->setCurrent(1);
-        QCOMPARE(vd_manager->current(), 1);
+        // We need at least two subspaces for this test.
+        win::subspace_manager_set_count(*vd_manager, 2);
+        QCOMPARE(vd_manager->subspaces.size(), 2u);
+        win::subspaces_set_current(*vd_manager, 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Initialize RuleBook with the test rule.
         auto [config, group] = get_config();
-        group.writeEntry("desktops", QStringList{vd_manager->desktopForX11Id(2)->id()});
+        group.writeEntry("desktops",
+                         QStringList{win::subspaces_get_for_x11id(*vd_manager, 2)->id()});
         group.writeEntry("desktopsrule", enum_index(win::rules::action::force_temporarily));
         group.writeEntry("wmclass", "org.kde.foo");
         group.writeEntry("wmclasscomplete", false);
@@ -1902,33 +1906,33 @@ TEST_CASE("xdg-shell rules", "[win]")
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
         QVERIFY(client);
 
-        // The client should appear on the second virtual desktop.
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(vd_manager->current(), 2);
+        // The client should appear on the second subspace.
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
-        // Any attempt to move the client to another virtual desktop should fail.
-        win::send_window_to_desktop(*setup.base->space, client, 1, true);
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(vd_manager->current(), 2);
+        // Any attempt to move the client to another subspace should fail.
+        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
         // The rule should be discarded when the client is withdrawn.
         shellSurface.reset();
         surface.reset();
         QVERIFY(wait_for_destroyed(client));
-        vd_manager->setCurrent(1);
-        QCOMPARE(vd_manager->current(), 1);
+        win::subspaces_set_current(*vd_manager, 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo");
         QVERIFY(client);
-        QCOMPARE(win::get_desktop(*client), 1);
-        QCOMPARE(vd_manager->current(), 1);
+        QCOMPARE(win::get_subspace(*client), 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
-        // One should be able to move the client between desktops.
-        win::send_window_to_desktop(*setup.base->space, client, 2, true);
-        QCOMPARE(win::get_desktop(*client), 2);
-        QCOMPARE(vd_manager->current(), 1);
-        win::send_window_to_desktop(*setup.base->space, client, 1, true);
-        QCOMPARE(win::get_desktop(*client), 1);
-        QCOMPARE(vd_manager->current(), 1);
+        // One should be able to move the client between subspaces.
+        win::send_window_to_subspace(*setup.base->space, client, 2, true);
+        QCOMPARE(win::get_subspace(*client), 2);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
+        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        QCOMPARE(win::get_subspace(*client), 1);
+        QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // Destroy the client.
         shellSurface.reset();

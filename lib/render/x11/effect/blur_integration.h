@@ -35,7 +35,7 @@ public:
     void add(Effect& effect, update_function const& update) override
     {
         registry.insert({&effect, update});
-        atom = announce_support_property(effects, &effect, atom_name.data());
+        support.atom = announce_support_property(effects, &effect, support.atom_name.data());
 
         auto const windows = effects.stackingOrder();
         for (auto window : windows) {
@@ -46,7 +46,7 @@ public:
     void remove(Effect& effect) override
     {
         registry.erase(&effect);
-        remove_support_property(effects, &effect, atom_name.data());
+        remove_support_property(effects, &effect, support.atom_name.data());
     }
 
     void reset()
@@ -71,8 +71,11 @@ public:
     std::map<Effect*, update_function> registry;
     Effects& effects;
 
-    long atom{0};
-    static constexpr std::string_view atom_name{"_KDE_NET_WM_BLUR_BEHIND_REGION"};
+    struct support_t {
+        long atom{0};
+        static constexpr std::string_view atom_name{"_KDE_NET_WM_BLUR_BEHIND_REGION"};
+    } support;
+
     decltype(get_internal_blur_properties()) const internal_properties;
 };
 

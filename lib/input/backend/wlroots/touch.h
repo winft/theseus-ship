@@ -6,7 +6,7 @@
 #pragma once
 
 #include "control/touch.h"
-#include "platform.h"
+#include <input/backend/wlroots/device_helpers.h>
 
 #include "base/utils.h"
 #include "config-kwin.h"

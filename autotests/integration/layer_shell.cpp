@@ -131,7 +131,7 @@ TEST_CASE("layer shell", "[win]")
     {
         // Tries to create multiple kinds of layer surfaces.
         QSignalSpy window_spy(setup.base->space->qobject.get(),
-                              &win::space::qobject_t::wayland_window_added);
+                              &space::qobject_t::wayland_window_added);
         QVERIFY(window_spy.isValid());
 
         auto surface = std::unique_ptr<Clt::Surface>(create_surface());
@@ -249,7 +249,7 @@ TEST_CASE("layer shell", "[win]")
 
         // Checks various standard geometries.
         QSignalSpy window_spy(setup.base->space->qobject.get(),
-                              &win::space::qobject_t::wayland_window_added);
+                              &space::qobject_t::wayland_window_added);
         QVERIFY(window_spy.isValid());
 
         auto surface = std::unique_ptr<Clt::Surface>(create_surface());
@@ -285,12 +285,13 @@ TEST_CASE("layer shell", "[win]")
     {
         // Checks that output changes are handled correctly.
         QSignalSpy window_spy(setup.base->space->qobject.get(),
-                              &win::space::qobject_t::wayland_window_added);
+                              &space::qobject_t::wayland_window_added);
         QVERIFY(window_spy.isValid());
 
         auto const output_geo = QRect(2000, 0, 1000, 500);
         auto wlr_out
             = wlr_headless_add_output(setup.base->backend, output_geo.width(), output_geo.height());
+        wlr_output_enable(wlr_out, true);
         QCOMPARE(setup.base->outputs.size(), 3);
 
         setup.base->all_outputs.back()->force_geometry(output_geo);
@@ -357,7 +358,7 @@ TEST_CASE("layer shell", "[win]")
     {
         // Checks popup creation.
         QSignalSpy window_spy(setup.base->space->qobject.get(),
-                              &win::space::qobject_t::wayland_window_added);
+                              &space::qobject_t::wayland_window_added);
         QVERIFY(window_spy.isValid());
 
         // First create the layer surface.

@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/scene.h"
 #include "win/actions.h"
 #include "win/net.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/plasmashell.h>
@@ -31,7 +30,12 @@ TEST_CASE("minimize animation", "[effect]")
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("minimize-animation", operation_mode);
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
@@ -45,7 +49,7 @@ TEST_CASE("minimize animation", "[effect]")
 
     setup.start();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -104,7 +108,7 @@ TEST_CASE("minimize animation", "[effect]")
                      iconRect.translated(panel->geo.frame.topLeft()));
 
         // Load effect that will be tested.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
         QVERIFY(effectsImpl->loadEffect(effectName));
         QCOMPARE(effectsImpl->loadedEffects().count(), 1);

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "kwin_export.h"
+#include <subspace.h>
 
 #include <QObject>
 #include <functional>
@@ -23,9 +24,11 @@ public Q_SLOTS:
     void reconfigure();
 
 Q_SIGNALS:
-    void currentDesktopChanged(int);
-    void currentDesktopChanging(uint currentDesktop, QPointF delta); // for realtime animations
-    void currentDesktopChangingCancelled();
+    void current_subspace_changed(win::subspace* old);
+
+    // for realtime animations
+    void current_subspace_changing(win::subspace* current, QPointF delta);
+    void current_subspace_changing_cancelled();
 
     // X11 window
     void clientAdded(quint32);
@@ -48,6 +51,8 @@ Q_SIGNALS:
     void internalClientAdded(quint32 client);
     void internalClientRemoved(quint32 client);
     void surface_id_changed(quint32, quint32);
+
+    void screen_locked(bool);
 
 private:
     std::function<void()> reconfigure_callback;

@@ -8,11 +8,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/wayland/server.h"
 #include "base/x11/xcb/window.h"
-#include "debug/console/wayland/wayland_console.h"
 #include "win/control.h"
 #include "win/deco.h"
-#include "win/internal_window.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -64,6 +61,13 @@ TEST_CASE("debug console", "[debug]")
     test_outputs_default();
     setup_wayland_connection();
 
+    auto create_model = [&] {
+        auto model = std::make_unique<debug::wayland_console_model>();
+        debug::model_setup_connections(*model, *setup.base->space);
+        debug::wayland_model_setup_connections(*model, *setup.base->space);
+        return model;
+    };
+
     SECTION("toplevel")
     {
         struct data {
@@ -85,8 +89,7 @@ TEST_CASE("debug console", "[debug]")
                                   data{4, 0, false},
                                   data{100, 0, false});
 
-        auto model = std::unique_ptr<debug::wayland_console_model>(
-            debug::wayland_console_model::create(*setup.base->space));
+        auto model = create_model();
         QCOMPARE(model->rowCount(QModelIndex()), 4);
         QCOMPARE(model->columnCount(QModelIndex()), 2);
 
@@ -105,9 +108,7 @@ TEST_CASE("debug console", "[debug]")
 
     SECTION("x11 window with control")
     {
-        auto model = std::unique_ptr<debug::wayland_console_model>(
-            debug::wayland_console_model::create(*setup.base->space));
-
+        auto model = create_model();
         auto x11TopLevelIndex = model->index(0, 0, QModelIndex());
         QVERIFY(x11TopLevelIndex.isValid());
 
@@ -177,8 +178,7 @@ TEST_CASE("debug console", "[debug]")
         QVERIFY(!model->index(model->rowCount(clientIndex), 0, clientIndex).isValid());
 
         // creating a second model should be initialized directly with the X11 child
-        auto model2 = std::unique_ptr<debug::wayland_console_model>(
-            debug::wayland_console_model::create(*setup.base->space));
+        auto model2 = create_model();
         QVERIFY(model2->hasChildren(model2->index(0, 0, QModelIndex())));
 
         // now close the window again, it should be removed from the model
@@ -201,9 +201,7 @@ TEST_CASE("debug console", "[debug]")
 
     SECTION("x11 unmanaged window")
     {
-        auto model = std::unique_ptr<debug::wayland_console_model>(
-            debug::wayland_console_model::create(*setup.base->space));
-
+        auto model = create_model();
         auto unmanagedTopLevelIndex = model->index(1, 0, QModelIndex());
         QVERIFY(unmanagedTopLevelIndex.isValid());
 
@@ -231,7 +229,7 @@ TEST_CASE("debug console", "[debug]")
         window.map();
 
         QSignalSpy unmanaged_server_spy(setup.base->space->qobject.get(),
-                                        &win::space::qobject_t::unmanagedAdded);
+                                        &space::qobject_t::unmanagedAdded);
         QVERIFY(unmanaged_server_spy.isValid());
 
         QVERIFY(rowsInsertedSpy.wait());
@@ -287,8 +285,7 @@ TEST_CASE("debug console", "[debug]")
         QVERIFY(!model->index(model->rowCount(clientIndex), 0, clientIndex).isValid());
 
         // creating a second model should be initialized directly with the X11 child
-        auto model2 = std::unique_ptr<debug::wayland_console_model>(
-            debug::wayland_console_model::create(*setup.base->space));
+        auto model2 = create_model();
         QVERIFY(model2->hasChildren(model2->index(1, 0, QModelIndex())));
 
         // now close the window again, it should be removed from the model
@@ -310,9 +307,7 @@ TEST_CASE("debug console", "[debug]")
 
     SECTION("wayland window")
     {
-        auto model = std::unique_ptr<debug::wayland_console_model>(
-            debug::wayland_console_model::create(*setup.base->space));
-
+        auto model = create_model();
         auto waylandTopLevelIndex = model->index(2, 0, QModelIndex());
         QVERIFY(waylandTopLevelIndex.isValid());
 
@@ -390,8 +385,7 @@ TEST_CASE("debug console", "[debug]")
         QVERIFY(!model->index(model->rowCount(clientIndex), 0, clientIndex).isValid());
 
         // creating a second model should be initialized directly with the X11 child
-        auto model2 = std::unique_ptr<debug::wayland_console_model>(
-            debug::wayland_console_model::create(*setup.base->space));
+        auto model2 = create_model();
         QVERIFY(model2->hasChildren(model2->index(2, 0, QModelIndex())));
 
         // now close the window again, it should be removed from the model
@@ -420,9 +414,7 @@ TEST_CASE("debug console", "[debug]")
 
     SECTION("internal window")
     {
-        auto model = std::unique_ptr<debug::wayland_console_model>(
-            debug::wayland_console_model::create(*setup.base->space));
-
+        auto model = create_model();
         auto internalTopLevelIndex = model->index(3, 0, QModelIndex());
         QVERIFY(internalTopLevelIndex.isValid());
 
@@ -503,7 +495,7 @@ TEST_CASE("debug console", "[debug]")
         QVERIFY(destroyedSpy.isValid());
 
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::internalClientAdded);
+                                  &space::qobject_t::internalClientAdded);
         QVERIFY(clientAddedSpy.isValid());
         console->show();
         QCOMPARE(console->windowHandle()->isVisible(), true);

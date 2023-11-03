@@ -83,22 +83,22 @@ namespace KWin::win
 {
 
 /**
- * Returns topmost visible client. Windows on the dock, the desktop
+ * Returns topmost visible client. Windows on the dock, the subspace
  * or of any other special kind are excluded. Also if the window
  * doesn't accept focus it's excluded.
  */
 // TODO misleading name for this method, too many slightly different ways to use it
 template<typename Space>
-std::optional<typename Space::window_t> top_client_on_desktop(Space& space,
-                                                              int desktop,
-                                                              base::output const* output,
-                                                              bool unconstrained = false,
-                                                              bool only_normal = true)
+std::optional<typename Space::window_t> top_client_in_subspace(Space& space,
+                                                               int subspace,
+                                                               base::output const* output,
+                                                               bool unconstrained = false,
+                                                               bool only_normal = true)
 {
     auto const& list = unconstrained ? space.stacking.order.pre_stack : space.stacking.order.stack;
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         if (std::visit(overload{[&](auto&& win) {
-                           if (!on_desktop(win, desktop)) {
+                           if (!on_subspace(*win, subspace)) {
                                return false;
                            }
                            if (!win->isShown()) {
@@ -182,21 +182,23 @@ void lower_window(Space& space, Window* window)
     auto block = do_lower(window);
 
     // TODO(romangg): Factor this out in separatge function.
-    if constexpr (std::is_same_v<typename Space::x11_window, Window>) {
-        if (window->transient->lead() && window->group) {
-            // Lower also all windows in the group, in reversed stacking order.
-            auto const wins
-                = restacked_by_space_stacking_order(space, get_transient_family(window));
+    if constexpr (requires { typename Space::x11_window; }) {
+        if constexpr (std::is_same_v<typename Space::x11_window, Window>) {
+            if (window->transient->lead() && window->group) {
+                // Lower also all windows in the group, in reversed stacking order.
+                auto const wins
+                    = restacked_by_space_stacking_order(space, get_transient_family(window));
 
-            for (auto it = wins.crbegin(); it != wins.crend(); it++) {
-                auto gwin = *it;
-                if (gwin == window) {
-                    continue;
+                for (auto it = wins.crbegin(); it != wins.crend(); it++) {
+                    auto gwin = *it;
+                    if (gwin == window) {
+                        continue;
+                    }
+
+                    assert(gwin->control);
+                    do_lower(gwin);
+                    cleanup(gwin);
                 }
-
-                assert(gwin->control);
-                do_lower(gwin);
-                cleanup(gwin);
             }
         }
     }
@@ -272,13 +274,13 @@ void raise_or_lower_client(Space& space, Window* window)
         && contains(space.stacking.order.stack, space.stacking.most_recently_raised)
         && std::visit(overload{[](auto&& win) { return win->isShown(); }},
                       *space.stacking.most_recently_raised)
-        && on_current_desktop(window)) {
+        && on_current_subspace(*window)) {
         topmost = space.stacking.most_recently_raised;
     } else {
-        topmost = top_client_on_desktop(
+        topmost = top_client_in_subspace(
             space,
-            on_all_desktops(window) ? space.virtual_desktop_manager->current()
-                                    : get_desktop(*window),
+            on_all_subspaces(*window) ? subspaces_get_current_x11id(*space.subspace_manager)
+                                      : get_subspace(*window),
             space.options->qobject->isSeparateScreenFocus() ? window->topo.central_output
                                                             : nullptr);
     }

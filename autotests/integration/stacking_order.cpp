@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/blocker.h"
 #include "win/actions.h"
 #include "win/activation.h"
-#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/wayland/window.h"
@@ -275,7 +274,7 @@ TEST_CASE("stacking order", "[win]")
 
         // Close the top-most transient.
         QObject::connect(transient2->space.qobject.get(),
-                         &win::space::qobject_t::remnant_created,
+                         &space::qobject_t::remnant_created,
                          transient2->qobject.get(),
                          [&](auto win_id) {
                              std::visit(overload{[&](auto&& win) { win->remnant->ref(); }},
@@ -283,7 +282,7 @@ TEST_CASE("stacking order", "[win]")
                          });
 
         QSignalSpy windowClosedSpy(transient2->space.qobject.get(),
-                                   &win::space::qobject_t::remnant_created);
+                                   &space::qobject_t::remnant_created);
         QVERIFY(windowClosedSpy.isValid());
         transient2ShellSurface.reset();
         transient2Surface.reset();
@@ -315,7 +314,7 @@ TEST_CASE("stacking order", "[win]")
         auto conn = create_xcb_connection();
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
 
         // Create the group leader.
@@ -439,7 +438,7 @@ TEST_CASE("stacking order", "[win]")
         auto conn = create_xcb_connection();
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
 
         // Create the group leader.
@@ -582,7 +581,7 @@ TEST_CASE("stacking order", "[win]")
         auto conn = create_xcb_connection();
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
 
         // Create the group leader.
@@ -682,7 +681,7 @@ TEST_CASE("stacking order", "[win]")
 
         // Unmap the transient.
         QObject::connect(transient->space.qobject.get(),
-                         &win::space::qobject_t::remnant_created,
+                         &space::qobject_t::remnant_created,
                          transient->qobject.get(),
                          [&](auto win_id) {
                              std::visit(overload{[&](auto&& win) { win->remnant->ref(); }},
@@ -690,7 +689,7 @@ TEST_CASE("stacking order", "[win]")
                          });
 
         QSignalSpy windowClosedSpy(transient->space.qobject.get(),
-                                   &win::space::qobject_t::remnant_created);
+                                   &space::qobject_t::remnant_created);
         QVERIFY(windowClosedSpy.isValid());
         xcb_unmap_window(conn.get(), transientWid);
         xcb_flush(conn.get());
@@ -715,7 +714,7 @@ TEST_CASE("stacking order", "[win]")
         auto conn = create_xcb_connection();
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
 
         // Create the group leader.

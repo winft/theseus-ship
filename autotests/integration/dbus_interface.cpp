@@ -12,8 +12,6 @@ SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 #include "win/controlling.h"
 #include "win/desktop_space.h"
 #include "win/move.h"
-#include "win/space.h"
-#include "win/virtual_desktops.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
 
@@ -65,7 +63,7 @@ TEST_CASE("dbus interface", "[base]")
 {
     test::setup setup("dbus-interface", base::operation_mode::xwayland);
     setup.start();
-    setup.base->space->virtual_desktop_manager->setCount(4);
+    win::subspace_manager_set_count(*setup.base->space->subspace_manager, 4);
 
     setup_wayland_connection();
 
@@ -82,7 +80,7 @@ TEST_CASE("dbus interface", "[base]")
     SECTION("get window info for xdg-shell client")
     {
         QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::wayland_window_added);
+                                  &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         std::unique_ptr<Surface> surface(create_surface());
@@ -113,7 +111,7 @@ TEST_CASE("dbus interface", "[base]")
         QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->geo.pos().y());
         QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->geo.size().width());
         QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->geo.size().height());
-        QCOMPARE(windowData.value(QStringLiteral("desktops")), win::desktop_ids(client));
+        QCOMPARE(windowData.value(QStringLiteral("desktops")), win::subspaces_ids(*client));
         QCOMPARE(windowData.value(QStringLiteral("minimized")).toBool(), false);
         QCOMPARE(windowData.value(QStringLiteral("fullscreen")).toBool(), false);
         QCOMPARE(windowData.value(QStringLiteral("keepAbove")).toBool(), false);
@@ -175,13 +173,13 @@ TEST_CASE("dbus interface", "[base]")
         // not testing fullscreen, maximizeHorizontal, maximizeVertical and noBorder as those
         // require window geometry changes
 
-        QCOMPARE(win::get_desktop(*client), 1);
-        win::send_window_to_desktop(*setup.base->space, client, 2, false);
-        QCOMPARE(win::get_desktop(*client), 2);
+        QCOMPARE(win::get_subspace(*client), 1);
+        win::send_window_to_subspace(*setup.base->space, client, 2, false);
+        QCOMPARE(win::get_subspace(*client), 2);
         reply = getWindowInfo(client->meta.internal_id);
         reply.waitForFinished();
         QCOMPARE(reply.value().value(QStringLiteral("desktops")).toStringList(),
-                 win::desktop_ids(client));
+                 win::subspaces_ids(*client));
 
         win::move(client, QPoint(10, 20));
         reply = getWindowInfo(client->meta.internal_id);
@@ -241,7 +239,7 @@ TEST_CASE("dbus interface", "[base]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -265,7 +263,7 @@ TEST_CASE("dbus interface", "[base]")
         QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->geo.pos().y());
         QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->geo.size().width());
         QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->geo.size().height());
-        QCOMPARE(windowData.value(QStringLiteral("desktops")), win::desktop_ids(client));
+        QCOMPARE(windowData.value(QStringLiteral("desktops")), win::subspaces_ids(*client));
         QCOMPARE(windowData.value(QStringLiteral("minimized")).toBool(), false);
         QCOMPARE(windowData.value(QStringLiteral("shaded")).toBool(), false);
         QCOMPARE(windowData.value(QStringLiteral("fullscreen")).toBool(), false);

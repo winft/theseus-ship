@@ -93,7 +93,7 @@ Q_SIGNALS:
 
     void activeChanged();
     void demandsAttentionChanged();
-    void desktopsChanged();
+    void subspaces_changed();
 
     void minimizedChanged();
     void clientMinimized(bool animate);
@@ -114,7 +114,7 @@ Q_SIGNALS:
     void transientChanged();
     void modalChanged();
     void moveResizedChanged();
-    void moveResizeCursorChanged(cursor_shape);
+    void moveResizeCursorChanged(KWin::win::cursor_shape);
     void clientStartUserMovedResized();
     void clientStepUserMovedResized(QRect const&);
     void clientFinishUserMovedResized();

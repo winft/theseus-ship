@@ -1,98 +1,147 @@
 /*
-    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "effects.h"
-#include "output.h"
-#include "presentation.h"
-#include "shadow.h"
-#include "utils.h"
+#include <render/compositor.h>
+#include <render/dbus/compositing.h>
+#include <render/gl/backend.h>
+#include <render/gl/egl_data.h>
+#include <render/gl/scene.h>
+#include <render/options.h>
+#include <render/post/night_color_manager.h>
+#include <render/qpainter/scene.h>
+#include <render/singleton_interface.h>
+#include <render/wayland/shadow.h>
+#include <render/wayland/xwl_effects.h>
+#include <render/x11/compositor_start.h>
 
-#include "render/compositor.h"
-#include "render/compositor_start.h"
-#include "render/cursor.h"
-#include "render/dbus/compositing.h"
-#include "render/gl/scene.h"
-#include "render/qpainter/scene.h"
-
-#include <deque>
-#include <map>
 #include <memory>
 
 namespace KWin::render::wayland
 {
 
-template<typename Platform>
-class compositor
+template<typename Base>
+class xwl_platform
 {
 public:
+    using type = xwl_platform<Base>;
     using qobject_t = compositor_qobject;
-    using platform_t = Platform;
-    using type = compositor<Platform>;
-    using scene_t = render::scene<Platform>;
-    using effects_t = wayland::effects_handler_impl<scene_t>;
-    using space_t = typename Platform::base_t::space_t;
-    using window_t = render::window<typename space_t::window_t, type>;
+    using base_t = Base;
+    using space_t = typename Base::space_t;
+
     using state_t = render::state;
+    using scene_t = render::scene<type>;
+    using effects_t = wayland::xwl_effects_handler_impl<scene_t>;
+
+    using window_t = render::window<typename space_t::window_t, type>;
+    using effect_window_group_t = effect_window_group_impl<typename space_t::window_group_t>;
+    using buffer_t = buffer_win_integration<typename scene_t::buffer_t>;
     using shadow_t = render::shadow<window_t>;
 
-    compositor(Platform& platform)
-        : qobject{std::make_unique<compositor_qobject>([this](auto /*te*/) { return false; })}
+    xwl_platform(Base& base)
+        : base{base}
+        , qobject{std::make_unique<compositor_qobject>([this](auto /*te*/) { return false; })}
+        , options{std::make_unique<render::options>(base.operation_mode, base.config.main)}
+        , night_color{std::make_unique<render::post::night_color_manager<Base>>(base)}
         , presentation{std::make_unique<wayland::presentation>(
-              platform.base.get_clockid(),
+              base.get_clockid(),
               [&] {
                   return std::make_unique<Wrapland::Server::PresentationManager>(
-                      platform.base.server->display.get());
+                      base.server->display.get());
               })}
-        , platform{platform}
         , dbus{std::make_unique<dbus::compositing<type>>(*this)}
     {
+        singleton_interface::get_egl_data = [this] { return egl_data; };
+
         compositor_setup(*this);
+        x11::compositor_setup(*this);
 
         dbus->qobject->integration.get_types = [] { return QStringList{"egl"}; };
     }
 
-    ~compositor()
+    virtual ~xwl_platform()
     {
-        Q_EMIT this->qobject->aboutToDestroy();
-        compositor_stop(*this, true);
-        delete_unused_support_properties(*this);
-        compositor_destroy_selection(*this);
+        x11::delete_unused_support_properties(*this);
+        selection_owner = {};
+
+        singleton_interface::get_egl_data = {};
     }
+
+    virtual void init() = 0;
+
+    bool requiresCompositing() const
+    {
+        return true;
+    }
+
+    bool compositingPossible() const
+    {
+        return true;
+    }
+
+    QString compositingNotPossibleReason() const
+    {
+        return {};
+    }
+
+    bool openGLCompositingIsBroken() const
+    {
+        return false;
+    }
+
+    void createOpenGLSafePoint(opengl_safe_point /*safePoint*/)
+    {
+    }
+
+    render::outline_visual* create_non_composited_outline(render::outline* /*outline*/)
+    {
+        // Not possible on Wayland.
+        return nullptr;
+    }
+
+    void invertScreen()
+    {
+        assert(effects);
+        effects->invert_screen();
+    }
+
+    virtual gl::backend<gl::scene<type>, type>* get_opengl_backend() = 0;
+    virtual qpainter::backend<qpainter::scene<type>>* get_qpainter_backend() = 0;
+    virtual bool is_sw_compositing() const = 0;
+
+    // TODO(romangg): Remove the boolean trap.
+    virtual void render_stop(bool on_shutdown) = 0;
 
     void start(space_t& space)
     {
         if (!this->space) {
             // On first start setup connections.
             QObject::connect(&space.base, &base::platform::x11_reset, this->qobject.get(), [this] {
-                compositor_setup_x11_support(*this);
+                x11::compositor_claim(*this);
             });
             QObject::connect(space.stacking.order.qobject.get(),
                              &win::stacking_order_qobject::changed,
                              this->qobject.get(),
                              [this] { full_repaint(*this); });
             QObject::connect(space.qobject.get(),
-                             &space_t::qobject_t::currentDesktopChanged,
+                             &space_t::qobject_t::current_subspace_changed,
                              this->qobject.get(),
                              [this] { full_repaint(*this); });
-            QObject::connect(&this->platform.base,
-                             &base::platform::output_removed,
-                             this->qobject.get(),
-                             [this](auto output) {
-                                 for (auto& win : this->space->windows) {
-                                     std::visit(overload{[&](auto&& win) {
-                                                    remove_all(win->render_data.repaint_outputs,
-                                                               output);
-                                                }},
-                                                win);
-                                 }
-                             });
+            QObject::connect(
+                &base, &base::platform::output_removed, this->qobject.get(), [this](auto output) {
+                    for (auto& win : this->space->windows) {
+                        std::visit(overload{[&](auto&& win) {
+                                       remove_all(win->render_data.repaint_outputs, output);
+                                   }},
+                                   win);
+                    }
+                });
             QObject::connect(
                 space.qobject.get(), &win::space_qobject::destroyed, this->qobject.get(), [this] {
-                    for (auto& output : this->platform.base.outputs) {
+                    for (auto& output : base.outputs) {
                         output->render->delay_timer.stop();
                     }
                 });
@@ -102,11 +151,14 @@ public:
         // For now we use the software cursor as our wlroots backend does not support yet a hardware
         // cursor.
         using sw_cursor_t = typename decltype(this->software_cursor)::element_type;
-        this->software_cursor = std::make_unique<sw_cursor_t>(this->platform);
+        this->software_cursor = std::make_unique<sw_cursor_t>(*this);
         this->software_cursor->set_enabled(true);
 
         try {
-            compositor_start_scene(*this);
+            if (compositor_prepare_scene(*this)) {
+                x11::compositor_claim(*this);
+                compositor_start_scene(*this);
+            }
         } catch (std::runtime_error const& ex) {
             qCCritical(KWIN_CORE) << "Error: " << ex.what();
             qCCritical(KWIN_CORE) << "Wayland requires compositing. Going to quit.";
@@ -132,7 +184,7 @@ public:
             return;
         }
 
-        for (auto& output : this->platform.base.outputs) {
+        for (auto& output : base.outputs) {
             if (!win::visible_rect(window).intersected(output->geometry()).isEmpty()) {
                 output->render->set_delay_timer();
             }
@@ -161,14 +213,14 @@ public:
         if (locked) {
             return;
         }
-        for (auto& output : this->platform.base.outputs) {
+        for (auto& output : base.outputs) {
             output->render->add_repaint(region);
         }
     }
 
     void check_idle()
     {
-        for (auto& output : this->platform.base.outputs) {
+        for (auto& output : base.outputs) {
             if (!output->render->idle) {
                 return;
             }
@@ -197,10 +249,10 @@ public:
 
     std::unique_ptr<scene_t> create_scene()
     {
-        if (this->platform.is_sw_compositing()) {
-            return qpainter::create_scene(this->platform);
+        if (is_sw_compositing()) {
+            return qpainter::create_scene(*this);
         }
-        return gl::create_scene(this->platform);
+        return gl::create_scene(*this);
     }
 
     template<typename RefWin>
@@ -212,30 +264,36 @@ public:
 
     void performCompositing()
     {
-        for (auto& output : this->platform.base.outputs) {
+        for (auto& output : base.outputs) {
             output->render->run();
         }
     }
 
+    Base& base;
+
     std::unique_ptr<compositor_qobject> qobject;
+    gl::egl_data* egl_data{nullptr};
+
+    state_t state{state::off};
+    int output_index{0};
+
+    std::unique_ptr<render::options> options;
+    std::unique_ptr<render::post::night_color_manager<Base>> night_color;
 
     std::unique_ptr<scene_t> scene;
     std::unique_ptr<effects_t> effects;
     std::unique_ptr<wayland::presentation> presentation;
-    std::unique_ptr<cursor<Platform>> software_cursor;
+    std::unique_ptr<cursor<type>> software_cursor;
 
-    state_t state{state::off};
-    x11::compositor_selection_owner* m_selectionOwner{nullptr};
+    std::unique_ptr<x11::compositor_selection_owner> selection_owner;
 
     QList<xcb_atom_t> unused_support_properties;
     QTimer unused_support_property_timer;
 
-    Platform& platform;
     space_t* space{nullptr};
 
 private:
     int locked{0};
-
     std::unique_ptr<dbus::compositing<type>> dbus;
 };
 

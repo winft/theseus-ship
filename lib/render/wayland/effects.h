@@ -11,6 +11,8 @@
 
 #include "base/wayland/server.h"
 #include "render/effects.h"
+#include <render/wayland/setup_handler.h>
+#include <win/wayland/space_windows.h>
 
 namespace KWin::render::wayland
 {
@@ -33,57 +35,17 @@ template<typename Scene>
 class effects_handler_impl : public render::effects_handler_impl<Scene>
 {
 public:
-    using space_t = typename Scene::platform_t::space_t;
+    using type = effects_handler_impl<Scene>;
+    using abstract_type = render::effects_handler_impl<Scene>;
 
     effects_handler_impl(Scene& scene)
-        : render::effects_handler_impl<Scene>(scene)
+        : abstract_type(scene)
         , blur{*this, *scene.platform.base.server->display}
         , contrast{*this, *scene.platform.base.server->display}
         , slide{*this, *scene.platform.base.server->display}
     {
-        this->reconfigure();
-
-        auto space = scene.platform.base.space.get();
-
-        // TODO(romangg): We do this for every window here, even for windows that are not an
-        // xdg-shell
-        //                type window. Restrict that?
-        QObject::connect(space->qobject.get(),
-                         &win::space_qobject::wayland_window_added,
-                         this,
-                         [this](auto win_id) {
-                             std::visit(
-                                 overload{[&](auto&& win) {
-                                     if (win->render_data.ready_for_painting) {
-                                         this->slotXdgShellClientShown(*win);
-                                         return;
-                                     }
-
-                                     QObject::connect(
-                                         win->qobject.get(),
-                                         &win::window_qobject::windowShown,
-                                         this,
-                                         [this, win] { this->slotXdgShellClientShown(*win); });
-                                 }},
-                                 this->scene.platform.base.space->windows_map.at(win_id));
-                         });
-
-        // TODO(romangg): We do this here too for every window.
-        for (auto win : space->windows) {
-            std::visit(overload{[&](typename space_t::wayland_window* win) {
-                                    if (win->render_data.ready_for_painting) {
-                                        this->setupAbstractClientConnections(*win);
-                                    } else {
-                                        QObject::connect(
-                                            win->qobject.get(),
-                                            &win::window_qobject::windowShown,
-                                            this,
-                                            [this, win] { this->slotXdgShellClientShown(*win); });
-                                    }
-                                },
-                                [](auto&&) {}},
-                       win);
-        }
+        effect::setup_handler(*this);
+        effect_setup_handler(*this);
     }
 
     ~effects_handler_impl()
@@ -101,15 +63,46 @@ public:
 
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* surface) const override
     {
-        if (auto win = this->scene.platform.base.space->find_window(surface)) {
+        if (auto win
+            = win::wayland::space_windows_find(*this->scene.platform.base.space, surface)) {
             return win->render->effect.get();
         }
+        return nullptr;
+    }
+
+    EffectWindow* find_window_by_wid(WId /*id*/) const override
+    {
         return nullptr;
     }
 
     Wrapland::Server::Display* waylandDisplay() const override
     {
         return this->scene.platform.base.server->display.get();
+    }
+
+    xcb_connection_t* xcbConnection() const override
+    {
+        return nullptr;
+    }
+
+    uint32_t x11RootWindow() const override
+    {
+        return 0;
+    }
+
+    SessionState sessionState() const override
+    {
+        return SessionState::Normal;
+    }
+
+    QByteArray readRootProperty(long /*atom*/, long /*type*/, int /*format*/) const override
+    {
+        return {};
+    }
+
+    template<typename Win>
+    void slotUnmanagedShown(Win& /*window*/)
+    {
     }
 
     effect::region_integration& get_blur_integration() override
@@ -132,9 +125,9 @@ public:
         return kscreen_dummy;
     }
 
-    blur_integration<effects_handler_impl> blur;
-    contrast_integration<effects_handler_impl> contrast;
-    slide_integration<effects_handler_impl> slide;
+    blur_integration<effects_handler_impl, blur_support> blur;
+    contrast_integration<effects_handler_impl, contrast_support> contrast;
+    slide_integration<effects_handler_impl, slide_support> slide;
 
 protected:
     void doStartMouseInterception(Qt::CursorShape shape) override
@@ -158,6 +151,8 @@ protected:
         blur.remove(effect);
         contrast.remove(effect);
         slide.remove(effect);
+
+        delete &effect;
     }
 
 private:

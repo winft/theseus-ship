@@ -35,18 +35,23 @@ void init_rule_book(rules::book& book, Space& space)
             }
         });
 
-    if (auto manager = space.session_manager.get()) {
-        using manager_t = std::remove_pointer_t<decltype(manager)>;
-        QObject::connect(
-            manager, &manager_t::stateChanged, book.qobject.get(), [&book](auto old, auto next) {
-                // If starting to save a session or ending a save session due to either completion
-                // or cancellation, we need to disalbe/enable rule book updates.
-                auto was_save = old == session_state::saving;
-                auto will_save = next == session_state::saving;
-                if (was_save || will_save) {
-                    book.setUpdatesDisabled(will_save && !was_save);
-                }
-            });
+    if constexpr (requires(Space space) { space.session_manager; }) {
+        if (auto manager = space.session_manager.get()) {
+            using manager_t = std::remove_pointer_t<decltype(manager)>;
+            QObject::connect(manager,
+                             &manager_t::stateChanged,
+                             book.qobject.get(),
+                             [&book](auto old, auto next) {
+                                 // If starting to save a session or ending a save session due to
+                                 // either completion or cancellation, we need to disalbe/enable
+                                 // rule book updates.
+                                 auto was_save = old == session_state::saving;
+                                 auto will_save = next == session_state::saving;
+                                 if (was_save || will_save) {
+                                     book.setUpdatesDisabled(will_save && !was_save);
+                                 }
+                             });
+        }
     }
 
     book.load();
@@ -80,7 +85,7 @@ void apply_window_rules(Win& win)
 
     // MinSize, MaxSize handled by Geometry
     // IgnoreGeometry
-    set_desktops(&win, win.topo.desktops);
+    set_subspaces(win, win.topo.subspaces);
 
     // TODO(romangg): can central_output be null?
     send_to_screen(win.space, &win, *win.topo.central_output);

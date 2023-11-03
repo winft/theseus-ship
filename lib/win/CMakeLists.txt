@@ -16,12 +16,6 @@ target_link_libraries(win
     Qt::Concurrent
     Qt::OpenGL
     Qt::Quick
-
-    # TODO(romangg): For now needed because of surface include.
-    WraplandServer
-
-    XCB::KEYSYMS
-    ${X11_LIBRARIES}
     base
 )
 
@@ -51,11 +45,6 @@ target_sources(win
       rules/types.h
       rules/update.h
       rules/window.h
-      x11/client_machine.h
-      x11/extras.h
-      x11/key_server.h
-      x11/net/root_info.h
-      x11/net/win_info.h
       actions.h
       activation.h
       active_window.h
@@ -81,7 +70,6 @@ target_sources(win
       geo_move.h
       geo_restrict.h
       input.h
-      internal_window.h
       kill_window.h
       layers.h
       maximize.h
@@ -100,14 +88,11 @@ target_sources(win
       scene.h
       screen.h
       screen_edges.h
-      session.h
-      session_manager.h
       setup.h
       shortcuts_init.h
       shortcut_dialog.h
       shortcut_set.h
       singleton_interface.h
-      space.h
       space_areas.h
       space_areas_helpers.h
       space_qobject.h
@@ -116,6 +101,7 @@ target_sources(win
       space_window_release.h
       stacking.h
       stacking_order.h
+      stacking_state.h
       structs.h
       strut_rect.h
       tabbox.h
@@ -124,7 +110,12 @@ target_sources(win
       types.h
       user_actions_menu.h
       util.h
-      virtual_desktops.h
+      subspace.h
+      subspace_grid.h
+      subspace_manager.h
+      subspace_manager_qobject.h
+      subspaces_get.h
+      subspaces_set.h
       window_area.h
       window_find.h
       window_geometry.h
@@ -151,18 +142,12 @@ target_sources(win
     rules/book_settings.cpp
     rules/ruling.cpp
     rules/window.cpp
-    session_manager.cpp
     screen_edges.cpp
     shortcut_dialog.cpp
     singleton_interface.cpp
     space_qobject.cpp
-    virtual_desktops.cpp
-    x11/client_machine.cpp
-    x11/extras.cpp
-    x11/key_server.cpp
-    x11/net/atoms.cpp
-    x11/net/root_info.cpp
-    x11/net/win_info.cpp
+    subspace.cpp
+    subspace_grid.cpp
 )
 
 if (KWIN_BUILD_TABBOX)
@@ -181,7 +166,6 @@ if (KWIN_BUILD_TABBOX)
         tabbox/tabbox_handler_impl.h
         tabbox/tabbox_logging.h
         tabbox/tabbox_switcher_item.h
-        tabbox/tabbox_x11_filter.h
     PRIVATE
       tabbox/tabbox_client_model.cpp
       tabbox/tabbox_config.cpp
@@ -197,12 +181,7 @@ endif()
 qt6_add_dbus_adaptor(win_dbus_src
   dbus/org.kde.KWin.VirtualDesktopManager.xml
   dbus/virtual_desktop_manager.h
-  KWin::win::dbus::virtual_desktop_manager
-)
-qt6_add_dbus_adaptor(win_dbus_src
-  dbus/org.kde.KWin.Session.xml
-  session_manager.h
-  KWin::win::session_manager
+  KWin::win::dbus::subspace_manager_wrap
 )
 qt6_add_dbus_interface(win_dbus_src dbus/org.kde.kappmenu.xml appmenu_interface)
 qt6_add_dbus_interface(win_dbus_src
@@ -217,12 +196,6 @@ kconfig_add_kcfg_files(win rules/kconfig/rules_settings.kcfgc)
 kconfig_add_kcfg_files(win rules/kconfig/rules_book_settings_base.kcfgc)
 
 ki18n_wrap_ui(win shortcut_dialog.ui)
-
-set_target_properties(win PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-win"
-)
 
 # Target killer helper
 add_executable(kwin_killer_helper x11/helpers/killer.cpp)
@@ -241,12 +214,19 @@ target_link_libraries(win-x11
   PUBLIC
     win
     XCB::ICCCM
+    XCB::KEYSYMS
+    ${X11_LIBRARIES}
 )
 
 target_sources(win-x11
   PUBLIC
     FILE_SET HEADERS
     FILES
+      x11/client_machine.h
+      x11/extras.h
+      x11/key_server.h
+      x11/net/root_info.h
+      x11/net/win_info.h
       x11/net/atoms_p.h
       x11/net/geo.h
       x11/net/info_p.h
@@ -284,14 +264,16 @@ target_sources(win-x11
       x11/screen_edge.h
       x11/screen_edges_filter.h
       x11/session.h
+      x11/session_manager.h
       x11/shortcut.h
-      x11/space.h
       x11/space_areas.h
       x11/space_event.h
       x11/space_setup.h
       x11/stacking.h
+      x11/subspace_manager.h
       x11/sync.h
       x11/sync_alarm_filter.h
+      x11/tabbox_filter.h
       x11/tool_windows.h
       x11/transient.h
       x11/types.h
@@ -305,12 +287,36 @@ target_sources(win-x11
       x11/xcb.h
       x11/xcb_event_filter.h
       x11/xcb_windows.h
+  PRIVATE
+    x11/client_machine.cpp
+    x11/extras.cpp
+    x11/key_server.cpp
+    x11/session_manager.cpp
+    x11/net/atoms.cpp
+    x11/net/root_info.cpp
+    x11/net/win_info.cpp
 )
 
-set_target_properties(win-x11 PROPERTIES
-   VERSION ${CMAKE_PROJECT_VERSION}
-   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-   OUTPUT_NAME "kwin-win-x11"
+qt6_add_dbus_adaptor(win_x11_dbus_src
+  dbus/org.kde.KWin.Session.xml
+  x11/session_manager.h
+  KWin::win::x11::session_manager
+)
+
+target_sources(win-x11 PRIVATE ${win_x11_dbus_src})
+
+add_library(win-x11-backend SHARED)
+
+target_link_libraries(win-x11-backend
+  PUBLIC
+    win-x11
+)
+
+target_sources(win-x11-backend
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      x11/space.h
 )
 
 add_library(win-wl SHARED)
@@ -318,6 +324,7 @@ add_library(win-wl SHARED)
 target_link_libraries(win-wl
   PUBLIC
     win
+    WraplandServer
 )
 
 target_sources(win-wl
@@ -331,6 +338,7 @@ target_sources(win-wl
       wayland/desktop_set.h
       wayland/idle.h
       wayland/input.h
+      wayland/internal_window.h
       wayland/layer_shell.h
       wayland/plasma_shell.h
       wayland/plasma_window.h
@@ -339,6 +347,7 @@ target_sources(win-wl
       wayland/setup.h
       wayland/space.h
       wayland/space_areas.h
+      wayland/subspace_manager.h
       wayland/subsurface.h
       wayland/surface.h
       wayland/transient.h
@@ -348,13 +357,14 @@ target_sources(win-wl
       wayland/xdg_shell.h
       wayland/xdg_shell_control.h
       wayland/xwl_control.h
+      wayland/xwl_space.h
       wayland/xwl_window.h
 )
 
-set_target_properties(win-wl PROPERTIES
+set_target_properties(win win-x11 win-x11-backend win-wl PROPERTIES
    VERSION ${CMAKE_PROJECT_VERSION}
    SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-   OUTPUT_NAME "kwin-win-wl"
+   PREFIX libkwinft-
 )
 
 install(
@@ -366,39 +376,10 @@ install(
   DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/onscreennotification
 )
 
-install(TARGETS win
-  EXPORT win-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
+install(TARGETS win win-x11 win-x11-backend win-wl
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/win
-)
-install(TARGETS win-x11
-  EXPORT win-x11-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/win
-)
-install(TARGETS win-wl
-  EXPORT win-wl-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/win
-)
-
-install(EXPORT win-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT win-x11-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT win-wl-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )
 
 install(TARGETS kwin_killer_helper DESTINATION ${KDE_INSTALL_LIBEXECDIR})

@@ -5,8 +5,9 @@
 */
 #pragma once
 
-#include "types.h"
-#include "virtual_desktops.h"
+#include <vector>
+#include <win/subspace.h>
+#include <win/types.h>
 
 namespace KWin::win
 {
@@ -15,7 +16,7 @@ template<typename Output>
 struct window_topology {
     win::layer layer{layer::unknown};
     Output const* central_output{nullptr};
-    QVector<virtual_desktop*> desktops;
+    std::vector<subspace*> subspaces;
 };
 
 }

@@ -60,7 +60,7 @@ public:
     using buffer_t = typename Scene::buffer_t;
 
     window(RefWin ref_win, Scene& scene)
-        : window_t(ref_win, *scene.platform.compositor)
+        : window_t(ref_win, scene.platform)
         , scene{scene}
     {
         scene.windows.insert({this->id(), this});

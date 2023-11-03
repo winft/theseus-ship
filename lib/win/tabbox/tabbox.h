@@ -2,6 +2,7 @@
 SPDX-FileCopyrightText: 1999, 2000 Matthias Ettrich <ettrich@kde.org>
 SPDX-FileCopyrightText: 2003 Lubos Lunak <l.lunak@kde.org>
 SPDX-FileCopyrightText: 2009 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -11,11 +12,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "tabbox_config.h"
 #include "tabbox_handler_impl.h"
 #include "tabbox_logging.h"
-#include "tabbox_x11_filter.h"
 
-#include <base/x11/grabs.h>
-#include <base/x11/xcb/helpers.h>
-#include <base/x11/xcb/proto.h>
 #include <config-kwin.h>
 #include <kwin_export.h>
 #include <win/activation.h>
@@ -246,7 +243,7 @@ public:
             handler->create_model();
 
             if (!partial_reset) {
-                set_current_desktop(space.virtual_desktop_manager->current());
+                set_current_desktop(subspaces_get_current_x11id(*space.subspace_manager));
             }
             break;
         }
@@ -354,7 +351,7 @@ public:
     {
         if (!is_natively_shown && is_displayed()) {
             // tabbox has been replaced, check effects
-            if (auto& effects = space.base.render->compositor->effects;
+            if (auto& effects = space.base.render->effects;
                 effects && effects->checkInputWindowEvent(event)) {
                 return true;
             }
@@ -386,7 +383,7 @@ public:
     {
         if (!is_natively_shown && is_displayed()) {
             // tabbox has been replaced, check effects
-            if (auto& effects = space.base.render->compositor->effects;
+            if (auto& effects = space.base.render->effects;
                 effects && effects->checkInputWindowEvent(event)) {
                 return true;
             }
@@ -494,14 +491,12 @@ public:
 
     int next_desktop_static(int iDesktop) const
     {
-        win::virtual_desktop_next functor(*space.virtual_desktop_manager);
-        return functor(iDesktop, true);
+        return space.subspace_manager->next(iDesktop, true);
     }
 
     int previous_desktop_static(int iDesktop) const
     {
-        win::virtual_desktop_previous functor(*space.virtual_desktop_manager);
-        return functor(iDesktop, true);
+        return space.subspace_manager->previous(iDesktop, true);
     }
 
     void key_press(int keyQt)
@@ -656,7 +651,7 @@ public:
             grab.tab = old_tab_grab;
             if (desktop != -1) {
                 set_current_desktop(desktop);
-                space.virtual_desktop_manager->setCurrent(desktop);
+                subspaces_set_current(*space.subspace_manager, desktop);
             }
         }
     }
@@ -863,6 +858,15 @@ public:
     std::unique_ptr<tabbox_qobject> qobject;
     Space& space;
 
+    struct {
+        bool desktop{false};
+        bool tab{false};
+
+        // true if tabbox is in modal mode which does not require holding a modifier
+        bool no_modifier{false};
+        bool forced_global_mouse{false};
+    } grab;
+
 private:
     template<typename Input>
     bool areModKeysDepressed(Input const& input, QKeySequence const& seq)
@@ -996,7 +1000,7 @@ private:
         // topmost one with exceptions (can't be keepabove/below, otherwise gets stuck on them).
         for (int i = space.stacking.order.stack.size() - 1; i >= 0; --i) {
             if (std::visit(overload{[&](auto&& win) {
-                               if (win->control && on_current_desktop(win)
+                               if (win->control && on_current_subspace(*win)
                                    && !win::is_special_window(win) && win->isShown()
                                    && win::wants_tab_focus(win) && !win->control->keep_above
                                    && !win->control->keep_below) {
@@ -1031,7 +1035,7 @@ private:
                                       return false;
                                   }
                                   if (!options_traverse_all
-                                      && !on_desktop(win, current_desktop())) {
+                                      && !on_subspace(*win, current_desktop())) {
                                       return false;
                                   }
                                   return true;
@@ -1067,8 +1071,8 @@ private:
                            return;
                        }
 
-                       if (!on_desktop(win, current_desktop())) {
-                           set_current_desktop(get_desktop(*win));
+                       if (!on_subspace(*win, current_desktop())) {
+                           set_current_desktop(get_subspace(*win));
                        }
                        win::raise_window(space, win);
                    }},
@@ -1115,60 +1119,21 @@ private:
 
     bool establish_tabbox_grab()
     {
-        if constexpr (requires(decltype(space.base.input) input) { input->ungrab_keyboard(); }) {
-            return establish_tabbox_grab_x11();
+        if constexpr (requires(Space space) { space.tabbox_grab(); }) {
+            return space.tabbox_grab();
         } else {
             grab.forced_global_mouse = true;
             return true;
         }
     }
 
-    bool establish_tabbox_grab_x11()
-    {
-        base::x11::update_time_from_clock(space.base);
-
-        if (!space.base.input->grab_keyboard()) {
-            return false;
-        }
-
-        // Don't try to establish a global mouse grab using XGrabPointer, as that would prevent
-        // using Alt+Tab while DND (#44972). However force passive grabs on all windows
-        // in order to catch MouseRelease events and close the tabbox (#67416).
-        // All clients already have passive grabs in their wrapper windows, so check only
-        // the active client, which may not have it.
-        Q_ASSERT(!grab.forced_global_mouse);
-        grab.forced_global_mouse = true;
-
-        if (space.stacking.active) {
-            std::visit(overload{[&](auto&& win) { win->control->update_mouse_grab(); }},
-                       *space.stacking.active);
-        }
-
-        x11_event_filter.reset(new tabbox_x11_filter<tabbox<Space>>(*this));
-        return true;
-    }
-
     void remove_tabbox_grab()
     {
-        if constexpr (requires(decltype(space.base.input) input) { input->ungrab_keyboard(); }) {
-            remove_tabbox_grab_x11();
+        if constexpr (requires(Space space) { space.tabbox_ungrab(); }) {
+            space.tabbox_ungrab();
         } else {
             grab.forced_global_mouse = false;
         }
-    }
-
-    void remove_tabbox_grab_x11()
-    {
-        base::x11::update_time_from_clock(space.base);
-        space.base.input->ungrab_keyboard();
-
-        Q_ASSERT(grab.forced_global_mouse);
-        grab.forced_global_mouse = false;
-        if (space.stacking.active) {
-            std::visit(overload{[](auto&& win) { win->control->update_mouse_grab(); }},
-                       *space.stacking.active);
-        }
-        x11_event_filter.reset();
     }
 
     template<typename Slot>
@@ -1375,15 +1340,6 @@ private:
     } walk_sc;
 
     struct {
-        bool desktop{false};
-        bool tab{false};
-
-        // true if tabbox is in modal mode which does not require holding a modifier
-        bool no_modifier{false};
-        bool forced_global_mouse{false};
-    } grab;
-
-    struct {
         std::unordered_map<electric_border, uint32_t> normal;
         std::unordered_map<electric_border, uint32_t> alternative;
     } border_activate;
@@ -1392,8 +1348,6 @@ private:
         QHash<electric_border, QAction*> activate;
         QHash<electric_border, QAction*> alternative_activate;
     } touch_border_action;
-
-    QScopedPointer<base::x11::event_filter> x11_event_filter;
 
     static constexpr auto s_windows{kli18n("Walk Through Windows")};
     static constexpr auto s_windowsRev{kli18n("Walk Through Windows (Reverse)")};

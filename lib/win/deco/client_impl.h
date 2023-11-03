@@ -52,10 +52,11 @@ public:
                          qobject.get(),
                          [this] { update_size(); });
         QObject::connect(window->qobject.get(),
-                         &window_qobject::desktopsChanged,
+                         &window_qobject::subspaces_changed,
                          qobject.get(),
                          [decoratedClient, window]() {
-                             Q_EMIT decoratedClient->onAllDesktopsChanged(on_all_desktops(window));
+                             Q_EMIT decoratedClient->onAllDesktopsChanged(
+                                 on_all_subspaces(*window));
                          });
         QObject::connect(window->qobject.get(),
                          &window_qobject::captionChanged,
@@ -79,7 +80,7 @@ public:
                          decoratedClient,
                          &KDecoration2::DecoratedClient::keepBelowChanged);
 
-        auto comp_qobject = m_client->space.base.render->compositor->qobject.get();
+        auto comp_qobject = m_client->space.base.render->qobject.get();
         using comp_qobject_t = std::remove_pointer_t<decltype(comp_qobject)>;
 
         QObject::connect(comp_qobject,
@@ -223,7 +224,7 @@ public:
 
     bool isOnAllDesktops() const override
     {
-        return on_all_desktops(m_client);
+        return on_all_subspaces(*m_client);
     }
 
     bool isResizeable() const override
@@ -400,7 +401,7 @@ public:
 
     void requestToggleOnAllDesktops() override
     {
-        perform_window_operation(m_client, win_op::on_all_desktops);
+        perform_window_operation(m_client, win_op::on_all_subspaces);
     }
 
     // Deprecated.

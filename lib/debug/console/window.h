@@ -5,14 +5,11 @@
 */
 #pragma once
 
-#include "win/actions.h"
-#include "win/activation.h"
-#include "win/controlling.h"
-#include "win/desktop_get.h"
-#include "win/meta.h"
-#include "win/property_window.h"
-#include "win/space.h"
-#include "win/transient.h"
+#include <win/activation.h>
+#include <win/desktop_get.h>
+#include <win/desktop_set.h>
+#include <win/move.h>
+#include <win/property_window.h>
 
 namespace KWin::debug
 {
@@ -205,27 +202,32 @@ public:
         }
     }
 
-    QVector<win::virtual_desktop*> desktops() const override
+    QVector<win::subspace*> desktops() const override
     {
-        return win::get_desktops(*ref_win);
+        QVector<win::subspace*> ret;
+        auto const& subs = ref_win->topo.subspaces;
+        std::copy(subs.begin(), subs.end(), std::back_inserter(ret));
+        return ret;
     }
 
-    void setDesktops(QVector<win::virtual_desktop*> desktops) override
+    void setDesktops(QVector<win::subspace*> subs) override
     {
         if (ref_win->control) {
-            win::set_desktops(ref_win, desktops);
+            std::vector<win::subspace*> vec;
+            std::copy(subs.begin(), subs.end(), std::back_inserter(vec));
+            win::set_subspaces(*ref_win, vec);
         }
     }
 
     bool isOnAllDesktops() const override
     {
-        return win::on_all_desktops(ref_win);
+        return win::on_all_subspaces(*ref_win);
     }
 
     void setOnAllDesktops(bool set) override
     {
         if (ref_win->control) {
-            win::set_on_all_desktops(ref_win, set);
+            win::set_on_all_subspaces(*ref_win, set);
         }
     }
 

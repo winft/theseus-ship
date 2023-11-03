@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "extras.h"
 #include "window_find.h"
+#include <win/x11/win_info.h>
 
 #include <QIcon>
 #include <vector>
@@ -21,7 +22,7 @@ class group
 public:
     using group_t = group<Space>;
     using x11_window_t = typename Space::x11_window;
-    using effect_window_group_t = typename Space::base_t::render_t::scene_t::effect_window_group_t;
+    using effect_window_group_t = typename Space::base_t::render_t::effect_window_group_t;
 
     group(xcb_window_t xcb_leader, Space& space)
         : xcb_leader{xcb_leader}
@@ -144,17 +145,5 @@ private:
     int refcount{0};
     Space& space;
 };
-
-template<typename Space>
-group<Space>* find_group(Space& space, xcb_window_t leader)
-{
-    assert(leader != XCB_WINDOW_NONE);
-    for (auto group : space.groups) {
-        if (group->xcb_leader == leader) {
-            return group;
-        }
-    }
-    return nullptr;
-}
 
 }

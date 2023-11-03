@@ -24,8 +24,8 @@
 #include "win/layers.h"
 #include "win/options.h"
 #include "win/rules/find.h"
-#include "win/session.h"
 #include <win/tabbox/tabbox_client_impl.h>
+#include <win/x11/xcb_cursor.h>
 
 namespace KWin::win::x11
 {
@@ -51,7 +51,7 @@ void embed_client(Win* win, xcb_visualid_t visualid, xcb_colormap_t colormap, ui
         0,        // back_pixmap
         0,        // border_pixel
         colormap, // colormap
-        win->space.input->cursor->x11_cursor(Qt::ArrowCursor),
+        xcb_cursor_get(win->space, Qt::ArrowCursor),
     };
 
     auto const cw_mask = XCB_CW_BACK_PIXMAP | XCB_CW_BORDER_PIXEL | XCB_CW_COLORMAP | XCB_CW_CURSOR;
@@ -214,25 +214,420 @@ xcb_timestamp_t query_timestamp(Win& win)
 }
 
 template<typename Win>
-xcb_timestamp_t read_user_time_map_timestamp(Win* win, bool session)
+xcb_timestamp_t read_user_time_map_timestamp(Win* win)
 {
     xcb_timestamp_t time = win->net_info->userTime();
-
     if (time != -1U) {
         return time;
     }
 
-    // Creation time would just mess things up during session startup, as possibly many apps are
-    // started up at the same time. If there's no active window yet, no timestamp will be
-    // needed, as plain allow_window_activation() will return true in such case. And if there's
-    // already active window, it's better not to activate the new one. Unless it was the active
-    // window at the time of session saving and there was no user interaction yet, this check
-    // will be done in manage().
-    if (session) {
-        return -1U;
+    return query_timestamp(*win);
+}
+
+template<typename Win>
+void control_create_set_subspaces(Win& win,
+                                  std::optional<std::vector<subspace*>> subs,
+                                  bool isMapped)
+{
+    using desks = std::vector<subspace*>;
+
+    if (!subs.has_value()) {
+        subs = is_desktop(&win) ? desks{} : desks{win.space.subspace_manager->current};
     }
 
-    return query_timestamp(*win);
+    set_subspaces(win,
+                  win.control->rules.checkDesktops(*win.space.subspace_manager, *subs, !isMapped));
+    win.net_info->setDesktop(get_subspace(win));
+}
+
+template<typename Win>
+bool init_controlled_window_from_session(Win& win, bool isMapped)
+{
+    auto session = take_session_info(win.space, &win);
+    if (!session) {
+        return false;
+    }
+
+    auto init_minimize = session->minimized;
+    win.user_no_border = session->noBorder;
+
+    set_shortcut(&win, win.control->rules.checkShortcut(session->shortcut, true));
+
+    init_minimize = win.control->rules.checkMinimize(init_minimize, !isMapped);
+    win.user_no_border = win.control->rules.checkNoBorder(win.user_no_border, !isMapped);
+
+    // We setup compositing already here so a subspace presence change can access effects.
+    win.setupCompositing();
+
+    // Initial subspace placement
+    using desks = std::vector<subspace*>;
+    std::optional<desks> initial_subspaces;
+
+    if (session->onAllDesktops) {
+        initial_subspaces = desks{};
+    } else if (auto subspace
+               = subspaces_get_for_x11id(*win.space.subspace_manager, session->desktop)) {
+        initial_subspaces = desks{subspace};
+    }
+
+    control_create_set_subspaces(win, std::move(initial_subspaces), isMapped);
+    propagate_on_all_subspaces_to_children(win);
+
+    win.geo.client_frame_extents = gtk_frame_extents(&win);
+    win.geo.update.original.client_frame_extents = win.geo.client_frame_extents;
+
+    prepare_decoration(&win);
+
+    // Set size before placement.
+    win.geo.frame = session->geometry;
+
+    if (isMapped) {
+        // TODO(romangg): Or should we just in general assume a window with session info is
+        //                unmapped and remove the additional argument to this function?
+        qCWarning(KWIN_CORE)
+            << "Unexpected client behavior: session info provided for already mapped client.";
+    }
+    auto const placement_area = place_session(&win, win.geo.frame);
+
+    // CT: Extra check for stupid jdk 1.3.1. But should make sense in general
+    // if client has initial state set to Iconic and is transient with a parent
+    // window that is not Iconic, set init_state to Normal
+    if (init_minimize) {
+        auto leads = win.transient->leads();
+        for (auto lead : leads) {
+            if (lead->isShown()) {
+                // SELI TODO: Even e.g. for net::Utility?
+                init_minimize = false;
+            }
+        }
+    }
+
+    // If a dialog is shown for minimized window, minimize it too
+    if (!init_minimize && win.transient->lead()
+        && win.space.session_manager->state() != session_state::saving) {
+        bool visible_parent = false;
+
+        for (auto const& lead : win.transient->leads()) {
+            if (lead->isShown()) {
+                visible_parent = true;
+            }
+        }
+
+        if (!visible_parent) {
+            init_minimize = true;
+            set_demands_attention(&win, true);
+        }
+    }
+
+    if (init_minimize) {
+        set_minimized(&win, true, true);
+    }
+
+    // Other settings from the previous session
+
+    // Session restored windows are not considered to be new windows WRT rules,
+    // I.e. obey only forcing rules
+    set_keep_above(&win, session->keepAbove);
+    set_keep_below(&win, session->keepBelow);
+    set_original_skip_taskbar(&win, session->skipTaskbar);
+    set_skip_pager(&win, session->skipPager);
+    set_skip_switcher(&win, session->skipSwitcher);
+    win.setOpacity(session->opacity);
+
+    if (static_cast<maximize_mode>(session->maximized) != maximize_mode::restore) {
+        maximize(&win, static_cast<maximize_mode>(session->maximized));
+        win.geo.restore.max = session->restore;
+    }
+    if (session->fullscreen) {
+        win.setFullScreen(true, false);
+        win.geo.restore.max = session->fsrestore;
+    }
+
+    check_offscreen_position(win.geo.restore.max, placement_area);
+
+    update_allowed_actions(&win, true);
+
+    // Set initial user time directly
+    //
+    // Falling back to creation time (through call to read_user_creation_time) would just mess
+    // things up during session startup, as possibly many apps are started up at the same time. If
+    // there's no active window yet, no timestamp will be needed, as plain allow_window_activation()
+    // will return true in such case. And if there's already active window, it's better not to
+    // activate the new one. Unless it was the active window at the time of session saving and there
+    // was no user interaction yet, this check will be done in manage().
+    win.user_time = win.net_info->userTime();
+
+    // And do what Win::updateUserTime() does
+    win.group->updateUserTime(win.user_time);
+
+    // This should avoid flicker, because real restacking is done
+    // only after manage() finishes because of blocking, but the window is shown sooner
+    win.xcb_windows.outer.lower();
+
+    if (session->stackingOrder != -1) {
+        win.sm_stacking_order = session->stackingOrder;
+        restore_session_stacking_order(&win.space, &win);
+    }
+
+    if (!win.space.base.render->scene) {
+        // set to true in case compositing is turned on later. bug #160393
+        win.render_data.ready_for_painting = true;
+    }
+
+    if (win.isShown()) {
+        auto allow{false};
+        if (session->active) {
+            allow = !win.space.was_user_interaction || !win.space.stacking.active
+                || (win.space.stacking.active
+                    && std::visit(overload{[&](auto&& win) { return is_desktop(win); }},
+                                  *win.space.stacking.active));
+        }
+
+        if (on_current_subspace(win) && !isMapped && !allow && session->stackingOrder < 0) {
+            restack_client_under_active(win.space, win);
+        }
+
+        update_visibility(&win);
+
+        if (!isMapped) {
+            if (allow && on_current_subspace(win)) {
+                if (!is_special_window(&win)) {
+                    if (win.space.options->qobject->focusPolicyIsReasonable()
+                        && wants_tab_focus(&win)) {
+                        request_focus(win.space, win);
+                    }
+                }
+            }
+        }
+    } else {
+        update_visibility(&win);
+    }
+
+    return true;
+}
+
+template<typename Win>
+void init_controlled_window(Win& win, bool isMapped, QRect const& client_geo)
+{
+    auto init_minimize = !isMapped && (win.net_info->initialMappingState() == net::Iconic);
+    if (win.net_info->state() & net::Hidden) {
+        init_minimize = true;
+    }
+
+    set_shortcut(&win, win.control->rules.checkShortcut(QString(), true));
+
+    init_minimize = win.control->rules.checkMinimize(init_minimize, !isMapped);
+    win.user_no_border = win.control->rules.checkNoBorder(win.user_no_border, !isMapped);
+
+    // We setup compositing already here so a subspace presence change can access effects.
+    win.setupCompositing();
+
+    // Initial subspace placement
+    using desks = std::vector<subspace*>;
+    std::optional<desks> initial_subspaces;
+
+    // If this window is transient, ensure that it is opened on the
+    // same window as its parent.  this is necessary when an application
+    // starts up on a different subspace than is currently displayed.
+    if (win.transient->lead()) {
+        auto leads = win.transient->leads();
+        bool on_current = false;
+        bool on_all = false;
+        Win* maincl = nullptr;
+
+        // This is slightly duplicated from win::place_on_main_window()
+        for (auto const& lead : leads) {
+            if (leads.size() > 1 && is_special_window(lead)
+                && !(win.net_info->state() & net::Modal)) {
+                // Don't consider group-transients and toolbars etc when placing
+                // except when it's modal (blocks specials as well).
+                continue;
+            }
+
+            maincl = lead;
+            if (on_current_subspace(*lead)) {
+                on_current = true;
+            }
+            if (on_all_subspaces(*lead)) {
+                on_all = true;
+            }
+        }
+
+        if (on_all) {
+            initial_subspaces = desks{};
+        } else if (on_current) {
+            initial_subspaces = desks{win.space.subspace_manager->current};
+        } else if (maincl != nullptr) {
+            initial_subspaces = maincl->topo.subspaces;
+        }
+    } else {
+        // A transient shall appear on its leader and not drag that around.
+        auto subspace_id = 0;
+        if (win.net_info->desktop()) {
+            // Window had the initial desktop property, force it
+            subspace_id = win.net_info->desktop();
+        }
+        if (subspace_id) {
+            if (subspace_id == net::OnAllDesktops) {
+                initial_subspaces = desks{};
+            } else if (auto subspace
+                       = subspaces_get_for_x11id(*win.space.subspace_manager, subspace_id)) {
+                initial_subspaces = desks{subspace};
+            }
+        }
+    }
+
+    control_create_set_subspaces(win, std::move(initial_subspaces), isMapped);
+    propagate_on_all_subspaces_to_children(win);
+
+    win.geo.client_frame_extents = gtk_frame_extents(&win);
+    win.geo.update.original.client_frame_extents = win.geo.client_frame_extents;
+
+    prepare_decoration(&win);
+
+    // Set size before placement.
+    if (isMapped) {
+        win.synced_geometry.client = client_geo;
+    }
+
+    auto const frame_pos = client_geo.topLeft() - QPoint(left_border(&win), top_border(&win))
+        + QPoint(win.geo.client_frame_extents.left(), win.geo.client_frame_extents.top());
+    auto const frame_size = size_for_client_size(&win, client_geo.size(), size_mode::any, false);
+    win.geo.frame = QRect(frame_pos, frame_size);
+
+    if (isMapped) {
+        place_mapped(&win, win.geo.frame);
+    } else {
+        place_unmapped(&win, win.geo.frame);
+    }
+
+    // CT: Extra check for stupid jdk 1.3.1. But should make sense in general
+    // if client has initial state set to Iconic and is transient with a parent
+    // window that is not Iconic, set init_state to Normal
+    if (init_minimize) {
+        auto leads = win.transient->leads();
+        for (auto lead : leads) {
+            if (lead->isShown()) {
+                // SELI TODO: Even e.g. for net::Utility?
+                init_minimize = false;
+            }
+        }
+    }
+
+    auto const isSessionSaving = win.space.session_manager->state() == session_state::saving;
+
+    // If a dialog is shown for minimized window, minimize it too
+    if (!init_minimize && win.transient->lead() && !isSessionSaving) {
+        bool visible_parent = false;
+
+        for (auto const& lead : win.transient->leads()) {
+            if (lead->isShown()) {
+                visible_parent = true;
+            }
+        }
+
+        if (!visible_parent) {
+            init_minimize = true;
+            set_demands_attention(&win, true);
+        }
+    }
+
+    if (init_minimize) {
+        set_minimized(&win, true, true);
+    }
+
+    // Window may want to be maximized
+    // done after checking that the window isn't larger than the workarea, so that
+    // the restore geometry from the checks above takes precedence, and window
+    // isn't restored larger than the workarea
+    auto maxmode{maximize_mode::restore};
+
+    if (win.net_info->state() & net::MaxVert) {
+        maxmode = maxmode | maximize_mode::vertical;
+    }
+    if (win.net_info->state() & net::MaxHoriz) {
+        maxmode = maxmode | maximize_mode::horizontal;
+    }
+
+    // Either hints were set to maximize, or is forced to maximize,
+    // or is forced to non-maximize and hints were set to maximize
+    if (auto const forced_maxmode = win.control->rules.checkMaximize(maxmode, !isMapped);
+        maxmode != maximize_mode::restore || forced_maxmode != maximize_mode::restore) {
+        maximize(&win, forced_maxmode);
+    }
+
+    // Read other initial states
+    set_keep_above(
+        &win, win.control->rules.checkKeepAbove(win.net_info->state() & net::KeepAbove, !isMapped));
+    set_keep_below(
+        &win, win.control->rules.checkKeepBelow(win.net_info->state() & net::KeepBelow, !isMapped));
+    set_original_skip_taskbar(
+        &win,
+        win.control->rules.checkSkipTaskbar(win.net_info->state() & net::SkipTaskbar, !isMapped));
+    set_skip_pager(
+        &win, win.control->rules.checkSkipPager(win.net_info->state() & net::SkipPager, !isMapped));
+    set_skip_switcher(
+        &win,
+        win.control->rules.checkSkipSwitcher(win.net_info->state() & net::SkipSwitcher, !isMapped));
+
+    if (win.net_info->state() & net::DemandsAttention) {
+        set_demands_attention(&win, true);
+    }
+    if (win.net_info->state() & net::Modal) {
+        win.transient->set_modal(true);
+    }
+
+    win.setFullScreen(
+        win.control->rules.checkFullScreen(win.net_info->state() & net::FullScreen, !isMapped),
+        false);
+
+    update_allowed_actions(&win, true);
+
+    // Set initial user time directly
+    win.user_time = read_user_time_map_timestamp(&win);
+
+    // And do what Win::updateUserTime() does
+    win.group->updateUserTime(win.user_time);
+
+    // This should avoid flicker, because real restacking is done
+    // only after manage() finishes because of blocking, but the window is shown sooner
+    win.xcb_windows.outer.lower();
+
+    if (!win.space.base.render->scene) {
+        // set to true in case compositing is turned on later. bug #160393
+        win.render_data.ready_for_painting = true;
+    }
+
+    if (win.isShown()) {
+        auto allow = allow_window_activation(win.space, &win, win.userTime(), false);
+
+        // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
+        // also force if activation is allowed
+        if (!on_current_subspace(win) && !isMapped && (allow || isSessionSaving)) {
+            subspaces_set_current(*win.space.subspace_manager, get_subspace(win));
+        }
+
+        if (on_current_subspace(win) && !isMapped && !allow) {
+            restack_client_under_active(win.space, win);
+        }
+
+        update_visibility(&win);
+
+        if (!isMapped) {
+            if (allow && on_current_subspace(win)) {
+                if (!is_special_window(&win)) {
+                    if (win.space.options->qobject->focusPolicyIsReasonable()
+                        && wants_tab_focus(&win)) {
+                        request_focus(win.space, win);
+                    }
+                }
+            } else if (!is_special_window(&win)) {
+                set_demands_attention(&win, true);
+            }
+        }
+    } else {
+        update_visibility(&win);
+    }
 }
 
 /**
@@ -261,14 +656,14 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
 
     setup_space_window_connections(&space, win);
 
-    using compositor_t = typename Space::base_t::render_t::compositor_t;
-    if constexpr (requires(compositor_t comp) { comp.update_blocking(win); }) {
-        auto comp = space.base.render->compositor.get();
+    using render_t = typename Space::base_t::render_t;
+    if constexpr (requires(render_t render) { render.update_blocking(win); }) {
+        auto render = space.base.render.get();
         QObject::connect(
             win->qobject.get(),
             &Win::qobject_t::blockingCompositingChanged,
-            comp->qobject.get(),
-            [comp, win](auto blocks) { comp->update_blocking(blocks ? win : nullptr); });
+            render->qobject.get(),
+            [render, win](auto blocks) { render->update_blocking(blocks ? win : nullptr); });
     }
 
     QObject::connect(win->qobject.get(),
@@ -305,7 +700,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
                      &window_qobject::moveResizeCursorChanged,
                      win->qobject.get(),
                      [win](auto cursor) {
-                         auto nativeCursor = win->space.input->cursor->x11_cursor(cursor);
+                         auto nativeCursor = xcb_cursor_get(win->space, cursor);
                          win->xcb_windows.outer.define_cursor(nativeCursor);
                          if (win->xcb_windows.input.is_valid()) {
                              win->xcb_windows.input.define_cursor(nativeCursor);
@@ -418,304 +813,14 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     set_skip_pager(win, (win->net_info->state() & net::SkipPager) != 0);
     set_skip_switcher(win, (win->net_info->state() & net::SkipSwitcher) != 0);
 
-    auto init_minimize = !isMapped && (win->net_info->initialMappingState() == net::Iconic);
-    if (win->net_info->state() & net::Hidden) {
-        init_minimize = true;
-    }
-
     // Make sure that the input window is created before we update the stacking order
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
     update_input_window(win, win->geo.frame);
 
     update_layer(win);
 
-    auto session = take_session_info(space, win);
-    if (session) {
-        init_minimize = session->minimized;
-        win->user_no_border = session->noBorder;
-    }
-
-    set_shortcut(win,
-                 win->control->rules.checkShortcut(session ? session->shortcut : QString(), true));
-
-    init_minimize = win->control->rules.checkMinimize(init_minimize, !isMapped);
-    win->user_no_border = win->control->rules.checkNoBorder(win->user_no_border, !isMapped);
-
-    // We setup compositing already here so a desktop presence change can access effects.
-    win->setupCompositing();
-
-    // Initial desktop placement
-    using desks = QVector<virtual_desktop*>;
-    std::optional<desks> initial_desktops;
-    if (session) {
-        if (session->onAllDesktops) {
-            initial_desktops = desks{};
-        } else if (auto desktop
-                   = space.virtual_desktop_manager->desktopForX11Id(session->desktop)) {
-            initial_desktops = desks{desktop};
-        }
-    } else {
-        // If this window is transient, ensure that it is opened on the
-        // same window as its parent.  this is necessary when an application
-        // starts up on a different desktop than is currently displayed.
-        if (win->transient->lead()) {
-            auto leads = win->transient->leads();
-            bool on_current = false;
-            bool on_all = false;
-            Win* maincl = nullptr;
-
-            // This is slightly duplicated from win::place_on_main_window()
-            for (auto const& lead : leads) {
-                if (leads.size() > 1 && is_special_window(lead)
-                    && !(win->net_info->state() & net::Modal)) {
-                    // Don't consider group-transients and toolbars etc when placing
-                    // except when it's modal (blocks specials as well).
-                    continue;
-                }
-
-                maincl = lead;
-                if (on_current_desktop(lead)) {
-                    on_current = true;
-                }
-                if (on_all_desktops(lead)) {
-                    on_all = true;
-                }
-            }
-
-            if (on_all) {
-                initial_desktops = desks{};
-            } else if (on_current) {
-                initial_desktops = desks{space.virtual_desktop_manager->currentDesktop()};
-            } else if (maincl != nullptr) {
-                initial_desktops = maincl->topo.desktops;
-            }
-        } else {
-            // A transient shall appear on its leader and not drag that around.
-            auto desktop_id = 0;
-            if (win->net_info->desktop()) {
-                // Window had the initial desktop property, force it
-                desktop_id = win->net_info->desktop();
-            }
-            if (desktop_id) {
-                if (desktop_id == net::OnAllDesktops) {
-                    initial_desktops = desks{};
-                } else if (auto desktop
-                           = space.virtual_desktop_manager->desktopForX11Id(desktop_id)) {
-                    initial_desktops = desks{desktop};
-                }
-            }
-        }
-    }
-
-    if (!initial_desktops.has_value()) {
-        initial_desktops
-            = is_desktop(win) ? desks{} : desks{space.virtual_desktop_manager->currentDesktop()};
-    }
-
-    set_desktops(win,
-                 win->control->rules.checkDesktops(
-                     *space.virtual_desktop_manager, *initial_desktops, !isMapped));
-    win->net_info->setDesktop(get_desktop(*win));
-
-    propagate_on_all_desktops_to_children(*win);
-
-    win->geo.client_frame_extents = gtk_frame_extents(win);
-    win->geo.update.original.client_frame_extents = win->geo.client_frame_extents;
-
-    prepare_decoration(win);
-
-    // Set size before placement.
-    QRect frame_geo;
-
-    if (session) {
-        frame_geo = session->geometry;
-    } else {
-        auto const client_geo = windowGeometry.rect();
-
-        if (isMapped) {
-            win->synced_geometry.client = client_geo;
-        }
-
-        auto const frame_pos = client_geo.topLeft() - QPoint(left_border(win), top_border(win))
-            + QPoint(win->geo.client_frame_extents.left(), win->geo.client_frame_extents.top());
-        auto const frame_size = size_for_client_size(win, client_geo.size(), size_mode::any, false);
-        frame_geo = QRect(frame_pos, frame_size);
-    }
-
-    win->geo.frame = frame_geo;
-
-    auto const placement_area = place_on_taking_control(win, frame_geo, isMapped, session);
-
-    // CT: Extra check for stupid jdk 1.3.1. But should make sense in general
-    // if client has initial state set to Iconic and is transient with a parent
-    // window that is not Iconic, set init_state to Normal
-    if (init_minimize) {
-        auto leads = win->transient->leads();
-        for (auto lead : leads) {
-            if (lead->isShown()) {
-                // SELI TODO: Even e.g. for net::Utility?
-                init_minimize = false;
-            }
-        }
-    }
-
-    // If a dialog is shown for minimized window, minimize it too
-    if (!init_minimize && win->transient->lead()
-        && space.session_manager->state() != session_state::saving) {
-        bool visible_parent = false;
-
-        for (auto const& lead : win->transient->leads()) {
-            if (lead->isShown()) {
-                visible_parent = true;
-            }
-        }
-
-        if (!visible_parent) {
-            init_minimize = true;
-            set_demands_attention(win, true);
-        }
-    }
-
-    if (init_minimize) {
-        set_minimized(win, true, true);
-    }
-
-    // Other settings from the previous session
-    if (session) {
-        // Session restored windows are not considered to be new windows WRT rules,
-        // I.e. obey only forcing rules
-        set_keep_above(win, session->keepAbove);
-        set_keep_below(win, session->keepBelow);
-        set_original_skip_taskbar(win, session->skipTaskbar);
-        set_skip_pager(win, session->skipPager);
-        set_skip_switcher(win, session->skipSwitcher);
-        win->setOpacity(session->opacity);
-
-        if (static_cast<maximize_mode>(session->maximized) != maximize_mode::restore) {
-            maximize(win, static_cast<maximize_mode>(session->maximized));
-            win->geo.restore.max = session->restore;
-        }
-        if (session->fullscreen) {
-            win->setFullScreen(true, false);
-            win->geo.restore.max = session->fsrestore;
-        }
-
-        check_offscreen_position(win->geo.restore.max, placement_area);
-
-    } else {
-        // Window may want to be maximized
-        // done after checking that the window isn't larger than the workarea, so that
-        // the restore geometry from the checks above takes precedence, and window
-        // isn't restored larger than the workarea
-        auto maxmode{maximize_mode::restore};
-
-        if (win->net_info->state() & net::MaxVert) {
-            maxmode = maxmode | maximize_mode::vertical;
-        }
-        if (win->net_info->state() & net::MaxHoriz) {
-            maxmode = maxmode | maximize_mode::horizontal;
-        }
-
-        auto forced_maxmode = win->control->rules.checkMaximize(maxmode, !isMapped);
-
-        // Either hints were set to maximize, or is forced to maximize,
-        // or is forced to non-maximize and hints were set to maximize
-        if (forced_maxmode != maximize_mode::restore || maxmode != maximize_mode::restore) {
-            maximize(win, forced_maxmode);
-        }
-
-        // Read other initial states
-        set_keep_above(
-            win,
-            win->control->rules.checkKeepAbove(win->net_info->state() & net::KeepAbove, !isMapped));
-        set_keep_below(
-            win,
-            win->control->rules.checkKeepBelow(win->net_info->state() & net::KeepBelow, !isMapped));
-        set_original_skip_taskbar(win,
-                                  win->control->rules.checkSkipTaskbar(
-                                      win->net_info->state() & net::SkipTaskbar, !isMapped));
-        set_skip_pager(
-            win,
-            win->control->rules.checkSkipPager(win->net_info->state() & net::SkipPager, !isMapped));
-        set_skip_switcher(win,
-                          win->control->rules.checkSkipSwitcher(
-                              win->net_info->state() & net::SkipSwitcher, !isMapped));
-
-        if (win->net_info->state() & net::DemandsAttention) {
-            set_demands_attention(win, true);
-        }
-        if (win->net_info->state() & net::Modal) {
-            win->transient->set_modal(true);
-        }
-
-        win->setFullScreen(win->control->rules.checkFullScreen(
-                               win->net_info->state() & net::FullScreen, !isMapped),
-                           false);
-    }
-
-    update_allowed_actions(win, true);
-
-    // Set initial user time directly
-    win->user_time = read_user_time_map_timestamp(win, session);
-
-    // And do what Win::updateUserTime() does
-    win->group->updateUserTime(win->user_time);
-
-    // This should avoid flicker, because real restacking is done
-    // only after manage() finishes because of blocking, but the window is shown sooner
-    win->xcb_windows.outer.lower();
-
-    if (session && session->stackingOrder != -1) {
-        win->sm_stacking_order = session->stackingOrder;
-        restore_session_stacking_order(&space, win);
-    }
-
-    if (!win->space.base.render->compositor->scene) {
-        // set to true in case compositing is turned on later. bug #160393
-        win->render_data.ready_for_painting = true;
-    }
-
-    if (win->isShown()) {
-        auto allow{false};
-        if (session) {
-            if (session->active) {
-                allow = !space.was_user_interaction || !space.stacking.active
-                    || (space.stacking.active
-                        && std::visit(overload{[&](auto&& win) { return is_desktop(win); }},
-                                      *space.stacking.active));
-            }
-        } else {
-            allow = allow_window_activation(space, win, win->userTime(), false);
-        }
-
-        auto const isSessionSaving = space.session_manager->state() == session_state::saving;
-
-        // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
-        // also force if activation is allowed
-        if (!on_current_desktop(win) && !isMapped && !session && (allow || isSessionSaving)) {
-            space.virtual_desktop_manager->setCurrent(get_desktop(*win));
-        }
-
-        if (on_current_desktop(win) && !isMapped && !allow
-            && (!session || session->stackingOrder < 0)) {
-            restack_client_under_active(win->space, *win);
-        }
-
-        update_visibility(win);
-
-        if (!isMapped) {
-            if (allow && on_current_desktop(win)) {
-                if (!is_special_window(win)) {
-                    if (space.options->qobject->focusPolicyIsReasonable() && wants_tab_focus(win)) {
-                        request_focus(space, *win);
-                    }
-                }
-            } else if (!session && !is_special_window(win)) {
-                set_demands_attention(win, true);
-            }
-        }
-    } else {
-        update_visibility(win);
+    if (!init_controlled_window_from_session(*win, isMapped)) {
+        init_controlled_window(*win, isMapped, windowGeometry.rect());
     }
 
     assert(win->mapping != mapping_state::withdrawn);
@@ -738,8 +843,6 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
         }
     }
 
-    delete session;
-
     // Remove ApplyNow rules
     rules::discard_used_rules(*space.rule_book, *win, false);
 
@@ -750,7 +853,7 @@ auto create_controlled_window(xcb_window_t xcb_win, bool isMapped, Space& space)
     read_show_on_screen_edge(win, showOnScreenEdgeCookie);
 
     // Forward all opacity values to the frame in case there'll be other CM running.
-    auto comp_qobject = win->space.base.render->compositor->qobject.get();
+    auto comp_qobject = win->space.base.render->qobject.get();
     using comp_qobject_t = std::remove_pointer_t<decltype(comp_qobject)>;
     QObject::connect(
         comp_qobject, &comp_qobject_t::compositingToggled, win->qobject.get(), [win](bool active) {

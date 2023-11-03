@@ -9,8 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/layout_manager.h"
-#include "win/space.h"
-#include "win/virtual_desktops.h"
 
 #include <KConfigGroup>
 

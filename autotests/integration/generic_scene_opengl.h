@@ -34,9 +34,9 @@ inline std::unique_ptr<setup> generic_scene_opengl_get_setup(std::string const& 
     config->sync();
 
     setup->base->config.main = config;
-    QVERIFY(setup->base->render->compositor);
+    QVERIFY(setup->base->render);
 
-    auto& scene = setup->base->render->compositor->scene;
+    auto& scene = setup->base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
     REQUIRE(!setup->base->render->is_sw_compositing());

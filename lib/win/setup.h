@@ -22,8 +22,8 @@ void setup_space_window_connections(Space* space, Win* win)
     // TODO(romangg): Move into a different function about compositor(render) <-> window setup.
     QObject::connect(win->qobject.get(),
                      &window_qobject::needsRepaint,
-                     space->base.render->compositor->qobject.get(),
-                     [win] { win->space.base.render->compositor->schedule_repaint(win); });
+                     space->base.render->qobject.get(),
+                     [win] { win->space.base.render->schedule_repaint(win); });
     QObject::connect(
         win->qobject.get(), &window_qobject::minimizedChanged, space->qobject.get(), [space, win] {
             Q_EMIT space->qobject->clientMinimizedChanged(win->meta.signal_id);
@@ -80,7 +80,7 @@ void setup_window_control_connections(Win* win)
 
         geometry_updates_blocker blocker(win);
         auto const area = space_window_area(
-            win->space, area_option::placement, get_current_output(win->space), get_desktop(*win));
+            win->space, area_option::placement, get_current_output(win->space), get_subspace(*win));
         place_in_area(win, area);
     });
 

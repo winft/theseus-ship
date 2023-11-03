@@ -8,10 +8,26 @@
 #include "geo.h"
 
 #include "win/space_areas.h"
-#include "win/virtual_desktops.h"
 
 namespace KWin::win::x11
 {
+
+template<typename Space>
+void update_work_areas(Space& space)
+{
+    if (!space.root_info) {
+        return;
+    }
+
+    for (uint subspace = 1; subspace <= space.subspace_manager->subspaces.size(); subspace++) {
+        x11::net::rect rect;
+        rect.pos.x = space.areas.work[subspace].x();
+        rect.pos.y = space.areas.work[subspace].y();
+        rect.size.width = space.areas.work[subspace].width();
+        rect.size.height = space.areas.work[subspace].height();
+        space.root_info->setWorkArea(subspace, rect);
+    }
+}
 
 template<typename Window>
 void update_space_areas(Window* win,
@@ -24,7 +40,7 @@ void update_space_areas(Window* win,
     }
 
     auto const& outputs = win->space.base.outputs;
-    auto const desktops_count = static_cast<int>(win->space.virtual_desktop_manager->count());
+    auto const subspaces_count = static_cast<int>(win->space.subspace_manager->subspaces.size());
 
     auto client_area = adjusted_client_area(win, desktop_area, desktop_area);
 
@@ -55,19 +71,19 @@ void update_space_areas(Window* win,
     // or having some content appear offscreen (Relatively rare compared to other).
     auto has_offscreen_xinerama_strut = win::x11::has_offscreen_xinerama_strut(win);
 
-    if (on_all_desktops(win)) {
-        for (int desktop = 1; desktop <= desktops_count; ++desktop) {
+    if (on_all_subspaces(*win)) {
+        for (int subspace = 1; subspace <= subspaces_count; ++subspace) {
             if (!has_offscreen_xinerama_strut) {
-                areas.work[desktop] = areas.work[desktop].intersected(client_area);
+                areas.work[subspace] = areas.work[subspace].intersected(client_area);
             }
 
-            auto& resmove = areas.restrictedmove[desktop];
+            auto& resmove = areas.restrictedmove[subspace];
             resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
 
             for (size_t screen = 0; screen < outputs.size(); screen++) {
                 auto const client_area_on_screen
                     = win::x11::adjusted_client_area(win, desktop_area, screens_geos[screen]);
-                auto& screen_area = areas.screen[desktop][screen];
+                auto& screen_area = areas.screen[subspace][screen];
                 auto const geo = screen_area.intersected(client_area_on_screen);
 
                 // Ignore the geometry if it results in the screen getting removed completely.
@@ -78,20 +94,21 @@ void update_space_areas(Window* win,
         }
     } else {
         if (!has_offscreen_xinerama_strut) {
-            areas.work[get_desktop(*win)] = areas.work[get_desktop(*win)].intersected(client_area);
+            areas.work[get_subspace(*win)]
+                = areas.work[get_subspace(*win)].intersected(client_area);
         }
 
-        auto& resmove = areas.restrictedmove[get_desktop(*win)];
+        auto& resmove = areas.restrictedmove[get_subspace(*win)];
         resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
 
         for (size_t screen = 0; screen < outputs.size(); screen++) {
-            auto const screen_area = areas.screen[get_desktop(*win)][screen];
+            auto const screen_area = areas.screen[get_subspace(*win)][screen];
             auto const geo = screen_area.intersected(
                 win::x11::adjusted_client_area(win, desktop_area, screens_geos[screen]));
 
             // Ignore the geometry if it results in the screen getting removed completely.
             if (!geo.isEmpty()) {
-                areas.screen[get_desktop(*win)][screen] = geo;
+                areas.screen[get_subspace(*win)][screen] = geo;
             }
         }
     }

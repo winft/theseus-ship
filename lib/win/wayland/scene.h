@@ -64,15 +64,15 @@ void setup_scale_scene_notify(Win& win)
 
     // A change of scale won't affect the geometry in compositor co-ordinates, but will affect the
     // window quads.
-    QObject::connect(
-        win.surface,
-        &Wrapland::Server::Surface::committed,
-        win.space.base.render->compositor->scene.get(),
-        [&] {
-            if (win.surface->state().updates & Wrapland::Server::surface_change::scale) {
-                win.space.base.render->compositor->scene->windowGeometryShapeChanged(&win);
-            }
-        });
+    QObject::connect(win.surface,
+                     &Wrapland::Server::Surface::committed,
+                     win.space.base.render->scene.get(),
+                     [&] {
+                         if (win.surface->state().updates
+                             & Wrapland::Server::surface_change::scale) {
+                             win.space.base.render->scene->windowGeometryShapeChanged(&win);
+                         }
+                     });
 }
 
 template<typename Win>
@@ -80,12 +80,12 @@ void setup_compositing(Win& win)
 {
     static_assert(!Win::is_toplevel);
     assert(!win.remnant);
-    assert(win.space.base.render->compositor->scene);
+    assert(win.space.base.render->scene);
 
     discard_shape(win);
     win.render_data.damage_region = QRect({}, win.geo.size());
 
-    add_scene_window(*win.space.base.render->compositor->scene, win);
+    add_scene_window(*win.space.base.render->scene, win);
 }
 
 }

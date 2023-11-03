@@ -17,7 +17,8 @@
 #include "base/x11/xcb/window.h"
 #include "utils/blocker.h"
 #include "win/desktop_space.h"
-#include "win/space_areas_helpers.h"
+#include "win/space_setup.h"
+#include <win/space_areas_helpers.h>
 
 namespace KWin::win::x11
 {
@@ -40,10 +41,73 @@ inline static void select_wm_input_event_mask(base::x11::data const& data)
             XCB_EVENT_MASK_EXPOSURE);
 }
 
+template<typename Manager>
+void subspace_manager_set_root_info(Manager& mgr, x11::net::root_info* info)
+{
+    mgr.backend.data = info;
+
+    // Nothing will be connected to rootInfo
+    if (!mgr.backend.data) {
+        return;
+    }
+
+    int columns = mgr.subspaces.size() / mgr.rows;
+    if (mgr.subspaces.size() % mgr.rows > 0) {
+        columns++;
+    }
+
+    mgr.backend.set_layout(columns, mgr.rows);
+
+    mgr.backend.update_size(mgr.subspaces.size());
+    subspace_manager_update_layout(mgr);
+    mgr.backend.set_current(subspaces_get_current_x11id(mgr));
+
+    for (auto vd : mgr.subspaces) {
+        mgr.backend.update_subspace_meta(vd->x11DesktopNumber(), vd->name());
+    }
+}
+
 template<typename Space>
 void init_space(Space& space)
 {
     assert(space.base.x11_data.connection);
+
+    using session_manager_t = decltype(space.session_manager)::element_type;
+    space.session_manager = std::make_unique<session_manager_t>();
+    QObject::connect(space.session_manager.get(),
+                     &session_manager_t::loadSessionRequested,
+                     space.qobject.get(),
+                     [&](auto&& session_name) { x11::load_session_info(space, session_name); });
+    QObject::connect(
+        space.session_manager.get(),
+        &session_manager_t::prepareSessionSaveRequested,
+        space.qobject.get(),
+        [&](auto const& name) { x11::store_session(space, name, x11::sm_save_phase0); });
+    QObject::connect(
+        space.session_manager.get(),
+        &session_manager_t::finishSessionSaveRequested,
+        space.qobject.get(),
+        [&](auto const& name) { x11::store_session(space, name, x11::sm_save_phase2); });
+
+    QObject::connect(&space.updateToolWindowsTimer, &QTimer::timeout, space.qobject.get(), [&] {
+        x11::update_tool_windows_visibility(&space, true);
+    });
+
+    QObject::connect(space.stacking.order.qobject.get(),
+                     &stacking_order_qobject::changed,
+                     space.qobject.get(),
+                     [&](auto count_changed) {
+                         x11::propagate_clients(space, count_changed);
+                         if (space.stacking.active) {
+                             std::visit(
+                                 overload{[](auto&& win) { win->control->update_mouse_grab(); }},
+                                 *space.stacking.active);
+                         }
+                     });
+    QObject::connect(space.stacking.order.qobject.get(),
+                     &stacking_order_qobject::render_restack,
+                     space.qobject.get(),
+                     [&] { x11::render_stack_unmanaged_windows(space); });
 
     space.atoms->retrieveHelpers();
 
@@ -81,8 +145,12 @@ void init_space(Space& space)
     space.m_nullFocus->map();
 
     space.root_info = x11::root_info<Space>::create(space);
-    auto& vds = space.virtual_desktop_manager;
-    vds->setRootInfo(space.root_info.get());
+    auto& subspaces = space.subspace_manager;
+
+    if constexpr (requires { subspaces->backend; }) {
+        subspace_manager_set_root_info(*subspaces, space.root_info.get());
+    }
+
     space.root_info->activate();
 
     // TODO(romangg): Do we need this still?
@@ -149,11 +217,11 @@ void init_space(Space& space)
         space.stacking.order.update_count();
 
         save_old_output_sizes(space);
-        update_space_areas(space);
+        win::update_space_areas(space);
 
         // NETWM spec says we have to set it to (0,0) if we don't support it
-        auto viewports = new net::point[vds->count()];
-        space.root_info->setDesktopViewport(vds->count(), *viewports);
+        auto viewports = new net::point[subspaces->subspaces.size()];
+        space.root_info->setDesktopViewport(subspaces->subspaces.size(), *viewports);
         delete[] viewports;
         QRect geom;
 
@@ -185,10 +253,12 @@ void init_space(Space& space)
     if (!new_active_win && !space.stacking.active && space.stacking.should_get_focus.empty()) {
         // No client activated in manage()
         if (!new_active_win) {
-            new_active_win = win::top_client_on_desktop(space, vds->current(), nullptr);
+            new_active_win
+                = top_client_in_subspace(space, subspaces_get_current_x11id(*subspaces), nullptr);
         }
         if (!new_active_win) {
-            new_active_win = win::find_desktop(&space, true, vds->current());
+            new_active_win
+                = win::find_desktop(&space, true, subspaces_get_current_x11id(*subspaces));
         }
     }
     if (new_active_win) {
@@ -201,6 +271,7 @@ void clear_space(Space& space)
 {
     using var_win = typename Space::window_t;
 
+    // TODO: grabXServer();
     space.stacking.order.lock();
 
     // Use stacking.order, so that kwin --replace keeps stacking order
@@ -242,7 +313,11 @@ void clear_space(Space& space)
 
     space.root_info.reset();
     space.shape_helper_window.reset();
+
     space.stacking.order.unlock();
+
+    // TODO: ungrabXServer();
+    base::x11::xcb::extensions::destroy();
 }
 
 }

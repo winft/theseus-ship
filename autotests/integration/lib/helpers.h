@@ -12,10 +12,17 @@
 #include "types.h"
 
 #include "base/output.h"
-#include "base/wayland/platform.h"
-#include "base/wayland/server.h"
-#include "win/wayland/space.h"
 #include "win/wayland/window.h"
+
+#if USE_XWL
+#include <base/wayland/xwl_platform.h>
+#include <render/wayland/xwl_platform.h>
+#include <win/wayland/xwl_space.h>
+#else
+#include <base/wayland/platform.h>
+#include <render/wayland/platform.h>
+#include <win/wayland/space.h>
+#endif
 
 #include <Wrapland/Client/xdg_shell.h>
 
@@ -34,8 +41,14 @@ namespace KWin::detail::test
 
 class client;
 
+#if USE_XWL
+using space = win::wayland::xwl_space<render::wayland::xwl_platform<base::wayland::xwl_platform>,
+                                      input::wayland::platform<base::wayland::xwl_platform>>;
+#else
 using space = win::wayland::space<render::wayland::platform<base::wayland::platform>,
                                   input::wayland::platform<base::wayland::platform>>;
+#endif
+
 using wayland_window = win::wayland::window<space>;
 
 struct KWIN_EXPORT output {
@@ -177,31 +190,63 @@ bool wait_for_destroyed(Window* window)
     return destroyedSpy.wait();
 }
 
+template<typename Window, typename Variant>
+Window* get_window(Variant window)
+{
+    auto helper_get = [](auto&& win) -> Window* {
+        if (!std::holds_alternative<Window*>(win)) {
+            return nullptr;
+        }
+        return std::get<Window*>(win);
+    };
+
+    if constexpr (requires(Variant win) { win.has_value(); }) {
+        if (!window) {
+            return nullptr;
+        }
+        return helper_get(*window);
+    } else {
+        return helper_get(window);
+    }
+}
+
 template<typename Window>
-Window* get_window(std::optional<space::window_t> window)
+auto get_wayland_window(Window window)
 {
-    if (!window) {
-        return nullptr;
+    if constexpr (requires(Window win) { win.has_value(); }) {
+        return get_window<typename std::remove_pointer_t<
+            std::variant_alternative_t<0, typename Window::value_type>>::space_t::wayland_window>(
+            window);
+    } else {
+        return get_window<typename std::remove_pointer_t<
+            std::variant_alternative_t<0, Window>>::space_t::wayland_window>(window);
     }
-    if (!std::holds_alternative<Window*>(*window)) {
-        return nullptr;
+}
+
+template<typename Window>
+auto get_x11_window(Window window)
+{
+    if constexpr (requires(Window win) { win.has_value(); }) {
+        return get_window<typename std::remove_pointer_t<
+            std::variant_alternative_t<0, typename Window::value_type>>::space_t::x11_window>(
+            window);
+    } else {
+        return get_window<typename std::remove_pointer_t<
+            std::variant_alternative_t<0, Window>>::space_t::x11_window>(window);
     }
-    return std::get<Window*>(*window);
 }
 
-inline wayland_window* get_wayland_window(std::optional<space::window_t> window)
+template<typename Window>
+auto get_internal_window(Window window)
 {
-    return get_window<wayland_window>(window);
-}
-
-inline space::x11_window* get_x11_window(std::optional<space::window_t> window)
-{
-    return get_window<space::x11_window>(window);
-}
-
-inline space::internal_window_t* get_internal_window(std::optional<space::window_t> window)
-{
-    return get_window<space::internal_window_t>(window);
+    if constexpr (requires(Window win) { win.has_value(); }) {
+        return get_window<typename std::remove_pointer_t<
+            std::variant_alternative_t<0, typename Window::value_type>>::space_t::
+                              internal_window_t>(window);
+    } else {
+        return get_window<typename std::remove_pointer_t<
+            std::variant_alternative_t<0, Window>>::space_t::internal_window_t>(window);
+    }
 }
 
 /**

@@ -12,6 +12,7 @@
 #include "win/deco/window.h"
 #include "win/move.h"
 #include "win/scene.h"
+#include <win/x11/net/geo.h>
 
 #include <KDecoration2/DecoratedClient>
 
@@ -108,7 +109,7 @@ void create_decoration(Win* win)
     win->control->deco.decoration = decoration;
     win->geo.update.original.deco_margins = frame_margins(win);
 
-    auto comp = win->space.base.render->compositor.get();
+    auto comp = win->space.base.render.get();
     using comp_t = std::remove_pointer_t<decltype(comp)>;
 
     if (comp->state == comp_t::state_t::on) {

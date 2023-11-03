@@ -9,8 +9,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/actions.h"
 #include "win/desktop_set.h"
 #include "win/screen.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
+#include <win/subspace_manager.h>
 
 #include <Wrapland/Client/idle_notify_v1.h>
 #include <Wrapland/Client/idleinhibit.h>
@@ -97,14 +97,14 @@ TEST_CASE("idle inhibition", "[win]")
         QCOMPARE(idle.inhibit_count, 0);
     }
 
-    SECTION("no inhibit on other desktop")
+    SECTION("no inhibit on other subspace")
     {
         // This test verifies that the idle inhibitor object is not honored when
-        // the associated surface is not on the current virtual desktop.
+        // the associated surface is not on the current subspace.
 
-        auto& vd_manager = setup.base->space->virtual_desktop_manager;
-        vd_manager->setCount(2);
-        QCOMPARE(vd_manager->count(), 2u);
+        auto& vd_manager = setup.base->space->subspace_manager;
+        win::subspace_manager_set_count(*vd_manager, 2);
+        QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // Get reference to the idle interface.
         auto& idle = setup.base->input->idle;
@@ -125,22 +125,22 @@ TEST_CASE("idle inhibition", "[win]")
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
-        // The test client should be only on the first virtual desktop.
-        QCOMPARE(c->topo.desktops.count(), 1);
-        QCOMPARE(c->topo.desktops.constFirst(), vd_manager->desktops().first());
+        // The test client should be only on the first subspace.
+        QCOMPARE(c->topo.subspaces.size(), 1);
+        QCOMPARE(c->topo.subspaces.front(), vd_manager->subspaces.front());
 
         // This should inhibit our server object.
         QCOMPARE(idle.inhibit_count, 1);
 
-        // Switch to the second virtual desktop.
-        vd_manager->setCurrent(2);
+        // Switch to the second subspace.
+        win::subspaces_set_current(*vd_manager, 2);
 
         // The surface is no longer visible, so the compositor don't have to honor the
         // idle inhibitor object.
         QCOMPARE(idle.inhibit_count, 0);
 
-        // Switch back to the first virtual desktop.
-        vd_manager->setCurrent(1);
+        // Switch back to the first subspace.
+        win::subspaces_set_current(*vd_manager, 1);
 
         // The test client became visible again, so the compositor has to honor the idle
         // inhibitor object back again.
@@ -247,14 +247,14 @@ TEST_CASE("idle inhibition", "[win]")
         QCOMPARE(idle.inhibit_count, 0);
     }
 
-    SECTION("no inhibit left current desktop")
+    SECTION("no inhibit left current subspace")
     {
         // This test verifies that the idle inhibitor object is not honored by KWin
-        // when the associated surface leaves the current virtual desktop.
+        // when the associated surface leaves the current subspace.
 
-        auto& vd_manager = setup.base->space->virtual_desktop_manager;
-        vd_manager->setCount(2);
-        QCOMPARE(vd_manager->count(), 2u);
+        auto& vd_manager = setup.base->space->subspace_manager;
+        win::subspace_manager_set_count(*vd_manager, 2);
+        QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // Get reference to the idle interface.
         auto& idle = setup.base->input->idle;
@@ -275,25 +275,25 @@ TEST_CASE("idle inhibition", "[win]")
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
 
-        // The test client should be only on the first virtual desktop.
-        QCOMPARE(c->topo.desktops.count(), 1);
-        QCOMPARE(c->topo.desktops.constFirst(), vd_manager->desktops().first());
+        // The test client should be only on the first subspace.
+        QCOMPARE(c->topo.subspaces.size(), 1);
+        QCOMPARE(c->topo.subspaces.front(), vd_manager->subspaces.front());
 
         // This should inhibit our server object.
         QCOMPARE(idle.inhibit_count, 1);
 
-        // Let the client enter the second virtual desktop.
-        win::enter_desktop(c, vd_manager->desktops().at(1));
+        // Let the client enter the second subspace.
+        win::enter_subspace(*c, vd_manager->subspaces.at(1));
         QCOMPARE(idle.inhibit_count, 1);
 
-        // If the client leaves the first virtual desktop, then the associated idle
+        // If the client leaves the first subspace, then the associated idle
         // inhibitor object should not be honored.
-        win::leave_desktop(c, vd_manager->desktops().at(0));
+        win::leave_subspace(*c, vd_manager->subspaces.at(0));
         QCOMPARE(idle.inhibit_count, 0);
 
-        // If the client enters the first desktop, then the associated idle inhibitor
+        // If the client enters the first subspace, then the associated idle inhibitor
         // object should be honored back again.
-        win::enter_desktop(c, vd_manager->desktops().at(0));
+        win::enter_subspace(*c, vd_manager->subspaces.at(0));
         QCOMPARE(idle.inhibit_count, 1);
 
         // Destroy the test client.

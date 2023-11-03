@@ -7,7 +7,9 @@
 
 #include "types.h"
 
-namespace KWin::render
+#include <xcb/xcb.h>
+
+namespace KWin::render::x11
 {
 
 // for delayed supportproperty management of effects
@@ -33,14 +35,14 @@ void delete_unused_support_properties(Compositor& comp)
         return;
     }
 
-    auto con = comp.platform.base.x11_data.connection;
+    auto con = comp.base.x11_data.connection;
     if (!con) {
         return;
     }
 
     for (auto const& atom : qAsConst(comp.unused_support_properties)) {
         // remove property from root window
-        xcb_delete_property(con, comp.platform.base.x11_data.root_window, atom);
+        xcb_delete_property(con, comp.base.x11_data.root_window, atom);
     }
     comp.unused_support_properties.clear();
 }

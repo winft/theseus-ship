@@ -12,6 +12,7 @@
 #include "input/event_filter.h"
 #include "input/keyboard_redirect.h"
 #include "input/qt_event.h"
+#include <win/wayland/space_windows.h>
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/keyboard_pool.h>
@@ -209,7 +210,7 @@ private:
     bool is_surface_allowed(Pool const& device_pool) const
     {
         if (auto surface = device_pool.get_focus().surface) {
-            if (auto win = this->redirect.space.find_window(surface)) {
+            if (auto win = win::wayland::space_windows_find(this->redirect.space, surface)) {
                 return win->isLockScreen() || win->isInputMethod();
             }
             return false;

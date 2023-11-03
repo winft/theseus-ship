@@ -8,6 +8,7 @@
 #include "utils.h"
 
 #include "base/wayland/server.h"
+#include <utils/algorithm.h>
 
 #include <QHash>
 #include <QObject>

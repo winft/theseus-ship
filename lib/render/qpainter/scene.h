@@ -33,8 +33,8 @@ public:
     using output_t = typename abstract_type::output_t;
 
     explicit scene(Platform& platform)
-        : render::scene<Platform>(platform)
-        , m_backend{platform.get_qpainter_backend(*platform.compositor)}
+        : abstract_type(platform)
+        , m_backend{platform.get_qpainter_backend()}
         , m_painter(new QPainter())
     {
         QQuickWindow::setSceneGraphBackend("software");
@@ -164,7 +164,7 @@ protected:
 
     void paintCursor()
     {
-        auto cursor = this->platform.compositor->software_cursor.get();
+        auto cursor = this->platform.software_cursor.get();
         if (!cursor->enabled) {
             return;
         }
@@ -180,7 +180,7 @@ protected:
 
     void paintEffectQuickView(EffectQuickView* view) override
     {
-        auto painter = this->platform.compositor->effects->scenePainter();
+        auto painter = this->platform.effects->scenePainter();
         const QImage buffer = view->bufferAsImage();
         if (buffer.isNull()) {
             return;

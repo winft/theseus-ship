@@ -15,7 +15,7 @@ namespace KWin::render
 template<typename Compositor>
 void full_repaint(Compositor& comp)
 {
-    auto const& space_size = comp.platform.base.topology.size;
+    auto const& space_size = comp.base.topology.size;
     comp.addRepaint(QRegion(0, 0, space_size.width(), space_size.height()));
 }
 

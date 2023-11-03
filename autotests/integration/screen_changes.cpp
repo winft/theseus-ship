@@ -23,7 +23,12 @@ TEST_CASE("screen changes", "[base]")
 {
     // this test verifies that when a new screen is added it gets synced to Wayland
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("screen-changes", operation_mode);
     setup.start();
     setup_wayland_connection();

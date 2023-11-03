@@ -9,14 +9,14 @@
 #include "helpers.h"
 
 #include "win/meta.h"
-#include "win/session_manager.h"
 #include "win/space_qobject.h"
 #include "win/util.h"
-#include "win/virtual_desktops.h"
 #include "win/window_qobject.h"
+#include <win/subspace.h>
 
 #include <KConfigGroup>
 #include <QObject>
+#include <string>
 #include <unordered_map>
 
 namespace KWin::input::xkb
@@ -44,17 +44,19 @@ class layout_policy
 public:
     virtual ~layout_policy() = default;
 
-    virtual QString name() const = 0;
-
     std::unique_ptr<layout_policy_qobject> qobject;
     Manager* manager;
+    std::string const name;
 
     using window_t = typename std::decay_t<decltype(manager->redirect.space)>::window_t;
 
 protected:
-    explicit layout_policy(Manager* manager, KConfigGroup const& config = KConfigGroup())
+    explicit layout_policy(Manager* manager,
+                           std::string name,
+                           KConfigGroup const& config = KConfigGroup())
         : qobject{std::make_unique<layout_policy_qobject>()}
         , manager(manager)
+        , name{name}
         , config(config)
     {
         QObject::connect(manager->qobject.get(),
@@ -75,14 +77,14 @@ protected:
         get_keyboard()->switch_to_layout(index);
     }
 
-    virtual QString const default_layout_entry_key() const
+    std::string const get_config_key_name() const
     {
-        return QLatin1String(default_layout_entry_key_prefix) % name() % QLatin1Char('_');
+        return config_key_prefix + name;
     }
 
     void clear_layouts()
     {
-        auto const layout_entries = config.keyList().filter(default_layout_entry_key_prefix);
+        auto const layout_entries = config.keyList().filter(config_key_prefix);
         for (const auto& entry : layout_entries) {
             config.deleteEntry(entry);
         }
@@ -94,7 +96,9 @@ protected:
     }
 
     KConfigGroup config;
-    constexpr static char default_layout_entry_key_prefix[]{"LayoutDefault"};
+
+private:
+    static constexpr auto config_key_prefix{"LayoutDefault"};
 };
 
 template<typename Manager>
@@ -102,33 +106,20 @@ class global_layout_policy : public layout_policy<Manager>
 {
 public:
     global_layout_policy(Manager* manager, KConfigGroup const& config)
-        : layout_policy<Manager>(manager, config)
+        : layout_policy<Manager>(manager, "Global", config)
     {
-        auto session_manager = manager->redirect.space.session_manager.get();
-        QObject::connect(session_manager,
-                         &win::session_manager::prepareSessionSaveRequested,
-                         this->qobject.get(),
-                         [this] {
-                             this->clear_layouts();
-                             if (auto const layout = this->get_keyboard()->layout) {
-                                 this->config.writeEntry(default_layout_entry_key(), layout);
-                             }
-                         });
-
-        QObject::connect(session_manager,
-                         &win::session_manager::loadSessionRequested,
-                         this->qobject.get(),
-                         [this] {
-                             if (this->get_keyboard()->layouts_count() > 1) {
-                                 this->set_layout(
-                                     this->config.readEntry(default_layout_entry_key(), 0));
-                             }
-                         });
+        if (this->get_keyboard()->layouts_count() > 1) {
+            this->set_layout(this->config.readEntry(this->get_config_key_name().c_str(), 0));
+        }
     }
 
-    QString name() const override
+    ~global_layout_policy() override
     {
-        return QStringLiteral("Global");
+        this->clear_layouts();
+
+        if (auto const layout = this->get_keyboard()->layout) {
+            this->config.writeEntry(this->get_config_key_name().c_str(), layout);
+        }
     }
 
 protected:
@@ -140,78 +131,57 @@ protected:
     {
         Q_UNUSED(index)
     }
-
-private:
-    QString const default_layout_entry_key() const override
-    {
-        return QLatin1String(this->default_layout_entry_key_prefix) % name();
-    }
 };
 
 template<typename Manager>
-class virtual_desktop_layout_policy : public layout_policy<Manager>
+class subspace_layout_policy : public layout_policy<Manager>
 {
 public:
-    virtual_desktop_layout_policy(Manager* manager, KConfigGroup const& config)
-        : layout_policy<Manager>(manager, config)
+    subspace_layout_policy(Manager* manager, KConfigGroup const& config)
+        : layout_policy<Manager>(manager, "Desktop", config)
     {
         auto& space = manager->redirect.space;
-        QObject::connect(space.virtual_desktop_manager->qobject.get(),
-                         &win::virtual_desktop_manager_qobject::currentChanged,
+
+        QObject::connect(space.subspace_manager->qobject.get(),
+                         &decltype(space.subspace_manager->qobject)::element_type::subspace_created,
+                         this->qobject.get(),
+                         [this](auto subspace) { handle_subspace_created(subspace); });
+        QObject::connect(space.subspace_manager->qobject.get(),
+                         &decltype(space.subspace_manager->qobject)::element_type::subspace_removed,
+                         this->qobject.get(),
+                         [this](auto subspace) { layouts.erase(subspace); });
+        QObject::connect(space.subspace_manager->qobject.get(),
+                         &decltype(space.subspace_manager->qobject)::element_type::current_changed,
                          this->qobject.get(),
                          [this] { handle_desktop_change(); });
 
-        auto session_manager = space.session_manager.get();
-        QObject::connect(session_manager,
-                         &win::session_manager::prepareSessionSaveRequested,
-                         this->qobject.get(),
-                         [this] {
-                             this->clear_layouts();
+        auto const& cfg_entries = this->config.entryMap();
+        auto const key_prefix = get_config_key_prefix();
+        for (auto const& [key, val] : cfg_entries.asKeyValueRange()) {
+            if (key.startsWith(key_prefix.c_str())) {
+                restored_layouts.insert({key.toStdString(), val.toInt()});
+            }
+        }
 
-                             for (auto const& [vd, layout] : layouts) {
-                                 if (!layout) {
-                                     continue;
-                                 }
+        if (this->get_keyboard()->layouts_count() > 1) {
+            auto const& subspaces = this->manager->redirect.space.subspace_manager->subspaces;
 
-                                 this->config.writeEntry(this->default_layout_entry_key()
-                                                             % QLatin1String(QByteArray::number(
-                                                                 vd->x11DesktopNumber())),
-                                                         layout);
-                             }
-                         });
+            for (auto const subspace : subspaces) {
+                handle_subspace_created(subspace);
+            }
 
-        QObject::connect(
-            session_manager,
-            &win::session_manager::loadSessionRequested,
-            this->qobject.get(),
-            [this] {
-                if (this->get_keyboard()->layouts_count() > 1) {
-                    auto const& desktops
-                        = this->manager->redirect.space.virtual_desktop_manager->desktops();
-
-                    for (auto const desktop : desktops) {
-                        uint const layout = this->config.readEntry(
-                            this->default_layout_entry_key()
-                                % QLatin1String(QByteArray::number(desktop->x11DesktopNumber())),
-                            0u);
-
-                        if (layout) {
-                            layouts.insert({desktop, layout});
-                            QObject::connect(desktop,
-                                             &win::virtual_desktop::aboutToBeDestroyed,
-                                             this->qobject.get(),
-                                             [this, desktop] { layouts.erase(desktop); });
-                        }
-                    }
-
-                    handle_desktop_change();
-                }
-            });
+            handle_desktop_change();
+        }
     }
 
-    QString name() const override
+    ~subspace_layout_policy() override
     {
-        return QStringLiteral("Desktop");
+        this->clear_layouts();
+        for (auto const& [subspace, layout] : layouts) {
+            if (layout) {
+                this->config.writeEntry(get_config_key(subspace).c_str(), layout);
+            }
+        }
     }
 
 protected:
@@ -222,7 +192,7 @@ protected:
 
     void handle_layout_change(uint index) override
     {
-        auto desktop = this->manager->redirect.space.virtual_desktop_manager->currentDesktop();
+        auto desktop = this->manager->redirect.space.subspace_manager->current;
         if (!desktop) {
             return;
         }
@@ -231,25 +201,50 @@ protected:
 
         if (it == layouts.end()) {
             layouts.insert({desktop, index});
-            QObject::connect(desktop,
-                             &win::virtual_desktop::aboutToBeDestroyed,
-                             this->qobject.get(),
-                             [this, desktop] { layouts.erase(desktop); });
         } else {
             it->second = index;
         }
     }
 
 private:
+    std::string get_config_key_prefix() const
+    {
+        return this->get_config_key_name() + "_";
+    }
+
+    std::string get_config_key(uint subspace_x11id) const
+    {
+        return get_config_key_prefix() + std::to_string(subspace_x11id);
+    }
+    std::string get_config_key(win::subspace* subspace) const
+    {
+        return get_config_key(subspace->x11DesktopNumber());
+    }
+
+    void handle_subspace_created(win::subspace* subspace)
+    {
+        auto it = restored_layouts.find(get_config_key(subspace));
+        if (it == restored_layouts.end()) {
+            return;
+        }
+
+        if (this->get_keyboard()->layouts_count() > 1) {
+            if (it->second) {
+                layouts.insert({subspace, it->second});
+            }
+        }
+        restored_layouts.erase(it);
+    }
+
     void handle_desktop_change()
     {
-        if (auto desktop
-            = this->manager->redirect.space.virtual_desktop_manager->currentDesktop()) {
+        if (auto desktop = this->manager->redirect.space.subspace_manager->current) {
             this->set_layout(get_layout(layouts, desktop));
         }
     }
 
-    std::unordered_map<win::virtual_desktop*, uint32_t> layouts;
+    std::unordered_map<win::subspace*, uint32_t> layouts;
+    std::unordered_map<std::string, uint32_t> restored_layouts;
 };
 
 template<typename Manager>
@@ -259,7 +254,7 @@ public:
     using window_t = typename layout_policy<Manager>::window_t;
 
     explicit window_layout_policy(Manager* manager)
-        : layout_policy<Manager>(manager)
+        : layout_policy<Manager>(manager, "Window")
     {
         QObject::connect(manager->redirect.space.qobject.get(),
                          &win::space_qobject::clientActivated,
@@ -280,11 +275,6 @@ public:
                                         }},
                                         *window);
                          });
-    }
-
-    QString name() const override
-    {
-        return QStringLiteral("Window");
     }
 
 protected:
@@ -331,7 +321,7 @@ public:
     using window_t = typename layout_policy<Manager>::window_t;
 
     application_layout_policy(Manager* manager, KConfigGroup const& config)
-        : layout_policy<Manager>(manager, config)
+        : layout_policy<Manager>(manager, "WinClass", config)
     {
         auto& space = manager->redirect.space;
         QObject::connect(space.qobject.get(),
@@ -345,46 +335,23 @@ public:
                              }
                          });
 
-        auto session_manager = space.session_manager.get();
-        QObject::connect(
-            session_manager,
-            &win::session_manager::prepareSessionSaveRequested,
-            this->qobject.get(),
-            [this] {
-                this->clear_layouts();
-
-                for (auto const& [win, layout] : layouts) {
-                    if (!layout) {
-                        continue;
-                    }
-
-                    auto name = std::visit(
-                        overload{[](auto&& win) { return win->control->desktop_file_name; }}, win);
-                    if (!name.isEmpty()) {
-                        this->config.writeEntry(
-                            this->default_layout_entry_key() % QLatin1String(name), layout);
-                    }
-                }
-            });
-        QObject::connect(session_manager,
-                         &win::session_manager::loadSessionRequested,
-                         this->qobject.get(),
-                         [this] {
-                             if (this->get_keyboard()->layouts_count() > 1) {
-                                 auto const keyPrefix = this->default_layout_entry_key();
-                                 auto const keyList = this->config.keyList().filter(keyPrefix);
-                                 for (auto const& key : keyList) {
-                                     restored_layouts.insert(
-                                         {QStringView(key).mid(keyPrefix.size()).toLatin1(),
-                                          this->config.readEntry(key, 0)});
-                                 }
-                             }
-                         });
+        if (this->get_keyboard()->layouts_count() > 1) {
+            auto const keyPrefix = this->get_config_key_prefix();
+            auto const keyList = this->config.keyList().filter(keyPrefix);
+            for (auto const& key : keyList) {
+                restored_layouts.insert({QStringView(key).mid(keyPrefix.size()).toLatin1(),
+                                         this->config.readEntry(key, 0)});
+            }
+        }
     }
 
-    QString name() const override
+    ~application_layout_policy() override
     {
-        return QStringLiteral("WinClass");
+        this->clear_layouts();
+
+        for (auto const& [key, layout] : restored_layouts) {
+            this->config.writeEntry(this->get_config_key_prefix() % key, layout);
+        }
     }
 
 protected:
@@ -413,7 +380,14 @@ protected:
                            QObject::connect(window->qobject.get(),
                                             &win::window_qobject::closed,
                                             this->qobject.get(),
-                                            [this, window] { layouts.erase(window_t(window)); });
+                                            [this, window] {
+                                                if (window->control) {
+                                                    restored_layouts.insert(
+                                                        {window->control->desktop_file_name,
+                                                         layouts.at(window)});
+                                                }
+                                                layouts.erase(window_t(window));
+                                            });
                        } else {
                            if (it->second == index) {
                                return;
@@ -435,6 +409,11 @@ protected:
     }
 
 private:
+    QString get_config_key_prefix() const
+    {
+        return QString::fromStdString(this->get_config_key_name() + "_");
+    }
+
     template<typename Win>
     void handle_client_activated(Win* window)
     {
@@ -443,8 +422,7 @@ private:
             return;
         }
 
-        auto it = layouts.find(window);
-        if (it != layouts.end()) {
+        if (auto it = layouts.find(window); it != layouts.end()) {
             this->set_layout(it->second);
             return;
         }
@@ -464,7 +442,6 @@ private:
         if (auto restored_it = restored_layouts.find(window->control->desktop_file_name);
             restored_it != restored_layouts.end()) {
             restored_layout = restored_it->second;
-            restored_layouts.erase(restored_it);
         }
 
         this->set_layout(restored_layout);
@@ -483,7 +460,7 @@ std::unique_ptr<layout_policy<Manager>>
 create_layout_policy(Manager* manager, KConfigGroup const& config, QString const& policy)
 {
     if (policy.toLower() == QStringLiteral("desktop")) {
-        return std::make_unique<virtual_desktop_layout_policy<Manager>>(manager, config);
+        return std::make_unique<subspace_layout_policy<Manager>>(manager, config);
     }
     if (policy.toLower() == QStringLiteral("window")) {
         return std::make_unique<window_layout_policy<Manager>>(manager);

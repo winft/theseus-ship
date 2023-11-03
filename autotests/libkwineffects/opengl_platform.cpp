@@ -66,7 +66,7 @@ TEST_CASE("opengl platform", "[render],[unit]")
     epoxy_glGetStringi = mock_glGetStringi;
     epoxy_glGetIntegerv = mock_glGetIntegerv;
 
-    GLPlatform::create(nullptr);
+    GLPlatform::create();
 
     SECTION("driver to string")
     {
@@ -176,7 +176,6 @@ TEST_CASE("opengl platform", "[render],[unit]")
         QCOMPARE(gl->glslVersion(), 0);
         QCOMPARE(gl->mesaVersion(), 0);
         QCOMPARE(gl->galliumVersion(), 0);
-        QCOMPARE(gl->serverVersion(), 0);
         QCOMPARE(gl->kernelVersion(), 0);
         QCOMPARE(gl->driverVersion(), 0);
 
@@ -250,7 +249,6 @@ TEST_CASE("opengl platform", "[render],[unit]")
             QCOMPARE(gl->glslVersion(), readVersion(settingsGroup, "GLSLVersion"));
             QCOMPARE(gl->mesaVersion(), readVersion(settingsGroup, "MesaVersion"));
             QCOMPARE(gl->galliumVersion(), readVersion(settingsGroup, "GalliumVersion"));
-            QCOMPARE(gl->serverVersion(), 0);
 
             // Detects GL version instead of driver version
             if (file != "amd-catalyst-radeonhd-7700M-3.1.13399") {

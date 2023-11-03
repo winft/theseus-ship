@@ -17,6 +17,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QRegion>
 #include <functional>
 #include <memory>
+#include <xcb/xcb.h>
 
 namespace KWin::win::deco
 {
@@ -136,7 +137,7 @@ public:
                             client->client()->frameId()};
 
         auto render = client->client()->space.base.render.get();
-        if (auto& scene = render->compositor->scene) {
+        if (auto& scene = render->scene) {
             injector = scene->create_deco(std::move(injector_window));
         } else {
             if constexpr (requires(decltype(render) render, render_window window) {

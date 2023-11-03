@@ -11,7 +11,6 @@
 #include "kwin_export.h"
 #include "ruling.h"
 #include "win/types.h"
-#include "win/virtual_desktops.h"
 
 #include <QRect>
 #include <functional>
@@ -52,9 +51,10 @@ public:
     int checkOpacityActive(int s) const;
     int checkOpacityInactive(int s) const;
     bool checkIgnoreGeometry(bool ignore, bool init = false) const;
-    QVector<win::virtual_desktop*> checkDesktops(virtual_desktop_manager const& manager,
-                                                 QVector<virtual_desktop*> vds,
-                                                 bool init = false) const
+
+    template<typename Manager>
+    std::vector<win::subspace*>
+    checkDesktops(Manager const& manager, std::vector<subspace*> vds, bool init = false) const
     {
         for (auto&& rule : rules) {
             if (rule->applyDesktops(manager, vds, init)) {

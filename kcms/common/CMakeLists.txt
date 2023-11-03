@@ -31,7 +31,7 @@ set_target_properties(kcmkwincommon PROPERTIES
     SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
 )
 
-install(TARGETS kcmkwincommon ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
+install(TARGETS kcmkwincommon LIBRARY NAMELINK_SKIP)
 
 set(kcm_kwin4_genericscripted_SRCS generic_scripted_config.cpp)
 qt_add_dbus_interface(kcm_kwin4_genericscripted_SRCS

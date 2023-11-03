@@ -9,8 +9,6 @@
 #include "base/platform.h"
 #include "base/x11/xcb/helpers.h"
 #include "render/gl/gl.h"
-#include "render/x11/compositor.h"
-#include "win/space.h"
 
 // Must be included late because of Qt.
 #include "glx_context_attribute_builder.h"
@@ -365,12 +363,13 @@ static inline glXFuncPtr getProcAddress(const char* name)
     return ret;
 }
 
-template<typename Compositor, typename Backend>
-void start_glx_backend(Display* display, Compositor& compositor, Backend& backend)
+template<typename Backend>
+void start_glx_backend(Display* display, Backend& backend)
 {
     backend.data.display = display;
-    backend.overlay_window = std::make_unique<typename Compositor::overlay_window_t>(compositor);
-    compositor.overlay_window = backend.overlay_window.get();
+    backend.overlay_window
+        = std::make_unique<typename Backend::platform_t::overlay_window_t>(backend.platform);
+    backend.platform.overlay_window = backend.overlay_window.get();
 
     // Force initialization of GLX integration in the Qt's xcb backend
     // to make it call XESetWireToEvent callbacks, which is required
@@ -396,7 +395,7 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
         throw std::runtime_error("Could not initialize rendering context");
     }
 
-    gl::init_gl(gl_interface::glx, getProcAddress, backend.platform.base.x11_data.connection);
+    gl::init_gl(gl_interface::glx, getProcAddress);
 
     // Check whether certain features are supported
     backend.data.extensions.mesa_copy_sub_buffer
@@ -410,8 +409,8 @@ void start_glx_backend(Display* display, Compositor& compositor, Backend& backen
     // See BUG 342582.
     if (backend.hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
         && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
-        backend.swap_filter = std::make_unique<swap_event_filter<Compositor>>(
-            compositor, backend.window, backend.data.window);
+        backend.swap_filter = std::make_unique<swap_event_filter<typename Backend::platform_t>>(
+            backend.platform, backend.window, backend.data.window);
         glXSelectEvent(display, backend.data.window, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
     }
 

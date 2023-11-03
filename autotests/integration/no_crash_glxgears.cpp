@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/wayland/server.h"
 #include "win/deco.h"
-#include "win/space.h"
 #include "win/x11/window.h"
 
 #include <KDecoration2/Decoration>
@@ -23,8 +22,7 @@ TEST_CASE("no crash glxgears", "[xwl],[win]")
     test::setup setup("no-crash-glxgears", base::operation_mode::xwayland);
     setup.start();
 
-    QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                              &win::space::qobject_t::clientAdded);
+    QSignalSpy clientAddedSpy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
 
     QProcess glxgears;

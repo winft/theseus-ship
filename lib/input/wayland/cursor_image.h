@@ -18,7 +18,6 @@
 
 #include <KScreenLocker/KsldApp>
 #include <QElapsedTimer>
-#include <QHash>
 #include <QImage>
 #include <QObject>
 #include <QPainter>
@@ -29,6 +28,7 @@
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
+#include <map>
 #include <memory>
 #include <wayland-cursor.h>
 
@@ -99,9 +99,9 @@ public:
         reevaluteSource();
     }
 
-    void setWindowSelectionCursor(const QByteArray& shape)
+    void setWindowSelectionCursor(std::string const& shape)
     {
-        if (shape.isEmpty()) {
+        if (shape.empty()) {
             loadThemeCursor(Qt::CrossCursor, &m_windowSelectionCursor);
         } else {
             loadThemeCursor(shape, &m_windowSelectionCursor);
@@ -306,7 +306,7 @@ private:
             setSource(CursorSource::WindowSelector);
             return;
         }
-        if (auto& effects = redirect.platform.base.render->compositor->effects;
+        if (auto& effects = redirect.platform.base.render->effects;
             effects && effects->isMouseInterception()) {
             setSource(CursorSource::EffectsOverride);
             return;
@@ -560,13 +560,13 @@ private:
         loadThemeCursor(shape, m_cursors, image);
     }
 
-    void loadThemeCursor(const QByteArray& shape, Image* image)
+    void loadThemeCursor(std::string const& shape, Image* image)
     {
         loadThemeCursor(shape, m_cursorsByName, image);
     }
 
     template<typename T>
-    void loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Image* image)
+    void loadThemeCursor(T const& shape, std::map<T, Image>& cursors, Image* image)
     {
         loadTheme();
 
@@ -574,8 +574,8 @@ private:
             return;
         }
 
-        auto it = cursors.constFind(shape);
-        if (it == cursors.constEnd()) {
+        auto it = cursors.find(shape);
+        if (it == cursors.end()) {
             image->image = QImage();
             image->hotSpot = QPoint();
             wl_cursor_image* cursor = m_cursorTheme->get(shape);
@@ -600,12 +600,12 @@ private:
             int hotSpotY = qRound(cursor->hotspot_y / scale);
             QImage img = buffer->shmImage()->createQImage().copy();
             img.setDevicePixelRatio(scale);
-            it = decltype(it)(cursors.insert(shape, {img, QPoint(hotSpotX, hotSpotY)}));
+            it = cursors.insert({shape, {img, QPoint(hotSpotX, hotSpotY)}}).first;
         }
 
-        image->hotSpot = it.value().hotSpot;
-        image->image = it.value().image;
-    };
+        image->hotSpot = it->second.hotSpot;
+        image->image = it->second.image;
+    }
 
     enum class CursorSource {
         LockScreen,
@@ -642,8 +642,8 @@ private:
     Image m_fallbackCursor;
     Image m_moveResizeCursor;
     Image m_windowSelectionCursor;
-    QHash<win::cursor_shape, Image> m_cursors;
-    QHash<QByteArray, Image> m_cursorsByName;
+    std::map<win::cursor_shape, Image> m_cursors;
+    std::map<std::string, Image> m_cursorsByName;
     QElapsedTimer m_surfaceRenderedTimer;
     struct {
         Image cursor;

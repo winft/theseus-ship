@@ -49,12 +49,12 @@ void desktop_background_item::setOutput(base::output* output)
     }
 }
 
-win::virtual_desktop* desktop_background_item::desktop() const
+win::subspace* desktop_background_item::desktop() const
 {
     return m_desktop;
 }
 
-void desktop_background_item::setDesktop(win::virtual_desktop* desktop)
+void desktop_background_item::setDesktop(win::subspace* desktop)
 {
     if (m_desktop != desktop) {
         m_desktop = desktop;
@@ -88,9 +88,9 @@ void desktop_background_item::updateWindow()
         return;
     }
 
-    win::virtual_desktop* desktop = m_desktop;
+    auto desktop = m_desktop;
     if (!desktop) {
-        desktop = win::singleton_interface::virtual_desktops->current();
+        desktop = win::singleton_interface::subspaces->current();
     }
 
     scripting::window* clientCandidate = nullptr;

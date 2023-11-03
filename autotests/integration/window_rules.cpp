@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/rules/book.h"
 #include "win/rules/ruling.h"
 #include "win/screen_edges.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
@@ -127,7 +126,7 @@ TEST_CASE("window rules", "[win]")
         xcb_flush(c.get());
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -206,7 +205,7 @@ TEST_CASE("window rules", "[win]")
         xcb_flush(c.get());
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 

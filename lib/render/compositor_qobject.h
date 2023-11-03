@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include "kwin_export.h"
+#include <kwin_export.h>
+#include <render/outline.h>
 
 #include <QObject>
 #include <QTimerEvent>
@@ -18,6 +19,10 @@ class KWIN_EXPORT compositor_qobject : public QObject
 {
     Q_OBJECT
 public:
+    // TODO(romangg): Should be moved somewhere else. It's needed in win spaces and can't be defined
+    // in render platforms (likely because outline has Q_OBJECT macro and platforms are templated).
+    using outline_t = render::outline;
+
     compositor_qobject(std::function<bool(QTimerEvent*)> timer_event_handler);
     ~compositor_qobject() override;
 

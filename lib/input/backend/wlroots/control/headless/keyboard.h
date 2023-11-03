@@ -18,7 +18,7 @@ struct keyboard_control_data {
     bool is_alpha_numeric_keyboard{false};
 };
 
-class keyboard_control : public input::control::keyboard
+class KWIN_EXPORT keyboard_control : public input::control::keyboard
 {
     Q_OBJECT
 

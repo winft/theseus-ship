@@ -21,14 +21,15 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 class QAction;
 
 namespace KWin::win
 {
 
-class virtual_desktop;
-class virtual_desktop_manager_qobject;
+class subspace;
+class subspace_manager_qobject;
 
 struct screen_edger_singleton {
     using callback_t = std::function<bool(electric_border)>;
@@ -41,12 +42,12 @@ struct screen_edger_singleton {
     std::function<electric_border_action(electric_border)> action_for_touch_border;
 };
 
-struct virtual_desktops_singleton {
-    win::virtual_desktop_manager_qobject* qobject;
-    std::function<QVector<virtual_desktop*>()> get;
-    std::function<virtual_desktop*(unsigned int, QString)> create;
+struct subspaces_singleton {
+    win::subspace_manager_qobject* qobject;
+    std::function<std::vector<subspace*>()> get;
+    std::function<subspace*(unsigned int, QString)> create;
     std::function<void(QString const&)> remove;
-    std::function<virtual_desktop*()> current;
+    std::function<subspace*()> current;
 };
 
 class internal_window_singleton : public QObject
@@ -72,7 +73,7 @@ public:
 /// Only for exceptional use in environments without dependency injection support (e.g. Qt plugins).
 struct KWIN_EXPORT singleton_interface {
     static screen_edger_singleton* edger;
-    static virtual_desktops_singleton* virtual_desktops;
+    static subspaces_singleton* subspaces;
 
     static std::function<QRect()> get_current_output_geometry;
     static std::function<std::string(std::string const&)> set_activation_token;

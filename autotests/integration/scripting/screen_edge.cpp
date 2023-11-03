@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effect_loader.h"
 #include "script/platform.h"
 #include "script/script.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 
 #define private public
@@ -26,7 +25,12 @@ namespace KWin::detail::test
 
 TEST_CASE("screen edge script", "[script]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("screen-edge-script", operation_mode);
 
     // empty config to have defaults
@@ -47,8 +51,8 @@ TEST_CASE("screen edge script", "[script]")
     setup.start();
     QVERIFY(setup.base->script);
 
-    setup.base->space->edges->time_threshold = 0;
-    setup.base->space->edges->reactivate_threshold = 0;
+    setup.base->space->edges->time_threshold = {};
+    setup.base->space->edges->reactivate_threshold = {};
 
     auto triggerConfigReload = [&]() { win::space_reconfigure(*setup.base->space); };
 
@@ -92,7 +96,7 @@ TEST_CASE("screen edge script", "[script]")
 
         // triggering the edge will result in show desktop being triggered
         QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::showingDesktopChanged);
+                                  &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
         // trigger the edge
@@ -137,7 +141,7 @@ TEST_CASE("screen edge script", "[script]")
         QCOMPARE(runningChangedSpy.first().first().toBool(), true);
         // triggering the edge will result in show desktop being triggered
         QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::showingDesktopChanged);
+                                  &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
         // trigger the edge
@@ -167,7 +171,7 @@ TEST_CASE("screen edge script", "[script]")
         QVERIFY(runningChangedSpy.wait());
 
         QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::showingDesktopChanged);
+                                  &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
         // trigger the edge
@@ -217,7 +221,7 @@ TEST_CASE("screen edge script", "[script]")
         QTRY_COMPARE(runningChangedSpy.count(), 1);
 
         QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::showingDesktopChanged);
+                                  &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
         // Trigger the edge through touch

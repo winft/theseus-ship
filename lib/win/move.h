@@ -153,7 +153,7 @@ void check_unrestricted_move_resize(Win* win)
     }
 
     auto desktopArea = space_window_area(
-        win->space, area_option::work, mov_res.geometry.center(), get_desktop(*win));
+        win->space, area_option::work, mov_res.geometry.center(), get_subspace(*win));
     int left_marge, right_marge, top_marge, bottom_marge, titlebar_marge;
 
     // restricted move/resize - keep at least part of the titlebar always visible
@@ -436,7 +436,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             QRegion availableArea(space_window_area(win->space, area_option::full, nullptr, 0));
 
             // Strut areas
-            availableArea -= restricted_move_area(win->space, get_desktop(*win), strut_area::all);
+            availableArea -= restricted_move_area(win->space, get_subspace(*win), strut_area::all);
 
             bool transposed = false;
             int requiredPixels;
@@ -575,7 +575,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             if (!mov_res.unrestricted) {
                 // Strut areas
                 auto const strut
-                    = restricted_move_area(win->space, get_desktop(*win), strut_area::all);
+                    = restricted_move_area(win->space, get_subspace(*win), strut_area::all);
 
                 // On the screen
                 QRegion availableArea(space_window_area(win->space, area_option::full, nullptr, 0));
@@ -662,8 +662,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
     }
 
     if (is_move(win)) {
-        win->space.edges->check(
-            globalPos, QDateTime::fromMSecsSinceEpoch(win->space.base.x11_data.time, Qt::UTC));
+        win->space.edges->check(globalPos, std::chrono::system_clock::now());
     }
 }
 
@@ -721,6 +720,26 @@ template<typename Win>
 void update_move_resize(Win* win, QPointF const& currentGlobalCursor)
 {
     move_resize(win, win->geo.pos(), currentGlobalCursor.toPoint());
+}
+
+template<typename Space, typename Win, typename Output>
+void send_to_screen(Space const& space, Win* win, Output const& output);
+
+// TODO(romangg): We have 3 different functions to finish/end/leave a move-resize operation. There
+//                should be only a single one!
+template<typename Win>
+void leave_move_resize(Win& win)
+{
+    unset_move_resize_window(win.space);
+    win.control->move_resize.enabled = false;
+
+    if (win.space.edges->desktop_switching.when_moving_client) {
+        win.space.edges->reserveDesktopSwitching(false, Qt::Vertical | Qt::Horizontal);
+    }
+    if (win.control->electric_maximizing) {
+        win.space.outline->hide();
+        elevate(&win, false);
+    }
 }
 
 template<typename Win>
@@ -801,23 +820,6 @@ void end_move_resize(Win* win)
     }
 
     update_cursor(win);
-}
-
-// TODO(romangg): We have 3 different functions to finish/end/leave a move-resize operation. There
-//                should be only a single one!
-template<typename Win>
-void leave_move_resize(Win& win)
-{
-    unset_move_resize_window(win.space);
-    win.control->move_resize.enabled = false;
-
-    if (win.space.edges->desktop_switching.when_moving_client) {
-        win.space.edges->reserveDesktopSwitching(false, Qt::Vertical | Qt::Horizontal);
-    }
-    if (win.control->electric_maximizing) {
-        win.space.outline->hide();
-        elevate(&win, false);
-    }
 }
 
 template<typename Win>
@@ -973,7 +975,7 @@ void send_to_screen(Space const& space, Win* win, Output const& output)
 
     auto oldScreenArea = space_window_area(space, area_option::maximize, win);
     auto screenArea
-        = space_window_area(space, area_option::maximize, checked_output, get_desktop(*win));
+        = space_window_area(space, area_option::maximize, checked_output, get_subspace(*win));
 
     // the window can have its center so that the position correction moves the new center onto
     // the old screen, what will tile it where it is. Ie. the screen is not changed

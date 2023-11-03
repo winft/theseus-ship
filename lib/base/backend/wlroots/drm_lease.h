@@ -23,14 +23,14 @@ extern "C" {
 namespace KWin::base::backend::wlroots
 {
 
-class non_desktop_output;
+class non_desktop_output_wrap;
 
 class KWIN_EXPORT drm_lease : public QObject
 {
     Q_OBJECT
 public:
     drm_lease(Wrapland::Server::drm_lease_v1* lease,
-              std::vector<non_desktop_output*> const& outputs);
+              std::vector<non_desktop_output_wrap*> const& outputs);
 
     drm_lease(drm_lease const&) = delete;
     drm_lease& operator=(drm_lease const&) = delete;
@@ -41,7 +41,7 @@ public:
     Wrapland::Server::drm_lease_v1* lease;
     wlr_drm_lease* wlr_lease{nullptr};
 
-    std::vector<non_desktop_output*> outputs;
+    std::vector<non_desktop_output_wrap*> outputs;
 
 Q_SIGNALS:
     void finished();

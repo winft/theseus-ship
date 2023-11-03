@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/platform.h"
 #include "base/singleton_interface.h"
-#include "win/space.h"
 
 #include <logging.h>
 

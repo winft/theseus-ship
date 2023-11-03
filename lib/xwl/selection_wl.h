@@ -177,7 +177,7 @@ void handle_wl_selection_change(Selection* sel)
     if (!sel->data.active_window_notifier) {
         sel->data.active_window_notifier
             = QObject::connect(sel->data.core.space->qobject.get(),
-                               &win::space::qobject_t::clientActivated,
+                               &Selection::space_t::qobject_t::clientActivated,
                                sel->data.qobject.get(),
                                [sel] { handle_wl_selection_client_change(sel); });
     }

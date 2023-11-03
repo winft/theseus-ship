@@ -19,7 +19,9 @@
 #include "win/space_areas_helpers.h"
 #include "win/tabbox.h"
 #include "win/window_release.h"
+#include <win/x11/user_time.h>
 
+#include <QWindow>
 #include <csignal>
 #include <xcb/xcb_icccm.h>
 
@@ -30,9 +32,9 @@ template<typename Win>
 QWindow* find_internal_window(Win const& win)
 {
     auto const windows = qApp->topLevelWindows();
-    for (auto xcb_win : windows) {
-        if (xcb_win->handle() && xcb_win->winId() == win.xcb_windows.client) {
-            return xcb_win;
+    for (auto qwin : windows) {
+        if (qwin->handle() && qwin->winId() == win.xcb_windows.client) {
+            return qwin;
         }
     }
     return nullptr;
@@ -130,7 +132,7 @@ void finish_unmanaged_removal(Win* win, Win* remnant)
     assert(contains(space.windows, var_win(win)));
 
     remove_window_from_lists(space, win);
-    space.base.render->compositor->addRepaint(visible_rect(win));
+    space.base.render->addRepaint(visible_rect(win));
 
     Q_EMIT space.qobject->unmanagedRemoved(win->meta.signal_id);
 
@@ -261,8 +263,8 @@ void release_window(Win* win, bool on_shutdown)
     finish_rules(win);
     win->geo.update.block++;
 
-    if (on_current_desktop(win) && win->isShown()) {
-        space.base.render->compositor->addRepaint(visible_rect(win));
+    if (on_current_subspace(*win) && win->isShown()) {
+        space.base.render->addRepaint(visible_rect(win));
     }
 
     // Grab X during the release to make removing of properties, setting to withdrawn state
@@ -379,8 +381,8 @@ void destroy_window(Win* win)
     finish_rules(win);
     win->geo.update.block++;
 
-    if (on_current_desktop(win) && win->isShown()) {
-        win->space.base.render->compositor->addRepaint(visible_rect(win));
+    if (on_current_subspace(*win) && win->isShown()) {
+        win->space.base.render->addRepaint(visible_rect(win));
     }
 
     // So that it's not considered visible anymore

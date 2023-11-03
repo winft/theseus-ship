@@ -7,7 +7,6 @@
 
 #include "win/geo.h"
 #include "win/wayland/input.h"
-#include "win/x11/stacking.h"
 
 namespace KWin::input
 {
@@ -33,7 +32,7 @@ auto find_controlled_window(Redirect const& redirect, QPoint const& pos)
                                return false;
                            }
                            if (win->control) {
-                               if (!win::on_current_desktop(win) || win->control->minimized) {
+                               if (!win::on_current_subspace(*win) || win->control->minimized) {
                                    return false;
                                }
                            }
@@ -72,23 +71,25 @@ template<typename Redirect>
 auto find_window(Redirect const& redirect, QPoint const& pos)
     -> std::optional<typename Redirect::window_t>
 {
-    // TODO: check whether the unmanaged wants input events at all
-    if (!base::wayland::is_screen_locked(redirect.platform.base)) {
-        // if an effect overrides the cursor we don't have a window to focus
-        if (redirect.platform.base.render->compositor->effects
-            && redirect.platform.base.render->compositor->effects->isMouseInterception()) {
-            return {};
-        }
+    if (base::wayland::is_screen_locked(redirect.platform.base)) {
+        return find_controlled_window(redirect, pos);
+    }
 
-        auto const& unmanaged = win::x11::get_unmanageds(redirect.space);
-        for (auto const& win : unmanaged) {
-            if (std::visit(overload{[&](auto&& win) {
-                               return win::input_geometry(win).contains(pos)
-                                   && win::wayland::accepts_input(win, pos);
-                           }},
-                           win)) {
-                return win;
-            }
+    // if an effect overrides the cursor we don't have a window to focus
+    if (redirect.platform.base.render->effects
+        && redirect.platform.base.render->effects->isMouseInterception()) {
+        return {};
+    }
+
+    // Check windows without control (important for Xwayland unmanageds).
+    for (auto const& win : redirect.space.windows) {
+        if (std::visit(overload{[&](auto&& win) {
+                           return !win->control && !win->remnant
+                               && win::input_geometry(win).contains(pos)
+                               && win::wayland::accepts_input(win, pos);
+                       }},
+                       win)) {
+            return win;
         }
     }
 

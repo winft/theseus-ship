@@ -6,8 +6,6 @@ add_library(input SHARED)
 
 target_link_libraries(input
   PUBLIC
-    WraplandServer
-    XCB::CURSOR
     win
 )
 
@@ -35,7 +33,6 @@ target_sources(input
       filters/window_action.h
       filters/window_selector.h
       spies/activity.h
-      spies/keyboard_repeat.h
       spies/modifier_only_shortcuts.h
       spies/tablet_mode_switch.h
       spies/touch_hide_cursor.h
@@ -68,7 +65,6 @@ target_sources(input
     platform_qobject.cpp
     redirect_qobject.cpp
     singleton_interface.cpp
-    spies/modifier_only_shortcuts.cpp
     switch.cpp
     cursor.cpp
     logging.cpp
@@ -77,23 +73,20 @@ target_sources(input
     xkb/keymap.cpp
 )
 
-set_target_properties(input PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-input"
-)
+add_library(input-x11-backend SHARED)
 
-add_library(input-x11 SHARED)
-
-target_link_libraries(input-x11
+target_link_libraries(input-x11-backend
   PUBLIC
     base-x11
     input
+    win-x11
     KF6::GlobalAccel
     X11::Xi
+    XCB::CURSOR
+    ${XKBX11_LIBRARIES}
 )
 
-target_sources(input-x11
+target_sources(input-x11-backend
   PUBLIC
     FILE_SET HEADERS
     FILES
@@ -114,12 +107,6 @@ target_sources(input-x11
     x11/cursor.cpp
     x11/global_shortcuts_manager.cpp
     x11/xfixes_cursor_event_filter.cpp
-)
-
-set_target_properties(input-x11 PROPERTIES
-  VERSION ${CMAKE_PROJECT_VERSION}
-  SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-input-x11"
 )
 
 add_library(input-wl SHARED)
@@ -151,6 +138,7 @@ target_sources(input-wl
       dbus/keyboard_layout.h
       dbus/keyboard_layouts_v2.h
       dbus/tablet_mode_manager.h
+      spies/keyboard_repeat.h
       wayland/cursor.h
       wayland/cursor_image.h
       wayland/cursor_theme.h
@@ -194,10 +182,10 @@ target_sources(input-wl
     xkb/layout_policies.cpp
 )
 
-set_target_properties(input-wl PROPERTIES
+set_target_properties(input input-x11-backend input-wl PROPERTIES
   VERSION ${CMAKE_PROJECT_VERSION}
   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-  OUTPUT_NAME "kwin-input-wl"
+  PREFIX libkwinft-
 )
 
 qt6_generate_dbus_interface(dbus/device.h org.kde.kwin.InputDevice.xml OPTIONS -A)
@@ -211,39 +199,8 @@ install(
   DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
 
-install(TARGETS input
-  EXPORT input-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
+install(TARGETS input input-x11-backend input-wl
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/input
 )
-install(TARGETS input-x11
-  EXPORT input-x11-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/input
-)
-install(TARGETS input-wl
-  EXPORT input-wl-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/input
-)
-
-install(EXPORT input-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT input-x11-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT input-wl-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-
-install(TARGETS input-x11 ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)

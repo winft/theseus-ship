@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "win/move.h"
-#include "win/space.h"
 #include "win/space_reconfigure.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -37,7 +36,12 @@ namespace KWin::detail::test
 
 TEST_CASE("pointer constraints", "[input]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("pointer-constraints", operation_mode);
 
     // set custom config which disables the OnScreenNotification

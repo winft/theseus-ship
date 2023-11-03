@@ -6,8 +6,6 @@
 #pragma once
 
 #include "rules/find.h"
-#include "x11/hide.h"
-#include "x11/tool_windows.h"
 
 namespace KWin::win
 {
@@ -33,7 +31,10 @@ void space_reconfigure(Space& space)
     Q_EMIT space.qobject->configChanged();
 
     space.user_actions_menu->discard();
-    x11::update_tool_windows_visibility(&space, true);
+
+    if constexpr (requires(Space space, bool arg) { space.update_tool_windows_visibility(arg); }) {
+        space.update_tool_windows_visibility(true);
+    }
 
     space.rule_book->load();
     for (auto win : space.windows) {

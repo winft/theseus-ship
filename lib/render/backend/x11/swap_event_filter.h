@@ -30,19 +30,17 @@ typedef struct xcb_glx_buffer_swap_complete_event_t {
 namespace KWin::render::backend::x11
 {
 
-template<typename Compositor>
+template<typename Platform>
 class swap_event_filter : public base::x11::event_filter
 {
 public:
-    swap_event_filter(Compositor& compositor,
-                      xcb_drawable_t drawable,
-                      xcb_glx_drawable_t glxDrawable)
-        : base::x11::event_filter(*compositor.platform.base.x11_event_filters,
+    swap_event_filter(Platform& platform, xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable)
+        : base::x11::event_filter(*platform.base.x11_event_filters,
                                   base::x11::xcb::extensions::self()->glx_event_base()
                                       + XCB_GLX_BUFFER_SWAP_COMPLETE)
         , m_drawable(drawable)
         , m_glxDrawable(glxDrawable)
-        , compositor{compositor}
+        , platform{platform}
     {
     }
 
@@ -55,7 +53,7 @@ public:
         // by a WireToEvent handler, and the GLX drawable when the event was
         // received over the wire
         if (ev->drawable == m_drawable || ev->drawable == m_glxDrawable) {
-            compositor.bufferSwapComplete();
+            platform.bufferSwapComplete();
             return true;
         }
 
@@ -65,7 +63,7 @@ public:
 private:
     xcb_drawable_t m_drawable;
     xcb_glx_drawable_t m_glxDrawable;
-    Compositor& compositor;
+    Platform& platform;
 };
 
 }

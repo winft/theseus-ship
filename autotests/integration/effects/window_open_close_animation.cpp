@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "render/effects.h"
 #include "render/scene.h"
 #include "win/net.h"
-#include "win/space.h"
 #include "win/transient.h"
 #include "win/wayland/window.h"
 
@@ -29,7 +28,12 @@ TEST_CASE("window open close animation", "[effect]")
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("window-open-close-animation", operation_mode);
 
     auto config = setup.base->config.main;
@@ -42,7 +46,7 @@ TEST_CASE("window open close animation", "[effect]")
 
     setup.start();
 
-    auto& scene = setup.base->render->compositor->scene;
+    auto& scene = setup.base->render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -55,7 +59,7 @@ TEST_CASE("window open close animation", "[effect]")
         auto effectName = GENERATE(QString("fade"), QString("glide"), QString("scale"));
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
 
         // Load effect that will be tested.
@@ -99,7 +103,7 @@ TEST_CASE("window open close animation", "[effect]")
         auto effectName = GENERATE(QString("fade"), QString("glide"), QString("scale"));
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->compositor->effects;
+        auto& effectsImpl = setup.base->render->effects;
         QVERIFY(effectsImpl);
 
         // Create the main window.

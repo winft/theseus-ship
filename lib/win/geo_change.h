@@ -23,7 +23,7 @@ int get_pack_position_left(Space const& space, Win const* window, int oldX, bool
                                  area_option::maximize,
                                  QPoint(window->geo.update.frame.left() - 1,
                                         window->geo.update.frame.center().y()),
-                                 get_desktop(*window))
+                                 get_subspace(*window))
                    .left();
     }
 
@@ -38,14 +38,14 @@ int get_pack_position_left(Space const& space, Win const* window, int oldX, bool
         return oldX;
     }
 
-    const int desktop = get_desktop(*window) == 0 || on_all_desktops(window)
-        ? space.virtual_desktop_manager->current()
-        : get_desktop(*window);
+    const int subspace = get_subspace(*window) == 0 || on_all_subspaces(*window)
+        ? subspaces_get_current_x11id(*space.subspace_manager)
+        : get_subspace(*window);
 
     for (auto win : space.windows) {
         std::visit(
             overload{[&](auto&& win) {
-                if (is_irrelevant(win, window, desktop)) {
+                if (is_irrelevant(win, window, subspace)) {
                     return;
                 }
                 int const x = leftEdge ? win->geo.update.frame.right() + 1
@@ -72,7 +72,7 @@ int get_pack_position_right(Space const& space, Win const* window, int oldX, boo
                                  area_option::maximize,
                                  QPoint(window->geo.update.frame.right() + 1,
                                         window->geo.update.frame.center().y()),
-                                 get_desktop(*window))
+                                 get_subspace(*window))
                    .right();
     }
 
@@ -87,14 +87,14 @@ int get_pack_position_right(Space const& space, Win const* window, int oldX, boo
         return oldX;
     }
 
-    int const desktop = get_desktop(*window) == 0 || on_all_desktops(window)
-        ? space.virtual_desktop_manager->current()
-        : get_desktop(*window);
+    int const subspace = get_subspace(*window) == 0 || on_all_subspaces(*window)
+        ? subspaces_get_current_x11id(*space.subspace_manager)
+        : get_subspace(*window);
 
     for (auto win : space.windows) {
         std::visit(
             overload{[&](auto&& win) {
-                if (is_irrelevant(win, window, desktop)) {
+                if (is_irrelevant(win, window, subspace)) {
                     return;
                 }
                 int const x = rightEdge ? win->geo.update.frame.left() - 1
@@ -120,7 +120,7 @@ int get_pack_position_up(Space const& space, Win const* window, int oldY, bool t
                                  area_option::maximize,
                                  QPoint(window->geo.update.frame.center().x(),
                                         window->geo.update.frame.top() - 1),
-                                 get_desktop(*window))
+                                 get_subspace(*window))
                    .top();
     }
 
@@ -128,14 +128,14 @@ int get_pack_position_up(Space const& space, Win const* window, int oldY, bool t
         return oldY;
     }
 
-    int const desktop = get_desktop(*window) == 0 || on_all_desktops(window)
-        ? space.virtual_desktop_manager->current()
-        : get_desktop(*window);
+    int const subspace = get_subspace(*window) == 0 || on_all_subspaces(*window)
+        ? subspaces_get_current_x11id(*space.subspace_manager)
+        : get_subspace(*window);
 
     for (auto win : space.windows) {
         std::visit(
             overload{[&](auto&& win) {
-                if (is_irrelevant(win, window, desktop)) {
+                if (is_irrelevant(win, window, subspace)) {
                     return;
                 }
                 int const y = topEdge ? win->geo.update.frame.bottom() + 1
@@ -161,7 +161,7 @@ int get_pack_position_down(Space const& space, Win const* window, int oldY, bool
                                  area_option::maximize,
                                  QPoint(window->geo.update.frame.center().x(),
                                         window->geo.update.frame.bottom() + 1),
-                                 get_desktop(*window))
+                                 get_subspace(*window))
                    .bottom();
     }
 
@@ -176,14 +176,14 @@ int get_pack_position_down(Space const& space, Win const* window, int oldY, bool
         return oldY;
     }
 
-    int const desktop = get_desktop(*window) == 0 || on_all_desktops(window)
-        ? space.virtual_desktop_manager->current()
-        : get_desktop(*window);
+    int const subspace = get_subspace(*window) == 0 || on_all_subspaces(*window)
+        ? subspaces_get_current_x11id(*space.subspace_manager)
+        : get_subspace(*window);
 
     for (auto win : space.windows) {
         std::visit(
             overload{[&](auto&& win) {
-                if (is_irrelevant(win, window, desktop)) {
+                if (is_irrelevant(win, window, subspace)) {
                     return;
                 }
                 int const y = bottomEdge ? win->geo.update.frame.top() - 1
@@ -244,7 +244,7 @@ void grow_horizontal(Win* win)
             win->space,
             area_option::movement,
             QPoint((win->geo.pos().x() + grown_right) / 2, win->geo.frame.center().y()),
-            get_desktop(*win));
+            get_subspace(*win));
         if (area.right() >= grown_right) {
             frame_geo.setRight(grown_right);
         }
@@ -304,7 +304,7 @@ void grow_vertical(Win* win)
             win->space,
             area_option::movement,
             QPoint(win->geo.frame.center().x(), (win->geo.pos().y() + newbottom) / 2),
-            get_desktop(*win));
+            get_subspace(*win));
         if (area.bottom() >= newbottom) {
             frame_geo.setBottom(newbottom);
         }

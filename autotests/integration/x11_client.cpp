@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/activation.h"
 #include "win/active_window.h"
 #include "win/meta.h"
-#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
@@ -100,7 +99,7 @@ TEST_CASE("x11 window", "[win]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -154,7 +153,7 @@ TEST_CASE("x11 window", "[win]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -306,7 +305,7 @@ TEST_CASE("x11 window", "[win]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -375,7 +374,7 @@ TEST_CASE("x11 window", "[win]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -391,7 +390,7 @@ TEST_CASE("x11 window", "[win]")
 
         auto const& uuidConnection = QObject::connect(
             client->space.qobject.get(),
-            &win::space::qobject_t::remnant_created,
+            &space::qobject_t::remnant_created,
             client->space.qobject.get(),
             [&setup, &deletedUuid](auto win_id) {
                 std::visit(overload{[&](auto&& win) { deletedUuid = win->meta.internal_id; }},
@@ -424,8 +423,7 @@ TEST_CASE("x11 window", "[win]")
         // and destroy the window again
         xcb_unmap_window(c.get(), w);
         xcb_flush(c.get());
-        QSignalSpy windowClosedSpy(client->space.qobject.get(),
-                                   &win::space::qobject_t::remnant_created);
+        QSignalSpy windowClosedSpy(client->space.qobject.get(), &space::qobject_t::remnant_created);
         QVERIFY(windowClosedSpy.isValid());
         QVERIFY(windowClosedSpy.wait());
 
@@ -472,7 +470,7 @@ TEST_CASE("x11 window", "[win]")
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -503,8 +501,7 @@ TEST_CASE("x11 window", "[win]")
         // this test verifies that a caption set through WM_NAME is read correctly
 
         // open glxgears as that one only uses WM_NAME
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
-                                  &win::space::qobject_t::clientAdded);
+        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
         QVERIFY(clientAddedSpy.isValid());
 
         QProcess glxgears;
@@ -560,7 +557,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_flush(c.get());
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -676,7 +673,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_flush(c.get());
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
@@ -753,7 +750,7 @@ TEST_CASE("x11 window", "[win]")
         QVERIFY(!xcb_connection_has_error(connection.get()));
 
         QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
-                                    &win::space::qobject_t::clientAdded);
+                                    &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
 
         const QRect windowGeometry(0, 0, 100, 200);

@@ -7,6 +7,7 @@
 
 #include "popup_placement.h"
 #include "window_release.h"
+#include <win/wayland/space_windows.h>
 
 #include "base/wayland/server.h"
 #include "utils/geo.h"
@@ -102,9 +103,8 @@ void xdg_shell_setup_control(Win& win)
 
         maximize(&win, ctrl->rules.checkMaximize(win.geo.update.max_mode, true));
 
-        set_desktops(
-            &win,
-            ctrl->rules.checkDesktops(*win.space.virtual_desktop_manager, win.topo.desktops, true));
+        set_subspaces(
+            win, ctrl->rules.checkDesktops(*win.space.subspace_manager, win.topo.subspaces, true));
         set_desktop_file_name(&win,
                               ctrl->rules.checkDesktopFile(ctrl->desktop_file_name, true).toUtf8());
         if (ctrl->rules.checkMinimize(ctrl->minimized, true)) {
@@ -170,7 +170,7 @@ void xdg_shell_handle_first_commit(Win& win)
             config_size = space_window_area(win.space,
                                             area_option::placement,
                                             get_current_output(win.space),
-                                            get_desktop(win))
+                                            get_subspace(win))
                               .size();
         }
         win.configure_geometry(QRect(win.geo.pos(), config_size));
@@ -301,7 +301,7 @@ Win& create_toplevel_window(Space* space, Wrapland::Server::XdgShellToplevel* to
                      win.qobject.get(),
                      configure);
 
-    set_desktop(&win, win.space.virtual_desktop_manager->current());
+    set_subspace(win, subspaces_get_current_x11id(*win.space.subspace_manager));
     set_color_scheme(&win, QString());
 
     QObject::connect(win.surface, &Wrapland::Server::Surface::committed, win.qobject.get(), [&win] {
@@ -322,8 +322,8 @@ Win& create_popup_window(Space* space, Wrapland::Server::XdgShellPopup* popup)
 
     QObject::connect(win.qobject.get(),
                      &Win::qobject_t::needsRepaint,
-                     win.space.base.render->compositor->qobject.get(),
-                     [&win] { win.space.base.render->compositor->schedule_repaint(&win); });
+                     win.space.base.render->qobject.get(),
+                     [&win] { win.space.base.render->schedule_repaint(&win); });
     QObject::connect(win.qobject.get(),
                      &Win::qobject_t::frame_geometry_changed,
                      win.qobject.get(),
@@ -499,7 +499,7 @@ void install_plasma_shell_surface(Win& win, Wrapland::Server::PlasmaShellSurface
                 || type == win_type::on_screen_display || type == win_type::notification
                 || type == win_type::tooltip || type == win_type::critical_notification
                 || type == win_type::applet_popup) {
-                set_on_all_desktops(&win, true);
+                set_on_all_subspaces(win, true);
             }
             win::update_space_areas(win.space);
         }
@@ -641,7 +641,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
     space->windows.push_back(&win);
 
     if (win.render_data.ready_for_painting) {
-        space->handle_window_added(&win);
+        space_windows_add(*space, win);
     }
 
     // Not directly connected as the connection is tied to client instead of this.
@@ -663,7 +663,7 @@ void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
     space->windows.push_back(&win);
 
     if (win.render_data.ready_for_painting) {
-        space->handle_window_added(&win);
+        space_windows_add(*space, win);
     }
 }
 
@@ -757,7 +757,8 @@ void handle_configure_ack(Win& win, uint32_t serial)
 template<typename Win>
 Win* xdg_shell_find_parent(Win& win)
 {
-    auto find = [&win](auto parent_surface) { return win.space.find_window(parent_surface); };
+    auto find
+        = [&win](auto parent_surface) { return space_windows_find(win.space, parent_surface); };
 
     if (win.toplevel) {
         if (auto parent = win.toplevel->transientFor()) {

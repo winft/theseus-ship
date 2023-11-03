@@ -12,6 +12,7 @@
 #include "win/meta.h"
 #include "win/move.h"
 #include "win/types.h"
+#include <win/x11/xcb_cursor.h>
 
 #include "base/x11/grabs.h"
 
@@ -116,7 +117,7 @@ bool do_start_move_resize(Win& win)
         XCB_GRAB_MODE_ASYNC,
         XCB_GRAB_MODE_ASYNC,
         win.xcb_windows.grab,
-        win.space.input->cursor->x11_cursor(win.control->move_resize.cursor),
+        xcb_cursor_get(win.space, win.control->move_resize.cursor),
         win.space.base.x11_data.time);
 
     unique_cptr<xcb_grab_pointer_reply_t> pointerGrab(

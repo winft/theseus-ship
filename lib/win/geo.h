@@ -17,7 +17,7 @@ namespace KWin::win
 {
 
 template<typename Win1, typename Win2>
-static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int desktop)
+static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int subspace)
 {
     if (!window) {
         return true;
@@ -33,7 +33,7 @@ static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int 
     if (!window->isShown()) {
         return true;
     }
-    if (!on_desktop(window, desktop)) {
+    if (!on_subspace(*window, subspace)) {
         return true;
     }
     if (is_desktop(window)) {

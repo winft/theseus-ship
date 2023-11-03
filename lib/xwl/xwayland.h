@@ -165,7 +165,7 @@ public:
             core.x11.atoms = nullptr;
             win::x11::net::reset_atoms();
 
-            render::compositor_destroy_selection(*space.base.render->compositor);
+            space.base.render->selection_owner = {};
             space.base.x11_data.connection = nullptr;
             Q_EMIT space.base.x11_reset();
         }
@@ -260,7 +260,7 @@ private:
 
         QObject::connect(
             space.qobject.get(),
-            &win::space::qobject_t::surface_id_changed,
+            &Space::qobject_t::surface_id_changed,
             this,
             [this, xwayland_connection = space.base.server->xwayland_connection()](auto win_id,
                                                                                    auto id) {
@@ -290,11 +290,9 @@ private:
             return;
         }
 
-        if (auto& cursor = space.input->cursor) {
-            base::x11::xcb::define_cursor(space.base.x11_data.connection,
-                                          space.base.x11_data.root_window,
-                                          cursor->x11_cursor(Qt::ArrowCursor));
-        }
+        base::x11::xcb::define_cursor(space.base.x11_data.connection,
+                                      space.base.x11_data.root_window,
+                                      win::x11::xcb_cursor_get(space, Qt::ArrowCursor));
 
         space.base.process_environment.insert(QStringLiteral("DISPLAY"),
                                               QString::fromUtf8(qgetenv("DISPLAY")));

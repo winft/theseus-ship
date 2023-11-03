@@ -169,7 +169,7 @@ public:
 
         this->render->win_integration.setup_buffer = setup_buffer;
         this->render->win_integration.get_viewport = get_viewport;
-        space.base.render->compositor->integrate_shadow(*this);
+        space.base.render->integrate_shadow(*this);
 
         setup_scale_scene_notify(*this);
     }
@@ -505,7 +505,7 @@ public:
 
         // Must be done after signal is emitted so the screen margins are updated.
         if (hasStrut()) {
-            update_space_areas(this->space);
+            win::update_space_areas(this->space);
         }
     }
 
@@ -539,7 +539,7 @@ public:
             this->control->destroy_plasma_wayland_integration();
         }
 
-        this->space.base.render->compositor->addRepaint(visible_rect(this));
+        this->space.base.render->addRepaint(visible_rect(this));
 
         if (this->control) {
             process_window_hidden(this->space, *this);
@@ -1010,7 +1010,7 @@ public:
         }
 
         if (hide) {
-            this->space.base.render->compositor->addRepaint(visible_rect(this));
+            this->space.base.render->addRepaint(visible_rect(this));
             process_window_hidden(this->space, *this);
             Q_EMIT this->qobject->windowHidden();
         } else {
@@ -1290,7 +1290,7 @@ public:
         if (auto const& damage = surface->state().damage; !damage.isEmpty()) {
             handle_surface_damage(*this, damage);
         } else if (surface->state().updates & Wrapland::Server::surface_change::frame) {
-            this->space.base.render->compositor->schedule_frame_callback(this);
+            this->space.base.render->schedule_frame_callback(this);
         }
 
         if (toplevel || popup) {
@@ -1303,14 +1303,14 @@ public:
                     auto const area = space_window_area(this->space,
                                                         area_option::placement,
                                                         get_current_output(this->space),
-                                                        get_desktop(*this));
+                                                        get_subspace(*this));
                     place_in_area(this, area);
                 } else if (plasma_shell_surface && plasma_shell_surface->open_under_cursor()) {
                     must_place = false;
                     auto const area = space_window_area(this->space,
                                                         area_option::placement,
                                                         this->space.input->cursor->pos(),
-                                                        get_desktop(*this));
+                                                        get_subspace(*this));
                     auto size = this->geo.size();
                     auto pos = this->space.input->cursor->pos()
                         - QPoint(size.width(), size.height()) / 2;
@@ -1508,7 +1508,7 @@ private:
 
         // First time shown. Must be added to space.
         set_ready_for_painting(*this);
-        this->space.handle_window_added(this);
+        space_windows_add(space, *this);
     }
 };
 

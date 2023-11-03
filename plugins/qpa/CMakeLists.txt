@@ -26,5 +26,6 @@ target_link_libraries(KWinQpaPlugin PRIVATE
     Qt::GuiPrivate
     Freetype::Freetype # Must be after Qt platform support libs
     Fontconfig::Fontconfig
+    WraplandServer
     win
 )

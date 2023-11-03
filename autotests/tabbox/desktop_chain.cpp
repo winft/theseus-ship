@@ -15,6 +15,18 @@ namespace KWin::detail::test
 
 TEST_CASE("tabbox desktop chain", "[unit],[win]")
 {
+    std::vector<std::unique_ptr<win::subspace>> subspaces;
+    for (int i = 0; i < 6; i++) {
+        auto sub = std::make_unique<win::subspace>();
+        sub->setX11DesktopNumber(i + 1);
+        subspaces.push_back(std::move(sub));
+    }
+
+    auto sub_at = [&subspaces](auto x11id) {
+        assert(x11id > 0);
+        return subspaces.at(x11id - 1).get();
+    };
+
     SECTION("init")
     {
         struct data {
@@ -76,7 +88,7 @@ TEST_CASE("tabbox desktop chain", "[unit],[win]")
 
         win::tabbox_desktop_chain_manager manager;
         manager.resize(0, test_data.size);
-        manager.add_desktop(0, test_data.add);
+        manager.add_desktop(nullptr, sub_at(test_data.add));
         REQUIRE(manager.next(test_data.next) == test_data.result);
     }
 
@@ -127,7 +139,7 @@ TEST_CASE("tabbox desktop chain", "[unit],[win]")
 
         win::tabbox_desktop_chain_manager manager;
         manager.resize(0, test_data.size);
-        manager.add_desktop(0, test_data.add);
+        manager.add_desktop(nullptr, sub_at(test_data.add));
         manager.resize(test_data.size, test_data.newSize);
         REQUIRE(manager.next(test_data.next) == test_data.result);
     }
@@ -139,11 +151,11 @@ TEST_CASE("tabbox desktop chain", "[unit],[win]")
         win::tabbox_desktop_chain_manager manager;
         manager.resize(0, 6);
         chain.add(4);
-        manager.add_desktop(0, 4);
+        manager.add_desktop(nullptr, sub_at(4));
         chain.add(5);
-        manager.add_desktop(4, 5);
+        manager.add_desktop(sub_at(4), sub_at(5));
         chain.add(6);
-        manager.add_desktop(5, 6);
+        manager.add_desktop(sub_at(5), sub_at(6));
         QCOMPARE(chain.next(6), (uint)5);
         QCOMPARE(manager.next(6), (uint)5);
         QCOMPARE(chain.next(5), (uint)4);
@@ -158,15 +170,16 @@ TEST_CASE("tabbox desktop chain", "[unit],[win]")
         QCOMPARE(manager.next(1), (uint)3);
         QCOMPARE(chain.next(2), (uint)3);
         QCOMPARE(manager.next(2), (uint)3);
+
         // add
         chain.add(1);
-        manager.add_desktop(3, 1);
+        manager.add_desktop(sub_at(3), sub_at(1));
         QCOMPARE(chain.next(3), (uint)3);
         QCOMPARE(manager.next(3), (uint)3);
         QCOMPARE(chain.next(1), (uint)3);
         QCOMPARE(manager.next(1), (uint)3);
         chain.add(2);
-        manager.add_desktop(1, 2);
+        manager.add_desktop(sub_at(1), sub_at(2));
         QCOMPARE(chain.next(1), (uint)3);
         QCOMPARE(manager.next(1), (uint)3);
         QCOMPARE(chain.next(2), (uint)1);
@@ -179,40 +192,47 @@ TEST_CASE("tabbox desktop chain", "[unit],[win]")
     {
         win::tabbox_desktop_chain_manager manager;
         manager.resize(0, 4);
-        manager.add_desktop(0, 3);
+        manager.add_desktop(nullptr, sub_at(3));
+
         // creating the first chain, should keep it unchanged
         manager.use_chain(QStringLiteral("test"));
         QCOMPARE(manager.next(3), (uint)1);
         QCOMPARE(manager.next(1), (uint)2);
         QCOMPARE(manager.next(2), (uint)4);
         QCOMPARE(manager.next(4), (uint)3);
+
         // but creating a second chain, should create an empty one
         manager.use_chain(QStringLiteral("second chain"));
         QCOMPARE(manager.next(1), (uint)2);
         QCOMPARE(manager.next(2), (uint)3);
         QCOMPARE(manager.next(3), (uint)4);
         QCOMPARE(manager.next(4), (uint)1);
+
         // adding a desktop should only affect the currently used one
-        manager.add_desktop(3, 2);
+        manager.add_desktop(sub_at(3), sub_at(2));
         QCOMPARE(manager.next(1), (uint)3);
         QCOMPARE(manager.next(2), (uint)1);
         QCOMPARE(manager.next(3), (uint)4);
         QCOMPARE(manager.next(4), (uint)2);
+
         // verify by switching back
         manager.use_chain(QStringLiteral("test"));
         QCOMPARE(manager.next(3), (uint)1);
         QCOMPARE(manager.next(1), (uint)2);
         QCOMPARE(manager.next(2), (uint)4);
         QCOMPARE(manager.next(4), (uint)3);
-        manager.add_desktop(3, 1);
+        manager.add_desktop(sub_at(3), sub_at(1));
+
         // use second chain again and put 4th desktop to front
         manager.use_chain(QStringLiteral("second chain"));
-        manager.add_desktop(3, 4);
+        manager.add_desktop(sub_at(3), sub_at(4));
+
         // just for the fun a third chain, and let's shrink it
         manager.use_chain(QStringLiteral("third chain"));
         manager.resize(4, 3);
         QCOMPARE(manager.next(1), (uint)2);
         QCOMPARE(manager.next(2), (uint)3);
+
         // it must have affected all chains
         manager.use_chain(QStringLiteral("test"));
         QCOMPARE(manager.next(1), (uint)3);

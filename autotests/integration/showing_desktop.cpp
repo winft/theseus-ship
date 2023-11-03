@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/wayland/server.h"
 #include "win/activation.h"
 #include "win/net.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/plasmashell.h>
@@ -23,7 +22,12 @@ namespace KWin::detail::test
 
 TEST_CASE("showing desktop", "[win]")
 {
+#if USE_XWL
     auto operation_mode = GENERATE(base::operation_mode::wayland, base::operation_mode::xwayland);
+#else
+    auto operation_mode = GENERATE(base::operation_mode::wayland);
+#endif
+
     test::setup setup("showing-desktop", operation_mode);
     setup.start();
     setup_wayland_connection(global_selection::plasma_shell);

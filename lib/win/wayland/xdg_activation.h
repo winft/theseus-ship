@@ -9,6 +9,7 @@
 #include "base/wayland/server.h"
 #include "win/activation.h"
 #include "win/stacking.h"
+#include <win/wayland/space_windows.h>
 
 #include <Wrapland/Server/xdg_activation_v1.h>
 #include <fcntl.h>
@@ -91,8 +92,7 @@ struct xdg_activation {
             appid.clear();
         }
 
-        Q_EMIT space.base.render->compositor->effects->startupRemoved(
-            QString::fromStdString(token));
+        Q_EMIT space.base.render->effects->startupRemoved(QString::fromStdString(token));
         token.clear();
     }
 
@@ -122,7 +122,7 @@ std::string xdg_activation_set_token(Space& space, std::string const& appid)
         space.plasma_activation_feedback->app_id(appid);
         auto const icon = QIcon::fromTheme(icon_from_desktop_file(QString::fromStdString(appid)),
                                            QIcon::fromTheme(QStringLiteral("system-run")));
-        Q_EMIT space.base.render->compositor->effects->startupAdded(token_str, icon);
+        Q_EMIT space.base.render->effects->startupAdded(token_str, icon);
     }
     return token_str;
 }
@@ -148,7 +148,7 @@ void xdg_activation_handle_token_request(Space& space, TokenRequest& token)
             return true;
         }
 
-        auto win = space.find_window(token.surface());
+        auto win = space_windows_find(space, token.surface());
         if (!win) {
             qCDebug(KWIN_CORE) << "No window associated with token surface" << token.surface();
             return false;
@@ -197,7 +197,7 @@ void handle_xdg_activation_activate(Space* space,
                                     std::string const& token,
                                     Wrapland::Server::Surface* surface)
 {
-    auto win = space->find_window(surface);
+    auto win = space_windows_find(*space, surface);
     if (!win) {
         qCDebug(KWIN_CORE) << "No window found to xdg-activate" << surface;
         return;

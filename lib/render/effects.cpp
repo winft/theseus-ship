@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/control.h"
 #include "win/deco/bridge.h"
 #include "win/desktop_get.h"
-#include "win/internal_window.h"
 #include "win/remnant.h"
 #include "win/screen.h"
 #include "win/window_area.h"
@@ -423,13 +422,6 @@ void effects_handler_wrap::destroyEffect(Effect* effect)
 
     stopMouseInterception(effect);
     handle_effect_destroy(*effect);
-
-    const QList<QByteArray> properties = m_propertiesForEffects.keys();
-    for (const QByteArray& property : properties) {
-        removeSupportProperty(property, effect);
-    }
-
-    delete effect;
 }
 
 bool effects_handler_wrap::isEffectLoaded(const QString& name) const

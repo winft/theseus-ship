@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/input.h"
 #include "win/move.h"
 #include "win/placement.h"
-#include "win/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 

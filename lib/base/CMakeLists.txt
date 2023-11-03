@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 add_library(base SHARED)
+target_compile_options (base PUBLIC -fexceptions)
 
 target_link_libraries(base
   PUBLIC
@@ -59,12 +60,6 @@ endif()
 configure_file(config-kwin.h.cmake config-kwin.h)
 generate_export_header(base BASE_NAME kwin)
 
-set_target_properties(base PROPERTIES
-   VERSION ${CMAKE_PROJECT_VERSION}
-   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-   OUTPUT_NAME "kwin-base"
-)
-
 add_library(base-x11 SHARED)
 
 target_link_libraries(base-x11
@@ -91,7 +86,6 @@ target_sources(base-x11
       x11/event_filter_manager.h
       x11/fixx11h.h
       x11/grabs.h
-      x11/platform.h
       x11/selection_owner.h
       x11/user_interaction_filter.h
       x11/xcb/atom.h
@@ -112,12 +106,6 @@ target_sources(base-x11
     x11/grabs.cpp
     x11/selection_owner.cpp
     x11/xcb/extensions.cpp
-)
-
-set_target_properties(base-x11 PROPERTIES
-   VERSION ${CMAKE_PROJECT_VERSION}
-   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-   OUTPUT_NAME "kwin-base-x11"
 )
 
 add_library(base-wl SHARED)
@@ -146,42 +134,14 @@ target_sources(base-wl
     wayland/filtered_display.cpp
 )
 
-set_target_properties(base-wl PROPERTIES
+set_target_properties(base base-x11 base-wl PROPERTIES
    VERSION ${CMAKE_PROJECT_VERSION}
    SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
-   OUTPUT_NAME "kwin-base-wl"
+   PREFIX libkwinft-
 )
 
-install(TARGETS base
-  EXPORT base-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
+install(TARGETS base base-x11 base-wl
+  EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/base
-)
-install(TARGETS base-x11
-  EXPORT base-x11-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/base
-)
-install(TARGETS base-wl
-  EXPORT base-wl-export
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  LIBRARY NAMELINK_SKIP
-  FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/base/wl
-)
-install(EXPORT base-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT base-x11-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
-)
-install(EXPORT base-wl-export
-  NAMESPACE kwinft::
-  ${INSTALL_TARGETS_DEFAULT_ARGS}
-  DESTINATION ${KDE_INSTALL_CMAKEPACKAGEDIR}/kwinft
 )
