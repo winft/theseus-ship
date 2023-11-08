@@ -463,7 +463,7 @@ private:
         slow_update_timer = nullptr;
 
         const QDateTime now = QDateTime::currentDateTime();
-        const bool isDay = daylight;
+        auto const isDay = data.daylight;
         const int targetTemp = isDay ? data.temperature.day_target : data.temperature.night_target;
 
         // We've reached the target color temperature or the transition time is zero.
@@ -557,6 +557,10 @@ private:
         }
 
         const QDateTime todayNow = QDateTime::currentDateTime();
+        auto set_daylight = [this](auto set) {
+            data.daylight = set;
+            Q_EMIT dbus->send_daylight(set);
+        };
 
         if (data.mode == night_color_mode::timings) {
             const QDateTime nextMorB
@@ -569,11 +573,11 @@ private:
             const QDateTime nextEveE = nextEveB.addSecs(data.transition.duration * 60);
 
             if (nextEveB < nextMorB) {
-                data.daylight = true;
+                set_daylight(true);
                 data.transition.next = DateTimes(nextEveB, nextEveE);
                 data.transition.prev = DateTimes(nextMorB.addDays(-1), nextMorE.addDays(-1));
             } else {
-                data.daylight = false;
+                set_daylight(false);
                 data.transition.next = DateTimes(nextMorB, nextMorE);
                 data.transition.prev = DateTimes(nextEveB.addDays(-1), nextEveE.addDays(-1));
             }
@@ -594,12 +598,12 @@ private:
             // first try by only switching the timings
             if (data.transition.prev.first.date() == data.transition.next.first.date()) {
                 // next is evening
-                data.daylight = true;
+                set_daylight(true);
                 data.transition.prev = data.transition.next;
                 data.transition.next = get_sun_timings(todayNow, lat, lng, false);
             } else {
                 // next is morning
-                data.daylight = false;
+                set_daylight(false);
                 data.transition.prev = data.transition.next;
                 data.transition.next = get_sun_timings(todayNow.addDays(1), lat, lng, true);
             }
@@ -609,17 +613,17 @@ private:
             // in case this fails, reset them
             DateTimes morning = get_sun_timings(todayNow, lat, lng, true);
             if (todayNow < morning.first) {
-                data.daylight = false;
+                set_daylight(false);
                 data.transition.prev = get_sun_timings(todayNow.addDays(-1), lat, lng, false);
                 data.transition.next = morning;
             } else {
                 DateTimes evening = get_sun_timings(todayNow, lat, lng, false);
                 if (todayNow < evening.first) {
-                    data.daylight = true;
+                    set_daylight(true);
                     data.transition.prev = morning;
                     data.transition.next = evening;
                 } else {
-                    data.daylight = false;
+                    set_daylight(false);
                     data.transition.prev = evening;
                     data.transition.next = get_sun_timings(todayNow.addDays(1), lat, lng, true);
                 }

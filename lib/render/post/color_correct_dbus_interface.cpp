@@ -85,6 +85,11 @@ int color_correct_dbus_interface::mode() const
     return integration.data.mode;
 }
 
+bool color_correct_dbus_interface::daylight() const
+{
+    return integration.data.daylight;
+}
+
 quint64 color_correct_dbus_interface::previousTransitionDateTime() const
 {
     auto const dateTime = integration.data.transition.prev.first;
@@ -152,6 +157,13 @@ void color_correct_dbus_interface::send_mode(night_color_mode mode) const
 {
     QVariantMap props;
     props.insert(QStringLiteral("mode"), static_cast<uint>(mode));
+    send_changed_properties(props);
+}
+
+void color_correct_dbus_interface::send_daylight(bool daylight) const
+{
+    QVariantMap props;
+    props.insert(QStringLiteral("daylight"), static_cast<uint>(daylight));
     send_changed_properties(props);
 }
 
