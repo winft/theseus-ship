@@ -43,8 +43,8 @@ inline void night_color_display_inhibit_message(bool inhibit)
     auto const icon
         = inhibit ? QStringLiteral("redshift-status-off") : QStringLiteral("redshift-status-on");
 
-    auto const text = inhibit ? i18nc("Night Color was disabled", "Night Color Off")
-                              : i18nc("Night Color was enabled", "Night Color On");
+    auto const text = inhibit ? i18nc("Night Light was disabled", "Night Light Off")
+                              : i18nc("Night Light was enabled", "Night Light On");
 
     auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
                                                   QStringLiteral("/org/kde/osdService"),
