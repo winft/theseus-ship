@@ -206,6 +206,7 @@ set_package_properties(wlroots PROPERTIES
 if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.17)
   set(HAVE_WLR_SESSION_ON_AUTOCREATE 1)
   set(HAVE_WLR_VALUE_DRM_FORMATS 1)
+  set(HAVE_WLR_PRESENT_CLOCK_MONOTONIC 1)
 endif()
 
 find_package(X11)

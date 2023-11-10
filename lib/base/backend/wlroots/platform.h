@@ -104,7 +104,11 @@ public:
 
     clockid_t get_clockid() const override
     {
+#if HAVE_WLR_PRESENT_CLOCK_MONOTONIC
+        return CLOCK_MONOTONIC;
+#else
         return wlr_backend_get_presentation_clock(backend);
+#endif
     }
 
     std::vector<std::unique_ptr<drm_lease>> leases;
