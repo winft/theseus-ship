@@ -110,7 +110,9 @@ set_package_properties(KF6Kirigami2 PROPERTIES
     TYPE RUNTIME
 )
 
-find_package(KF6Plasma ${KF6_MIN_VERSION} CONFIG)
+find_package(KF6Plasma ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}
+  CONFIG
+)
 set_package_properties(KF6Plasma PROPERTIES
     DESCRIPTION "A QtQuick based components set"
     PURPOSE "Required at runtime for several QML effects"
