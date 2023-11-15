@@ -1733,7 +1733,7 @@ public:
     FrameSizesArray<4> frameSizes;
     VertexAttrib attrib[VertexAttributeCount];
     Bitfield enabledArrays;
-    static IndexBuffer* s_indexBuffer;
+    static std::unique_ptr<IndexBuffer> s_indexBuffer;
 };
 
 bool GLVertexBufferPrivate::hasMapBufferRange = false;
@@ -1741,7 +1741,7 @@ bool GLVertexBufferPrivate::supportsIndexedQuads = false;
 GLVertexBuffer* GLVertexBufferPrivate::streamingBuffer = nullptr;
 bool GLVertexBufferPrivate::haveBufferStorage = false;
 bool GLVertexBufferPrivate::haveSyncFences = false;
-IndexBuffer* GLVertexBufferPrivate::s_indexBuffer = nullptr;
+std::unique_ptr<IndexBuffer> GLVertexBufferPrivate::s_indexBuffer;
 
 void GLVertexBufferPrivate::interleaveArrays(float* dst,
                                              int dim,
@@ -2143,7 +2143,7 @@ void GLVertexBuffer::prepare_primitive_quads_buffer(int& count)
     auto& indexBuffer = GLVertexBufferPrivate::s_indexBuffer;
 
     if (!indexBuffer) {
-        indexBuffer = new IndexBuffer;
+        indexBuffer = std::make_unique<IndexBuffer>();
     }
 
     indexBuffer->bind();
@@ -2279,7 +2279,7 @@ void GLVertexBuffer::initStatic()
             = hasGLVersion(4, 4) || hasGLExtension("GL_ARB_buffer_storage");
         GLVertexBufferPrivate::haveSyncFences = hasGLVersion(3, 2) || hasGLExtension("GL_ARB_sync");
     }
-    GLVertexBufferPrivate::s_indexBuffer = nullptr;
+    GLVertexBufferPrivate::s_indexBuffer = {};
     GLVertexBufferPrivate::streamingBuffer = new GLVertexBuffer(GLVertexBuffer::Stream);
 
     if (GLVertexBufferPrivate::haveBufferStorage && GLVertexBufferPrivate::haveSyncFences) {
@@ -2291,8 +2291,7 @@ void GLVertexBuffer::initStatic()
 
 void GLVertexBuffer::cleanup()
 {
-    delete GLVertexBufferPrivate::s_indexBuffer;
-    GLVertexBufferPrivate::s_indexBuffer = nullptr;
+    GLVertexBufferPrivate::s_indexBuffer = {};
     GLVertexBufferPrivate::hasMapBufferRange = false;
     GLVertexBufferPrivate::supportsIndexedQuads = false;
     delete GLVertexBufferPrivate::streamingBuffer;
