@@ -7,7 +7,7 @@
 #include "blurshader.h"
 
 #include <render/effect/interface/effects_handler.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader_manager.h>
 
 static void ensureResources()
 {

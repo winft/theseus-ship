@@ -11,6 +11,8 @@
 #include "effect_window.h"
 #include "effects_handler.h"
 #include "paint_data.h"
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
 
 #include <QDebug>
 #include <QTimer>

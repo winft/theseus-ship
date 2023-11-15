@@ -11,7 +11,11 @@
 #include "paint_data.h"
 
 #include <base/logging.h>
+#include <render/gl/interface/framebuffer.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
 #include <render/gl/interface/texture.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 namespace KWin
 {

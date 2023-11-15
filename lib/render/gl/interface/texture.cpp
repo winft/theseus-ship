@@ -16,6 +16,8 @@
 
 #include <render/effect/interface/paint_data.h>
 #include <render/effect/interface/types.h>
+#include <render/gl/interface/framebuffer.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <QImage>
 #include <QMatrix4x4>

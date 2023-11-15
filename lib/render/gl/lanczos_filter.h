@@ -12,8 +12,11 @@
 
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/framebuffer.h>
 #include <render/gl/interface/platform.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <QObject>
 #include <QVector2D>

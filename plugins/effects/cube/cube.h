@@ -10,7 +10,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <render/effect/interface/effect_screen.h>
 #include <render/effect/interface/effect_window_visible_ref.h>
 #include <render/effect/interface/time_line.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/texture.h>
 
 #include <QFont>
 #include <QMatrix4x4>

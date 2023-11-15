@@ -9,8 +9,9 @@
 
 #include <render/effect/interface/effect.h>
 #include <render/effect/interface/effect_screen.h>
+#include <render/gl/interface/framebuffer.h>
 #include <render/gl/interface/platform.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/texture.h>
 
 #include <QVector2D>
 #include <QVector>

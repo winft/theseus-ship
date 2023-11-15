@@ -65,10 +65,14 @@ target_sources(render
       gl/egl_context_attribute_builder.h
       gl/egl_data.h
       gl/gl.h
+      gl/interface/framebuffer.h
       gl/interface/platform.h
+      gl/interface/shader.h
+      gl/interface/shader_manager.h
       gl/interface/texture.h
       gl/interface/utils.h
       gl/interface/utils_funcs.h
+      gl/interface/vertex_buffer.h
       gl/lanczos_filter.h
       gl/scene.h
       gl/shadow.h
@@ -125,10 +129,14 @@ target_sources(render
     effects.cpp
     gl/context_attribute_builder.cpp
     gl/egl_context_attribute_builder.cpp
+    gl/interface/framebuffer.cpp
     gl/interface/platform.cpp
+    gl/interface/shader.cpp
+    gl/interface/shader_manager.cpp
     gl/interface/texture.cpp
     gl/interface/utils.cpp
     gl/interface/utils_funcs.cpp
+    gl/interface/vertex_buffer.cpp
     options.cpp
     outline.cpp
     singleton_interface.cpp

@@ -9,7 +9,7 @@
 #include "effects_handler.h"
 
 #include <base/logging.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/texture.h>
 
 #include <QGuiApplication>
 #include <QOffscreenSurface>

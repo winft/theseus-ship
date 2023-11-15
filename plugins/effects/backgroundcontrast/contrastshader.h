@@ -8,7 +8,7 @@
 #ifndef CONTRASTSHADER_H
 #define CONTRASTSHADER_H
 
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
 
 class QMatrix4x4;
 

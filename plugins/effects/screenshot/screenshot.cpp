@@ -10,8 +10,8 @@
 
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
-#include <render/gl/interface/platform.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/framebuffer.h>
+#include <render/gl/interface/texture.h>
 
 #include <QPainter>
 

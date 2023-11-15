@@ -14,6 +14,8 @@
 
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
 
 #include <KConfigGroup>
 #include <kconfigloader.h>

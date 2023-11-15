@@ -8,11 +8,11 @@
 
 #include <kwin_export.h>
 #include <render/effect/interface/effect.h>
-#include <render/gl/interface/utils.h>
 
 namespace KWin
 {
 
+class GLShader;
 class OffscreenEffectPrivate;
 
 /**

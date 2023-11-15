@@ -9,7 +9,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <QPainter>
 
