@@ -67,6 +67,7 @@ void EffectTogglableState::deactivate()
 void EffectTogglableState::stop()
 {
     setInProgress(false);
+    setPartialActivationFactor(0.0);
     setStatus(Status::Stopped);
 }
 
@@ -98,15 +99,15 @@ void EffectTogglableState::partialActivate(qreal factor)
     }
 
     setStatus(Status::Activating);
-    setPartialActivationFactor(factor);
     setInProgress(true);
+    setPartialActivationFactor(factor);
 }
 
 void EffectTogglableState::partialDeactivate(qreal factor)
 {
     setStatus(Status::Deactivating);
-    setPartialActivationFactor(1.0 - factor);
     setInProgress(true);
+    setPartialActivationFactor(1.0 - factor);
 }
 
 void EffectTogglableState::toggle()
