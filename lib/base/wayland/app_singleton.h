@@ -18,7 +18,6 @@ public:
     {
         setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);
         setenv("KWIN_FORCE_OWN_QPA", "1", true);
-        qputenv("QSG_RENDER_LOOP", "basic");
 
 #if HAVE_SCHED_RESET_ON_FORK
         int const minPriority = sched_get_priority_min(SCHED_RR);
