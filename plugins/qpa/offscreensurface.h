@@ -19,12 +19,9 @@ class OffscreenSurface : public QPlatformOffscreenSurface
 {
 public:
     explicit OffscreenSurface(QOffscreenSurface* surface);
-    ~OffscreenSurface() override;
 
     QSurfaceFormat format() const override;
     bool isValid() const override;
-
-    EGLSurface nativeHandle() const;
 
 private:
     QSurfaceFormat m_format;

@@ -32,12 +32,7 @@ SharingPlatformContext::SharingPlatformContext(QOpenGLContext* context)
 
 bool SharingPlatformContext::makeCurrent(QPlatformSurface* surface)
 {
-    EGLSurface eglSurface{EGL_NO_SURFACE};
-    if (surface->surface()->surfaceClass() != QSurface::Window) {
-        eglSurface = static_cast<OffscreenSurface*>(surface)->nativeHandle();
-    }
-
-    const bool ok = eglMakeCurrent(eglDisplay(), eglSurface, eglSurface, eglContext());
+    bool const ok = eglMakeCurrent(eglDisplay(), EGL_NO_SURFACE, EGL_NO_SURFACE, eglContext());
     if (!ok) {
         qCWarning(KWIN_QPA, "eglMakeCurrent failed: %x", eglGetError());
         return false;
