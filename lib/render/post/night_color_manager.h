@@ -37,11 +37,12 @@ inline bool checkLocation(double lat, double lng)
     return -90 <= lat && lat <= 90 && -180 <= lng && lng <= 180;
 }
 
-inline void night_color_display_inhibit_message(bool inhibit)
+inline void night_color_display_inhibit_message(bool inhibit, bool show_day_status)
 {
     // TODO: Maybe use different icons?
-    auto const icon
-        = inhibit ? QStringLiteral("redshift-status-off") : QStringLiteral("redshift-status-on");
+    auto const icon = inhibit ? QStringLiteral("redshift-status-off")
+        : show_day_status     ? QStringLiteral("redshift-status-day")
+                              : QStringLiteral("redshift-status-on");
 
     auto const text = inhibit ? i18nc("Night Light was disabled", "Night Light Off")
                               : i18nc("Night Light was enabled", "Night Light On");
@@ -231,7 +232,8 @@ private:
 
         if (data.inhibit_reference_count == 1) {
             reset_all_timers();
-            night_color_display_inhibit_message(true);
+            night_color_display_inhibit_message(
+                true, data.daylight && data.temperature.target != DEFAULT_DAY_TEMPERATURE);
             dbus->send_inhibited(true);
         }
     }
@@ -242,7 +244,8 @@ private:
 
         if (!data.inhibit_reference_count) {
             reset_all_timers();
-            night_color_display_inhibit_message(false);
+            night_color_display_inhibit_message(
+                false, data.daylight && data.temperature.target != DEFAULT_DAY_TEMPERATURE);
             dbus->send_inhibited(false);
         }
     }
