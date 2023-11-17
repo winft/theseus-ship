@@ -1838,8 +1838,6 @@ void CubeEffect::windowInputMouseEvent(QEvent* e)
 }
 
 enum class tabbox_mode {
-    desktop,                         // Focus chain of desktops
-    desktop_list,                    // Static desktop order
     windows,                         // Primary window switching mode
     windows_alternative,             // Secondary window switching mode
     current_app_windows,             // Same as primary window switching mode but only for windows
@@ -1854,18 +1852,11 @@ void CubeEffect::slotTabBoxAdded(int mode)
         return;
     if (effects->activeFullScreenEffect() && effects->activeFullScreenEffect() != this)
         return;
-    if (useForTabBox && static_cast<tabbox_mode>(mode) == tabbox_mode::desktop_list) {
-        effects->refTabBox();
-        tabBoxMode = true;
-        setActive(true);
-        rotateToDesktop(effects->currentTabBoxDesktop());
-    }
 }
 
 void CubeEffect::slotTabBoxUpdated()
 {
     if (activated) {
-        rotateToDesktop(effects->currentTabBoxDesktop());
         effects->addRepaintFull();
     }
 }

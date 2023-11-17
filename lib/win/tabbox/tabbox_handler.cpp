@@ -7,7 +7,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "tabbox_client_model.h"
 #include "tabbox_config.h"
-#include "tabbox_desktop_model.h"
 
 #include "script/platform.h"
 #include "tabbox_logging.h"
@@ -55,7 +54,6 @@ public:
     win::tabbox_switcher_item* switcher_item() const;
 
     win::tabbox_client_model* client_model() const;
-    win::tabbox_desktop_model* desktop_model() const;
 
     tabbox_handler* q; // public pointer
     // members
@@ -64,9 +62,7 @@ public:
     QScopedPointer<QQmlComponent> m_qml_component;
     QObject* m_main_item;
     QMap<QString, QObject*> m_client_tabboxes;
-    QMap<QString, QObject*> m_desktop_tabboxes;
     win::tabbox_client_model* m_client_model;
-    win::tabbox_desktop_model* m_desktop_model;
     QModelIndex index;
     /**
      * Indicates if the tabbox is shown.
@@ -76,7 +72,7 @@ public:
     int wheel_angle_delta = 0;
 
 private:
-    QObject* create_switcher_item(bool desktop_mode);
+    QObject* create_switcher_item();
 };
 
 tabbox_handler_private::tabbox_handler_private(tabbox_handler* q)
@@ -90,15 +86,11 @@ tabbox_handler_private::tabbox_handler_private(tabbox_handler* q)
     last_raised_client_succ = nullptr;
     config = tabbox_config();
     m_client_model = new win::tabbox_client_model(q);
-    m_desktop_model = new win::tabbox_desktop_model(q);
 }
 
 tabbox_handler_private::~tabbox_handler_private()
 {
     for (auto it = m_client_tabboxes.constBegin(); it != m_client_tabboxes.constEnd(); ++it) {
-        delete it.value();
-    }
-    for (auto it = m_desktop_tabboxes.constBegin(); it != m_desktop_tabboxes.constEnd(); ++it) {
         delete it.value();
     }
 }
@@ -132,15 +124,11 @@ win::tabbox_client_model* tabbox_handler_private::client_model() const
     return m_client_model;
 }
 
-win::tabbox_desktop_model* tabbox_handler_private::desktop_model() const
-{
-    return m_desktop_model;
-}
-
 void tabbox_handler_private::update_highlight_windows()
 {
-    if (!is_shown || config.tabbox_mode() != tabbox_config::ClientTabBox)
+    if (!is_shown) {
         return;
+    }
 
     tabbox_client* current_client = q->client(index);
     QWindow* w = window();
@@ -197,21 +185,17 @@ void tabbox_handler_private::end_highlight_windows(bool abort)
     q->highlight_windows();
 }
 
-QObject* tabbox_handler_private::create_switcher_item(bool desktopMode)
+QObject* tabbox_handler_private::create_switcher_item()
 {
     // first try look'n'feel package
     QString file = QStandardPaths::locate(
         QStandardPaths::GenericDataLocation,
-        QStringLiteral("plasma/look-and-feel/%1/contents/%2")
-            .arg(config.layout_name())
-            .arg(desktopMode ? QStringLiteral("desktopswitcher/DesktopSwitcher.qml")
-                             : QStringLiteral("windowswitcher/WindowSwitcher.qml")));
+        QStringLiteral("plasma/look-and-feel/%1/contents/windowswitcher/WindowSwitcher.qml")
+            .arg(config.layout_name()));
     if (file.isNull()) {
-        const QString folder_name = QLatin1String(KWIN_NAME)
-            + (desktopMode ? QLatin1String("/desktoptabbox/") : QLatin1String("/tabbox/"));
-        auto find_switcher = [this, desktopMode, folder_name] {
-            const QString type = desktopMode ? QStringLiteral("KWin/DesktopSwitcher")
-                                             : QStringLiteral("KWin/WindowSwitcher");
+        const QString folder_name = QLatin1String("kwin/tabbox/");
+        auto find_switcher = [this, folder_name] {
+            const QString type = QStringLiteral("KWin/WindowSwitcher");
             auto offers = KPackage::PackageLoader::self()->findPackages(
                 type, folder_name, [this](const KPluginMetaData& data) {
                     return data.pluginId().compare(config.layout_name(), Qt::CaseInsensitive) == 0;
@@ -266,11 +250,7 @@ QObject* tabbox_handler_private::create_switcher_item(bool desktopMode)
         m_qml_component.reset(nullptr);
     } else {
         QObject* object = m_qml_component->create(m_qml_context.data());
-        if (desktopMode) {
-            m_desktop_tabboxes.insert(config.layout_name(), object);
-        } else {
-            m_client_tabboxes.insert(config.layout_name(), object);
-        }
+        m_client_tabboxes.insert(config.layout_name(), object);
         return object;
     }
     return nullptr;
@@ -285,7 +265,6 @@ void tabbox_handler_private::show()
     if (m_qml_component.isNull()) {
         m_qml_component.reset(new QQmlComponent(q->qml_engine()));
     }
-    const bool desktop_mode = (config.tabbox_mode() == tabbox_config::DesktopTabBox);
     auto find_main_item = [this](const QMap<QString, QObject*>& tabBoxes) -> QObject* {
         auto it = tabBoxes.constFind(config.layout_name());
         if (it != tabBoxes.constEnd()) {
@@ -294,10 +273,9 @@ void tabbox_handler_private::show()
         return nullptr;
     };
     m_main_item = nullptr;
-    m_main_item
-        = desktop_mode ? find_main_item(m_desktop_tabboxes) : find_main_item(m_client_tabboxes);
+    m_main_item = find_main_item(m_client_tabboxes);
     if (!m_main_item) {
-        m_main_item = create_switcher_item(desktop_mode);
+        m_main_item = create_switcher_item();
         if (!m_main_item) {
             return;
         }
@@ -307,13 +285,7 @@ void tabbox_handler_private::show()
         // need to save the current index row (https://bugs.kde.org/show_bug.cgi?id=333511).
         int indexRow = index.row();
         if (!item->model()) {
-            QAbstractItemModel* model = nullptr;
-            if (desktop_mode) {
-                model = desktop_model();
-            } else {
-                model = client_model();
-            }
-            item->set_model(model);
+            item->set_model(client_model());
         }
         item->set_all_desktops(config.client_desktop_mode() == tabbox_config::AllDesktopsClients);
         item->set_current_index(indexRow);
@@ -413,17 +385,8 @@ void tabbox_handler::hide(bool abort)
 QModelIndex tabbox_handler::next_prev(bool forward) const
 {
     QModelIndex ret;
-    QAbstractItemModel* model;
-    switch (d->config.tabbox_mode()) {
-    case tabbox_config::ClientTabBox:
-        model = d->client_model();
-        break;
-    case tabbox_config::DesktopTabBox:
-        model = d->desktop_model();
-        break;
-    default:
-        Q_UNREACHABLE();
-    }
+    auto model = d->client_model();
+
     if (forward) {
         int column = d->index.column() + 1;
         int row = d->index.row();
@@ -461,31 +424,6 @@ QModelIndex tabbox_handler::next_prev(bool forward) const
         return d->index;
 }
 
-QModelIndex tabbox_handler::desktop_index(int desktop) const
-{
-    if (d->config.tabbox_mode() != tabbox_config::DesktopTabBox)
-        return QModelIndex();
-    return d->desktop_model()->desktop_index(desktop);
-}
-
-QList<int> tabbox_handler::desktop_list() const
-{
-    if (d->config.tabbox_mode() != tabbox_config::DesktopTabBox)
-        return QList<int>();
-    return d->desktop_model()->desktop_list();
-}
-
-int tabbox_handler::desktop(const QModelIndex& index) const
-{
-    if (!index.isValid() || (d->config.tabbox_mode() != tabbox_config::DesktopTabBox))
-        return -1;
-    QVariant ret = d->desktop_model()->data(index, tabbox_desktop_model::DesktopRole);
-    if (ret.isValid())
-        return ret.toInt();
-    else
-        return -1;
-}
-
 void tabbox_handler::set_current_index(const QModelIndex& index)
 {
     if (d->index == index) {
@@ -494,12 +432,13 @@ void tabbox_handler::set_current_index(const QModelIndex& index)
     if (!index.isValid()) {
         return;
     }
+
     d->index = index;
-    if (d->config.tabbox_mode() == tabbox_config::ClientTabBox) {
-        if (d->config.is_highlight_windows()) {
-            d->update_highlight_windows();
-        }
+
+    if (d->config.is_highlight_windows()) {
+        d->update_highlight_windows();
     }
+
     Q_EMIT selected_index_changed();
 }
 
@@ -535,15 +474,14 @@ QModelIndex tabbox_handler::index(win::tabbox_client* client) const
 
 tabbox_client_list tabbox_handler::client_list() const
 {
-    if (d->config.tabbox_mode() != tabbox_config::ClientTabBox)
-        return tabbox_client_list();
     return d->client_model()->client_list();
 }
 
 tabbox_client* tabbox_handler::client(const QModelIndex& index) const
 {
-    if ((!index.isValid()) || (d->config.tabbox_mode() != tabbox_config::ClientTabBox))
+    if (!index.isValid()) {
         return nullptr;
+    }
     tabbox_client* c = static_cast<tabbox_client*>(
         d->client_model()->data(index, win::tabbox_client_model::ClientRole).value<void*>());
     return c;
@@ -551,46 +489,30 @@ tabbox_client* tabbox_handler::client(const QModelIndex& index) const
 
 void tabbox_handler::create_model(bool partial_reset)
 {
-    switch (d->config.tabbox_mode()) {
-    case tabbox_config::ClientTabBox: {
-        d->client_model()->create_client_list(partial_reset);
-        // TODO: C++11 use lambda function
-        bool last_raised = false;
-        bool last_raised_succ = false;
-        for (auto const& client : stacking_order()) {
-            if (client == d->last_raised_client) {
-                last_raised = true;
-            }
-            if (client == d->last_raised_client_succ) {
-                last_raised_succ = true;
-            }
+    d->client_model()->create_client_list(partial_reset);
+    bool last_raised = false;
+    bool last_raised_succ = false;
+
+    for (auto const& client : stacking_order()) {
+        if (client == d->last_raised_client) {
+            last_raised = true;
         }
-        if (d->last_raised_client && !last_raised)
-            d->last_raised_client = nullptr;
-        if (d->last_raised_client_succ && !last_raised_succ)
-            d->last_raised_client_succ = nullptr;
-        break;
+        if (client == d->last_raised_client_succ) {
+            last_raised_succ = true;
+        }
     }
-    case tabbox_config::DesktopTabBox:
-        d->desktop_model()->create_desktop_list();
-        break;
+
+    if (d->last_raised_client && !last_raised) {
+        d->last_raised_client = nullptr;
+    }
+    if (d->last_raised_client_succ && !last_raised_succ) {
+        d->last_raised_client_succ = nullptr;
     }
 }
 
 QModelIndex tabbox_handler::first() const
 {
-    QAbstractItemModel* model;
-    switch (d->config.tabbox_mode()) {
-    case tabbox_config::ClientTabBox:
-        model = d->client_model();
-        break;
-    case tabbox_config::DesktopTabBox:
-        model = d->desktop_model();
-        break;
-    default:
-        Q_UNREACHABLE();
-    }
-    return model->index(0, 0);
+    return d->client_model()->index(0, 0);
 }
 
 bool tabbox_handler::eventFilter(QObject* watched, QEvent* e)

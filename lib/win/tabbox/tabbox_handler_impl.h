@@ -6,7 +6,6 @@
 #pragma once
 
 #include "tabbox_client_impl.h"
-#include "tabbox_desktop_chain.h"
 #include "tabbox_handler.h"
 
 #include "win/focus_chain_edit.h"
@@ -27,18 +26,7 @@ public:
         : tabbox_handler([tabbox] { return tabbox->space.base.script->qml_engine; },
                          tabbox->qobject.get())
         , m_tabbox(tabbox)
-        , m_desktop_focus_chain(new tabbox_desktop_chain_manager(this))
     {
-        // connects for DesktopFocusChainManager
-        auto& vds = tabbox->space.subspace_manager;
-        connect(vds->qobject.get(),
-                &decltype(vds->qobject)::element_type::countChanged,
-                m_desktop_focus_chain,
-                &tabbox_desktop_chain_manager::resize);
-        connect(vds->qobject.get(),
-                &decltype(vds->qobject)::element_type::current_changed,
-                m_desktop_focus_chain,
-                &tabbox_desktop_chain_manager::add_desktop);
     }
 
     int active_screen() const override
@@ -124,16 +112,6 @@ public:
             return contains(m_tabbox->space.stacking.focus_chain.chains.latest_use, c->client());
         }
         return false;
-    }
-
-    int next_desktop_focus_chain(int subspace) const override
-    {
-        return m_desktop_focus_chain->next(subspace);
-    }
-
-    int number_of_desktops() const override
-    {
-        return m_tabbox->space.subspace_manager->subspaces.size();
     }
 
     tabbox_client_list stacking_order() const override
@@ -372,7 +350,6 @@ private:
     }
 
     Tabbox* m_tabbox;
-    tabbox_desktop_chain_manager* m_desktop_focus_chain;
 };
 
 }

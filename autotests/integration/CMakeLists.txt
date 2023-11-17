@@ -97,7 +97,6 @@ add_executable(tests
   ../libkwineffects/window_quad_list.cpp
   ../on_screen_notifications.cpp
   ../opengl_context_attribute_builder.cpp
-  ../tabbox/desktop_chain.cpp
   ../tabbox/tabbox_client_model.cpp
   ../tabbox/tabbox_config.cpp
   ../tabbox/tabbox_handler.cpp

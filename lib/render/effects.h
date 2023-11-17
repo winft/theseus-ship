@@ -766,13 +766,6 @@ public:
 #endif
     }
 
-    void setTabBoxDesktop([[maybe_unused]] int desktop) override
-    {
-#if KWIN_BUILD_TABBOX
-        get_space().tabbox->set_current_desktop(desktop);
-#endif
-    }
-
     EffectWindowList currentTabBoxWindowList() const override
     {
 #if KWIN_BUILD_TABBOX
@@ -808,24 +801,6 @@ public:
     {
 #if KWIN_BUILD_TABBOX
         get_space().tabbox->close();
-#endif
-    }
-
-    QList<int> currentTabBoxDesktopList() const override
-    {
-#if KWIN_BUILD_TABBOX
-        return get_space().tabbox->current_desktop_list();
-#else
-        return QList<int>();
-#endif
-    }
-
-    int currentTabBoxDesktop() const override
-    {
-#if KWIN_BUILD_TABBOX
-        return get_space().tabbox->current_desktop();
-#else
-        return -1;
 #endif
     }
 
