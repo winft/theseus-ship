@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "color_mapper.h"
 #include "control_create.h"
 #include "moving_window_filter.h"
 #include "netinfo.h"
@@ -110,13 +109,6 @@ void init_space(Space& space)
                      [&] { x11::render_stack_unmanaged_windows(space); });
 
     space.atoms->retrieveHelpers();
-
-    using color_mapper_t = color_mapper<Space>;
-    space.color_mapper = std::make_unique<color_mapper_t>(space);
-    QObject::connect(space.qobject.get(),
-                     &Space::qobject_t::clientActivated,
-                     space.color_mapper.get(),
-                     &color_mapper_t::update);
 
     auto const& x11_data = space.base.x11_data;
 

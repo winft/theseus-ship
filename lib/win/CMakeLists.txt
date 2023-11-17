@@ -236,7 +236,6 @@ target_sources(win-x11
       x11/activation.h
       x11/appmenu.h
       x11/client.h
-      x11/color_mapper.h
       x11/command.h
       x11/control.h
       x11/control_create.h
