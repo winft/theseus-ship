@@ -76,6 +76,24 @@ public:
             switchToNextLayout();
         });
 
+        auto switch_last_used_action = new QAction(qobject.get());
+        switch_last_used_action->setObjectName(
+            QStringLiteral("Switch to Last-Used Keyboard Layout"));
+        switch_last_used_action->setProperty("componentName",
+                                             QStringLiteral("KDE Keyboard Layout Switcher"));
+        switch_last_used_action->setProperty("componentDisplayName",
+                                             i18n("Keyboard Layout Switcher"));
+        QKeySequence sequence_last_used{Qt::META | Qt::ALT | Qt::Key_L};
+        redirect.platform.shortcuts->register_keyboard_default_shortcut(switch_last_used_action,
+                                                                        {sequence_last_used});
+        redirect.platform.shortcuts->register_keyboard_shortcut(switch_last_used_action,
+                                                                {sequence_last_used});
+        redirect.platform.setup_action_for_global_accel(switch_last_used_action);
+
+        QObject::connect(switch_last_used_action, &QAction::triggered, qobject.get(), [this] {
+            switch_to_last_used_layout();
+        });
+
         reconfigure();
         init_dbus_interface_v2();
 
@@ -97,6 +115,11 @@ public:
     void switchToPreviousLayout()
     {
         get_keyboard()->switch_to_previous_layout();
+    }
+
+    void switch_to_last_used_layout()
+    {
+        get_keyboard()->switch_to_last_used_layout();
     }
 
     std::unique_ptr<layout_manager_qobject> qobject;

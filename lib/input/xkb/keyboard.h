@@ -13,6 +13,7 @@
 #include <QObject>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <xkbcommon/xkbcommon-compose.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 
@@ -67,6 +68,7 @@ public:
 
     void switch_to_next_layout();
     void switch_to_previous_layout();
+    void switch_to_last_used_layout();
     bool switch_to_layout(xkb_layout_index_t layout);
 
     std::string layout_name_from_index(xkb_layout_index_t index) const;
@@ -88,6 +90,7 @@ public:
     xkb_state* state{nullptr};
     std::shared_ptr<xkb::keymap> keymap;
     uint32_t layout{0};
+    std::optional<uint32_t> last_used_layout;
     keyboard_leds leds{keyboard_leds::none};
     xkb_keysym_t keysym{XKB_KEY_NoSymbol};
     std::vector<std::string> layouts;
