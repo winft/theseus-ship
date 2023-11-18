@@ -1098,14 +1098,6 @@ public:
     }
 
     template<typename Win>
-    void slotPaddingChanged(Win& window, const QRect& old)
-    {
-        assert(window.render);
-        assert(window.render->effect);
-        Q_EMIT windowPaddingChanged(window.render->effect.get(), old);
-    }
-
-    template<typename Win>
     void slotWindowDamaged(Win& window, const QRegion& r)
     {
         assert(window.render);

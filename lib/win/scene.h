@@ -177,10 +177,6 @@ auto update_shadow(Win* win)
         dirty_rect |= shdw->shadowRegion().boundingRect();
     }
 
-    if (old_visible_rect != visible_rect(win)) {
-        Q_EMIT win->qobject->paddingChanged(old_visible_rect);
-    }
-
     if (dirty_rect.isValid()) {
         dirty_rect.translate(win->geo.pos());
         add_layer_repaint(*win, dirty_rect);

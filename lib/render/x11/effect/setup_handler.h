@@ -54,8 +54,7 @@ void effect_setup_handler(Handler& handler)
         // TODO: Can we merge this with the one for Wayland XdgShellClients below?
         std::visit(overload{[&](typename Handler::space_t::x11_window* win) {
                                 if (win->control) {
-                                    render::x11::effect_setup_controlled_window_connections(handler,
-                                                                                            *win);
+                                    effect::setup_handler_window_connections(handler, *win);
                                 }
                             },
                             [](auto&&) {}},

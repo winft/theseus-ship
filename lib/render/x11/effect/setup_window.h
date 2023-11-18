@@ -11,17 +11,6 @@ namespace KWin::render::x11
 {
 
 template<typename Handler, typename Win>
-void effect_setup_controlled_window_connections(Handler& handler, Win& window)
-{
-    effect::setup_handler_window_connections(handler, window);
-    QObject::connect(
-        window.qobject.get(),
-        &win::window_qobject::paddingChanged,
-        &handler,
-        [&handler, &window](auto const& old) { handler.slotPaddingChanged(window, old); });
-}
-
-template<typename Handler, typename Win>
 void effect_setup_unmanaged_window_connections(Handler& handler, Win& window)
 {
     QObject::connect(window.qobject.get(),
@@ -33,11 +22,6 @@ void effect_setup_unmanaged_window_connections(Handler& handler, Win& window)
         &win::window_qobject::frame_geometry_changed,
         &handler,
         [&handler, &window](auto const& old) { handler.slotFrameGeometryChanged(window, old); });
-    QObject::connect(
-        window.qobject.get(),
-        &win::window_qobject::paddingChanged,
-        &handler,
-        [&handler, &window](auto const& old) { handler.slotPaddingChanged(window, old); });
     QObject::connect(
         window.qobject.get(),
         &win::window_qobject::damaged,
