@@ -15,13 +15,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin
 {
 
-class ZoomEffectConfigForm : public QWidget, public Ui::ZoomEffectConfigForm
-{
-    Q_OBJECT
-public:
-    explicit ZoomEffectConfigForm(QWidget* parent = nullptr);
-};
-
 class ZoomEffectConfig : public KCModule
 {
     Q_OBJECT
@@ -32,7 +25,7 @@ public Q_SLOTS:
     void save() override;
 
 private:
-    ZoomEffectConfigForm* m_ui;
+    Ui::ZoomEffectConfigForm m_ui;
     enum MouseTracking { MouseCentred = 0, MouseProportional = 1, MouseDisabled = 2 };
 };
 

@@ -16,13 +16,6 @@ class KActionCollection;
 namespace KWin
 {
 
-class MouseMarkEffectConfigForm : public QWidget, public Ui::MouseMarkEffectConfigForm
-{
-    Q_OBJECT
-public:
-    explicit MouseMarkEffectConfigForm(QWidget* parent);
-};
-
 class MouseMarkEffectConfig : public KCModule
 {
     Q_OBJECT
@@ -35,7 +28,7 @@ public:
 private:
     void updateSpinBoxSuffix();
 
-    MouseMarkEffectConfigForm m_ui;
+    Ui::MouseMarkEffectConfigForm m_ui;
     KActionCollection* m_actionCollection;
 };
 
