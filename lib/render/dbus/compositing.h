@@ -12,7 +12,6 @@
 #include "render/types.h"
 
 #include <QObject>
-#include <QtDBus>
 #include <functional>
 
 #include <epoxy/gl.h>

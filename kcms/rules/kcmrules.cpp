@@ -12,6 +12,7 @@
 
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusPendingReply>
 
 #include <KConfig>
 #include <KLocalizedString>

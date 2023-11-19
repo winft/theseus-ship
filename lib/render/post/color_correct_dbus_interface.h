@@ -8,8 +8,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "kwin_export.h"
 #include "render/types.h"
 
+#include <QDBusContext>
+#include <QDBusServiceWatcher>
 #include <QObject>
-#include <QtDBus>
 #include <functional>
 
 namespace KWin::render::post

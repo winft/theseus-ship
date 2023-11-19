@@ -8,6 +8,8 @@
 
 #include "compositingadaptor.h"
 
+#include <QDBusConnection>
+
 namespace KWin::render::dbus
 {
 

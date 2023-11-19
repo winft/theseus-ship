@@ -10,9 +10,14 @@
 #include "utils/algorithm.h"
 #include "win/rules/ruling.h"
 
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusMetaType>
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
+#include <QFileInfo>
 #include <QIcon>
 #include <QQmlEngine>
-#include <QtDBus>
 
 #include <KColorSchemeManager>
 #include <KConfig>

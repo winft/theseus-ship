@@ -13,7 +13,6 @@
 #include <win/subspaces_set.h>
 
 #include <QObject>
-#include <QtDBus>
 #include <gsl/pointers>
 
 namespace KWin::win

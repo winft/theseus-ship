@@ -22,6 +22,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
+#include <QDBusReply>
 #include <QObject>
 #include <QTimer>
 #include <memory>

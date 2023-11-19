@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include <QtDBus>
+#include <QDBusArgument>
 #include <kwin_export.h>
 
 namespace KWin::win::dbus
