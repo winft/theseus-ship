@@ -34,9 +34,9 @@ class QQmlEngine;
 namespace KWin
 {
 /**
- * The tabbox is a model based view for displaying a list while switching windows or desktops.
+ * The tabbox is a model based view for displaying a list while switching windows.
  * This functionality is mostly referred to as Alt+Tab. TabBox itself does not provide support for
- * switching windows or desktops. This has to be done outside of TabBox inside an independent
+ * switching windows. This has to be done outside of TabBox inside an independent
  * controller.
  *
  * The main entrance point to tabbox is the class tabbox_handler, which has to be subclassed and
@@ -44,19 +44,16 @@ namespace KWin
  * implemented as well.
  *
  * The behavior of the tabbox is defined by the tabbox_config and has to be set in the
- * tabbox_handler. If the tabbox should be used to switch desktops as well as clients it is
- * sufficient to just provide different tabbox_config objects instead of creating an own handler for
- * each mode.
+ * tabbox_handler.
  *
- * In order to use the tabbox the tabbox_config has to be set. This defines if the model for
- * desktops or for clients will be used. The model has to be initialized by calling
- * tabbox_handler::create_model(), as the model is undefined when the tabbox is not active. The
- * tabbox is activated by tabbox_handler::show(). Depending on the current set tabbox_config it is
- * possible that the highlight windows effect activated and that the view is not displayed at all.
- * As already mentioned the tabbox does not handle any updating of the selected item. This has to be
- * done by invoking tabbox_handler::set_current_index(). Nevertheless the tabbox_handler provides
- * methods to query for the model index or the next or previous item, for a cursor position or for a
- * given item (that is tabbox_client or desktop). By invoking tabbox_handler::hide() the view, the
+ * In order to use the tabbox the tabbox_config has to be set. The model has to be initialized by
+ * calling tabbox_handler::create_model(), as the model is undefined when the tabbox is not active.
+ * The tabbox is activated by tabbox_handler::show(). Depending on the current set tabbox_config it
+ * is possible that the highlight windows effect activated and that the view is not displayed at
+ * all. As already mentioned the tabbox does not handle any updating of the selected item. This has
+ * to be done by invoking tabbox_handler::set_current_index(). Nevertheless the tabbox_handler
+ * provides methods to query for the model index or the next or previous item, for a cursor position
+ * or for a given item (that is tabbox_client). By invoking tabbox_handler::hide() the view, the
  * optional highlight windows effect are removed. The model is invalidated immediately. So if it is
  * necessary to retrieve the last selected item this has to be done before calling the hide method.
  *
@@ -70,7 +67,6 @@ namespace KWin
 namespace win
 {
 
-class tabbox_desktop_model;
 class tabbox_client_model;
 class tabbox_config;
 class tabbox_handler_private;
@@ -142,15 +138,6 @@ public:
      * @return The number of current desktop
      */
     virtual int current_desktop() const = 0;
-    /**
-     * @return The number of virtual desktops
-     */
-    virtual int number_of_desktops() const = 0;
-    /**
-     * @param desktop The desktop which is the starting point to find the next desktop
-     * @return The next desktop in the current focus chain.
-     */
-    virtual int next_desktop_focus_chain(int desktop) const = 0;
 
     /**
      * whether KWin is currently compositing and it's related features (elevating) can be used
@@ -221,8 +208,6 @@ public:
      * Call this method to show the TabBoxView. Depending on current
      * configuration this method might not do anything.
      * If highlight windows effect is to be used it will be activated.
-     * Highlight windows and outline are not shown if
-     * tabbox_config::TabBoxMode is Tabbox_config::DesktopTabBox.
      * @see tabbox_config::is_show_tabbox
      * @see tabbox_config::is_highlight_windows
      */
@@ -262,26 +247,6 @@ public:
      * @param partial_reset Keep the currently selected item or regenerate everything
      */
     void create_model(bool partial_reset = false);
-
-    /**
-     * @param desktop The desktop whose index should be retrieved
-     * @return The model index of given desktop. If TabBoxMode is not
-     * tabbox_config::DesktopTabBox an invalid model index will be returned.
-     */
-    QModelIndex desktop_index(int desktop) const;
-    /**
-     * @return The current list of desktops.
-     * If TabBoxMode is not tabbox_config::DesktopTabBox an empty list will
-     * be returned.
-     * @see desktop_model::desktop_list
-     */
-    QList<int> desktop_list() const;
-    /**
-     * @return The desktop for given model index. If the index is not valid
-     * or TabBoxMode is not tabbox_config::DesktopTabBox -1 will be returned.
-     * @see desktop_model::desktop_index
-     */
-    int desktop(const QModelIndex& index) const;
 
     /**
      * Handles additional grabbed key events by the tabbox controller.

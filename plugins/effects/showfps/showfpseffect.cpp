@@ -72,7 +72,7 @@ void ShowFpsEffect::prePaintScreen(effect::screen_prepaint_data& data)
     }
 
     if (!m_scene) {
-        m_scene = std::make_unique<EffectQuickScene>(nullptr);
+        m_scene = std::make_unique<EffectQuickScene>();
         const auto url = QUrl::fromLocalFile(
             QStandardPaths::locate(QStandardPaths::GenericDataLocation,
                                    QStringLiteral("kwin/effects/showfps/qml/main.qml")));

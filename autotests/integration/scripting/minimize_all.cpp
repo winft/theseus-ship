@@ -35,10 +35,8 @@ static QString locateMainScript(const QString& pluginName)
     if (offers.isEmpty()) {
         return QString();
     }
-    auto const& metaData = offers.first();
-    QString const mainScriptFileName = metaData.value(QStringLiteral("X-Plasma-MainScript"));
-    QFileInfo const metaDataFileInfo(metaData.fileName());
-    return metaDataFileInfo.path() + QLatin1String("/contents/") + mainScriptFileName;
+    const QFileInfo metaDataFileInfo(offers.first().fileName());
+    return metaDataFileInfo.path() + QLatin1String("/contents/code/main.js");
 }
 
 }

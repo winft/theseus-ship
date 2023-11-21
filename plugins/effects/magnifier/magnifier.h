@@ -45,6 +45,7 @@ private Q_SLOTS:
                           Qt::MouseButtons oldbuttons,
                           Qt::KeyboardModifiers modifiers,
                           Qt::KeyboardModifiers oldmodifiers);
+    void slotWindowAdded(EffectWindow* w);
     void slotWindowDamaged();
 
 private:

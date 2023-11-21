@@ -11,6 +11,9 @@
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/platform.h>
+#include <render/gl/interface/texture.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <QMatrix4x4>
 
@@ -170,9 +173,21 @@ void ContrastEffect::uploadGeometry(GLVertexBuffer* vbo, const QRegion& region)
     uploadRegion(*map, region);
     vbo->unmap();
 
-    GLVertexAttrib const layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};
-
-    vbo->setAttribLayout(layout, 2, sizeof(QVector2D));
+    constexpr std::array layout{
+        GLVertexAttrib{
+            .attributeIndex = VA_Position,
+            .componentCount = 2,
+            .type = GL_FLOAT,
+            .relativeOffset = 0,
+        },
+        GLVertexAttrib{
+            .attributeIndex = VA_TexCoord,
+            .componentCount = 2,
+            .type = GL_FLOAT,
+            .relativeOffset = 0,
+        },
+    };
+    vbo->setAttribLayout(std::span(layout), sizeof(QVector2D));
 }
 
 bool ContrastEffect::shouldContrast(effect::window_paint_data const& data) const
@@ -254,6 +269,7 @@ void ContrastEffect::doContrast(effect::window_paint_data& data, QRegion const& 
 {
     auto mvp = effect::get_mvp(data);
     auto const rect = effect::map_to_viewport(data.render, shape.boundingRect());
+    auto const opacity = data.paint.opacity * data.window.opacity();
 
     // Upload geometry for the horizontal and vertical passes
     auto vbo = GLVertexBuffer::streamingBuffer();
@@ -282,7 +298,7 @@ void ContrastEffect::doContrast(effect::window_paint_data& data, QRegion const& 
     shader->setColorMatrix(win_data.colorMatrix);
     shader->bind();
 
-    shader->setOpacity(data.paint.opacity);
+    shader->setOpacity(opacity);
 
     // Set up the texture matrix to transform from screen coordinates to texture coordinates.
     QMatrix4x4 textureMatrix;
@@ -297,7 +313,7 @@ void ContrastEffect::doContrast(effect::window_paint_data& data, QRegion const& 
     texture->unbind();
     vbo->unbindArrays();
 
-    if (data.paint.opacity < 1.0) {
+    if (opacity < 1.0) {
         glDisable(GL_BLEND);
     }
 

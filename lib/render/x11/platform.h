@@ -89,8 +89,6 @@ public:
         x11::compositor_setup(*this);
 
         dbus->qobject->integration.get_types = [] { return QStringList{"glx"}; };
-        dbus->qobject->integration.resume = [this] { resume(suspend_reason::script); };
-        dbus->qobject->integration.suspend = [this] { suspend(suspend_reason::script); };
 
         if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
             m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");
@@ -181,9 +179,6 @@ public:
             }
             if (flags(m_suspended & suspend_reason::rule)) {
                 reasons << QStringLiteral("Disabled by Window");
-            }
-            if (flags(m_suspended & suspend_reason::script)) {
-                reasons << QStringLiteral("Disabled by Script");
             }
             qCDebug(KWIN_CORE) << "Compositing is suspended, reason:" << reasons;
             return;
@@ -302,21 +297,6 @@ public:
     {
         assert(reason != suspend_reason::none);
         m_suspended |= reason;
-
-        if (flags(reason & suspend_reason::script)) {
-            // When disabled show a shortcut how the user can get back compositing.
-            auto const shortcuts = base.input->shortcuts->get_keyboard_shortcut(
-                this->space->qobject->template findChild<QAction*>(
-                    QStringLiteral("Suspend Compositing")));
-            if (!shortcuts.isEmpty()) {
-                // Display notification only if there is the shortcut.
-                const QString message = i18n(
-                    "Desktop effects have been suspended by another application.<br/>"
-                    "You can resume using the '%1' shortcut.",
-                    shortcuts.first().toString(QKeySequence::NativeText));
-                KNotification::event(QStringLiteral("compositingsuspendeddbus"), message);
-            }
-        }
         m_releaseSelectionTimer.start();
         compositor_stop(*this, false);
     }

@@ -101,14 +101,10 @@
         "Name[vi]": "Ép nhỏ",
         "Name[x-test]": "xxSquashxx",
         "Name[zh_CN]": "最小化过渡动画 (收缩)",
-        "Name[zh_TW]": "壓縮",
-        "Version": "1",
-        "Website": ""
+        "Name[zh_TW]": "壓縮"
     },
-    "X-KDE-Ordering": "60",
-    "X-KDE-ParentApp": "",
+    "X-KDE-Ordering": 60,
     "X-KWin-Exclusive-Category": "minimize",
     "X-KWin-Video-Url": "https://files.kde.org/plasma/kwin/effect-videos/minimize.ogv",
-    "X-Plasma-API": "javascript",
-    "X-Plasma-MainScript": "code/main.js"
+    "X-Plasma-API": "javascript"
 }

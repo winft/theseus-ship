@@ -33,7 +33,8 @@ SlideEffect::SlideEffect()
             &SlideEffect::desktopChangingCancelled);
     connect(effects, &EffectsHandler::windowAdded, this, &SlideEffect::windowAdded);
     connect(effects, &EffectsHandler::windowDeleted, this, &SlideEffect::windowDeleted);
-    connect(effects, &EffectsHandler::numberDesktopsChanged, this, &SlideEffect::finishedSwitching);
+    connect(effects, &EffectsHandler::desktopAdded, this, &SlideEffect::finishedSwitching);
+    connect(effects, &EffectsHandler::desktopRemoved, this, &SlideEffect::finishedSwitching);
     connect(effects, &EffectsHandler::screenAdded, this, &SlideEffect::finishedSwitching);
     connect(effects, &EffectsHandler::screenRemoved, this, &SlideEffect::finishedSwitching);
 }
@@ -98,6 +99,7 @@ void SlideEffect::prePaintScreen(effect::screen_prepaint_data& data)
         m_currentPosition.setY(m_motionY.position() / virtualSpaceSize.height());
     }
 
+    QList<win::subspace*> const desktops = effects->desktops();
     const int w = effects->desktopGridWidth();
     const int h = effects->desktopGridHeight();
 
@@ -106,22 +108,21 @@ void SlideEffect::prePaintScreen(effect::screen_prepaint_data& data)
     m_paintCtx.visibleDesktops.clear();
     m_paintCtx.visibleDesktops.reserve(4); // 4 - maximum number of visible desktops
     bool includedX = false, includedY = false;
-    for (int i = 1; i <= effects->numberOfDesktops(); i++) {
-        if (effects->desktopGridCoords(i).x() % w == (int)(m_currentPosition.x()) % w) {
+    for (auto desktop : desktops) {
+        const QPoint coords = effects->desktopGridCoords(desktop);
+        if (coords.x() % w == (int)(m_currentPosition.x()) % w) {
             includedX = true;
-        } else if (effects->desktopGridCoords(i).x() % w
-                   == ((int)(m_currentPosition.x()) + 1) % w) {
+        } else if (coords.x() % w == ((int)(m_currentPosition.x()) + 1) % w) {
             includedX = true;
         }
-        if (effects->desktopGridCoords(i).y() % h == (int)(m_currentPosition.y()) % h) {
+        if (coords.y() % h == (int)(m_currentPosition.y()) % h) {
             includedY = true;
-        } else if (effects->desktopGridCoords(i).y() % h
-                   == ((int)(m_currentPosition.y()) + 1) % h) {
+        } else if (coords.y() % h == ((int)(m_currentPosition.y()) + 1) % h) {
             includedY = true;
         }
 
         if (includedX && includedY) {
-            m_paintCtx.visibleDesktops << i;
+            m_paintCtx.visibleDesktops << desktop;
         }
     }
 
@@ -172,8 +173,8 @@ bool SlideEffect::willBePainted(const EffectWindow* w) const
     if (w == m_movingWindow) {
         return true;
     }
-    for (const int& id : qAsConst(m_paintCtx.visibleDesktops)) {
-        if (w->isOnDesktop(id)) {
+    for (auto desktop : std::as_const(m_paintCtx.visibleDesktops)) {
+        if (w->isOnDesktop(desktop)) {
             return true;
         }
     }
@@ -209,7 +210,7 @@ void SlideEffect::paintWindow(effect::window_paint_data& data)
 
     const auto screens = effects->screens();
 
-    for (int desktop : qAsConst(m_paintCtx.visibleDesktops)) {
+    for (auto desktop : qAsConst(m_paintCtx.visibleDesktops)) {
         if (!data.window.isOnDesktop(desktop)) {
             continue;
         }
@@ -275,7 +276,9 @@ bool SlideEffect::shouldElevate(const EffectWindow* w) const
  * Called AFTER the gesture is released.
  * Sets up animation to round off to the new current desktop.
  */
-void SlideEffect::startAnimation(int old, int current, EffectWindow* movingWindow)
+void SlideEffect::startAnimation(win::subspace* old,
+                                 win::subspace* current,
+                                 EffectWindow* movingWindow)
 {
     Q_UNUSED(old)
 
@@ -343,7 +346,7 @@ void SlideEffect::finishedSwitching()
     m_currentPosition = effects->desktopGridCoords(effects->currentDesktop());
 }
 
-void SlideEffect::desktopChanged(int old, int current, EffectWindow* with)
+void SlideEffect::desktopChanged(win::subspace* old, win::subspace* current, EffectWindow* with)
 {
     if (effects->hasActiveFullScreenEffect() && effects->activeFullScreenEffect() != this) {
         m_currentPosition = effects->desktopGridCoords(effects->currentDesktop());
@@ -353,7 +356,7 @@ void SlideEffect::desktopChanged(int old, int current, EffectWindow* with)
     startAnimation(old, current, with);
 }
 
-void SlideEffect::desktopChanging(uint old, QPointF desktopOffset, EffectWindow* with)
+void SlideEffect::desktopChanging(win::subspace* old, QPointF desktopOffset, EffectWindow* with)
 {
     if (effects->hasActiveFullScreenEffect() && effects->activeFullScreenEffect() != this) {
         return;

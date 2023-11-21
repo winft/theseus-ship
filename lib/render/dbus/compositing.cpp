@@ -8,6 +8,8 @@
 
 #include "compositingadaptor.h"
 
+#include <QDBusConnection>
+
 namespace KWin::render::dbus
 {
 
@@ -52,20 +54,6 @@ bool compositing_qobject::isOpenGLBroken() const
 bool compositing_qobject::platformRequiresCompositing() const
 {
     return integration.required();
-}
-
-void compositing_qobject::resume()
-{
-    if (integration.resume) {
-        integration.resume();
-    }
-}
-
-void compositing_qobject::suspend()
-{
-    if (integration.suspend) {
-        integration.suspend();
-    }
 }
 
 void compositing_qobject::reinitialize()

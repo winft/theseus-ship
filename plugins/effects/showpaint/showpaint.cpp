@@ -8,7 +8,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <KLocalizedString>
 #include <QAction>
@@ -56,25 +58,27 @@ void ShowPaintEffect::paintGL(const QMatrix4x4& projection)
 {
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    vbo->setUseColor(true);
     ShaderBinder binder(ShaderTrait::UniformColor);
     binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, projection);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     QColor color = s_colors[m_colorIndex];
     color.setAlphaF(s_alpha);
-    vbo->setColor(color);
-    QVector<float> verts;
+    binder.shader()->setUniform(GLShader::ColorUniform::Color, color);
+
+    QVector<QVector2D> verts;
     verts.reserve(m_painted.rectCount() * 12);
+
     for (const QRect& r : m_painted) {
-        verts << r.x() + r.width() << r.y();
-        verts << r.x() << r.y();
-        verts << r.x() << r.y() + r.height();
-        verts << r.x() << r.y() + r.height();
-        verts << r.x() + r.width() << r.y() + r.height();
-        verts << r.x() + r.width() << r.y();
+        verts.push_back(QVector2D(r.x() + r.width(), r.y()));
+        verts.push_back(QVector2D(r.x(), r.y()));
+        verts.push_back(QVector2D(r.x(), r.y() + r.height()));
+        verts.push_back(QVector2D(r.x(), r.y() + r.height()));
+        verts.push_back(QVector2D(r.x() + r.width(), r.y() + r.height()));
+        verts.push_back(QVector2D(r.x() + r.width(), r.y()));
     }
-    vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
+
+    vbo->setVertices(verts);
     vbo->render(GL_TRIANGLES);
     glDisable(GL_BLEND);
 }

@@ -188,10 +188,9 @@ QString get_support_info(Space const& space)
             }
             support.append(QStringLiteral("\n"));
 
-            if (platform->supports(LimitedGLSL) || platform->supports(GLSL))
-                support.append(QStringLiteral("OpenGL shading language version string: ")
-                               + QString::fromUtf8(platform->glShadingLanguageVersionString())
-                               + QStringLiteral("\n"));
+            support.append(QStringLiteral("OpenGL shading language version string: ")
+                           + QString::fromUtf8(platform->glShadingLanguageVersionString())
+                           + QStringLiteral("\n"));
 
             support.append(QStringLiteral("Driver: ")
                            + GLPlatform::driverToString(platform->driver()) + QStringLiteral("\n"));
@@ -207,11 +206,9 @@ QString get_support_info(Space const& space)
             support.append(QStringLiteral("OpenGL version: ")
                            + GLPlatform::versionToString(platform->glVersion())
                            + QStringLiteral("\n"));
-
-            if (platform->supports(LimitedGLSL) || platform->supports(GLSL))
-                support.append(QStringLiteral("GLSL version: ")
-                               + GLPlatform::versionToString(platform->glslVersion())
-                               + QStringLiteral("\n"));
+            support.append(QStringLiteral("GLSL version: ")
+                           + GLPlatform::versionToString(platform->glslVersion())
+                           + QStringLiteral("\n"));
 
             if (platform->isMesaDriver())
                 support.append(QStringLiteral("Mesa version: ")
@@ -225,18 +222,6 @@ QString get_support_info(Space const& space)
             support.append(QStringLiteral("Direct rendering: "));
             support.append(QStringLiteral("Requires strict binding: "));
             support.append(!platform->isLooseBinding() ? yes : no);
-            support.append(QStringLiteral("GLSL shaders: "));
-            if (platform->supports(GLSL)) {
-                support.append(platform->supports(LimitedGLSL) ? QStringLiteral("limited\n") : yes);
-            } else {
-                support.append(no);
-            }
-            support.append(QStringLiteral("Texture NPOT support: "));
-            if (platform->supports(TextureNPOT)) {
-                support.append(platform->supports(LimitedNPOT) ? QStringLiteral("limited\n") : yes);
-            } else {
-                support.append(no);
-            }
             support.append(QStringLiteral("Virtual Machine: "));
             support.append(platform->isVirtualMachine() ? yes : no);
             support.append(QStringLiteral("Timer query support: "));

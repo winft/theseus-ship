@@ -24,7 +24,10 @@
 
 #include <base/kwin_export.h>
 #include <render/effect/interface/quick_scene.h>
+#include <script/gesture_handler.h>
+#include <script/quick_scene_effect.h>
 
+#include <KConfigPropertyMap>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlExpression>
@@ -130,6 +133,8 @@ public:
         qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");
         qmlRegisterType<screen_edge_handler>("org.kde.kwin", 3, 0, "ScreenEdgeHandler");
         qmlRegisterType<shortcut_handler>("org.kde.kwin", 3, 0, "ShortcutHandler");
+        qmlRegisterType<SwipeGestureHandler>("org.kde.kwin", 3, 0, "SwipeGestureHandler");
+        qmlRegisterType<PinchGestureHandler>("org.kde.kwin", 3, 0, "PinchGestureHandler");
         qmlRegisterType<window_model>("org.kde.kwin", 3, 0, "WindowModel");
         qmlRegisterType<window_filter_model>("org.kde.kwin", 3, 0, "WindowFilterModel");
         qmlRegisterType<subspace_model>("org.kde.kwin", 3, 0, "VirtualDesktopModel");
@@ -139,6 +144,7 @@ public:
             0,
             "SceneView",
             QStringLiteral("Can't instantiate an object of type SceneView"));
+        qmlRegisterType<ScriptedQuickSceneEffect>("org.kde.kwin", 3, 0, "SceneEffect");
 
         qmlRegisterSingletonType<qt_script_space>(
             "org.kde.kwin",
@@ -152,6 +158,7 @@ public:
             });
         qmlRegisterSingletonInstance("org.kde.kwin", 3, 0, "Options", options.get());
 
+        qmlRegisterAnonymousType<KConfigPropertyMap>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<output>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<window>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<win::subspace>("org.kde.kwin", 3);

@@ -10,6 +10,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <KConfigGroup>
 #include <QAction>
@@ -282,19 +285,22 @@ void MouseClickEffect::drawCircleGl(const QColor& color, float cx, float cy, flo
 
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    vbo->setUseColor(true);
-    vbo->setColor(color);
-    QVector<float> verts;
+
+    QVector<QVector2D> verts;
     verts.reserve(num_segments * 2);
 
     for (int ii = 0; ii < num_segments; ++ii) {
-        verts << x + cx << y + cy; // output vertex
+        // output vertex
+        verts.push_back(QVector2D(x + cx, y + cy));
+
         // apply the rotation matrix
         t = x;
         x = c * x - s * y;
         y = s * t + c * y;
     }
-    vbo->setData(verts.size() / 2, 2, verts.data(), nullptr);
+
+    vbo->setVertices(verts);
+    ShaderManager::instance()->getBoundShader()->setUniform(GLShader::ColorUniform::Color, color);
     vbo->render(GL_LINE_LOOP);
 }
 

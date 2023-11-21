@@ -13,7 +13,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/framebuffer.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/texture.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <KStandardAction>
 #include <QAction>
@@ -43,7 +47,12 @@ MagnifierEffect::MagnifierEffect()
     effects->registerGlobalShortcutAndDefault({static_cast<Qt::Key>(Qt::META) + Qt::Key_0}, a);
 
     connect(effects, &EffectsHandler::mouseChanged, this, &MagnifierEffect::slotMouseChanged);
-    connect(effects, &EffectsHandler::windowDamaged, this, &MagnifierEffect::slotWindowDamaged);
+    connect(effects, &EffectsHandler::windowAdded, this, &MagnifierEffect::slotWindowAdded);
+
+    auto const windows = effects->stackingOrder();
+    for (auto window : windows) {
+        slotWindowAdded(window);
+    }
 
     reconfigure(ReconfigureAll);
 }
@@ -138,44 +147,49 @@ void MagnifierEffect::paintScreen(effect::screen_paint_data& data)
     ShaderManager::instance()->popShader();
     m_texture->unbind();
 
-    QVector<float> verts;
+    QVector<QVector2D> verts;
     auto vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    vbo->setColor(QColor(0, 0, 0));
     QRectF const areaF = area;
+    auto const frame = area.adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
 
     // top frame
-    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.top();
-    verts << areaF.left() - FRAME_WIDTH << areaF.top();
-    verts << areaF.right() + FRAME_WIDTH << areaF.top();
-    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
+    verts.push_back(QVector2D(frame.right(), frame.top()));
+    verts.push_back(QVector2D(frame.left(), frame.top()));
+    verts.push_back(QVector2D(frame.left(), areaF.top()));
+    verts.push_back(QVector2D(frame.left(), areaF.top()));
+    verts.push_back(QVector2D(frame.right(), areaF.top()));
+    verts.push_back(QVector2D(frame.right(), frame.top()));
+
     // left frame
-    verts << areaF.left() << areaF.top() - FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.left() << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.left() << areaF.top() - FRAME_WIDTH;
+    verts.push_back(QVector2D(areaF.left(), frame.top()));
+    verts.push_back(QVector2D(frame.left(), frame.top()));
+    verts.push_back(QVector2D(frame.left(), frame.bottom()));
+    verts.push_back(QVector2D(frame.left(), frame.bottom()));
+    verts.push_back(QVector2D(areaF.left(), frame.bottom()));
+    verts.push_back(QVector2D(areaF.left(), frame.top()));
+
     // right frame
-    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
-    verts << areaF.right() << areaF.top() - FRAME_WIDTH;
-    verts << areaF.right() << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.right() << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.right() + FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.right() + FRAME_WIDTH << areaF.top() - FRAME_WIDTH;
+    verts.push_back(QVector2D(frame.right(), frame.top()));
+    verts.push_back(QVector2D(areaF.right(), frame.top()));
+    verts.push_back(QVector2D(areaF.right(), frame.bottom()));
+    verts.push_back(QVector2D(areaF.right(), frame.bottom()));
+    verts.push_back(QVector2D(frame.right(), frame.bottom()));
+    verts.push_back(QVector2D(frame.right(), frame.top()));
+
     // bottom frame
-    verts << areaF.right() + FRAME_WIDTH << areaF.bottom();
-    verts << areaF.left() - FRAME_WIDTH << areaF.bottom();
-    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.left() - FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.right() + FRAME_WIDTH << areaF.bottom() + FRAME_WIDTH;
-    verts << areaF.right() + FRAME_WIDTH << areaF.bottom();
-    vbo->setData(verts.size() / 2, 2, verts.constData(), nullptr);
+    verts.push_back(QVector2D(frame.right(), areaF.bottom()));
+    verts.push_back(QVector2D(frame.left(), areaF.bottom()));
+    verts.push_back(QVector2D(frame.left(), frame.bottom()));
+    verts.push_back(QVector2D(frame.left(), frame.bottom()));
+    verts.push_back(QVector2D(frame.right(), frame.bottom()));
+    verts.push_back(QVector2D(frame.right(), areaF.bottom()));
+
+    vbo->setVertices(verts);
 
     ShaderBinder binder(ShaderTrait::UniformColor);
     binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
+    binder.shader()->setUniform(GLShader::ColorUniform::Color, QColor(0, 0, 0));
     vbo->render(GL_TRIANGLES);
 }
 
@@ -273,6 +287,11 @@ void MagnifierEffect::slotMouseChanged(const QPoint& pos,
         // need full repaint as we might lose some change events on fast mouse movements
         // see Bug 187658
         effects->addRepaintFull();
+}
+
+void MagnifierEffect::slotWindowAdded(EffectWindow* w)
+{
+    connect(w, &EffectWindow::windowDamaged, this, &MagnifierEffect::slotWindowDamaged);
 }
 
 void MagnifierEffect::slotWindowDamaged()

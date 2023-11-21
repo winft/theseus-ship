@@ -11,7 +11,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <KColorScheme>
 
@@ -28,18 +30,13 @@ ResizeEffect::ResizeEffect()
 {
     initConfig<ResizeConfig>();
     reconfigure(ReconfigureAll);
-    connect(effects,
-            &EffectsHandler::windowStartUserMovedResized,
-            this,
-            &ResizeEffect::slotWindowStartUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowStepUserMovedResized,
-            this,
-            &ResizeEffect::slotWindowStepUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowFinishUserMovedResized,
-            this,
-            &ResizeEffect::slotWindowFinishUserMovedResized);
+
+    connect(effects, &EffectsHandler::windowAdded, this, &ResizeEffect::slotWindowAdded);
+
+    auto const windows = effects->stackingOrder();
+    for (auto window : windows) {
+        slotWindowAdded(window);
+    }
 }
 
 ResizeEffect::~ResizeEffect()
@@ -90,24 +87,25 @@ void ResizeEffect::paintWindow(effect::window_paint_data& data)
         if (effects->isOpenGLCompositing()) {
             GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
             vbo->reset();
-            vbo->setUseColor(true);
             ShaderBinder binder(ShaderTrait::UniformColor);
             binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             color.setAlphaF(alpha);
-            vbo->setColor(color);
-            QVector<float> verts;
+            binder.shader()->setUniform(GLShader::ColorUniform::Color, color);
+            QVector<QVector2D> verts;
             verts.reserve(paintRegion.rectCount() * 12);
+
             for (const QRect& r : paintRegion) {
-                verts << r.x() + r.width() << r.y();
-                verts << r.x() << r.y();
-                verts << r.x() << r.y() + r.height();
-                verts << r.x() << r.y() + r.height();
-                verts << r.x() + r.width() << r.y() + r.height();
-                verts << r.x() + r.width() << r.y();
+                verts.push_back(QVector2D(r.x() + r.width(), r.y()));
+                verts.push_back(QVector2D(r.x(), r.y()));
+                verts.push_back(QVector2D(r.x(), r.y() + r.height()));
+                verts.push_back(QVector2D(r.x(), r.y() + r.height()));
+                verts.push_back(QVector2D(r.x() + r.width(), r.y() + r.height()));
+                verts.push_back(QVector2D(r.x() + r.width(), r.y()));
             }
-            vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
+
+            vbo->setVertices(verts);
             vbo->render(GL_TRIANGLES);
             glDisable(GL_BLEND);
         } else {
@@ -131,6 +129,22 @@ void ResizeEffect::reconfigure(ReconfigureFlags)
         m_features |= TextureScale;
     if (ResizeConfig::outline())
         m_features |= Outline;
+}
+
+void ResizeEffect::slotWindowAdded(EffectWindow* w)
+{
+    connect(w,
+            &EffectWindow::windowStartUserMovedResized,
+            this,
+            &ResizeEffect::slotWindowStartUserMovedResized);
+    connect(w,
+            &EffectWindow::windowStepUserMovedResized,
+            this,
+            &ResizeEffect::slotWindowStepUserMovedResized);
+    connect(w,
+            &EffectWindow::windowFinishUserMovedResized,
+            this,
+            &ResizeEffect::slotWindowFinishUserMovedResized);
 }
 
 void ResizeEffect::slotWindowStartUserMovedResized(EffectWindow* w)

@@ -104,11 +104,9 @@
         "Name[vi]": "Theo dõi màn hình",
         "Name[x-test]": "xxEye on Screenxx",
         "Name[zh_CN]": "窗口内收",
-        "Name[zh_TW]": "螢幕之眼",
-        "Version": "0.1.0"
+        "Name[zh_TW]": "螢幕之眼"
     },
-    "X-KDE-Ordering": "50",
+    "X-KDE-Ordering": 50,
     "X-KWin-Exclusive-Category": "show-desktop",
-    "X-Plasma-API": "javascript",
-    "X-Plasma-MainScript": "code/main.js"
+    "X-Plasma-API": "javascript"
 }

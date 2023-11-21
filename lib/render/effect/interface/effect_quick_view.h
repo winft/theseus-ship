@@ -44,15 +44,10 @@ public:
     };
 
     /**
-     * Construct a new KWinQuickView
-     * Export mode will be determined by the current effectsHandler
+     * Construct a new KWinQuickView explicitly stating an export mode. \a alpha indicates
+     * whether the view is translucent or not.
      */
-    EffectQuickView(QObject* parent);
-
-    /**
-     * Construct a new KWinQuickView explicitly stating an export mode
-     */
-    EffectQuickView(QObject* parent, ExportMode exportMode);
+    explicit EffectQuickView(ExportMode exportMode = ExportMode::Texture, bool alpha = true);
 
     /**
      * Note that this may change the current GL Context
@@ -70,6 +65,7 @@ public:
 
     void setOpacity(qreal opacity);
     qreal opacity() const;
+    bool hasAlphaChannel() const;
 
     /**
      * Render the current scene graph into the FBO.
@@ -151,8 +147,7 @@ private:
 class KWIN_EXPORT EffectQuickScene : public EffectQuickView
 {
 public:
-    EffectQuickScene(QObject* parent);
-    EffectQuickScene(QObject* parent, ExportMode exportMode);
+    explicit EffectQuickScene(ExportMode exportMode = ExportMode::Texture, bool alpha = true);
     ~EffectQuickScene();
 
     /** top level item in the given source*/

@@ -29,7 +29,6 @@ Q_SIGNALS:
     void frame_geometry_changed(QRect const& old);
     void visible_geometry_changed();
 
-    void paddingChanged(QRect const& old);
     void closed();
     void windowShown();
     void windowHidden();

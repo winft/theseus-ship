@@ -37,6 +37,7 @@ public:
     QStringList themeNames() const override;
     QPlatformTheme* createPlatformTheme(const QString& name) const override;
     QPlatformOpenGLContext* createPlatformOpenGLContext(QOpenGLContext* context) const override;
+    QPlatformAccessibility* accessibility() const override;
     QPlatformNativeInterface* nativeInterface() const override;
     QPlatformServices* services() const override;
     void initialize() override;
@@ -47,6 +48,7 @@ private:
     void initScreens();
 
     std::unique_ptr<QPlatformFontDatabase> m_fontDb;
+    mutable std::unique_ptr<QPlatformAccessibility> m_accessibility;
     QScopedPointer<QPlatformNativeInterface> m_nativeInterface;
     Screen* m_dummyScreen = nullptr;
     QVector<Screen*> m_screens;

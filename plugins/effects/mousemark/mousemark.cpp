@@ -13,7 +13,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
 #include <render/gl/interface/platform.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <KLocalizedString>
 #include <QAction>
@@ -117,27 +119,26 @@ void MouseMarkEffect::paintScreen(effect::screen_paint_data& data)
         glLineWidth(width);
         GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
         vbo->reset();
-        vbo->setUseColor(true);
-        vbo->setColor(color);
         ShaderBinder binder(ShaderTrait::UniformColor);
         binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
-        QVector<float> verts;
+        binder.shader()->setUniform(GLShader::ColorUniform::Color, color);
+        QVector<QVector2D> verts;
         for (auto const& mark : qAsConst(marks)) {
             verts.clear();
             verts.reserve(mark.size() * 2);
             for (auto const& p : qAsConst(mark)) {
-                verts << p.x() << p.y();
+                verts.push_back(QVector2D(p.x(), p.y()));
             }
-            vbo->setData(verts.size() / 2, 2, verts.data(), nullptr);
+            vbo->setVertices(verts);
             vbo->render(GL_LINE_STRIP);
         }
         if (!drawing.isEmpty()) {
             verts.clear();
             verts.reserve(drawing.size() * 2);
             for (auto const& p : qAsConst(drawing)) {
-                verts << p.x() << p.y();
+                verts.push_back(QVector2D(p.x(), p.y()));
             }
-            vbo->setData(verts.size() / 2, 2, verts.data(), nullptr);
+            vbo->setVertices(verts);
             vbo->render(GL_LINE_STRIP);
         }
         glLineWidth(1.0);

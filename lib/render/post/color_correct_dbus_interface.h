@@ -8,8 +8,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "kwin_export.h"
 #include "render/types.h"
 
+#include <QDBusContext>
+#include <QDBusServiceWatcher>
 #include <QObject>
-#include <QtDBus>
 #include <functional>
 
 namespace KWin::render::post
@@ -43,6 +44,7 @@ class KWIN_EXPORT color_correct_dbus_interface : public QObject, public QDBusCon
     Q_PROPERTY(int currentTemperature READ currentTemperature)
     Q_PROPERTY(int targetTemperature READ targetTemperature)
     Q_PROPERTY(int mode READ mode)
+    Q_PROPERTY(bool daylight READ daylight)
     Q_PROPERTY(quint64 previousTransitionDateTime READ previousTransitionDateTime)
     Q_PROPERTY(quint32 previousTransitionDuration READ previousTransitionDuration)
     Q_PROPERTY(quint64 scheduledTransitionDateTime READ scheduledTransitionDateTime)
@@ -59,6 +61,7 @@ public:
     int currentTemperature() const;
     int targetTemperature() const;
     int mode() const;
+    bool daylight() const;
     quint64 previousTransitionDateTime() const;
     quint32 previousTransitionDuration() const;
     quint64 scheduledTransitionDateTime() const;
@@ -70,6 +73,7 @@ public:
     void send_current_temperature(int temp) const;
     void send_target_temperature(int temp) const;
     void send_mode(night_color_mode mode) const;
+    void send_daylight(bool daylight) const;
     void send_transition_timings() const;
 
 public Q_SLOTS:

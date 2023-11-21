@@ -16,14 +16,12 @@ public:
     tabbox_config_private()
         : show_tabbox(tabbox_config::default_show_tabbox())
         , highlight_windows(tabbox_config::default_highlight_window())
-        , tabbox_mode(tabbox_config::ClientTabBox)
         , client_desktop_mode(tabbox_config::default_desktop_mode())
         , client_applications_mode(tabbox_config::default_applications_mode())
         , client_minimized_mode(tabbox_config::default_minimized_mode())
         , show_desktop_mode(tabbox_config::default_show_desktop_mode())
         , client_multi_screen_mode(tabbox_config::default_multi_screen_mode())
         , client_switching_mode(tabbox_config::default_switching_mode())
-        , desktop_switching_mode(tabbox_config::MostRecentlyUsedDesktopSwitching)
         , layout_name(tabbox_config::default_layout_name())
     {
     }
@@ -33,14 +31,12 @@ public:
     bool show_tabbox;
     bool highlight_windows;
 
-    tabbox_config::TabBoxMode tabbox_mode;
     tabbox_config::ClientDesktopMode client_desktop_mode;
     tabbox_config::ClientApplicationsMode client_applications_mode;
     tabbox_config::ClientMinimizedMode client_minimized_mode;
     tabbox_config::ShowDesktopMode show_desktop_mode;
     tabbox_config::ClientMultiScreenMode client_multi_screen_mode;
     tabbox_config::ClientSwitchingMode client_switching_mode;
-    tabbox_config::DesktopSwitchingMode desktop_switching_mode;
     QString layout_name;
 };
 
@@ -107,16 +103,6 @@ bool tabbox_config::is_show_tabbox() const
     return d->show_tabbox;
 }
 
-void tabbox_config::set_tabbox_mode(tabbox_config::TabBoxMode mode)
-{
-    d->tabbox_mode = mode;
-}
-
-tabbox_config::TabBoxMode tabbox_config::tabbox_mode() const
-{
-    return d->tabbox_mode;
-}
-
 tabbox_config::ClientDesktopMode tabbox_config::client_desktop_mode() const
 {
     return d->client_desktop_mode;
@@ -175,16 +161,6 @@ tabbox_config::ClientSwitchingMode tabbox_config::client_switching_mode() const
 void tabbox_config::set_client_switching_mode(ClientSwitchingMode switching_mode)
 {
     d->client_switching_mode = switching_mode;
-}
-
-tabbox_config::DesktopSwitchingMode tabbox_config::desktop_switching_mode() const
-{
-    return d->desktop_switching_mode;
-}
-
-void tabbox_config::set_desktop_switching_mode(DesktopSwitchingMode switching_mode)
-{
-    d->desktop_switching_mode = switching_mode;
 }
 
 QString& tabbox_config::layout_name() const

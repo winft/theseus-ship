@@ -81,7 +81,11 @@ void keyboard::update_keymap(std::shared_ptr<xkb::keymap> keymap)
     leds_indices.caps = xkb_keymap_led_get_index(keymap->raw, XKB_LED_NAME_CAPS);
     leds_indices.scroll = xkb_keymap_led_get_index(keymap->raw, XKB_LED_NAME_SCROLL);
 
+    auto old_layout = layout;
     layout = xkb_state_serialize_layout(state, XKB_STATE_LAYOUT_EFFECTIVE);
+    if (old_layout != layout) {
+        last_used_layout = old_layout;
+    }
 
     modifier_state.depressed
         = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_DEPRESSED));
@@ -190,6 +194,7 @@ void keyboard::update_modifiers()
     layout = xkb_state_serialize_layout(state, XKB_STATE_LAYOUT_EFFECTIVE);
 
     if (old_layout != layout) {
+        last_used_layout = old_layout;
         Q_EMIT qobject->layout_changed();
     }
 }
@@ -336,6 +341,16 @@ void keyboard::switch_to_previous_layout()
     }
     const xkb_layout_index_t previousLayout = layout == 0 ? layouts_count() - 1 : layout - 1;
     switch_to_layout(previousLayout);
+}
+
+void keyboard::switch_to_last_used_layout()
+{
+    auto num_layouts = xkb_keymap_num_layouts(keymap->raw);
+    if (!last_used_layout.has_value() || *last_used_layout >= num_layouts) {
+        switch_to_previous_layout();
+    } else {
+        switch_to_layout(*last_used_layout);
+    }
 }
 
 bool keyboard::switch_to_layout(xkb_layout_index_t layout)

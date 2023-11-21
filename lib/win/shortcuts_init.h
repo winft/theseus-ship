@@ -32,6 +32,7 @@ QAction* add_subspace_action(Manager& manager,
                              Input& input,
                              QString const& name,
                              QString const& label,
+                             QKeySequence const& key,
                              Slot slot)
 {
     auto a = new QAction(manager.qobject.get());
@@ -39,7 +40,7 @@ QAction* add_subspace_action(Manager& manager,
     a->setObjectName(name);
     a->setText(label);
 
-    set_global_shortcut_with_default(input, *a, {});
+    set_global_shortcut_with_default(input, *a, key);
     input.registerShortcut(QKeySequence(), a, manager.qobject.get(), slot);
 
     return a;
@@ -124,6 +125,7 @@ void shortcuts_init_subspaces(Space& space)
                         input,
                         QStringLiteral("Switch to Next Desktop"),
                         i18n("Switch to Next Desktop"),
+                        QKeySequence(),
                         [manager] {
                             subspaces_set_current(*manager,
                                                   subspaces_get_successor_of_current(*manager));
@@ -132,44 +134,41 @@ void shortcuts_init_subspaces(Space& space)
                         input,
                         QStringLiteral("Switch to Previous Desktop"),
                         i18n("Switch to Previous Desktop"),
+                        QKeySequence(),
                         [manager] {
                             subspaces_set_current(*manager,
                                                   subspaces_get_predecessor_of_current(*manager));
                         });
 
     // shortcuts
-    QAction* slotRightAction = add_subspace_action(
+    add_subspace_action(
         *manager,
         input,
         QStringLiteral("Switch One Desktop to the Right"),
         i18n("Switch One Desktop to the Right"),
+        QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Right),
         [manager] { subspaces_set_current(*manager, subspaces_get_east_of_current(*manager)); });
-    set_global_shortcut_with_default(
-        input, *slotRightAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Right));
-    QAction* slotLeftAction = add_subspace_action(
+    add_subspace_action(
         *manager,
         input,
         QStringLiteral("Switch One Desktop to the Left"),
         i18n("Switch One Desktop to the Left"),
+        QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Left),
         [manager] { subspaces_set_current(*manager, subspaces_get_west_of_current(*manager)); });
-    set_global_shortcut_with_default(
-        input, *slotLeftAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Left));
-    QAction* slotUpAction = add_subspace_action(
+    add_subspace_action(
         *manager,
         input,
         QStringLiteral("Switch One Desktop Up"),
         i18n("Switch One Desktop Up"),
+        QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Up),
         [manager] { subspaces_set_current(*manager, subspaces_get_north_of_current(*manager)); });
-    set_global_shortcut_with_default(
-        input, *slotUpAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Up));
-    QAction* slotDownAction = add_subspace_action(
+    add_subspace_action(
         *manager,
         input,
         QStringLiteral("Switch One Desktop Down"),
         i18n("Switch One Desktop Down"),
+        QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Down),
         [manager] { subspaces_set_current(*manager, subspaces_get_south_of_current(*manager)); });
-    set_global_shortcut_with_default(
-        input, *slotDownAction, QKeySequence(Qt::CTRL | Qt::META | Qt::Key_Down));
 
     // Gestures
     subspace_manager_connect_gestures(*manager);

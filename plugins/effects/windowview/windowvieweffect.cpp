@@ -115,26 +115,6 @@ WindowViewEffect::WindowViewEffect()
         }
     });
 
-    const auto gestureCallback = [this](qreal progress) {
-        if (!effects->hasActiveFullScreenEffect() || effects->activeFullScreenEffect() == this) {
-            switch (m_status) {
-            case Status::Inactive:
-            case Status::Activating:
-                setMode(ModeAllDesktops);
-                partialActivate(progress);
-                break;
-            case Status::Active:
-            case Status::Deactivating:
-                partialDeactivate(progress);
-                break;
-            }
-        }
-    };
-    effects->registerTouchpadSwipeShortcut(
-        SwipeDirection::Down, 4, m_realtimeToggleAction, gestureCallback);
-    effects->registerTouchscreenSwipeShortcut(
-        SwipeDirection::Down, 3, m_realtimeToggleAction, gestureCallback);
-
     reconfigure(ReconfigureAll);
 }
 

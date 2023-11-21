@@ -158,6 +158,9 @@ var dimScreenEffect = {
         }
     },
     slotWindowAdded: function (window) {
+        window.windowMinimized.connect(dimScreenEffect.cancelAnimationInstant);
+        window.windowUnminimized.connect(dimScreenEffect.restartAnimation);
+
         // Don't dim authentication agents that just opened.
         var agent = activeAuthenticationAgent();
         if (agent == window) {
@@ -214,11 +217,13 @@ var dimScreenEffect = {
         effect.configChanged.connect(dimScreenEffect.loadConfig);
         effects.windowActivated.connect(dimScreenEffect.slotWindowActivated);
         effects.windowAdded.connect(dimScreenEffect.slotWindowAdded);
-        effects.windowMinimized.connect(dimScreenEffect.cancelAnimationInstant);
-        effects.windowUnminimized.connect(dimScreenEffect.restartAnimation);
         effects.activeFullScreenEffectChanged.connect(
             dimScreenEffect.slotActiveFullScreenEffectChanged);
         effects.desktopChanged.connect(dimScreenEffect.slotDesktopChanged);
+
+        for (const window of effects.stackingOrder) {
+            dimScreenEffect.slotWindowAdded(window);
+        }
     }
 };
 

@@ -79,12 +79,6 @@ LookingGlassEffectConfig::LookingGlassEffectConfig(QObject* parent, const KPlugi
     m_ui.editor->addCollection(m_actionCollection);
 }
 
-LookingGlassEffectConfig::~LookingGlassEffectConfig()
-{
-    // Undo (only) unsaved changes to global key shortcuts
-    m_ui.editor->undo();
-}
-
 void LookingGlassEffectConfig::save()
 {
     qDebug() << "Saving config of LookingGlass";

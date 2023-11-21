@@ -240,6 +240,7 @@ bool perform_mouse_command(Win& win, mouse_cmd cmd, QPoint const& globalPos)
     case mouse_cmd::move:
     case mouse_cmd::unrestricted_move: {
         if (!win.isMovableAcrossScreens()) {
+            replay = true;
             break;
         }
 

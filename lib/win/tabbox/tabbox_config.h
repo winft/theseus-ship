@@ -92,23 +92,6 @@ public:
                                ///< first
         StackingOrderSwitching ///< Sort by current stacking order
     };
-    /**
-     * DesktopSwitchingMode defines the sorting of the desktops in the
-     * TabBoxDesktopModel.
-     */
-    enum DesktopSwitchingMode {
-        MostRecentlyUsedDesktopSwitching, ///< Sort by recently used. Most recently used desktop is
-                                          ///< the first
-        StaticDesktopSwitching            ///< Static sorting in numerical ascending order
-    };
-    /**
-     * TabBoxMode defines what kind of items the TabBox is displaying and which
-     * Model is used
-     */
-    enum TabBoxMode {
-        ClientTabBox, ///< tabbox uses client_model
-        DesktopTabBox ///< tabbox uses desktop_model
-    };
 
     tabbox_config();
     tabbox_config(tabbox_config const& other);
@@ -133,11 +116,6 @@ public:
      * @see default_highlight_windows
      */
     bool is_highlight_windows() const;
-    /**
-     * @return The current TabBoxMode
-     * @see set_tabbox_mode
-     */
-    TabBoxMode tabbox_mode() const;
     /**
      * @return The current ClientDesktopMode
      * This option only applies for TabBoxMode ClientTabBox.
@@ -181,12 +159,6 @@ public:
      */
     ClientSwitchingMode client_switching_mode() const;
     /**
-     * @return The current DesktopSwitchingMode
-     * This option only applies for TabBoxMode DesktopTabBox.
-     * @see set_desktop_switching_mode
-     */
-    DesktopSwitchingMode desktop_switching_mode() const;
-    /**
      * @return Then name of the current item_layout
      * @see set_layout_name
      */
@@ -195,21 +167,14 @@ public:
     // setters
     /**
      * @param show The tabbox should be shown or not.
-     * This option does not apply for TabBoxMode DesktopTabBox.
      * @see is_show_tabbox
      */
     void set_show_tabbox(bool show);
     /**
      * @param highlight Highlight Windows effect should be used or not.
-     * This option does not apply for TabBoxMode DesktopTabBox.
      * @see is_highlight_windows
      */
     void set_highlight_windows(bool highlight);
-    /**
-     * @param mode The new TabBoxMode to be used.
-     * @see tabBoxMode
-     */
-    void set_tabbox_mode(TabBoxMode mode);
     /**
      * @param desktop_mode The new ClientDesktopMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
@@ -246,12 +211,6 @@ public:
      * @see client_switching_mode
      */
     void set_client_switching_mode(ClientSwitchingMode switching_mode);
-    /**
-     * @param switching_mode The new DesktopSwitchingMode to be used.
-     * This option only applies for TabBoxMode DesktopTabBox.
-     * @see desktop_switching_mode
-     */
-    void set_desktop_switching_mode(DesktopSwitchingMode switching_mode);
     /**
      * @param name The new item_layout config name
      * @see layout_name

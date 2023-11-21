@@ -57,15 +57,6 @@ public:
     win::tabbox_client* next_client_focus_chain(win::tabbox_client* client) const override;
     win::tabbox_client* first_client_focus_chain() const override;
     bool is_in_focus_chain(win::tabbox_client* client) const override;
-    int next_desktop_focus_chain(int desktop) const override
-    {
-        Q_UNUSED(desktop)
-        return 1;
-    }
-    int number_of_desktops() const override
-    {
-        return 1;
-    }
     bool is_kwin_compositing() const override
     {
         return false;

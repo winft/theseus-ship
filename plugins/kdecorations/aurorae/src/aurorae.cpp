@@ -170,12 +170,11 @@ QQmlComponent* Helper::loadComponent(const QString& themeName)
         // TODO: what to do in error case?
         return nullptr;
     }
-    const KPluginMetaData& service = offers.first();
+    const KPluginMetaData service = offers.first();
     const QString pluginName = service.pluginId();
-    const QString scriptName = service.value(QStringLiteral("X-Plasma-MainScript"));
     const QString file = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
                                                 s_qmlPackageFolder + pluginName
-                                                    + QLatin1String("/contents/") + scriptName);
+                                                    + QLatin1String("/contents/ui/main.qml"));
     if (file.isNull()) {
         qCDebug(AURORAE) << "Could not find script file for " << pluginName;
         // TODO: what to do in error case?
@@ -317,8 +316,7 @@ bool Decoration::init()
         m_item->setParentItem(visualParent.value<QQuickItem*>());
         visualParent.value<QQuickItem*>()->setProperty("drawBackground", false);
     } else {
-        m_view = std::make_unique<KWin::EffectQuickView>(this,
-                                                         KWin::EffectQuickView::ExportMode::Image);
+        m_view = std::make_unique<KWin::EffectQuickView>(KWin::EffectQuickView::ExportMode::Image);
         m_item->setParentItem(m_view->contentItem());
         auto updateSize = [this]() { m_item->setSize(m_view->contentItem()->size()); };
         updateSize();

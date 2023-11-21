@@ -38,6 +38,7 @@ include(GenerateExportHeader)
 find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Concurrent
     Core
+    Core5Compat
     DBus
     Quick
     UiTools
@@ -110,7 +111,9 @@ set_package_properties(KF6Kirigami2 PROPERTIES
     TYPE RUNTIME
 )
 
-find_package(KF6Plasma ${KF6_MIN_VERSION} CONFIG)
+find_package(KF6Plasma ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}
+  CONFIG
+)
 set_package_properties(KF6Plasma PROPERTIES
     DESCRIPTION "A QtQuick based components set"
     PURPOSE "Required at runtime for several QML effects"
@@ -204,6 +207,7 @@ set_package_properties(wlroots PROPERTIES
 if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.17)
   set(HAVE_WLR_SESSION_ON_AUTOCREATE 1)
   set(HAVE_WLR_VALUE_DRM_FORMATS 1)
+  set(HAVE_WLR_PRESENT_CLOCK_MONOTONIC 1)
 endif()
 
 find_package(X11)
@@ -320,6 +324,7 @@ include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/effect
 )
 
+add_subdirectory(kconf_update)
 add_subdirectory(lib)
 add_subdirectory(plugins)
 

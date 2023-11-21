@@ -12,7 +12,6 @@
 #include "render/types.h"
 
 #include <QObject>
-#include <QtDBus>
 #include <functional>
 
 #include <epoxy/gl.h>
@@ -31,8 +30,6 @@ struct compositing_integration {
     std::function<QString(void)> type;
 
     std::function<QStringList(void)> get_types;
-    std::function<void(void)> resume;
-    std::function<void(void)> suspend;
     std::function<void(void)> reinit;
 };
 
@@ -94,35 +91,6 @@ public:
     compositing_integration integration;
 
 public Q_SLOTS:
-    /**
-     * @brief Suspends the Compositor if it is currently active.
-     *
-     * Note: it is possible that the Compositor is not able to suspend. Use isActive to check
-     * whether the Compositor has been suspended.
-     *
-     * @return void
-     * @see resume
-     * @see isActive
-     */
-    void suspend();
-    /**
-     * @brief Resumes the Compositor if it is currently suspended.
-     *
-     * Note: it is possible that the Compositor cannot be resumed, that is there might be Clients
-     * blocking the usage of Compositing or the Scene might be broken. Use isActive to check
-     * whether the Compositor has been resumed. Also check isCompositingPossible and
-     * isOpenGLBroken.
-     *
-     * Note: The starting of the Compositor can require some time and is partially done threaded.
-     * After this method returns the setup may not have been completed.
-     *
-     * @return void
-     * @see suspend
-     * @see isActive
-     * @see isCompositingPossible
-     * @see isOpenGLBroken
-     */
-    void resume();
     /**
      * @brief Used by Compositing KCM after settings change.
      *

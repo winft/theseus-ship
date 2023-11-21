@@ -19,12 +19,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QCoreApplication>
 #include <QtConcurrentRun>
 
+#include <qpa/qplatformaccessibility.h>
 #include <qpa/qplatformnativeinterface.h>
 #include <qpa/qplatformwindow.h>
 #include <qpa/qwindowsysteminterface.h>
 
 #include <QtGui/private/qgenericunixfontdatabase_p.h>
 #include <QtGui/private/qgenericunixthemes_p.h>
+#include <QtGui/private/qspiaccessiblebridge_p.h>
 #include <QtGui/private/qunixeventdispatcher_qpa_p.h>
 
 namespace KWin
@@ -142,6 +144,14 @@ QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext*
         return new SharingPlatformContext(context);
     }
     return nullptr;
+}
+
+QPlatformAccessibility* Integration::accessibility() const
+{
+    if (!m_accessibility) {
+        m_accessibility.reset(new QSpiAccessibleBridge());
+    }
+    return m_accessibility.get();
 }
 
 void Integration::initScreens()

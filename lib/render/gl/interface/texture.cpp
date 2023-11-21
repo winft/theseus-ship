@@ -16,6 +16,8 @@
 
 #include <render/effect/interface/paint_data.h>
 #include <render/effect/interface/types.h>
+#include <render/gl/interface/framebuffer.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <QImage>
 #include <QMatrix4x4>
@@ -704,19 +706,6 @@ void GLTexturePrivate::update_cache(QRect const& source, QSize const& size)
     cache.size = size;
     cache.source = source;
 
-    if (!m_vbo) {
-        m_vbo = std::make_unique<GLVertexBuffer>(KWin::GLVertexBuffer::Static);
-    }
-
-    float const verts[4 * 2] = {0.f,
-                                0.f,
-                                0.f,
-                                static_cast<float>(size.height()),
-                                static_cast<float>(size.width()),
-                                0.f,
-                                static_cast<float>(size.width()),
-                                static_cast<float>(size.height())};
-
     float const texWidth = (m_target == GL_TEXTURE_RECTANGLE_ARB) ? m_size.width() : 1.0f;
     float const texHeight = (m_target == GL_TEXTURE_RECTANGLE_ARB) ? m_size.height() : 1.0f;
 
@@ -737,16 +726,30 @@ void GLTexturePrivate::update_cache(QRect const& source, QSize const& size)
     auto const p4
         = textureMat.map(QPointF(source.x() + source.width(), source.y() + source.height()));
 
-    float const texcoords[4 * 2] = {static_cast<float>(p1.x()),
-                                    static_cast<float>(p1.y()),
-                                    static_cast<float>(p2.x()),
-                                    static_cast<float>(p2.y()),
-                                    static_cast<float>(p3.x()),
-                                    static_cast<float>(p3.y()),
-                                    static_cast<float>(p4.x()),
-                                    static_cast<float>(p4.y())};
+    if (!m_vbo) {
+        m_vbo = std::make_unique<GLVertexBuffer>(GLVertexBuffer::Static);
+    }
 
-    m_vbo->setData(4, 2, verts, texcoords);
+    const std::array<GLVertex2D, 4> data{
+        GLVertex2D{
+            .position = QVector2D(0, 0),
+            .texcoord = QVector2D(p1),
+        },
+        GLVertex2D{
+            .position = QVector2D(0, size.height()),
+            .texcoord = QVector2D(p2),
+        },
+        GLVertex2D{
+            .position = QVector2D(size.width(), 0),
+            .texcoord = QVector2D(p3),
+        },
+        GLVertex2D{
+            .position = QVector2D(size.width(), size.height()),
+            .texcoord = QVector2D(p4),
+        },
+    };
+
+    m_vbo->setVertices(data);
 }
 
 void GLTexture::set_content_transform(effect::transform_type transform)

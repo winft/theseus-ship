@@ -19,8 +19,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/window_area.h"
 #include "win/x11/window.h"
 
+#include <render/gl/interface/framebuffer.h>
 #include <render/gl/interface/platform.h>
-#include <render/gl/interface/utils.h>
 
 #include <KDecoration2/DecorationSettings>
 
@@ -570,6 +570,17 @@ Effect* effects_handler_wrap::findEffect(const QString& name) const
         return nullptr;
     }
     return (*it).second;
+}
+
+bool effects_handler_wrap::is_effect_active(QString const& plugin_id) const
+{
+    auto it = std::find_if(loaded_effects.cbegin(),
+                           loaded_effects.cend(),
+                           [&plugin_id](auto const& p) { return p.first == plugin_id; });
+    if (it == loaded_effects.cend()) {
+        return false;
+    }
+    return it->second->isActive();
 }
 
 QImage effects_handler_wrap::blit_from_framebuffer(effect::render_data& data,

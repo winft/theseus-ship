@@ -27,8 +27,12 @@ public:
 
     void setPreview(const QPixmap &preview);
     const QPixmap preview() const;
+
     void setRatio(const qreal ratio);
     qreal ratio() const;
+
+    void setMinimumContentWidth(qreal minw);
+    qreal minimumContentWidth() const;
 
     QRect previewRect() const;
     KSvg::ImageSet *svgImageSet() const;
@@ -36,10 +40,6 @@ public:
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
-    void dropEvent(QDropEvent *event) override;
-
-Q_SIGNALS:
-    void imageDropped(const QString &);
 
 private:
     ScreenPreviewWidgetPrivate *const d;

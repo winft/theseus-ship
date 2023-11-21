@@ -23,7 +23,6 @@ TEST_CASE("tabbox handler", "[unit],[win]")
          */
         MockTabBoxHandler tabboxhandler;
         win::tabbox_config config;
-        config.set_tabbox_mode(win::tabbox_config::ClientTabBox);
         config.set_show_tabbox(false);
         config.set_highlight_windows(false);
         tabboxhandler.set_config(config);

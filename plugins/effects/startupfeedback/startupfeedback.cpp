@@ -8,7 +8,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/texture.h>
 
 #include <KConfigGroup>
 #include <KSelectionOwner>
@@ -442,7 +444,7 @@ QImage StartupFeedbackEffect::scalePixmap(const QPixmap& pm, const QSize& size) 
 
     if (scaled.format() != QImage::Format_ARGB32_Premultiplied
         && scaled.format() != QImage::Format_ARGB32) {
-        scaled = scaled.convertToFormat(QImage::Format_ARGB32);
+        scaled.convertTo(QImage::Format_ARGB32);
     }
 
     QImage result(20 * m_bounceSizesRatio, 20 * m_bounceSizesRatio, QImage::Format_ARGB32);

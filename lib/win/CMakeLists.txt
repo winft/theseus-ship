@@ -160,8 +160,6 @@ if (KWIN_BUILD_TABBOX)
         tabbox/tabbox_client_impl.h
         tabbox/tabbox_client_model.h
         tabbox/tabbox_config.h
-        tabbox/tabbox_desktop_chain.h
-        tabbox/tabbox_desktop_model.h
         tabbox/tabbox_handler.h
         tabbox/tabbox_handler_impl.h
         tabbox/tabbox_logging.h
@@ -169,8 +167,6 @@ if (KWIN_BUILD_TABBOX)
     PRIVATE
       tabbox/tabbox_client_model.cpp
       tabbox/tabbox_config.cpp
-      tabbox/tabbox_desktop_chain.cpp
-      tabbox/tabbox_desktop_model.cpp
       tabbox/tabbox_handler.cpp
       tabbox/tabbox_logging.cpp
       tabbox/tabbox_switcher_item.cpp
@@ -236,7 +232,6 @@ target_sources(win-x11
       x11/activation.h
       x11/appmenu.h
       x11/client.h
-      x11/color_mapper.h
       x11/command.h
       x11/control.h
       x11/control_create.h

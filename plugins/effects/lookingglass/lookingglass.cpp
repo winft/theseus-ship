@@ -13,8 +13,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
+#include <render/gl/interface/framebuffer.h>
 #include <render/gl/interface/platform.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/texture.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <KLocalizedString>
 #include <KStandardAction>
@@ -60,7 +64,12 @@ LookingGlassEffect::LookingGlassEffect()
     effects->registerGlobalShortcutAndDefault({static_cast<Qt::Key>(Qt::META) + Qt::Key_0}, a);
 
     connect(effects, &EffectsHandler::mouseChanged, this, &LookingGlassEffect::slotMouseChanged);
-    connect(effects, &EffectsHandler::windowDamaged, this, &LookingGlassEffect::slotWindowDamaged);
+    connect(effects, &EffectsHandler::windowAdded, this, &LookingGlassEffect::slotWindowAdded);
+
+    auto const windows = effects->stackingOrder();
+    for (auto window : windows) {
+        slotWindowAdded(window);
+    }
 
     reconfigure(ReconfigureAll);
 }
@@ -69,7 +78,7 @@ LookingGlassEffect::~LookingGlassEffect() = default;
 
 bool LookingGlassEffect::supported()
 {
-    return effects->isOpenGLCompositing() && !GLPlatform::instance()->supports(LimitedNPOT);
+    return effects->isOpenGLCompositing();
 }
 
 void LookingGlassEffect::reconfigure(ReconfigureFlags)
@@ -113,22 +122,40 @@ bool LookingGlassEffect::loadData()
     }
 
     m_vbo = std::make_unique<GLVertexBuffer>(GLVertexBuffer::Static);
-    QVector<float> verts;
-    QVector<float> texcoords;
-    texcoords << screenSize.width() << 0.0;
-    verts << screenSize.width() << 0.0;
-    texcoords << 0.0 << 0.0;
-    verts << 0.0 << 0.0;
-    texcoords << 0.0 << screenSize.height();
-    verts << 0.0 << screenSize.height();
-    texcoords << 0.0 << screenSize.height();
-    verts << 0.0 << screenSize.height();
-    texcoords << screenSize.width() << screenSize.height();
-    verts << screenSize.width() << screenSize.height();
-    texcoords << screenSize.width() << 0.0;
-    verts << screenSize.width() << 0.0;
-    m_vbo->setData(6, 2, verts.constData(), texcoords.constData());
+    QVector<GLVertex2D> verts;
+
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(screenSize.width(), 0.0),
+        .texcoord = QVector2D(screenSize.width(), 0.0),
+    });
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(0.0, 0.0),
+        .texcoord = QVector2D(0.0, 0.0),
+    });
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(0.0, screenSize.height()),
+        .texcoord = QVector2D(0.0, screenSize.height()),
+    });
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(0.0, screenSize.height()),
+        .texcoord = QVector2D(0.0, screenSize.height()),
+    });
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(screenSize.width(), screenSize.height()),
+        .texcoord = QVector2D(screenSize.width(), screenSize.height()),
+    });
+    verts.push_back(GLVertex2D{
+        .position = QVector2D(screenSize.width(), 0.0),
+        .texcoord = QVector2D(screenSize.width(), 0.0),
+    });
+
+    m_vbo->setVertices(verts);
     return true;
+}
+
+void LookingGlassEffect::slotWindowAdded(EffectWindow* w)
+{
+    connect(w, &EffectWindow::windowDamaged, this, &LookingGlassEffect::slotWindowDamaged);
 }
 
 void LookingGlassEffect::toggle()

@@ -15,7 +15,6 @@ enum class suspend_reason {
     none = 0,
     user = 1 << 0,
     rule = 1 << 1,
-    script = 1 << 2,
     all = 0xff,
 };
 

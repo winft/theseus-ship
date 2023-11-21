@@ -47,6 +47,7 @@ public:
     }
 
 public Q_SLOTS:
+    void slotWindowAdded(KWin::EffectWindow* w);
     void slotWindowStartUserMovedResized(KWin::EffectWindow* w);
     void slotWindowStepUserMovedResized(KWin::EffectWindow* w, const QRect& geometry);
     void slotWindowFinishUserMovedResized(KWin::EffectWindow* w);

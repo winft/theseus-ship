@@ -10,7 +10,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <render/effect/interface/effect_screen.h>
 #include <render/effect/interface/effect_window_visible_ref.h>
 #include <render/effect/interface/time_line.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/texture.h>
 
 #include <QFont>
 #include <QMatrix4x4>
@@ -152,7 +153,7 @@ private:
     void paintSphereCap();
     bool loadShader();
     void rotateCube();
-    void rotateToDesktop(int desktop);
+    void rotateToDesktop(win::subspace* desktop);
     void setActive(bool active);
     QImage loadCubeCap(const QString& capPath);
     QImage loadWallPaper(const QString& file);
@@ -168,8 +169,8 @@ private:
     QList<ElectricBorder> borderActivate;
     QList<ElectricBorder> borderActivateCylinder;
     QList<ElectricBorder> borderActivateSphere;
-    int painting_desktop;
-    int frontDesktop;
+    win::subspace* painting_desktop{nullptr};
+    win::subspace* frontDesktop{nullptr};
     float cubeOpacity;
     bool opacityDesktopOnly;
     bool displayDesktopName;
@@ -189,7 +190,7 @@ private:
     // Horizontal/start/stop
     float startAngle;
     float currentAngle;
-    int startFrontDesktop;
+    win::subspace* startFrontDesktop{nullptr};
     AnimationState animationState;
     TimeLine timeLine;
     QQueue<AnimationState> animations;

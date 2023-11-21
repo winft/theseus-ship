@@ -55,6 +55,9 @@ Monitor::Monitor(QWidget* parent)
         grp[ i ] = new QActionGroup(this);
     }
     QRect avail = screenFromWidget(this)->geometry();
+
+    // 3 buttons in a row and some spacing between them
+    setMinimumContentWidth(20 * 3 + 5 * 2);
     setRatio((qreal)avail.width() / (qreal)avail.height());
     checkSize();
 }
@@ -92,8 +95,6 @@ bool Monitor::event(QEvent* event)
 void Monitor::checkSize()
 {
     QRect contentsRect = previewRect();
-    //int w = 151;
-    //int h = 115;
     view->setGeometry(contentsRect);
     scene->setSceneRect(QRect(QPoint(0, 0), contentsRect.size()));
     int x2 = (contentsRect.width() - 20) / 2;

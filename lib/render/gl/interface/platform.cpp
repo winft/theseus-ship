@@ -673,13 +673,8 @@ GLPlatform::GLPlatform()
     , m_glslVersion(0)
     , m_mesaVersion(0)
     , m_driverVersion(0)
-    , m_galliumVersion(0)
     , m_kernelVersion(0)
     , m_looseBinding(false)
-    , m_supportsGLSL(false)
-    , m_limitedGLSL(false)
-    , m_textureNPOT(false)
-    , m_limitedNPOT(false)
     , m_supportsTimerQuery(false)
     , m_virtualMachine(false)
     , m_preferBufferSubData(false)
@@ -738,17 +733,6 @@ void GLPlatform::detect(gl_interface platformInterface)
         m_mesaVersion = parseVersionString(version);
     }
 
-    if (isGLES()) {
-        m_supportsGLSL = true;
-        m_textureNPOT = true;
-    } else {
-        m_supportsGLSL = m_extensions.contains("GL_ARB_shader_objects")
-            && m_extensions.contains("GL_ARB_fragment_shader")
-            && m_extensions.contains("GL_ARB_vertex_shader");
-
-        m_textureNPOT = m_extensions.contains("GL_ARB_texture_non_power_of_two");
-    }
-
     if (!qEnvironmentVariableIsSet("KWIN_NO_TIMER_QUERY")) {
         if (isGLES()) {
             // 3.0 is required so query functions can be used without "EXT" suffix.
@@ -764,14 +748,8 @@ void GLPlatform::detect(gl_interface platformInterface)
 
     m_kernelVersion = getKernelVersion();
 
-    m_glslVersion = 0;
-    m_glsl_version.clear();
-
-    if (m_supportsGLSL) {
-        // Parse the GLSL version
-        m_glsl_version = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
-        m_glslVersion = parseVersionString(m_glsl_version);
-    }
+    m_glsl_version = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
+    m_glslVersion = parseVersionString(m_glsl_version);
 
     m_chipset = QByteArrayLiteral("Unknown");
     m_preferBufferSubData = false;
@@ -892,15 +870,11 @@ void GLPlatform::detect(gl_interface platformInterface)
     else {
         const QList<QByteArray> tokens = m_renderer.split(' ');
         if (m_renderer.contains("Gallium")) {
-            // Sample renderer string: Gallium 0.4 on AMD RV740
-            m_galliumVersion = parseVersionString(tokens.at(1));
             m_chipset
                 = (tokens.at(3) == "AMD" || tokens.at(3) == "ATI") ? tokens.at(4) : tokens.at(3);
         } else {
             // The renderer string does not contain "Gallium" anymore.
             m_chipset = tokens.at(0);
-            // We don't know the actual version anymore, but it's at least 0.4.
-            m_galliumVersion = kVersionNumber(0, 4, 0);
         }
 
         // R300G
@@ -976,23 +950,6 @@ void GLPlatform::detect(gl_interface platformInterface)
     // Driver/GPU specific features
     // ====================================================
     if (isRadeon()) {
-        // R200 technically has a programmable pipeline, but since it's SM 1.4,
-        // it's too limited to to be of any practical value to us.
-        if (m_chipClass < R300)
-            m_supportsGLSL = false;
-
-        m_limitedGLSL = false;
-        m_limitedNPOT = false;
-
-        if (m_chipClass < R600) {
-            if (driver() == Driver_Catalyst)
-                m_textureNPOT = m_limitedNPOT = false; // Software fallback
-            else if (driver() == Driver_R300G)
-                m_limitedNPOT = m_textureNPOT;
-
-            m_limitedGLSL = m_supportsGLSL;
-        }
-
         // fallback to NoCompositing for R100 and R200 and for R600 due to NPOT limitations not
         // supported by KWin's shaders
         m_recommend_sw = m_chipClass < R300 || m_chipClass < R600;
@@ -1003,24 +960,15 @@ void GLPlatform::detect(gl_interface platformInterface)
     }
 
     if (isNvidia()) {
-        if (m_driver == Driver_NVidia && m_chipClass < NV40)
-            m_supportsGLSL = false; // High likelihood of software emulation
-
         if (m_driver == Driver_NVidia) {
             m_looseBinding = true;
             m_preferBufferSubData = true;
         }
 
         m_recommend_sw = m_chipClass < NV40;
-        m_limitedNPOT = m_textureNPOT && m_chipClass < NV40;
-        m_limitedGLSL = m_supportsGLSL && m_chipClass < G80;
     }
 
     if (isIntel()) {
-        if (m_chipClass < I915)
-            m_supportsGLSL = false;
-
-        m_limitedGLSL = m_supportsGLSL && m_chipClass < I965;
         // see https://bugs.freedesktop.org/show_bug.cgi?id=80349#c1
         m_looseBinding = false;
 
@@ -1033,7 +981,6 @@ void GLPlatform::detect(gl_interface platformInterface)
 
     if (isLima()) {
         m_recommend_sw = false;
-        m_supportsGLSL = true;
     }
 
     if (isVideoCore4()) {
@@ -1057,13 +1004,9 @@ void GLPlatform::detect(gl_interface platformInterface)
         if (m_driver < Driver_Llvmpipe) {
             // we recommend QPainter
             m_recommend_sw = true;
-            // Software emulation does not provide GLSL
-            m_limitedGLSL = m_supportsGLSL = false;
         } else {
             // llvmpipe does support GLSL
             m_recommend_sw = false;
-            m_limitedGLSL = false;
-            m_supportsGLSL = true;
         }
     }
 
@@ -1075,7 +1018,6 @@ void GLPlatform::detect(gl_interface platformInterface)
     if (m_chipClass == UnknownChipClass && m_driver == Driver_Unknown) {
         // we don't know the hardware. Let's be optimistic and assume OpenGL compatible hardware
         m_recommend_sw = false;
-        m_supportsGLSL = true;
     }
 
     if (isVirtualBox()) {
@@ -1092,12 +1034,6 @@ void GLPlatform::detect(gl_interface platformInterface)
         m_virtualMachine = true;
         m_recommend_sw = false;
     }
-
-    // and force back to shader supported on gles, we wouldn't have got a context if not supported
-    if (isGLES()) {
-        m_supportsGLSL = true;
-        m_limitedGLSL = false;
-    }
 }
 
 static void print(const QByteArray& label, const QByteArray& setting)
@@ -1113,35 +1049,22 @@ void GLPlatform::printResults() const
     print(QByteArrayLiteral("OpenGL renderer string:"), m_renderer);
     print(QByteArrayLiteral("OpenGL version string:"), m_version);
 
-    if (m_supportsGLSL)
-        print(QByteArrayLiteral("OpenGL shading language version string:"), m_glsl_version);
-
+    print(QByteArrayLiteral("OpenGL shading language version string:"), m_glsl_version);
     print(QByteArrayLiteral("Driver:"), driverToString8(m_driver));
     if (!isMesaDriver())
         print(QByteArrayLiteral("Driver version:"), versionToString8(m_driverVersion));
 
     print(QByteArrayLiteral("GPU class:"), chipClassToString8(m_chipClass));
-
     print(QByteArrayLiteral("OpenGL version:"), versionToString8(m_glVersion));
-
-    if (m_supportsGLSL)
-        print(QByteArrayLiteral("GLSL version:"), versionToString8(m_glslVersion));
+    print(QByteArrayLiteral("GLSL version:"), versionToString8(m_glslVersion));
 
     if (isMesaDriver())
         print(QByteArrayLiteral("Mesa version:"), versionToString8(mesaVersion()));
-    // if (galliumVersion() > 0)
-    //     print("Gallium version:", versionToString(m_galliumVersion));
     if (kernelVersion() > 0)
         print(QByteArrayLiteral("Linux kernel version:"), versionToString8(m_kernelVersion));
 
     print(QByteArrayLiteral("Requires strict binding:"),
           !m_looseBinding ? QByteArrayLiteral("yes") : QByteArrayLiteral("no"));
-    print(QByteArrayLiteral("GLSL shaders:"),
-          m_supportsGLSL ? (m_limitedGLSL ? QByteArrayLiteral("limited") : QByteArrayLiteral("yes"))
-                         : QByteArrayLiteral("no"));
-    print(QByteArrayLiteral("Texture NPOT support:"),
-          m_textureNPOT ? (m_limitedNPOT ? QByteArrayLiteral("limited") : QByteArrayLiteral("yes"))
-                        : QByteArrayLiteral("no"));
     print(QByteArrayLiteral("Virtual Machine:"),
           m_virtualMachine ? QByteArrayLiteral("yes") : QByteArrayLiteral("no"));
     print(QByteArrayLiteral("Timer query support:"),
@@ -1153,22 +1076,8 @@ bool GLPlatform::supports(GLFeature feature) const
     switch (feature) {
     case LooseBinding:
         return m_looseBinding;
-
-    case GLSL:
-        return m_supportsGLSL;
-
-    case LimitedGLSL:
-        return m_limitedGLSL;
-
-    case TextureNPOT:
-        return m_textureNPOT;
-
-    case LimitedNPOT:
-        return m_limitedNPOT;
-
     case GLFeature::TimerQuery:
         return m_supportsTimerQuery;
-
     default:
         return false;
     }
@@ -1187,11 +1096,6 @@ qint64 GLPlatform::glslVersion() const
 qint64 GLPlatform::mesaVersion() const
 {
     return m_mesaVersion;
-}
-
-qint64 GLPlatform::galliumVersion() const
-{
-    return m_galliumVersion;
 }
 
 qint64 GLPlatform::kernelVersion() const
@@ -1220,11 +1124,6 @@ ChipClass GLPlatform::chipClass() const
 bool GLPlatform::isMesaDriver() const
 {
     return mesaVersion() > 0;
-}
-
-bool GLPlatform::isGalliumDriver() const
-{
-    return galliumVersion() > 0;
 }
 
 bool GLPlatform::isRadeon() const

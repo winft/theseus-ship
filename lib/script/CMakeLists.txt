@@ -6,6 +6,7 @@ add_library(script SHARED)
 
 target_link_libraries(script
   PUBLIC
+    KF6::ConfigQml
     base
     render
     win
@@ -24,10 +25,12 @@ target_sources(script
       desktop_background_item.h
       effect.h
       effect_loader.h
+      gesture_handler.h
       js_engine_global_methods_wrapper.h
       options.h
       output.h
       platform.h
+      quick_scene_effect.h
       screen_edge_handler.h
       script.h
       scripting_logging.h
@@ -46,9 +49,11 @@ target_sources(script
     js_engine_global_methods_wrapper.cpp
     screen_edge_handler.cpp
     effect.cpp
+    gesture_handler.cpp
     options.cpp
     output.cpp
     platform.cpp
+    quick_scene_effect.cpp
     script.cpp
     script_timer.cpp
     scripting_logging.cpp

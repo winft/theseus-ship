@@ -30,20 +30,11 @@ CubeSlideEffect::CubeSlideEffect()
     initConfig<CubeSlideConfig>();
     connect(effects, &EffectsHandler::windowAdded, this, &CubeSlideEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::windowDeleted, this, &CubeSlideEffect::slotWindowDeleted);
+    connect(effects, &EffectsHandler::desktopChanged, this, &CubeSlideEffect::slotDesktopChanged);
+    connect(
+        effects, &EffectsHandler::desktopAdded, this, &CubeSlideEffect::slotNumberDesktopsChanged);
     connect(effects,
-            QOverload<int, int, EffectWindow*>::of(&EffectsHandler::desktopChanged),
-            this,
-            &CubeSlideEffect::slotDesktopChanged);
-    connect(effects,
-            &EffectsHandler::windowStepUserMovedResized,
-            this,
-            &CubeSlideEffect::slotWindowStepUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowFinishUserMovedResized,
-            this,
-            &CubeSlideEffect::slotWindowFinishUserMovedResized);
-    connect(effects,
-            &EffectsHandler::numberDesktopsChanged,
+            &EffectsHandler::desktopRemoved,
             this,
             &CubeSlideEffect::slotNumberDesktopsChanged);
     reconfigure(ReconfigureAll);
@@ -124,7 +115,7 @@ void CubeSlideEffect::paintSlideCube(effect::screen_paint_data const& data)
     auto firstFaceData = data;
     auto secondFaceData = data;
     auto direction = slideRotations.head();
-    int secondDesktop;
+    win::subspace* secondDesktop{nullptr};
 
     QVector3D const x_axis{1, 0, 0};
     QVector3D const y_axis{0, 1, 0};
@@ -138,8 +129,8 @@ void CubeSlideEffect::paintSlideCube(effect::screen_paint_data const& data)
             secondDesktop = effects->desktopToLeft(front_desktop, true);
         } else {
             secondDesktop = front_desktop - 1;
-            if (secondDesktop == 0)
-                secondDesktop = effects->numberOfDesktops();
+            if (!secondDesktop)
+                secondDesktop = effects->desktops().back();
         }
 
         firstFaceData.paint.geo.rotation.angle = 90.0f * timeLine.currentValue();
@@ -153,8 +144,8 @@ void CubeSlideEffect::paintSlideCube(effect::screen_paint_data const& data)
             secondDesktop = effects->desktopToRight(front_desktop, true);
         } else {
             secondDesktop = front_desktop + 1;
-            if (secondDesktop > effects->numberOfDesktops())
-                secondDesktop = 1;
+            if (secondDesktop->x11DesktopNumber() > effects->desktops().size())
+                secondDesktop = effects->desktops().front();
         }
 
         firstFaceData.paint.geo.rotation.angle = -90.0f * timeLine.currentValue();
@@ -369,6 +360,15 @@ void CubeSlideEffect::postPaintScreen()
         return;
     }
 
+    auto get_subsp_index = [](auto subsp) -> int {
+        auto const& subspaces = effects->desktops();
+        auto it = std::find(subspaces.begin(), subspaces.end(), subsp);
+        if (it == subspaces.end()) {
+            return -1;
+        }
+        return it - subspaces.begin();
+    };
+
     if (timeLine.currentValue() == 1.0) {
         auto direction = slideRotations.dequeue();
 
@@ -377,18 +377,18 @@ void CubeSlideEffect::postPaintScreen()
             if (usePagerLayout)
                 front_desktop = effects->desktopToLeft(front_desktop, true);
             else {
-                front_desktop--;
-                if (front_desktop == 0)
-                    front_desktop = effects->numberOfDesktops();
+                auto index = get_subsp_index(front_desktop) - 1;
+                front_desktop
+                    = index >= 0 ? effects->desktops().at(index) : effects->desktops().back();
             }
             break;
         case Right:
             if (usePagerLayout)
                 front_desktop = effects->desktopToRight(front_desktop, true);
             else {
-                front_desktop++;
-                if (front_desktop > effects->numberOfDesktops())
-                    front_desktop = 1;
+                auto index = get_subsp_index(front_desktop) + 1;
+                front_desktop = index < effects->desktops().size() ? effects->desktops().at(index)
+                                                                   : effects->desktops().front();
             }
             break;
         case Upwards:
@@ -421,14 +421,16 @@ void CubeSlideEffect::postPaintScreen()
     effects->addRepaintFull();
 }
 
-void CubeSlideEffect::slotDesktopChanged(int old, int current, EffectWindow* w)
+void CubeSlideEffect::slotDesktopChanged(win::subspace* old,
+                                         win::subspace* current,
+                                         EffectWindow* w)
 {
     Q_UNUSED(w)
 
     if (effects->activeFullScreenEffect() && effects->activeFullScreenEffect() != this) {
         return;
     }
-    if (old > effects->numberOfDesktops()) {
+    if (old->x11DesktopNumber() > effects->desktops().size()) {
         // number of desktops has been reduced -> no animation
         return;
     }
@@ -440,6 +442,14 @@ void CubeSlideEffect::slotDesktopChanged(int old, int current, EffectWindow* w)
     }
 
     auto activate = true;
+    auto get_subsp_index = [](auto subsp) -> int {
+        auto const& subspaces = effects->desktops();
+        auto it = std::find(subspaces.begin(), subspaces.end(), subsp);
+        if (it == subspaces.end()) {
+            return -1;
+        }
+        return it - subspaces.begin();
+    };
 
     if (!slideRotations.empty()) {
         // last slide still in progress
@@ -453,19 +463,17 @@ void CubeSlideEffect::slotDesktopChanged(int old, int current, EffectWindow* w)
             if (usePagerLayout) {
                 old = effects->desktopToLeft(front_desktop, true);
             } else {
-                old = front_desktop - 1;
-                if (old == 0) {
-                    old = effects->numberOfDesktops();
-                }
+                auto index = get_subsp_index(front_desktop) - 1;
+                old = index >= 0 ? effects->desktops().at(index) : effects->desktops().back();
             }
             break;
         case Right:
             if (usePagerLayout) {
                 old = effects->desktopToRight(front_desktop, true);
             } else {
-                old = front_desktop + 1;
-                if (old > effects->numberOfDesktops())
-                    old = 1;
+                auto index = get_subsp_index(front_desktop) + 1;
+                old = index < effects->desktops().size() ? effects->desktops().at(index)
+                                                         : effects->desktops().front();
             }
             break;
         case Upwards:
@@ -476,6 +484,7 @@ void CubeSlideEffect::slotDesktopChanged(int old, int current, EffectWindow* w)
             break;
         }
     }
+
     if (usePagerLayout) {
         // calculate distance in respect to pager
         auto diff = effects->desktopGridCoords(effects->currentDesktop())
@@ -516,14 +525,14 @@ void CubeSlideEffect::slotDesktopChanged(int old, int current, EffectWindow* w)
         }
     } else {
         // ignore pager layout
-        auto left = old - current;
+        auto left = old->x11DesktopNumber() - current->x11DesktopNumber();
         if (left < 0) {
-            left = effects->numberOfDesktops() + left;
+            left = effects->desktops().size() + left;
         }
 
         auto right = current - old;
         if (right < 0) {
-            right = effects->numberOfDesktops() + right;
+            right = effects->desktops().size() + right;
         }
 
         if (left < right) {
@@ -571,6 +580,15 @@ void CubeSlideEffect::startAnimation()
 
 void CubeSlideEffect::slotWindowAdded(EffectWindow* w)
 {
+    connect(w,
+            &EffectWindow::windowStepUserMovedResized,
+            this,
+            &CubeSlideEffect::slotWindowStepUserMovedResized);
+    connect(w,
+            &EffectWindow::windowFinishUserMovedResized,
+            this,
+            &CubeSlideEffect::slotWindowFinishUserMovedResized);
+
     if (!isActive()) {
         return;
     }

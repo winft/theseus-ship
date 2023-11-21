@@ -54,7 +54,6 @@ public:
         , space{space}
     {
         config.normal = tabbox_config();
-        config.normal.set_tabbox_mode(tabbox_config::ClientTabBox);
         config.normal.set_client_desktop_mode(tabbox_config::OnlyCurrentDesktopClients);
         config.normal.set_client_applications_mode(tabbox_config::AllWindowsAllApplications);
         config.normal.set_client_minimized_mode(tabbox_config::IgnoreMinimizedStatus);
@@ -63,7 +62,6 @@ public:
         config.normal.set_client_switching_mode(tabbox_config::FocusChainSwitching);
 
         config.alternative = tabbox_config();
-        config.alternative.set_tabbox_mode(tabbox_config::ClientTabBox);
         config.alternative.set_client_desktop_mode(tabbox_config::AllDesktopsClients);
         config.alternative.set_client_applications_mode(tabbox_config::AllWindowsAllApplications);
         config.alternative.set_client_minimized_mode(tabbox_config::IgnoreMinimizedStatus);
@@ -79,21 +77,10 @@ public:
         config.alternative_current_app.set_client_applications_mode(
             tabbox_config::AllWindowsCurrentApplication);
 
-        config.desktop = tabbox_config();
-        config.desktop.set_tabbox_mode(tabbox_config::DesktopTabBox);
-        config.desktop.set_show_tabbox(true);
-        config.desktop.set_show_desktop_mode(tabbox_config::DoNotShowDesktopClient);
-        config.desktop.set_desktop_switching_mode(tabbox_config::MostRecentlyUsedDesktopSwitching);
-
-        config.desktop_list = tabbox_config();
-        config.desktop_list.set_tabbox_mode(tabbox_config::DesktopTabBox);
-        config.desktop_list.set_show_tabbox(true);
-        config.desktop_list.set_show_desktop_mode(tabbox_config::DoNotShowDesktopClient);
-        config.desktop_list.set_desktop_switching_mode(tabbox_config::StaticDesktopSwitching);
         handler = new tabbox_handler_impl(this);
         QTimer::singleShot(0, qobject.get(), [this] { set_handler_ready(); });
 
-        current_mode = tabbox_mode::desktop; // init variables
+        current_mode = tabbox_mode::windows;
         QObject::connect(
             &delay_show_data.timer, &QTimer::timeout, qobject.get(), [this] { show(); });
         QObject::connect(space.qobject.get(),
@@ -133,31 +120,6 @@ public:
         return ret;
     }
 
-    /**
-     * Returns the currently displayed virtual desktop ( only works in
-     * TabBoxDesktopListMode )
-     * Returns -1 if no desktop is displayed.
-     */
-    int current_desktop()
-    {
-        return handler->desktop(handler->current_index());
-    }
-
-    /**
-     * Returns the list of desktops potentially displayed ( only works in
-     * TabBoxDesktopListMode )
-     * Returns an empty list if no are available.
-     */
-    QList<int> current_desktop_list()
-    {
-        return handler->desktop_list();
-    }
-
-    /**
-     * Change the currently selected client, and notify the effects.
-     *
-     * @see setCurrentDesktop
-     */
     void set_current_client(window_t window)
     {
         auto client = std::visit(
@@ -166,21 +128,6 @@ public:
         set_current_index(handler->index(client));
     }
 
-    /**
-     * Change the currently selected desktop, and notify the effects.
-     *
-     * @see setCurrentClient
-     */
-    void set_current_desktop(int new_desktop)
-    {
-        set_current_index(handler->desktop_index(new_desktop));
-    }
-
-    /**
-     * Sets the current mode to \a mode, either TabBoxDesktopListMode or TabBoxWindowsMode
-     *
-     * @see mode
-     */
     void set_mode(tabbox_mode mode)
     {
         current_mode = mode;
@@ -197,12 +144,6 @@ public:
         case tabbox_mode::current_app_windows_alternative:
             handler->set_config(config.alternative_current_app);
             break;
-        case tabbox_mode::desktop:
-            handler->set_config(config.desktop);
-            break;
-        case tabbox_mode::desktop_list:
-            handler->set_config(config.desktop_list);
-            break;
         }
     }
 
@@ -211,41 +152,25 @@ public:
         return current_mode;
     }
 
-    /**
-     * Resets the tab box to display the active client in TabBoxWindowsMode, or the
-     * current desktop in TabBoxDesktopListMode
-     */
+    /// Resets the tab box to display the active client in TabBoxWindowsMode
     void reset(bool partial_reset = false)
     {
-        switch (handler->config().tabbox_mode()) {
-        case tabbox_config::ClientTabBox:
-            handler->create_model(partial_reset);
+        handler->create_model(partial_reset);
 
-            if (partial_reset) {
-                if (!handler->current_index().isValid()
-                    || !handler->client(handler->current_index())) {
-                    set_current_index(handler->first());
-                }
-            } else {
-                if (space.stacking.active) {
-                    set_current_client(*space.stacking.active);
-                }
-
-                // it's possible that the active client is not part of the model
-                // in that case the index is invalid
-                if (!handler->current_index().isValid()) {
-                    set_current_index(handler->first());
-                }
+        if (partial_reset) {
+            if (!handler->current_index().isValid() || !handler->client(handler->current_index())) {
+                set_current_index(handler->first());
+            }
+        } else {
+            if (space.stacking.active) {
+                set_current_client(*space.stacking.active);
             }
 
-            break;
-        case tabbox_config::DesktopTabBox:
-            handler->create_model();
-
-            if (!partial_reset) {
-                set_current_desktop(subspaces_get_current_x11id(*space.subspace_manager));
+            // it's possible that the active client is not part of the model
+            // in that case the index is invalid
+            if (!handler->current_index().isValid()) {
+                set_current_index(handler->first());
             }
-            break;
         }
 
         Q_EMIT qobject->tabbox_updated();
@@ -417,7 +342,7 @@ public:
 
     bool is_grabbed() const
     {
-        return grab.tab || grab.desktop;
+        return grab.tab;
     }
 
     void init_shortcuts()
@@ -440,10 +365,6 @@ public:
         key(s_windowsAltRev, [this] { slot_walk_back_through_windows_alternative(); });
         key(s_appAlt, [this] { slot_walk_through_current_app_windows_alternative(); });
         key(s_appAltRev, [this] { slot_walk_back_through_current_app_windows_alternative(); });
-        key(s_desktops, [this] { slot_walk_through_desktops(); });
-        key(s_desktopsRev, [this] { slot_walk_back_through_desktops(); });
-        key(s_desktopList, [this] { slot_walk_through_desktop_list(); });
-        key(s_desktopListRev, [this] { slot_walk_back_through_desktop_list(); });
 
         QObject::connect(
             space.base.input->shortcuts.get(),
@@ -487,16 +408,6 @@ public:
         }
         --pos;
         return list.at(pos);
-    }
-
-    int next_desktop_static(int iDesktop) const
-    {
-        return space.subspace_manager->next(iDesktop, true);
-    }
-
-    int previous_desktop_static(int iDesktop) const
-    {
-        return space.subspace_manager->previous(iDesktop, true);
     }
 
     void key_press(int keyQt)
@@ -609,18 +520,9 @@ public:
                     << "== " << cuts[i].toString() << " or " << cuts[i + mode_count].toString();
                 kde_walk_through_windows(direction == Forward);
             }
-
-        } else if (grab.desktop) {
-            direction = direction_for(walk_sc.desktops.normal, walk_sc.desktops.reverse);
-            if (direction == Steady) {
-                direction = direction_for(walk_sc.desktops.list, walk_sc.desktops.list_reverse);
-            }
-            if (direction != Steady) {
-                walk_through_desktops(direction == Forward);
-            }
         }
 
-        if (grab.desktop || grab.tab) {
+        if (grab.tab) {
             if (((keyQt & ~Qt::KeyboardModifierMask) == Qt::Key_Escape) && direction == Steady) {
                 // if Escape is part of the shortcut, don't cancel
                 close(true);
@@ -639,20 +541,7 @@ public:
         }
 
         if (grab.tab) {
-            bool old_control_grab = grab.desktop;
             accept();
-            grab.desktop = old_control_grab;
-        }
-
-        if (grab.desktop) {
-            bool old_tab_grab = grab.tab;
-            int desktop = current_desktop();
-            close();
-            grab.tab = old_tab_grab;
-            if (desktop != -1) {
-                set_current_desktop(desktop);
-                subspaces_set_current(*space.subspace_manager, desktop);
-            }
         }
     }
 
@@ -708,7 +597,6 @@ public:
         space.input->pointer->setEnableConstraints(true);
 
         grab.tab = false;
-        grab.desktop = false;
         grab.no_modifier = false;
     }
 
@@ -728,66 +616,6 @@ public:
                            }
                        }},
                        *c);
-        }
-    }
-
-    void slot_walk_through_desktops()
-    {
-        if (!config_is_ready || is_grabbed()) {
-            return;
-        }
-
-        if (areModKeysDepressed(*space.base.input, walk_sc.desktops.normal)) {
-            if (start_walk_through_desktops()) {
-                walk_through_desktops(true);
-            }
-        } else {
-            one_step_through_desktops(true);
-        }
-    }
-
-    void slot_walk_back_through_desktops()
-    {
-        if (!config_is_ready || is_grabbed()) {
-            return;
-        }
-
-        if (areModKeysDepressed(*space.base.input, walk_sc.desktops.reverse)) {
-            if (start_walk_through_desktops()) {
-                walk_through_desktops(false);
-            }
-        } else {
-            one_step_through_desktops(false);
-        }
-    }
-
-    void slot_walk_through_desktop_list()
-    {
-        if (!config_is_ready || is_grabbed()) {
-            return;
-        }
-
-        if (areModKeysDepressed(*space.base.input, walk_sc.desktops.list)) {
-            if (start_walk_through_desktop_list()) {
-                walk_through_desktops(true);
-            }
-        } else {
-            one_step_through_desktop_list(true);
-        }
-    }
-
-    void slot_walk_back_through_desktop_list()
-    {
-        if (!config_is_ready || is_grabbed()) {
-            return;
-        }
-
-        if (areModKeysDepressed(*space.base.input, walk_sc.desktops.list_reverse)) {
-            if (start_walk_through_desktop_list()) {
-                walk_through_desktops(false);
-            }
-        } else {
-            one_step_through_desktop_list(false);
         }
     }
 
@@ -859,7 +687,6 @@ public:
     Space& space;
 
     struct {
-        bool desktop{false};
         bool tab{false};
 
         // true if tabbox is in modal mode which does not require holding a modifier
@@ -929,38 +756,6 @@ private:
         set_mode(mode);
         reset();
         return true;
-    }
-
-    // tabbox_mode::desktop | tabbox_mode::desktop_list
-    bool start_walk_through_desktops(tabbox_mode mode)
-    {
-        if (!establish_tabbox_grab()) {
-            return false;
-        }
-
-        grab.desktop = true;
-        grab.no_modifier = false;
-
-        set_mode(mode);
-        reset();
-
-        // Show the switcher only when there are two or more clients.
-        if (handler->client_list().size() <= 1) {
-            close();
-            return false;
-        }
-
-        return true;
-    }
-
-    bool start_walk_through_desktops()
-    {
-        return start_walk_through_desktops(tabbox_mode::desktop);
-    }
-
-    bool start_walk_through_desktop_list()
-    {
-        return start_walk_through_desktops(tabbox_mode::desktop_list);
     }
 
     // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
@@ -1034,8 +829,7 @@ private:
                                       || win->control->keep_above || win->control->keep_below) {
                                       return false;
                                   }
-                                  if (!options_traverse_all
-                                      && !on_subspace(*win, current_desktop())) {
+                                  if (!options_traverse_all && !on_current_subspace(*win)) {
                                       return false;
                                   }
                                   return true;
@@ -1071,18 +865,12 @@ private:
                            return;
                        }
 
-                       if (!on_subspace(*win, current_desktop())) {
-                           set_current_desktop(get_subspace(*win));
+                       if (!on_current_subspace(*win)) {
+                           subspaces_set_current(*win->space.subspace_manager, get_subspace(*win));
                        }
                        win::raise_window(space, win);
                    }},
                    *candidate);
-    }
-
-    void walk_through_desktops(bool forward)
-    {
-        next_prev(forward);
-        delayed_show();
     }
 
     // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
@@ -1094,27 +882,6 @@ private:
         if (auto win = current_client()) {
             std::visit(overload{[&](auto&& win) { activate_window(space, *win); }}, *win);
         }
-    }
-
-    // TabBoxDesktopMode | TabBoxDesktopListMode
-    void one_step_through_desktops(bool forward, tabbox_mode mode)
-    {
-        set_mode(mode);
-        reset();
-        next_prev(forward);
-        if (current_desktop() != -1) {
-            set_current_desktop(current_desktop());
-        }
-    }
-
-    void one_step_through_desktops(bool forward)
-    {
-        one_step_through_desktops(forward, tabbox_mode::desktop);
-    }
-
-    void one_step_through_desktop_list(bool forward)
-    {
-        one_step_through_desktops(forward, tabbox_mode::desktop_list);
     }
 
     bool establish_tabbox_grab()
@@ -1191,12 +958,6 @@ private:
 
         handler->set_config(config.normal);
         delay_show_data.duration = cfg_group.template readEntry<int>("DelayTime", 90);
-
-        QString const default_desktop_layout = QStringLiteral("org.kde.breeze.desktop");
-        config.desktop.set_layout_name(
-            cfg_group.readEntry("DesktopLayout", default_desktop_layout));
-        config.desktop_list.set_layout_name(
-            cfg_group.readEntry("DesktopListLayout", default_desktop_layout));
 
         auto recreate_borders = [this, &cfg_group](auto& borders, auto const& border_config) {
             for (auto const& [border, id] : borders) {
@@ -1276,17 +1037,6 @@ private:
             walk_sc.current_app_windows.alternative = seq;
         } else if (qstrcmp(qPrintable(action->objectName()), s_appAltRev.untranslatedText()) == 0) {
             walk_sc.current_app_windows.alternative_reverse = seq;
-        } else if (qstrcmp(qPrintable(action->objectName()), s_desktops.untranslatedText()) == 0) {
-            walk_sc.desktops.normal = seq;
-        } else if (qstrcmp(qPrintable(action->objectName()), s_desktopsRev.untranslatedText())
-                   == 0) {
-            walk_sc.desktops.reverse = seq;
-        } else if (qstrcmp(qPrintable(action->objectName()), s_desktopList.untranslatedText())
-                   == 0) {
-            walk_sc.desktops.list = seq;
-        } else if (qstrcmp(qPrintable(action->objectName()), s_desktopListRev.untranslatedText())
-                   == 0) {
-            walk_sc.desktops.list_reverse = seq;
         }
     }
 
@@ -1311,19 +1061,9 @@ private:
         tabbox_config alternative;
         tabbox_config normal_current_app;
         tabbox_config alternative_current_app;
-        tabbox_config desktop;
-        tabbox_config desktop_list;
     } config;
 
     struct {
-        // Shortcuts to walk through items.
-        struct {
-            QKeySequence normal;
-            QKeySequence reverse;
-            QKeySequence list;
-            QKeySequence list_reverse;
-        } desktops;
-
         struct {
             QKeySequence normal;
             QKeySequence reverse;
@@ -1359,10 +1099,6 @@ private:
         kli18n("Walk Through Windows of Current Application Alternative")};
     static constexpr auto s_appAltRev{
         kli18n("Walk Through Windows of Current Application Alternative (Reverse)")};
-    static constexpr auto s_desktops{kli18n("Walk Through Desktops")};
-    static constexpr auto s_desktopsRev{kli18n("Walk Through Desktops (Reverse)")};
-    static constexpr auto s_desktopList{kli18n("Walk Through Desktop List")};
-    static constexpr auto s_desktopListRev{kli18n("Walk Through Desktop List (Reverse)")};
 };
 
 }

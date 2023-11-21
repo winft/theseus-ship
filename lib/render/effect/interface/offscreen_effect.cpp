@@ -11,24 +11,34 @@
 #include "paint_data.h"
 
 #include <base/logging.h>
+#include <render/gl/interface/framebuffer.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
 #include <render/gl/interface/texture.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 namespace KWin
 {
 
 struct OffscreenData {
+    ~OffscreenData()
+    {
+        QObject::disconnect(windowExpandedGeometryChangedConnection);
+        QObject::disconnect(windowDamagedConnection);
+    }
+
     QScopedPointer<GLTexture> texture;
     QScopedPointer<GLFramebuffer> renderTarget;
     bool isDirty = true;
     GLShader* shader = nullptr;
+    QMetaObject::Connection windowExpandedGeometryChangedConnection;
+    QMetaObject::Connection windowDamagedConnection;
 };
 
 class OffscreenEffectPrivate
 {
 public:
     QHash<EffectWindow const*, OffscreenData*> windows;
-    QMetaObject::Connection windowExpandedGeometryChangedConnection;
-    QMetaObject::Connection windowDamagedConnection;
     QMetaObject::Connection windowDeletedConnection;
 
     void paint(GLTexture* texture,
@@ -83,6 +93,18 @@ void OffscreenEffect::redirect(EffectWindow* window)
 
     effects->makeOpenGLContextCurrent();
     offscreenData = new OffscreenData;
+
+    offscreenData->windowExpandedGeometryChangedConnection
+        = connect(window,
+                  &EffectWindow::windowExpandedGeometryChanged,
+                  this,
+                  &OffscreenEffect::handleWindowGeometryChanged);
+
+    if (d->live) {
+        offscreenData->windowDamagedConnection = connect(
+            window, &EffectWindow::windowDamaged, this, &OffscreenEffect::handleWindowDamaged);
+    }
+
     allocateOffscreenData(window, offscreenData);
 
     if (d->windows.count() == 1) {
@@ -176,7 +198,7 @@ void OffscreenEffectPrivate::paint(GLTexture* texture,
 
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    vbo->setAttribLayout(attribs, 2, sizeof(GLVertex2D));
+    vbo->setAttribLayout(std::span(GLVertexBuffer::GLVertex2DLayout), sizeof(GLVertex2D));
 
     auto map = vbo->map<GLVertex2D>(verticesPerQuad * quads.count());
     if (!map) {
@@ -274,28 +296,13 @@ void OffscreenEffect::handleWindowDeleted(EffectWindow* window)
 
 void OffscreenEffect::setupConnections()
 {
-    d->windowExpandedGeometryChangedConnection
-        = connect(effects,
-                  &EffectsHandler::windowExpandedGeometryChanged,
-                  this,
-                  &OffscreenEffect::handleWindowGeometryChanged);
-
-    if (d->live) {
-        d->windowDamagedConnection = connect(
-            effects, &EffectsHandler::windowDamaged, this, &OffscreenEffect::handleWindowDamaged);
-    }
     d->windowDeletedConnection = connect(
         effects, &EffectsHandler::windowDeleted, this, &OffscreenEffect::handleWindowDeleted);
 }
 
 void OffscreenEffect::destroyConnections()
 {
-    disconnect(d->windowExpandedGeometryChangedConnection);
-    disconnect(d->windowDamagedConnection);
     disconnect(d->windowDeletedConnection);
-
-    d->windowExpandedGeometryChangedConnection = {};
-    d->windowDamagedConnection = {};
     d->windowDeletedConnection = {};
 }
 

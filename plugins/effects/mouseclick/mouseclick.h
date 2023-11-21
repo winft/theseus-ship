@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <deque>
 #include <render/effect/interface/effect.h>
 #include <render/effect/interface/effect_frame.h>
-#include <render/gl/interface/utils.h>
 
 #include <KLocalizedString>
 #include <QFont>

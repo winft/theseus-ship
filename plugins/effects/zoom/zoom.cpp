@@ -17,7 +17,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/framebuffer.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/texture.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <KConfigGroup>
 #include <KLocalizedString>
@@ -102,7 +106,7 @@ ZoomEffect::ZoomEffect()
     timeline.setFrameRange(0, 100);
     connect(&timeline, &QTimeLine::frameChanged, this, &ZoomEffect::timelineFrameChanged);
     connect(effects, &EffectsHandler::mouseChanged, this, &ZoomEffect::slotMouseChanged);
-    connect(effects, &EffectsHandler::windowDamaged, this, &ZoomEffect::slotWindowDamaged);
+    connect(effects, &EffectsHandler::windowAdded, this, &ZoomEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::screenRemoved, this, &ZoomEffect::slotScreenRemoved);
 
 #if HAVE_ACCESSIBILITY
@@ -112,6 +116,11 @@ ZoomEffect::ZoomEffect()
             this,
             &ZoomEffect::moveFocus);
 #endif
+
+    auto const windows = effects->stackingOrder();
+    for (auto w : windows) {
+        slotWindowAdded(w);
+    }
 
     source_zoom = -1; // used to trigger initialZoom reading
     reconfigure(ReconfigureAll);
@@ -275,25 +284,35 @@ ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(QRect const& viewport
         data.vbo.reset(new GLVertexBuffer(GLVertexBuffer::Static));
         data.viewport = rect;
 
-        QVector<float> verts;
-        QVector<float> texcoords;
+        QVector<GLVertex2D> verts;
 
         // The v-coordinate is flipped because projection matrix is "flipped."
-        texcoords << 1.0 << 1.0;
-        verts << rect.x() + rect.width() << rect.y();
-        texcoords << 0.0 << 1.0;
-        verts << rect.x() << rect.y();
-        texcoords << 0.0 << 0.0;
-        verts << rect.x() << rect.y() + rect.height();
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x() + rect.width(), rect.y()),
+            .texcoord = QVector2D(1.0f, 1.0f),
+        });
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x(), rect.y()),
+            .texcoord = QVector2D(0.0, 1.0),
+        });
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x(), rect.y() + rect.height()),
+            .texcoord = QVector2D(0.0, 0.0),
+        });
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x() + rect.width(), rect.y() + rect.height()),
+            .texcoord = QVector2D(1.0, 0.0),
+        });
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x() + rect.width(), rect.y()),
+            .texcoord = QVector2D(1.0, 1.0),
+        });
+        verts.push_back(GLVertex2D{
+            .position = QVector2D(rect.x(), rect.y() + rect.height()),
+            .texcoord = QVector2D(0.0, 0.0),
+        });
 
-        texcoords << 1.0 << 0.0;
-        verts << rect.x() + rect.width() << rect.y() + rect.height();
-        texcoords << 1.0 << 1.0;
-        verts << rect.x() + rect.width() << rect.y();
-        texcoords << 0.0 << 0.0;
-        verts << rect.x() << rect.y() + rect.height();
-
-        data.vbo->setData(6, 2, verts.constData(), texcoords.constData());
+        data.vbo->setVertices(verts);
     }
 
     return &data;
@@ -571,6 +590,11 @@ void ZoomEffect::slotMouseChanged(const QPoint& pos,
         lastMouseEvent = QTime::currentTime();
         effects->addRepaintFull();
     }
+}
+
+void ZoomEffect::slotWindowAdded(EffectWindow* w)
+{
+    connect(w, &EffectWindow::windowDamaged, this, &ZoomEffect::slotWindowDamaged);
 }
 
 void ZoomEffect::slotWindowDamaged()

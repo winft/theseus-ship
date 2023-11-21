@@ -67,7 +67,7 @@ private Q_SLOTS:
     void slotWindowAdded(EffectWindow* w);
     void slotWindowDeleted(EffectWindow* w);
 
-    void slotDesktopChanged(int old, int current, EffectWindow* w);
+    void slotDesktopChanged(win::subspace* old, win::subspace* current, EffectWindow* w);
     void slotWindowStepUserMovedResized(KWin::EffectWindow* w);
     void slotWindowFinishUserMovedResized(KWin::EffectWindow* w);
     void slotNumberDesktopsChanged();
@@ -81,9 +81,9 @@ private:
     void startAnimation();
 
     bool cube_painting;
-    int front_desktop;
-    int painting_desktop;
-    int other_desktop;
+    win::subspace* front_desktop{nullptr};
+    win::subspace* painting_desktop{nullptr};
+    win::subspace* other_desktop{nullptr};
     bool firstDesktop;
     bool stickyPainting;
     QHash<EffectWindow*, EffectWindowVisibleRef> staticWindows;

@@ -11,6 +11,8 @@
 #include "effect_window.h"
 #include "effects_handler.h"
 #include "paint_data.h"
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
 
 #include <QDebug>
 #include <QTimer>
@@ -229,14 +231,12 @@ quint64 AnimationEffect::p_animate(EffectWindow* w,
     Q_D(AnimationEffect);
     if (!d->m_isInitialized)
         init(); // needs to ensure the window gets removed if deleted in the same event cycle
-    if (d->m_animations.isEmpty()) {
-        connect(effects,
-                &EffectsHandler::windowExpandedGeometryChanged,
-                this,
-                &AnimationEffect::_windowExpandedGeometryChanged);
-    }
     auto it = d->m_animations.find(w);
     if (it == d->m_animations.end()) {
+        connect(w,
+                &EffectWindow::windowExpandedGeometryChanged,
+                this,
+                &AnimationEffect::_windowExpandedGeometryChanged);
         it = d->m_animations.insert(w, QPair<QList<AniData>, QRect>(QList<AniData>(), QRect()));
     }
 
@@ -439,10 +439,12 @@ bool AnimationEffect::cancel(quint64 animationId)
                 }
                 entry->first.erase(anim);     // remove the animation
                 if (entry->first.isEmpty()) { // no other animations on the window, release it.
+                    disconnect(entry.key(),
+                               &EffectWindow::windowExpandedGeometryChanged,
+                               this,
+                               &AnimationEffect::_windowExpandedGeometryChanged);
                     d->m_animations.erase(entry);
                 }
-                if (d->m_animations.isEmpty())
-                    disconnectGeometryChanges();
                 d->m_animationsTouched = true; // could be called from animationEnded
                 return true;
             }
@@ -492,14 +494,6 @@ QRect AnimationEffect::clipRect(const QRect& geo, const AniData& anim) const
     const QPoint d(x[0] + ratio[0] * (x[1] - x[0]), y[0] + ratio[1] * (y[1] - y[0]));
     clip.moveTopLeft(QPoint(d.x() - clip.width() / 2, d.y() - clip.height() / 2));
     return clip;
-}
-
-void AnimationEffect::disconnectGeometryChanges()
-{
-    disconnect(effects,
-               &EffectsHandler::windowExpandedGeometryChanged,
-               this,
-               &AnimationEffect::_windowExpandedGeometryChanged);
 }
 
 void AnimationEffect::prePaintWindow(effect::window_prepaint_data& data)
@@ -736,6 +730,10 @@ void AnimationEffect::postPaintScreen()
             invalidateLayerRect = damageDirty = true;
         }
         if (entry->first.isEmpty()) {
+            disconnect(entry.key(),
+                       &EffectWindow::windowExpandedGeometryChanged,
+                       this,
+                       &AnimationEffect::_windowExpandedGeometryChanged);
             effects->addRepaint(entry->second);
             entry = d->m_animations.erase(entry);
         } else {
@@ -763,11 +761,6 @@ void AnimationEffect::postPaintScreen()
                 }
             }
         }
-    }
-
-    // janitorial...
-    if (d->m_animations.isEmpty()) {
-        disconnectGeometryChanges();
     }
 
     effects->postPaintScreen();

@@ -297,7 +297,6 @@ public:
     std::unique_ptr<deco::bridge<type>> deco;
     std::unique_ptr<dbus::appmenu> appmenu;
     std::unique_ptr<x11::root_info<space>> root_info;
-    std::unique_ptr<x11::color_mapper<type>> color_mapper;
 
     std::unique_ptr<input_t> input;
     std::unordered_map<std::string, xcb_cursor_t> xcb_cursors;

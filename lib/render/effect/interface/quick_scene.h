@@ -10,7 +10,7 @@
 #include <render/effect/interface/effect_screen.h>
 #include <render/effect/interface/paint_data.h>
 
-#include <QQmlEngine>
+#include <QQmlComponent>
 
 namespace KWin
 {
@@ -31,6 +31,7 @@ class KWIN_EXPORT QuickSceneView : public EffectQuickView
     Q_OBJECT
     Q_PROPERTY(QuickSceneEffect* effect READ effect CONSTANT)
     Q_PROPERTY(EffectScreen const* screen READ screen CONSTANT)
+    Q_PROPERTY(QQuickItem* rootItem READ rootItem CONSTANT)
 
 public:
     explicit QuickSceneView(QuickSceneEffect* effect, EffectScreen const* screen);
@@ -75,6 +76,7 @@ class KWIN_EXPORT QuickSceneEffect : public Effect
 {
     Q_OBJECT
     Q_PROPERTY(QuickSceneView* activeView READ activeView NOTIFY activeViewChanged)
+    Q_PROPERTY(QQmlComponent* delegate READ delegate WRITE setDelegate NOTIFY delegateChanged)
 
 public:
     explicit QuickSceneEffect(QObject* parent = nullptr);
@@ -95,12 +97,12 @@ public:
     /**
      * Returns the scene view on the specified screen
      */
-    QuickSceneView* viewForScreen(EffectScreen const* screen) const;
+    Q_INVOKABLE QuickSceneView* viewForScreen(EffectScreen const* screen) const;
 
     /**
      * Returns the view at the specified @a pos in the global screen coordinates.
      */
-    QuickSceneView* viewAt(const QPoint& pos) const;
+    Q_INVOKABLE QuickSceneView* viewAt(const QPoint& pos) const;
 
     /**
      * Get a view at the given direction from the active view
@@ -113,6 +115,12 @@ public:
      * set as inactive
      */
     Q_INVOKABLE void activateView(QuickSceneView* view);
+
+    /**
+     * The delegate provides a template defining the contents of each instantiated screen view.
+     */
+    QQmlComponent* delegate() const;
+    void setDelegate(QQmlComponent* delegate);
 
     /**
      * Returns the source URL.
@@ -153,6 +161,7 @@ Q_SIGNALS:
     void
     itemDroppedOutOfScreen(QPointF const& globalPos, QQuickItem* item, EffectScreen const* screen);
     void activeViewChanged(KWin::QuickSceneView* view);
+    void delegateChanged();
 
 protected:
     /**

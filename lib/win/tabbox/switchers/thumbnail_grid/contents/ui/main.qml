@@ -5,9 +5,9 @@
  SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-import QtQuick 2.0
+import QtQuick
 import QtQuick.Layouts 1.1
-import org.kde.plasma.core 2.0 as PlasmaCore
+import org.kde.plasma.core as PlasmaCore
 import org.kde.ksvg 1.0 as KSvg
 import org.kde.plasma.components 3.0 as PlasmaComponents3
 import org.kde.kwin 3.0 as KWin
@@ -93,7 +93,7 @@ KWin.TabBoxSwitcher {
             GridView {
                 id: thumbnailGridView
                 anchors.fill: parent
-
+                focus: true
                 model: tabBox.model
 
                 readonly property int iconSize: Kirigami.Units.iconSizes.huge
@@ -107,23 +107,18 @@ KWin.TabBoxSwitcher {
                 keyNavigationWraps: true
                 highlightMoveDuration: 0
 
-                delegate: Item {
+                delegate: MouseArea {
                     id: thumbnailGridItem
                     width: thumbnailGridView.cellWidth
                     height: thumbnailGridView.cellHeight
-                    readonly property bool isCurrentItem: GridView.isCurrentItem
+                    focus: GridView.isCurrentItem
+                    hoverEnabled: true
 
-                    MouseArea {
-                        id: mouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: {
-                            thumbnailGridItem.select();
-                        }
-                    }
-                    function select() {
+                    Accessible.name: model.caption
+                    Accessible.role: Accessible.ListItem
+
+                    onClicked: {
                         thumbnailGridView.currentIndex = index;
-                        thumbnailGridView.currentIndexChanged(thumbnailGridView.currentIndex);
                     }
 
                     ColumnLayout {
@@ -151,7 +146,7 @@ KWin.TabBoxSwitcher {
                             Kirigami.Icon {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.verticalCenter: parent.bottom
-                                anchors.verticalCenterOffset: Math.round(-columnLayout.spacing/2)
+                                anchors.verticalCenterOffset: Math.round(-thumbnailGridView.iconSize / 4)
                                 width: thumbnailGridView.iconSize
                                 height: thumbnailGridView.iconSize
 
@@ -168,9 +163,9 @@ KWin.TabBoxSwitcher {
                                     topMargin: -columnLayout.anchors.topMargin
                                 }
                                 visible: model.closeable && typeof tabBox.model.close !== 'undefined' &&
-                                        (mouseArea.containsMouse
+                                        (thumbnailGridItem.containsMouse
                                          || closeButton.hovered
-                                         || thumbnailGridItem.isCurrentItem
+                                         || thumbnailGridItem.focus
                                          || Kirigami.Settings.tabletMode
                                          || Kirigami.Settings.hasTransientTouchInput
                                         )
@@ -184,7 +179,7 @@ KWin.TabBoxSwitcher {
                         PlasmaComponents3.Label {
                             Layout.fillWidth: true
                             text: model.caption
-                            font.weight: thumbnailGridItem.isCurrentItem ? Font.Bold : Font.Normal
+                            font.weight: thumbnailGridItem.focus ? Font.Bold : Font.Normal
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             textFormat: Text.PlainText

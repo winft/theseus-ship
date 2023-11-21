@@ -12,96 +12,86 @@
 namespace KWin::effect
 {
 
-template<typename Handler, typename Win>
-void setup_handler_window_connections(Handler& handler, Win& window)
+template<typename Win>
+void setup_window_connections(Win& window)
 {
     auto qtwin = window.qobject.get();
+    auto eff_win = window.render->effect.get();
 
-    QObject::connect(qtwin, &win::window_qobject::subspaces_changed, &handler, [&handler, &window] {
-        Q_EMIT handler.windowDesktopsChanged(window.render->effect.get());
+    QObject::connect(qtwin, &win::window_qobject::subspaces_changed, eff_win, [eff_win] {
+        Q_EMIT eff_win->windowDesktopsChanged(eff_win);
     });
-    QObject::connect(qtwin,
-                     &win::window_qobject::maximize_mode_changed,
-                     &handler,
-                     [&handler, &window](auto mode) { handler.slotClientMaximized(window, mode); });
     QObject::connect(
-        qtwin, &win::window_qobject::clientStartUserMovedResized, &handler, [&handler, &window] {
-            Q_EMIT handler.windowStartUserMovedResized(window.render->effect.get());
+        qtwin, &win::window_qobject::maximize_mode_changed, eff_win, [&window, eff_win](auto mode) {
+            Q_EMIT eff_win->windowMaximizedStateChanged(
+                eff_win,
+                flags(mode & win::maximize_mode::horizontal),
+                flags(mode & win::maximize_mode::vertical));
         });
+    QObject::connect(qtwin, &win::window_qobject::clientStartUserMovedResized, eff_win, [eff_win] {
+        Q_EMIT eff_win->windowStartUserMovedResized(eff_win);
+    });
     QObject::connect(qtwin,
                      &win::window_qobject::clientStepUserMovedResized,
-                     &handler,
-                     [&handler, &window](QRect const& geometry) {
-                         Q_EMIT handler.windowStepUserMovedResized(window.render->effect.get(),
-                                                                   geometry);
+                     eff_win,
+                     [eff_win](auto const& geometry) {
+                         Q_EMIT eff_win->windowStepUserMovedResized(eff_win, geometry);
                      });
+    QObject::connect(qtwin, &win::window_qobject::clientFinishUserMovedResized, eff_win, [eff_win] {
+        Q_EMIT eff_win->windowFinishUserMovedResized(eff_win);
+    });
     QObject::connect(
-        qtwin, &win::window_qobject::clientFinishUserMovedResized, &handler, [&handler, &window] {
-            Q_EMIT handler.windowFinishUserMovedResized(window.render->effect.get());
+        qtwin, &win::window_qobject::opacityChanged, eff_win, [&window, eff_win](auto old) {
+            Q_EMIT eff_win->windowOpacityChanged(eff_win, old, window.opacity());
         });
-    QObject::connect(qtwin,
-                     &win::window_qobject::opacityChanged,
-                     &handler,
-                     [&handler, &window](auto old) { handler.slotOpacityChanged(window, old); });
     QObject::connect(
-        qtwin, &win::window_qobject::clientMinimized, &handler, [&handler, &window](auto animate) {
+        qtwin, &win::window_qobject::clientMinimized, eff_win, [eff_win](auto animate) {
             // TODO: notify effects even if it should not animate?
             if (animate) {
-                Q_EMIT handler.windowMinimized(window.render->effect.get());
+                Q_EMIT eff_win->windowMinimized(eff_win);
             }
         });
-    QObject::connect(qtwin,
-                     &win::window_qobject::clientUnminimized,
-                     &handler,
-                     [&handler, &window](auto animate) {
-                         // TODO: notify effects even if it should not animate?
-                         if (animate) {
-                             Q_EMIT handler.windowUnminimized(window.render->effect.get());
-                         }
-                     });
-    QObject::connect(qtwin, &win::window_qobject::modalChanged, &handler, [&handler, &window] {
-        handler.slotClientModalityChanged(window);
+    QObject::connect(
+        qtwin, &win::window_qobject::clientUnminimized, eff_win, [eff_win](auto animate) {
+            // TODO: notify effects even if it should not animate?
+            if (animate) {
+                Q_EMIT eff_win->windowUnminimized(eff_win);
+            }
+        });
+    QObject::connect(qtwin, &win::window_qobject::modalChanged, eff_win, [eff_win] {
+        eff_win->windowModalityChanged(eff_win);
     });
     QObject::connect(
-        qtwin,
-        &win::window_qobject::frame_geometry_changed,
-        &handler,
-        [&handler, &window](auto const& rect) { handler.slotFrameGeometryChanged(window, rect); });
-    QObject::connect(
-        qtwin, &win::window_qobject::damaged, &handler, [&handler, &window](auto const& rect) {
-            handler.slotWindowDamaged(window, rect);
+        qtwin, &win::window_qobject::frame_geometry_changed, eff_win, [eff_win](auto const& old) {
+            eff_win->windowFrameGeometryChanged(eff_win, old);
         });
-    QObject::connect(qtwin,
-                     &win::window_qobject::unresponsiveChanged,
-                     &handler,
-                     [&handler, &window](bool unresponsive) {
-                         Q_EMIT handler.windowUnresponsiveChanged(window.render->effect.get(),
-                                                                  unresponsive);
-                     });
-    QObject::connect(qtwin, &win::window_qobject::windowShown, &handler, [&handler, &window] {
-        Q_EMIT handler.windowShown(window.render->effect.get());
-    });
-    QObject::connect(qtwin, &win::window_qobject::windowHidden, &handler, [&handler, &window] {
-        Q_EMIT handler.windowHidden(window.render->effect.get());
+    QObject::connect(qtwin, &win::window_qobject::damaged, eff_win, [eff_win](auto const& rect) {
+        eff_win->windowDamaged(eff_win, rect);
     });
     QObject::connect(
-        qtwin, &win::window_qobject::keepAboveChanged, &handler, [&handler, &window](bool above) {
-            Q_UNUSED(above)
-            Q_EMIT handler.windowKeepAboveChanged(window.render->effect.get());
+        qtwin, &win::window_qobject::unresponsiveChanged, eff_win, [eff_win](bool unresponsive) {
+            Q_EMIT eff_win->windowUnresponsiveChanged(eff_win, unresponsive);
         });
-    QObject::connect(
-        qtwin, &win::window_qobject::keepBelowChanged, &handler, [&handler, &window](bool below) {
-            Q_UNUSED(below)
-            Q_EMIT handler.windowKeepBelowChanged(window.render->effect.get());
-        });
-    QObject::connect(
-        qtwin, &win::window_qobject::fullScreenChanged, &handler, [&handler, &window]() {
-            Q_EMIT handler.windowFullScreenChanged(window.render->effect.get());
-        });
-    QObject::connect(
-        qtwin, &win::window_qobject::visible_geometry_changed, &handler, [&handler, &window]() {
-            Q_EMIT handler.windowExpandedGeometryChanged(window.render->effect.get());
-        });
+    QObject::connect(qtwin, &win::window_qobject::windowShown, eff_win, [eff_win] {
+        Q_EMIT eff_win->windowShown(eff_win);
+    });
+    QObject::connect(qtwin, &win::window_qobject::windowHidden, eff_win, [eff_win] {
+        Q_EMIT eff_win->windowHidden(eff_win);
+    });
+    QObject::connect(qtwin, &win::window_qobject::keepAboveChanged, eff_win, [eff_win](bool above) {
+        Q_UNUSED(above)
+        Q_EMIT eff_win->windowKeepAboveChanged(eff_win);
+    });
+    QObject::connect(qtwin, &win::window_qobject::keepBelowChanged, eff_win, [eff_win](bool below) {
+        Q_UNUSED(below)
+        Q_EMIT eff_win->windowKeepBelowChanged(eff_win);
+    });
+    QObject::connect(qtwin, &win::window_qobject::fullScreenChanged, eff_win, [eff_win]() {
+        Q_EMIT eff_win->windowFullScreenChanged(eff_win);
+    });
+    QObject::connect(qtwin, &win::window_qobject::visible_geometry_changed, eff_win, [eff_win]() {
+        Q_EMIT eff_win->windowExpandedGeometryChanged(eff_win);
+    });
 }
 
 }

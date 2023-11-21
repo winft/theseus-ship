@@ -42,6 +42,7 @@ protected:
     void apply(effect::window_paint_data& data, WindowQuadList& quads) override;
 
 public Q_SLOTS:
+    void slotWindowAdded(KWin::EffectWindow* w);
     void slotWindowDeleted(KWin::EffectWindow* w);
     void slotWindowMinimized(KWin::EffectWindow* w);
     void slotWindowUnminimized(KWin::EffectWindow* w);

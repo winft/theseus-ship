@@ -9,7 +9,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
 #include <render/effect/interface/paint_data.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/shader.h>
+#include <render/gl/interface/shader_manager.h>
+#include <render/gl/interface/vertex_buffer.h>
 
 #include <QPainter>
 
@@ -57,19 +59,13 @@ SnapHelperEffect::SnapHelperEffect()
 {
     reconfigure(ReconfigureAll);
 
+    connect(effects, &EffectsHandler::windowAdded, this, &SnapHelperEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::windowClosed, this, &SnapHelperEffect::slotWindowClosed);
-    connect(effects,
-            &EffectsHandler::windowStartUserMovedResized,
-            this,
-            &SnapHelperEffect::slotWindowStartUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowFinishUserMovedResized,
-            this,
-            &SnapHelperEffect::slotWindowFinishUserMovedResized);
-    connect(effects,
-            &EffectsHandler::windowFrameGeometryChanged,
-            this,
-            &SnapHelperEffect::slotWindowFrameGeometryChanged);
+
+    auto const windows = effects->stackingOrder();
+    for (auto window : windows) {
+        slotWindowAdded(window);
+    }
 }
 
 SnapHelperEffect::~SnapHelperEffect()
@@ -104,7 +100,6 @@ void SnapHelperEffect::paintScreen(effect::screen_paint_data& data)
     if (effects->isOpenGLCompositing()) {
         GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
         vbo->reset();
-        vbo->setUseColor(true);
         ShaderBinder binder(ShaderTrait::UniformColor);
         binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, effect::get_mvp(data));
         glEnable(GL_BLEND);
@@ -112,10 +107,10 @@ void SnapHelperEffect::paintScreen(effect::screen_paint_data& data)
 
         QColor color = s_lineColor;
         color.setAlphaF(color.alphaF() * opacityFactor);
-        vbo->setColor(color);
+        binder.shader()->setUniform(GLShader::ColorUniform::Color, color);
 
         glLineWidth(s_lineWidth);
-        QVector<float> verts;
+        QVector<QVector2D> verts;
         verts.reserve(screens.size() * 24);
         for (EffectScreen* screen : screens) {
             const QRect rect = effects->clientArea(ScreenArea, screen, 0);
@@ -125,30 +120,30 @@ void SnapHelperEffect::paintScreen(effect::screen_paint_data& data)
             const int halfHeight = m_geometry.height() / 2;
 
             // Center vertical line.
-            verts << rect.x() + rect.width() / 2 << rect.y();
-            verts << rect.x() + rect.width() / 2 << rect.y() + rect.height();
+            verts.push_back(QVector2D(rect.x() + rect.width() / 2, rect.y()));
+            verts.push_back(QVector2D(rect.x() + rect.width() / 2, rect.y() + rect.height()));
 
             // Center horizontal line.
-            verts << rect.x() << rect.y() + rect.height() / 2;
-            verts << rect.x() + rect.width() << rect.y() + rect.height() / 2;
+            verts.push_back(QVector2D(rect.x(), rect.y() + rect.height() / 2));
+            verts.push_back(QVector2D(rect.x() + rect.width(), rect.y() + rect.height() / 2));
 
             // Top edge of the window outline.
-            verts << midX - halfWidth - s_lineWidth / 2 << midY - halfHeight;
-            verts << midX + halfWidth + s_lineWidth / 2 << midY - halfHeight;
+            verts.push_back(QVector2D(midX - halfWidth - s_lineWidth / 2, midY - halfHeight));
+            verts.push_back(QVector2D(midX + halfWidth + s_lineWidth / 2, midY - halfHeight));
 
             // Right edge of the window outline.
-            verts << midX + halfWidth << midY - halfHeight + s_lineWidth / 2;
-            verts << midX + halfWidth << midY + halfHeight - s_lineWidth / 2;
+            verts.push_back(QVector2D(midX + halfWidth, midY - halfHeight + s_lineWidth / 2));
+            verts.push_back(QVector2D(midX + halfWidth, midY + halfHeight - s_lineWidth / 2));
 
             // Bottom edge of the window outline.
-            verts << midX + halfWidth + s_lineWidth / 2 << midY + halfHeight;
-            verts << midX - halfWidth - s_lineWidth / 2 << midY + halfHeight;
+            verts.push_back(QVector2D(midX + halfWidth + s_lineWidth / 2, midY + halfHeight));
+            verts.push_back(QVector2D(midX - halfWidth - s_lineWidth / 2, midY + halfHeight));
 
             // Left edge of the window outline.
-            verts << midX - halfWidth << midY + halfHeight - s_lineWidth / 2;
-            verts << midX - halfWidth << midY - halfHeight + s_lineWidth / 2;
+            verts.push_back(QVector2D(midX - halfWidth, midY + halfHeight - s_lineWidth / 2));
+            verts.push_back(QVector2D(midX - halfWidth, midY - halfHeight + s_lineWidth / 2));
         }
-        vbo->setData(verts.count() / 2, 2, verts.data(), nullptr);
+        vbo->setVertices(verts);
         vbo->render(GL_LINES);
 
         glDisable(GL_BLEND);
@@ -192,6 +187,22 @@ void SnapHelperEffect::postPaintScreen()
     }
 
     effects->postPaintScreen();
+}
+
+void SnapHelperEffect::slotWindowAdded(EffectWindow* w)
+{
+    connect(w,
+            &EffectWindow::windowStartUserMovedResized,
+            this,
+            &SnapHelperEffect::slotWindowStartUserMovedResized);
+    connect(w,
+            &EffectWindow::windowFinishUserMovedResized,
+            this,
+            &SnapHelperEffect::slotWindowFinishUserMovedResized);
+    connect(w,
+            &EffectWindow::windowFrameGeometryChanged,
+            this,
+            &SnapHelperEffect::slotWindowFrameGeometryChanged);
 }
 
 void SnapHelperEffect::slotWindowClosed(EffectWindow* w)

@@ -102,13 +102,9 @@
         "Name[vi]": "Làm tối màn hình cho chế độ quản trị viên",
         "Name[x-test]": "xxDim Screen for Administrator Modexx",
         "Name[zh_CN]": "请求管理员模式时降低屏幕亮度",
-        "Name[zh_TW]": "為管理員模式暗化螢幕",
-        "Version": "1",
-        "Website": ""
+        "Name[zh_TW]": "為管理員模式暗化螢幕"
     },
-    "X-KDE-Ordering": "60",
-    "X-KDE-ParentApp": "",
+    "X-KDE-Ordering": 60,
     "X-KWin-Video-Url": "https://files.kde.org/plasma/kwin/effect-videos/dim_administration.mp4",
-    "X-Plasma-API": "javascript",
-    "X-Plasma-MainScript": "code/main.js"
+    "X-Plasma-API": "javascript"
 }

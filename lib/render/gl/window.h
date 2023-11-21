@@ -455,14 +455,24 @@ private:
             texture->setFilter(GL_LINEAR);
         }
 
-        const GLVertexAttrib attribs[] = {
-            {VA_Position, 2, GL_FLOAT, offsetof(GLVertex2D, position)},
-            {VA_TexCoord, 2, GL_FLOAT, offsetof(GLVertex2D, texcoord)},
-        };
-
         auto vbo = GLVertexBuffer::streamingBuffer();
         vbo->reset();
-        vbo->setAttribLayout(attribs, 2, sizeof(GLVertex2D));
+
+        constexpr std::array layout{
+            GLVertexAttrib{
+                .attributeIndex = VA_Position,
+                .componentCount = 2,
+                .type = GL_FLOAT,
+                .relativeOffset = offsetof(GLVertex2D, position),
+            },
+            GLVertexAttrib{
+                .attributeIndex = VA_TexCoord,
+                .componentCount = 2,
+                .type = GL_FLOAT,
+                .relativeOffset = offsetof(GLVertex2D, texcoord),
+            },
+        };
+        vbo->setAttribLayout(std::span(layout), sizeof(GLVertex2D));
 
         return true;
     }

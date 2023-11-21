@@ -9,6 +9,7 @@
 #include <render/effect/interface/effect_integration.h>
 #include <render/effect/interface/paint_data.h>
 #include <render/effect/interface/types.h>
+#include <win/subspace.h>
 
 #include <KSharedConfig>
 
@@ -45,7 +46,8 @@ class WindowQuadList;
 class KWIN_EXPORT EffectsHandler : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int currentDesktop READ currentDesktop WRITE setCurrentDesktop NOTIFY desktopChanged)
+    Q_PROPERTY(KWin::win::subspace* currentDesktop READ currentDesktop WRITE setCurrentDesktop
+                   NOTIFY desktopChanged)
     Q_PROPERTY(QString currentActivity READ currentActivity NOTIFY currentActivityChanged)
     Q_PROPERTY(KWin::EffectWindow* activeWindow READ activeWindow WRITE activateWindow NOTIFY
                    windowActivated)
@@ -54,11 +56,7 @@ class KWIN_EXPORT EffectsHandler : public QObject
     Q_PROPERTY(int desktopGridHeight READ desktopGridHeight NOTIFY desktopGridHeightChanged)
     Q_PROPERTY(int workspaceWidth READ workspaceWidth)
     Q_PROPERTY(int workspaceHeight READ workspaceHeight)
-    /**
-     * The number of desktops currently used. Minimum number of desktops is 1, maximum 20.
-     */
-    Q_PROPERTY(
-        int desktops READ numberOfDesktops WRITE setNumberOfDesktops NOTIFY numberDesktopsChanged)
+    Q_PROPERTY(QList<KWin::win::subspace*> desktops READ desktops)
     Q_PROPERTY(bool optionRollOverDesktops READ optionRollOverDesktops)
     Q_PROPERTY(KWin::EffectScreen* activeScreen READ activeScreen)
     /**
@@ -263,12 +261,6 @@ public:
         = 0;
 
     /**
-     * Moves the window to the specific desktop
-     * Setting desktop to NET::OnAllDesktops will set the window on all desktops
-     */
-    Q_SCRIPTABLE virtual void windowToDesktop(KWin::EffectWindow* w, int desktop) = 0;
-
-    /**
      * Moves a window to the given desktops
      * On X11, the window will end up on the last window in the list
      * Setting this to an empty list will set the window on all desktops
@@ -277,7 +269,7 @@ public:
      * a valid desktop X11Id
      */
     Q_SCRIPTABLE virtual void windowToDesktops(KWin::EffectWindow* w,
-                                               const QVector<uint>& desktopIds)
+                                               QVector<win::subspace*> const& desktopIds)
         = 0;
 
     Q_SCRIPTABLE virtual void windowToScreen(KWin::EffectWindow* w, EffectScreen* screen) = 0;
@@ -292,19 +284,15 @@ public:
     /**
      * @returns The ID of the current desktop.
      */
-    virtual int currentDesktop() const = 0;
+    virtual win::subspace* currentDesktop() const = 0;
     /**
      * @returns Total number of desktops currently in existence.
      */
-    virtual int numberOfDesktops() const = 0;
+    virtual QList<win::subspace*> desktops() const = 0;
     /**
      * Set the current desktop to @a desktop.
      */
-    virtual void setCurrentDesktop(int desktop) = 0;
-    /**
-     * Sets the total number of desktops to @a desktops.
-     */
-    virtual void setNumberOfDesktops(int desktops) = 0;
+    virtual void setCurrentDesktop(win::subspace* subsp) = 0;
     /**
      * @returns The size of desktop layout in grid units.
      */
@@ -329,42 +317,52 @@ public:
      * @returns The ID of the desktop at the point @a coords or 0 if no desktop exists at that
      * point. @a coords is to be in grid units.
      */
-    virtual int desktopAtCoords(QPoint coords) const = 0;
+    virtual win::subspace* desktopAtCoords(QPoint coords) const = 0;
     /**
      * @returns The coords of desktop @a id in grid units.
      */
-    virtual QPoint desktopGridCoords(int id) const = 0;
+    virtual QPoint desktopGridCoords(win::subspace* subsp) const = 0;
     /**
      * @returns The coords of the top-left corner of desktop @a id in pixels.
      */
-    virtual QPoint desktopCoords(int id) const = 0;
+    virtual QPoint desktopCoords(win::subspace* subsp) const = 0;
     /**
      * @returns The ID of the desktop above desktop @a id. Wraps around to the bottom of
      * the layout if @a wrap is set. If @a id is not set use the current one.
      */
-    Q_SCRIPTABLE virtual int desktopAbove(int desktop = 0, bool wrap = true) const = 0;
+    Q_SCRIPTABLE virtual KWin::win::subspace* desktopAbove(KWin::win::subspace* subsp = nullptr,
+                                                           bool wrap = true) const
+        = 0;
     /**
      * @returns The ID of the desktop to the right of desktop @a id. Wraps around to the
      * left of the layout if @a wrap is set. If @a id is not set use the current one.
      */
-    Q_SCRIPTABLE virtual int desktopToRight(int desktop = 0, bool wrap = true) const = 0;
+    Q_SCRIPTABLE virtual KWin::win::subspace* desktopToRight(KWin::win::subspace* subsp = nullptr,
+                                                             bool wrap = true) const
+        = 0;
     /**
      * @returns The ID of the desktop below desktop @a id. Wraps around to the top of the
      * layout if @a wrap is set. If @a id is not set use the current one.
      */
-    Q_SCRIPTABLE virtual int desktopBelow(int desktop = 0, bool wrap = true) const = 0;
+    Q_SCRIPTABLE virtual KWin::win::subspace* desktopBelow(KWin::win::subspace* subsp = nullptr,
+                                                           bool wrap = true) const
+        = 0;
     /**
      * @returns The ID of the desktop to the left of desktop @a id. Wraps around to the
      * right of the layout if @a wrap is set. If @a id is not set use the current one.
      */
-    Q_SCRIPTABLE virtual int desktopToLeft(int desktop = 0, bool wrap = true) const = 0;
-    Q_SCRIPTABLE virtual QString desktopName(int desktop) const = 0;
+    Q_SCRIPTABLE virtual KWin::win::subspace* desktopToLeft(KWin::win::subspace* subsp = nullptr,
+                                                            bool wrap = true) const
+        = 0;
+    Q_SCRIPTABLE virtual QString desktopName(KWin::win::subspace* subsp) const = 0;
     virtual bool optionRollOverDesktops() const = 0;
 
     virtual EffectScreen* activeScreen() const = 0; // Xinerama
-    virtual QRect clientArea(clientAreaOption, EffectScreen const* screen, int desktop) const = 0;
+    virtual QRect
+    clientArea(clientAreaOption, EffectScreen const* screen, win::subspace* subsp) const
+        = 0;
     virtual QRect clientArea(clientAreaOption, const EffectWindow* c) const = 0;
-    virtual QRect clientArea(clientAreaOption, const QPoint& p, int desktop) const = 0;
+    virtual QRect clientArea(clientAreaOption, const QPoint& p, win::subspace* subsp) const = 0;
 
     /**
      * The bounding size of all screens combined. Overlapping areas
@@ -419,13 +417,10 @@ public:
     Q_SCRIPTABLE virtual void setElevatedWindow(KWin::EffectWindow* w, bool set) = 0;
 
     virtual void setTabBoxWindow(EffectWindow*) = 0;
-    virtual void setTabBoxDesktop(int) = 0;
     virtual EffectWindowList currentTabBoxWindowList() const = 0;
     virtual void refTabBox() = 0;
     virtual void unrefTabBox() = 0;
     virtual void closeTabBox() = 0;
-    virtual QList<int> currentTabBoxDesktopList() const = 0;
-    virtual int currentTabBoxDesktop() const = 0;
     virtual EffectWindow* currentTabBoxWindow() const = 0;
 
     virtual void setActiveFullScreenEffect(Effect* e) = 0;
@@ -703,7 +698,9 @@ Q_SIGNALS:
      * @param with The window which is taken over to the new desktop, can be NULL
      * @since 4.9
      */
-    void desktopChanged(int oldDesktop, int newDesktop, KWin::EffectWindow* with);
+    void desktopChanged(KWin::win::subspace* oldDesktop,
+                        KWin::win::subspace* newDesktop,
+                        KWin::EffectWindow* with);
 
     /**
      * Signal emmitted while desktop is changing for animation.
@@ -712,11 +709,11 @@ Q_SIGNALS:
      * offset.x() = .6 means 60% of the way to the desktop to the right.
      * Positive Values means Up and Right.
      */
-    void desktopChanging(uint currentDesktop, QPointF offset, KWin::EffectWindow* with);
+    void
+    desktopChanging(KWin::win::subspace* currentDesktop, QPointF offset, KWin::EffectWindow* with);
     void desktopChangingCancelled();
-
-    /// This signal is emitted when a window enters or leaves a virtual desktop.
-    void windowDesktopsChanged(KWin::EffectWindow* window);
+    void desktopAdded(KWin::win::subspace* subsp);
+    void desktopRemoved(KWin::win::subspace* subsp);
 
     /**
      * Emitted when the virtual desktop grid layout changes
@@ -736,13 +733,6 @@ Q_SIGNALS:
      * @since 5.25
      */
     void desktopGridHeightChanged(int height);
-    /**
-     * Signal emitted when the number of currently existing desktops is changed.
-     * @param old The previous number of desktops in used.
-     * @see EffectsHandler::numberOfDesktops.
-     * @since 4.7
-     */
-    void numberDesktopsChanged(uint old);
     /**
      * Signal emitted when the desktop showing ("dashboard") state changed
      * The desktop is risen to the keepAbove layer, you may want to elevate
@@ -783,117 +773,6 @@ Q_SIGNALS:
      * @since 4.7
      */
     void windowDeleted(KWin::EffectWindow* w);
-    /**
-     * Signal emitted when a user begins a window move or resize operation.
-     * To figure out whether the user resizes or moves the window use
-     * isUserMove or isUserResize.
-     * Whenever the geometry is updated the signal @ref windowStepUserMovedResized
-     * is emitted with the current geometry.
-     * The move/resize operation ends with the signal @ref windowFinishUserMovedResized.
-     * Only one window can be moved/resized by the user at the same time!
-     * @param w The window which is being moved/resized
-     * @see windowStepUserMovedResized
-     * @see windowFinishUserMovedResized
-     * @see EffectWindow::isUserMove
-     * @see EffectWindow::isUserResize
-     * @since 4.7
-     */
-    void windowStartUserMovedResized(KWin::EffectWindow* w);
-    /**
-     * Signal emitted during a move/resize operation when the user changed the geometry.
-     * Please note: KWin supports two operation modes. In one mode all changes are applied
-     * instantly. This means the window's geometry matches the passed in @p geometry. In the
-     * other mode the geometry is changed after the user ended the move/resize mode.
-     * The @p geometry differs from the window's geometry. Also the window's pixmap still has
-     * the same size as before. Depending what the effect wants to do it would be recommended
-     * to scale/translate the window.
-     * @param w The window which is being moved/resized
-     * @param geometry The geometry of the window in the current move/resize step.
-     * @see windowStartUserMovedResized
-     * @see windowFinishUserMovedResized
-     * @see EffectWindow::isUserMove
-     * @see EffectWindow::isUserResize
-     * @since 4.7
-     */
-    void windowStepUserMovedResized(KWin::EffectWindow* w, const QRect& geometry);
-    /**
-     * Signal emitted when the user finishes move/resize of window @p w.
-     * @param w The window which has been moved/resized
-     * @see windowStartUserMovedResized
-     * @see windowFinishUserMovedResized
-     * @since 4.7
-     */
-    void windowFinishUserMovedResized(KWin::EffectWindow* w);
-    /**
-     * Signal emitted when the maximized state of the window @p w changed.
-     * A window can be in one of four states:
-     * @li restored: both @p horizontal and @p vertical are @c false
-     * @li horizontally maximized: @p horizontal is @c true and @p vertical is @c false
-     * @li vertically maximized: @p horizontal is @c false and @p vertical is @c true
-     * @li completely maximized: both @p horizontal and @p vertical are @c true
-     * @param w The window whose maximized state changed
-     * @param horizontal If @c true maximized horizontally
-     * @param vertical If @c true maximized vertically
-     * @since 4.7
-     */
-    void windowMaximizedStateChanged(KWin::EffectWindow* w, bool horizontal, bool vertical);
-    /**
-     * This signal is emitted when the frame geometry of a window changed.
-     * @param window The window whose geometry changed
-     * @param oldGeometry The previous geometry
-     * @since 5.19
-     */
-    void windowFrameGeometryChanged(KWin::EffectWindow* window, const QRect& oldGeometry);
-    /**
-     * Signal emitted when the padding of a window changed. (eg. shadow size)
-     * @param w The window whose geometry changed
-     * @param old The previous expandedGeometry()
-     * @since 4.9
-     */
-    void windowPaddingChanged(KWin::EffectWindow* w, const QRect& old);
-    /**
-     * Signal emitted when the windows opacity is changed.
-     * @param w The window whose opacity level is changed.
-     * @param oldOpacity The previous opacity level
-     * @param newOpacity The new opacity level
-     * @since 4.7
-     */
-    void windowOpacityChanged(KWin::EffectWindow* w, qreal oldOpacity, qreal newOpacity);
-    /**
-     * Signal emitted when a window got minimized.
-     * @param w The window which was minimized
-     * @since 4.7
-     */
-    void windowMinimized(KWin::EffectWindow* w);
-    /**
-     * Signal emitted when a window got unminimized.
-     * @param w The window which was unminimized
-     * @since 4.7
-     */
-    void windowUnminimized(KWin::EffectWindow* w);
-    /**
-     * Signal emitted when a window either becomes modal (ie. blocking for its main client) or
-     * looses that state.
-     * @param w The window which was unminimized
-     * @since 4.11
-     */
-    void windowModalityChanged(KWin::EffectWindow* w);
-    /**
-     * Signal emitted when a window either became unresponsive (eg. app froze or crashed)
-     * or respoonsive
-     * @param w The window that became (un)responsive
-     * @param unresponsive Whether the window is responsive or unresponsive
-     * @since 5.10
-     */
-    void windowUnresponsiveChanged(KWin::EffectWindow* w, bool unresponsive);
-    /**
-     * Signal emitted when an area of a window is scheduled for repainting.
-     * Use this signal in an effect if another area needs to be synced as well.
-     * @param w The window which is scheduled for repainting
-     * @param r Always empty.
-     * @since 4.7
-     */
-    void windowDamaged(KWin::EffectWindow* w, const QRegion& r);
     /**
      * Signal emitted when a tabbox is added.
      * An effect who wants to replace the tabbox with itself should use refTabBox.
@@ -1034,30 +913,6 @@ Q_SIGNALS:
      * @since 5.0
      */
     void virtualScreenGeometryChanged();
-
-    /**
-     * The window @p w gets shown again. The window was previously
-     * initially shown with windowAdded and hidden with windowHidden.
-     *
-     * @see windowHidden
-     * @see windowAdded
-     * @since 5.8
-     */
-    void windowShown(KWin::EffectWindow* w);
-
-    /**
-     * The window @p w got hidden but not yet closed.
-     * This can happen when a window is still being used and is supposed to be shown again
-     * with windowShown. On X11 an example is autohiding panels. On Wayland every
-     * window first goes through the window hidden state and might get shown again, or might
-     * get closed the normal way.
-     *
-     * @see windowShown
-     * @see windowClosed
-     * @since 5.8
-     */
-    void windowHidden(KWin::EffectWindow* w);
-
     /**
      * This signal gets emitted when the data on EffectWindow @p w for @p role changed.
      *
@@ -1093,30 +948,6 @@ Q_SIGNALS:
     void hasActiveFullScreenEffectChanged();
 
     /**
-     * This signal is emitted when the keep above state of @p w was changed.
-     *
-     * @param w The window whose the keep above state was changed.
-     * @since 5.15
-     */
-    void windowKeepAboveChanged(KWin::EffectWindow* w);
-
-    /**
-     * This signal is emitted when the keep below state of @p was changed.
-     *
-     * @param w The window whose the keep below state was changed.
-     * @since 5.15
-     */
-    void windowKeepBelowChanged(KWin::EffectWindow* w);
-
-    /**
-     * This signal is emitted when the full screen state of @p w was changed.
-     *
-     * @param w The window whose the full screen state was changed.
-     * @since 5.15
-     */
-    void windowFullScreenChanged(KWin::EffectWindow* w);
-
-    /**
      * This signal is emitted when the session state was changed
      * @since 5.18
      */
@@ -1125,11 +956,6 @@ Q_SIGNALS:
     void startupAdded(const QString& id, const QIcon& icon);
     void startupChanged(const QString& id, const QIcon& icon);
     void startupRemoved(const QString& id);
-
-    /**
-     * This signal is emitted when the visible geometry of a window changed.
-     */
-    void windowExpandedGeometryChanged(KWin::EffectWindow* window);
 
     void frameRendered(KWin::effect::screen_paint_data& data);
 

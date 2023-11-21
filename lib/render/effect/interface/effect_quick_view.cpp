@@ -9,7 +9,7 @@
 #include "effects_handler.h"
 
 #include <base/logging.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/texture.h>
 
 #include <QGuiApplication>
 #include <QOffscreenSurface>
@@ -50,6 +50,7 @@ public:
     // Used for either software QtQuick rendering and nonGL kwin rendering
     bool m_useBlit = false;
     bool m_visible = true;
+    bool m_hasAlphaChannel = true;
     bool m_automaticRepaint = true;
 
     QList<QEventPoint> touchPoints;
@@ -74,14 +75,8 @@ public:
     QScopedPointer<QQuickItem> quickItem;
 };
 
-EffectQuickView::EffectQuickView(QObject* parent)
-    : EffectQuickView(parent, effects ? ExportMode::Texture : ExportMode::Image)
-{
-}
-
-EffectQuickView::EffectQuickView(QObject* parent, ExportMode exportMode)
-    : QObject(parent)
-    , d(new EffectQuickView::Private)
+EffectQuickView::EffectQuickView(ExportMode exportMode, bool alpha)
+    : d(new EffectQuickView::Private)
 {
     d->m_renderControl = new QQuickRenderControl();
 
@@ -90,6 +85,7 @@ EffectQuickView::EffectQuickView(QObject* parent, ExportMode exportMode)
     d->m_view->setFlags(Qt::FramelessWindowHint);
     d->m_view->setColor(Qt::transparent);
 
+    d->m_hasAlphaChannel = alpha;
     if (exportMode == ExportMode::Image) {
         d->m_useBlit = true;
     }
@@ -112,6 +108,9 @@ EffectQuickView::EffectQuickView(QObject* parent, ExportMode exportMode)
         format.setOption(QSurfaceFormat::ResetNotification);
         format.setDepthBufferSize(16);
         format.setStencilBufferSize(8);
+        if (alpha) {
+            format.setAlphaBufferSize(8);
+        }
 
         d->m_view->setFormat(format);
 
@@ -244,8 +243,12 @@ void EffectQuickView::update()
         const QSize nativeSize = d->m_view->size() * d->m_view->effectiveDevicePixelRatio();
         if (d->m_fbo.isNull() || d->m_fbo->size() != nativeSize) {
             d->m_textureExport.reset(nullptr);
-            d->m_fbo.reset(new QOpenGLFramebufferObject(
-                nativeSize, QOpenGLFramebufferObject::CombinedDepthStencil));
+
+            QOpenGLFramebufferObjectFormat fboFormat;
+            fboFormat.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+            fboFormat.setInternalTextureFormat(d->m_hasAlphaChannel ? GL_RGBA8 : GL_RGB8);
+
+            d->m_fbo.reset(new QOpenGLFramebufferObject(nativeSize, fboFormat));
             if (!d->m_fbo->isValid()) {
                 d->m_fbo.reset();
                 d->m_glcontext->doneCurrent();
@@ -408,6 +411,11 @@ void EffectQuickView::setOpacity(qreal opacity)
 qreal EffectQuickView::opacity() const
 {
     return d->m_view->opacity();
+}
+
+bool EffectQuickView::hasAlphaChannel() const
+{
+    return d->m_hasAlphaChannel;
 }
 
 QQuickItem* EffectQuickView::contentItem() const
@@ -574,14 +582,8 @@ void EffectQuickView::Private::updateTouchState(Qt::TouchPointState state,
     // that the current touch points are in.
 }
 
-EffectQuickScene::EffectQuickScene(QObject* parent)
-    : EffectQuickView(parent)
-    , d(new EffectQuickScene::Private)
-{
-}
-
-EffectQuickScene::EffectQuickScene(QObject* parent, EffectQuickView::ExportMode exportMode)
-    : EffectQuickView(parent, exportMode)
+EffectQuickScene::EffectQuickScene(EffectQuickView::ExportMode exportMode, bool alpha)
+    : EffectQuickView(exportMode, alpha)
     , d(new EffectQuickScene::Private)
 {
 }

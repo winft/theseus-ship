@@ -37,8 +37,7 @@ public:
     effect_frame_quick_scene(EffectFrameStyle style,
                              bool staticSize,
                              QPoint position,
-                             Qt::Alignment alignment,
-                             QObject* parent = nullptr);
+                             Qt::Alignment alignment);
     ~effect_frame_quick_scene() override;
 
     EffectFrameStyle style() const;

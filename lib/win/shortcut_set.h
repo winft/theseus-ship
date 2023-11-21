@@ -83,7 +83,7 @@ void set_shortcut(Win* win, QString const& shortcut)
         return;
     }
 
-    QRegularExpression const reg(QStringLiteral("(.*\\+)\\((.*)\\)"));
+    static QRegularExpression const reg(QStringLiteral("(.*\\+)\\((.*)\\)"));
     QList<QKeySequence> keys;
     QStringList groups = cut.split(QStringLiteral(" - "));
     for (QStringList::ConstIterator it = groups.constBegin(); it != groups.constEnd(); ++it) {

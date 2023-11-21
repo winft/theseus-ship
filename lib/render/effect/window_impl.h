@@ -186,11 +186,15 @@ public:
         return {};
     }
 
-    QVector<uint> desktops() const override
+    QVector<win::subspace*> desktops() const override
     {
-        return std::visit(overload{[](auto&& ref_win) -> QVector<uint> {
+        return std::visit(overload{[](auto&& ref_win) -> QVector<win::subspace*> {
                               if (ref_win->control || ref_win->remnant) {
-                                  return win::x11_subspace_ids(*ref_win);
+                                  auto const& subs = ref_win->topo.subspaces;
+                                  QVector<win::subspace*> ret;
+                                  ret.reserve(subs.size());
+                                  std::copy(subs.cbegin(), subs.cend(), std::back_inserter(ret));
+                                  return ret;
                               }
                               return {};
                           }},

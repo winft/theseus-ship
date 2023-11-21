@@ -51,11 +51,9 @@ void effect_setup_handler(Handler& handler)
 
     // connect all clients
     for (auto& win : ws->windows) {
-        // TODO: Can we merge this with the one for Wayland XdgShellClients below?
         std::visit(overload{[&](typename Handler::space_t::x11_window* win) {
                                 if (win->control) {
-                                    render::x11::effect_setup_controlled_window_connections(handler,
-                                                                                            *win);
+                                    effect::setup_window_connections(*win);
                                 }
                             },
                             [](auto&&) {}},
@@ -63,7 +61,7 @@ void effect_setup_handler(Handler& handler)
     }
     for (auto win : win::x11::get_unmanageds(*ws)) {
         std::visit(overload{[&](auto&& win) {
-                       render::x11::effect_setup_unmanaged_window_connections(handler, *win);
+                       render::x11::effect_setup_unmanaged_window_connections(*win);
                    }},
                    win);
     }

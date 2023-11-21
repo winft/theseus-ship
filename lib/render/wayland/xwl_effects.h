@@ -108,7 +108,7 @@ public:
     void slotUnmanagedShown(Win& window)
     { // regardless, unmanaged windows are -yet?- not synced anyway
         assert(!window.control);
-        x11::effect_setup_unmanaged_window_connections(*this, window);
+        x11::effect_setup_unmanaged_window_connections(window);
         Q_EMIT this->windowAdded(window.render->effect.get());
     }
 

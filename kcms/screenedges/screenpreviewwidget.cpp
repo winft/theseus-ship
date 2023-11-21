@@ -16,16 +16,17 @@
 
 #include <KSvg/FrameSvg>
 #include <KSvg/ImageSet>
-#include <kurlmimedata.h>
 #include <memory>
 
 class ScreenPreviewWidgetPrivate
 {
 public:
     ScreenPreviewWidgetPrivate(ScreenPreviewWidget *screen)
-          : q(screen),
-            ratio(1)
-    {}
+        : q(screen)
+        , ratio(1)
+        , minimumContentWidth(0)
+    {
+    }
 
     ~ScreenPreviewWidgetPrivate()
     {}
@@ -38,16 +39,21 @@ public:
     void updateScreenGraphics()
     {
         int bottomElements = screenGraphics->elementSize("base").height() + screenGraphics->marginSize(KSvg::FrameSvg::BottomMargin);
-        QRect bounds(QPoint(0, 0), QSize(q->size().width(), q->height() - bottomElements));
+        QRect bounds(QPoint(0, 0), QSize(q->width(), q->height() - bottomElements));
 
-        QSize monitorSize(q->size().width(), q->size().width()/ratio);
+        QSizeF monitorSize(1.0, 1.0 / ratio);
         monitorSize.scale(bounds.size(), Qt::KeepAspectRatio);
 
         if (monitorSize.isEmpty()) {
             return;
         }
 
-        monitorRect = QRect(QPoint(0,0), monitorSize);
+        const auto minFrameWidth = minimumContentWidth + screenGraphics->marginSize(KSvg::FrameSvg::LeftMargin) + screenGraphics->marginSize(KSvg::FrameSvg::RightMargin);
+        if (monitorSize.width() < minFrameWidth) {
+            monitorSize.setWidth(minFrameWidth);
+        }
+
+        monitorRect = QRect(QPoint(0, 0), monitorSize.toSize());
         monitorRect.moveCenter(bounds.center());
 
         screenGraphics->resizeFrame(monitorRect.size());
@@ -62,6 +68,7 @@ public:
     QPixmap preview;
     QRect monitorRect;
     qreal ratio;
+    qreal minimumContentWidth;
     QRect previewRect;
 };
 
@@ -105,6 +112,17 @@ qreal ScreenPreviewWidget::ratio() const
     return d->ratio;
 }
 
+void ScreenPreviewWidget::setMinimumContentWidth(const qreal minw)
+{
+    d->minimumContentWidth = minw;
+    d->updateScreenGraphics();
+}
+
+qreal ScreenPreviewWidget::minimumContentWidth() const
+{
+    return d->minimumContentWidth;
+}
+
 QRect ScreenPreviewWidget::previewRect() const
 {
     return d->previewRect;
@@ -142,19 +160,6 @@ void ScreenPreviewWidget::paintEvent(QPaintEvent *event)
     painter.restore();
 
     d->screenGraphics->paint(&painter, d->previewRect, "glass");
-}
-
-void ScreenPreviewWidget::dropEvent(QDropEvent *e)
-{
-    if (!e->mimeData()->hasUrls())
-        return;
-
-    QList<QUrl> uris(KUrlMimeData::urlsFromMimeData(e->mimeData()));
-    if (!uris.isEmpty()) {
-        // TODO: Download remote file
-        if (uris.first().isLocalFile())
-           Q_EMIT imageDropped(uris.first().path());
-    }
 }
 
 #include "moc_screenpreviewwidget.cpp"

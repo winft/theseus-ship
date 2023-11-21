@@ -30,45 +30,6 @@ enum GLFeature {
     LooseBinding,
 
     /**
-     * Set if the driver supports the following extensions:
-     * - GL_ARB_shader_objects
-     * - GL_ARB_fragment_shader
-     * - GL_ARB_vertex_shader
-     * - GL_ARB_shading_language_100
-     */
-    GLSL,
-
-    /**
-     * If set, assume the following:
-     * - No flow control or branches
-     * - No loops, unless the loops have a fixed iteration count and can be unrolled
-     * - No functions, unless they can be inlined
-     * - No indirect indexing of arrays
-     * - No support for gl_ClipVertex or gl_FrontFacing
-     * - No texture fetches in vertex shaders
-     * - Max 32 texture fetches in fragment shaders
-     * - Max 4 texture indirections
-     */
-    LimitedGLSL,
-
-    /**
-     * Set when the driver supports GL_ARB_texture_non_power_of_two.
-     */
-    TextureNPOT,
-
-    /**
-     * If set, the driver supports GL_ARB_texture_non_power_of_two with the
-     * GL_ARB_texture_rectangle limitations.
-     *
-     * This means no support for mipmap filters, and that only the following
-     * wrap modes are supported:
-     * - GL_CLAMP
-     * - GL_CLAMP_TO_EDGE
-     * - GL_CLAMP_TO_BORDER
-     */
-    LimitedNPOT,
-
-    /**
      * Set if the driver supports GL_ARB_timer_query extension or OpenGL 3.3.
      */
     TimerQuery,
@@ -229,11 +190,6 @@ public:
     qint64 mesaVersion() const;
 
     /**
-     * Returns the Gallium version if the driver is a Gallium driver, and 0 otherwise.
-     */
-    qint64 galliumVersion() const;
-
-    /**
      * Returns the Linux kernel version.
      *
      * If the kernel is not a Linux kernel, this method returns 0.
@@ -261,11 +217,6 @@ public:
      * Returns true if the driver is a Mesa driver, and false otherwise.
      */
     bool isMesaDriver() const;
-
-    /**
-     * Returns true if the driver is a Gallium driver, and false otherwise.
-     */
-    bool isGalliumDriver() const;
 
     /**
      * Returns true if the GPU is a Radeon GPU, and false otherwise.
@@ -461,13 +412,8 @@ private:
     qint64 m_glslVersion;
     qint64 m_mesaVersion;
     qint64 m_driverVersion;
-    qint64 m_galliumVersion;
     qint64 m_kernelVersion;
     bool m_looseBinding : 1;
-    bool m_supportsGLSL : 1;
-    bool m_limitedGLSL : 1;
-    bool m_textureNPOT : 1;
-    bool m_limitedNPOT : 1;
     bool m_supportsTimerQuery : 1;
     bool m_virtualMachine : 1;
     bool m_preferBufferSubData : 1;

@@ -10,8 +10,8 @@
 
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
-#include <render/gl/interface/platform.h>
-#include <render/gl/interface/utils.h>
+#include <render/gl/interface/framebuffer.h>
+#include <render/gl/interface/texture.h>
 
 #include <QPainter>
 
@@ -226,7 +226,10 @@ void ScreenShotEffect::takeScreenShot(effect::render_data& data, ScreenShotWindo
 
     if (window->hasDecoration() && !(screenshot->flags & ScreenShotIncludeDecoration)) {
         geometry = window->clientGeometry();
+    } else if (!(screenshot->flags & ScreenShotIncludeShadow)) {
+        geometry = window->frameGeometry();
     }
+
     if (screenshot->flags & ScreenShotNativeResolution) {
         if (auto const screen = window->screen()) {
             devicePixelRatio = screen->devicePixelRatio();
