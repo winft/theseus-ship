@@ -9,7 +9,10 @@ effects.windowAdded.connect(function (window) {
         sendTestResponse('fail');
     }
 
-    window.windowMinimized.connect(() => {
+    window.minimizedChanged.connect(() => {
+        if (!window.minimized) {
+            return;
+        }
         if (effect.ungrab(window, Effect.WindowAddedGrabRole)) {
             sendTestResponse('ok');
         } else {

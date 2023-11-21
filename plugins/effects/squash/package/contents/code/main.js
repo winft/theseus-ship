@@ -144,8 +144,13 @@ var squashEffect = {
         });
     },
     slotWindowAdded: function (window) {
-        window.windowMinimized.connect(squashEffect.slotWindowMinimized);
-        window.windowUnminimized.connect(squashEffect.slotWindowUnminimized);
+        window.minimizedChanged.connect(() => {
+            if (window.minimized) {
+                squashEffect.slotWindowMinimized(window);
+            } else {
+                squashEffect.slotWindowUnminimized(window);
+            }
+        });
     },
     init: function () {
         effect.configChanged.connect(squashEffect.loadConfig);
