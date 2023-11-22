@@ -307,11 +307,6 @@ public:
                              : m_internalWindowFlags.testFlag(Qt::Popup);
     }
 
-    layer layer_for_dock() const
-    {
-        return win::layer_for_dock(*this);
-    }
-
     QByteArray windowRole() const
     {
         return {};

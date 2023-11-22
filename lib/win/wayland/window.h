@@ -1158,32 +1158,6 @@ public:
         this->geo.restore.max = {};
     }
 
-    win::layer layer_for_dock() const
-    {
-        assert(this->control);
-
-        if (!plasma_shell_surface) {
-            return win::layer_for_dock(*this);
-        }
-
-        using PSS = Wrapland::Server::PlasmaShellSurface;
-
-        switch (plasma_shell_surface->panelBehavior()) {
-        case PSS::PanelBehavior::WindowsCanCover:
-            return layer::normal;
-        case PSS::PanelBehavior::AutoHide:
-        case PSS::PanelBehavior::WindowsGoBelow:
-            return layer::above;
-        case PSS::PanelBehavior::AlwaysVisible:
-            return layer::dock;
-        default:
-            Q_UNREACHABLE();
-            break;
-        }
-
-        return layer::unknown;
-    }
-
     bool has_pending_repaints() const
     {
         return this->render_data.ready_for_painting && !repaints(*this).isEmpty();
