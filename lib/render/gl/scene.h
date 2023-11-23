@@ -310,7 +310,7 @@ protected:
      */
     void paintCursor(effect::render_data const& render)
     {
-        if constexpr (requires(Platform platform) { platform.software_cursor; }) {
+        if constexpr (requires(decltype(this->platform) platform) { platform.software_cursor; }) {
             auto cursor = this->platform.software_cursor.get();
 
             // don't paint if we use hardware cursor or the cursor is hidden
