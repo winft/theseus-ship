@@ -79,6 +79,9 @@ public:
      */
     int theme_size() const;
 
+    static QString default_theme_name();
+    int default_theme_size();
+
     /**
      * Returns the current cursor position. This method does an update of the mouse position if
      * needed. It's save to call it multiple times.

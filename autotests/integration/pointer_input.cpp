@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/wayland/server.h"
 #include "input/pointer_redirect.h"
 #include "input/wayland/cursor.h"
-#include "input/wayland/cursor_theme.h"
 #include "render/effects.h"
 #include "win/move.h"
 #include "win/screen_edges.h"
@@ -92,43 +91,44 @@ TEST_CASE("pointer input", "[input]")
     test_outputs_default();
     cursor()->set_pos(QPoint(640, 512));
 
-    auto loadReferenceThemeCursor = [&](auto const& shape) -> effect::cursor_image {
-        if (!setup.base->server->internal_connection.shm) {
+    auto loadReferenceThemeCursorHelper
+        = [&](auto const& theme, std::string const& name) -> effect::cursor_image {
+        auto const sprites = theme.shape(QByteArray::fromStdString(name));
+        if (sprites.isEmpty()) {
             return {};
         }
 
-        using cursor_t = std::remove_pointer_t<decltype(cursor())>;
-        auto cursorTheme = std::make_unique<input::wayland::cursor_theme<cursor_t>>(
-            *cursor(), setup.base->server->internal_connection.shm);
-
-        wl_cursor_image* cursor = cursorTheme->get(shape);
-        if (!cursor) {
-            return {};
-        }
-
-        wl_buffer* b = wl_cursor_image_get_buffer(cursor);
-        if (!b) {
-            return {};
-        }
-
-        setup.base->server->internal_connection.client->flush();
-        setup.base->server->dispatch();
-
-        auto bufferId = Wrapland::Client::Buffer::getId(b);
-        auto wlResource = setup.base->server->internal_connection.server->getResource(bufferId);
-        auto buffer = Wrapland::Server::Buffer::get(setup.base->server->display.get(), wlResource);
-        if (!buffer) {
-            return {};
-        }
-
-        const qreal scale = setup.base->topology.max_scale;
-        QImage image = buffer->shmImage()->createQImage().copy();
-        image.setDevicePixelRatio(scale);
-
-        const QPoint hotSpot(qRound(cursor->hotspot_x / scale), qRound(cursor->hotspot_y / scale));
-
-        return {image, hotSpot};
+        return {sprites.first().data(), sprites.first().hotspot()};
     };
+
+    auto load_cursor_theme_by_name = [&](std::string const& name) -> effect::cursor_image {
+        auto& cursor = setup.base->space->input->cursor;
+        auto scale = setup.base->topology.max_scale;
+
+        input::wayland::xcursor_theme const theme(
+            cursor->theme_name(), cursor->theme_size(), scale);
+        if (theme.empty()) {
+            return {};
+        }
+
+        auto image = loadReferenceThemeCursorHelper(theme, name);
+        if (!image.image.isNull()) {
+            return image;
+        }
+
+        auto const alternative_names = win::cursor_shape_get_alternative_names(name);
+        for (auto const& alternative : alternative_names) {
+            image = loadReferenceThemeCursorHelper(theme, alternative);
+            if (!image.image.isNull()) {
+                return image;
+            }
+        }
+
+        return image;
+    };
+
+    auto loadReferenceThemeCursor
+        = [&](win::cursor_shape shape) { return load_cursor_theme_by_name(shape.name()); };
 
     auto get_wayland_window_from_id = [&](uint32_t id) {
         return get_window<wayland_window>(setup.base->space->windows_map.at(id));

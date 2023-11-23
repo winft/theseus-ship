@@ -138,10 +138,10 @@ target_sources(input-wl
       dbus/keyboard_layout.h
       dbus/keyboard_layouts_v2.h
       dbus/tablet_mode_manager.h
+      extern/xcursor.h
       spies/keyboard_repeat.h
       wayland/cursor.h
       wayland/cursor_image.h
-      wayland/cursor_theme.h
       wayland/device_redirect.h
       wayland/global_shortcuts_manager.h
       wayland/idle.h
@@ -153,6 +153,7 @@ target_sources(input-wl
       wayland/redirect.h
       wayland/tablet_redirect.h
       wayland/touch_redirect.h
+      wayland/xcursor_theme.h
       xkb/helpers.h
       xkb/layout_manager.h
       xkb/layout_policies.h
@@ -169,8 +170,9 @@ target_sources(input-wl
     dbus/keyboard_layout.cpp
     dbus/keyboard_layouts_v2.cpp
     dbus/tablet_mode_manager.cpp
-    wayland/global_shortcuts_manager.cpp
+    extern/xcursor.c
     logging.cpp
+    wayland/global_shortcuts_manager.cpp
     wayland/kglobalaccel/runtime/component.cpp
     wayland/kglobalaccel/runtime/global_accel_d.cpp
     wayland/kglobalaccel/runtime/global_shortcut.cpp
@@ -178,6 +180,7 @@ target_sources(input-wl
     wayland/kglobalaccel/runtime/global_shortcuts_registry.cpp
     wayland/kglobalaccel/runtime/service_action_component.cpp
     wayland/kglobalaccel/runtime/sequence_helpers.cpp
+    wayland/xcursor_theme.cpp
     xkb/layout_manager.cpp
     xkb/layout_policies.cpp
 )

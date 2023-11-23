@@ -20,8 +20,8 @@ namespace KWin::input
 
 cursor::cursor(KSharedConfigPtr config)
     : m_cursorTrackingCounter(0)
-    , m_themeName("default")
-    , m_themeSize(24)
+    , m_themeName(default_theme_name())
+    , m_themeSize(default_theme_size())
     , config{config}
 {
     singleton_interface::cursor = this;
@@ -95,6 +95,16 @@ QString const& cursor::theme_name() const
 int cursor::theme_size() const
 {
     return m_themeSize;
+}
+
+QString cursor::default_theme_name()
+{
+    return QStringLiteral("default");
+}
+
+int cursor::default_theme_size()
+{
+    return 24;
 }
 
 QImage cursor::image() const
