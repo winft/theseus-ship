@@ -58,7 +58,6 @@ target_link_libraries(wayland
     Pixman::Pixman
     wlroots::wlroots
     Wayland::Server
-    WraplandClient
 )
 
 target_sources(wayland
