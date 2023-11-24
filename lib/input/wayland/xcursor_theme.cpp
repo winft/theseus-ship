@@ -167,6 +167,7 @@ static QStringList search_paths()
 void xcursor_theme_private::load(QString const& name, int size, double device_pixel_ratio)
 {
     auto const paths = search_paths();
+    bool default_fallback = false;
 
     QSet<QString> loaded;
     QStack<QString> stack;
@@ -197,6 +198,15 @@ void xcursor_theme_private::load(QString const& name, int size, double device_pi
         loaded.insert(name);
         for (auto it = inherits.crbegin(); it != inherits.crend(); ++it) {
             stack.push(*it);
+        }
+
+        if (registry.empty() && name == "default" && !default_fallback) {
+            // This is a last resort in case we haven't found any theme directly in a "cursors"
+            // directory, through inherit of index.theme in standard paths or XCURSOR_PATH.
+            // We aim for always having a theme because otherwise no cursor is painted.
+            default_fallback = true;
+            stack.push("Adwaita");
+            stack.push("breeze_cursors");
         }
     }
 }
