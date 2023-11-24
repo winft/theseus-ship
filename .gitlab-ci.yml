@@ -89,7 +89,7 @@ Coverity Scan:
   script:
     - mkdir build && cd build
     - cmake -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
-      -DCMAKE_CXX_COMPILER=clang++
+      -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
       -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_EXE_LINKER_FLAGS=--coverage
       -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
     - make -j$(nproc)
