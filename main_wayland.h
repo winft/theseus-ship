@@ -36,7 +36,6 @@ public:
     }
 
 private:
-    void handle_server_addons_created();
     void create_xwayland();
     void startSession();
 

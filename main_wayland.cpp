@@ -213,11 +213,8 @@ void ApplicationWayland::start(base::operation_mode mode,
     }
 
     base->process_environment = environment;
-    base->server->create_addons([this] { handle_server_addons_created(); });
-}
+    base->server->init_screen_locker();
 
-void ApplicationWayland::handle_server_addons_created()
-{
     if (base->operation_mode == base::operation_mode::xwayland) {
         create_xwayland();
     } else {
