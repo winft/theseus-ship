@@ -17,7 +17,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/geo.h"
 #include "win/space_qobject.h"
 
-#include <render/effect/interface/effect_quick_view.h>
+#include <render/effect/interface/offscreen_quick_view.h>
 #include <render/effect/interface/paint_clipper.h>
 #include <render/effect/interface/paint_data.h>
 

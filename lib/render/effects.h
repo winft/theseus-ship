@@ -25,10 +25,10 @@
 
 #include <render/effect/interface/effect.h>
 #include <render/effect/interface/effect_frame.h>
-#include <render/effect/interface/effect_quick_view.h>
 #include <render/effect/interface/effect_screen.h>
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/offscreen_quick_view.h>
 
 #include <QHash>
 #include <QMouseEvent>

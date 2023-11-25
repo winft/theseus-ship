@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorationoptions.h"
 
 #include <base/config-kwin.h>
-#include <render/effect/interface/effect_quick_view.h>
 #include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/offscreen_quick_view.h>
 
 // KDecoration2
 #include <KDecoration2/DecoratedClient>

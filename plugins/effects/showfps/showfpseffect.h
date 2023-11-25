@@ -9,7 +9,7 @@
 #pragma once
 
 #include <render/effect/interface/effect.h>
-#include <render/effect/interface/effect_quick_view.h>
+#include <render/effect/interface/offscreen_quick_view.h>
 
 #include <QElapsedTimer>
 

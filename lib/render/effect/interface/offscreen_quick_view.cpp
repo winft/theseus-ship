@@ -4,7 +4,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "effect_quick_view.h"
+#include "offscreen_quick_view.h"
 
 #include "effects_handler.h"
 
