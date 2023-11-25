@@ -10,7 +10,6 @@
 #include "scripting_logging.h"
 
 #include <KConfigGroup>
-#include <KLocalizedContext>
 #include <KPackage/PackageLoader>
 #include <QDBusConnection>
 #include <QFutureWatcher>
@@ -24,17 +23,16 @@ namespace KWin::scripting
 platform_wrap::platform_wrap(base::options& options,
                              win::options& win_opts,
                              render::options& render_opts,
-                             base::config& config)
-    : qml_engine{std::make_unique<QQmlEngine>()}
-    , declarative_script_shared_context(new QQmlContext(qml_engine.get(), this))
+                             base::config& config,
+                             QQmlEngine& engine)
+    : qml_engine{engine}
+    , declarative_script_shared_context(new QQmlContext(&engine, this))
     , config{config}
     , options{std::make_unique<scripting::options>(options, win_opts, render_opts)}
     , m_scriptsLock(new QRecursiveMutex)
 {
     qRegisterMetaType<KWin::SessionState>();
 
-    qml_engine->setProperty("_kirigamiTheme", QStringLiteral("KirigamiPlasmaStyle"));
-    qml_engine->rootContext()->setContextObject(new KLocalizedContext(qml_engine.get()));
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
                                                  this,
                                                  QDBusConnection::ExportScriptableContents

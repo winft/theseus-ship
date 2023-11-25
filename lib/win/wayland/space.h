@@ -110,6 +110,7 @@ public:
     std::unique_ptr<win::options> options;
 
     win::space_areas areas;
+    std::unique_ptr<QQmlEngine> qml_engine;
     std::unique_ptr<rules::book> rule_book;
 
     int initial_subspace{1};

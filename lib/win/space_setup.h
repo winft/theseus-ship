@@ -15,7 +15,9 @@
 
 #include "base/platform.h"
 
+#include <KLocalizedContext>
 #include <QObject>
+#include <QQmlEngine>
 
 namespace KWin::win
 {
@@ -23,6 +25,11 @@ namespace KWin::win
 template<typename Space>
 void init_space(Space& space)
 {
+    space.qml_engine = std::make_unique<QQmlEngine>();
+    space.qml_engine->setProperty("_kirigamiTheme", QStringLiteral("KirigamiPlasmaStyle"));
+    space.qml_engine->rootContext()->setContextObject(
+        new KLocalizedContext(space.qml_engine.get()));
+
     space.m_quickTileCombineTimer = new QTimer(space.qobject.get());
     space.m_quickTileCombineTimer->setSingleShot(true);
 

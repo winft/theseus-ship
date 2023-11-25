@@ -190,7 +190,7 @@ private:
             return false;
         }
 
-        auto engine = render.base.script->qml_engine.get();
+        auto engine = &render.base.script->qml_engine;
         QQmlComponent component(engine);
         component.loadUrl(QUrl::fromLocalFile(scriptFile));
         if (component.isError()) {

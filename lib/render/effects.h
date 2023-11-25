@@ -531,8 +531,7 @@ public:
 
     QQmlEngine* qmlEngine() const override
     {
-        auto& script = scene.platform.base.script;
-        return script ? script->qml_engine.get() : nullptr;
+        return scene.platform.base.space->qml_engine.get();
     }
 
     void renderOffscreenQuickView(OffscreenQuickView* view) const override

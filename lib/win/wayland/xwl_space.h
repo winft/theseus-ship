@@ -170,6 +170,7 @@ public:
 
     win::space_areas areas;
     std::unique_ptr<base::x11::atoms> atoms;
+    std::unique_ptr<QQmlEngine> qml_engine;
     std::unique_ptr<rules::book> rule_book;
 
     std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;

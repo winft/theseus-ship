@@ -545,7 +545,7 @@ declarative_script::declarative_script(int id,
                                        QObject* parent)
     : abstract_script(id, scriptName, pluginName, platform.config, parent)
     , m_context(new QQmlContext(platform.declarative_script_shared_context, this))
-    , m_component(new QQmlComponent(platform.qml_engine.get(), this))
+    , m_component(new QQmlComponent(&platform.qml_engine, this))
 {
     m_context->setContextProperty(QStringLiteral("KWin"),
                                   new js_engine_global_methods_wrapper(this));
