@@ -439,7 +439,7 @@ protected:
         }
     }
 
-    void paintEffectQuickView(EffectQuickView* view) override
+    void paintOffscreenQuickView(OffscreenQuickView* view) override
     {
         auto texture = view->bufferAsTexture();
         if (!texture) {

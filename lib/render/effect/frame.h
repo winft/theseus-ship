@@ -21,7 +21,7 @@ class EffectsHandler;
 namespace render
 {
 
-class effect_frame_quick_scene : public EffectQuickScene
+class effect_frame_quick_scene : public OffscreenQuickScene
 {
     Q_OBJECT
 

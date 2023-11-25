@@ -72,7 +72,7 @@ void ShowFpsEffect::prePaintScreen(effect::screen_prepaint_data& data)
     }
 
     if (!m_scene) {
-        m_scene = std::make_unique<EffectQuickScene>();
+        m_scene = std::make_unique<OffscreenQuickScene>();
         const auto url = QUrl::fromLocalFile(
             QStandardPaths::locate(QStandardPaths::GenericDataLocation,
                                    QStringLiteral("kwin/effects/showfps/qml/main.qml")));
@@ -94,7 +94,7 @@ void ShowFpsEffect::paintScreen(effect::screen_paint_data& data)
 
     auto const rect = data.render.viewport;
     m_scene->setGeometry(QRect(rect.x() + rect.width() - 300, 0, 300, 150));
-    effects->renderEffectQuickView(m_scene.get());
+    effects->renderOffscreenQuickView(m_scene.get());
 }
 
 void ShowFpsEffect::paintWindow(effect::window_paint_data& data)

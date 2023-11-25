@@ -535,12 +535,12 @@ public:
         return script ? script->qml_engine.get() : nullptr;
     }
 
-    void renderEffectQuickView(EffectQuickView* effectQuickView) const override
+    void renderOffscreenQuickView(OffscreenQuickView* view) const override
     {
-        if (!effectQuickView->isVisible()) {
+        if (!view->isVisible()) {
             return;
         }
-        scene.paintEffectQuickView(effectQuickView);
+        scene.paintOffscreenQuickView(view);
     }
 
     void moveWindow(EffectWindow* w,

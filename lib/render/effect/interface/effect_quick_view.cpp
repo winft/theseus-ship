@@ -34,7 +34,7 @@
 namespace KWin
 {
 
-class Q_DECL_HIDDEN EffectQuickView::Private
+class Q_DECL_HIDDEN OffscreenQuickView::Private
 {
 public:
     QQuickWindow* m_view;
@@ -64,7 +64,7 @@ public:
     void updateTouchState(Qt::TouchPointState state, qint32 id, const QPointF& pos);
 };
 
-class Q_DECL_HIDDEN EffectQuickScene::Private
+class Q_DECL_HIDDEN OffscreenQuickScene::Private
 {
 public:
     Private()
@@ -75,8 +75,8 @@ public:
     QScopedPointer<QQuickItem> quickItem;
 };
 
-EffectQuickView::EffectQuickView(ExportMode exportMode, bool alpha)
-    : d(new EffectQuickView::Private)
+OffscreenQuickView::OffscreenQuickView(ExportMode exportMode, bool alpha)
+    : d(new OffscreenQuickView::Private)
 {
     d->m_renderControl = new QQuickRenderControl();
 
@@ -148,15 +148,15 @@ EffectQuickView::EffectQuickView(ExportMode exportMode, bool alpha)
     d->m_repaintTimer->setSingleShot(true);
     d->m_repaintTimer->setInterval(10);
 
-    connect(d->m_repaintTimer, &QTimer::timeout, this, &EffectQuickView::update);
+    connect(d->m_repaintTimer, &QTimer::timeout, this, &OffscreenQuickView::update);
     connect(d->m_renderControl,
             &QQuickRenderControl::renderRequested,
             this,
-            &EffectQuickView::handleRenderRequested);
+            &OffscreenQuickView::handleRenderRequested);
     connect(d->m_renderControl,
             &QQuickRenderControl::sceneChanged,
             this,
-            &EffectQuickView::handleSceneChanged);
+            &OffscreenQuickView::handleSceneChanged);
 
     d->touchDevice = new QPointingDevice({},
                                          {},
@@ -167,16 +167,16 @@ EffectQuickView::EffectQuickView(ExportMode exportMode, bool alpha)
                                          {});
 }
 
-EffectQuickView::~EffectQuickView()
+OffscreenQuickView::~OffscreenQuickView()
 {
     disconnect(d->m_renderControl,
                &QQuickRenderControl::renderRequested,
                this,
-               &EffectQuickView::handleRenderRequested);
+               &OffscreenQuickView::handleRenderRequested);
     disconnect(d->m_renderControl,
                &QQuickRenderControl::sceneChanged,
                this,
-               &EffectQuickView::handleSceneChanged);
+               &OffscreenQuickView::handleSceneChanged);
 
     if (d->m_glcontext) {
         // close the view whilst we have an active GL context
@@ -190,12 +190,12 @@ EffectQuickView::~EffectQuickView()
     d->m_view = nullptr;
 }
 
-bool EffectQuickView::automaticRepaint() const
+bool OffscreenQuickView::automaticRepaint() const
 {
     return d->m_automaticRepaint;
 }
 
-void EffectQuickView::setAutomaticRepaint(bool set)
+void OffscreenQuickView::setAutomaticRepaint(bool set)
 {
     if (d->m_automaticRepaint != set) {
         d->m_automaticRepaint = set;
@@ -207,7 +207,7 @@ void EffectQuickView::setAutomaticRepaint(bool set)
     }
 }
 
-void EffectQuickView::handleSceneChanged()
+void OffscreenQuickView::handleSceneChanged()
 {
     if (d->m_automaticRepaint) {
         d->m_repaintTimer->start();
@@ -215,7 +215,7 @@ void EffectQuickView::handleSceneChanged()
     Q_EMIT sceneChanged();
 }
 
-void EffectQuickView::handleRenderRequested()
+void OffscreenQuickView::handleRenderRequested()
 {
     if (d->m_automaticRepaint) {
         d->m_repaintTimer->start();
@@ -223,7 +223,7 @@ void EffectQuickView::handleRenderRequested()
     Q_EMIT renderRequested();
 }
 
-void EffectQuickView::update()
+void OffscreenQuickView::update()
 {
     if (!d->m_visible) {
         return;
@@ -285,7 +285,7 @@ void EffectQuickView::update()
     Q_EMIT repaintNeeded();
 }
 
-void EffectQuickView::forwardMouseEvent(QEvent* e)
+void OffscreenQuickView::forwardMouseEvent(QEvent* e)
 {
     if (!d->m_visible) {
         return;
@@ -354,7 +354,7 @@ void EffectQuickView::forwardMouseEvent(QEvent* e)
     }
 }
 
-void EffectQuickView::forwardKeyEvent(QKeyEvent* keyEvent)
+void OffscreenQuickView::forwardKeyEvent(QKeyEvent* keyEvent)
 {
     if (!d->m_visible) {
         return;
@@ -362,7 +362,7 @@ void EffectQuickView::forwardKeyEvent(QKeyEvent* keyEvent)
     QCoreApplication::sendEvent(d->m_view, keyEvent);
 }
 
-bool EffectQuickView::forwardTouchDown(qint32 id, const QPointF& pos, quint32 time)
+bool OffscreenQuickView::forwardTouchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(time)
 
@@ -374,7 +374,7 @@ bool EffectQuickView::forwardTouchDown(qint32 id, const QPointF& pos, quint32 ti
     return event.isAccepted();
 }
 
-bool EffectQuickView::forwardTouchMotion(qint32 id, const QPointF& pos, quint32 time)
+bool OffscreenQuickView::forwardTouchMotion(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(time)
 
@@ -386,7 +386,7 @@ bool EffectQuickView::forwardTouchMotion(qint32 id, const QPointF& pos, quint32 
     return event.isAccepted();
 }
 
-bool EffectQuickView::forwardTouchUp(qint32 id, quint32 time)
+bool OffscreenQuickView::forwardTouchUp(qint32 id, quint32 time)
 {
     Q_UNUSED(time)
 
@@ -398,37 +398,37 @@ bool EffectQuickView::forwardTouchUp(qint32 id, quint32 time)
     return event.isAccepted();
 }
 
-QRect EffectQuickView::geometry() const
+QRect OffscreenQuickView::geometry() const
 {
     return d->m_view->geometry();
 }
 
-void EffectQuickView::setOpacity(qreal opacity)
+void OffscreenQuickView::setOpacity(qreal opacity)
 {
     d->m_view->setOpacity(opacity);
 }
 
-qreal EffectQuickView::opacity() const
+qreal OffscreenQuickView::opacity() const
 {
     return d->m_view->opacity();
 }
 
-bool EffectQuickView::hasAlphaChannel() const
+bool OffscreenQuickView::hasAlphaChannel() const
 {
     return d->m_hasAlphaChannel;
 }
 
-QQuickItem* EffectQuickView::contentItem() const
+QQuickItem* OffscreenQuickView::contentItem() const
 {
     return d->m_view->contentItem();
 }
 
-QQuickWindow* EffectQuickView::window() const
+QQuickWindow* OffscreenQuickView::window() const
 {
     return d->m_view;
 }
 
-void EffectQuickView::setVisible(bool visible)
+void OffscreenQuickView::setVisible(bool visible)
 {
     if (d->m_visible == visible) {
         return;
@@ -443,22 +443,22 @@ void EffectQuickView::setVisible(bool visible)
     }
 }
 
-bool EffectQuickView::isVisible() const
+bool OffscreenQuickView::isVisible() const
 {
     return d->m_visible;
 }
 
-void EffectQuickView::show()
+void OffscreenQuickView::show()
 {
     setVisible(true);
 }
 
-void EffectQuickView::hide()
+void OffscreenQuickView::hide()
 {
     setVisible(false);
 }
 
-GLTexture* EffectQuickView::bufferAsTexture()
+GLTexture* OffscreenQuickView::bufferAsTexture()
 {
     if (d->m_useBlit) {
         if (d->m_image.isNull()) {
@@ -477,24 +477,24 @@ GLTexture* EffectQuickView::bufferAsTexture()
     return d->m_textureExport.data();
 }
 
-QImage EffectQuickView::bufferAsImage() const
+QImage OffscreenQuickView::bufferAsImage() const
 {
     return d->m_image;
 }
 
-QSize EffectQuickView::size() const
+QSize OffscreenQuickView::size() const
 {
     return d->m_view->geometry().size();
 }
 
-void EffectQuickView::setGeometry(const QRect& rect)
+void OffscreenQuickView::setGeometry(const QRect& rect)
 {
     const QRect oldGeometry = d->m_view->geometry();
     d->m_view->setGeometry(rect);
     Q_EMIT geometryChanged(oldGeometry, rect);
 }
 
-void EffectQuickView::Private::releaseResources()
+void OffscreenQuickView::Private::releaseResources()
 {
     if (m_glcontext) {
         m_glcontext->makeCurrent(m_offscreenSurface.data());
@@ -505,9 +505,9 @@ void EffectQuickView::Private::releaseResources()
     }
 }
 
-void EffectQuickView::Private::updateTouchState(Qt::TouchPointState state,
-                                                qint32 id,
-                                                const QPointF& pos)
+void OffscreenQuickView::Private::updateTouchState(Qt::TouchPointState state,
+                                                   qint32 id,
+                                                   const QPointF& pos)
 {
     // Remove the points that were previously in a released state, since they
     // are no longer relevant. Additionally, reset the state of all remaining
@@ -582,20 +582,20 @@ void EffectQuickView::Private::updateTouchState(Qt::TouchPointState state,
     // that the current touch points are in.
 }
 
-EffectQuickScene::EffectQuickScene(EffectQuickView::ExportMode exportMode, bool alpha)
-    : EffectQuickView(exportMode, alpha)
-    , d(new EffectQuickScene::Private)
+OffscreenQuickScene::OffscreenQuickScene(OffscreenQuickView::ExportMode exportMode, bool alpha)
+    : OffscreenQuickView(exportMode, alpha)
+    , d(new OffscreenQuickScene::Private)
 {
 }
 
-EffectQuickScene::~EffectQuickScene() = default;
+OffscreenQuickScene::~OffscreenQuickScene() = default;
 
-void EffectQuickScene::setSource(const QUrl& source)
+void OffscreenQuickScene::setSource(const QUrl& source)
 {
     setSource(source, QVariantMap());
 }
 
-void EffectQuickScene::setSource(const QUrl& source, const QVariantMap& initialProperties)
+void OffscreenQuickScene::setSource(const QUrl& source, const QVariantMap& initialProperties)
 {
     if (!d->qmlComponent) {
         d->qmlComponent.reset(new QQmlComponent(effects->qmlEngine()));
@@ -631,7 +631,7 @@ void EffectQuickScene::setSource(const QUrl& source, const QVariantMap& initialP
     connect(contentItem(), &QQuickItem::heightChanged, item, updateSize);
 }
 
-QQuickItem* EffectQuickScene::rootItem() const
+QQuickItem* OffscreenQuickScene::rootItem() const
 {
     return d->quickItem.data();
 }

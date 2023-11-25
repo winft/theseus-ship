@@ -178,7 +178,7 @@ protected:
         cursor->mark_as_rendered();
     }
 
-    void paintEffectQuickView(EffectQuickView* view) override
+    void paintOffscreenQuickView(OffscreenQuickView* view) override
     {
         auto painter = this->platform.effects->scenePainter();
         const QImage buffer = view->bufferAsImage();

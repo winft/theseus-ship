@@ -88,7 +88,7 @@ bool QuickSceneEffectPrivate::isItemOnScreen(QQuickItem* item, EffectScreen cons
 }
 
 QuickSceneView::QuickSceneView(QuickSceneEffect* effect, EffectScreen const* screen)
-    : EffectQuickView(ExportMode::Texture, false)
+    : OffscreenQuickView(ExportMode::Texture, false)
     , m_effect(effect)
     , m_screen(screen)
 {
@@ -380,11 +380,11 @@ void QuickSceneEffect::paintScreen(effect::screen_paint_data& data)
 
     if (effects->waylandDisplay()) {
         if (auto it = d->views.find(data.screen); it != d->views.end()) {
-            effects->renderEffectQuickView(it->second.get());
+            effects->renderOffscreenQuickView(it->second.get());
         }
     } else {
         for (auto const& [screen, screenView] : d->views) {
-            effects->renderEffectQuickView(screenView.get());
+            effects->renderOffscreenQuickView(screenView.get());
         }
     }
 }

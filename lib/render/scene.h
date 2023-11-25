@@ -650,7 +650,7 @@ public:
     {
     }
 
-    virtual void paintEffectQuickView(EffectQuickView* view) = 0;
+    virtual void paintOffscreenQuickView(OffscreenQuickView* view) = 0;
 
     // The region which actually has been painted by paintScreen() and should be
     // copied from the buffer to the screen. I.e. the region returned from scene::paintScreen().

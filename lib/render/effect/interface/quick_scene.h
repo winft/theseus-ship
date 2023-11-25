@@ -26,7 +26,7 @@ class QuickSceneEffectPrivate;
  *
  * @see QuickSceneEffect, OffscreenQuickView
  */
-class KWIN_EXPORT QuickSceneView : public EffectQuickView
+class KWIN_EXPORT QuickSceneView : public OffscreenQuickView
 {
     Q_OBJECT
     Q_PROPERTY(QuickSceneEffect* effect READ effect CONSTANT)
