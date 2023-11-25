@@ -82,7 +82,7 @@ public:
     virtual void reserve_touch(win::electric_border border, QAction* action) = 0;
     virtual void register_shortcut(QKeySequence const& shortcut, QAction* action) = 0;
 
-    QQmlEngine* qml_engine;
+    std::unique_ptr<QQmlEngine> qml_engine;
     QQmlContext* declarative_script_shared_context;
     base::config& config;
     std::unique_ptr<scripting::options> options;

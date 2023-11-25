@@ -25,8 +25,8 @@ platform_wrap::platform_wrap(base::options& options,
                              win::options& win_opts,
                              render::options& render_opts,
                              base::config& config)
-    : qml_engine(new QQmlEngine(this))
-    , declarative_script_shared_context(new QQmlContext(qml_engine, this))
+    : qml_engine{std::make_unique<QQmlEngine>()}
+    , declarative_script_shared_context(new QQmlContext(qml_engine.get(), this))
     , config{config}
     , options{std::make_unique<scripting::options>(options, win_opts, render_opts)}
     , m_scriptsLock(new QRecursiveMutex)
@@ -34,7 +34,7 @@ platform_wrap::platform_wrap(base::options& options,
     qRegisterMetaType<KWin::SessionState>();
 
     qml_engine->setProperty("_kirigamiTheme", QStringLiteral("KirigamiPlasmaStyle"));
-    qml_engine->rootContext()->setContextObject(new KLocalizedContext(qml_engine));
+    qml_engine->rootContext()->setContextObject(new KLocalizedContext(qml_engine.get()));
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
                                                  this,
                                                  QDBusConnection::ExportScriptableContents

@@ -532,7 +532,7 @@ public:
     QQmlEngine* qmlEngine() const override
     {
         auto& script = scene.platform.base.script;
-        return script ? script->qml_engine : nullptr;
+        return script ? script->qml_engine.get() : nullptr;
     }
 
     void renderEffectQuickView(EffectQuickView* effectQuickView) const override
