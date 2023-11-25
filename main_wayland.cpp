@@ -195,7 +195,7 @@ void ApplicationWayland::start(base::operation_mode mode,
     base->space->desktop = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->space);
     win::init_shortcuts(*base->space);
     render::init_shortcuts(*base->render);
-    base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
+    base->mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->start(*base->space);
 

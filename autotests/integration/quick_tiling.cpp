@@ -869,7 +869,7 @@ TEST_CASE("quick tiling", "[win]")
                                       &win::window_qobject::frame_geometry_changed);
         QVERIFY(geometryChangedSpy.isValid());
 
-        QVERIFY(setup.base->script);
+        QVERIFY(setup.base->mod.script);
         QTemporaryFile tmpFile;
         QVERIFY(tmpFile.open());
 
@@ -877,10 +877,10 @@ TEST_CASE("quick tiling", "[win]")
         out << "workspace.slotWindowQuickTile" << QString::fromStdString(test_data.action) << "()";
         out.flush();
 
-        auto const id = setup.base->script->loadScript(tmpFile.fileName());
+        auto const id = setup.base->mod.script->loadScript(tmpFile.fileName());
         QVERIFY(id != -1);
-        QVERIFY(setup.base->script->isScriptLoaded(tmpFile.fileName()));
-        auto s = setup.base->script->findScript(tmpFile.fileName());
+        QVERIFY(setup.base->mod.script->isScriptLoaded(tmpFile.fileName()));
+        auto s = setup.base->mod.script->findScript(tmpFile.fileName());
         QVERIFY(s);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         QVERIFY(runningChangedSpy.isValid());

@@ -276,7 +276,7 @@ void ApplicationX11::start()
         event_filter = std::make_unique<win::x11::xcb_event_filter<base_t::space_t>>(*base.space);
         installNativeEventFilter(event_filter.get());
 
-        base.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
+        base.mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
         render->start(*base.space);
 
         // Trigger possible errors, there's still a chance to abort.

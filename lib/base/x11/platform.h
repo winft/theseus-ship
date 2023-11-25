@@ -74,7 +74,10 @@ public:
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
-    std::unique_ptr<scripting::platform<space_t>> script;
+
+    struct {
+        std::unique_ptr<scripting::platform<space_t>> script;
+    } mod;
 
     bool is_crash_restart{false};
 

@@ -49,7 +49,7 @@ TEST_CASE("screen edge script", "[script]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->script);
+    QVERIFY(setup.base->mod.script);
 
     setup.base->space->edges->time_threshold = {};
     setup.base->space->edges->reactivate_threshold = {};
@@ -81,11 +81,11 @@ TEST_CASE("screen edge script", "[script]")
             .writeEntry("Edge", int(test_data.edge));
         config->sync();
 
-        QVERIFY(!setup.base->script->isScriptLoaded(scriptToLoad));
-        const int id = setup.base->script->loadScript(scriptToLoad);
+        QVERIFY(!setup.base->mod.script->isScriptLoaded(scriptToLoad));
+        const int id = setup.base->mod.script->loadScript(scriptToLoad);
         QVERIFY(id != -1);
-        QVERIFY(setup.base->script->isScriptLoaded(scriptToLoad));
-        auto s = setup.base->script->findScript(scriptToLoad);
+        QVERIFY(setup.base->mod.script->isScriptLoaded(scriptToLoad));
+        auto s = setup.base->mod.script->findScript(scriptToLoad);
         QVERIFY(s);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         QVERIFY(runningChangedSpy.isValid());
@@ -127,11 +127,11 @@ TEST_CASE("screen edge script", "[script]")
             .writeEntry("Edge", int(test_data.edge));
         config->sync();
 
-        QVERIFY(!setup.base->script->isScriptLoaded(scriptToLoad));
-        auto const id = setup.base->script->loadScript(scriptToLoad);
+        QVERIFY(!setup.base->mod.script->isScriptLoaded(scriptToLoad));
+        auto const id = setup.base->mod.script->loadScript(scriptToLoad);
         QVERIFY(id != -1);
-        QVERIFY(setup.base->script->isScriptLoaded(scriptToLoad));
-        auto s = setup.base->script->findScript(scriptToLoad);
+        QVERIFY(setup.base->mod.script->isScriptLoaded(scriptToLoad));
+        auto s = setup.base->mod.script->findScript(scriptToLoad);
         QVERIFY(s);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         QVERIFY(runningChangedSpy.isValid());
@@ -159,8 +159,8 @@ TEST_CASE("screen edge script", "[script]")
         const QString scriptToLoad = QFINDTESTDATA("./scripts/screenedgeunregister.js");
         QVERIFY(!scriptToLoad.isEmpty());
 
-        setup.base->script->loadScript(scriptToLoad);
-        auto s = setup.base->script->findScript(scriptToLoad);
+        setup.base->mod.script->loadScript(scriptToLoad);
+        auto s = setup.base->mod.script->findScript(scriptToLoad);
         auto configGroup = s->config();
         configGroup.writeEntry("Edge", int(KWin::ElectricLeft));
         configGroup.sync();
@@ -212,10 +212,10 @@ TEST_CASE("screen edge script", "[script]")
     {
         const QString scriptToLoad = QFINDTESTDATA("./scripts/screenedgetouch.qml");
         QVERIFY(!scriptToLoad.isEmpty());
-        QVERIFY(setup.base->script->loadDeclarativeScript(scriptToLoad) != -1);
-        QVERIFY(setup.base->script->isScriptLoaded(scriptToLoad));
+        QVERIFY(setup.base->mod.script->loadDeclarativeScript(scriptToLoad) != -1);
+        QVERIFY(setup.base->mod.script->isScriptLoaded(scriptToLoad));
 
-        auto s = setup.base->script->findScript(scriptToLoad);
+        auto s = setup.base->mod.script->findScript(scriptToLoad);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         s->run();
         QTRY_COMPARE(runningChangedSpy.count(), 1);
@@ -239,9 +239,9 @@ TEST_CASE("screen edge script", "[script]")
                                  QFINDTESTDATA("./scripts/touchScreenedge.js")};
     for (const QString& script : scripts) {
         if (!script.isEmpty()) {
-            if (setup.base->script->isScriptLoaded(script)) {
-                QVERIFY(setup.base->script->unloadScript(script));
-                QTRY_VERIFY(!setup.base->script->isScriptLoaded(script));
+            if (setup.base->mod.script->isScriptLoaded(script)) {
+                QVERIFY(setup.base->mod.script->unloadScript(script));
+                QTRY_VERIFY(!setup.base->mod.script->isScriptLoaded(script));
             }
         }
     }

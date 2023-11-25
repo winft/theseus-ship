@@ -152,7 +152,7 @@ void setup::start()
     input::wayland::add_dbus(base->input.get());
     win::init_shortcuts(*base->space);
     render::init_shortcuts(*base->render);
-    base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
+    base->mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->start(*base->space);
     base->server->init_screen_locker();

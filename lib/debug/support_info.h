@@ -95,7 +95,7 @@ QString get_support_info(Space const& space)
     support.append(QStringLiteral("Options\n"));
     support.append(QStringLiteral("=======\n"));
 
-    auto const metaOptions = space.base.script->options->metaObject();
+    auto const metaOptions = space.base.mod.script->options->metaObject();
     auto printProperty = [](const QVariant& variant) {
         if (variant.type() == QVariant::Size) {
             const QSize& s = variant.toSize();
@@ -113,7 +113,7 @@ QString get_support_info(Space const& space)
         support.append(
             QStringLiteral("%1: %2\n")
                 .arg(property.name())
-                .arg(printProperty(space.base.script->options->property(property.name()))));
+                .arg(printProperty(space.base.mod.script->options->property(property.name()))));
     }
 
     support.append(QStringLiteral("\nScreen Edges\n"));
