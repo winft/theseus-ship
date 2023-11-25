@@ -122,6 +122,7 @@ PRIVATE
   Catch2::Catch2WithMain
   KF6::Crash
   KF6::WindowSystem
+  WraplandClient
   # Static plugins
   KWinQpaPlugin
   KF6WindowSystemKWinPlugin
@@ -202,6 +203,7 @@ PRIVATE
   Catch2::Catch2WithMain
   KF6::Crash
   KF6::WindowSystem
+  WraplandClient
   # Static plugins
   KWinQpaPlugin
   KF6WindowSystemKWinPlugin

@@ -25,12 +25,12 @@ class cursor : public input::cursor
 {
 public:
     using type = cursor<Redirect>;
-    using cursor_image_t = wayland::cursor_image<type, Redirect>;
+    using redirect_t = Redirect;
 
     cursor(Redirect& redirect)
         : input::cursor(redirect.platform.config.main)
-        , cursor_image{std::make_unique<cursor_image_t>(redirect)}
         , redirect{redirect}
+        , cursor_image{std::make_unique<wayland::cursor_image<type>>(*this)}
     {
         QObject::connect(redirect.qobject.get(),
                          &redirect_qobject::globalPointerChanged,
@@ -72,8 +72,8 @@ public:
         return {image(), hotspot()};
     }
 
-    std::unique_ptr<cursor_image_t> cursor_image;
     Redirect& redirect;
+    std::unique_ptr<wayland::cursor_image<type>> cursor_image;
 
 protected:
     void do_set_pos() override

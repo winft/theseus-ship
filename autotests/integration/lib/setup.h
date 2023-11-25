@@ -59,7 +59,6 @@ struct setup final {
     bool ready{false};
 
 private:
-    void handle_server_addons_created();
     void create_xwayland();
 };
 

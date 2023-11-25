@@ -16,11 +16,6 @@
 #include <KScreenLocker/KsldApp>
 #include <QObject>
 #include <QThread>
-#include <Wrapland/Client/compositor.h>
-#include <Wrapland/Client/connection_thread.h>
-#include <Wrapland/Client/event_queue.h>
-#include <Wrapland/Client/registry.h>
-#include <Wrapland/Client/seat.h>
 #include <Wrapland/Server/client.h>
 #include <Wrapland/Server/data_control_v1.h>
 #include <Wrapland/Server/data_device_manager.h>
@@ -62,8 +57,6 @@ class KWIN_EXPORT server_qobject : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
-    void internal_client_available();
-    void terminating_internal_client_connection();
     void screenlocker_initialized();
 };
 
@@ -89,8 +82,6 @@ public:
 
     void terminateClientConnections()
     {
-        destroy_internal_connection();
-
         for (auto client : display->clients()) {
             client->destroy();
         }
@@ -156,31 +147,9 @@ public:
         return !(m_initFlags & start_options::no_global_shortcuts);
     }
 
-    void create_addons(std::function<void()> callback)
-    {
-        auto handle_client_created = [this, callback](auto client_created) {
-            if (client_created && has_screen_locker_integration()) {
-                init_screen_locker();
-            }
-            callback();
-        };
-        create_internal_connection(handle_client_created);
-    }
-
     Wrapland::Server::Client* xwayland_connection() const
     {
         return m_xwayland.client;
-    }
-
-    void dispatch()
-    {
-        if (!display) {
-            return;
-        }
-        if (internal_connection.server) {
-            internal_connection.server->flush();
-        }
-        display->dispatchEvents(0);
     }
 
     /**
@@ -213,6 +182,65 @@ public:
         return ret;
     }
 
+    void init_screen_locker()
+    {
+        if (!has_screen_locker_integration()) {
+            return;
+        }
+
+        auto* screenLockerApp = ScreenLocker::KSldApp::self();
+
+        ScreenLocker::KSldApp::self()->setGreeterEnvironment(base.process_environment);
+        ScreenLocker::KSldApp::self()->initialize();
+
+        QObject::connect(ScreenLocker::KSldApp::self(),
+                         &ScreenLocker::KSldApp::aboutToLock,
+                         qobject.get(),
+                         [this, screenLockerApp]() {
+                             if (screen_locker_client_connection) {
+                                 // Already sent data to KScreenLocker.
+                                 return;
+                             }
+                             int clientFd = create_screen_locker_connection();
+                             if (clientFd < 0) {
+                                 return;
+                             }
+                             ScreenLocker::KSldApp::self()->setWaylandFd(clientFd);
+
+                             for (auto& seat : seats) {
+                                 QObject::connect(seat.get(),
+                                                  &Wrapland::Server::Seat::timestampChanged,
+                                                  screenLockerApp,
+                                                  &ScreenLocker::KSldApp::userActivity);
+                             }
+                         });
+
+        QObject::connect(ScreenLocker::KSldApp::self(),
+                         &ScreenLocker::KSldApp::unlocked,
+                         qobject.get(),
+                         [this, screenLockerApp]() {
+                             if (screen_locker_client_connection) {
+                                 screen_locker_client_connection->destroy();
+                                 delete screen_locker_client_connection;
+                                 screen_locker_client_connection = nullptr;
+                             }
+
+                             for (auto& seat : seats) {
+                                 QObject::disconnect(seat.get(),
+                                                     &Wrapland::Server::Seat::timestampChanged,
+                                                     screenLockerApp,
+                                                     &ScreenLocker::KSldApp::userActivity);
+                             }
+                             ScreenLocker::KSldApp::self()->setWaylandFd(-1);
+                         });
+
+        if (flags(m_initFlags & start_options::lock_screen)) {
+            ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
+        }
+
+        Q_EMIT qobject->screenlocker_initialized();
+    }
+
     std::unique_ptr<server_qobject> qobject;
     std::unique_ptr<Wrapland::Server::Display> display;
     std::unique_ptr<Wrapland::Server::output_manager> output_manager;
@@ -230,18 +258,6 @@ public:
     std::unique_ptr<Wrapland::Server::ShadowManager> shadow_manager;
     std::unique_ptr<Wrapland::Server::DpmsManager> dpms_manager;
     std::unique_ptr<Wrapland::Server::RelativePointerManagerV1> relative_pointer_manager_v1;
-
-    struct {
-        Wrapland::Server::Client* server{nullptr};
-        Wrapland::Client::ConnectionThread* client{nullptr};
-        QThread* clientThread{nullptr};
-        Wrapland::Client::Registry* registry{nullptr};
-        Wrapland::Client::Compositor* compositor{nullptr};
-        Wrapland::Client::EventQueue* queue{nullptr};
-        Wrapland::Client::Seat* seat{nullptr};
-        Wrapland::Client::ShmPool* shm{nullptr};
-
-    } internal_connection;
 
     Wrapland::Server::Client* screen_locker_client_connection{nullptr};
 
@@ -314,65 +330,6 @@ private:
             = std::make_unique<Wrapland::Server::RelativePointerManagerV1>(display.get());
     }
 
-    void create_internal_connection(std::function<void(bool)> callback)
-    {
-        const auto socket = create_connection();
-        if (!socket.connection) {
-            callback(false);
-            return;
-        }
-        internal_connection.server = socket.connection;
-        using namespace Wrapland::Client;
-        internal_connection.client = new ConnectionThread();
-        internal_connection.client->setSocketFd(socket.fd);
-        internal_connection.clientThread = new QThread;
-        internal_connection.client->moveToThread(internal_connection.clientThread);
-        internal_connection.clientThread->start();
-
-        QObject::connect(
-            internal_connection.client,
-            &ConnectionThread::establishedChanged,
-            qobject.get(),
-            [this, callback](bool established) {
-                if (!established) {
-                    return;
-                }
-                auto registry = new Registry;
-                auto eventQueue = new EventQueue;
-                eventQueue->setup(internal_connection.client);
-                registry->setEventQueue(eventQueue);
-                registry->create(internal_connection.client);
-                internal_connection.registry = registry;
-                internal_connection.queue = eventQueue;
-
-                QObject::connect(
-                    registry,
-                    &Registry::interfacesAnnounced,
-                    qobject.get(),
-                    [this, callback, registry] {
-                        auto create_interface
-                            = [registry](Registry::Interface iface_code, auto creator) {
-                                  auto iface = registry->interface(iface_code);
-                                  assert(iface.name != 0);
-                                  return (registry->*creator)(iface.name, iface.version, nullptr);
-                              };
-
-                        internal_connection.shm
-                            = create_interface(Registry::Interface::Shm, &Registry::createShmPool);
-                        internal_connection.compositor = create_interface(
-                            Registry::Interface::Compositor, &Registry::createCompositor);
-                        internal_connection.seat
-                            = create_interface(Registry::Interface::Seat, &Registry::createSeat);
-                        callback(true);
-                        Q_EMIT qobject->internal_client_available();
-                    },
-                    Qt::QueuedConnection);
-
-                registry->setup();
-            });
-        internal_connection.client->establishConnection();
-    }
-
     int create_screen_locker_connection()
     {
         const auto socket = create_connection();
@@ -385,94 +342,6 @@ private:
                          qobject.get(),
                          [this] { screen_locker_client_connection = nullptr; });
         return socket.fd;
-    }
-
-    void destroy_internal_connection()
-    {
-        Q_EMIT qobject->terminating_internal_client_connection();
-        if (internal_connection.client) {
-            // delete all connections hold by plugins like e.g. widget style
-            const auto connections = Wrapland::Client::ConnectionThread::connections();
-            for (auto c : connections) {
-                if (c == internal_connection.client) {
-                    continue;
-                }
-                Q_EMIT c->establishedChanged(false);
-            }
-
-            delete internal_connection.registry;
-            delete internal_connection.compositor;
-            delete internal_connection.seat;
-            delete internal_connection.shm;
-            dispatch();
-            delete internal_connection.queue;
-            internal_connection.client->deleteLater();
-            internal_connection.clientThread->quit();
-            internal_connection.clientThread->wait();
-            delete internal_connection.clientThread;
-            internal_connection.client = nullptr;
-            internal_connection.server->destroy();
-            internal_connection.server = nullptr;
-        }
-    }
-
-    void init_screen_locker()
-    {
-        if (!has_screen_locker_integration()) {
-            return;
-        }
-
-        auto* screenLockerApp = ScreenLocker::KSldApp::self();
-
-        ScreenLocker::KSldApp::self()->setGreeterEnvironment(base.process_environment);
-        ScreenLocker::KSldApp::self()->initialize();
-
-        QObject::connect(ScreenLocker::KSldApp::self(),
-                         &ScreenLocker::KSldApp::aboutToLock,
-                         qobject.get(),
-                         [this, screenLockerApp]() {
-                             if (screen_locker_client_connection) {
-                                 // Already sent data to KScreenLocker.
-                                 return;
-                             }
-                             int clientFd = create_screen_locker_connection();
-                             if (clientFd < 0) {
-                                 return;
-                             }
-                             ScreenLocker::KSldApp::self()->setWaylandFd(clientFd);
-
-                             for (auto& seat : seats) {
-                                 QObject::connect(seat.get(),
-                                                  &Wrapland::Server::Seat::timestampChanged,
-                                                  screenLockerApp,
-                                                  &ScreenLocker::KSldApp::userActivity);
-                             }
-                         });
-
-        QObject::connect(ScreenLocker::KSldApp::self(),
-                         &ScreenLocker::KSldApp::unlocked,
-                         qobject.get(),
-                         [this, screenLockerApp]() {
-                             if (screen_locker_client_connection) {
-                                 screen_locker_client_connection->destroy();
-                                 delete screen_locker_client_connection;
-                                 screen_locker_client_connection = nullptr;
-                             }
-
-                             for (auto& seat : seats) {
-                                 QObject::disconnect(seat.get(),
-                                                     &Wrapland::Server::Seat::timestampChanged,
-                                                     screenLockerApp,
-                                                     &ScreenLocker::KSldApp::userActivity);
-                             }
-                             ScreenLocker::KSldApp::self()->setWaylandFd(-1);
-                         });
-
-        if (flags(m_initFlags & start_options::lock_screen)) {
-            ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
-        }
-
-        Q_EMIT qobject->screenlocker_initialized();
     }
 
     struct {

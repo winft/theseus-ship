@@ -95,7 +95,5 @@ int main(int argc, char* argv[])
     base.space->desktop = std::make_unique<desktop::platform>(*base.space);
 
     base.render->start(*base.space);
-    base.server->create_addons([] { /* noop */ });
-
     return app.exec();
 }

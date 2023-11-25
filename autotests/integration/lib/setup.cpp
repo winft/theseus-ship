@@ -166,9 +166,12 @@ void setup::start()
     base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
 
     base->render->start(*base->space);
-    base->server->create_addons([this] { handle_server_addons_created(); });
+    base->server->init_screen_locker();
 
-    TRY_REQUIRE_WITH_TIMEOUT(ready, 10000);
+    if (base->operation_mode == base::operation_mode::xwayland) {
+        create_xwayland();
+        TRY_REQUIRE_WITH_TIMEOUT(ready, 10000);
+    }
 }
 
 void setup::set_outputs(size_t count)
@@ -217,18 +220,6 @@ void setup::set_outputs(std::vector<output> const& outputs)
 void setup::add_client(global_selection globals)
 {
     clients.emplace_back(globals);
-}
-
-void setup::handle_server_addons_created()
-{
-#if USE_XWL
-    if (base->operation_mode == base::operation_mode::xwayland) {
-        create_xwayland();
-        return;
-    }
-#endif
-
-    ready = true;
 }
 
 void setup::create_xwayland()

@@ -8,13 +8,12 @@
 */
 #pragma once
 
-#include "cursor_theme.h"
-
 #include "base/wayland/screen_lock.h"
 #include "base/wayland/server.h"
 #include "kwin_export.h"
 #include "win/space_qobject.h"
 #include "win/window_qobject.h"
+#include <input/wayland/xcursor_theme.h>
 
 #include <KScreenLocker/KsldApp>
 #include <QElapsedTimer>
@@ -28,9 +27,7 @@
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
-#include <map>
 #include <memory>
-#include <wayland-cursor.h>
 
 namespace KWin::input::wayland
 {
@@ -42,16 +39,18 @@ Q_SIGNALS:
     void changed();
 };
 
-template<typename Cursor, typename Redirect>
+template<typename Cursor>
 class cursor_image
 {
 public:
-    using window_t = typename Redirect::platform_t::base_t::space_t::window_t;
+    using window_t = typename Cursor::redirect_t::platform_t::base_t::space_t::window_t;
 
-    cursor_image(Redirect& redirect)
+    cursor_image(Cursor& cursor)
         : qobject{std::make_unique<cursor_image_qobject>()}
-        , redirect{redirect}
+        , cursor{cursor}
     {
+        auto& redirect = cursor.redirect;
+
         QObject::connect(redirect.platform.base.server->seat(),
                          &Wrapland::Server::Seat::focusedPointerChanged,
                          qobject.get(),
@@ -75,14 +74,15 @@ public:
                              [this] { reevaluteSource(); });
         }
 
-        m_surfaceRenderedTimer.start();
-
-        // Loading the theme is delayed because we depend on the client connection.
-        // TODO(romangg): Instead load the theme without client connection and setup directly.
-        QObject::connect(redirect.platform.base.server->qobject.get(),
-                         &base::wayland::server_qobject::internal_client_available,
+        QObject::connect(
+            &cursor, &Cursor::theme_changed, qobject.get(), [this] { m_cursorTheme = {}; });
+        QObject::connect(&redirect.platform.base,
+                         &Cursor::redirect_t::platform_t::base_t::topology_changed,
                          qobject.get(),
-                         [this] { setup_theme(); });
+                         [this] { m_cursorTheme = {}; });
+
+        m_surfaceRenderedTimer.start();
+        setup_theme();
     }
 
     void setEffectsOverrideCursor(Qt::CursorShape shape)
@@ -167,7 +167,7 @@ public:
 
     void markAsRendered()
     {
-        auto seat = redirect.platform.base.server->seat();
+        auto seat = cursor.redirect.platform.base.server->seat();
 
         if (m_currentSource == CursorSource::DragAndDrop) {
             auto p = seat->drags().get_source().pointer;
@@ -235,41 +235,27 @@ public:
 private:
     void setup_theme()
     {
-        QObject::connect(redirect.space.qobject.get(),
+        QObject::connect(cursor.redirect.space.qobject.get(),
                          &win::space_qobject::wayland_window_added,
                          qobject.get(),
                          [this](auto win_id) {
                              std::visit(overload{[this](auto&& win) { setup_move_resize(win); }},
-                                        redirect.space.windows_map.at(win_id));
+                                        cursor.redirect.space.windows_map.at(win_id));
                          });
 
-        // TODO(romangg): can we load the fallback cursor earlier in the ctor already?
         loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
-        if (m_cursorTheme) {
-            QObject::connect(m_cursorTheme->qobject.get(),
-                             &cursor_theme_qobject::themeChanged,
-                             qobject.get(),
-                             [this] {
-                                 m_cursors.clear();
-                                 m_cursorsByName.clear();
-                                 loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
-                                 updateDecorationCursor();
-                                 updateMoveResize();
-                                 // TODO: update effects
-                             });
-        }
 
-        auto const clients = redirect.space.windows;
+        auto const clients = cursor.redirect.space.windows;
         std::for_each(clients.begin(), clients.end(), [this](auto win) {
             std::visit(overload{[this](auto&& win) { setup_move_resize(win); }}, win);
         });
 
-        QObject::connect(redirect.space.qobject.get(),
+        QObject::connect(cursor.redirect.space.qobject.get(),
                          &win::space_qobject::clientAdded,
                          qobject.get(),
                          [this](auto win_id) {
                              std::visit(overload{[this](auto&& win) { setup_move_resize(win); }},
-                                        redirect.space.windows_map.at(win_id));
+                                        cursor.redirect.space.windows_map.at(win_id));
                          });
 
         Q_EMIT qobject->changed();
@@ -293,34 +279,37 @@ private:
 
     void reevaluteSource()
     {
-        if (redirect.platform.base.server->seat()->drags().is_pointer_drag()) {
+        if (cursor.redirect.platform.base.server->seat()->drags().is_pointer_drag()) {
             // TODO: touch drag?
             setSource(CursorSource::DragAndDrop);
             return;
         }
-        if (base::wayland::is_screen_locked(redirect.platform.base)) {
+        if (base::wayland::is_screen_locked(cursor.redirect.platform.base)) {
             setSource(CursorSource::LockScreen);
             return;
         }
-        if (redirect.isSelectingWindow()) {
+        if (cursor.redirect.isSelectingWindow()) {
             setSource(CursorSource::WindowSelector);
             return;
         }
-        if (auto& effects = redirect.platform.base.render->effects;
+        if (auto& effects = cursor.redirect.platform.base.render->effects;
             effects && effects->isMouseInterception()) {
             setSource(CursorSource::EffectsOverride);
             return;
         }
-        if (redirect.space.move_resize_window) {
+        if (cursor.redirect.space.move_resize_window) {
             setSource(CursorSource::MoveResize);
             return;
         }
-        if (redirect.pointer->focus.deco.client) {
+        if (cursor.redirect.pointer->focus.deco.client) {
             setSource(CursorSource::Decoration);
             return;
         }
-        if (redirect.pointer->focus.window
-            && !redirect.platform.base.server->seat()->pointers().get_focus().devices.empty()) {
+        if (cursor.redirect.pointer->focus.window
+            && !cursor.redirect.platform.base.server->seat()
+                    ->pointers()
+                    .get_focus()
+                    .devices.empty()) {
             setSource(CursorSource::PointerSurface);
             return;
         }
@@ -329,13 +318,14 @@ private:
 
     void update()
     {
-        if (redirect.pointer->cursor_update_blocking) {
+        if (cursor.redirect.pointer->cursor_update_blocking) {
             return;
         }
         using namespace Wrapland::Server;
         QObject::disconnect(m_serverCursor.connection);
 
-        auto const pointer_focus = redirect.platform.base.server->seat()->pointers().get_focus();
+        auto const pointer_focus
+            = cursor.redirect.platform.base.server->seat()->pointers().get_focus();
         if (pointer_focus.devices.empty()) {
             m_serverCursor.connection = QMetaObject::Connection();
             reevaluteSource();
@@ -356,7 +346,7 @@ private:
         const bool needsEmit = m_currentSource == CursorSource::LockScreen
             || m_currentSource == CursorSource::PointerSurface;
 
-        auto seat = redirect.platform.base.server->seat();
+        auto seat = cursor.redirect.platform.base.server->seat();
         if (!seat->hasPointer()) {
             if (needsEmit) {
                 Q_EMIT qobject->changed();
@@ -406,9 +396,9 @@ private:
         m_decorationCursor.image = QImage();
         m_decorationCursor.hotSpot = QPoint();
 
-        if (auto win = redirect.pointer->at.window) {
+        if (auto win = cursor.redirect.pointer->at.window) {
             std::visit(overload{[&](auto&& win) {
-                           if (!redirect.pointer->focus.deco.client) {
+                           if (!cursor.redirect.pointer->focus.deco.client) {
                                return;
                            }
                            loadThemeCursor(win->control->move_resize.cursor, &m_decorationCursor);
@@ -426,7 +416,7 @@ private:
         m_moveResizeCursor.image = QImage();
         m_moveResizeCursor.hotSpot = QPoint();
 
-        if (auto& mov_res = redirect.space.move_resize_window) {
+        if (auto& mov_res = cursor.redirect.space.move_resize_window) {
             auto cursor = std::visit(
                 overload{[&](auto&& win) { return win->control->move_resize.cursor; }}, *mov_res);
             loadThemeCursor(cursor, &m_moveResizeCursor);
@@ -445,7 +435,7 @@ private:
         m_drag.cursor.image = QImage();
         m_drag.cursor.hotSpot = QPoint();
         reevaluteSource();
-        if (auto p = redirect.platform.base.server->seat()->drags().get_source().pointer) {
+        if (auto p = cursor.redirect.platform.base.server->seat()->drags().get_source().pointer) {
             m_drag.connection = QObject::connect(
                 p, &Pointer::cursorChanged, qobject.get(), [this] { updateDragCursor(); });
         } else {
@@ -461,14 +451,14 @@ private:
         const bool needsEmit = m_currentSource == CursorSource::DragAndDrop;
         QImage additionalIcon;
         if (auto drag_icon
-            = redirect.platform.base.server->seat()->drags().get_source().surfaces.icon) {
+            = cursor.redirect.platform.base.server->seat()->drags().get_source().surfaces.icon) {
             if (auto buffer = drag_icon->state().buffer) {
                 // TODO: Check std::optional?
                 additionalIcon = buffer->shmImage()->createQImage().copy();
                 additionalIcon.setOffset(drag_icon->state().offset);
             }
         }
-        auto p = redirect.platform.base.server->seat()->drags().get_source().pointer;
+        auto p = cursor.redirect.platform.base.server->seat()->drags().get_source().pointer;
         if (!p) {
             if (needsEmit) {
                 Q_EMIT qobject->changed();
@@ -532,22 +522,22 @@ private:
         // TODO: add the cursor image
     }
 
-    void loadTheme()
+    bool ensure_theme()
     {
-        if (m_cursorTheme) {
-            return;
+        if (!m_cursorTheme.empty()) {
+            return true;
         }
 
-        // check whether we can create it
-        if (redirect.platform.base.server->internal_connection.shm) {
-            m_cursorTheme = std::make_unique<cursor_theme<Cursor>>(
-                static_cast<Cursor&>(*redirect.cursor),
-                redirect.platform.base.server->internal_connection.shm);
-            QObject::connect(redirect.platform.base.server->qobject.get(),
-                             &base::wayland::server_qobject::terminating_internal_client_connection,
-                             qobject.get(),
-                             [this] { m_cursorTheme.reset(); });
+        auto scale = cursor.redirect.platform.base.topology.max_scale;
+
+        m_cursorTheme = xcursor_theme(cursor.theme_name(), cursor.theme_size(), scale);
+
+        if (m_cursorTheme.empty()) {
+            m_cursorTheme
+                = xcursor_theme(cursor.default_theme_name(), cursor.default_theme_size(), scale);
         }
+
+        return !m_cursorTheme.empty();
     }
 
     struct Image {
@@ -557,54 +547,41 @@ private:
 
     void loadThemeCursor(win::cursor_shape shape, Image* image)
     {
-        loadThemeCursor(shape, m_cursors, image);
+        loadThemeCursor(shape.name(), image);
     }
 
     void loadThemeCursor(std::string const& shape, Image* image)
     {
-        loadThemeCursor(shape, m_cursorsByName, image);
-    }
-
-    template<typename T>
-    void loadThemeCursor(T const& shape, std::map<T, Image>& cursors, Image* image)
-    {
-        loadTheme();
-
-        if (!m_cursorTheme) {
+        if (!ensure_theme()) {
+            qCWarning(KWIN_CORE) << "No theme for cursor when loading shape" << shape.c_str();
             return;
         }
 
-        auto it = cursors.find(shape);
-        if (it == cursors.end()) {
-            image->image = QImage();
-            image->hotSpot = QPoint();
-            wl_cursor_image* cursor = m_cursorTheme->get(shape);
-            if (!cursor) {
-                return;
-            }
-            wl_buffer* b = wl_cursor_image_get_buffer(cursor);
-            if (!b) {
-                return;
-            }
-            redirect.platform.base.server->internal_connection.client->flush();
-            redirect.platform.base.server->dispatch();
-            auto buffer = Wrapland::Server::Buffer::get(
-                redirect.platform.base.server->display.get(),
-                redirect.platform.base.server->internal_connection.server->getResource(
-                    Wrapland::Client::Buffer::getId(b)));
-            if (!buffer) {
-                return;
-            }
-            auto scale = redirect.platform.base.topology.max_scale;
-            int hotSpotX = qRound(cursor->hotspot_x / scale);
-            int hotSpotY = qRound(cursor->hotspot_y / scale);
-            QImage img = buffer->shmImage()->createQImage().copy();
-            img.setDevicePixelRatio(scale);
-            it = cursors.insert({shape, {img, QPoint(hotSpotX, hotSpotY)}}).first;
+        if (load_theme_helper(shape, image)) {
+            return;
         }
 
-        image->hotSpot = it->second.hotSpot;
-        image->image = it->second.image;
+        auto const alternative_names = win::cursor_shape_get_alternative_names(shape);
+        for (auto const& alternative : alternative_names) {
+            if (load_theme_helper(alternative, image)) {
+                return;
+            }
+        }
+
+        qCWarning(KWIN_CORE) << "Failed to load theme cursor for shape" << shape.c_str();
+    }
+
+    bool load_theme_helper(std::string const& name, Image* image)
+    {
+        auto const sprites = m_cursorTheme.shape(QByteArray::fromStdString(name));
+        if (sprites.isEmpty()) {
+            return false;
+        }
+
+        image->image = sprites.first().data();
+        image->hotSpot = sprites.first().hotspot();
+
+        return true;
     }
 
     enum class CursorSource {
@@ -628,7 +605,7 @@ private:
     }
 
     CursorSource m_currentSource = CursorSource::Fallback;
-    std::unique_ptr<cursor_theme<Cursor>> m_cursorTheme;
+    xcursor_theme m_cursorTheme;
 
     struct {
         QMetaObject::Connection connection;
@@ -642,15 +619,13 @@ private:
     Image m_fallbackCursor;
     Image m_moveResizeCursor;
     Image m_windowSelectionCursor;
-    std::map<win::cursor_shape, Image> m_cursors;
-    std::map<std::string, Image> m_cursorsByName;
     QElapsedTimer m_surfaceRenderedTimer;
     struct {
         Image cursor;
         QMetaObject::Connection connection;
     } m_drag;
 
-    Redirect& redirect;
+    Cursor& cursor;
 };
 
 }
