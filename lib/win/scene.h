@@ -161,8 +161,6 @@ auto update_shadow(Win* win)
     // Old & new shadow region
     QRect dirty_rect;
 
-    auto const old_visible_rect = visible_rect(win);
-
     if (auto shdw = shadow(win)) {
         dirty_rect = shdw->shadowRegion().boundingRect();
         if (!shdw->updateShadow()) {
