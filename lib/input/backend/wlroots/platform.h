@@ -18,6 +18,7 @@ extern "C" {
 #include <wlr/types/wlr_input_device.h>
 }
 
+#include <gsl/pointers>
 #include <ranges>
 
 namespace KWin::input::backend::wlroots
@@ -35,19 +36,19 @@ void platform_handle_device(struct wl_listener* listener, [[maybe_unused]] void*
     switch (device->type) {
     case WLR_INPUT_DEVICE_KEYBOARD:
         qCDebug(KWIN_INPUT) << "Keyboard device added:" << device->name;
-        platform_add_keyboard(new keyboard<Platform>(device, input), *input);
+        platform_add_keyboard(new keyboard<Platform>(device, input), *input->frontend);
         break;
     case WLR_INPUT_DEVICE_POINTER:
         qCDebug(KWIN_INPUT) << "Pointer device added:" << device->name;
-        platform_add_pointer(new pointer<Platform>(device, input), *input);
+        platform_add_pointer(new pointer<Platform>(device, input), *input->frontend);
         break;
     case WLR_INPUT_DEVICE_SWITCH:
         qCDebug(KWIN_INPUT) << "Switch device added:" << device->name;
-        platform_add_switch(new switch_device<Platform>(device, input), *input);
+        platform_add_switch(new switch_device<Platform>(device, input), *input->frontend);
         break;
     case WLR_INPUT_DEVICE_TOUCH:
         qCDebug(KWIN_INPUT) << "Touch device added:" << device->name;
-        platform_add_touch(new touch<Platform>(device, input), *input);
+        platform_add_touch(new touch<Platform>(device, input), *input->frontend);
         break;
     default:
         // TODO(romangg): Handle other device types.
@@ -55,15 +56,16 @@ void platform_handle_device(struct wl_listener* listener, [[maybe_unused]] void*
     }
 }
 
-template<typename Base>
-class platform : public input::wayland::platform<typename Base::abstract_type>
+template<typename Frontend>
+class platform
 {
 public:
-    using type = platform<Base>;
+    using type = platform<Frontend>;
+    using frontend_type = Frontend;
 
-    platform(Base& base, wlr_backend* backend, input::config config)
-        : wayland::platform<typename Base::abstract_type>(base, std::move(config))
-        , backend{backend}
+    platform(Frontend& frontend)
+        : frontend{&frontend}
+        , backend{frontend.base.backend.backend}
     {
         add_device.receiver = this;
         add_device.event.notify = platform_handle_device<type>;
@@ -74,14 +76,15 @@ public:
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
 
-    ~platform() override
+    virtual ~platform()
     {
-        unset_platform<wlroots::keyboard<type>>(this->keyboards);
-        unset_platform<wlroots::pointer<type>>(this->pointers);
-        unset_platform<wlroots::switch_device<type>>(this->switches);
-        unset_platform<wlroots::touch<type>>(this->touchs);
+        unset_platform<wlroots::keyboard<type>>(frontend->keyboards);
+        unset_platform<wlroots::pointer<type>>(frontend->pointers);
+        unset_platform<wlroots::switch_device<type>>(frontend->switches);
+        unset_platform<wlroots::touch<type>>(frontend->touchs);
     }
 
+    gsl::not_null<Frontend*> frontend;
     wlr_backend* backend{nullptr};
 
 private:

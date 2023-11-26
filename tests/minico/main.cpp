@@ -4,10 +4,9 @@ SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include <base/app_singleton.h>
-#include <base/backend/wlroots/platform.h>
 #include <base/wayland/platform.h>
 #include <desktop/platform.h>
-#include <input/backend/wlroots/platform.h>
+#include <input/wayland/platform.h>
 
 #include <KCrash>
 #include <KLocalizedString>
@@ -55,7 +54,7 @@ int main(int argc, char* argv[])
     QObject::connect(
         KSignalHandler::self(), &KSignalHandler::signalReceived, &app, &QCoreApplication::exit);
 
-    using base_t = base::backend::wlroots::platform<base::wayland::platform>;
+    using base_t = base::wayland::platform;
     base_t base(base::config(KConfig::OpenFlag::FullConfig, "kwinft-minimalrc"),
                 "",
                 base::wayland::start_options::no_lock_screen_integration,
@@ -64,17 +63,14 @@ int main(int argc, char* argv[])
     base.options = base::create_options(base::operation_mode::wayland, base.config.main);
 
     try {
-        using render_t
-            = render::backend::wlroots::platform<base_t,
-                                                 render::wayland::platform<base_t::abstract_type>>;
-        base.render = std::make_unique<render_t>(base);
+        base.render = std::make_unique<base_t::render_t>(base);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
         exit(exc.code().value());
     }
 
-    base.input = std::make_unique<input::backend::wlroots::platform<base_t>>(
-        base, base.backend, input::config(KConfig::NoGlobals));
+    base.input = std::make_unique<input::wayland::platform<base_t>>(
+        base, input::config(KConfig::NoGlobals));
     input::wayland::add_dbus(base.input.get());
 
     // TODO(romangg): remove

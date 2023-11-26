@@ -29,7 +29,7 @@ void init_egl(Backend& backend, egl_data& egl)
         eglGetProcAddress("eglQueryWaylandBufferWL"));
 
     // only bind if not already done
-    if (auto&& display = backend.platform.base.server->display;
+    if (auto&& display = backend.platform.frontend->base.server->display;
         display->eglDisplay() != backend.data.base.display) {
         if (!egl.bind_wl_display(backend.data.base.display, display->native())) {
             egl.unbind_wl_display = nullptr;
@@ -45,7 +45,7 @@ void unbind_egl_display(Backend& backend, egl_data const& egl)
 {
     if (egl.unbind_wl_display && backend.data.base.display != EGL_NO_DISPLAY) {
         egl.unbind_wl_display(backend.data.base.display,
-                              backend.platform.base.server->display->native());
+                              backend.platform.frontend->base.server->display->native());
     }
 }
 

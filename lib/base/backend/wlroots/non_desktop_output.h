@@ -76,7 +76,7 @@ public:
 private:
     void create_lease_connector()
     {
-        auto lease_device = platform->drm_lease_device.get();
+        auto lease_device = platform->frontend->drm_lease_device.get();
         if (!lease_device) {
             return;
         }

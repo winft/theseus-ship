@@ -11,68 +11,61 @@
 #include "wlr_helpers.h"
 #include <render/compositor_start.h>
 
+#include <gsl/pointers>
 #include <variant>
 
 namespace KWin::render::backend::wlroots
 {
 
-template<typename Base, typename WaylandPlatform>
-class platform : public WaylandPlatform
+template<typename Frontend>
+class platform
 {
 public:
-    using type = platform<Base, WaylandPlatform>;
-    using abstract_type = WaylandPlatform;
-    using output_t = output<typename Base::output_t, type>;
+    using type = platform<Frontend>;
+    using frontend_type = Frontend;
+    using output_t = output<typename frontend_type::base_t::backend_t::output_t, type>;
 
-    explicit platform(Base& base)
-        : abstract_type(base)
-        , base{base}
+    explicit platform(Frontend& frontend)
+        : frontend{&frontend}
     {
     }
 
-    ~platform() override
-    {
-        // TODO(romangg): Should be in abstract platform. Still needs the gl backend though.
-        Q_EMIT this->qobject->aboutToDestroy();
-        compositor_stop(*this, true);
-    }
-
-    void init() override
+    void init()
     {
         // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
         //                available in the ctor. Can we change that?
-        if (this->options->qobject->sw_compositing()) {
+        if (frontend->options->qobject->sw_compositing()) {
             qpainter = create_render_backend<qpainter_backend<platform>>(*this, "pixman");
         } else {
             egl = create_render_backend<egl_backend<platform>>(*this, "gles2");
         }
 
-        if (!wlr_backend_start(base.backend)) {
+        if (!wlr_backend_start(frontend->base.backend.backend)) {
             throw std::exception();
         }
 
-        base::update_output_topology(base);
+        base::update_output_topology(frontend->base);
     }
 
-    bool is_sw_compositing() const override
+    bool is_sw_compositing() const
     {
         return static_cast<bool>(qpainter);
     }
 
-    gl::backend<gl::scene<abstract_type>, abstract_type>* get_opengl_backend() override
+    gl::backend<gl::scene<frontend_type>, frontend_type>* get_opengl_backend()
     {
         assert(egl);
         egl->make_current();
         return egl.get();
     }
 
-    qpainter::backend<qpainter::scene<abstract_type>>* get_qpainter_backend() override
+    qpainter::backend<qpainter::scene<frontend_type>>* get_qpainter_backend()
     {
         assert(qpainter);
         return qpainter.get();
     }
 
-    void render_stop(bool on_shutdown) override
+    void render_stop(bool on_shutdown)
     {
         if (egl && on_shutdown) {
             wayland::unbind_egl_display(*egl, egl->data);
@@ -80,7 +73,7 @@ public:
         }
     }
 
-    Base& base;
+    gsl::not_null<Frontend*> frontend;
     std::unique_ptr<egl_backend<platform>> egl;
     std::unique_ptr<qpainter_backend<platform>> qpainter;
 
@@ -93,8 +86,9 @@ private:
                                                   std::string const& wlroots_name)
     {
         setenv("WLR_RENDERER", wlroots_name.c_str(), true);
-        platform.renderer = wlr_renderer_autocreate(platform.base.backend);
-        platform.allocator = wlr_allocator_autocreate(platform.base.backend, platform.renderer);
+        platform.renderer = wlr_renderer_autocreate(platform.frontend->base.backend.backend);
+        platform.allocator
+            = wlr_allocator_autocreate(platform.frontend->base.backend.backend, platform.renderer);
         return std::make_unique<Render>(platform);
     }
 };

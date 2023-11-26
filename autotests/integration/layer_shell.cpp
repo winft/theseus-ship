@@ -289,8 +289,8 @@ TEST_CASE("layer shell", "[win]")
         QVERIFY(window_spy.isValid());
 
         auto const output_geo = QRect(2000, 0, 1000, 500);
-        auto wlr_out
-            = wlr_headless_add_output(setup.base->backend, output_geo.width(), output_geo.height());
+        auto wlr_out = wlr_headless_add_output(
+            setup.base->backend.backend, output_geo.width(), output_geo.height());
         wlr_output_enable(wlr_out, true);
         QCOMPARE(setup.base->outputs.size(), 3);
 

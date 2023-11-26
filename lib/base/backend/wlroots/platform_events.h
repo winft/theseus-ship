@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <base/backend/wlroots/non_desktop_output.h>
 #include <base/backend/wlroots/output.h>
 #include <base/logging.h>
 #include <base/utils.h>
@@ -25,7 +26,7 @@ static void handle_destroy(struct wl_listener* listener, void* /*data*/)
 template<typename Platform>
 void add_new_output(Platform& platform, wlr_output* native)
 {
-    auto& render = static_cast<typename Platform::render_t&>(*platform.render);
+    auto& render = platform.frontend->render->backend;
     wlr_output_init_render(native, render.allocator, render.renderer);
 
     if (!wl_list_empty(&native->modes)) {
@@ -45,7 +46,7 @@ void add_new_output(Platform& platform, wlr_output* native)
     if (platform.align_horizontal) {
         auto shifted_geo = output->geometry();
         auto screens_width = 0;
-        for (auto out : platform.outputs) {
+        for (auto out : platform.frontend->outputs) {
             // +1 for QRect's bottom-right deviation
             screens_width = std::max(out->geometry().right() + 1, screens_width);
         }
@@ -53,11 +54,11 @@ void add_new_output(Platform& platform, wlr_output* native)
         output->force_geometry(shifted_geo);
     }
 
-    platform.all_outputs.push_back(output);
-    platform.outputs.push_back(output);
-    platform.server->output_manager->commit_changes();
+    platform.frontend->all_outputs.push_back(output);
+    platform.frontend->outputs.push_back(output);
+    platform.frontend->server->output_manager->commit_changes();
 
-    Q_EMIT platform.output_added(output);
+    Q_EMIT platform.frontend->output_added(output);
 }
 
 template<typename Platform>

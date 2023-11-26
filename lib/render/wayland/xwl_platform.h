@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <render/backend/wlroots/platform.h>
 #include <render/compositor.h>
 #include <render/dbus/compositing.h>
 #include <render/gl/backend.h>
@@ -32,6 +33,7 @@ public:
     using base_t = Base;
     using space_t = typename Base::space_t;
 
+    using backend_t = backend::wlroots::platform<type>;
     using state_t = render::state;
     using scene_t = render::scene<type>;
     using effects_t = wayland::xwl_effects_handler_impl<scene_t>;
@@ -45,6 +47,7 @@ public:
         : base{base}
         , qobject{std::make_unique<compositor_qobject>([this](auto /*te*/) { return false; })}
         , options{std::make_unique<render::options>(base.operation_mode, base.config.main)}
+        , backend{*this}
         , night_color{std::make_unique<render::post::night_color_manager<Base>>(base)}
         , presentation{std::make_unique<wayland::presentation>(
               base.get_clockid(),
@@ -70,7 +73,10 @@ public:
         singleton_interface::get_egl_data = {};
     }
 
-    virtual void init() = 0;
+    void init()
+    {
+        backend.init();
+    }
 
     bool requiresCompositing() const
     {
@@ -108,12 +114,26 @@ public:
         effects->invert_screen();
     }
 
-    virtual gl::backend<gl::scene<type>, type>* get_opengl_backend() = 0;
-    virtual qpainter::backend<qpainter::scene<type>>* get_qpainter_backend() = 0;
-    virtual bool is_sw_compositing() const = 0;
+    gl::backend<gl::scene<type>, type>* get_opengl_backend()
+    {
+        return backend.get_opengl_backend();
+    }
+
+    qpainter::backend<qpainter::scene<type>>* get_qpainter_backend()
+    {
+        return backend.get_qpainter_backend();
+    }
+
+    bool is_sw_compositing() const
+    {
+        return backend.is_sw_compositing();
+    }
 
     // TODO(romangg): Remove the boolean trap.
-    virtual void render_stop(bool on_shutdown) = 0;
+    void render_stop(bool on_shutdown)
+    {
+        return backend.render_stop(on_shutdown);
+    }
 
     void start(space_t& space)
     {
@@ -278,6 +298,7 @@ public:
     int output_index{0};
 
     std::unique_ptr<render::options> options;
+    backend_t backend;
     std::unique_ptr<render::post::night_color_manager<Base>> night_color;
 
     std::unique_ptr<scene_t> scene;

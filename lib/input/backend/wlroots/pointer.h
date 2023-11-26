@@ -30,7 +30,7 @@ void pointer_handle_destroy(struct wl_listener* listener, void* /*data*/)
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     if (pointer->platform) {
-        platform_remove_pointer(pointer, *pointer->platform);
+        platform_remove_pointer(pointer, *pointer->platform->frontend);
     }
     delete pointer;
 }
@@ -309,7 +309,7 @@ public:
         auto backend = wlr_pointer_from_input_device(dev);
 
         if (auto libinput = get_libinput_device(dev)) {
-            control = std::make_unique<pointer_control>(libinput, platform->config.main);
+            control = std::make_unique<pointer_control>(libinput, platform->frontend->config.main);
         }
 
         destroyed.receiver = this;

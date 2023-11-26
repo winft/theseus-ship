@@ -11,7 +11,6 @@
 #include <base/backend/wlroots/non_desktop_output.h>
 #include <base/backend/wlroots/platform_events.h>
 #include <base/logging.h>
-#include <base/seat/backend/wlroots/session.h>
 
 #include "base/utils.h"
 #include "utils/flags.h"
@@ -19,29 +18,27 @@
 #include <functional>
 #include <memory>
 
-namespace Wrapland::Server
-{
-class Display;
+extern "C" {
+#define static
+#include <wlr/util/log.h>
+#undef static
 }
 
 namespace KWin::base::backend::wlroots
 {
 
-template<typename WaylandPlatform>
-class platform : public WaylandPlatform
+template<typename Frontend>
+class platform
 {
 public:
-    using type = platform<WaylandPlatform>;
-    using abstract_type = WaylandPlatform;
+    using type = platform<Frontend>;
+    using frontend_type = Frontend;
     using output_t = wlroots::output<type>;
 
-    using render_t = render::backend::wlroots::platform<type, typename abstract_type::render_t>;
+    using render_t = typename frontend_type::render_t::backend_t;
 
-    platform(base::config config,
-             std::string const& socket_name,
-             base::wayland::start_options flags,
-             start_options options)
-        : WaylandPlatform(std::move(config), socket_name, flags)
+    platform(Frontend& frontend, start_options options)
+        : frontend{&frontend}
         , destroyed{std::make_unique<event_receiver<platform>>()}
         , new_output{std::make_unique<event_receiver<platform>>()}
     {
@@ -51,12 +48,12 @@ public:
         wlr_log_init(WLR_DEBUG, nullptr);
 
         if (::flags(options & start_options::headless)) {
-            backend = wlr_headless_backend_create(this->server->display->native());
+            backend = wlr_headless_backend_create(frontend.server->display->native());
         } else {
 #if HAVE_WLR_SESSION_ON_AUTOCREATE
-            backend = wlr_backend_autocreate(this->server->display->native(), &wlroots_session);
+            backend = wlr_backend_autocreate(frontend.server->display->native(), &wlroots_session);
 #else
-            backend = wlr_backend_autocreate(this->server->display->native());
+            backend = wlr_backend_autocreate(frontend.server->display->native());
             wlroots_session = wlr_backend_get_session(backend);
 #endif
         }
@@ -70,21 +67,17 @@ public:
         wl_signal_add(&backend->events.new_output, &new_output->event);
 
         if (auto drm = get_drm_backend(backend)) {
-            setup_drm_leasing(this->server->display.get(), drm);
+            setup_drm_leasing(frontend.server->display.get(), drm);
         }
-
-        auto session = std::make_unique<seat::backend::wlroots::session>(wlroots_session, backend);
-        session->take_control(this->server->display->native());
-        this->session = std::move(session);
     }
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     platform(platform&& other) = delete;
     platform& operator=(platform&& other) = delete;
-    ~platform() override
+    virtual ~platform()
     {
-        for (auto output : this->all_outputs) {
+        for (auto output : frontend->all_outputs) {
             static_cast<output_t*>(output)->platform = nullptr;
             delete output;
         }
@@ -98,7 +91,7 @@ public:
         }
     }
 
-    clockid_t get_clockid() const override
+    clockid_t get_clockid() const
     {
 #if HAVE_WLR_PRESENT_CLOCK_MONOTONIC
         return CLOCK_MONOTONIC;
@@ -107,6 +100,7 @@ public:
 #endif
     }
 
+    gsl::not_null<Frontend*> frontend;
     std::vector<std::unique_ptr<drm_lease>> leases;
     std::vector<non_desktop_output<type>*> non_desktop_outputs;
 
@@ -118,22 +112,23 @@ private:
     void init();
     void setup_drm_leasing(Wrapland::Server::Display* display, wlr_backend* drm_backend)
     {
-        this->drm_lease_device = std::make_unique<Wrapland::Server::drm_lease_device_v1>(display);
+        frontend->drm_lease_device
+            = std::make_unique<Wrapland::Server::drm_lease_device_v1>(display);
 
-        QObject::connect(this->drm_lease_device.get(),
+        QObject::connect(frontend->drm_lease_device.get(),
                          &Wrapland::Server::drm_lease_device_v1::needs_new_client_fd,
-                         this,
-                         [this, drm_backend] {
+                         frontend,
+                         [abs = frontend, drm_backend] {
                              // TODO(romangg): wait in case not DRM master at the moment.
                              auto fd = wlr_drm_backend_get_non_master_fd(drm_backend);
-                             this->drm_lease_device->update_fd(fd);
+                             abs->drm_lease_device->update_fd(fd);
                          });
-        QObject::connect(this->drm_lease_device.get(),
+        QObject::connect(frontend->drm_lease_device.get(),
                          &Wrapland::Server::drm_lease_device_v1::leased,
-                         this,
+                         frontend,
                          [this](auto lease) {
                              try {
-                                 process_drm_leased(lease);
+                                 this->process_drm_leased(lease);
                              } catch (std::runtime_error const& e) {
                                  qCDebug(KWIN_CORE) << "Creating lease failed:" << e.what();
                                  lease->finish();
@@ -174,11 +169,9 @@ private:
 
         leases.push_back(std::make_unique<drm_lease>(lease, outputs));
         auto drm_lease = leases.back().get();
-        auto plat_ptr = this;
 
-        QObject::connect(drm_lease, &drm_lease::finished, plat_ptr, [plat_ptr, drm_lease] {
-            remove_all_if(plat_ptr->leases,
-                          [drm_lease](auto& lease) { return lease.get() == drm_lease; });
+        QObject::connect(drm_lease, &drm_lease::finished, frontend, [this, drm_lease] {
+            remove_all_if(leases, [drm_lease](auto& lease) { return lease.get() == drm_lease; });
         });
 
         qCDebug(KWIN_CORE) << "DRM resources have been leased to client";

@@ -23,18 +23,18 @@ namespace KWin::render::backend::wlroots
 
 template<typename Base, typename Platform>
 class output
-    : public wayland::output<typename Base::abstract_type, typename Platform::abstract_type>
+    : public wayland::output<typename Base::abstract_type, typename Platform::frontend_type>
 {
 public:
     using type = output<Base, Platform>;
     using abstract_type
-        = wayland::output<typename Base::abstract_type, typename Platform::abstract_type>;
+        = wayland::output<typename Base::abstract_type, typename Platform::frontend_type>;
     using base_t = Base;
     using egl_output_t = egl_output<type>;
     using qpainter_output_t = qpainter_output<type>;
 
     output(base_t& base, Platform& platform)
-        : abstract_type(base, platform)
+        : abstract_type(base, *platform.frontend)
     {
         this->swap_pending = base.native->frame_pending;
 

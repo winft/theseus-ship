@@ -31,7 +31,7 @@ void switch_handle_destroy(struct wl_listener* listener, void* /*data*/)
         = wl_container_of(listener, event_receiver_struct, event);
     auto switch_device = event_receiver_struct->receiver;
     if (switch_device->platform) {
-        platform_remove_switch(switch_device, *switch_device->platform);
+        platform_remove_switch(switch_device, *switch_device->platform->frontend);
     }
     delete switch_device;
 }
@@ -66,7 +66,7 @@ public:
         auto backend = wlr_switch_from_input_device(dev);
 
         if (auto libinput = get_libinput_device(dev)) {
-            control = std::make_unique<switch_control>(libinput, platform->config.main);
+            control = std::make_unique<switch_control>(libinput, platform->frontend->config.main);
         }
 
         destroyed.receiver = this;

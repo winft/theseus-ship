@@ -7,6 +7,7 @@
 
 #include "control/headless/keyboard.h"
 #include "control/keyboard.h"
+#include <base/backend/wlroots/platform_helpers.h>
 #include <input/backend/wlroots/device_helpers.h>
 
 #include "base/utils.h"
@@ -34,7 +35,7 @@ void keyboard_handle_destroy(struct wl_listener* listener, void* /*data*/)
 
     keyboard->backend = nullptr;
     if (keyboard->platform) {
-        platform_remove_keyboard(keyboard, *keyboard->platform);
+        platform_remove_keyboard(keyboard, *keyboard->platform->frontend);
     }
     delete keyboard;
 }
@@ -86,13 +87,13 @@ class keyboard : public input::keyboard
 {
 public:
     keyboard(wlr_input_device* dev, Platform* platform)
-        : input::keyboard(platform->xkb.context, platform->xkb.compose_table)
+        : input::keyboard(platform->frontend->xkb.context, platform->frontend->xkb.compose_table)
         , platform{platform}
     {
         backend = wlr_keyboard_from_input_device(dev);
 
         if (auto libinput = get_libinput_device(dev)) {
-            control = std::make_unique<keyboard_control>(libinput, platform->config.main);
+            control = std::make_unique<keyboard_control>(libinput, platform->frontend->config.main);
         } else if (base::backend::wlroots::get_headless_backend(platform->backend)) {
             auto headless_control = std::make_unique<headless::keyboard_control>();
             headless_control->data.is_alpha_numeric_keyboard = true;

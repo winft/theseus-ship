@@ -32,7 +32,7 @@ void touch_handle_destroy(struct wl_listener* listener, void* /*data*/)
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
     if (touch->platform) {
-        platform_remove_touch(touch, *touch->platform);
+        platform_remove_touch(touch, *touch->platform->frontend);
     }
     delete touch;
 }
@@ -126,19 +126,20 @@ void touch_handle_frame(struct wl_listener* listener, void* /*data*/)
 }
 
 template<typename Platform>
-class touch : public input::touch_impl<typename Platform::base_t>
+class touch : public input::touch_impl<typename Platform::frontend_type::base_t>
 {
 public:
     using er = base::event_receiver<touch<Platform>>;
 
     touch(wlr_input_device* dev, Platform* platform)
-        : touch_impl<typename Platform::base_t>(platform->base)
+        : touch_impl<typename Platform::frontend_type::base_t>(platform->frontend->base)
         , platform{platform}
     {
         auto backend = wlr_touch_from_input_device(dev);
 
         if (auto libinput = get_libinput_device(dev)) {
-            this->control = std::make_unique<touch_control>(libinput, platform->config.main);
+            this->control
+                = std::make_unique<touch_control>(libinput, platform->frontend->config.main);
         }
         this->output = this->get_output();
 

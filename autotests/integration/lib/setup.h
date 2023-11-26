@@ -28,9 +28,9 @@ namespace KWin::detail::test
 
 struct setup final {
 #if USE_XWL
-    using base_t = base::backend::wlroots::platform<base::wayland::xwl_platform>;
+    using base_t = base::wayland::xwl_platform;
 #else
-    using base_t = base::backend::wlroots::platform<base::wayland::platform>;
+    using base_t = base::wayland::platform;
 #endif
 
     setup(std::string const& test_name);

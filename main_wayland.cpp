@@ -11,9 +11,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/app_singleton.h"
 #include "base/backend/wlroots/platform.h"
 #include "base/wayland/server.h"
-#include "input/backend/wlroots/platform.h"
 #include "input/wayland/cursor.h"
-#include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
 #include "render/backend/wlroots/platform.h"
 #include "render/effects.h"
@@ -23,6 +21,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 #include <desktop/kde/platform.h>
+#include <input/wayland/platform.h>
 #include <render/wayland/xwl_platform.h>
 
 // Wrapland
@@ -175,16 +174,15 @@ void ApplicationWayland::start(base::operation_mode mode,
     base->options = base::create_options(mode, base->config.main);
 
     try {
-        using render_t = render::backend::wlroots::
-            platform<base_t, render::wayland::xwl_platform<base_t::abstract_type>>;
+        using render_t = base_t::render_t;
         base->render = std::make_unique<render_t>(*base);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
         exit(exc.code().value());
     }
 
-    base->input = std::make_unique<input::backend::wlroots::platform<base_t>>(
-        *base, base->backend, input::config(KConfig::NoGlobals));
+    base->input = std::make_unique<input::wayland::platform<base_t>>(
+        *base, input::config(KConfig::NoGlobals));
     input::wayland::add_dbus(base->input.get());
     base->input->install_shortcuts();
 
