@@ -10,6 +10,7 @@
 #include "base/logging.h"
 #include "base/output.h"
 #include "base/output_helpers.h"
+#include <utils/algorithm.h>
 
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/wlr_output_configuration_head_v1.h>
@@ -108,9 +109,13 @@ bool outputs_apply_config(Base& base, Wrapland::Server::wlr_output_configuration
     for (auto const& [output, state] : config_states) {
         if (old_states.at(output).enabled != state.enabled) {
             if (state.enabled) {
-                base.enable_output(output);
+                assert(!contains(base.outputs, output));
+                base.outputs.push_back(output);
+                Q_EMIT base.output_added(output);
             } else {
-                base.disable_output(output);
+                assert(contains(base.outputs, output));
+                remove_all(base.outputs, output);
+                Q_EMIT base.output_removed(output);
             }
         }
 

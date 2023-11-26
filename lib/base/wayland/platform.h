@@ -12,7 +12,6 @@
 #include "input/wayland/platform.h"
 #include "render/wayland/platform.h"
 #include "script/platform.h"
-#include "utils/algorithm.h"
 #include <win/wayland/space.h>
 
 #include <QProcessEnvironment>
@@ -50,20 +49,6 @@ public:
     ~platform() override
     {
         singleton_interface::get_outputs = {};
-    }
-
-    void enable_output(output_t* output)
-    {
-        assert(!contains(outputs, output));
-        outputs.push_back(output);
-        Q_EMIT output_added(output);
-    }
-
-    void disable_output(output_t* output)
-    {
-        assert(contains(outputs, output));
-        remove_all(outputs, output);
-        Q_EMIT output_removed(output);
     }
 
     base::operation_mode operation_mode;

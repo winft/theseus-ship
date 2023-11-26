@@ -11,7 +11,6 @@
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
 #include "script/platform.h"
-#include "utils/algorithm.h"
 #include <base/x11/data.h>
 #include <base/x11/event_filter_manager.h>
 #include <render/wayland/xwl_platform.h>
@@ -54,20 +53,6 @@ public:
     ~xwl_platform() override
     {
         singleton_interface::get_outputs = {};
-    }
-
-    void enable_output(output_t* output)
-    {
-        assert(!contains(outputs, output));
-        outputs.push_back(output);
-        Q_EMIT output_added(output);
-    }
-
-    void disable_output(output_t* output)
-    {
-        assert(contains(outputs, output));
-        remove_all(outputs, output);
-        Q_EMIT output_removed(output);
     }
 
     base::operation_mode operation_mode;
