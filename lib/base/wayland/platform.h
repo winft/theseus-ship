@@ -12,6 +12,7 @@
 #include "input/wayland/platform.h"
 #include "render/wayland/platform.h"
 #include "script/platform.h"
+#include <base/platform_helpers.h>
 #include <win/wayland/space.h>
 
 #include <QProcessEnvironment>
@@ -37,8 +38,7 @@ public:
         : config{std::move(config)}
         , server{std::make_unique<wayland::server<platform>>(*this, socket_name, flags)}
     {
-        init_platform(*this);
-        init_singleton_interface();
+        platform_init(*this);
     }
 
     platform(platform const&) = delete;
@@ -73,18 +73,6 @@ public:
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
     std::unique_ptr<scripting::platform<space_t>> script;
-
-private:
-    void init_singleton_interface() const
-    {
-        singleton_interface::get_outputs = [this] {
-            std::vector<base::output*> vec;
-            for (auto&& output : outputs) {
-                vec.push_back(output);
-            }
-            return vec;
-        };
-    }
 };
 
 }

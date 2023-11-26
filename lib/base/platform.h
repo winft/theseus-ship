@@ -46,19 +46,4 @@ Q_SIGNALS:
     void x11_reset();
 };
 
-template<typename Platform>
-void init_platform(Platform& platform)
-{
-    QObject::connect(&platform, &Platform::output_added, &platform, [&platform](auto output) {
-        if (!platform.topology.current) {
-            platform.topology.current = output;
-        }
-    });
-    QObject::connect(&platform, &platform::output_removed, &platform, [&platform](auto output) {
-        if (output == platform.topology.current) {
-            platform.topology.current = nullptr;
-        }
-    });
-}
-
 }

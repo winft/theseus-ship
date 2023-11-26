@@ -16,6 +16,7 @@
 #include "render/x11/platform.h"
 #include "script/platform.h"
 #include "win/x11/space.h"
+#include <base/platform_helpers.h>
 #include <base/x11/data.h>
 #include <base/x11/event_filter_manager.h>
 
@@ -38,17 +39,7 @@ public:
         , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
     {
         operation_mode = operation_mode::x11;
-
-        init_platform(*this);
-
-        singleton_interface::platform = this;
-        singleton_interface::get_outputs = [this] {
-            std::vector<base::output*> vec;
-            for (auto&& output : outputs) {
-                vec.push_back(output);
-            }
-            return vec;
-        };
+        platform_init(*this);
     }
 
     ~platform() override

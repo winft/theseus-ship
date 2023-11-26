@@ -11,6 +11,7 @@
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
 #include "script/platform.h"
+#include <base/platform_helpers.h>
 #include <base/x11/data.h>
 #include <base/x11/event_filter_manager.h>
 #include <render/wayland/xwl_platform.h>
@@ -41,8 +42,7 @@ public:
         , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
         , server{std::make_unique<wayland::server<xwl_platform>>(*this, socket_name, flags)}
     {
-        init_platform(*this);
-        init_singleton_interface();
+        platform_init(*this);
     }
 
     xwl_platform(xwl_platform const&) = delete;
@@ -80,18 +80,6 @@ public:
     std::unique_ptr<space_t> space;
     std::unique_ptr<scripting::platform<space_t>> script;
     std::unique_ptr<xwl::xwayland<space_t>> xwayland;
-
-private:
-    void init_singleton_interface() const
-    {
-        singleton_interface::get_outputs = [this] {
-            std::vector<base::output*> vec;
-            for (auto&& output : outputs) {
-                vec.push_back(output);
-            }
-            return vec;
-        };
-    }
 };
 
 }
