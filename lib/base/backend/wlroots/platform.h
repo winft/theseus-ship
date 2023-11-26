@@ -11,7 +11,6 @@
 #include <base/backend/wlroots/non_desktop_output.h>
 #include <base/backend/wlroots/platform_events.h>
 #include <base/logging.h>
-#include <base/singleton_interface.h>
 
 #include "base/utils.h"
 #include "utils/flags.h"
@@ -91,10 +90,6 @@ public:
 
         if (backend) {
             wlr_backend_destroy(backend);
-        }
-
-        if (singleton_interface::platform == this) {
-            singleton_interface::platform = nullptr;
         }
     }
 
