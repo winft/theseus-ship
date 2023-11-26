@@ -61,6 +61,7 @@ int main(int argc, char* argv[])
                 "",
                 base::wayland::start_options::no_lock_screen_integration,
                 base::backend::wlroots::start_options::none);
+    base.operation_mode = base::operation_mode::wayland;
     base.options = base::create_options(base::operation_mode::wayland, base.config.main);
 
     auto session = new base::seat::backend::wlroots::session(base.wlroots_session, base.backend);
