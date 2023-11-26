@@ -8,7 +8,6 @@
 #include "drm_lease.h"
 #include "output.h"
 #include "platform_helpers.h"
-#include <base/app_singleton.h>
 #include <base/backend/wlroots/non_desktop_output.h>
 #include <base/backend/wlroots/platform_events.h>
 #include <base/logging.h>
@@ -46,9 +45,6 @@ public:
         , destroyed{std::make_unique<event_receiver<platform>>()}
         , new_output{std::make_unique<event_receiver<platform>>()}
     {
-        singleton_interface::platform = this;
-        Q_EMIT singleton_interface::app_singleton->platform_created();
-
         align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 
         // TODO(romangg): Make this dependent on KWIN_CORE debug verbosity.

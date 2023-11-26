@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <base/app_singleton.h>
 #include <base/singleton_interface.h>
 
 #include <QObject>
@@ -35,6 +36,10 @@ void platform_init(Platform& platform)
         }
         return vec;
     };
+
+    if (singleton_interface::app_singleton) {
+        Q_EMIT singleton_interface::app_singleton->platform_created();
+    }
 }
 
 }
