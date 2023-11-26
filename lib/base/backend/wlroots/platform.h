@@ -30,7 +30,7 @@ template<typename WaylandPlatform>
 class platform : public WaylandPlatform
 {
 public:
-    using type = platform;
+    using type = platform<WaylandPlatform>;
     using abstract_type = WaylandPlatform;
     using output_t = wlroots::output<type>;
 
