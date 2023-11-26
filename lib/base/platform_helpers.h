@@ -9,6 +9,7 @@
 #include <base/singleton_interface.h>
 
 #include <QObject>
+#include <ranges>
 #include <vector>
 
 namespace KWin::base
@@ -29,12 +30,11 @@ void platform_init(Platform& platform)
     });
 
     singleton_interface::platform = &platform;
-    singleton_interface::get_outputs = [&platform] {
-        std::vector<base::output*> vec;
-        for (auto&& output : platform.outputs) {
-            vec.push_back(output);
-        }
-        return vec;
+    singleton_interface::get_outputs = [&platform]() -> std::vector<base::output*> {
+        // TODO(romangg): Use ranges::to once we use C++23.
+        auto range = platform.outputs
+            | std::views::transform([](auto out) { return static_cast<base::output*>(out); });
+        return {range.begin(), range.end()};
     };
 
     if (singleton_interface::app_singleton) {
