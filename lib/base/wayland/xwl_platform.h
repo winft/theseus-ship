@@ -35,14 +35,6 @@ public:
     using input_t = input::wayland::platform<xwl_platform>;
     using space_t = win::wayland::xwl_space<render_t, input_t>;
 
-    xwl_platform(base::config config)
-        : config{std::move(config)}
-        , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
-    {
-        init_platform(*this);
-        init_singleton_interface();
-    }
-
     xwl_platform(base::config config,
                  std::string const& socket_name,
                  base::wayland::start_options flags)

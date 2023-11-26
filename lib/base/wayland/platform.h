@@ -32,13 +32,6 @@ public:
     using input_t = input::wayland::platform<platform>;
     using space_t = win::wayland::space<render_t, input_t>;
 
-    platform(base::config config)
-        : config{std::move(config)}
-    {
-        init_platform(*this);
-        init_singleton_interface();
-    }
-
     platform(base::config config,
              std::string const& socket_name,
              base::wayland::start_options flags)
