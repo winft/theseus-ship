@@ -355,7 +355,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(buttonSpy.isValid());
 
         // first modify the config for this run
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", mod_name);
         group.writeEntry("CommandAll1", "Move");
         group.writeEntry("CommandAll2", "Move");
@@ -429,7 +429,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(buttonSpy.isValid());
 
         // first modify the config for this run
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", "Meta");
         group.writeEntry("CommandAll1", "Move");
         group.writeEntry("CommandAll2", "Move");
@@ -519,7 +519,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(axisSpy.isValid());
 
         // first modify the config for this run
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", mod_name);
         group.writeEntry("CommandAllWheel", "change opacity");
         group.sync();
@@ -581,7 +581,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(axisSpy.isValid());
 
         // first modify the config for this run
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", "Meta");
         group.writeEntry("CommandAllWheel", "change opacity");
         group.sync();
@@ -636,7 +636,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(axisSpy.isValid());
 
         // first modify the config for this run
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandWindowWheel", "activate and scroll");
         group.sync();
         win::space_reconfigure(*setup.base->mod.space);
@@ -692,7 +692,7 @@ TEST_CASE("pointer input", "[input]")
         cursor()->set_pos(900, 900);
 
         // first modify the config for this run
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("AutoRaise", true);
         group.writeEntry("AutoRaiseInterval", 20);
         group.writeEntry("DelayFocusInterval", 200);
@@ -789,10 +789,10 @@ TEST_CASE("pointer input", "[input]")
         auto button = GENERATE(BTN_LEFT, BTN_MIDDLE, BTN_RIGHT);
 
         // First modify the config for this run - disable FocusFollowsMouse.
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("FocusPolicy", "ClickToFocus");
         group.sync();
-        group = setup.base->config.main->group("MouseBindings");
+        group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandWindow1", "Activate, raise and pass click");
         group.writeEntry("CommandWindow2", "Activate, raise and pass click");
         group.writeEntry("CommandWindow3", "Activate, raise and pass click");
@@ -889,7 +889,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(buttonSpy.isValid());
 
         // Adjust config for this run.
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("ClickRaise", click_raise);
         group.sync();
         win::space_reconfigure(*setup.base->mod.space);
@@ -1576,7 +1576,7 @@ TEST_CASE("pointer input", "[input]")
                        data{Qt::LeftEdge, win::extended_cursor::SizeWest});
 
         // first modify the config for this run
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", "Meta");
         group.writeEntry("CommandAll3", "Resize");
         group.sync();
@@ -1645,7 +1645,7 @@ TEST_CASE("pointer input", "[input]")
         // this test verifies that the cursor has correct shape during move operation
 
         // first modify the config for this run
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", "Meta");
         group.writeEntry("CommandAll1", "Move");
         group.sync();

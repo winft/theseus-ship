@@ -32,7 +32,7 @@ TEST_CASE("night color", "[render]")
         const bool activeDefault = true;
         const int modeDefault = 0;
 
-        auto cfgGroup = setup.base->config.main->group("NightColor");
+        auto cfgGroup = setup.base->config.main->group(QStringLiteral("NightColor"));
 
         cfgGroup.writeEntry("Active", activeDefault);
         cfgGroup.writeEntry("Mode", modeDefault);

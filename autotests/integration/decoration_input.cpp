@@ -499,7 +499,7 @@ TEST_CASE("decoration input", "[input],[win]")
         // Verifies that one can resize the window outside the decoration with NoSideBorder.
 
         // first adjust config
-        setup.base->config.main->group("org.kde.kdecoration2")
+        setup.base->config.main->group(QStringLiteral("org.kde.kdecoration2"))
             .writeEntry("BorderSize", QStringLiteral("None"));
         setup.base->config.main->sync();
         win::space_reconfigure(*setup.base->mod.space);
@@ -563,7 +563,7 @@ TEST_CASE("decoration input", "[input],[win]")
         auto caps_lock = GENERATE(true, false);
 
         // first modify the config for this run
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", modifier.key_name);
         group.writeEntry("CommandAll1", "Move");
         group.writeEntry("CommandAll2", "Move");
@@ -631,7 +631,7 @@ TEST_CASE("decoration input", "[input],[win]")
         auto caps_lock = GENERATE(true, false);
 
         // first modify the config for this run
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", modifier.key_name);
         group.writeEntry("CommandAllWheel", "change opacity");
         group.sync();

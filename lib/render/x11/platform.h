@@ -138,7 +138,8 @@ public:
     bool openGLCompositingIsBroken() const
     {
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-        return KConfigGroup(this->base.config.main, "Compositing").readEntry(unsafeKey, false);
+        return KConfigGroup(this->base.config.main, QStringLiteral("Compositing"))
+            .readEntry(unsafeKey, false);
     }
 
     virtual bool compositingPossible() const = 0;

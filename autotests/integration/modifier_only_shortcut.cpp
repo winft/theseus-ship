@@ -136,7 +136,7 @@ TEST_CASE("modifier only shortcut", "[input]")
         QSignalSpy triggeredSpy(&target, &Target::shortcutTriggered);
         QVERIFY(triggeredSpy.isValid());
 
-        auto group = setup.base->config.main->group("ModifierOnlyShortcuts");
+        auto group = setup.base->config.main->group(QStringLiteral("ModifierOnlyShortcuts"));
         group.writeEntry("Meta", config.meta);
         group.writeEntry("Alt", config.alt);
         group.writeEntry("Shift", config.shift);
@@ -250,7 +250,7 @@ TEST_CASE("modifier only shortcut", "[input]")
         QSignalSpy triggeredSpy(&target, &Target::shortcutTriggered);
         QVERIFY(triggeredSpy.isValid());
 
-        auto group = setup.base->config.main->group("ModifierOnlyShortcuts");
+        auto group = setup.base->config.main->group(QStringLiteral("ModifierOnlyShortcuts"));
         group.writeEntry("Meta", QStringList());
         group.writeEntry("Alt", QStringList());
         group.writeEntry(
@@ -362,7 +362,7 @@ TEST_CASE("modifier only shortcut", "[input]")
         QSignalSpy triggeredSpy(&target, &Target::shortcutTriggered);
         QVERIFY(triggeredSpy.isValid());
 
-        auto group = setup.base->config.main->group("ModifierOnlyShortcuts");
+        auto group = setup.base->config.main->group(QStringLiteral("ModifierOnlyShortcuts"));
         group.writeEntry("Meta", config.meta);
         group.writeEntry("Alt", config.alt);
         group.writeEntry("Shift", config.shift);

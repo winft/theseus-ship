@@ -29,7 +29,7 @@ latched_key_change read_startup_num_lock_config(Manager const& manager)
     }
 
     // STATE_ON = 0,  STATE_OFF = 1, STATE_UNCHANGED = 2, see plasma-desktop/kcms/keyboard/kcmmisc.h
-    auto const config = manager.numlock_config->group("Keyboard");
+    auto const config = manager.numlock_config->group(QStringLiteral("Keyboard"));
     auto setting = config.readEntry("NumLock", 2);
 
     if (setting == 0) {

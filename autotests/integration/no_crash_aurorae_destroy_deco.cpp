@@ -23,7 +23,8 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
     test::setup setup("debug-console", base::operation_mode::xwayland);
 
     auto config = app()->base->config.main;
-    config->group("org.kde.kdecoration2").writeEntry("library", "org.kde.kwin.aurorae");
+    config->group(QStringLiteral("org.kde.kdecoration2"))
+        .writeEntry("library", "org.kde.kwin.aurorae");
     config->sync();
 
     setup.start();
@@ -42,7 +43,7 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
         // option BorderlessMaximizedWindows, see BUG 362772.
 
         // first adjust the config
-        auto group = app()->base->config.main->group("Windows");
+        auto group = app()->base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("BorderlessMaximizedWindows", true);
         group.sync();
 

@@ -58,7 +58,7 @@ void cursor::load_theme_settings()
 
 void cursor::load_theme_from_kconfig()
 {
-    KConfigGroup mousecfg(config, "Mouse");
+    KConfigGroup mousecfg(config, QStringLiteral("Mouse"));
 
     auto const themeName = mousecfg.readEntry("cursorTheme", "default");
     uint const themeSize = mousecfg.readEntry("cursorSize", 24);

@@ -723,12 +723,12 @@ TEST_CASE("subspace", "[win]")
         QCOMPARE(vd_manager->subspaces.size(), 1);
 
         // Setting a sensible number.
-        config->group("Desktops").writeEntry("Number", 4);
+        config->group(QStringLiteral("Desktops")).writeEntry("Number", 4);
         win::subspace_manager_load(*vd_manager);
         QCOMPARE(vd_manager->subspaces.size(), 4);
 
         // Setting the config value and reloading should update.
-        config->group("Desktops").writeEntry("Number", 5);
+        config->group(QStringLiteral("Desktops")).writeEntry("Number", 5);
         win::subspace_manager_load(*vd_manager);
         QCOMPARE(vd_manager->subspaces.size(), 5);
     }
@@ -743,13 +743,13 @@ TEST_CASE("subspace", "[win]")
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
         vd_manager->config = config;
 
-        REQUIRE(config->hasGroup("Desktops"));
+        REQUIRE(config->hasGroup(QStringLiteral("Desktops")));
 
         // Now save should create the group "Desktops".
         win::subspace_manager_save(*vd_manager);
-        QCOMPARE(config->hasGroup("Desktops"), true);
+        QCOMPARE(config->hasGroup(QStringLiteral("Desktops")), true);
 
-        auto subspaces = config->group("Desktops");
+        auto subspaces = config->group(QStringLiteral("Desktops"));
         QCOMPARE(subspaces.readEntry<int>("Number", 1), 4);
         QCOMPARE(subspaces.hasKey("Name_1"), false);
         QCOMPARE(subspaces.hasKey("Name_2"), false);

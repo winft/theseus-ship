@@ -25,7 +25,7 @@ TEST_CASE("no crash no border", "[win]")
     test::setup setup("no-crash-no-border");
 
     auto config = setup.base->config.main;
-    config->group("org.kde.kdecoration2").writeEntry("NoPlugin", true);
+    config->group(QStringLiteral("org.kde.kdecoration2")).writeEntry("NoPlugin", true);
     config->sync();
 
     setup.start();

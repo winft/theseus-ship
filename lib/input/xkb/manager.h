@@ -92,7 +92,7 @@ public:
             context, locale.constData(), XKB_COMPOSE_COMPILE_NO_FLAGS);
 
         default_keyboard = std::make_unique<keyboard>(context, compose_table);
-        m_configGroup = platform->config.xkb->group("Layout");
+        m_configGroup = platform->config.xkb->group(QStringLiteral("Layout"));
     }
 
     ~manager()
@@ -103,7 +103,7 @@ public:
 
     void setConfig(const KSharedConfigPtr& config)
     {
-        m_configGroup = config->group("Layout");
+        m_configGroup = config->group(QStringLiteral("Layout"));
     }
 
     void reconfigure()

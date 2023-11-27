@@ -22,7 +22,7 @@ TEST_CASE("struts", "[win]")
     test::setup setup("struts", base::operation_mode::xwayland);
 
     // set custom config which disables the Outline
-    auto group = setup.base->config.main->group("Outline");
+    auto group = setup.base->config.main->group(QStringLiteral("Outline"));
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
     group.sync();
 
@@ -353,7 +353,7 @@ TEST_CASE("struts", "[win]")
         using namespace Wrapland::Client;
 
         // First enable maxmizing policy
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("Placement", "maximizing");
         group.sync();
         win::space_reconfigure(*setup.base->mod.space);

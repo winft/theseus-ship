@@ -814,7 +814,7 @@ private:
 
         bool options_traverse_all;
         {
-            KConfigGroup group(space.base.config.main, "TabBox");
+            KConfigGroup group(space.base.config.main, QStringLiteral("TabBox"));
             options_traverse_all = group.readEntry("TraverseAll", false);
         }
 
@@ -944,10 +944,10 @@ private:
     void reconfigure()
     {
         auto cfg = space.base.config.main;
-        auto cfg_group = cfg->group("TabBox");
+        auto cfg_group = cfg->group(QStringLiteral("TabBox"));
 
-        load_config(cfg->group("TabBox"), config.normal);
-        load_config(cfg->group("TabBoxAlternative"), config.alternative);
+        load_config(cfg->group(QStringLiteral("TabBox")), config.normal);
+        load_config(cfg->group(QStringLiteral("TabBoxAlternative")), config.alternative);
 
         config.normal_current_app = config.normal;
         config.normal_current_app.set_client_applications_mode(
