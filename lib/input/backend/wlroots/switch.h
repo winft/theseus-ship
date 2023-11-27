@@ -30,7 +30,9 @@ void switch_handle_destroy(struct wl_listener* listener, void* /*data*/)
     base::event_receiver<switch_device<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto switch_device = event_receiver_struct->receiver;
-    platform_remove_switch(switch_device, *switch_device->platform);
+    if (switch_device->platform) {
+        platform_remove_switch(switch_device, *switch_device->platform);
+    }
     delete switch_device;
 }
 

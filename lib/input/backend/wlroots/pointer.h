@@ -29,7 +29,9 @@ void pointer_handle_destroy(struct wl_listener* listener, void* /*data*/)
     base::event_receiver<pointer<Platform>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-    platform_remove_pointer(pointer, *pointer->platform);
+    if (pointer->platform) {
+        platform_remove_pointer(pointer, *pointer->platform);
+    }
     delete pointer;
 }
 

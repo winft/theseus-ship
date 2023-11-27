@@ -18,6 +18,8 @@ extern "C" {
 #include <wlr/types/wlr_input_device.h>
 }
 
+#include <ranges>
+
 namespace KWin::input::backend::wlroots
 {
 
@@ -57,12 +59,14 @@ template<typename Base>
 class platform : public input::wayland::platform<typename Base::abstract_type>
 {
 public:
+    using type = platform<Base>;
+
     platform(Base& base, wlr_backend* backend, input::config config)
         : wayland::platform<typename Base::abstract_type>(base, std::move(config))
         , backend{backend}
     {
         add_device.receiver = this;
-        add_device.event.notify = platform_handle_device<platform<Base>>;
+        add_device.event.notify = platform_handle_device<type>;
 
         wl_signal_add(&backend->events.new_input, &add_device.event);
     }
@@ -70,10 +74,25 @@ public:
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
 
+    ~platform() override
+    {
+        unset_platform<wlroots::keyboard<type>>(this->keyboards);
+        unset_platform<wlroots::pointer<type>>(this->pointers);
+        unset_platform<wlroots::switch_device<type>>(this->switches);
+        unset_platform<wlroots::touch<type>>(this->touchs);
+    }
+
     wlr_backend* backend{nullptr};
 
 private:
     base::event_receiver<platform> add_device;
+
+    template<typename Dev>
+    void unset_platform(auto& container)
+    {
+        std::ranges::for_each(container,
+                              [](auto dev) { static_cast<Dev*>(dev)->platform = nullptr; });
+    }
 };
 
 }

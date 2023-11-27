@@ -33,7 +33,9 @@ void keyboard_handle_destroy(struct wl_listener* listener, void* /*data*/)
     auto keyboard = event_receiver_struct->receiver;
 
     keyboard->backend = nullptr;
-    platform_remove_keyboard(keyboard, *keyboard->platform);
+    if (keyboard->platform) {
+        platform_remove_keyboard(keyboard, *keyboard->platform);
+    }
     delete keyboard;
 }
 
