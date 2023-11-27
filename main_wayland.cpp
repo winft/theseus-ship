@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/app_singleton.h"
 #include "base/backend/wlroots/platform.h"
-#include "base/seat/backend/wlroots/session.h"
 #include "base/wayland/server.h"
 #include "input/backend/wlroots/platform.h"
 #include "input/wayland/cursor.h"
@@ -174,10 +173,6 @@ void ApplicationWayland::start(base::operation_mode mode,
     base->operation_mode = mode;
 
     base->options = base::create_options(mode, base->config.main);
-
-    auto session = new base::seat::backend::wlroots::session(base->wlroots_session, base->backend);
-    base->session.reset(session);
-    session->take_control(base->server->display->native());
 
     try {
         using render_t = render::backend::wlroots::

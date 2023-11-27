@@ -5,7 +5,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include <base/app_singleton.h>
 #include <base/backend/wlroots/platform.h>
-#include <base/seat/backend/wlroots/session.h>
 #include <base/wayland/platform.h>
 #include <desktop/platform.h>
 #include <input/backend/wlroots/platform.h>
@@ -63,10 +62,6 @@ int main(int argc, char* argv[])
                 base::backend::wlroots::start_options::none);
     base.operation_mode = base::operation_mode::wayland;
     base.options = base::create_options(base::operation_mode::wayland, base.config.main);
-
-    auto session = new base::seat::backend::wlroots::session(base.wlroots_session, base.backend);
-    base.session.reset(session);
-    session->take_control(base.server->display->native());
 
     try {
         using render_t

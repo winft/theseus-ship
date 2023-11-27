@@ -80,6 +80,10 @@ void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
 
 void session::take_control(wl_display* display)
 {
+    if (is_dummy) {
+        return;
+    }
+
     // TODO(romangg): assert instead?
     if (!native) {
         native = wlr_session_create(display);

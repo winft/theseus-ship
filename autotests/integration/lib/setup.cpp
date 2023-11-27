@@ -6,7 +6,6 @@
 #include "setup.h"
 
 #include "base/config.h"
-#include "base/seat/backend/wlroots/session.h"
 #include "input/backend/wlroots/platform.h"
 #include "render/backend/wlroots/platform.h"
 #include "render/shortcuts_init.h"
@@ -73,9 +72,6 @@ setup::setup(std::string const& test_name,
     auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend);
     auto out = wlr_headless_add_output(headless_backend, 1280, 1024);
     wlr_output_enable(out, true);
-
-    base->session = std::make_unique<base::seat::backend::wlroots::session>(base->wlroots_session,
-                                                                            headless_backend);
 
     try {
 #if USE_XWL

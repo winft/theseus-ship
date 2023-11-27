@@ -11,6 +11,7 @@
 #include <base/backend/wlroots/non_desktop_output.h>
 #include <base/backend/wlroots/platform_events.h>
 #include <base/logging.h>
+#include <base/seat/backend/wlroots/session.h>
 
 #include "base/utils.h"
 #include "utils/flags.h"
@@ -71,6 +72,10 @@ public:
         if (auto drm = get_drm_backend(backend)) {
             setup_drm_leasing(this->server->display.get(), drm);
         }
+
+        auto session = std::make_unique<seat::backend::wlroots::session>(wlroots_session, backend);
+        session->take_control(this->server->display->native());
+        this->session = std::move(session);
     }
 
     platform(platform const&) = delete;
