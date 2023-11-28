@@ -13,20 +13,20 @@
 namespace KWin::base::backend::wlroots
 {
 
-template<typename Platform>
+template<typename Backend>
 static void handle_destroy(struct wl_listener* listener, void* /*data*/)
 {
-    event_receiver<Platform>* event_receiver_struct
+    event_receiver<Backend>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto wlr = event_receiver_struct->receiver;
 
-    wlr->backend = nullptr;
+    wlr->native = nullptr;
 }
 
-template<typename Platform>
-void add_new_output(Platform& platform, wlr_output* native)
+template<typename Backend>
+void add_new_output(Backend& backend, wlr_output* native)
 {
-    auto& render = platform.frontend->render->backend;
+    auto& render = backend.frontend->render->backend;
     wlr_output_init_render(native, render.allocator, render.renderer);
 
     if (!wl_list_empty(&native->modes)) {
@@ -41,12 +41,12 @@ void add_new_output(Platform& platform, wlr_output* native)
         }
     }
 
-    auto output = new wlroots::output(native, &platform);
+    auto output = new wlroots::output(native, &backend);
 
-    if (platform.align_horizontal) {
+    if (backend.align_horizontal) {
         auto shifted_geo = output->geometry();
         auto screens_width = 0;
-        for (auto out : platform.frontend->outputs) {
+        for (auto out : backend.frontend->outputs) {
             // +1 for QRect's bottom-right deviation
             screens_width = std::max(out->geometry().right() + 1, screens_width);
         }
@@ -54,28 +54,28 @@ void add_new_output(Platform& platform, wlr_output* native)
         output->force_geometry(shifted_geo);
     }
 
-    platform.frontend->all_outputs.push_back(output);
-    platform.frontend->outputs.push_back(output);
-    platform.frontend->server->output_manager->commit_changes();
+    backend.frontend->all_outputs.push_back(output);
+    backend.frontend->outputs.push_back(output);
+    backend.frontend->server->output_manager->commit_changes();
 
-    Q_EMIT platform.frontend->output_added(output);
+    Q_EMIT backend.frontend->output_added(output);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_new_output(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<Platform>* new_output_struct
+    base::event_receiver<Backend>* new_output_struct
         = wl_container_of(listener, new_output_struct, event);
-    auto platform = new_output_struct->receiver;
+    auto backend = new_output_struct->receiver;
     auto native = reinterpret_cast<wlr_output*>(data);
 
     if (native->non_desktop) {
-        platform->non_desktop_outputs.push_back(new non_desktop_output(native, platform));
+        backend->non_desktop_outputs.push_back(new non_desktop_output(native, backend));
         return;
     }
 
     try {
-        add_new_output(*platform, native);
+        add_new_output(*backend, native);
     } catch (std::runtime_error const& e) {
         qCWarning(KWIN_CORE) << "Adding new output" << native->name << "failed:" << e.what();
     }

@@ -14,10 +14,10 @@
 namespace KWin::render::wayland
 {
 
-template<typename Backend>
-void init_egl(Backend& backend, egl_data& egl)
+template<typename EglBackend>
+void init_egl(EglBackend& egl_backend, egl_data& egl)
 {
-    if (!backend.hasExtension(QByteArrayLiteral("EGL_WL_bind_wayland_display"))) {
+    if (!egl_backend.hasExtension(QByteArrayLiteral("EGL_WL_bind_wayland_display"))) {
         return;
     }
 
@@ -29,23 +29,23 @@ void init_egl(Backend& backend, egl_data& egl)
         eglGetProcAddress("eglQueryWaylandBufferWL"));
 
     // only bind if not already done
-    if (auto&& display = backend.platform.frontend->base.server->display;
-        display->eglDisplay() != backend.data.base.display) {
-        if (!egl.bind_wl_display(backend.data.base.display, display->native())) {
+    if (auto&& display = egl_backend.backend.frontend->base.server->display;
+        display->eglDisplay() != egl_backend.data.base.display) {
+        if (!egl.bind_wl_display(egl_backend.data.base.display, display->native())) {
             egl.unbind_wl_display = nullptr;
             egl.query_wl_buffer = nullptr;
         } else {
-            display->setEglDisplay(backend.data.base.display);
+            display->setEglDisplay(egl_backend.data.base.display);
         }
     }
 }
 
-template<typename Backend>
-void unbind_egl_display(Backend& backend, egl_data const& egl)
+template<typename EglBackend>
+void unbind_egl_display(EglBackend& egl_backend, egl_data const& egl)
 {
-    if (egl.unbind_wl_display && backend.data.base.display != EGL_NO_DISPLAY) {
-        egl.unbind_wl_display(backend.data.base.display,
-                              backend.platform.frontend->base.server->display->native());
+    if (egl.unbind_wl_display && egl_backend.data.base.display != EGL_NO_DISPLAY) {
+        egl.unbind_wl_display(egl_backend.data.base.display,
+                              egl_backend.backend.frontend->base.server->display->native());
     }
 }
 

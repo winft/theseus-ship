@@ -35,7 +35,7 @@ public:
     using render_t = render::wayland::xwl_platform<xwl_platform>;
     using input_t = input::wayland::platform<xwl_platform>;
     using space_t = win::wayland::xwl_space<render_t, input_t>;
-    using backend_t = backend::wlroots::platform<xwl_platform>;
+    using backend_t = backend::wlroots::backend<xwl_platform>;
 
     xwl_platform(base::config config,
                  std::string const& socket_name,

@@ -70,7 +70,7 @@ setup::setup(std::string const& test_name,
                                     base::backend::wlroots::start_options::headless);
     base->operation_mode = mode;
 
-    auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend.backend);
+    auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend.native);
     auto out = wlr_headless_add_output(headless_backend, 1280, 1024);
     wlr_output_enable(out, true);
 
@@ -136,9 +136,9 @@ void setup::start()
     wlr_pointer_init(pointer, nullptr, "headless-pointer");
     wlr_touch_init(touch, nullptr, "headless-touch");
 
-    wlr_signal_emit_safe(&base->backend.backend->events.new_input, keyboard);
-    wlr_signal_emit_safe(&base->backend.backend->events.new_input, pointer);
-    wlr_signal_emit_safe(&base->backend.backend->events.new_input, touch);
+    wlr_signal_emit_safe(&base->backend.native->events.new_input, keyboard);
+    wlr_signal_emit_safe(&base->backend.native->events.new_input, pointer);
+    wlr_signal_emit_safe(&base->backend.native->events.new_input, touch);
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.
@@ -198,7 +198,7 @@ void setup::set_outputs(std::vector<output> const& outputs)
     for (auto&& output : outputs) {
         auto const size = output.geometry.size() * output.scale;
 
-        auto out = wlr_headless_add_output(base->backend.backend, size.width(), size.height());
+        auto out = wlr_headless_add_output(base->backend.native, size.width(), size.height());
         wlr_output_enable(out, true);
         base->all_outputs.back()->force_geometry(output.geometry);
     }

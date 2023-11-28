@@ -29,7 +29,7 @@ public:
     using type = platform<Base>;
     using space_t = typename Base::space_t;
     using redirect_t = redirect<space_t>;
-    using backend_t = backend::wlroots::platform<type>;
+    using backend_t = backend::wlroots::backend<type>;
 
     platform(Base& base, input::config config)
         : base{base}

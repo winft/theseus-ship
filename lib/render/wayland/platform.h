@@ -34,7 +34,7 @@ public:
     using base_t = Base;
     using space_t = typename Base::space_t;
 
-    using backend_t = backend::wlroots::platform<type>;
+    using backend_t = backend::wlroots::backend<type>;
     using state_t = render::state;
     using scene_t = render::scene<type>;
     using effects_t = wayland::effects_handler_impl<scene_t>;

@@ -39,14 +39,14 @@ public:
     wlr_output* native;
 };
 
-template<typename Platform>
+template<typename Backend>
 class non_desktop_output : public non_desktop_output_wrap
 {
 public:
-    using type = non_desktop_output<Platform>;
-    non_desktop_output(wlr_output* wlr_out, Platform* platform)
+    using type = non_desktop_output<Backend>;
+    non_desktop_output(wlr_output* wlr_out, Backend* backend)
         : non_desktop_output_wrap(wlr_out)
-        , platform{platform}
+        , backend{backend}
     {
         wlr_out->data = this;
 
@@ -66,17 +66,17 @@ public:
         if (native) {
             wlr_output_destroy(native);
         }
-        if (platform) {
-            remove_all(platform->non_desktop_outputs, this);
+        if (backend) {
+            remove_all(backend->non_desktop_outputs, this);
         }
     }
 
-    Platform* platform;
+    Backend* backend;
 
 private:
     void create_lease_connector()
     {
-        auto lease_device = platform->frontend->drm_lease_device.get();
+        auto lease_device = backend->frontend->drm_lease_device.get();
         if (!lease_device) {
             return;
         }

@@ -32,7 +32,7 @@ public:
     using render_t = render::wayland::platform<wayland::platform>;
     using input_t = input::wayland::platform<wayland::platform>;
     using space_t = win::wayland::space<render_t, input_t>;
-    using backend_t = backend::wlroots::platform<wayland::platform>;
+    using backend_t = backend::wlroots::backend<wayland::platform>;
 
     platform(base::config config,
              std::string const& socket_name,

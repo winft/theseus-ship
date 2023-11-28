@@ -15,7 +15,7 @@ template<typename Platform>
 void platform_init(Platform& platform)
 {
     auto session = std::make_unique<seat::backend::wlroots::session>(
-        platform.backend.wlroots_session, platform.backend.backend);
+        platform.backend.wlroots_session, platform.backend.native);
     session->take_control(platform.server->display->native());
     platform.session = std::move(session);
 

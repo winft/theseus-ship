@@ -30,18 +30,18 @@ void output_handle_destroy(wl_listener* listener, void* /*data*/)
     delete output;
 }
 
-template<typename Platform>
-class output : public base::wayland::output<typename Platform::frontend_type>
+template<typename Backend>
+class output : public base::wayland::output<typename Backend::frontend_type>
 {
 public:
     using type = output;
-    using abstract_type = base::wayland::output<typename Platform::frontend_type>;
-    using render_t = typename Platform::render_t::output_t;
+    using abstract_type = base::wayland::output<typename Backend::frontend_type>;
+    using render_t = typename Backend::render_t::output_t;
 
-    output(wlr_output* wlr_out, Platform* platform)
-        : abstract_type(*platform->frontend)
+    output(wlr_output* wlr_out, Backend* backend)
+        : abstract_type(*backend->frontend)
         , native{wlr_out}
-        , platform{platform}
+        , backend{backend}
     {
         wlr_out->data = this;
 
@@ -100,7 +100,7 @@ public:
                               modes,
                               current_mode.id != -1 ? &current_mode : nullptr);
 
-        this->render = std::make_unique<render_t>(*this, platform->frontend->render->backend);
+        this->render = std::make_unique<render_t>(*this, backend->frontend->render->backend);
     }
 
     ~output() override
@@ -109,11 +109,11 @@ public:
         if (native) {
             wlr_output_destroy(native);
         }
-        if (platform) {
-            remove_all(platform->frontend->outputs, this);
-            remove_all(platform->frontend->all_outputs, this);
-            platform->frontend->server->output_manager->commit_changes();
-            Q_EMIT platform->frontend->output_removed(this);
+        if (backend) {
+            remove_all(backend->frontend->outputs, this);
+            remove_all(backend->frontend->all_outputs, this);
+            backend->frontend->server->output_manager->commit_changes();
+            Q_EMIT backend->frontend->output_removed(this);
         }
     }
 
@@ -124,7 +124,7 @@ public:
 
         if (set_on) {
             wlr_output_commit(native);
-            wayland::output_set_dpms_on(*this, *platform->frontend);
+            wayland::output_set_dpms_on(*this, *backend->frontend);
             return;
         }
 
@@ -136,7 +136,7 @@ public:
 
         get_render(this->render)->disable();
         wlr_output_commit(native);
-        wayland::output_set_dmps_off(mode, *this, *platform->frontend);
+        wayland::output_set_dmps_off(mode, *this, *backend->frontend);
     }
 
     bool change_backend_state(Wrapland::Server::output_state const& state) override
@@ -170,7 +170,7 @@ public:
     }
 
     wlr_output* native;
-    Platform* platform;
+    Backend* backend;
 
 private:
     base::event_receiver<output> destroy_rec;

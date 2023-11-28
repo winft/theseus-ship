@@ -207,7 +207,7 @@ bool update_texture_from_dmabuf(Texture& texture, Dmabuf* dmabuf)
 
         wlr_texture_destroy(texture.native);
         texture.native
-            = wlr_texture_from_dmabuf(texture.m_backend->platform.renderer, &dmabuf_attribs);
+            = wlr_texture_from_dmabuf(texture.m_backend->backend.renderer, &dmabuf_attribs);
         if (!texture.native) {
             return false;
         }
@@ -247,12 +247,8 @@ bool update_texture_from_data(Texture& texture,
     if (size != texture.m_size) {
         // First time update or size has changed.
         wlr_texture_destroy(texture.native);
-        texture.native = wlr_texture_from_pixels(texture.m_backend->platform.renderer,
-                                                 format,
-                                                 stride,
-                                                 size.width(),
-                                                 size.height(),
-                                                 data);
+        texture.native = wlr_texture_from_pixels(
+            texture.m_backend->backend.renderer, format, stride, size.width(), size.height(), data);
         if (!texture.native) {
             return false;
         }

@@ -18,14 +18,14 @@ namespace KWin::render::backend::wlroots
 {
 
 template<typename Frontend>
-class platform
+class backend
 {
 public:
-    using type = platform<Frontend>;
+    using type = backend<Frontend>;
     using frontend_type = Frontend;
     using output_t = output<typename frontend_type::base_t::backend_t::output_t, type>;
 
-    explicit platform(Frontend& frontend)
+    explicit backend(Frontend& frontend)
         : frontend{&frontend}
     {
     }
@@ -35,12 +35,12 @@ public:
         // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
         //                available in the ctor. Can we change that?
         if (frontend->options->qobject->sw_compositing()) {
-            qpainter = create_render_backend<qpainter_backend<platform>>(*this, "pixman");
+            qpainter = create_render_backend<qpainter_backend<backend>>(*this, "pixman");
         } else {
-            egl = create_render_backend<egl_backend<platform>>(*this, "gles2");
+            egl = create_render_backend<egl_backend<backend>>(*this, "gles2");
         }
 
-        if (!wlr_backend_start(frontend->base.backend.backend)) {
+        if (!wlr_backend_start(frontend->base.backend.native)) {
             throw std::exception();
         }
 
@@ -74,22 +74,21 @@ public:
     }
 
     gsl::not_null<Frontend*> frontend;
-    std::unique_ptr<egl_backend<platform>> egl;
-    std::unique_ptr<qpainter_backend<platform>> qpainter;
+    std::unique_ptr<egl_backend<backend>> egl;
+    std::unique_ptr<qpainter_backend<backend>> qpainter;
 
     wlr_renderer* renderer{nullptr};
     wlr_allocator* allocator{nullptr};
 
 private:
-    template<typename Render, typename Platform>
-    std::unique_ptr<Render> create_render_backend(Platform& platform,
-                                                  std::string const& wlroots_name)
+    template<typename Render, typename Backend>
+    std::unique_ptr<Render> create_render_backend(Backend& backend, std::string const& wlroots_name)
     {
         setenv("WLR_RENDERER", wlroots_name.c_str(), true);
-        platform.renderer = wlr_renderer_autocreate(platform.frontend->base.backend.backend);
-        platform.allocator
-            = wlr_allocator_autocreate(platform.frontend->base.backend.backend, platform.renderer);
-        return std::make_unique<Render>(platform);
+        backend.renderer = wlr_renderer_autocreate(backend.frontend->base.backend.native);
+        backend.allocator
+            = wlr_allocator_autocreate(backend.frontend->base.backend.native, backend.renderer);
+        return std::make_unique<Render>(backend);
     }
 };
 

@@ -215,7 +215,7 @@ TEST_CASE("keyboard layout", "[input]")
         auto keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
         auto name = "headless-keyboard" + std::to_string(keyboards_index);
         wlr_keyboard_init(keyboard, nullptr, name.c_str());
-        wlr_signal_emit_safe(&setup->base->backend.backend->events.new_input, keyboard);
+        wlr_signal_emit_safe(&setup->base->backend.native->events.new_input, keyboard);
         return keyboard;
     };
 
