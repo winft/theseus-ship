@@ -12,7 +12,6 @@
 #include "helpers.h"
 #include "types.h"
 
-#include "base/backend/wlroots/platform.h"
 #include "base/types.h"
 #include "base/wayland/server.h"
 

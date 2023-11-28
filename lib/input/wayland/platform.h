@@ -13,7 +13,7 @@
 #include "input/dbus/dbus.h"
 #include "input/platform.h"
 #include "input/types.h"
-#include <input/backend/wlroots/platform.h>
+#include <input/backend/wlroots/backend.h>
 
 #include <QPointF>
 #include <Wrapland/Server/display.h>

@@ -6,7 +6,6 @@
 */
 #include "lib/setup.h"
 
-#include "base/backend/wlroots/platform.h"
 #include "base/wayland/server.h"
 #include "input/dbus/keyboard_layouts_v2.h"
 #include "input/keyboard_redirect.h"

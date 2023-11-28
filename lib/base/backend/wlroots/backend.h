@@ -8,8 +8,8 @@
 #include "drm_lease.h"
 #include "output.h"
 #include "platform_helpers.h"
+#include <base/backend/wlroots/events.h>
 #include <base/backend/wlroots/non_desktop_output.h>
-#include <base/backend/wlroots/platform_events.h>
 #include <base/logging.h>
 
 #include "base/utils.h"

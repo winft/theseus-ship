@@ -5,7 +5,7 @@
 */
 #include "session.h"
 
-#include "base/backend/wlroots/platform_helpers.h"
+#include "base/backend/wlroots/helpers.h"
 #include "base/logging.h"
 #include "base/wayland/server.h"
 

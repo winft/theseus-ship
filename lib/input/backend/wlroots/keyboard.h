@@ -7,7 +7,7 @@
 
 #include "control/headless/keyboard.h"
 #include "control/keyboard.h"
-#include <base/backend/wlroots/platform_helpers.h>
+#include <base/backend/wlroots/helpers.h>
 #include <input/backend/wlroots/device_helpers.h>
 
 #include "base/utils.h"

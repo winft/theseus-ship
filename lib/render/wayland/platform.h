@@ -7,7 +7,7 @@
 
 #include "effects.h"
 
-#include <render/backend/wlroots/platform.h>
+#include <render/backend/wlroots/backend.h>
 #include <render/compositor_start.h>
 #include <render/dbus/compositing.h>
 #include <render/gl/backend.h>

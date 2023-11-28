@@ -9,11 +9,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "main.h"
 
 #include "base/app_singleton.h"
-#include "base/backend/wlroots/platform.h"
 #include "base/wayland/server.h"
 #include "input/wayland/cursor.h"
 #include "input/wayland/redirect.h"
-#include "render/backend/wlroots/platform.h"
 #include "render/effects.h"
 #include "render/shortcuts_init.h"
 #include "script/platform.h"

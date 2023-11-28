@@ -11,7 +11,7 @@
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
 #include "script/platform.h"
-#include <base/backend/wlroots/platform.h>
+#include <base/backend/wlroots/backend.h>
 #include <base/wayland/platform_helpers.h>
 #include <base/x11/data.h>
 #include <base/x11/event_filter_manager.h>

@@ -12,7 +12,7 @@
 #include "input/wayland/platform.h"
 #include "render/wayland/platform.h"
 #include "script/platform.h"
-#include <base/backend/wlroots/platform.h>
+#include <base/backend/wlroots/backend.h>
 #include <base/wayland/platform_helpers.h>
 #include <win/wayland/space.h>
 
