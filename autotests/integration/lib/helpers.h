@@ -13,6 +13,7 @@
 
 #include "base/output.h"
 #include "win/wayland/window.h"
+#include <script/platform.h>
 
 #if USE_XWL
 #include <base/wayland/xwl_platform.h>
@@ -42,11 +43,28 @@ namespace KWin::detail::test
 class client;
 
 #if USE_XWL
-using space = win::wayland::xwl_space<base::wayland::xwl_platform>;
+struct base_mod {
+    using platform_t = base::wayland::xwl_platform<base_mod>;
+    using render_t = render::wayland::xwl_platform<base::wayland::xwl_platform<base_mod>>;
+    using input_t = input::wayland::platform<base::wayland::xwl_platform<base_mod>>;
+    using space_t = win::wayland::xwl_space<platform_t>;
+
+    std::unique_ptr<scripting::platform<space_t>> script;
+};
+using base_t = base::wayland::xwl_platform<base_mod>;
 #else
-using space = win::wayland::space<base::wayland::platform>;
+struct base_mod {
+    using platform_t = base::wayland::platform<base_mod>;
+    using render_t = render::wayland::platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t>;
+    using space_t = win::wayland::space<platform_t>;
+
+    std::unique_ptr<scripting::platform<space_t>> script;
+};
+using base_t = base::wayland::platform<base_mod>;
 #endif
 
+using space = base_t::space_t;
 using wayland_window = win::wayland::window<space>;
 
 struct KWIN_EXPORT output {

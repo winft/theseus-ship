@@ -11,7 +11,6 @@
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
 #include "render/wayland/platform.h"
-#include "script/platform.h"
 #include <base/backend/wlroots/backend.h>
 #include <base/wayland/platform_helpers.h>
 #include <win/wayland/space.h>
@@ -25,30 +24,35 @@
 namespace KWin::base::wayland
 {
 
+struct platform_mod {
+};
+
+template<typename Mod = platform_mod>
 class platform : public base::platform
 {
 public:
-    using output_t = output<wayland::platform>;
-    using render_t = render::wayland::platform<wayland::platform>;
-    using input_t = input::wayland::platform<wayland::platform>;
-    using space_t = win::wayland::space<wayland::platform>;
-    using backend_t = backend::wlroots::backend<wayland::platform>;
+    using type = platform<Mod>;
+    using output_t = output<type>;
+    using render_t = render::wayland::platform<type>;
+    using input_t = input::wayland::platform<type>;
+    using space_t = win::wayland::space<type>;
+    using backend_t = backend::wlroots::backend<type>;
 
     platform(base::config config,
              std::string const& socket_name,
              base::wayland::start_options flags,
              backend::wlroots::start_options options)
         : config{std::move(config)}
-        , server{std::make_unique<wayland::server<platform>>(*this, socket_name, flags)}
+        , server{std::make_unique<wayland::server<type>>(*this, socket_name, flags)}
         , backend{*this, options}
     {
         wayland::platform_init(*this);
     }
 
-    platform(platform const&) = delete;
-    platform& operator=(platform const&) = delete;
-    platform(platform&& other) = delete;
-    platform& operator=(platform&& other) = delete;
+    platform(type const&) = delete;
+    platform& operator=(type const&) = delete;
+    platform(type&& other) = delete;
+    platform& operator=(type&& other) = delete;
 
     ~platform() override
     {
@@ -64,7 +68,7 @@ public:
     base::config config;
     std::unique_ptr<base::options> options;
 
-    std::unique_ptr<wayland::server<wayland::platform>> server;
+    std::unique_ptr<wayland::server<type>> server;
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
 
     // All outputs, including disabled ones.
@@ -81,9 +85,7 @@ public:
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
 
-    struct {
-        std::unique_ptr<scripting::platform<space_t>> script;
-    } mod;
+    Mod mod;
 };
 
 }

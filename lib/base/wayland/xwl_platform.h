@@ -10,7 +10,6 @@
 #include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
-#include "script/platform.h"
 #include <base/backend/wlroots/backend.h>
 #include <base/wayland/platform_helpers.h>
 #include <base/x11/data.h>
@@ -28,31 +27,36 @@
 namespace KWin::base::wayland
 {
 
+struct xwl_platform_mod {
+};
+
+template<typename Mod = xwl_platform_mod>
 class xwl_platform : public base::platform
 {
 public:
-    using output_t = output<xwl_platform>;
-    using render_t = render::wayland::xwl_platform<xwl_platform>;
-    using input_t = input::wayland::platform<xwl_platform>;
-    using space_t = win::wayland::xwl_space<xwl_platform>;
-    using backend_t = backend::wlroots::backend<xwl_platform>;
+    using type = xwl_platform<Mod>;
+    using output_t = output<type>;
+    using render_t = render::wayland::xwl_platform<type>;
+    using input_t = input::wayland::platform<type>;
+    using space_t = win::wayland::xwl_space<type>;
+    using backend_t = backend::wlroots::backend<type>;
 
     xwl_platform(base::config config,
                  std::string const& socket_name,
                  base::wayland::start_options flags,
                  backend::wlroots::start_options options)
         : config{std::move(config)}
-        , server{std::make_unique<wayland::server<xwl_platform>>(*this, socket_name, flags)}
+        , server{std::make_unique<wayland::server<type>>(*this, socket_name, flags)}
         , backend{*this, options}
         , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
     {
         wayland::platform_init(*this);
     }
 
-    xwl_platform(xwl_platform const&) = delete;
-    xwl_platform& operator=(xwl_platform const&) = delete;
-    xwl_platform(xwl_platform&& other) = delete;
-    xwl_platform& operator=(xwl_platform&& other) = delete;
+    xwl_platform(type const&) = delete;
+    xwl_platform& operator=(type const&) = delete;
+    xwl_platform(type&& other) = delete;
+    xwl_platform& operator=(type&& other) = delete;
 
     ~xwl_platform() override
     {
@@ -69,7 +73,7 @@ public:
     base::x11::data x11_data;
     std::unique_ptr<base::options> options;
 
-    std::unique_ptr<wayland::server<wayland::xwl_platform>> server;
+    std::unique_ptr<wayland::server<type>> server;
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
 
     // All outputs, including disabled ones.
@@ -87,9 +91,7 @@ public:
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
 
-    struct {
-        std::unique_ptr<scripting::platform<space_t>> script;
-    } mod;
+    Mod mod;
 
     std::unique_ptr<xwl::xwayland<space_t>> xwayland;
 };

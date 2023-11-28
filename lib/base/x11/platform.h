@@ -14,7 +14,6 @@
 #include "base/x11/randr_filter.h"
 #include "input/x11/platform.h"
 #include "render/x11/platform.h"
-#include "script/platform.h"
 #include "win/x11/space.h"
 #include <base/platform_helpers.h>
 #include <base/x11/data.h>
@@ -26,13 +25,18 @@
 namespace KWin::base::x11
 {
 
+struct platform_mod {
+};
+
+template<typename Mod = platform_mod>
 class platform : public base::platform
 {
 public:
-    using output_t = base::x11::output<platform>;
-    using render_t = render::x11::platform<platform>;
-    using input_t = input::x11::platform<platform>;
-    using space_t = win::x11::space<platform>;
+    using type = platform<Mod>;
+    using output_t = base::x11::output<type>;
+    using render_t = render::x11::platform<type>;
+    using input_t = input::x11::platform<type>;
+    using space_t = win::x11::space<type>;
 
     platform(base::config config)
         : config{std::move(config)}
@@ -54,7 +58,7 @@ public:
     void update_outputs()
     {
         if (!randr_filter) {
-            randr_filter = std::make_unique<base::x11::randr_filter<platform>>(*this);
+            randr_filter = std::make_unique<base::x11::randr_filter<type>>(*this);
             update_outputs_impl<base::x11::xcb::randr::screen_resources>();
             return;
         }
@@ -75,9 +79,7 @@ public:
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
 
-    struct {
-        std::unique_ptr<scripting::platform<space_t>> script;
-    } mod;
+    Mod mod;
 
     bool is_crash_restart{false};
 
