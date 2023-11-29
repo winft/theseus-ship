@@ -19,7 +19,6 @@
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
 #include <debug/console/wayland/xwl_console.h>
-#include <desktop/platform.h>
 #include <win/stacking_state.h>
 #include <win/wayland/internal_window.h>
 #include <win/wayland/subspace_manager.h>
@@ -31,11 +30,14 @@
 namespace KWin::win::wayland
 {
 
-template<typename Base>
+struct xwl_space_mod {
+};
+
+template<typename Base, typename Mod = xwl_space_mod>
 class xwl_space
 {
 public:
-    using type = xwl_space<Base>;
+    using type = xwl_space<Base, Mod>;
     using qobject_t = space_qobject;
     using base_t = Base;
     using input_t = typename base_t::input_t::redirect_t;
@@ -239,7 +241,8 @@ public:
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-    std::unique_ptr<desktop::platform> desktop;
+
+    Mod mod;
 
     std::unique_ptr<Wrapland::Server::Compositor> compositor;
     std::unique_ptr<Wrapland::Server::Subcompositor> subcompositor;

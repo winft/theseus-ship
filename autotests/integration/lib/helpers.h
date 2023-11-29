@@ -42,12 +42,16 @@ namespace KWin::detail::test
 
 class client;
 
+struct space_mod {
+    std::unique_ptr<desktop::platform> desktop;
+};
+
 #if USE_XWL
 struct base_mod {
     using platform_t = base::wayland::xwl_platform<base_mod>;
     using render_t = render::wayland::xwl_platform<platform_t>;
     using input_t = input::wayland::platform<platform_t>;
-    using space_t = win::wayland::xwl_space<platform_t>;
+    using space_t = win::wayland::xwl_space<platform_t, space_mod>;
 
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;
@@ -62,7 +66,7 @@ struct base_mod {
     using platform_t = base::wayland::platform<base_mod>;
     using render_t = render::wayland::platform<platform_t>;
     using input_t = input::wayland::platform<platform_t>;
-    using space_t = win::wayland::space<platform_t>;
+    using space_t = win::wayland::space<platform_t, space_mod>;
 
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;

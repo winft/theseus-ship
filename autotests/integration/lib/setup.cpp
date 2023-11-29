@@ -148,7 +148,7 @@ void setup::start()
     out->wrapland_output()->set_metadata(metadata);
 
     base->mod.space = std::make_unique<base_t::space_t>(*base->mod.render, *base->mod.input);
-    base->mod.space->desktop
+    base->mod.space->mod.desktop
         = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->mod.space);
     input::wayland::add_dbus(base->mod.input.get());
     win::init_shortcuts(*base->mod.space);

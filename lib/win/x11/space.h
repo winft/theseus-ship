@@ -22,7 +22,6 @@
 #include "win/desktop_space.h"
 #include "win/screen_edges.h"
 #include "win/stacking_order.h"
-#include <desktop/platform.h>
 #include <win/kill_window.h>
 #include <win/space_reconfigure.h>
 #include <win/stacking_state.h>
@@ -36,11 +35,14 @@
 namespace KWin::win::x11
 {
 
-template<typename Base>
+struct space_mod {
+};
+
+template<typename Base, typename Mod = space_mod>
 class space
 {
 public:
-    using type = space<Base>;
+    using type = space<Base, Mod>;
     using qobject_t = space_qobject;
     using base_t = Base;
     using input_t = typename base_t::input_t::redirect_t;
@@ -307,7 +309,8 @@ public:
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-    std::unique_ptr<desktop::platform> desktop;
+
+    Mod mod;
 
     std::vector<window_t> windows;
     std::unordered_map<uint32_t, window_t> windows_map;

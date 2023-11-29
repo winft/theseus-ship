@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <base/wayland/platform.h>
 #include <base/wayland/xwl_platform.h>
+#include <desktop/platform.h>
 #include <script/platform.h>
 
 #include <QApplication>
@@ -17,11 +18,15 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin
 {
 
+struct space_mod {
+    std::unique_ptr<desktop::platform> desktop;
+};
+
 struct base_mod {
     using platform_t = base::wayland::xwl_platform<base_mod>;
     using render_t = render::wayland::xwl_platform<platform_t>;
     using input_t = input::wayland::platform<platform_t>;
-    using space_t = win::wayland::xwl_space<platform_t>;
+    using space_t = win::wayland::xwl_space<platform_t, space_mod>;
 
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;

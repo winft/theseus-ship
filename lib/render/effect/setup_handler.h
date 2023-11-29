@@ -211,16 +211,19 @@ void setup_handler(Handler& handler)
                              static_cast<ElectricBorder>(border), factor, geometry);
                      });
 
-    auto screen_locker_watcher = ws->base.mod.space->desktop->screen_locker_watcher.get();
-    using screen_locker_watcher_t = std::remove_pointer_t<decltype(screen_locker_watcher)>;
-    QObject::connect(screen_locker_watcher,
-                     &screen_locker_watcher_t::locked,
-                     &handler,
-                     &EffectsHandler::screenLockingChanged);
-    QObject::connect(screen_locker_watcher,
-                     &screen_locker_watcher_t::about_to_lock,
-                     &handler,
-                     &EffectsHandler::screenAboutToLock);
+    auto const& space_mod = ws->base.mod.space->mod;
+    if constexpr (requires(decltype(space_mod) mod) { mod.desktop; }) {
+        auto screen_locker_watcher = space_mod.desktop->screen_locker_watcher.get();
+        using screen_locker_watcher_t = std::remove_pointer_t<decltype(screen_locker_watcher)>;
+        QObject::connect(screen_locker_watcher,
+                         &screen_locker_watcher_t::locked,
+                         &handler,
+                         &EffectsHandler::screenLockingChanged);
+        QObject::connect(screen_locker_watcher,
+                         &screen_locker_watcher_t::about_to_lock,
+                         &handler,
+                         &EffectsHandler::screenAboutToLock);
+    }
 
     if constexpr (requires { typename Handler::space_t::internal_window_t; }) {
         for (auto& win : ws->windows) {

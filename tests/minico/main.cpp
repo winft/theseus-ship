@@ -85,7 +85,6 @@ int main(int argc, char* argv[])
     }
 
     base.mod.space = std::make_unique<base_t::space_t>(*base.mod.render, *base.mod.input);
-    base.mod.space->desktop = std::make_unique<desktop::platform>(*base.mod.space);
 
     base.mod.render->start(*base.mod.space);
     return app.exec();

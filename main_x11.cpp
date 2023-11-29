@@ -267,7 +267,7 @@ void ApplicationX11::start()
             exit(1);
         }
 
-        base.mod.space->desktop
+        base.mod.space->mod.desktop
             = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base.mod.space);
         win::init_shortcuts(*base.mod.space);
         render::init_shortcuts(*base.mod.render);

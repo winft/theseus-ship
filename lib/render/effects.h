@@ -272,7 +272,11 @@ public:
 
     bool isScreenLocked() const override
     {
-        return get_space().desktop->screen_locker_watcher->is_locked();
+        auto const& mod = get_space().mod;
+        if constexpr (requires(decltype(mod) mod) { mod.desktop; }) {
+            return mod.desktop->screen_locker_watcher->is_locked();
+        }
+        return false;
     }
 
     QPainter* scenePainter() override
