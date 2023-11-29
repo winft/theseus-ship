@@ -26,7 +26,10 @@ void space_reconfigure(Space& space)
     space.base.config.main->reparseConfiguration();
     space.options->updateSettings();
     space.base.options->updateSettings();
-    space.base.mod.script->start();
+
+    if constexpr (requires(decltype(space) space) { space.base.mod.script; }) {
+        space.base.mod.script->start();
+    }
 
     Q_EMIT space.qobject->configChanged();
 

@@ -23,11 +23,6 @@ target_link_libraries(x11
     desktop
     input-x11-backend
     render-x11-backend
-
-    # TODO(romangg): Linking against script lib is needed at the moment because in the base platform
-    #                the script platform is composited, but in the future it should be made possible
-    #                to build the wlroots backend lib without it.
-    script
     win-x11-backend
 )
 
@@ -48,12 +43,6 @@ target_link_libraries(wayland
     input-wl
     render-wl
     win-wl
-
-    # TODO(romangg): Linking against script lib is needed at the moment because in the base platform
-    #                the script platform is composited, but in the future it should be made possible
-    #                to build the wlroots backend lib without it.
-    script
-
     Libinput::Libinput
     Pixman::Pixman
     wlroots::wlroots

@@ -55,16 +55,7 @@ int main(int argc, char* argv[])
     QObject::connect(
         KSignalHandler::self(), &KSignalHandler::signalReceived, &app, &QCoreApplication::exit);
 
-    struct base_mod {
-        using platform_t = base::wayland::platform<base_mod>;
-        using render_t = render::wayland::platform<platform_t>;
-        using input_t = input::wayland::platform<platform_t>;
-        using space_t = win::wayland::space<platform_t>;
-
-        std::unique_ptr<scripting::platform<space_t>> script;
-    };
-
-    using base_t = base::wayland::platform<base_mod>;
+    using base_t = base::wayland::platform<>;
     base_t base(base::config(KConfig::OpenFlag::FullConfig, "kwinft-minimalrc"),
                 "",
                 base::wayland::start_options::no_lock_screen_integration,

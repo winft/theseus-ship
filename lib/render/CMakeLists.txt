@@ -17,6 +17,7 @@ add_library(render SHARED)
 
 target_link_libraries(render
   PUBLIC
+    KF6::ConfigQml
     KF6::Notifications
     epoxy::epoxy
     win
