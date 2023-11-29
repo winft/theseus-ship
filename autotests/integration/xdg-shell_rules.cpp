@@ -24,7 +24,7 @@ TEST_CASE("xdg-shell rules", "[win]")
     test_outputs_default();
     setup_wayland_connection(global_selection::xdg_decoration);
 
-    auto& vd_manager = setup.base->space->subspace_manager;
+    auto& vd_manager = setup.base->mod.space->subspace_manager;
     win::subspaces_set_current(*vd_manager, *vd_manager->subspaces.front());
 
     auto get_config = [&]() -> std::tuple<KSharedConfigPtr, KConfigGroup> {
@@ -62,7 +62,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
     auto get_toplevel_window = [&](QSignalSpy const& spy) -> wayland_window* {
         auto xdg_toplevel = spy.last().at(0).value<Wrapland::Server::XdgShellToplevel*>();
-        for (auto win : setup.base->space->windows) {
+        for (auto win : setup.base->mod.space->windows) {
             if (!std::holds_alternative<wayland_window*>(win)) {
                 continue;
             }
@@ -84,8 +84,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -117,8 +117,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -144,11 +144,11 @@ TEST_CASE("xdg-shell rules", "[win]")
             client->qobject.get(), &win::window_qobject::clientFinishUserMovedResized);
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
-        win::active_window_move(*setup.base->space);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
+        win::active_window_move(*setup.base->mod.space);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), client);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
         QVERIFY(win::is_move(client));
         QVERIFY(!win::is_resize(client));
@@ -162,7 +162,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         win::key_press_event(client, Qt::Key_Enter);
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
         QCOMPARE(client->geo.pos(), QPoint(50, 42));
@@ -194,8 +194,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -221,11 +221,11 @@ TEST_CASE("xdg-shell rules", "[win]")
             client->qobject.get(), &win::window_qobject::clientFinishUserMovedResized);
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
-        win::active_window_move(*setup.base->space);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
+        win::active_window_move(*setup.base->mod.space);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), client);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
         QVERIFY(win::is_move(client));
         QVERIFY(!win::is_resize(client));
@@ -239,7 +239,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         win::key_press_event(client, Qt::Key_Enter);
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
         QCOMPARE(client->geo.pos(), QPoint(50, 42));
@@ -271,8 +271,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -291,11 +291,11 @@ TEST_CASE("xdg-shell rules", "[win]")
         QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
                                              &win::window_qobject::clientStartUserMovedResized);
         QVERIFY(clientStartMoveResizedSpy.isValid());
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
-        win::active_window_move(*setup.base->space);
-        QVERIFY(!setup.base->space->move_resize_window);
+        win::active_window_move(*setup.base->mod.space);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(clientStartMoveResizedSpy.count(), 0);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
@@ -341,13 +341,13 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
+        setup.base->mod.space->rule_book->config = config;
 
         // The client should be moved to the position specified by the rule.
         QSignalSpy geometryChangedSpy(client->qobject.get(),
                                       &win::window_qobject::frame_geometry_changed);
         QVERIFY(geometryChangedSpy.isValid());
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
         QCOMPARE(geometryChangedSpy.count(), 1);
         QCOMPARE(client->geo.pos(), QPoint(42, 42));
 
@@ -364,11 +364,11 @@ TEST_CASE("xdg-shell rules", "[win]")
             client->qobject.get(), &win::window_qobject::clientFinishUserMovedResized);
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
-        win::active_window_move(*setup.base->space);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
+        win::active_window_move(*setup.base->mod.space);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), client);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
         QVERIFY(win::is_move(client));
         QVERIFY(!win::is_resize(client));
@@ -382,7 +382,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         win::key_press_event(client, Qt::Key_Enter);
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
         QCOMPARE(client->geo.pos(), QPoint(50, 42));
@@ -407,8 +407,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -427,12 +427,12 @@ TEST_CASE("xdg-shell rules", "[win]")
         QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
                                              &win::window_qobject::clientStartUserMovedResized);
         QVERIFY(clientStartMoveResizedSpy.isValid());
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
 
-        win::active_window_move(*setup.base->space);
-        QVERIFY(!setup.base->space->move_resize_window);
+        win::active_window_move(*setup.base->mod.space);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(clientStartMoveResizedSpy.count(), 0);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
@@ -464,8 +464,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         std::unique_ptr<Surface> surface = create_surface();
@@ -514,8 +514,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         auto surface = create_surface();
@@ -566,11 +566,11 @@ TEST_CASE("xdg-shell rules", "[win]")
             client->qobject.get(), &win::window_qobject::clientFinishUserMovedResized);
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
-        win::active_window_resize(*setup.base->space);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
+        win::active_window_resize(*setup.base->mod.space);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), client);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
         QVERIFY(!win::is_move(client));
         QVERIFY(win::is_resize(client));
@@ -604,7 +604,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         win::key_press_event(client, Qt::Key_Enter);
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
 
@@ -655,8 +655,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         auto surface = create_surface();
@@ -706,11 +706,11 @@ TEST_CASE("xdg-shell rules", "[win]")
             client->qobject.get(), &win::window_qobject::clientFinishUserMovedResized);
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
-        win::active_window_resize(*setup.base->space);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
+        win::active_window_resize(*setup.base->mod.space);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), client);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
         QVERIFY(!win::is_move(client));
         QVERIFY(win::is_resize(client));
@@ -743,7 +743,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         win::key_press_event(client, Qt::Key_Enter);
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
 
@@ -794,8 +794,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         auto surface = create_surface();
@@ -829,11 +829,11 @@ TEST_CASE("xdg-shell rules", "[win]")
         QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
                                              &win::window_qobject::clientStartUserMovedResized);
         QVERIFY(clientStartMoveResizedSpy.isValid());
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
-        win::active_window_resize(*setup.base->space);
-        QVERIFY(!setup.base->space->move_resize_window);
+        win::active_window_resize(*setup.base->mod.space);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(clientStartMoveResizedSpy.count(), 0);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
@@ -912,8 +912,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // The compositor should send a configure event with a new size.
         QVERIFY(configureRequestedSpy->wait());
@@ -952,8 +952,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         auto surface = create_surface();
@@ -989,11 +989,11 @@ TEST_CASE("xdg-shell rules", "[win]")
         QSignalSpy clientStartMoveResizedSpy(client->qobject.get(),
                                              &win::window_qobject::clientStartUserMovedResized);
         QVERIFY(clientStartMoveResizedSpy.isValid());
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
-        win::active_window_resize(*setup.base->space);
-        QVERIFY(!setup.base->space->move_resize_window);
+        win::active_window_resize(*setup.base->mod.space);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(clientStartMoveResizedSpy.count(), 0);
         QVERIFY(!win::is_move(client));
         QVERIFY(!win::is_resize(client));
@@ -1044,8 +1044,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         auto surface = create_surface();
@@ -1102,8 +1102,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         auto surface = create_surface();
@@ -1142,7 +1142,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(cfgdata.states.testFlag(xdg_shell_state::maximized));
 
         // One should still be able to change the maximized state of the client.
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy->wait());
         QCOMPARE(configureRequestedSpy->count(), 3);
 
@@ -1217,8 +1217,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         auto surface = create_surface();
@@ -1257,7 +1257,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(cfgdata.states.testFlag(xdg_shell_state::maximized));
 
         // One should still be able to change the maximized state of the client.
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy->wait());
         QCOMPARE(configureRequestedSpy->count(), 3);
 
@@ -1331,8 +1331,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         auto surface = create_surface();
@@ -1372,7 +1372,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         // Any attempt to change the maximized state should not succeed.
         const QRect oldGeometry = client->geo.frame;
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(!configureRequestedSpy->wait(100));
         QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
         QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
@@ -1467,8 +1467,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // We should receive a configure event with a new surface size.
         QVERIFY(configureRequestedSpy->wait());
@@ -1494,7 +1494,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(client->isMaximizable());
 
         // Restore the client.
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy->wait());
         QCOMPARE(configureRequestedSpy->count(), 4);
 
@@ -1536,8 +1536,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         auto surface = create_surface();
@@ -1577,7 +1577,7 @@ TEST_CASE("xdg-shell rules", "[win]")
 
         // Any attempt to change the maximized state should not succeed.
         const QRect oldGeometry = client->geo.frame;
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(!configureRequestedSpy->wait(100));
         QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
         QCOMPARE(client->synced_geometry.max_mode, win::maximize_mode::full);
@@ -1641,8 +1641,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -1678,8 +1678,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -1693,7 +1693,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
         // We still should be able to move the client between subspaces.
-        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        win::send_window_to_subspace(*setup.base->mod.space, client, 1, true);
         QCOMPARE(win::get_subspace(*client), 1);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
@@ -1731,8 +1731,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -1744,7 +1744,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
         // Move the client to the first subspace.
-        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        win::send_window_to_subspace(*setup.base->mod.space, client, 1, true);
         QCOMPARE(win::get_subspace(*client), 1);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
@@ -1766,7 +1766,7 @@ TEST_CASE("xdg-shell rules", "[win]")
     SECTION("subspace force")
     {
         // We need at least two subspaces for this test.
-        auto& vd_manager = setup.base->space->subspace_manager;
+        auto& vd_manager = setup.base->mod.space->subspace_manager;
         win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
         win::subspaces_set_current(*vd_manager, 1);
@@ -1781,8 +1781,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -1796,7 +1796,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
         // Any attempt to move the client to another subspace should fail.
-        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        win::send_window_to_subspace(*setup.base->mod.space, client, 1, true);
         QCOMPARE(win::get_subspace(*client), 2);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
@@ -1843,15 +1843,15 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // The client should have been moved to the second subspace.
         QCOMPARE(win::get_subspace(*client), 2);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // One should still be able to move the client between subspaces.
-        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        win::send_window_to_subspace(*setup.base->mod.space, client, 1, true);
         QCOMPARE(win::get_subspace(*client), 1);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
@@ -1883,8 +1883,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -1898,7 +1898,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
         // Any attempt to move the client to another subspace should fail.
-        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        win::send_window_to_subspace(*setup.base->mod.space, client, 1, true);
         QCOMPARE(win::get_subspace(*client), 2);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 2);
 
@@ -1914,10 +1914,10 @@ TEST_CASE("xdg-shell rules", "[win]")
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
         // One should be able to move the client between subspaces.
-        win::send_window_to_subspace(*setup.base->space, client, 2, true);
+        win::send_window_to_subspace(*setup.base->mod.space, client, 2, true);
         QCOMPARE(win::get_subspace(*client), 2);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
-        win::send_window_to_subspace(*setup.base->space, client, 1, true);
+        win::send_window_to_subspace(*setup.base->mod.space, client, 1, true);
         QCOMPARE(win::get_subspace(*client), 1);
         QCOMPARE(win::subspaces_get_current_x11id(*vd_manager), 1);
 
@@ -1937,8 +1937,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -1967,14 +1967,14 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
         std::unique_ptr<Surface> surface;
         std::unique_ptr<XdgShellToplevel> shellSurface;
-        QSignalSpy toplevel_created_Spy(setup.base->space->xdg_shell.get(),
+        QSignalSpy toplevel_created_Spy(setup.base->mod.space->xdg_shell.get(),
                                         &Wrapland::Server::XdgShell::toplevelCreated);
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo", 500);
         QVERIFY(!client);
@@ -2021,8 +2021,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2042,7 +2042,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         surface.reset();
         QVERIFY(wait_for_destroyed(client));
 
-        QSignalSpy toplevel_created_Spy(setup.base->space->xdg_shell.get(),
+        QSignalSpy toplevel_created_Spy(setup.base->mod.space->xdg_shell.get(),
                                         &Wrapland::Server::XdgShell::toplevelCreated);
         std::tie(client, surface, shellSurface) = createWindow("org.kde.foo", 500);
         QVERIFY(!client);
@@ -2070,8 +2070,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2122,8 +2122,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // The client should be minimized now.
         QVERIFY(client->isMinimizable());
@@ -2154,8 +2154,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2197,8 +2197,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2226,8 +2226,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2267,8 +2267,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2310,8 +2310,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2361,8 +2361,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // The client should not be on a taskbar now.
         QVERIFY(client->control->skip_taskbar());
@@ -2391,8 +2391,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2436,8 +2436,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2465,8 +2465,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2506,8 +2506,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2549,8 +2549,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2600,8 +2600,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // The client should not be on a pager now.
         QVERIFY(client->control->skip_pager());
@@ -2630,8 +2630,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2675,8 +2675,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2704,8 +2704,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2745,8 +2745,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2788,8 +2788,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2839,8 +2839,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // The client should be excluded from window switching effects now.
         QVERIFY(client->control->skip_switcher());
@@ -2869,8 +2869,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2914,8 +2914,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2943,8 +2943,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -2984,8 +2984,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3025,8 +3025,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3074,8 +3074,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // The client should now be kept above other clients.
         QVERIFY(client->control->keep_above);
@@ -3104,8 +3104,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3151,8 +3151,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3180,8 +3180,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3221,8 +3221,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3262,8 +3262,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3311,8 +3311,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // The client should now be kept below other clients.
         QVERIFY(client->control->keep_below);
@@ -3341,8 +3341,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3388,8 +3388,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3431,8 +3431,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3512,8 +3512,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3581,8 +3581,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3656,8 +3656,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // The client should now have a window shortcut assigned.
         QCOMPARE(client->control->shortcut, (QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_1}));
@@ -3712,8 +3712,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3825,8 +3825,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3855,8 +3855,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3883,8 +3883,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3920,8 +3920,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3932,7 +3932,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(client->control->active);
 
         // Make the client inactive.
-        win::unset_active_window(*setup.base->space);
+        win::unset_active_window(*setup.base->mod.space);
         QVERIFY(!client->control->active);
 
         // The opacity of the client should not be affected by the rule.
@@ -3954,8 +3954,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -3967,7 +3967,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QCOMPARE(client->opacity(), 1.0);
 
         // Make the client inactive.
-        win::unset_active_window(*setup.base->space);
+        win::unset_active_window(*setup.base->mod.space);
         QVERIFY(!client->control->active);
 
         // The opacity should be forced by the rule.
@@ -3989,8 +3989,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create the test client.
         wayland_window* client;
@@ -4002,7 +4002,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QCOMPARE(client->opacity(), 1.0);
 
         // Make the client inactive.
-        win::unset_active_window(*setup.base->space);
+        win::unset_active_window(*setup.base->mod.space);
         QVERIFY(!client->control->active);
 
         // The opacity should be forced by the rule.
@@ -4015,7 +4015,7 @@ TEST_CASE("xdg-shell rules", "[win]")
         QVERIFY(client);
         QVERIFY(client->control->active);
         QCOMPARE(client->opacity(), 1.0);
-        win::unset_active_window(*setup.base->space);
+        win::unset_active_window(*setup.base->mod.space);
         QVERIFY(!client->control->active);
         QCOMPARE(client->opacity(), 1.0);
 
@@ -4035,8 +4035,8 @@ TEST_CASE("xdg-shell rules", "[win]")
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
 
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         auto surface = create_surface();
         auto shellSurface = create_xdg_shell_toplevel(surface);

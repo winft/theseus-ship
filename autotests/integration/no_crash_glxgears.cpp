@@ -18,7 +18,7 @@ TEST_CASE("no crash glxgears", "[xwl],[win]")
     test::setup setup("no-crash-glxgears", base::operation_mode::xwayland);
     setup.start();
 
-    QSignalSpy clientAddedSpy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
+    QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(), &space::qobject_t::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
 
     QProcess glxgears;
@@ -28,9 +28,9 @@ TEST_CASE("no crash glxgears", "[xwl],[win]")
 
     QVERIFY(clientAddedSpy.wait());
     QCOMPARE(clientAddedSpy.count(), 1);
-    QCOMPARE(setup.base->space->windows.size(), 1);
+    QCOMPARE(setup.base->mod.space->windows.size(), 1);
 
-    auto glxgearsClient = get_x11_window(setup.base->space->windows.front());
+    auto glxgearsClient = get_x11_window(setup.base->mod.space->windows.front());
     QVERIFY(glxgearsClient);
     QVERIFY(win::decoration(glxgearsClient));
     QSignalSpy closedSpy(glxgearsClient->qobject.get(), &win::window_qobject::closed);

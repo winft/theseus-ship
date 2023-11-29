@@ -219,7 +219,7 @@ void clear_space(Space& space)
     }
 
     delete space.client_keys_dialog;
-    space.base.render->space = nullptr;
+    space.base.mod.render->space = nullptr;
 }
 
 }

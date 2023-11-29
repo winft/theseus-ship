@@ -100,7 +100,7 @@ public:
                               modes,
                               current_mode.id != -1 ? &current_mode : nullptr);
 
-        this->render = std::make_unique<render_t>(*this, backend->frontend->render->backend);
+        this->render = std::make_unique<render_t>(*this, backend->frontend->mod.render->backend);
     }
 
     ~output() override

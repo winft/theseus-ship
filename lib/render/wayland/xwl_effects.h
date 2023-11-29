@@ -55,7 +55,7 @@ public:
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* surface) const override
     {
         if (auto win
-            = win::wayland::space_windows_find(*this->scene.platform.base.space, surface)) {
+            = win::wayland::space_windows_find(*this->scene.platform.base.mod.space, surface)) {
             return win->render->effect.get();
         }
         return nullptr;
@@ -129,7 +129,7 @@ public:
 protected:
     void doStartMouseInterception(Qt::CursorShape shape) override
     {
-        auto& space = this->scene.platform.base.space;
+        auto& space = this->scene.platform.base.mod.space;
         space->input->pointer->setEffectsOverrideCursor(shape);
         if (auto& mov_res = space->move_resize_window) {
             std::visit(overload{[&](auto&& win) { win::end_move_resize(win); }}, *mov_res);
@@ -138,7 +138,7 @@ protected:
 
     void doStopMouseInterception() override
     {
-        this->scene.platform.base.space->input->pointer->removeEffectsOverrideCursor();
+        this->scene.platform.base.mod.space->input->pointer->removeEffectsOverrideCursor();
     }
 
     void handle_effect_destroy(Effect& effect) override

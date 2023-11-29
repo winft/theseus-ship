@@ -80,7 +80,7 @@ TEST_CASE("quick tiling", "[win]")
     setup_wayland_connection(global_selection::xdg_decoration);
 
     auto get_x11_window_from_id
-        = [&](uint32_t id) { return get_x11_window(setup.base->space->windows_map.at(id)); };
+        = [&](uint32_t id) { return get_x11_window(setup.base->mod.space->windows_map.at(id)); };
 
     SECTION("quick tiling")
     {
@@ -138,7 +138,7 @@ TEST_CASE("quick tiling", "[win]")
         // Map the client.
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -184,7 +184,7 @@ TEST_CASE("quick tiling", "[win]")
 
         auto output = base::get_output(setup.base->outputs, 1);
         QVERIFY(output);
-        win::send_to_screen(*setup.base->space, c, *output);
+        win::send_to_screen(*setup.base->mod.space, c, *output);
         QCOMPARE(c->topo.central_output, setup.base->outputs.at(1));
 
         // quick tile should not be changed
@@ -210,7 +210,7 @@ TEST_CASE("quick tiling", "[win]")
         // Map the client.
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
         QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -321,7 +321,7 @@ TEST_CASE("quick tiling", "[win]")
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
         QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -330,7 +330,7 @@ TEST_CASE("quick tiling", "[win]")
         QVERIFY(quickTileChangedSpy.isValid());
 
         win::perform_window_operation(c, win::win_op::unrestricted_move);
-        QCOMPARE(c, get_wayland_window(setup.base->space->move_resize_window));
+        QCOMPARE(c, get_wayland_window(setup.base->mod.space->move_resize_window));
         QCOMPARE(cursor()->pos(), QPoint(49, 24));
 
         quint32 timestamp = 1;
@@ -355,7 +355,7 @@ TEST_CASE("quick tiling", "[win]")
         keyboard_key_pressed(KEY_ENTER, timestamp++);
         keyboard_key_released(KEY_ENTER, timestamp++);
         QCOMPARE(cursor()->pos(), test_data.target);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
 
         QCOMPARE(quickTileChangedSpy.count(), 1);
         REQUIRE(c->control->quicktiling == test_data.expected_mode);
@@ -396,7 +396,7 @@ TEST_CASE("quick tiling", "[win]")
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
         QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
@@ -409,7 +409,7 @@ TEST_CASE("quick tiling", "[win]")
         QVERIFY(quickTileChangedSpy.isValid());
 
         win::perform_window_operation(c, win::win_op::unrestricted_move);
-        QCOMPARE(c, get_wayland_window(setup.base->space->move_resize_window));
+        QCOMPARE(c, get_wayland_window(setup.base->mod.space->move_resize_window));
         QCOMPARE(cursor()->pos(), QPoint(49, 24));
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 3);
@@ -419,7 +419,7 @@ TEST_CASE("quick tiling", "[win]")
         pointer_button_pressed(BTN_LEFT, timestamp++);
         pointer_button_released(BTN_LEFT, timestamp++);
         QCOMPARE(cursor()->pos(), test_data.target);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
 
         QCOMPARE(quickTileChangedSpy.count(), 1);
         REQUIRE(c->control->quicktiling == test_data.expected_mode);
@@ -476,7 +476,7 @@ TEST_CASE("quick tiling", "[win]")
         QVERIFY(c);
         QVERIFY(win::decoration(c));
         auto const decoration = win::decoration(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QCOMPARE(c->geo.frame,
                  QRect(-decoration->borderLeft(),
                        0,
@@ -498,17 +498,17 @@ TEST_CASE("quick tiling", "[win]")
             QPointF(c->geo.frame.center().x(), c->geo.frame.y() + decoration->borderTop() / 2),
             timestamp++);
         QVERIFY(configureRequestedSpy.wait());
-        QCOMPARE(c, get_wayland_window(setup.base->space->move_resize_window));
+        QCOMPARE(c, get_wayland_window(setup.base->mod.space->move_resize_window));
         QCOMPARE(configureRequestedSpy.count(), 3);
 
         touch_motion(0, test_data.target, timestamp++);
         touch_up(0, timestamp++);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
 
         // When there are no borders, there is no change to them when quick-tiling.
         // TODO: we should test both cases with fixed fake decoration for autotests.
-        auto const hasBorders
-            = setup.base->space->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
+        auto const hasBorders = setup.base->mod.space->deco->settings()->borderSize()
+            != KDecoration2::BorderSize::None;
 
         QCOMPARE(quickTileChangedSpy.count(), 1);
         REQUIRE(c->control->quicktiling == test_data.expected_mode);
@@ -576,7 +576,7 @@ TEST_CASE("quick tiling", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -667,7 +667,7 @@ TEST_CASE("quick tiling", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -753,7 +753,7 @@ TEST_CASE("quick tiling", "[win]")
         // Map the client.
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 
@@ -838,7 +838,7 @@ TEST_CASE("quick tiling", "[win]")
         // Map the client.
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QCOMPARE(c->control->quicktiling, win::quicktiles::none);
 

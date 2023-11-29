@@ -196,7 +196,7 @@ public:
     bool tabbox_grab()
     {
         base::x11::update_time_from_clock(base);
-        if (!base.input->grab_keyboard()) {
+        if (!base.mod.input->grab_keyboard()) {
             return false;
         }
 
@@ -219,7 +219,7 @@ public:
     void tabbox_ungrab()
     {
         base::x11::update_time_from_clock(base);
-        base.input->ungrab_keyboard();
+        base.mod.input->ungrab_keyboard();
 
         assert(tabbox->grab.forced_global_mouse);
         tabbox->grab.forced_global_mouse = false;

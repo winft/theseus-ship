@@ -34,12 +34,13 @@ TEST_CASE("scene qpainter", "[render]")
 
     test::setup setup("scene-qpainter", base::operation_mode::xwayland);
 
-    using qpainter_scene_t = render::qpainter::scene<decltype(setup.base->render)::element_type>;
+    using qpainter_scene_t
+        = render::qpainter::scene<decltype(setup.base->mod.render)::element_type>;
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -53,17 +54,17 @@ TEST_CASE("scene qpainter", "[render]")
     SECTION("start frame")
     {
         // this test verifies that the initial rendering is correct
-        render::full_repaint(*setup.base->render);
-        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->render->scene.get());
+        render::full_repaint(*setup.base->mod.render);
+        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->mod.render->scene.get());
         QVERIFY(scene);
-        REQUIRE(setup.base->render->is_sw_compositing());
+        REQUIRE(setup.base->mod.render->is_sw_compositing());
 
         // now let's render a reference image for comparison
         QImage referenceImage(QSize(1280, 1024), QImage::Format_RGB32);
         referenceImage.fill(Qt::black);
 
         QPainter p(&referenceImage);
-        auto& sw_cursor = setup.base->render->software_cursor;
+        auto& sw_cursor = setup.base->mod.render->software_cursor;
         auto const cursorImage = sw_cursor->image();
 
         QVERIFY(!cursorImage.isNull());
@@ -74,7 +75,7 @@ TEST_CASE("scene qpainter", "[render]")
     SECTION("cursor moving")
     {
         // this test verifies that rendering is correct also after moving the cursor a few times
-        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->render->scene.get());
+        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->mod.render->scene.get());
         QVERIFY(scene);
 
         auto surface = create_surface();
@@ -117,7 +118,7 @@ TEST_CASE("scene qpainter", "[render]")
         QImage referenceImage(QSize(1280, 1024), QImage::Format_RGB32);
         referenceImage.fill(Qt::black);
         QPainter p(&referenceImage);
-        auto& sw_cursor = setup.base->render->software_cursor;
+        auto& sw_cursor = setup.base->mod.render->software_cursor;
         auto const cursorImage = sw_cursor->image();
 
         QVERIFY(!cursorImage.isNull());
@@ -143,7 +144,7 @@ TEST_CASE("scene qpainter", "[render]")
         QSignalSpy frameRenderedSpy(s.get(), &Wrapland::Client::Surface::frameRendered);
         QVERIFY(frameRenderedSpy.isValid());
 
-        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->render->scene.get());
+        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->mod.render->scene.get());
         QVERIFY(scene);
 
         // now let's map the window
@@ -205,7 +206,7 @@ TEST_CASE("scene qpainter", "[render]")
         QSignalSpy pointerEnteredSpy(p.get(), &Pointer::entered);
         QVERIFY(pointerEnteredSpy.isValid());
 
-        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->render->scene.get());
+        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->mod.render->scene.get());
         QVERIFY(scene);
 
         // now let's set a cursor image
@@ -260,16 +261,16 @@ TEST_CASE("scene qpainter", "[render]")
         QVERIFY(frameRenderedSpy.isValid());
 
         // now let's try to reinitialize the compositing scene
-        auto oldScene = dynamic_cast<qpainter_scene_t*>(setup.base->render->scene.get());
+        auto oldScene = dynamic_cast<qpainter_scene_t*>(setup.base->mod.render->scene.get());
         QVERIFY(oldScene);
 
-        setup.base->render->reinitialize();
+        setup.base->mod.render->reinitialize();
 
-        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->render->scene.get());
+        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->mod.render->scene.get());
         QVERIFY(scene);
 
         // this should directly trigger a frame
-        render::full_repaint(*setup.base->render);
+        render::full_repaint(*setup.base->mod.render);
         QVERIFY(frameRenderedSpy.wait());
 
         // render reference image
@@ -278,7 +279,7 @@ TEST_CASE("scene qpainter", "[render]")
         QPainter painter(&referenceImage);
         painter.fillRect(0, 0, 200, 300, Qt::blue);
 
-        auto& sw_cursor = setup.base->render->software_cursor;
+        auto& sw_cursor = setup.base->mod.render->software_cursor;
         auto const cursorImage = sw_cursor->image();
         QVERIFY(!cursorImage.isNull());
         painter.drawImage(QPoint(400, 400) - sw_cursor->hotspot(), cursorImage);
@@ -339,13 +340,13 @@ TEST_CASE("scene qpainter", "[render]")
         xcb_flush(c.data());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->mod.space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QCOMPARE(win::frame_to_client_size(client, client->geo.size()), QSize(100, 200));
@@ -386,11 +387,11 @@ TEST_CASE("scene qpainter", "[render]")
         // For the frame signal.
         surface->commit();
 
-        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->render->scene.get());
+        auto scene = dynamic_cast<qpainter_scene_t*>(setup.base->mod.render->scene.get());
         QVERIFY(scene);
 
         // this should directly trigger a frame
-        render::full_repaint(*setup.base->render);
+        render::full_repaint(*setup.base->mod.render);
         QVERIFY(frameRenderedSpy.wait());
 
         auto const startPos = win::frame_to_client_pos(client, client->geo.pos());

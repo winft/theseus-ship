@@ -106,12 +106,13 @@ TEST_CASE("x11 desktop window", "[xwl],[win]")
     QCOMPARE(geo->depth, uint8_t(32));
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
+    QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
+                                &space::qobject_t::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 
     auto client_id = windowCreatedSpy.first().first().value<quint32>();
-    auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
+    auto client = get_x11_window(setup.base->mod.space->windows_map.at(client_id));
     QVERIFY(client);
     QCOMPARE(client->xcb_windows.client, w);
     QVERIFY(!win::decoration(client));

@@ -117,13 +117,14 @@ TEST_CASE("layer shell", "[win]")
 
     setup_wayland_connection();
 
-    auto get_wayland_window_from_id
-        = [&](uint32_t id) { return get_wayland_window(setup.base->space->windows_map.at(id)); };
+    auto get_wayland_window_from_id = [&](uint32_t id) {
+        return get_wayland_window(setup.base->mod.space->windows_map.at(id));
+    };
 
     SECTION("create")
     {
         // Tries to create multiple kinds of layer surfaces.
-        QSignalSpy window_spy(setup.base->space->qobject.get(),
+        QSignalSpy window_spy(setup.base->mod.space->qobject.get(),
                               &space::qobject_t::wayland_window_added);
         QVERIFY(window_spy.isValid());
 
@@ -155,7 +156,7 @@ TEST_CASE("layer shell", "[win]")
         QVERIFY(win::has_alpha(*window));
 
         // By default layer surfaces have keyboard interactivity set to none.
-        QVERIFY(!setup.base->space->stacking.active);
+        QVERIFY(!setup.base->mod.space->stacking.active);
 
         QVERIFY(!window->isMaximizable());
         QVERIFY(!window->isMovable());
@@ -200,7 +201,7 @@ TEST_CASE("layer shell", "[win]")
         QVERIFY(window2->isShown());
         QCOMPARE(window2->isHiddenInternal(), false);
         QCOMPARE(window2->render_data.ready_for_painting, true);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window2);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window2);
 
         // Surface is centered.
         QCOMPARE(window2->geo.frame,
@@ -241,7 +242,7 @@ TEST_CASE("layer shell", "[win]")
         auto margin = GENERATE(QMargins(), QMargins(0, 1, 2, 3), QMargins(100, 200, 300, 400));
 
         // Checks various standard geometries.
-        QSignalSpy window_spy(setup.base->space->qobject.get(),
+        QSignalSpy window_spy(setup.base->mod.space->qobject.get(),
                               &space::qobject_t::wayland_window_added);
         QVERIFY(window_spy.isValid());
 
@@ -277,7 +278,7 @@ TEST_CASE("layer shell", "[win]")
     SECTION("output change")
     {
         // Checks that output changes are handled correctly.
-        QSignalSpy window_spy(setup.base->space->qobject.get(),
+        QSignalSpy window_spy(setup.base->mod.space->qobject.get(),
                               &space::qobject_t::wayland_window_added);
         QVERIFY(window_spy.isValid());
 
@@ -350,7 +351,7 @@ TEST_CASE("layer shell", "[win]")
     SECTION("popup")
     {
         // Checks popup creation.
-        QSignalSpy window_spy(setup.base->space->qobject.get(),
+        QSignalSpy window_spy(setup.base->mod.space->qobject.get(),
                               &space::qobject_t::wayland_window_added);
         QVERIFY(window_spy.isValid());
 

@@ -34,7 +34,7 @@ TEST_CASE("window rules", "[win]")
     cursor()->set_pos(QPoint(640, 512));
 
     auto get_x11_window_from_id
-        = [&](uint32_t id) { return get_x11_window(setup.base->space->windows_map.at(id)); };
+        = [&](uint32_t id) { return get_x11_window(setup.base->mod.space->windows_map.at(id)); };
 
     auto get_config = [&]() -> std::tuple<KSharedConfigPtr, KConfigGroup> {
         auto config = setup.base->config.main;
@@ -66,8 +66,8 @@ TEST_CASE("window rules", "[win]")
         group.writeEntry("wmclasscomplete", false);
         group.writeEntry("wmclassmatch", enum_index(win::rules::name_match::exact));
         group.sync();
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // create the test window
         auto c = create_xcb_connection();
@@ -99,7 +99,7 @@ TEST_CASE("window rules", "[win]")
         xcb_change_property(c.get(),
                             XCB_PROP_MODE_REPLACE,
                             w,
-                            setup.base->space->atoms->wm_window_role,
+                            setup.base->mod.space->atoms->wm_window_role,
                             XCB_ATOM_STRING,
                             8,
                             role.size(),
@@ -114,7 +114,7 @@ TEST_CASE("window rules", "[win]")
         xcb_map_window(c.get(), w);
         xcb_flush(c.get());
 
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -154,8 +154,8 @@ TEST_CASE("window rules", "[win]")
         group.writeEntry("wmclassmatch", 1);
         group.sync();
 
-        setup.base->space->rule_book->config = config;
-        win::space_reconfigure(*setup.base->space);
+        setup.base->mod.space->rule_book->config = config;
+        win::space_reconfigure(*setup.base->mod.space);
 
         // create the test window
         auto c = create_xcb_connection();
@@ -193,7 +193,7 @@ TEST_CASE("window rules", "[win]")
         xcb_map_window(c.get(), w);
         xcb_flush(c.get());
 
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());

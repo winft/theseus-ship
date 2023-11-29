@@ -114,7 +114,7 @@ TEST_CASE("lockscreen", "[base]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = setup.base->render->scene;
+    auto& scene = setup.base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -139,7 +139,7 @@ TEST_CASE("lockscreen", "[base]")
         auto c = render_and_wait_for_shown(surface_holder, QSize(100, 50), Qt::blue);
 
         REQUIRE(c);
-        REQUIRE(get_wayland_window(setup.base->space->stacking.active) == c);
+        REQUIRE(get_wayland_window(setup.base->mod.space->stacking.active) == c);
 
         return c;
     };
@@ -147,14 +147,14 @@ TEST_CASE("lockscreen", "[base]")
     SECTION("stacking order")
     {
         // This test verifies that the lockscreen greeter is placed above other windows.
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
         LOCK QVERIFY(clientAddedSpy.wait());
 
         auto window_id = clientAddedSpy.first().first().value<quint32>();
-        auto client = get_wayland_window(setup.base->space->windows_map.at(window_id));
+        auto client = get_wayland_window(setup.base->mod.space->windows_map.at(window_id));
         QVERIFY(client);
         QVERIFY(client->isLockScreen());
         QCOMPARE(win::get_layer(*client), win::layer::unmanaged);
@@ -364,7 +364,7 @@ TEST_CASE("lockscreen", "[base]")
 
     SECTION("screen edge")
     {
-        QSignalSpy screenEdgeSpy(setup.base->space->edges->qobject.get(),
+        QSignalSpy screenEdgeSpy(setup.base->mod.space->edges->qobject.get(),
                                  &win::screen_edger_qobject::approaching);
         QVERIFY(screenEdgeSpy.isValid());
         QCOMPARE(screenEdgeSpy.count(), 0);
@@ -519,8 +519,8 @@ TEST_CASE("lockscreen", "[base]")
         QVERIFY(clientStepUserMovedResizedSpy.isValid());
         quint32 timestamp = 1;
 
-        win::active_window_move(*setup.base->space);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), c);
+        win::active_window_move(*setup.base->mod.space);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), c);
         QVERIFY(win::is_move(c));
 
         keyboard_key_pressed(KEY_RIGHT, timestamp++);
@@ -535,14 +535,14 @@ TEST_CASE("lockscreen", "[base]")
 
         // While locking our window should continue to be in move resize.
         LOCK;
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), c);
         QVERIFY(win::is_move(c));
         keyboard_key_pressed(KEY_RIGHT, timestamp++);
         keyboard_key_released(KEY_RIGHT, timestamp++);
         QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
         UNLOCK
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), c);
         QVERIFY(win::is_move(c));
 
         keyboard_key_pressed(KEY_RIGHT, timestamp++);
@@ -562,7 +562,7 @@ TEST_CASE("lockscreen", "[base]")
         QSignalSpy actionSpy(action.get(), &QAction::triggered);
         QVERIFY(actionSpy.isValid());
 
-        setup.base->input->shortcuts->registerPointerShortcut(
+        setup.base->mod.input->shortcuts->registerPointerShortcut(
             action.get(), Qt::MetaModifier, Qt::LeftButton);
 
         // Try to trigger the shortcut.
@@ -609,7 +609,7 @@ TEST_CASE("lockscreen", "[base]")
                 = sign > 0 ? win::pointer_axis_direction::left : win::pointer_axis_direction::right;
         }
 
-        setup.base->input->shortcuts->registerAxisShortcut(
+        setup.base->mod.input->shortcuts->registerAxisShortcut(
             action.get(), Qt::MetaModifier, axisDirection);
 
         // Try to trigger the shortcut.

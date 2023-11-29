@@ -80,13 +80,13 @@ TEST_CASE("pointer constraints", "[input]")
         QVERIFY(!c->geo.frame.contains(cursor()->pos()));
 
         // now let's confine
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
         cursor()->set_pos(c->geo.frame.center());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), true);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), true);
         QVERIFY(confinedSpy.wait());
 
         // picking a position outside the window geometry should not move pointer
-        QSignalSpy pointerPositionChangedSpy(setup.base->space->input->qobject.get(),
+        QSignalSpy pointerPositionChangedSpy(setup.base->mod.space->input->qobject.get(),
                                              &input::redirect_qobject::globalPointerChanged);
         QVERIFY(pointerPositionChangedSpy.isValid());
         cursor()->set_pos(QPoint(1280, 512));
@@ -118,13 +118,13 @@ TEST_CASE("pointer constraints", "[input]")
         group.writeEntry("CommandAll3", "Move");
         group.writeEntry("CommandAllWheel", "change opacity");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+        win::space_reconfigure(*setup.base->mod.space);
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAllModifier(), Qt::MetaModifier);
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll1(),
                  win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->space->options->qobject->commandAll2(),
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll2(),
                  win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll3(),
                  win::mouse_cmd::unrestricted_move);
 
         quint32 timestamp = 1;
@@ -146,9 +146,9 @@ TEST_CASE("pointer constraints", "[input]")
         keyboard_key_released(KEY_LEFTALT, timestamp++);
 
         // deactivate the client, this should unconfine
-        win::deactivate_window(*setup.base->space);
+        win::deactivate_window(*setup.base->mod.space);
         QVERIFY(unconfinedSpy.wait());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
 
         // reconfine pointer (this time with persistent life time)
         confinedPointer.reset(get_client().interfaces.pointer_constraints->confinePointer(
@@ -160,24 +160,25 @@ TEST_CASE("pointer constraints", "[input]")
 
         // activate it again, this confines again
         auto pointer_focus_window
-            = get_wayland_window(setup.base->space->input->pointer->focus.window);
+            = get_wayland_window(setup.base->mod.space->input->pointer->focus.window);
         QVERIFY(pointer_focus_window);
-        win::activate_window(*setup.base->space, *pointer_focus_window);
+        win::activate_window(*setup.base->mod.space, *pointer_focus_window);
         QVERIFY(confinedSpy2.wait());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), true);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), true);
 
         // deactivate the client one more time with the persistent life time constraint, this should
         // unconfine
-        win::deactivate_window(*setup.base->space);
+        win::deactivate_window(*setup.base->mod.space);
         QVERIFY(unconfinedSpy2.wait());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
 
         // activate it again, this confines again
-        pointer_focus_window = get_wayland_window(setup.base->space->input->pointer->focus.window);
+        pointer_focus_window
+            = get_wayland_window(setup.base->mod.space->input->pointer->focus.window);
         QVERIFY(pointer_focus_window);
-        win::activate_window(*setup.base->space, *pointer_focus_window);
+        win::activate_window(*setup.base->mod.space, *pointer_focus_window);
         QVERIFY(confinedSpy2.wait());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), true);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), true);
 
         // create a second window and move it above our constrained window
         std::unique_ptr<Surface> surface2(create_surface());
@@ -195,18 +196,19 @@ TEST_CASE("pointer constraints", "[input]")
         confinedPointer->setRegion(r.get());
         surface->commit(Surface::CommitFlag::None);
         QVERIFY(unconfinedSpy2.wait());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
         // and set a full region again, that should confine
         confinedPointer->setRegion(nullptr);
         surface->commit(Surface::CommitFlag::None);
         QVERIFY(confinedSpy2.wait());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), true);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), true);
 
         // delete pointer confine
         confinedPointer.reset(nullptr);
         flush_wayland_connection();
 
-        pointer_focus_window = get_wayland_window(setup.base->space->input->pointer->focus.window);
+        pointer_focus_window
+            = get_wayland_window(setup.base->mod.space->input->pointer->focus.window);
         QVERIFY(pointer_focus_window);
         QSignalSpy constraintsChangedSpy(pointer_focus_window->surface,
                                          &Wrapland::Server::Surface::pointerConstraintsChanged);
@@ -214,7 +216,7 @@ TEST_CASE("pointer constraints", "[input]")
         QVERIFY(constraintsChangedSpy.wait());
 
         // should be unconfined
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
 
         // confine again
         confinedPointer.reset(get_client().interfaces.pointer_constraints->confinePointer(
@@ -222,13 +224,13 @@ TEST_CASE("pointer constraints", "[input]")
         QSignalSpy confinedSpy3(confinedPointer.get(), &ConfinedPointer::confined);
         QVERIFY(confinedSpy3.isValid());
         QVERIFY(confinedSpy3.wait());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), true);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), true);
 
         // and now unmap
         shellSurface.reset();
         surface.reset();
         QVERIFY(wait_for_destroyed(c));
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
     }
 
     SECTION("locked pointer")
@@ -257,10 +259,10 @@ TEST_CASE("pointer constraints", "[input]")
         QVERIFY(!c->geo.frame.contains(cursor()->pos()));
 
         // now let's lock
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
         cursor()->set_pos(c->geo.frame.center());
         QCOMPARE(cursor()->pos(), c->geo.frame.center());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), true);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), true);
         QVERIFY(lockedSpy.wait());
 
         // try to move the pointer
@@ -269,8 +271,8 @@ TEST_CASE("pointer constraints", "[input]")
         QCOMPARE(cursor()->pos(), c->geo.frame.center());
 
         // deactivate the client, this should unlock
-        win::deactivate_window(*setup.base->space);
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        win::deactivate_window(*setup.base->mod.space);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
         QVERIFY(unlockedSpy.wait());
 
         // moving cursor should be allowed again
@@ -284,14 +286,14 @@ TEST_CASE("pointer constraints", "[input]")
 
         // activate the client again, this should lock again
         auto pointer_focus_window
-            = get_wayland_window(setup.base->space->input->pointer->focus.window);
+            = get_wayland_window(setup.base->mod.space->input->pointer->focus.window);
         QVERIFY(pointer_focus_window);
-        win::activate_window(*setup.base->space, *pointer_focus_window);
+        win::activate_window(*setup.base->mod.space, *pointer_focus_window);
         QVERIFY(lockedSpy2.wait());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), true);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), true);
 
         // try to move the pointer
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), true);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), true);
         cursor()->set_pos(c->geo.frame.center());
         QCOMPARE(cursor()->pos(), c->geo.frame.center() + QPoint(1, 1));
 
@@ -299,7 +301,8 @@ TEST_CASE("pointer constraints", "[input]")
         lockedPointer.reset(nullptr);
         flush_wayland_connection();
 
-        pointer_focus_window = get_wayland_window(setup.base->space->input->pointer->focus.window);
+        pointer_focus_window
+            = get_wayland_window(setup.base->mod.space->input->pointer->focus.window);
         QVERIFY(pointer_focus_window);
         QSignalSpy constraintsChangedSpy(pointer_focus_window->surface,
                                          &Wrapland::Server::Surface::pointerConstraintsChanged);
@@ -307,7 +310,7 @@ TEST_CASE("pointer constraints", "[input]")
         QVERIFY(constraintsChangedSpy.wait());
 
         // moving cursor should be allowed again
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
         cursor()->set_pos(c->geo.frame.center());
         QCOMPARE(cursor()->pos(), c->geo.frame.center());
     }
@@ -333,10 +336,10 @@ TEST_CASE("pointer constraints", "[input]")
         QVERIFY(!c->geo.frame.contains(cursor()->pos()));
 
         // now let's lock
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
         cursor()->set_pos(c->geo.frame.center());
         QCOMPARE(cursor()->pos(), c->geo.frame.center());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), true);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), true);
         QVERIFY(lockedSpy.wait());
 
         // close the window
@@ -344,7 +347,7 @@ TEST_CASE("pointer constraints", "[input]")
         surface.reset();
         // this should result in unlocked
         QVERIFY(unlockedSpy.wait());
-        QCOMPARE(setup.base->space->input->pointer->isConstrained(), false);
+        QCOMPARE(setup.base->mod.space->input->pointer->isConstrained(), false);
     }
 }
 

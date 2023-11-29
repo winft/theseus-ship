@@ -105,7 +105,7 @@ TEST_CASE("qpainter shadow", "[render]")
     // disable all effects - we don't want to have it interact with the rendering
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -114,7 +114,7 @@ TEST_CASE("qpainter shadow", "[render]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render);
+    QVERIFY(setup.base->mod.render);
 
     // Add directory with fake decorations to the plugin search path.
     QCoreApplication::addLibraryPath(
@@ -124,7 +124,7 @@ TEST_CASE("qpainter shadow", "[render]")
     auto group = setup.base->config.main->group("org.kde.kdecoration2");
     group.writeEntry("library", "org.kde.test.fakedecowithshadows");
     group.sync();
-    win::space_reconfigure(*setup.base->space);
+    win::space_reconfigure(*setup.base->mod.space);
 
     SECTION("tile overlaps")
     {

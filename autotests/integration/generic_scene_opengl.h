@@ -25,7 +25,7 @@ inline std::unique_ptr<setup> generic_scene_opengl_get_setup(std::string const& 
     setup->start();
 
     auto plugins = KConfigGroup(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup->base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup->base->mod.render).listOfKnownEffects();
 
     for (QString const& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -34,12 +34,12 @@ inline std::unique_ptr<setup> generic_scene_opengl_get_setup(std::string const& 
     config->sync();
 
     setup->base->config.main = config;
-    QVERIFY(setup->base->render);
+    QVERIFY(setup->base->mod.render);
 
-    auto& scene = setup->base->render->scene;
+    auto& scene = setup->base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
-    REQUIRE(!setup->base->render->is_sw_compositing());
+    REQUIRE(!setup->base->mod.render->is_sw_compositing());
 
     return setup;
 }

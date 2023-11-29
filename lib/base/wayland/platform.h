@@ -24,7 +24,18 @@
 namespace KWin::base::wayland
 {
 
+template<typename Mod>
+class platform;
+
 struct platform_mod {
+    using platform_t = base::wayland::platform<platform_mod>;
+    using render_t = render::wayland::platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t>;
+    using space_t = win::wayland::space<platform_t>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
 };
 
 template<typename Mod = platform_mod>
@@ -32,11 +43,12 @@ class platform : public base::platform
 {
 public:
     using type = platform<Mod>;
-    using output_t = output<type>;
-    using render_t = render::wayland::platform<type>;
-    using input_t = input::wayland::platform<type>;
-    using space_t = win::wayland::space<type>;
     using backend_t = backend::wlroots::backend<type>;
+    using output_t = output<type>;
+
+    using render_t = typename Mod::render_t;
+    using input_t = typename Mod::input_t;
+    using space_t = typename Mod::space_t;
 
     platform(base::config config,
              std::string const& socket_name,
@@ -80,10 +92,6 @@ public:
     std::unique_ptr<base::seat::session> session;
     backend_t backend;
     QProcessEnvironment process_environment;
-
-    std::unique_ptr<render_t> render;
-    std::unique_ptr<input_t> input;
-    std::unique_ptr<space_t> space;
 
     Mod mod;
 };

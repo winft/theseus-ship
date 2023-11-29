@@ -78,7 +78,7 @@ public:
 
     bool is_kwin_compositing() const override
     {
-        return static_cast<bool>(m_tabbox->space.base.render->scene);
+        return static_cast<bool>(m_tabbox->space.base.mod.render->scene);
     }
 
     tabbox_client* next_client_focus_chain(tabbox_client* client) const override
@@ -216,7 +216,7 @@ public:
 
     void highlight_windows(tabbox_client* client = nullptr, QWindow* controller = nullptr) override
     {
-        auto& effects = m_tabbox->space.base.render->effects;
+        auto& effects = m_tabbox->space.base.mod.render->effects;
         if (!effects) {
             return;
         }

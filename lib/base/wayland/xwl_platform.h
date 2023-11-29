@@ -27,7 +27,19 @@
 namespace KWin::base::wayland
 {
 
+template<typename Mod>
+class xwl_platform;
+
 struct xwl_platform_mod {
+    using platform_t = base::wayland::xwl_platform<xwl_platform_mod>;
+    using render_t = render::wayland::xwl_platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t>;
+    using space_t = win::wayland::xwl_space<platform_t>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
+    std::unique_ptr<xwl::xwayland<space_t>> xwayland;
 };
 
 template<typename Mod = xwl_platform_mod>
@@ -35,11 +47,12 @@ class xwl_platform : public base::platform
 {
 public:
     using type = xwl_platform<Mod>;
-    using output_t = output<type>;
-    using render_t = render::wayland::xwl_platform<type>;
-    using input_t = input::wayland::platform<type>;
-    using space_t = win::wayland::xwl_space<type>;
     using backend_t = backend::wlroots::backend<type>;
+    using output_t = output<type>;
+
+    using render_t = typename Mod::render_t;
+    using input_t = typename Mod::input_t;
+    using space_t = typename Mod::space_t;
 
     xwl_platform(base::config config,
                  std::string const& socket_name,
@@ -87,13 +100,7 @@ public:
 
     std::unique_ptr<x11::event_filter_manager> x11_event_filters;
 
-    std::unique_ptr<render_t> render;
-    std::unique_ptr<input_t> input;
-    std::unique_ptr<space_t> space;
-
     Mod mod;
-
-    std::unique_ptr<xwl::xwayland<space_t>> xwayland;
 };
 
 }

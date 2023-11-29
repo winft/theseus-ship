@@ -136,7 +136,7 @@ public:
                             client->decoration(),
                             client->client()->frameId()};
 
-        auto render = client->client()->space.base.render.get();
+        auto render = client->client()->space.base.mod.render.get();
         if (auto& scene = render->scene) {
             injector = scene->create_deco(std::move(injector_window));
         } else {

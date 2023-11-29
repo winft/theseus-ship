@@ -35,7 +35,7 @@ TEST_CASE("translucency", "[effect]")
     // disable all effects - we don't want to have it interact with the rendering
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -44,10 +44,10 @@ TEST_CASE("translucency", "[effect]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render);
+    QVERIFY(setup.base->mod.render);
 
     // load the translucency effect
-    auto& e = setup.base->render->effects;
+    auto& e = setup.base->mod.render->effects;
     QSignalSpy effectLoadedSpy(e->loader.get(), &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());
 
@@ -94,13 +94,13 @@ TEST_CASE("translucency", "[effect]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->mod.space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QVERIFY(win::decoration(client));
@@ -109,9 +109,9 @@ TEST_CASE("translucency", "[effect]")
         QVERIFY(!translucency_effect->isActive());
 
         // let's send the window to subspace 2
-        win::subspace_manager_set_count(*setup.base->space->subspace_manager, 2);
+        win::subspace_manager_set_count(*setup.base->mod.space->subspace_manager, 2);
         QCOMPARE(effects->desktops().size(), 2);
-        win::send_window_to_subspace(*setup.base->space, client, 2, false);
+        win::send_window_to_subspace(*setup.base->mod.space, client, 2, false);
         effects->setCurrentDesktop(effects->desktops().back());
         QVERIFY(!translucency_effect->isActive());
         cursor()->set_pos(client->geo.frame.center());
@@ -180,13 +180,13 @@ TEST_CASE("translucency", "[effect]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->mod.space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QVERIFY(win::decoration(client));

@@ -38,7 +38,7 @@ TEST_CASE("night color", "[render]")
         cfgGroup.writeEntry("Mode", modeDefault);
 
         cfgGroup.sync();
-        auto& manager = setup.base->render->night_color;
+        auto& manager = setup.base->mod.render->night_color;
         manager->reconfigure();
 
         QCOMPARE(manager->data.enabled, activeDefault);

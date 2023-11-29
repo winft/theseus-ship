@@ -95,7 +95,7 @@ struct subspace_predecessor {
 template<typename Functor, typename Data>
 void test_direction(test::setup& setup, Data const& test_data, std::string const& action_name)
 {
-    auto& vd_manager = setup.base->space->subspace_manager;
+    auto& vd_manager = setup.base->mod.space->subspace_manager;
 
     win::subspace_manager_set_count(*vd_manager, test_data.init_count);
     win::subspace_manager_set_rows(*vd_manager, 2);
@@ -155,7 +155,7 @@ TEST_CASE("subspace", "[win]")
 #endif
 
     setup_wayland_connection();
-    auto& vd_manager = setup.base->space->subspace_manager;
+    auto& vd_manager = setup.base->mod.space->subspace_manager;
     win::subspace_manager_set_count(*vd_manager, 1);
     win::subspaces_set_current(*vd_manager, 0u);
 

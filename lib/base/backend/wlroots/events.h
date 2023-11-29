@@ -26,7 +26,7 @@ static void handle_destroy(struct wl_listener* listener, void* /*data*/)
 template<typename Backend>
 void add_new_output(Backend& backend, wlr_output* native)
 {
-    auto& render = backend.frontend->render->backend;
+    auto& render = backend.frontend->mod.render->backend;
     wlr_output_init_render(native, render.allocator, render.renderer);
 
     if (!wl_list_empty(&native->modes)) {

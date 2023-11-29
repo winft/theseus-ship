@@ -32,6 +32,9 @@ struct base_mod {
     using input_t = input::x11::platform<platform_t>;
     using space_t = win::x11::space<platform_t>;
 
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
     std::unique_ptr<scripting::platform<space_t>> script;
 };
 

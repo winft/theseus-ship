@@ -38,7 +38,7 @@ TEST_CASE("screen edge script", "[script]")
 
     // disable all effects to prevent them grabbing edges
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -51,10 +51,10 @@ TEST_CASE("screen edge script", "[script]")
     setup.start();
     QVERIFY(setup.base->mod.script);
 
-    setup.base->space->edges->time_threshold = {};
-    setup.base->space->edges->reactivate_threshold = {};
+    setup.base->mod.space->edges->time_threshold = {};
+    setup.base->mod.space->edges->reactivate_threshold = {};
 
-    auto triggerConfigReload = [&]() { win::space_reconfigure(*setup.base->space); };
+    auto triggerConfigReload = [&]() { win::space_reconfigure(*setup.base->mod.space); };
 
     SECTION("edge")
     {
@@ -95,14 +95,14 @@ TEST_CASE("screen edge script", "[script]")
         QCOMPARE(runningChangedSpy.first().first().toBool(), true);
 
         // triggering the edge will result in show desktop being triggered
-        QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
+        QSignalSpy showDesktopSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
         // trigger the edge
         cursor()->set_pos(test_data.trigger_pos);
         QCOMPARE(showDesktopSpy.count(), 1);
-        QVERIFY(setup.base->space->showing_desktop);
+        QVERIFY(setup.base->mod.space->showing_desktop);
     }
 
     SECTION("touch edge")
@@ -140,7 +140,7 @@ TEST_CASE("screen edge script", "[script]")
         QCOMPARE(runningChangedSpy.count(), 1);
         QCOMPARE(runningChangedSpy.first().first().toBool(), true);
         // triggering the edge will result in show desktop being triggered
-        QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
+        QSignalSpy showDesktopSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
@@ -151,7 +151,7 @@ TEST_CASE("screen edge script", "[script]")
         touch_up(0, timestamp++);
         QVERIFY(showDesktopSpy.wait());
         QCOMPARE(showDesktopSpy.count(), 1);
-        QVERIFY(setup.base->space->showing_desktop);
+        QVERIFY(setup.base->mod.space->showing_desktop);
     }
 
     SECTION("edge unregister")
@@ -170,7 +170,7 @@ TEST_CASE("screen edge script", "[script]")
         s->run();
         QVERIFY(runningChangedSpy.wait());
 
-        QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
+        QSignalSpy showDesktopSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
@@ -186,7 +186,7 @@ TEST_CASE("screen edge script", "[script]")
 
         // reset
         cursor()->set_pos(500, 500);
-        win::toggle_show_desktop(*setup.base->space);
+        win::toggle_show_desktop(*setup.base->mod.space);
         showDesktopSpy.clear();
 
         // trigger again, to show that retriggering works
@@ -195,7 +195,7 @@ TEST_CASE("screen edge script", "[script]")
 
         // reset
         cursor()->set_pos(500, 500);
-        win::toggle_show_desktop(*setup.base->space);
+        win::toggle_show_desktop(*setup.base->mod.space);
         showDesktopSpy.clear();
 
         // make the script unregister the edge
@@ -220,7 +220,7 @@ TEST_CASE("screen edge script", "[script]")
         s->run();
         QTRY_COMPARE(runningChangedSpy.count(), 1);
 
-        QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
+        QSignalSpy showDesktopSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 

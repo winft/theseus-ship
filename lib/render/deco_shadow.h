@@ -91,7 +91,7 @@ std::unique_ptr<Shadow> create_deco_shadow(Win& win)
                               return {};
                           }
 
-                          auto shadow = ref_win->space.base.render->scene->createShadow(&win);
+                          auto shadow = ref_win->space.base.mod.render->scene->createShadow(&win);
                           if (!update_deco_shadow(*shadow, deco)) {
                               return {};
                           }

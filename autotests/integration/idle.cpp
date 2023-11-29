@@ -25,7 +25,7 @@ TEST_CASE("idle", "[input]")
 
     SECTION("idle")
     {
-        auto& idle = setup.base->input->idle;
+        auto& idle = setup.base->mod.input->idle;
         QCOMPARE(idle.inhibit_count, 0);
 
         auto& client = get_client();
@@ -57,7 +57,7 @@ TEST_CASE("idle", "[input]")
 
     SECTION("activity")
     {
-        auto& idle = setup.base->input->idle;
+        auto& idle = setup.base->mod.input->idle;
         QCOMPARE(idle.inhibit_count, 0);
 
         auto& client = get_client();
@@ -140,7 +140,7 @@ TEST_CASE("idle", "[input]")
             data{1500, 200, 3000});
 
         // Verifies that splicing listeners works as expected
-        auto& idle = setup.base->input->idle;
+        auto& idle = setup.base->mod.input->idle;
         QCOMPARE(idle.inhibit_count, 0);
 
         notification_wrap notification1(test_data.duration1);

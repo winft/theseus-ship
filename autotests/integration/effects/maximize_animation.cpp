@@ -27,7 +27,7 @@ TEST_CASE("maximize animation", "[effect]")
     test::setup setup("maximize-animation", operation_mode);
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -83,7 +83,7 @@ TEST_CASE("maximize animation", "[effect]")
 
         // Load effect that will be tested.
         const QString effectName = QStringLiteral("maximize");
-        auto& effectsImpl = setup.base->render->effects;
+        auto& effectsImpl = setup.base->mod.render->effects;
         QVERIFY(effectsImpl);
         QVERIFY(effectsImpl->loadEffect(effectName));
         QCOMPARE(effectsImpl->loadedEffects().count(), 1);
@@ -100,7 +100,7 @@ TEST_CASE("maximize animation", "[effect]")
                                       &win::window_qobject::maximize_mode_changed);
         QVERIFY(maximizeChangedSpy.isValid());
 
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -122,7 +122,7 @@ TEST_CASE("maximize animation", "[effect]")
         QTRY_VERIFY(!effect->isActive());
 
         // Restore the client.
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 4);
 

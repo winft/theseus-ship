@@ -76,8 +76,8 @@ auto find_window(Redirect const& redirect, QPoint const& pos)
     }
 
     // if an effect overrides the cursor we don't have a window to focus
-    if (redirect.platform.base.render->effects
-        && redirect.platform.base.render->effects->isMouseInterception()) {
+    if (redirect.platform.base.mod.render->effects
+        && redirect.platform.base.mod.render->effects->isMouseInterception()) {
         return {};
     }
 

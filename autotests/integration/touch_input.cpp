@@ -69,7 +69,7 @@ TEST_CASE("touch input", "[input]")
         auto c = render_and_wait_for_shown(client.surface, QSize(100, 50), Qt::blue);
 
         REQUIRE(c);
-        REQUIRE(get_wayland_window(setup.base->space->stacking.active) == c);
+        REQUIRE(get_wayland_window(setup.base->mod.space->stacking.active) == c);
 
         clients.push_back(std::move(client));
         return c;

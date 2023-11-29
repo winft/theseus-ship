@@ -25,7 +25,18 @@
 namespace KWin::base::x11
 {
 
+template<typename Mod>
+class platform;
+
 struct platform_mod {
+    using platform_t = base::x11::platform<platform_mod>;
+    using render_t = render::x11::platform<platform_t>;
+    using input_t = input::x11::platform<platform_t>;
+    using space_t = win::x11::space<platform_t>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
 };
 
 template<typename Mod = platform_mod>
@@ -34,9 +45,10 @@ class platform : public base::platform
 public:
     using type = platform<Mod>;
     using output_t = base::x11::output<type>;
-    using render_t = render::x11::platform<type>;
-    using input_t = input::x11::platform<type>;
-    using space_t = win::x11::space<type>;
+
+    using render_t = typename Mod::render_t;
+    using input_t = typename Mod::input_t;
+    using space_t = typename Mod::space_t;
 
     platform(base::config config)
         : config{std::move(config)}
@@ -75,9 +87,6 @@ public:
     std::unique_ptr<x11::event_filter_manager> x11_event_filters;
 
     std::vector<output_t*> outputs;
-    std::unique_ptr<render_t> render;
-    std::unique_ptr<input_t> input;
-    std::unique_ptr<space_t> space;
 
     Mod mod;
 

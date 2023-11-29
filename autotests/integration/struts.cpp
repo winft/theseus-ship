@@ -46,7 +46,7 @@ TEST_CASE("struts", "[win]")
 
     auto plasma_shell = get_client().interfaces.plasma_shell.get();
     auto get_x11_window_from_id
-        = [&](uint32_t id) { return get_x11_window(setup.base->space->windows_map.at(id)); };
+        = [&](uint32_t id) { return get_x11_window(setup.base->mod.space->windows_map.at(id)); };
 
     SECTION("wayland struts")
     {
@@ -156,50 +156,52 @@ TEST_CASE("struts", "[win]")
 
         auto const& outputs = setup.base->outputs;
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(0), 1)
-                == QRect(0, 0, 1280, 1024));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::movement, outputs.at(0), 1)
-            == QRect(0, 0, 1280, 1024));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(0), 1)
-            == QRect(0, 0, 1280, 1024));
-        REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::maximize_full, outputs.at(0), 1)
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1)
                 == QRect(0, 0, 1280, 1024));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::fullscreen, outputs.at(0), 1)
+                    *setup.base->mod.space, win::area_option::movement, outputs.at(0), 1)
                 == QRect(0, 0, 1280, 1024));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::screen, outputs.at(0), 1)
-            == QRect(0, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1)
+                == QRect(0, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::maximize_full, outputs.at(0), 1)
+                == QRect(0, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::fullscreen, outputs.at(0), 1)
+                == QRect(0, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::screen, outputs.at(0), 1)
+                == QRect(0, 0, 1280, 1024));
 
         // second screen
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(1), 1)
-                == QRect(1280, 0, 1280, 1024));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::movement, outputs.at(1), 1)
-            == QRect(1280, 0, 1280, 1024));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(1), 1)
-            == QRect(1280, 0, 1280, 1024));
-        REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::maximize_full, outputs.at(1), 1)
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1)
                 == QRect(1280, 0, 1280, 1024));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::fullscreen, outputs.at(1), 1)
+                    *setup.base->mod.space, win::area_option::movement, outputs.at(1), 1)
                 == QRect(1280, 0, 1280, 1024));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::screen, outputs.at(1), 1)
-            == QRect(1280, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1)
+                == QRect(1280, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::maximize_full, outputs.at(1), 1)
+                == QRect(1280, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::fullscreen, outputs.at(1), 1)
+                == QRect(1280, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::screen, outputs.at(1), 1)
+                == QRect(1280, 0, 1280, 1024));
 
         // combined
-        REQUIRE(win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1)
-                == QRect(0, 0, 2560, 1024));
-        REQUIRE(win::space_window_area(*setup.base->space, win::area_option::full, outputs.at(0), 1)
-                == QRect(0, 0, 2560, 1024));
-        REQUIRE(win::restricted_move_area(*setup.base->space, -1, win::strut_area::all)
+        REQUIRE(
+            win::space_window_area(*setup.base->mod.space, win::area_option::work, outputs.at(0), 1)
+            == QRect(0, 0, 2560, 1024));
+        REQUIRE(
+            win::space_window_area(*setup.base->mod.space, win::area_option::full, outputs.at(0), 1)
+            == QRect(0, 0, 2560, 1024));
+        REQUIRE(win::restricted_move_area(*setup.base->mod.space, -1, win::strut_area::all)
                 == QRegion());
 
         struct client_holder {
@@ -234,53 +236,55 @@ TEST_CASE("struts", "[win]")
         }
 
         // some props are independent of struts - those first
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::movement, outputs.at(0), 1)
-            == QRect(0, 0, 1280, 1024));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::maximize_full, outputs.at(0), 1)
+                    *setup.base->mod.space, win::area_option::movement, outputs.at(0), 1)
                 == QRect(0, 0, 1280, 1024));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::fullscreen, outputs.at(0), 1)
+                    *setup.base->mod.space, win::area_option::maximize_full, outputs.at(0), 1)
                 == QRect(0, 0, 1280, 1024));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::screen, outputs.at(0), 1)
-            == QRect(0, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::fullscreen, outputs.at(0), 1)
+                == QRect(0, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::screen, outputs.at(0), 1)
+                == QRect(0, 0, 1280, 1024));
 
         // screen 1
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::movement, outputs.at(1), 1)
-            == QRect(1280, 0, 1280, 1024));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::maximize_full, outputs.at(1), 1)
+                    *setup.base->mod.space, win::area_option::movement, outputs.at(1), 1)
                 == QRect(1280, 0, 1280, 1024));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::fullscreen, outputs.at(1), 1)
+                    *setup.base->mod.space, win::area_option::maximize_full, outputs.at(1), 1)
                 == QRect(1280, 0, 1280, 1024));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::screen, outputs.at(1), 1)
-            == QRect(1280, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::fullscreen, outputs.at(1), 1)
+                == QRect(1280, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::screen, outputs.at(1), 1)
+                == QRect(1280, 0, 1280, 1024));
 
         // combined
-        REQUIRE(win::space_window_area(*setup.base->space, win::area_option::full, outputs.at(0), 1)
-                == QRect(0, 0, 2560, 1024));
+        REQUIRE(
+            win::space_window_area(*setup.base->mod.space, win::area_option::full, outputs.at(0), 1)
+            == QRect(0, 0, 2560, 1024));
 
         // now verify the actual updated client areas
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(0), 1)
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1)
                 == test_data.maximized_screen_geos.at(0));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(0), 1)
-            == test_data.maximized_screen_geos.at(0));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(1), 1)
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1)
+                == test_data.maximized_screen_geos.at(0));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1)
+                == test_data.maximized_screen_geos.at(1));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1)
                 == test_data.maximized_screen_geos.at(1));
         REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(1), 1)
-            == test_data.maximized_screen_geos.at(1));
-        REQUIRE(win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1)
-                == test_data.work_area);
-        REQUIRE(win::restricted_move_area(*setup.base->space, -1, win::strut_area::all)
+            win::space_window_area(*setup.base->mod.space, win::area_option::work, outputs.at(0), 1)
+            == test_data.work_area);
+        REQUIRE(win::restricted_move_area(*setup.base->mod.space, -1, win::strut_area::all)
                 == test_data.restricted_move_area);
 
         // delete all surfaces
@@ -290,7 +294,7 @@ TEST_CASE("struts", "[win]")
             client = {};
             QVERIFY(destroyedSpy.wait());
         }
-        REQUIRE(win::restricted_move_area(*setup.base->space, -1, win::strut_area::all)
+        REQUIRE(win::restricted_move_area(*setup.base->mod.space, -1, win::strut_area::all)
                 == QRegion());
     }
 
@@ -318,19 +322,20 @@ TEST_CASE("struts", "[win]")
 
         auto const& outputs = setup.base->outputs;
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(0), 1)
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1)
                 == QRect(0, 0, 1280, 1000));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(0), 1)
-            == QRect(0, 0, 1280, 1000));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(1), 1)
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1)
+                == QRect(0, 0, 1280, 1000));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1)
+                == QRect(1280, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1)
                 == QRect(1280, 0, 1280, 1024));
         REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(1), 1)
-            == QRect(1280, 0, 1280, 1024));
-        REQUIRE(win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1)
-                == QRect(0, 0, 2560, 1000));
+            win::space_window_area(*setup.base->mod.space, win::area_option::work, outputs.at(0), 1)
+            == QRect(0, 0, 2560, 1000));
 
         QSignalSpy geometryChangedSpy(c->qobject.get(),
                                       &win::window_qobject::frame_geometry_changed);
@@ -339,19 +344,20 @@ TEST_CASE("struts", "[win]")
         QVERIFY(geometryChangedSpy.wait());
         REQUIRE(c->geo.frame == QRect(1280, 1000, 1280, 24));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(0), 1)
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1)
                 == QRect(0, 0, 1280, 1024));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(0), 1)
-            == QRect(0, 0, 1280, 1024));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(1), 1)
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1)
+                == QRect(0, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1)
+                == QRect(1280, 0, 1280, 1000));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1)
                 == QRect(1280, 0, 1280, 1000));
         REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(1), 1)
-            == QRect(1280, 0, 1280, 1000));
-        REQUIRE(win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1)
-                == QRect(0, 0, 2560, 1000));
+            win::space_window_area(*setup.base->mod.space, win::area_option::work, outputs.at(0), 1)
+            == QRect(0, 0, 2560, 1000));
     }
 
     SECTION("wayland mobile panel")
@@ -362,7 +368,7 @@ TEST_CASE("struts", "[win]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("Placement", "maximizing");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         // create first top panel
         const QRect windowGeometry(0, 0, 1280, 60);
@@ -385,19 +391,20 @@ TEST_CASE("struts", "[win]")
 
         auto const& outputs = setup.base->outputs;
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(0), 1)
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1)
                 == QRect(0, 60, 1280, 964));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(0), 1)
-            == QRect(0, 60, 1280, 964));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(1), 1)
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1)
+                == QRect(0, 60, 1280, 964));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1)
+                == QRect(1280, 0, 1280, 1024));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1)
                 == QRect(1280, 0, 1280, 1024));
         REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(1), 1)
-            == QRect(1280, 0, 1280, 1024));
-        REQUIRE(win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1)
-                == QRect(0, 60, 2560, 964));
+            win::space_window_area(*setup.base->mod.space, win::area_option::work, outputs.at(0), 1)
+            == QRect(0, 60, 2560, 964));
 
         // create another bottom panel
         const QRect windowGeometry2(0, 874, 1280, 150);
@@ -420,20 +427,20 @@ TEST_CASE("struts", "[win]")
         QVERIFY(c1->hasStrut());
 
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1),
                  QRect(0, 60, 1280, 814));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1),
                  QRect(0, 60, 1280, 814));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1),
-            QRect(0, 60, 2560, 814));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::work, outputs.at(0), 1),
+                 QRect(0, 60, 2560, 814));
 
         // Destroy test clients.
         shellSurface.reset();
@@ -750,52 +757,52 @@ TEST_CASE("struts", "[win]")
         // no, struts yet
         auto const& outputs = setup.base->outputs;
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::movement, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::movement, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize_full, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::maximize_full, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::fullscreen, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::fullscreen, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::screen, outputs.at(0), 1),
-            QRect(0, 0, 1280, 1024));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::screen, outputs.at(0), 1),
+                 QRect(0, 0, 1280, 1024));
 
         // second screen
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::movement, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::movement, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize_full, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::maximize_full, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::fullscreen, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::fullscreen, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::screen, outputs.at(1), 1),
-            QRect(1280, 0, 1280, 1024));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::screen, outputs.at(1), 1),
+                 QRect(1280, 0, 1280, 1024));
 
         // combined
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1),
-            QRect(0, 0, 2560, 1024));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::full, outputs.at(0), 1),
-            QRect(0, 0, 2560, 1024));
-        QCOMPARE(win::restricted_move_area(*setup.base->space, -1, win::strut_area::all),
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::work, outputs.at(0), 1),
+                 QRect(0, 0, 2560, 1024));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::full, outputs.at(0), 1),
+                 QRect(0, 0, 2560, 1024));
+        QCOMPARE(win::restricted_move_area(*setup.base->mod.space, -1, win::strut_area::all),
                  QRegion());
 
         // create an xcb window
@@ -835,7 +842,7 @@ TEST_CASE("struts", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -850,53 +857,54 @@ TEST_CASE("struts", "[win]")
         // this should have affected the client area
         // some props are independent of struts - those first
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::movement, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::movement, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize_full, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::maximize_full, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::fullscreen, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::fullscreen, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::screen, outputs.at(0), 1),
-            QRect(0, 0, 1280, 1024));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::screen, outputs.at(0), 1),
+                 QRect(0, 0, 1280, 1024));
 
         // screen 1
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::movement, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::movement, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize_full, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::maximize_full, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::fullscreen, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::fullscreen, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::screen, outputs.at(1), 1),
-            QRect(1280, 0, 1280, 1024));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::screen, outputs.at(1), 1),
+                 QRect(1280, 0, 1280, 1024));
 
         // combined
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::full, outputs.at(0), 1),
-            QRect(0, 0, 2560, 1024));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::full, outputs.at(0), 1),
+                 QRect(0, 0, 2560, 1024));
 
         // now verify the actual updated client areas
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(0), 1)
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1)
                 == test_data.maximized_screen_geos.at(0));
-        REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(0), 1)
-            == test_data.maximized_screen_geos.at(0));
         REQUIRE(win::space_window_area(
-                    *setup.base->space, win::area_option::placement, outputs.at(1), 1)
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1)
+                == test_data.maximized_screen_geos.at(0));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1)
+                == test_data.maximized_screen_geos.at(1));
+        REQUIRE(win::space_window_area(
+                    *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1)
                 == test_data.maximized_screen_geos.at(1));
         REQUIRE(
-            win::space_window_area(*setup.base->space, win::area_option::maximize, outputs.at(1), 1)
-            == test_data.maximized_screen_geos.at(1));
-        REQUIRE(win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1)
-                == test_data.work_area);
-        REQUIRE(win::restricted_move_area(*setup.base->space, -1, win::strut_area::all)
+            win::space_window_area(*setup.base->mod.space, win::area_option::work, outputs.at(0), 1)
+            == test_data.work_area);
+        REQUIRE(win::restricted_move_area(*setup.base->mod.space, -1, win::strut_area::all)
                 == test_data.restricted_move_area);
 
         // and destroy the window again
@@ -911,52 +919,52 @@ TEST_CASE("struts", "[win]")
 
         // now struts should be removed again
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::movement, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::movement, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize_full, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::maximize_full, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::fullscreen, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::fullscreen, outputs.at(0), 1),
                  QRect(0, 0, 1280, 1024));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::screen, outputs.at(0), 1),
-            QRect(0, 0, 1280, 1024));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::screen, outputs.at(0), 1),
+                 QRect(0, 0, 1280, 1024));
 
         // second screen
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::movement, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::movement, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize_full, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::maximize_full, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::fullscreen, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::fullscreen, outputs.at(1), 1),
                  QRect(1280, 0, 1280, 1024));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::screen, outputs.at(1), 1),
-            QRect(1280, 0, 1280, 1024));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::screen, outputs.at(1), 1),
+                 QRect(1280, 0, 1280, 1024));
 
         // combined
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1),
-            QRect(0, 0, 2560, 1024));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::full, outputs.at(0), 1),
-            QRect(0, 0, 2560, 1024));
-        QCOMPARE(win::restricted_move_area(*setup.base->space, -1, win::strut_area::all),
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::work, outputs.at(0), 1),
+                 QRect(0, 0, 2560, 1024));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::full, outputs.at(0), 1),
+                 QRect(0, 0, 2560, 1024));
+        QCOMPARE(win::restricted_move_area(*setup.base->mod.space, -1, win::strut_area::all),
                  QRegion());
     }
 
@@ -1020,7 +1028,7 @@ TEST_CASE("struts", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -1035,20 +1043,20 @@ TEST_CASE("struts", "[win]")
         // now verify the actual updated client areas
         auto const& outputs = setup.base->outputs;
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1),
                  geometries.at(0));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1),
                  geometries.at(0));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1),
                  QRect(554, 1080, 1366, 732));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1),
                  QRect(554, 1080, 1366, 732));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1),
-            QRect(0, 0, 1920, 1812));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::work, outputs.at(0), 1),
+                 QRect(0, 0, 1920, 1812));
 
         // and destroy the window again
         xcb_unmap_window(c.get(), w);
@@ -1123,7 +1131,7 @@ TEST_CASE("struts", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -1138,20 +1146,20 @@ TEST_CASE("struts", "[win]")
         // now verify the actual updated client areas
         auto const& outputs = setup.base->outputs;
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1),
                  QRect(0, 306, 1366, 744));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1),
                  QRect(0, 306, 1366, 744));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1),
                  geometries.at(1));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1),
                  geometries.at(1));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1),
-            QRect(0, 0, 3046, 1050));
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::work, outputs.at(0), 1),
+                 QRect(0, 0, 3046, 1050));
 
         // now create a window which is larger than screen 0
 
@@ -1270,7 +1278,7 @@ TEST_CASE("struts", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -1285,21 +1293,21 @@ TEST_CASE("struts", "[win]")
         // now verify the actual updated client areas
         auto const& outputs = setup.base->outputs;
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(0), 1),
                  QRect(0, 282, 1366, 768));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(0), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(0), 1),
                  QRect(0, 282, 1366, 768));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::placement, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::placement, outputs.at(1), 1),
                  QRect(1390, 0, 1656, 1050));
         QCOMPARE(win::space_window_area(
-                     *setup.base->space, win::area_option::maximize, outputs.at(1), 1),
+                     *setup.base->mod.space, win::area_option::maximize, outputs.at(1), 1),
                  QRect(1390, 0, 1656, 1050));
-        QCOMPARE(
-            win::space_window_area(*setup.base->space, win::area_option::work, outputs.at(0), 1),
-            QRect(0, 0, 3046, 1050));
-        QCOMPARE(win::restricted_move_area(*setup.base->space, -1, win::strut_area::all),
+        QCOMPARE(win::space_window_area(
+                     *setup.base->mod.space, win::area_option::work, outputs.at(0), 1),
+                 QRect(0, 0, 3046, 1050));
+        QCOMPARE(win::restricted_move_area(*setup.base->mod.space, -1, win::strut_area::all),
                  QRegion(1366, 0, 24, 1050));
 
         // create another window and try to move it
@@ -1339,7 +1347,7 @@ TEST_CASE("struts", "[win]")
         cursor()->set_pos(origGeo.center());
         win::perform_window_operation(client2, win::win_op::move);
 
-        QTRY_COMPARE(get_x11_window(setup.base->space->move_resize_window), client2);
+        QTRY_COMPARE(get_x11_window(setup.base->mod.space->move_resize_window), client2);
         QVERIFY(win::is_move(client2));
 
         // move to next screen - step is 8 pixel, so 800 pixel
@@ -1350,7 +1358,7 @@ TEST_CASE("struts", "[win]")
 
         win::key_press_event(client2, Qt::Key_Enter);
         QCOMPARE(win::is_move(client2), false);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(client2->geo.frame, QRect(origGeo.translated(-800, 0)));
 
         // Destroy window again.

@@ -32,7 +32,7 @@ TEST_CASE("no crash no border", "[win]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = setup.base->render->scene;
+    auto& scene = setup.base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -59,7 +59,7 @@ TEST_CASE("no crash no border", "[win]")
     // let's render
     auto c = render_and_wait_for_shown(surface, QSize(500, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+    QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
     QVERIFY(!win::decoration(c));
 }
 

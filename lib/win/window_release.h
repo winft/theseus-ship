@@ -141,7 +141,7 @@ void transfer_remnant_data(Win& source, Win& dest)
 template<typename Win>
 Win* create_remnant_window(Win& source)
 {
-    if (!source.space.base.render->scene) {
+    if (!source.space.base.mod.render->scene) {
         // Don't create effect remnants when we don't render.
         return nullptr;
     }

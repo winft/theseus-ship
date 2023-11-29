@@ -52,7 +52,7 @@ TEST_CASE("dbus interface", "[base]")
 {
     test::setup setup("dbus-interface", base::operation_mode::xwayland);
     setup.start();
-    win::subspace_manager_set_count(*setup.base->space->subspace_manager, 4);
+    win::subspace_manager_set_count(*setup.base->mod.space->subspace_manager, 4);
 
     setup_wayland_connection();
 
@@ -68,7 +68,7 @@ TEST_CASE("dbus interface", "[base]")
 
     SECTION("get window info for xdg-shell client")
     {
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
@@ -83,7 +83,7 @@ TEST_CASE("dbus interface", "[base]")
         QVERIFY(clientAddedSpy.wait());
 
         auto client_id = clientAddedSpy.first().first().value<quint32>();
-        auto client = get_wayland_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_wayland_window(setup.base->mod.space->windows_map.at(client_id));
         QVERIFY(client);
 
         // let's get the window info
@@ -163,7 +163,7 @@ TEST_CASE("dbus interface", "[base]")
         // require window geometry changes
 
         QCOMPARE(win::get_subspace(*client), 1);
-        win::send_window_to_subspace(*setup.base->space, client, 2, false);
+        win::send_window_to_subspace(*setup.base->mod.space, client, 2, false);
         QCOMPARE(win::get_subspace(*client), 2);
         reply = getWindowInfo(client->meta.internal_id);
         reply.waitForFinished();
@@ -227,13 +227,13 @@ TEST_CASE("dbus interface", "[base]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->mod.space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QCOMPARE(win::frame_to_client_size(client, client->geo.size()), windowGeometry.size());

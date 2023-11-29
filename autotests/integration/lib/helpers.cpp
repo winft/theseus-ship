@@ -41,7 +41,7 @@ output::output(QRect const& geometry, double scale)
 
 input::wayland::cursor<space::input_t>* cursor()
 {
-    return app()->base->space->input->cursor.get();
+    return app()->base->mod.space->input->cursor.get();
 }
 
 void setup_wayland_connection(global_selection globals)
@@ -179,7 +179,7 @@ wayland_window* render_and_wait_for_shown(client const& clt,
                                           QImage::Format const& format,
                                           int timeout)
 {
-    QSignalSpy clientAddedSpy(app()->base->space->qobject.get(),
+    QSignalSpy clientAddedSpy(app()->base->mod.space->qobject.get(),
                               &space::qobject_t::wayland_window_added);
     if (!clientAddedSpy.isValid()) {
         return nullptr;
@@ -191,7 +191,7 @@ wayland_window* render_and_wait_for_shown(client const& clt,
     }
 
     auto win_id = clientAddedSpy.first().first().value<quint32>();
-    return std::get<wayland_window*>(app()->base->space->windows_map.at(win_id));
+    return std::get<wayland_window*>(app()->base->mod.space->windows_map.at(win_id));
 }
 
 void flush_wayland_connection()
@@ -331,7 +331,7 @@ void lock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(app()->base->space->desktop->screen_locker_watcher.get(),
+    QSignalSpy lockWatcherSpy(app()->base->mod.space->desktop->screen_locker_watcher.get(),
                               &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
@@ -343,7 +343,7 @@ void lock_screen()
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 2);
 
-    QVERIFY(app()->base->space->desktop->screen_locker_watcher->is_locked());
+    QVERIFY(app()->base->mod.space->desktop->screen_locker_watcher->is_locked());
 }
 
 void unlock_screen()
@@ -351,7 +351,7 @@ void unlock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(app()->base->space->desktop->screen_locker_watcher.get(),
+    QSignalSpy lockWatcherSpy(app()->base->mod.space->desktop->screen_locker_watcher.get(),
                               &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
@@ -384,7 +384,7 @@ void unlock_screen()
 
     QVERIFY(!base::wayland::is_screen_locked(app()->base));
 
-    QVERIFY(!app()->base->space->desktop->screen_locker_watcher->is_locked());
+    QVERIFY(!app()->base->mod.space->desktop->screen_locker_watcher->is_locked());
 }
 
 void prepare_app_env(std::string const& qpa_plugin_path)

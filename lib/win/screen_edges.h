@@ -475,8 +475,8 @@ public:
         auto window = edger->space.stacking.active;
 
         auto newValue = !edger->remainActiveOnFullscreen() && window
-            && !(edger->space.base.render->effects
-                 && edger->space.base.render->effects->hasActiveFullScreenEffect());
+            && !(edger->space.base.mod.render->effects
+                 && edger->space.base.mod.render->effects->hasActiveFullScreenEffect());
         if (newValue) {
             newValue = std::visit(overload{[&](auto&& win) {
                                       return win->control->fullscreen

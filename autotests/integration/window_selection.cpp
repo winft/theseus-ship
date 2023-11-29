@@ -60,16 +60,16 @@ TEST_CASE("window selection", "[win]")
         QVERIFY(client);
         QVERIFY(keyboardEnteredSpy.wait());
         cursor()->set_pos(client->geo.frame.center());
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), client);
         QVERIFY(pointerEnteredSpy.wait());
 
         std::optional<space::window_t> selectedWindow;
         auto callback = [&selectedWindow](std::optional<space::window_t> t) { selectedWindow = t; };
 
         // start the interaction
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
-        setup.base->space->input->start_interactive_window_selection(callback);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
+        setup.base->mod.space->input->start_interactive_window_selection(callback);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QVERIFY(!selectedWindow);
         QCOMPARE(keyboardLeftSpy.count(), 0);
         QVERIFY(pointerLeftSpy.wait());
@@ -83,27 +83,27 @@ TEST_CASE("window selection", "[win]")
         quint32 timestamp = 0;
         pointer_button_pressed(BTN_LEFT, timestamp++);
         // should not have ended the mode
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QVERIFY(!selectedWindow);
-        QVERIFY(!setup.base->space->input->pointer->focus.window);
+        QVERIFY(!setup.base->mod.space->input->pointer->focus.window);
 
         // updating the pointer should not change anything
-        input::wayland::device_redirect_update(setup.base->space->input->pointer.get());
-        QVERIFY(!setup.base->space->input->pointer->focus.window);
+        input::wayland::device_redirect_update(setup.base->mod.space->input->pointer.get());
+        QVERIFY(!setup.base->mod.space->input->pointer->focus.window);
         // updating keyboard should also not change
-        setup.base->space->input->keyboard->update();
+        setup.base->mod.space->input->keyboard->update();
 
         // perform a right button click
         pointer_button_pressed(BTN_RIGHT, timestamp++);
         pointer_button_released(BTN_RIGHT, timestamp++);
         // should not have ended the mode
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QVERIFY(!selectedWindow);
         // now release
         pointer_button_released(BTN_LEFT, timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
         QCOMPARE(get_wayland_window(selectedWindow), client);
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), client);
         // should give back keyboard and pointer
         QVERIFY(pointerEnteredSpy.wait());
         if (keyboardEnteredSpy.count() != 2) {
@@ -144,9 +144,9 @@ TEST_CASE("window selection", "[win]")
         auto callback = [&selectedWindow](std::optional<space::window_t> t) { selectedWindow = t; };
 
         // start the interaction
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
-        setup.base->space->input->start_interactive_window_selection(callback);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
+        setup.base->mod.space->input->start_interactive_window_selection(callback);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QVERIFY(!selectedWindow);
         QCOMPARE(keyboardLeftSpy.count(), 0);
         QVERIFY(keyboardLeftSpy.wait());
@@ -175,10 +175,10 @@ TEST_CASE("window selection", "[win]")
         }
 
         keyboard_key_pressed(key, timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
         QVERIFY(selectedWindow);
         QCOMPARE(*selectedWindow, space::window_t(client));
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), client);
 
         // should give back keyboard and pointer
         QVERIFY(pointerEnteredSpy.wait());
@@ -209,9 +209,9 @@ TEST_CASE("window selection", "[win]")
         auto callback = [&selectedWindow](std::optional<space::window_t> t) { selectedWindow = t; };
 
         // start the interaction
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
-        setup.base->space->input->start_interactive_window_selection(callback);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
+        setup.base->mod.space->input->start_interactive_window_selection(callback);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QVERIFY(!selectedWindow);
 
         // simulate touch down
@@ -219,13 +219,13 @@ TEST_CASE("window selection", "[win]")
         touch_down(0, client->geo.frame.center(), timestamp++);
         QVERIFY(!selectedWindow);
         touch_up(0, timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
         QVERIFY(selectedWindow);
         QCOMPARE(*selectedWindow, space::window_t(client));
 
         // with movement
         selectedWindow = {};
-        setup.base->space->input->start_interactive_window_selection(callback);
+        setup.base->mod.space->input->start_interactive_window_selection(callback);
         touch_down(0, client->geo.frame.bottomRight() + QPoint(20, 20), timestamp++);
         QVERIFY(!selectedWindow);
         touch_motion(0, client->geo.frame.bottomRight() - QPoint(1, 1), timestamp++);
@@ -233,14 +233,14 @@ TEST_CASE("window selection", "[win]")
         touch_up(0, timestamp++);
         QVERIFY(selectedWindow);
         QCOMPARE(get_wayland_window(selectedWindow), client);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
 
         // it cancels active touch sequence on the window
         touch_down(0, client->geo.frame.center(), timestamp++);
         QVERIFY(touchStartedSpy.wait());
         selectedWindow = {};
-        setup.base->space->input->start_interactive_window_selection(callback);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        setup.base->mod.space->input->start_interactive_window_selection(callback);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QVERIFY(touchCanceledSpy.wait());
         QVERIFY(!selectedWindow);
         // this touch up does not yet select the window, it was started prior to the selection
@@ -249,7 +249,7 @@ TEST_CASE("window selection", "[win]")
         touch_down(0, client->geo.frame.center(), timestamp++);
         touch_up(0, timestamp++);
         QCOMPARE(get_wayland_window(selectedWindow), client);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
 
         QCOMPARE(touchStartedSpy.count(), 1);
         QCOMPARE(touchCanceledSpy.count(), 1);
@@ -275,16 +275,16 @@ TEST_CASE("window selection", "[win]")
         QVERIFY(client);
         QVERIFY(keyboardEnteredSpy.wait());
         cursor()->set_pos(client->geo.frame.center());
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), client);
         QVERIFY(pointerEnteredSpy.wait());
 
         std::optional<space::window_t> selectedWindow;
         auto callback = [&selectedWindow](std::optional<space::window_t> t) { selectedWindow = t; };
 
         // start the interaction
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
-        setup.base->space->input->start_interactive_window_selection(callback);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
+        setup.base->mod.space->input->start_interactive_window_selection(callback);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QVERIFY(!selectedWindow);
         QCOMPARE(keyboardLeftSpy.count(), 0);
         QVERIFY(pointerLeftSpy.wait());
@@ -298,9 +298,9 @@ TEST_CASE("window selection", "[win]")
         quint32 timestamp = 0;
         pointer_button_pressed(BTN_RIGHT, timestamp++);
         pointer_button_released(BTN_RIGHT, timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
         QVERIFY(!selectedWindow);
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), client);
         // should give back keyboard and pointer
         QVERIFY(pointerEnteredSpy.wait());
         if (keyboardEnteredSpy.count() != 2) {
@@ -332,16 +332,16 @@ TEST_CASE("window selection", "[win]")
         QVERIFY(client);
         QVERIFY(keyboardEnteredSpy.wait());
         cursor()->set_pos(client->geo.frame.center());
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), client);
         QVERIFY(pointerEnteredSpy.wait());
 
         std::optional<space::window_t> selectedWindow;
         auto callback = [&selectedWindow](std::optional<space::window_t> t) { selectedWindow = t; };
 
         // start the interaction
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
-        setup.base->space->input->start_interactive_window_selection(callback);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
+        setup.base->mod.space->input->start_interactive_window_selection(callback);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QVERIFY(!selectedWindow);
         QCOMPARE(keyboardLeftSpy.count(), 0);
         QVERIFY(pointerLeftSpy.wait());
@@ -354,9 +354,9 @@ TEST_CASE("window selection", "[win]")
         // simulate left button press
         quint32 timestamp = 0;
         keyboard_key_pressed(KEY_ESC, timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
         QVERIFY(!selectedWindow);
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), client);
         // should give back keyboard and pointer
         QVERIFY(pointerEnteredSpy.wait());
         if (keyboardEnteredSpy.count() != 2) {
@@ -389,16 +389,16 @@ TEST_CASE("window selection", "[win]")
         QVERIFY(client);
         QVERIFY(keyboardEnteredSpy.wait());
         cursor()->set_pos(client->geo.frame.center());
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), client);
         QVERIFY(pointerEnteredSpy.wait());
 
         QPoint point;
         auto callback = [&point](const QPoint& p) { point = p; };
 
         // start the interaction
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
-        setup.base->space->input->start_interactive_position_selection(callback);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
+        setup.base->mod.space->input->start_interactive_position_selection(callback);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QCOMPARE(point, QPoint());
         QCOMPARE(keyboardLeftSpy.count(), 0);
         QVERIFY(pointerLeftSpy.wait());
@@ -410,7 +410,7 @@ TEST_CASE("window selection", "[win]")
 
         // trying again should not be allowed
         QPoint point2;
-        setup.base->space->input->start_interactive_position_selection(
+        setup.base->mod.space->input->start_interactive_position_selection(
             [&point2](const QPoint& p) { point2 = p; });
         QCOMPARE(point2, QPoint(-1, -1));
 
@@ -418,27 +418,27 @@ TEST_CASE("window selection", "[win]")
         quint32 timestamp = 0;
         pointer_button_pressed(BTN_LEFT, timestamp++);
         // should not have ended the mode
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QCOMPARE(point, QPoint());
-        QVERIFY(!setup.base->space->input->pointer->focus.window);
+        QVERIFY(!setup.base->mod.space->input->pointer->focus.window);
 
         // updating the pointer should not change anything
-        input::wayland::device_redirect_update(setup.base->space->input->pointer.get());
-        QVERIFY(!setup.base->space->input->pointer->focus.window);
+        input::wayland::device_redirect_update(setup.base->mod.space->input->pointer.get());
+        QVERIFY(!setup.base->mod.space->input->pointer->focus.window);
         // updating keyboard should also not change
-        setup.base->space->input->keyboard->update();
+        setup.base->mod.space->input->keyboard->update();
 
         // perform a right button click
         pointer_button_pressed(BTN_RIGHT, timestamp++);
         pointer_button_released(BTN_RIGHT, timestamp++);
         // should not have ended the mode
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QCOMPARE(point, QPoint());
         // now release
         pointer_button_released(BTN_LEFT, timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
-        QCOMPARE(point, setup.base->space->input->globalPointer().toPoint());
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), client);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
+        QCOMPARE(point, setup.base->mod.space->input->globalPointer().toPoint());
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), client);
         // should give back keyboard and pointer
         QVERIFY(pointerEnteredSpy.wait());
         if (keyboardEnteredSpy.count() != 2) {
@@ -457,31 +457,31 @@ TEST_CASE("window selection", "[win]")
         auto callback = [&point](const QPoint& p) { point = p; };
 
         // start the interaction
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
-        setup.base->space->input->start_interactive_position_selection(callback);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
+        setup.base->mod.space->input->start_interactive_position_selection(callback);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         QCOMPARE(point, QPoint());
 
         // let's create multiple touch points
         quint32 timestamp = 0;
         touch_down(0, QPointF(0, 1), timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         touch_down(1, QPointF(10, 20), timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         touch_down(2, QPointF(30, 40), timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
 
         // let's move our points
         touch_motion(0, QPointF(5, 10), timestamp++);
         touch_motion(2, QPointF(20, 25), timestamp++);
         touch_motion(1, QPointF(25, 35), timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         touch_up(0, timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         touch_up(2, timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), true);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), true);
         touch_up(1, timestamp++);
-        QCOMPARE(setup.base->space->input->isSelectingWindow(), false);
+        QCOMPARE(setup.base->mod.space->input->isSelectingWindow(), false);
         QCOMPARE(point, QPoint(25, 35));
     }
 }

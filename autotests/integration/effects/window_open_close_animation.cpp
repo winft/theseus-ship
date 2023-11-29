@@ -29,7 +29,7 @@ TEST_CASE("window open close animation", "[effect]")
 
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -37,7 +37,7 @@ TEST_CASE("window open close animation", "[effect]")
 
     setup.start();
 
-    auto& scene = setup.base->render->scene;
+    auto& scene = setup.base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -50,7 +50,7 @@ TEST_CASE("window open close animation", "[effect]")
         auto effectName = GENERATE(QString("fade"), QString("glide"), QString("scale"));
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->effects;
+        auto& effectsImpl = setup.base->mod.render->effects;
         QVERIFY(effectsImpl);
 
         // Load effect that will be tested.
@@ -94,7 +94,7 @@ TEST_CASE("window open close animation", "[effect]")
         auto effectName = GENERATE(QString("fade"), QString("glide"), QString("scale"));
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->effects;
+        auto& effectsImpl = setup.base->mod.render->effects;
         QVERIFY(effectsImpl);
 
         // Create the main window.

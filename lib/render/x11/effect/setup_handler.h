@@ -22,7 +22,7 @@ void effect_setup_handler(Handler& handler)
         using filter = render::x11::property_notify_filter<Handler, typename Handler::space_t>;
         auto& base = handler.scene.platform.base;
         handler.x11_property_notify
-            = std::make_unique<filter>(handler, *base.space, base.x11_data.root_window);
+            = std::make_unique<filter>(handler, *base.mod.space, base.x11_data.root_window);
     };
 
     QObject::connect(&handler.scene.platform.base,
@@ -47,7 +47,7 @@ void effect_setup_handler(Handler& handler)
         make_property_filter();
     }
 
-    auto ws = handler.scene.platform.base.space.get();
+    auto ws = handler.scene.platform.base.mod.space.get();
 
     // connect all clients
     for (auto& win : ws->windows) {

@@ -172,7 +172,7 @@ protected:
         if (img.isNull()) {
             return;
         }
-        auto const cursorPos = this->platform.base.space->input->cursor->pos();
+        auto const cursorPos = this->platform.base.mod.space->input->cursor->pos();
         auto const hotspot = cursor->hotspot();
         m_painter->drawImage(cursorPos - hotspot, img);
         cursor->mark_as_rendered();

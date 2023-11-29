@@ -71,7 +71,7 @@ template<typename Space>
 void shortcuts_init_switch_to_subspace(Space& space)
 {
     auto manager = space.subspace_manager.get();
-    auto& input = *space.base.input;
+    auto& input = *space.base.mod.input;
 
     auto const toDesktop = QStringLiteral("Switch to Desktop %1");
     KLocalizedString const toDesktopLabel = ki18n("Switch to Desktop %1");
@@ -117,7 +117,7 @@ template<typename Space>
 void shortcuts_init_subspaces(Space& space)
 {
     auto manager = space.subspace_manager.get();
-    auto& input = *space.base.input;
+    auto& input = *space.base.mod.input;
 
     shortcuts_init_switch_to_subspace(space);
 
@@ -279,7 +279,7 @@ QAction* prepare_shortcut_action(Space& space,
         action->setData(data);
     }
 
-    set_global_shortcut_with_default(*space.base.input, *action, shortcut);
+    set_global_shortcut_with_default(*space.base.mod.input, *action, shortcut);
     return action;
 }
 
@@ -293,7 +293,7 @@ void init_shortcut(Space& space,
                    const QVariant& data = QVariant())
 {
     auto action = prepare_shortcut_action(space, actionName, description, shortcut, data);
-    space.base.input->registerShortcut(shortcut, action, receiver, slot);
+    space.base.mod.input->registerShortcut(shortcut, action, receiver, slot);
 }
 
 template<typename Space, typename Slot>
@@ -317,7 +317,7 @@ void init_shortcut_with_action_arg(Space& space,
                                    QVariant const& data)
 {
     auto action = prepare_shortcut_action(space, actionName, description, shortcut, data);
-    space.base.input->registerShortcut(
+    space.base.mod.input->registerShortcut(
         shortcut, action, receiver, [action, &slot] { slot(action); });
 }
 
@@ -534,12 +534,12 @@ void init_shortcuts(Space& space)
     def(kli18n("Kill Window"), Qt::META | Qt::CTRL | Qt::Key_Escape, start_window_killer<Space>);
     def6(kli18n("Suspend Compositing"),
          Qt::SHIFT | Qt::ALT | Qt::Key_F12,
-         space.base.render->qobject.get(),
-         [render = space.base.render.get()] { render->toggleCompositing(); });
+         space.base.mod.render->qobject.get(),
+         [render = space.base.mod.render.get()] { render->toggleCompositing(); });
     def6(kli18n("Invert Screen Colors"),
          0,
-         space.base.render->qobject.get(),
-         [render = space.base.render.get()] { render->invertScreen(); });
+         space.base.mod.render->qobject.get(),
+         [render = space.base.mod.render.get()] { render->invertScreen(); });
 
 #if KWIN_BUILD_TABBOX
     space.tabbox->init_shortcuts();

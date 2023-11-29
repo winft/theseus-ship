@@ -46,7 +46,7 @@ TEST_CASE("xdg-shell window", "[win]")
     SECTION("map unmap map")
     {
         // this test verifies that mapping a previously mapped window works correctly
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
@@ -60,7 +60,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(clientAddedSpy.wait());
 
         auto client_id = clientAddedSpy.first().first().value<quint32>();
-        auto client = get_wayland_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_wayland_window(setup.base->mod.space->windows_map.at(client_id));
         QVERIFY(client);
 
         QSignalSpy effectsWindowShownSpy(client->render->effect.get(), &EffectWindow::windowShown);
@@ -75,7 +75,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(client->render_data.bit_depth, 32);
         QVERIFY(win::has_alpha(*client));
         QCOMPARE(client->control->icon.name(), QStringLiteral("wayland"));
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), client);
         QVERIFY(effectsWindowShownSpy.isEmpty());
         QVERIFY(client->isMaximizable());
         QVERIFY(client->isMovable());
@@ -93,8 +93,8 @@ TEST_CASE("xdg-shell window", "[win]")
                          &space::qobject_t::remnant_created,
                          client->qobject.get(),
                          [&setup, &deletedUuid](auto win_id) {
-                             auto remnant_win
-                                 = get_wayland_window(setup.base->space->windows_map.at(win_id));
+                             auto remnant_win = get_wayland_window(
+                                 setup.base->mod.space->windows_map.at(win_id));
                              deletedUuid = remnant_win->meta.internal_id;
                          });
 
@@ -109,7 +109,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(client->render_data.ready_for_painting, true);
         QCOMPARE(client->isHiddenInternal(), true);
         QVERIFY(windowClosedSpy.isEmpty());
-        QVERIFY(!setup.base->space->stacking.active);
+        QVERIFY(!setup.base->mod.space->stacking.active);
         QCOMPARE(effectsWindowHiddenSpy.count(), 1);
         QCOMPARE(effectsWindowHiddenSpy.first().first().value<EffectWindow*>(),
                  client->render->effect.get());
@@ -125,7 +125,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(client->isHiddenInternal(), false);
         QCOMPARE(client->render_data.bit_depth, 24);
         QVERIFY(!win::has_alpha(*client));
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), client);
         QCOMPARE(effectsWindowShownSpy.count(), 1);
         QCOMPARE(effectsWindowShownSpy.first().first().value<EffectWindow*>(),
                  client->render->effect.get());
@@ -257,17 +257,17 @@ TEST_CASE("xdg-shell window", "[win]")
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(c->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QVERIFY(c->wantsInput());
         QVERIFY(win::wants_tab_focus(c));
         QVERIFY(c->isShown());
 
-        win::active_window_minimize(*setup.base->space);
+        win::active_window_minimize(*setup.base->mod.space);
         QVERIFY(!c->isShown());
         QVERIFY(c->wantsInput());
         QVERIFY(win::wants_tab_focus(c));
         QVERIFY(!c->control->active);
-        QVERIFY(!setup.base->space->stacking.active);
+        QVERIFY(!setup.base->mod.space->stacking.active);
         QVERIFY(c->control->minimized);
 
         // unminimize again
@@ -277,7 +277,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(c->wantsInput());
         QVERIFY(win::wants_tab_focus(c));
         QVERIFY(c->isShown());
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
     }
 
     SECTION("fullscreen")
@@ -671,7 +671,7 @@ TEST_CASE("xdg-shell window", "[win]")
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
         QVERIFY(c->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QVERIFY(c->wantsInput());
         QVERIFY(win::wants_tab_focus(c));
         QVERIFY(c->isShown());
@@ -688,7 +688,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(c->wantsInput());
         QVERIFY(win::wants_tab_focus(c));
 
-        // QCOMPARE(setup.base->space->stacking.active, c);
+        // QCOMPARE(setup.base->mod.space->stacking.active, c);
     }
 
     SECTION("desktop file name")
@@ -806,7 +806,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         QString const kill = QFINDTESTDATA(QStringLiteral("kill"));
         QVERIFY(!kill.isEmpty());
-        QSignalSpy shellClientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy shellClientAddedSpy(setup.base->mod.space->qobject.get(),
                                        &space::qobject_t::wayland_window_added);
         QVERIFY(shellClientAddedSpy.isValid());
 
@@ -839,7 +839,7 @@ TEST_CASE("xdg-shell window", "[win]")
         ::kill(process->processId(), SIGUSR1); // send a signal to freeze the process
 
         auto kill_client_id = shellClientAddedSpy.first().first().value<quint32>();
-        auto killClient = get_wayland_window(setup.base->space->windows_map.at(kill_client_id));
+        auto killClient = get_wayland_window(setup.base->mod.space->windows_map.at(kill_client_id));
         QVERIFY(killClient);
         QSignalSpy unresponsiveSpy(killClient->qobject.get(),
                                    &win::window_qobject::unresponsiveChanged);
@@ -933,7 +933,7 @@ TEST_CASE("xdg-shell window", "[win]")
         // this test verifies that when sending a client to a subspace all transients are also send
         // to that subspace
 
-        win::subspace_manager_set_count(*setup.base->space->subspace_manager, 2);
+        win::subspace_manager_set_count(*setup.base->mod.space->subspace_manager, 2);
         std::unique_ptr<Surface> surface{create_surface()};
         std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
 
@@ -948,7 +948,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         auto transient = render_and_wait_for_shown(transientSurface, QSize(100, 50), Qt::blue);
         QVERIFY(transient);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), transient);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), transient);
         QCOMPARE(transient->transient->lead(), c);
         QVERIFY(contains(c->transient->children, transient));
 
@@ -956,20 +956,20 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(!win::on_all_subspaces(*c));
         QCOMPARE(win::get_subspace(*transient), 1);
         QVERIFY(!win::on_all_subspaces(*transient));
-        win::active_window_to_subspace(*setup.base->space, 2);
+        win::active_window_to_subspace(*setup.base->mod.space, 2);
 
         QCOMPARE(win::get_subspace(*c), 1);
         QCOMPARE(win::get_subspace(*transient), 2);
 
         // activate c
-        win::activate_window(*setup.base->space, *c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        win::activate_window(*setup.base->mod.space, *c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QVERIFY(c->control->active);
 
         // and send it to the subspace it's already on
         QCOMPARE(win::get_subspace(*c), 1);
         QCOMPARE(win::get_subspace(*transient), 2);
-        win::active_window_to_subspace(*setup.base->space, 1);
+        win::active_window_to_subspace(*setup.base->mod.space, 1);
 
         // which should move the transient back to the subspace
         QCOMPARE(win::get_subspace(*c), 1);
@@ -1108,7 +1108,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(cfgdata.states & Wrapland::Client::xdg_shell_state::maximized);
 
         // Unmaximize again, an empty size is returned, that means the client should decide.
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -1275,7 +1275,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         auto window = render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
         QVERIFY(window);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window);
         QCOMPARE(window->geo.frame.size(), QSize(200, 100));
 
         Wrapland::Client::xdg_shell_positioner_data pos_data;
@@ -1310,7 +1310,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         auto output = base::get_output(outputs, 1);
         QVERIFY(output);
-        win::send_to_screen(*setup.base->space, window, *output);
+        win::send_to_screen(*setup.base->mod.space, window, *output);
         QCOMPARE(window->topo.central_output, outputs.at(1));
         QCOMPARE(popup->topo.central_output, outputs.at(0));
 
@@ -1421,9 +1421,9 @@ TEST_CASE("xdg-shell window", "[win]")
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
         // Start interactively resizing the client.
-        QVERIFY(!setup.base->space->move_resize_window);
-        win::active_window_resize(*setup.base->space);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
+        win::active_window_resize(*setup.base->mod.space);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), client);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 2);
@@ -1478,7 +1478,7 @@ TEST_CASE("xdg-shell window", "[win]")
         // Finish resizing the client.
         win::key_press_event(client, Qt::Key_Enter);
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
 #if 0
         // TODO(romangg): XdgShellClient currently doesn't send final configure event
         QVERIFY(configureRequestedSpy.wait());
@@ -1527,7 +1527,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
         QCOMPARE(client->geo.frame.size(), QSize(180, 80));
 
-        win::active_window_set_fullscreen(*setup.base->space);
+        win::active_window_set_fullscreen(*setup.base->mod.space);
         QCOMPARE(client->geo.restore.max, QRect(0, 0, 180, 80));
 
         QVERIFY(configureRequestedSpy.wait());
@@ -1545,7 +1545,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(win::render_geometry(client).size(), QSize(1280, 1024));
         QCOMPARE(client->geo.frame.size(), QSize(1280, 1024));
 
-        win::active_window_set_fullscreen(*setup.base->space);
+        win::active_window_set_fullscreen(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -1592,7 +1592,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
         QCOMPARE(client->geo.frame.size(), QSize(180, 80));
 
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 2);
 
@@ -1608,7 +1608,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QCOMPARE(win::render_geometry(client).size(), QSize(1280, 1024));
         QCOMPARE(client->geo.frame.size(), QSize(1280, 1024));
 
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -1752,7 +1752,7 @@ TEST_CASE("xdg-shell window", "[win]")
 
         auto window = render_and_wait_for_shown(surface, QSize(200, 100), Qt::red);
         QVERIFY(window);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window);
         QCOMPARE(window->geo.frame.size(), QSize(200, 100));
 
         Wrapland::Client::xdg_shell_positioner_data pos_data;
@@ -1819,7 +1819,7 @@ TEST_CASE("xdg-shell window", "[win]")
         QSize parent_size(200, 100);
         auto window = render_and_wait_for_shown(parent_surface, parent_size, Qt::red);
         QVERIFY(window);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window);
         QCOMPARE(window->geo.frame.size(), parent_size);
 
         QSignalSpy parent_geo_spy(window->qobject.get(),

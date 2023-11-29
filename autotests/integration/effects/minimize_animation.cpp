@@ -30,7 +30,7 @@ TEST_CASE("minimize animation", "[effect]")
     test::setup setup("minimize-animation", operation_mode);
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -40,7 +40,7 @@ TEST_CASE("minimize animation", "[effect]")
 
     setup.start();
 
-    auto& scene = setup.base->render->scene;
+    auto& scene = setup.base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -99,7 +99,7 @@ TEST_CASE("minimize animation", "[effect]")
                      iconRect.translated(panel->geo.frame.topLeft()));
 
         // Load effect that will be tested.
-        auto& effectsImpl = setup.base->render->effects;
+        auto& effectsImpl = setup.base->mod.render->effects;
         QVERIFY(effectsImpl);
         QVERIFY(effectsImpl->loadEffect(effectName));
         QCOMPARE(effectsImpl->loadedEffects().count(), 1);

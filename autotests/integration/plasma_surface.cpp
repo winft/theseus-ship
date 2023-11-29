@@ -63,7 +63,7 @@ TEST_CASE("plasma surface", "[win]")
         // now render to map the window
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         // currently the role is not yet set, so the window should not be on all subspaces
         QCOMPARE(win::on_all_subspaces(*c), false);
@@ -195,7 +195,7 @@ TEST_CASE("plasma surface", "[win]")
         QVERIFY(win::is_dock(panel));
         QCOMPARE(panel->geo.frame, test_data.panel_geo);
         QCOMPARE(panel->hasStrut(), false);
-        QCOMPARE(win::space_window_area(*setup.base->space, win::area_option::maximize, 0, 0),
+        QCOMPARE(win::space_window_area(*setup.base->mod.space, win::area_option::maximize, 0, 0),
                  QRect(0, 0, 1280, 1024));
         QCOMPARE(win::get_layer(*panel), KWin::win::layer::normal);
 
@@ -213,19 +213,19 @@ TEST_CASE("plasma surface", "[win]")
         win::move(c, test_data.window_geo.topLeft());
         QCOMPARE(c->geo.frame, test_data.window_geo);
 
-        auto stackingOrder = setup.base->space->stacking.order.stack;
+        auto stackingOrder = setup.base->mod.space->stacking.order.stack;
         QCOMPARE(stackingOrder.size(), 2);
         QCOMPARE(get_wayland_window(stackingOrder.front()), panel);
         QCOMPARE(get_wayland_window(stackingOrder.back()), c);
 
-        QSignalSpy stackingOrderChangedSpy(setup.base->space->stacking.order.qobject.get(),
+        QSignalSpy stackingOrderChangedSpy(setup.base->mod.space->stacking.order.qobject.get(),
                                            &win::stacking_order_qobject::changed);
         QVERIFY(stackingOrderChangedSpy.isValid());
 
         // trigger screenedge
         cursor()->set_pos(test_data.trigger_point);
         QCOMPARE(stackingOrderChangedSpy.count(), 1);
-        stackingOrder = setup.base->space->stacking.order.stack;
+        stackingOrder = setup.base->mod.space->stacking.order.stack;
         QCOMPARE(stackingOrder.size(), 2);
         QCOMPARE(get_wayland_window(stackingOrder.front()), c);
         QCOMPARE(get_wayland_window(stackingOrder.back()), panel);
@@ -340,7 +340,7 @@ TEST_CASE("plasma surface", "[win]")
         QVERIFY(win::is_dock(c));
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         REQUIRE(c->hasStrut() == test_data.expected_strut);
-        REQUIRE(win::space_window_area(*setup.base->space, win::area_option::maximize, 0, 0)
+        REQUIRE(win::space_window_area(*setup.base->mod.space, win::area_option::maximize, 0, 0)
                 == test_data.expected_max_area);
         REQUIRE(win::get_layer(*c) == test_data.expected_layer);
     }
@@ -399,7 +399,7 @@ TEST_CASE("plasma surface", "[win]")
         QCOMPARE(c->geo.frame, test_data.expected_place);
     }
 
-    QTRY_VERIFY(setup.base->space->stacking.order.stack.empty());
+    QTRY_VERIFY(setup.base->mod.space->stacking.order.stack.empty());
 }
 
 }

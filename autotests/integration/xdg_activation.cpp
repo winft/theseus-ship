@@ -37,7 +37,7 @@ TEST_CASE("xdg activation", "[win]")
         QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
         QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
         QVERIFY(window1->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window1);
 
         std::unique_ptr<Clt::Surface> surface2(create_surface());
         auto shell_surface2 = create_xdg_shell_toplevel(surface2);
@@ -49,12 +49,12 @@ TEST_CASE("xdg activation", "[win]")
         QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
         QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
         QVERIFY(window2->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window2);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window2);
 
         auto activation = get_client().interfaces.xdg_activation.get();
         QVERIFY(activation);
 
-        auto server_activation = setup.base->space->xdg_activation->interface.get();
+        auto server_activation = setup.base->mod.space->xdg_activation->interface.get();
         QVERIFY(server_activation);
         QSignalSpy token_spy(server_activation,
                              &Wrapland::Server::XdgActivationV1::token_requested);
@@ -71,7 +71,7 @@ TEST_CASE("xdg activation", "[win]")
             = token_spy.front().front().value<Wrapland::Server::XdgActivationTokenV1*>();
         QCOMPARE(server_token->app_id(), "testclient1");
 
-        auto const token_string = setup.base->space->xdg_activation->token;
+        auto const token_string = setup.base->mod.space->xdg_activation->token;
 
         QSignalSpy done_spy(token.get(), &Clt::XdgActivationTokenV1::done);
         QVERIFY(done_spy.isValid());
@@ -85,7 +85,7 @@ TEST_CASE("xdg activation", "[win]")
         QSignalSpy xdg_activate_spy(server_activation,
                                     &Wrapland::Server::XdgActivationV1::activate);
         QVERIFY(xdg_activate_spy.isValid());
-        QSignalSpy activated_spy(setup.base->space->qobject.get(),
+        QSignalSpy activated_spy(setup.base->mod.space->qobject.get(),
                                  &space::qobject_t::clientActivated);
         QVERIFY(activated_spy.isValid());
 
@@ -97,7 +97,7 @@ TEST_CASE("xdg activation", "[win]")
         QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(),
                  window1->surface);
         QVERIFY(window1->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window1);
     }
 
     SECTION("multi client")
@@ -114,7 +114,7 @@ TEST_CASE("xdg activation", "[win]")
         QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
         QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
         QVERIFY(window1->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window1);
 
         // Create a second client.
         setup_wayland_connection(global_selection::seat | global_selection::xdg_activation);
@@ -130,12 +130,12 @@ TEST_CASE("xdg activation", "[win]")
         QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
         QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
         QVERIFY(window2->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window2);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window2);
 
         auto activation2 = client2.interfaces.xdg_activation.get();
         QVERIFY(activation2);
 
-        auto server_activation = setup.base->space->xdg_activation->interface.get();
+        auto server_activation = setup.base->mod.space->xdg_activation->interface.get();
         QVERIFY(server_activation);
         QSignalSpy token_spy(server_activation,
                              &Wrapland::Server::XdgActivationV1::token_requested);
@@ -152,7 +152,7 @@ TEST_CASE("xdg activation", "[win]")
             = token_spy.front().front().value<Wrapland::Server::XdgActivationTokenV1*>();
         QCOMPARE(server_token->app_id(), "testclient1");
 
-        auto const token_string = setup.base->space->xdg_activation->token;
+        auto const token_string = setup.base->mod.space->xdg_activation->token;
 
         QSignalSpy done_spy(token.get(), &Clt::XdgActivationTokenV1::done);
         QVERIFY(done_spy.isValid());
@@ -167,7 +167,7 @@ TEST_CASE("xdg activation", "[win]")
         QSignalSpy xdg_activate_spy(server_activation,
                                     &Wrapland::Server::XdgActivationV1::activate);
         QVERIFY(xdg_activate_spy.isValid());
-        QSignalSpy activated_spy(setup.base->space->qobject.get(),
+        QSignalSpy activated_spy(setup.base->mod.space->qobject.get(),
                                  &space::qobject_t::clientActivated);
         QVERIFY(activated_spy.isValid());
 
@@ -179,7 +179,7 @@ TEST_CASE("xdg activation", "[win]")
         QCOMPARE(xdg_activate_spy.front().back().value<Wrapland::Server::Surface*>(),
                  window1->surface);
         QVERIFY(window1->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window1);
     }
 
     SECTION("plasma activation feedback")
@@ -196,7 +196,7 @@ TEST_CASE("xdg activation", "[win]")
         QCOMPARE(win::render_geometry(window1).size(), QSize(200, 100));
         QCOMPARE(window1->geo.frame.size(), QSize(200, 100));
         QVERIFY(window1->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window1);
 
         std::unique_ptr<Clt::Surface> surface2(create_surface());
         auto shell_surface2 = create_xdg_shell_toplevel(surface2);
@@ -208,7 +208,7 @@ TEST_CASE("xdg activation", "[win]")
         QCOMPARE(win::render_geometry(window2).size(), QSize(400, 200));
         QCOMPARE(window2->geo.frame.size(), QSize(400, 200));
         QVERIFY(window2->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window2);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window2);
 
         QSignalSpy plasma_activation_spy(get_client().interfaces.plasma_activation_feedback.get(),
                                          &Wrapland::Client::plasma_activation_feedback::activation);
@@ -217,7 +217,7 @@ TEST_CASE("xdg activation", "[win]")
         auto activation = get_client().interfaces.xdg_activation.get();
         QVERIFY(activation);
 
-        auto server_activation = setup.base->space->xdg_activation->interface.get();
+        auto server_activation = setup.base->mod.space->xdg_activation->interface.get();
         QVERIFY(server_activation);
         QSignalSpy token_spy(server_activation,
                              &Wrapland::Server::XdgActivationV1::token_requested);
@@ -239,7 +239,7 @@ TEST_CASE("xdg activation", "[win]")
             = token_spy.front().front().value<Wrapland::Server::XdgActivationTokenV1*>();
         QCOMPARE(server_token->app_id(), appid);
 
-        auto const token_string = setup.base->space->xdg_activation->token;
+        auto const token_string = setup.base->mod.space->xdg_activation->token;
 
         QVERIFY(plasma_activation_spy.wait());
         QCOMPARE(plasma_activation_spy.size(), 1);
@@ -266,7 +266,7 @@ TEST_CASE("xdg activation", "[win]")
         QVERIFY(plasma_activation_finished_spy.wait());
 
         QVERIFY(window1->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window1);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window1);
 
         QVERIFY(plasma_activation->is_finished());
         delete plasma_activation;

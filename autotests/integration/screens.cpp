@@ -45,7 +45,7 @@ TEST_CASE("screens", "[base]")
                                   data{"FocusStrictlyUnderMouse", true});
 
         auto original_config = setup.base->config.main;
-        auto& options = setup.base->space->options;
+        auto& options = setup.base->mod.space->options;
 
         QCOMPARE(options->get_current_output_follows_mouse(), false);
 
@@ -204,7 +204,7 @@ TEST_CASE("screens", "[base]")
 
         set_current_output(test_data.current);
         QCOMPARE(
-            base::get_output_index(base->outputs, *win::get_current_output(*setup.base->space)),
+            base::get_output_index(base->outputs, *win::get_current_output(*setup.base->mod.space)),
             test_data.current);
         REQUIRE(current_changed_spy.isEmpty() != test_data.signal);
     }
@@ -223,7 +223,7 @@ TEST_CASE("screens", "[base]")
         changedSpy.clear();
 
         // Create a window.
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -233,15 +233,15 @@ TEST_CASE("screens", "[base]")
         render(surface, QSize(100, 50), Qt::blue);
         flush_wayland_connection();
         QVERIFY(clientAddedSpy.wait());
-        auto client = get_wayland_window(setup.base->space->stacking.active);
+        auto client = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(client);
 
         win::move(client, QPoint(101, 0));
-        QCOMPARE(setup.base->space->stacking.active, space::window_t(client));
-        win::unset_active_window(*setup.base->space);
-        QVERIFY(!setup.base->space->stacking.active);
+        QCOMPARE(setup.base->mod.space->stacking.active, space::window_t(client));
+        win::unset_active_window(*setup.base->mod.space);
+        QVERIFY(!setup.base->mod.space->stacking.active);
 
-        QCOMPARE(win::get_current_output(*setup.base->space),
+        QCOMPARE(win::get_current_output(*setup.base->mod.space),
                  base::get_output(setup.base->outputs, 0));
 
         // it's not the active client, so changing won't work
@@ -251,18 +251,18 @@ TEST_CASE("screens", "[base]")
 
         auto output = base::get_output(setup.base->outputs, 0);
         QVERIFY(output);
-        QCOMPARE(win::get_current_output(*setup.base->space), output);
+        QCOMPARE(win::get_current_output(*setup.base->mod.space), output);
 
         // making the client active should affect things
         win::set_active(client, true);
-        win::set_active_window(*setup.base->space, *client);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client);
+        win::set_active_window(*setup.base->mod.space, *client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), client);
 
         // first of all current should be changed just by the fact that there is an active client
         output = base::get_output(setup.base->outputs, 1);
         QVERIFY(output);
         QCOMPARE(client->topo.central_output, output);
-        QCOMPARE(win::get_current_output(*setup.base->space), output);
+        QCOMPARE(win::get_current_output(*setup.base->mod.space), output);
 
         // but also calling setCurrent should emit the changed signal
         win::set_current_output_by_window(*setup.base, *client);
@@ -271,7 +271,7 @@ TEST_CASE("screens", "[base]")
 
         output = base::get_output(setup.base->outputs, 1);
         QVERIFY(output);
-        QCOMPARE(win::get_current_output(*setup.base->space), output);
+        QCOMPARE(win::get_current_output(*setup.base->mod.space), output);
 
         // setting current with the same client again should not change, though
         win::set_current_output_by_window(*setup.base, *client);
@@ -279,12 +279,12 @@ TEST_CASE("screens", "[base]")
         QCOMPARE(current_output_spy.count(), 1);
 
         // and it should even still be on screen 1 if we make the client non-current again
-        win::unset_active_window(*setup.base->space);
+        win::unset_active_window(*setup.base->mod.space);
         win::set_active(client, false);
 
         output = base::get_output(setup.base->outputs, 1);
         QVERIFY(output);
-        QCOMPARE(win::get_current_output(*setup.base->space), output);
+        QCOMPARE(win::get_current_output(*setup.base->mod.space), output);
     }
 
     SECTION("current with follows mouse")
@@ -313,13 +313,13 @@ TEST_CASE("screens", "[base]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("ActiveMouseScreen", true);
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         pointer_motion_absolute(QPointF(0, 0), 1);
 
         auto output = base::get_output(setup.base->outputs, 0);
         QVERIFY(output);
-        QCOMPARE(win::get_current_output(*setup.base->space), output);
+        QCOMPARE(win::get_current_output(*setup.base->mod.space), output);
 
         setup.set_outputs(test_data.geometries);
         QCOMPARE(changedSpy.count(), 1);
@@ -328,7 +328,7 @@ TEST_CASE("screens", "[base]")
 
         output = base::get_output(setup.base->outputs, test_data.expected);
         QVERIFY(output);
-        QCOMPARE(win::get_current_output(*setup.base->space), output);
+        QCOMPARE(win::get_current_output(*setup.base->mod.space), output);
     }
 
     SECTION("current point")
@@ -357,7 +357,7 @@ TEST_CASE("screens", "[base]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("ActiveMouseScreen", false);
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         setup.set_outputs(test_data.geometries);
         QCOMPARE(changedSpy.count(), 1);
@@ -366,7 +366,7 @@ TEST_CASE("screens", "[base]")
 
         auto output = base::get_output(setup.base->outputs, test_data.expected);
         QVERIFY(output);
-        QCOMPARE(win::get_current_output(*setup.base->space), output);
+        QCOMPARE(win::get_current_output(*setup.base->mod.space), output);
     }
 }
 

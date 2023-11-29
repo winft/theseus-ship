@@ -86,7 +86,7 @@ TEST_CASE("pointer input", "[input]")
     };
 
     auto load_cursor_theme_by_name = [&](std::string const& name) -> effect::cursor_image {
-        auto& cursor = setup.base->space->input->cursor;
+        auto& cursor = setup.base->mod.space->input->cursor;
         auto scale = setup.base->topology.max_scale;
 
         input::wayland::xcursor_theme const theme(
@@ -115,7 +115,7 @@ TEST_CASE("pointer input", "[input]")
         = [&](win::cursor_shape shape) { return load_cursor_theme_by_name(shape.name()); };
 
     auto get_wayland_window_from_id = [&](uint32_t id) {
-        return get_window<wayland_window>(setup.base->space->windows_map.at(id));
+        return get_window<wayland_window>(setup.base->mod.space->windows_map.at(id));
     };
 
     auto render = [](auto const& surface, QSize const& size = QSize(100, 50)) {
@@ -141,7 +141,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(leftSpy.isValid());
 
         // create a window
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -151,7 +151,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
 
         // currently there should not be a focused pointer surface
@@ -192,7 +192,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(movedSpy.isValid());
 
         // create a window
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -201,7 +201,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
 
         // enter
@@ -233,7 +233,7 @@ TEST_CASE("pointer input", "[input]")
         cursor()->set_pos(10, 10);
 
         // create a window
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -242,7 +242,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
 
         QCOMPARE(window->geo.pos(), QPoint(0, 0));
@@ -251,7 +251,7 @@ TEST_CASE("pointer input", "[input]")
         // is window view effect for top left screen edge loaded
         // TODO(romangg): Use OpenGl in this test and remove the expected fail once we can run tests
         // with OpenGl on CI. See https://gitlab.freedesktop.org/wlroots/wlroots/-/issues/2871.
-        REQUIRE_FALSE(setup.base->render->effects->isEffectLoaded("windowview"));
+        REQUIRE_FALSE(setup.base->mod.render->effects->isEffectLoaded("windowview"));
         return;
 
         QVERIFY(movedSpy.isEmpty());
@@ -283,7 +283,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(enteredSpy.isValid());
 
         // Create a window.
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
@@ -295,7 +295,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface, QSize(1280, 1024));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
         QVERIFY(!window->geo.frame.contains(cursor()->pos()));
 
@@ -366,17 +366,17 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAll2", "Move");
         group.writeEntry("CommandAll3", "Move");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), qt_mod);
-        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+        win::space_reconfigure(*setup.base->mod.space);
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAllModifier(), qt_mod);
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll1(),
                  win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->space->options->qobject->commandAll2(),
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll2(),
                  win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll3(),
                  win::mouse_cmd::unrestricted_move);
 
         // create a window
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -385,7 +385,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
 
         // move cursor on window
@@ -440,17 +440,17 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAll2", "Move");
         group.writeEntry("CommandAll3", "Move");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+        win::space_reconfigure(*setup.base->mod.space);
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAllModifier(), Qt::MetaModifier);
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll1(),
                  win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->space->options->qobject->commandAll2(),
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll2(),
                  win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll3(),
                  win::mouse_cmd::unrestricted_move);
 
         // create a window
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -459,13 +459,13 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
 
         // disable global shortcuts
-        QVERIFY(!setup.base->space->global_shortcuts_disabled);
-        win::set_global_shortcuts_disabled(*setup.base->space, true);
-        QVERIFY(setup.base->space->global_shortcuts_disabled);
+        QVERIFY(!setup.base->mod.space->global_shortcuts_disabled);
+        win::set_global_shortcuts_disabled(*setup.base->mod.space, true);
+        QVERIFY(setup.base->mod.space->global_shortcuts_disabled);
 
         // move cursor on window
         cursor()->set_pos(window->geo.frame.center());
@@ -481,7 +481,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(!win::is_move(window));
         pointer_button_released(BTN_LEFT, timestamp++);
 
-        win::set_global_shortcuts_disabled(*setup.base->space, false);
+        win::set_global_shortcuts_disabled(*setup.base->mod.space, false);
     }
 
     SECTION("scroll opacity")
@@ -528,10 +528,10 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAllKey", mod_name);
         group.writeEntry("CommandAllWheel", "change opacity");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         // create a window
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -540,7 +540,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(shellSurface);
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
         // set the opacity to 0.5
         window->setOpacity(0.5);
@@ -590,10 +590,10 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAllKey", "Meta");
         group.writeEntry("CommandAllWheel", "change opacity");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         // create a window
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -603,7 +603,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
         // set the opacity to 0.5
         window->setOpacity(0.5);
@@ -613,9 +613,9 @@ TEST_CASE("pointer input", "[input]")
         cursor()->set_pos(window->geo.frame.center());
 
         // disable global shortcuts
-        QVERIFY(!setup.base->space->global_shortcuts_disabled);
-        win::set_global_shortcuts_disabled(*setup.base->space, true);
-        QVERIFY(setup.base->space->global_shortcuts_disabled);
+        QVERIFY(!setup.base->mod.space->global_shortcuts_disabled);
+        win::set_global_shortcuts_disabled(*setup.base->mod.space, true);
+        QVERIFY(setup.base->mod.space->global_shortcuts_disabled);
 
         // simulate modifier+wheel
         quint32 timestamp = 1;
@@ -626,7 +626,7 @@ TEST_CASE("pointer input", "[input]")
         QCOMPARE(window->opacity(), 0.5);
         keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
-        win::set_global_shortcuts_disabled(*setup.base->space, false);
+        win::set_global_shortcuts_disabled(*setup.base->mod.space, false);
     }
 
     SECTION("scroll action")
@@ -644,9 +644,9 @@ TEST_CASE("pointer input", "[input]")
         auto group = setup.base->config.main->group("MouseBindings");
         group.writeEntry("CommandWindowWheel", "activate and scroll");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
         // create two windows
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface1 = create_surface();
@@ -656,7 +656,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface1);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window1 = get_wayland_window(setup.base->space->stacking.active);
+        auto window1 = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window1);
         auto surface2 = create_surface();
         QVERIFY(surface2);
@@ -665,7 +665,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface2);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window2 = get_wayland_window(setup.base->space->stacking.active);
+        auto window2 = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window2);
         QVERIFY(window1 != window2);
 
@@ -703,16 +703,16 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("DelayFocusInterval", 200);
         group.writeEntry("FocusPolicy", "FocusFollowsMouse");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
         // verify the settings
-        QCOMPARE(setup.base->space->options->qobject->focusPolicy(),
+        QCOMPARE(setup.base->mod.space->options->qobject->focusPolicy(),
                  win::focus_policy::follows_mouse);
-        QVERIFY(setup.base->space->options->qobject->isAutoRaise());
-        QCOMPARE(setup.base->space->options->qobject->autoRaiseInterval(), 20);
-        QCOMPARE(setup.base->space->options->qobject->delayFocusInterval(), 200);
+        QVERIFY(setup.base->mod.space->options->qobject->isAutoRaise());
+        QCOMPARE(setup.base->mod.space->options->qobject->autoRaiseInterval(), 20);
+        QCOMPARE(setup.base->mod.space->options->qobject->delayFocusInterval(), 200);
 
         // create two windows
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface1 = create_surface();
@@ -722,7 +722,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface1, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window1 = get_wayland_window(setup.base->space->stacking.active);
+        auto window1 = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window1);
         auto surface2 = create_surface();
         QVERIFY(surface2);
@@ -731,19 +731,20 @@ TEST_CASE("pointer input", "[input]")
         render(surface2, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window2 = get_wayland_window(setup.base->space->stacking.active);
+        auto window2 = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window2);
         QVERIFY(window1 != window2);
-        QCOMPARE(get_wayland_window(win::top_client_in_subspace(*setup.base->space, 1, nullptr)),
-                 window2);
+        QCOMPARE(
+            get_wayland_window(win::top_client_in_subspace(*setup.base->mod.space, 1, nullptr)),
+            window2);
         // geometry of the two windows should be overlapping
         QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
 
         // signal spies for active window changed and stacking order changed
-        QSignalSpy activeWindowChangedSpy(setup.base->space->qobject.get(),
+        QSignalSpy activeWindowChangedSpy(setup.base->mod.space->qobject.get(),
                                           &space::qobject_t::clientActivated);
         QVERIFY(activeWindowChangedSpy.isValid());
-        QSignalSpy stackingOrderChangedSpy(setup.base->space->stacking.order.qobject.get(),
+        QSignalSpy stackingOrderChangedSpy(setup.base->mod.space->stacking.order.qobject.get(),
                                            &win::stacking_order_qobject::changed);
         QVERIFY(stackingOrderChangedSpy.isValid());
 
@@ -756,21 +757,24 @@ TEST_CASE("pointer input", "[input]")
         cursor()->set_pos(10, 10);
         QVERIFY(stackingOrderChangedSpy.wait());
         QCOMPARE(stackingOrderChangedSpy.count(), 1);
-        QCOMPARE(get_wayland_window(win::top_client_in_subspace(*setup.base->space, 1, nullptr)),
-                 window1);
+        QCOMPARE(
+            get_wayland_window(win::top_client_in_subspace(*setup.base->mod.space, 1, nullptr)),
+            window1);
         QTRY_VERIFY(window1->control->active);
 
         // move on second window, but move away before active window change delay hits
         cursor()->set_pos(810, 810);
         QVERIFY(stackingOrderChangedSpy.wait());
         QCOMPARE(stackingOrderChangedSpy.count(), 2);
-        QCOMPARE(get_wayland_window(win::top_client_in_subspace(*setup.base->space, 1, nullptr)),
-                 window2);
+        QCOMPARE(
+            get_wayland_window(win::top_client_in_subspace(*setup.base->mod.space, 1, nullptr)),
+            window2);
         cursor()->set_pos(10, 10);
         QVERIFY(!activeWindowChangedSpy.wait(200));
         QVERIFY(window1->control->active);
-        QCOMPARE(get_wayland_window(win::top_client_in_subspace(*setup.base->space, 1, nullptr)),
-                 window1);
+        QCOMPARE(
+            get_wayland_window(win::top_client_in_subspace(*setup.base->mod.space, 1, nullptr)),
+            window1);
 
         // as we moved back on window 1 that should been raised in the mean time
         QCOMPARE(stackingOrderChangedSpy.count(), 3);
@@ -798,10 +802,10 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandWindow2", "Activate, raise and pass click");
         group.writeEntry("CommandWindow3", "Activate, raise and pass click");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         // Create two windows.
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
@@ -813,7 +817,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface1, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window1 = get_wayland_window(setup.base->space->stacking.active);
+        auto window1 = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window1);
 
         auto surface2 = create_surface();
@@ -824,20 +828,21 @@ TEST_CASE("pointer input", "[input]")
         render(surface2, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window2 = get_wayland_window(setup.base->space->stacking.active);
+        auto window2 = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window2);
         QVERIFY(window1 != window2);
-        QCOMPARE(get_wayland_window(win::top_client_in_subspace(*setup.base->space, 1, nullptr)),
-                 window2);
+        QCOMPARE(
+            get_wayland_window(win::top_client_in_subspace(*setup.base->mod.space, 1, nullptr)),
+            window2);
 
         // Geometry of the two windows should be overlapping.
         QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
 
         // Signal spies for active window changed and stacking order changed.
-        QSignalSpy activeWindowChangedSpy(setup.base->space->qobject.get(),
+        QSignalSpy activeWindowChangedSpy(setup.base->mod.space->qobject.get(),
                                           &space::qobject_t::clientActivated);
         QVERIFY(activeWindowChangedSpy.isValid());
-        QSignalSpy stackingOrderChangedSpy(setup.base->space->stacking.order.qobject.get(),
+        QSignalSpy stackingOrderChangedSpy(setup.base->mod.space->stacking.order.qobject.get(),
                                            &win::stacking_order_qobject::changed);
         QVERIFY(stackingOrderChangedSpy.isValid());
 
@@ -862,8 +867,9 @@ TEST_CASE("pointer input", "[input]")
         // Should raise window1 and activate it.
         QCOMPARE(stackingOrderChangedSpy.count(), 1);
         QVERIFY(!activeWindowChangedSpy.isEmpty());
-        QCOMPARE(get_wayland_window(win::top_client_in_subspace(*setup.base->space, 1, nullptr)),
-                 window1);
+        QCOMPARE(
+            get_wayland_window(win::top_client_in_subspace(*setup.base->mod.space, 1, nullptr)),
+            window1);
         QVERIFY(window1->control->active);
         QVERIFY(!window2->control->active);
 
@@ -891,11 +897,11 @@ TEST_CASE("pointer input", "[input]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("ClickRaise", click_raise);
         group.sync();
-        win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->space->options->qobject->isClickRaise(), click_raise);
+        win::space_reconfigure(*setup.base->mod.space);
+        QCOMPARE(setup.base->mod.space->options->qobject->isClickRaise(), click_raise);
 
         // Create two windows.
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
@@ -906,7 +912,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface1, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window1 = get_wayland_window(setup.base->space->stacking.active);
+        auto window1 = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window1);
         QSignalSpy window1DestroyedSpy(window1->qobject.get(), &QObject::destroyed);
         QVERIFY(window1DestroyedSpy.isValid());
@@ -918,25 +924,27 @@ TEST_CASE("pointer input", "[input]")
         render(surface2, QSize(800, 800));
         QVERIFY(clientAddedSpy.wait());
 
-        auto window2 = get_wayland_window(setup.base->space->stacking.active);
+        auto window2 = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window2);
         QVERIFY(window1 != window2);
 
         QSignalSpy window2DestroyedSpy(window2->qobject.get(), &QObject::destroyed);
         QVERIFY(window2DestroyedSpy.isValid());
-        QCOMPARE(get_wayland_window(win::top_client_in_subspace(*setup.base->space, 1, nullptr)),
-                 window2);
+        QCOMPARE(
+            get_wayland_window(win::top_client_in_subspace(*setup.base->mod.space, 1, nullptr)),
+            window2);
 
         // Geometry of the two windows should be overlapping.
         QVERIFY(window1->geo.frame.intersects(window2->geo.frame));
 
         // lower the currently active window
-        win::lower_window(*setup.base->space, window2);
-        QCOMPARE(get_wayland_window(win::top_client_in_subspace(*setup.base->space, 1, nullptr)),
-                 window1);
+        win::lower_window(*setup.base->mod.space, window2);
+        QCOMPARE(
+            get_wayland_window(win::top_client_in_subspace(*setup.base->mod.space, 1, nullptr)),
+            window1);
 
         // Signal spy for stacking order spy.
-        QSignalSpy stackingOrderChangedSpy(setup.base->space->stacking.order.qobject.get(),
+        QSignalSpy stackingOrderChangedSpy(setup.base->mod.space->stacking.order.qobject.get(),
                                            &win::stacking_order_qobject::changed);
         QVERIFY(stackingOrderChangedSpy.isValid());
 
@@ -953,14 +961,14 @@ TEST_CASE("pointer input", "[input]")
         if (click_raise) {
             QCOMPARE(stackingOrderChangedSpy.count(), 1);
             QTRY_COMPARE_WITH_TIMEOUT(
-                get_wayland_window(win::top_client_in_subspace(*setup.base->space, 1, nullptr)),
+                get_wayland_window(win::top_client_in_subspace(*setup.base->mod.space, 1, nullptr)),
                 window2,
                 200);
         } else {
             QCOMPARE(stackingOrderChangedSpy.count(), 0);
             QVERIFY(!stackingOrderChangedSpy.wait(100));
             QCOMPARE(
-                get_wayland_window(win::top_client_in_subspace(*setup.base->space, 1, nullptr)),
+                get_wayland_window(win::top_client_in_subspace(*setup.base->mod.space, 1, nullptr)),
                 window1);
         }
 
@@ -988,14 +996,14 @@ TEST_CASE("pointer input", "[input]")
 
         // Move cursor somewhere the new window won't open.
         cursor()->set_pos(800, 800);
-        auto& p = setup.base->space->input->pointer;
+        auto& p = setup.base->mod.space->input->pointer;
 
         // At the moment it should be the fallback cursor.
         auto const fallback_cursor = cursor()->image();
         QVERIFY(!fallback_cursor.isNull());
 
         // Create a window.
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
@@ -1008,7 +1016,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
 
         // Move the cursor to center of window. This should first set a null pointer. So we still
@@ -1107,7 +1115,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(!fallback_cursor.isNull());
 
         // Now let's create a window.
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
@@ -1118,7 +1126,7 @@ TEST_CASE("pointer input", "[input]")
 
         render(surface);
         QVERIFY(clientAddedSpy.wait());
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
 
         // And move cursor to the window.
@@ -1190,7 +1198,7 @@ TEST_CASE("pointer input", "[input]")
 
         cursor()->set_pos(800, 800);
 
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -1200,7 +1208,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
         QCOMPARE(window->transient->input_grab, false);
         // move pointer into window
@@ -1246,7 +1254,7 @@ TEST_CASE("pointer input", "[input]")
             = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
         QVERIFY(popupClient);
         QVERIFY(popupClient != window);
-        QCOMPARE(window, get_wayland_window(setup.base->space->stacking.active));
+        QCOMPARE(window, get_wayland_window(setup.base->mod.space->stacking.active));
         QCOMPARE(popupClient->transient->lead(), window);
         QCOMPARE(popupClient->geo.pos(), window->geo.pos() + QPoint(80, 20));
         QCOMPARE(popupClient->transient->input_grab, true);
@@ -1313,7 +1321,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(motionSpy.isValid());
 
         cursor()->set_pos(800, 800);
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -1333,7 +1341,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
         QCOMPARE(window->transient->input_grab, false);
         QVERIFY(win::decoration(window));
@@ -1369,7 +1377,7 @@ TEST_CASE("pointer input", "[input]")
             = get_wayland_window_from_id(clientAddedSpy.last().first().value<quint32>());
         QVERIFY(popupClient);
         QVERIFY(popupClient != window);
-        QCOMPARE(window, get_wayland_window(setup.base->space->stacking.active));
+        QCOMPARE(window, get_wayland_window(setup.base->mod.space->stacking.active));
         QCOMPARE(popupClient->transient->lead(), window);
         QCOMPARE(popupClient->geo.pos(),
                  win::frame_to_client_pos(window, window->geo.pos()) + QPoint(80, 20));
@@ -1404,7 +1412,7 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(leftSpy.isValid());
 
         cursor()->set_pos(800, 800);
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -1414,7 +1422,7 @@ TEST_CASE("pointer input", "[input]")
         render(surface);
         QVERIFY(clientAddedSpy.wait());
 
-        auto window = get_wayland_window(setup.base->space->stacking.active);
+        auto window = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(window);
 
         // move cursor over window
@@ -1534,7 +1542,7 @@ TEST_CASE("pointer input", "[input]")
 
         // unload the window view effect because it pushes back
         // pointer if it's at (0, 0)
-        setup.base->render->effects->unloadEffect(QStringLiteral("windowview"));
+        setup.base->mod.render->effects->unloadEffect(QStringLiteral("windowview"));
 
         // setup screen layout
         auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024},
@@ -1577,9 +1585,9 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAllKey", "Meta");
         group.writeEntry("CommandAll3", "Resize");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+        win::space_reconfigure(*setup.base->mod.space);
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAllModifier(), Qt::MetaModifier);
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll3(),
                  win::mouse_cmd::unrestricted_resize);
 
         // create a test client
@@ -1646,9 +1654,9 @@ TEST_CASE("pointer input", "[input]")
         group.writeEntry("CommandAllKey", "Meta");
         group.writeEntry("CommandAll1", "Move");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->space->options->qobject->commandAllModifier(), Qt::MetaModifier);
-        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+        win::space_reconfigure(*setup.base->mod.space);
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAllModifier(), Qt::MetaModifier);
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll1(),
                  win::mouse_cmd::unrestricted_move);
 
         // create a test client

@@ -136,7 +136,7 @@ void handle_desktop_resize(Space& space, QSize const& size)
     // TODO: emit a signal instead and remove the deep function calls into edges and effects
     space.edges->recreateEdges();
 
-    if (auto& effects = space.base.render->effects) {
+    if (auto& effects = space.base.mod.render->effects) {
         effects->desktopResized(size);
     }
 }

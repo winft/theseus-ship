@@ -27,9 +27,9 @@ TEST_CASE("keymap creation failure", "[input]")
     test::setup setup("keymap-create-fail");
     setup.start();
 
-    setup.base->input->xkb.setConfig(KSharedConfig::openConfig({}, KConfig::SimpleConfig));
+    setup.base->mod.input->xkb.setConfig(KSharedConfig::openConfig({}, KConfig::SimpleConfig));
 
-    auto layoutGroup = setup.base->input->config.xkb->group("Layout");
+    auto layoutGroup = setup.base->mod.input->config.xkb->group("Layout");
     layoutGroup.writeEntry("LayoutList", QStringLiteral("no"));
     layoutGroup.writeEntry("Model", "no");
     layoutGroup.writeEntry("Options", "no");

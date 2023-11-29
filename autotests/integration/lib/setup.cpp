@@ -75,7 +75,7 @@ setup::setup(std::string const& test_name,
     wlr_output_enable(out, true);
 
     try {
-        base->render = std::make_unique<base_t::render_t>(*base);
+        base->mod.render = std::make_unique<base_t::render_t>(*base);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
         throw;
@@ -93,20 +93,20 @@ setup::~setup()
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
     if (effects) {
-        base->render->effects->unloadAllEffects();
+        base->mod.render->effects->unloadAllEffects();
     }
 
 #if USE_XWL
     // Kill Xwayland before terminating its connection.
-    base->xwayland.reset();
+    base->mod.xwayland.reset();
 #endif
     base->server->terminateClientConnections();
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    base->render->lock();
+    base->mod.render->lock();
 
-    base->space.reset();
+    base->mod.space.reset();
 
     current_setup = nullptr;
 }
@@ -114,9 +114,9 @@ setup::~setup()
 void setup::start()
 {
     base->options = base::create_options(base->operation_mode, base->config.main);
-    base->input = std::make_unique<input::wayland::platform<base_t>>(
+    base->mod.input = std::make_unique<input::wayland::platform<base_t>>(
         *base, input::config(KConfig::SimpleConfig));
-    base->input->install_shortcuts();
+    base->mod.input->install_shortcuts();
 
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
     pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));
@@ -126,7 +126,7 @@ void setup::start()
     assert(touch);
 
     try {
-        base->render->init();
+        base->mod.render->init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         return;
@@ -147,14 +147,15 @@ void setup::start()
     metadata.physical_size = {1280, 1024};
     out->wrapland_output()->set_metadata(metadata);
 
-    base->space = std::make_unique<base_t::space_t>(*base->render, *base->input);
-    base->space->desktop = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->space);
-    input::wayland::add_dbus(base->input.get());
-    win::init_shortcuts(*base->space);
-    render::init_shortcuts(*base->render);
-    base->mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
+    base->mod.space = std::make_unique<base_t::space_t>(*base->mod.render, *base->mod.input);
+    base->mod.space->desktop
+        = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->mod.space);
+    input::wayland::add_dbus(base->mod.input.get());
+    win::init_shortcuts(*base->mod.space);
+    render::init_shortcuts(*base->mod.render);
+    base->mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base->mod.space);
 
-    base->render->start(*base->space);
+    base->mod.render->start(*base->mod.space);
     base->server->init_screen_locker();
 
     if (base->operation_mode == base::operation_mode::xwayland) {
@@ -222,8 +223,8 @@ void setup::create_xwayland()
     };
 
     try {
-        base->xwayland
-            = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->space, status_callback);
+        base->mod.xwayland
+            = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "System error creating Xwayland: " << exc.what() << std::endl;
     } catch (std::exception const& exc) {

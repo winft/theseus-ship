@@ -34,7 +34,7 @@ public:
         this->m_ui->surfacesView->setModel(new xwl_surface_tree_model(space, this));
 
         auto device_model = new input_device_model(this);
-        setup_input_device_model(*device_model, *space.base.input->dbus);
+        setup_input_device_model(*device_model, *space.base.mod.input->dbus);
         this->m_ui->inputDevicesView->setModel(device_model);
         this->m_ui->inputDevicesView->setItemDelegate(new wayland_console_delegate(this));
 
@@ -93,7 +93,7 @@ private:
 
     void update_keyboard_tab()
     {
-        auto xkb = input::xkb::get_primary_xkb_keyboard(*this->space.base.input);
+        auto xkb = input::xkb::get_primary_xkb_keyboard(*this->space.base.mod.input);
         auto keymap = xkb->keymap->raw;
 
         this->m_ui->layoutsLabel->setText(keymapComponentToString<xkb_layout_index_t>(

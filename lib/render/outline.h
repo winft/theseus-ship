@@ -63,7 +63,7 @@ public:
     {
         if (compositor.state == state::on) {
             return std::make_unique<composited_outline_visual>(
-                this, *compositor.base.space->qml_engine, compositor.base.config);
+                this, *compositor.base.mod.space->qml_engine, compositor.base.config);
         } else {
             return std::unique_ptr<outline_visual>(compositor.create_non_composited_outline(this));
         }

@@ -28,7 +28,7 @@ TEST_CASE("idle inhibition", "[win]")
 
     SECTION("inhibit")
     {
-        auto& idle = setup.base->input->idle;
+        auto& idle = setup.base->mod.input->idle;
         QCOMPARE(idle.inhibit_count, 0);
 
         // now create window
@@ -95,12 +95,12 @@ TEST_CASE("idle inhibition", "[win]")
         // This test verifies that the idle inhibitor object is not honored when
         // the associated surface is not on the current subspace.
 
-        auto& vd_manager = setup.base->space->subspace_manager;
+        auto& vd_manager = setup.base->mod.space->subspace_manager;
         win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // Get reference to the idle interface.
-        auto& idle = setup.base->input->idle;
+        auto& idle = setup.base->mod.input->idle;
         QCOMPARE(idle.inhibit_count, 0);
 
         // Create the test client.
@@ -151,7 +151,7 @@ TEST_CASE("idle inhibition", "[win]")
         // associated surface is minimized.
 
         // Get reference to the idle interface.
-        auto& idle = setup.base->input->idle;
+        auto& idle = setup.base->mod.input->idle;
         QCOMPARE(idle.inhibit_count, 0);
 
         // Create the test client.
@@ -192,7 +192,7 @@ TEST_CASE("idle inhibition", "[win]")
         // when the associated client is unmapped.
 
         // Get reference to the idle interface.
-        auto& idle = setup.base->input->idle;
+        auto& idle = setup.base->mod.input->idle;
         QCOMPARE(idle.inhibit_count, 0);
 
         // Create the test client.
@@ -245,12 +245,12 @@ TEST_CASE("idle inhibition", "[win]")
         // This test verifies that the idle inhibitor object is not honored by KWin
         // when the associated surface leaves the current subspace.
 
-        auto& vd_manager = setup.base->space->subspace_manager;
+        auto& vd_manager = setup.base->mod.space->subspace_manager;
         win::subspace_manager_set_count(*vd_manager, 2);
         QCOMPARE(vd_manager->subspaces.size(), 2u);
 
         // Get reference to the idle interface.
-        auto& idle = setup.base->input->idle;
+        auto& idle = setup.base->mod.input->idle;
         QCOMPARE(idle.inhibit_count, 0);
 
         // Create the test client.

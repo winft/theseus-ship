@@ -169,7 +169,7 @@ void update_shape(Win* win)
         add_full_repaint(*win);
 
         // In case shape change removes part of this window
-        win->space.base.render->addRepaint(visible_rect(win));
+        win->space.base.mod.render->addRepaint(visible_rect(win));
     }
 
     discard_shape(*win);
@@ -254,7 +254,7 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
     }
 
     if (win->control->move_resize.enabled) {
-        if (win->space.base.render->scene) {
+        if (win->space.base.mod.render->scene) {
             // Defer the X server update until we leave this mode.
             win->move_needs_server_update = true;
         } else {
