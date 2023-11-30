@@ -140,7 +140,6 @@ public:
     effect::render_data set_render_target_to_output(base::output const& output) override
     {
         auto const& out = get_egl_out(&output);
-        auto const geo = output.geometry();
         auto viewport = out->out->base.view_geometry();
         auto res = out->out->base.mode_size();
         auto is_portrait = has_portrait_transform(out->out->base);
