@@ -197,7 +197,6 @@ public:
 
     input::xkb::manager<type> xkb;
     std::unique_ptr<global_shortcuts_manager> shortcuts;
-    std::unique_ptr<dbus::device_manager<type>> dbus;
 
     Base& base;
 

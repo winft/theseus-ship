@@ -14,6 +14,7 @@
 #include "input/platform.h"
 #include "input/types.h"
 #include <input/backend/wlroots/backend.h>
+#include <input/dbus/device_manager.h>
 
 #include <QPointF>
 #include <Wrapland/Server/display.h>
@@ -21,12 +22,15 @@
 namespace KWin::input::wayland
 {
 
-template<typename Base>
+struct platform_mod {
+};
+
+template<typename Base, typename Mod = platform_mod>
 class platform
 {
 public:
     using base_t = Base;
-    using type = platform<Base>;
+    using type = platform<Base, Mod>;
     using space_t = typename Base::space_t;
     using redirect_t = redirect<space_t>;
     using backend_t = backend::wlroots::backend<type>;
@@ -180,10 +184,11 @@ public:
 
     input::xkb::manager<type> xkb;
     std::unique_ptr<global_shortcuts_manager> shortcuts;
-    std::unique_ptr<dbus::device_manager<type>> dbus;
     input::idle idle;
     std::unique_ptr<Wrapland::Server::kde_idle> kde_idle;
     std::unique_ptr<Wrapland::Server::idle_notifier_v1> idle_notifier;
+
+    Mod mod;
 
 private:
     void setup_touchpad_shortcuts()
@@ -227,11 +232,5 @@ private:
 
     bool touchpads_enabled{true};
 };
-
-template<typename Input>
-void add_dbus(Input* platform)
-{
-    platform->dbus = std::make_unique<dbus::device_manager<Input>>(*platform);
-}
 
 }

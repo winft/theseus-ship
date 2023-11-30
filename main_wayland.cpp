@@ -179,9 +179,9 @@ void ApplicationWayland::start(base::operation_mode mode,
         exit(exc.code().value());
     }
 
-    base->mod.input = std::make_unique<input::wayland::platform<base_t>>(
-        *base, input::config(KConfig::NoGlobals));
-    input::wayland::add_dbus(base->mod.input.get());
+    base->mod.input = std::make_unique<base_t::input_t>(*base, input::config(KConfig::NoGlobals));
+    base->mod.input->mod.dbus
+        = std::make_unique<input::dbus::device_manager<base_t::input_t>>(*base->mod.input);
 
     try {
         base->mod.render->init();

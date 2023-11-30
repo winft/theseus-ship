@@ -114,8 +114,10 @@ setup::~setup()
 void setup::start()
 {
     base->options = base::create_options(base->operation_mode, base->config.main);
-    base->mod.input = std::make_unique<input::wayland::platform<base_t>>(
-        *base, input::config(KConfig::SimpleConfig));
+    base->mod.input
+        = std::make_unique<base_t::input_t>(*base, input::config(KConfig::SimpleConfig));
+    base->mod.input->mod.dbus
+        = std::make_unique<input::dbus::device_manager<base_t::input_t>>(*base->mod.input);
 
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
     pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));
@@ -149,7 +151,6 @@ void setup::start()
     base->mod.space = std::make_unique<base_t::space_t>(*base->mod.render, *base->mod.input);
     base->mod.space->mod.desktop
         = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->mod.space);
-    input::wayland::add_dbus(base->mod.input.get());
     win::init_shortcuts(*base->mod.space);
     render::init_shortcuts(*base->mod.render);
     base->mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base->mod.space);

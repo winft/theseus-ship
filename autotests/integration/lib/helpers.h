@@ -42,6 +42,12 @@ namespace KWin::detail::test
 
 class client;
 
+template<typename Base>
+struct input_mod {
+    using platform_t = input::wayland::platform<Base, input_mod>;
+    std::unique_ptr<input::dbus::device_manager<platform_t>> dbus;
+};
+
 struct space_mod {
     std::unique_ptr<desktop::platform> desktop;
 };
@@ -50,7 +56,7 @@ struct space_mod {
 struct base_mod {
     using platform_t = base::wayland::xwl_platform<base_mod>;
     using render_t = render::wayland::xwl_platform<platform_t>;
-    using input_t = input::wayland::platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t, input_mod<platform_t>>;
     using space_t = win::wayland::xwl_space<platform_t, space_mod>;
 
     std::unique_ptr<render_t> render;
@@ -65,7 +71,7 @@ using base_t = base::wayland::xwl_platform<base_mod>;
 struct base_mod {
     using platform_t = base::wayland::platform<base_mod>;
     using render_t = render::wayland::platform<platform_t>;
-    using input_t = input::wayland::platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t, input_mod<platform_t>>;
     using space_t = win::wayland::space<platform_t, space_mod>;
 
     std::unique_ptr<render_t> render;

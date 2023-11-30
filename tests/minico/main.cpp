@@ -72,7 +72,6 @@ int main(int argc, char* argv[])
 
     base.mod.input = std::make_unique<input::wayland::platform<base_t>>(
         base, input::config(KConfig::NoGlobals));
-    input::wayland::add_dbus(base.mod.input.get());
 
     try {
         base.mod.render->init();
