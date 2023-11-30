@@ -116,7 +116,6 @@ void setup::start()
     base->options = base::create_options(base->operation_mode, base->config.main);
     base->mod.input = std::make_unique<input::wayland::platform<base_t>>(
         *base, input::config(KConfig::SimpleConfig));
-    base->mod.input->install_shortcuts();
 
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
     pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));

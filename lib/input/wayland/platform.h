@@ -55,6 +55,10 @@ public:
                          &Wrapland::Server::idle_notifier_v1::notification_created,
                          this->qobject.get(),
                          [this](auto notif) { idle_setup_notification(idle, notif); });
+
+        shortcuts = std::make_unique<global_shortcuts_manager>();
+        shortcuts->init();
+        setup_touchpad_shortcuts();
     }
 
     platform(platform const&) = delete;
@@ -87,13 +91,6 @@ public:
     {
         registerShortcut(shortcut, action);
         QObject::connect(action, &QAction::triggered, receiver, slot);
-    }
-
-    void install_shortcuts()
-    {
-        this->shortcuts = std::make_unique<global_shortcuts_manager>();
-        this->shortcuts->init();
-        setup_touchpad_shortcuts();
     }
 
     void update_keyboard_leds(input::keyboard_leds leds)

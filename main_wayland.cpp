@@ -182,7 +182,6 @@ void ApplicationWayland::start(base::operation_mode mode,
     base->mod.input = std::make_unique<input::wayland::platform<base_t>>(
         *base, input::config(KConfig::NoGlobals));
     input::wayland::add_dbus(base->mod.input.get());
-    base->mod.input->install_shortcuts();
 
     try {
         base->mod.render->init();

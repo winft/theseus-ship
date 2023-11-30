@@ -74,9 +74,6 @@ int main(int argc, char* argv[])
         base, input::config(KConfig::NoGlobals));
     input::wayland::add_dbus(base.mod.input.get());
 
-    // TODO(romangg): remove
-    base.mod.input->install_shortcuts();
-
     try {
         base.mod.render->init();
     } catch (std::exception const&) {
