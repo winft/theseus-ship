@@ -36,19 +36,20 @@
 namespace KWin::win::x11
 {
 
-template<typename Render, typename Input>
+template<typename Base>
 class space
 {
 public:
-    using type = space<Render, Input>;
+    using type = space<Base>;
     using qobject_t = space_qobject;
-    using base_t = typename Input::base_t;
-    using input_t = typename Input::redirect_t;
+    using base_t = Base;
+    using input_t = typename base_t::input_t::redirect_t;
     using x11_window = window<type>;
     using window_t = std::variant<x11_window*>;
     using window_group_t = x11::group<type>;
     using render_outline_t = typename base_t::render_t::qobject_t::outline_t;
 
+    template<typename Render, typename Input>
     space(Render& render, Input& input)
         : base{input.base}
     {

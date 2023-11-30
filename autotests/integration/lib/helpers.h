@@ -42,11 +42,9 @@ namespace KWin::detail::test
 class client;
 
 #if USE_XWL
-using space = win::wayland::xwl_space<render::wayland::xwl_platform<base::wayland::xwl_platform>,
-                                      input::wayland::platform<base::wayland::xwl_platform>>;
+using space = win::wayland::xwl_space<base::wayland::xwl_platform>;
 #else
-using space = win::wayland::space<render::wayland::platform<base::wayland::platform>,
-                                  input::wayland::platform<base::wayland::platform>>;
+using space = win::wayland::space<base::wayland::platform>;
 #endif
 
 using wayland_window = win::wayland::window<space>;

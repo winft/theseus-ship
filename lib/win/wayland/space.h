@@ -24,19 +24,20 @@
 namespace KWin::win::wayland
 {
 
-template<typename Render, typename Input>
+template<typename Base>
 class space
 {
 public:
-    using type = space<Render, Input>;
+    using type = space<Base>;
     using qobject_t = space_qobject;
-    using base_t = typename Input::base_t;
-    using input_t = typename Input::redirect_t;
+    using base_t = Base;
+    using input_t = typename base_t::input_t::redirect_t;
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
     using window_t = std::variant<wayland_window*, internal_window_t*>;
     using render_outline_t = typename base_t::render_t::qobject_t::outline_t;
 
+    template<typename Render, typename Input>
     space(Render& render, Input& input)
         : base{input.base}
     {

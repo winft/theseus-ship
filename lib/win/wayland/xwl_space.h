@@ -31,14 +31,14 @@
 namespace KWin::win::wayland
 {
 
-template<typename Render, typename Input>
+template<typename Base>
 class xwl_space
 {
 public:
-    using type = xwl_space<Render, Input>;
+    using type = xwl_space<Base>;
     using qobject_t = space_qobject;
-    using base_t = typename Input::base_t;
-    using input_t = typename Input::redirect_t;
+    using base_t = Base;
+    using input_t = typename base_t::input_t::redirect_t;
     using x11_window = xwl_window<type>;
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
@@ -46,6 +46,7 @@ public:
     using window_group_t = x11::group<type>;
     using render_outline_t = typename base_t::render_t::qobject_t::outline_t;
 
+    template<typename Render, typename Input>
     xwl_space(Render& render, Input& input)
         : base{input.base}
     {

@@ -31,7 +31,7 @@ public:
     using output_t = output<wayland::platform>;
     using render_t = render::wayland::platform<wayland::platform>;
     using input_t = input::wayland::platform<wayland::platform>;
-    using space_t = win::wayland::space<render_t, input_t>;
+    using space_t = win::wayland::space<wayland::platform>;
     using backend_t = backend::wlroots::backend<wayland::platform>;
 
     platform(base::config config,

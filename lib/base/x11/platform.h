@@ -32,7 +32,7 @@ public:
     using output_t = base::x11::output<platform>;
     using render_t = render::x11::platform<platform>;
     using input_t = input::x11::platform<platform>;
-    using space_t = win::x11::space<render_t, input_t>;
+    using space_t = win::x11::space<platform>;
 
     platform(base::config config)
         : config{std::move(config)}
