@@ -6,13 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "input/keyboard_redirect.h"
-#include "input/pointer_redirect.h"
-#include "win/move.h"
-#include "win/space_reconfigure.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/keyboard.h>
 #include <Wrapland/Client/pointer.h>
@@ -21,10 +14,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
-
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <functional>
 #include <linux/input.h>

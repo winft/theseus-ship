@@ -6,16 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/compositor.h"
-#include "render/cursor.h"
-#include "render/effect_loader.h"
-#include "render/qpainter/scene.h"
-#include "win/geo.h"
-#include "win/x11/window.h"
-
-#include <render/effect/interface/effects_handler.h>
-
 #include <KConfigGroup>
 #include <QPainter>
 #include <Wrapland/Client/pointer.h>

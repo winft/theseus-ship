@@ -6,17 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "input/xkb/helpers.h"
-#include "win/control.h"
-#include "win/stacking_order.h"
-#include "win/tabbox/tabbox.h"
-#include "win/wayland/window.h"
-
 #include <KConfigGroup>
 #include <Wrapland/Client/surface.h>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 

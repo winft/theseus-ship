@@ -6,18 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "input/pointer_redirect.h"
-#include "win/deco.h"
-#include "win/deco/bridge.h"
-#include "win/deco/client_impl.h"
-#include "win/deco/settings.h"
-#include "win/move.h"
-#include "win/screen_edges.h"
-#include "win/space_reconfigure.h"
-#include "win/wayland/window.h"
-
+#include <KDecoration2/Decoration>
+#include <KDecoration2/DecorationSettings>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/keyboard.h>
@@ -26,10 +16,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
-#include <KDecoration2/Decoration>
-#include <KDecoration2/DecorationSettings>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 

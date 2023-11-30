@@ -6,20 +6,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "base/x11/xcb/window.h"
-#include "win/control.h"
-#include "win/deco.h"
-#include "win/wayland/window.h"
-
+#include <QPainter>
+#include <QRasterWindow>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <catch2/generators/catch_generators.hpp>
-
-#include <QPainter>
-#include <QRasterWindow>
 
 namespace KWin::detail::test
 {

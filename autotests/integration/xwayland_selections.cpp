@@ -6,14 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "win/activation.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-#include "xwl/data_bridge.h"
-#include "xwl/xwayland.h"
-
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <catch2/generators/catch_generators.hpp>

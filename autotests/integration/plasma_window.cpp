@@ -6,24 +6,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/geo.h"
-#include "win/screen_edges.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
+#include <KScreenLocker/KsldApp>
+#include <QPainter>
+#include <QRasterWindow>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmawindowmanagement.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
-
-#include <KScreenLocker/KsldApp>
-
-#include <QPainter>
-#include <QRasterWindow>
 #include <xcb/xcb_icccm.h>
 
 using namespace Wrapland::Client;

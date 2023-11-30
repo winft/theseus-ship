@@ -6,34 +6,19 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "script/platform.h"
-#include "script/script.h"
-#include "win/deco/bridge.h"
-#include "win/deco/settings.h"
-#include "win/move.h"
-#include "win/screen.h"
-#include "win/wayland/space.h"
-#include "win/window_operation.h"
-#include "win/x11/window.h"
-
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
-
-#include <Wrapland/Client/compositor.h>
-#include <Wrapland/Client/connection_thread.h>
-#include <Wrapland/Client/surface.h>
-#include <Wrapland/Client/xdg_shell.h>
-#include <Wrapland/Client/xdgdecoration.h>
-
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
 #include <QTemporaryFile>
 #include <QTextStream>
-
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdg_shell.h>
+#include <Wrapland/Client/xdgdecoration.h>
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 #include <xcb/xcb_icccm.h>

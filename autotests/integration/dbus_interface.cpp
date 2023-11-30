@@ -6,23 +6,12 @@ SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "base/x11/atoms.h"
-#include "win/actions.h"
-#include "win/controlling.h"
-#include "win/desktop_space.h"
-#include "win/move.h"
-#include "win/wayland/space.h"
-#include "win/x11/window.h"
-
-#include <Wrapland/Client/surface.h>
-
 #include <QDBusArgument>
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingReply>
 #include <QUuid>
-
+#include <Wrapland/Client/surface.h>
 #include <xcb/xcb_icccm.h>
 
 using namespace Wrapland::Client;

@@ -6,15 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "render/compositor.h"
-#include "render/scene.h"
-#include "win/deco.h"
-#include "win/screen_edges.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
 #include <KDecoration2/Decoration>
 #include <linux/input.h>
 

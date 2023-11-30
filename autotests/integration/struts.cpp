@@ -6,22 +6,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/geo.h"
-#include "win/input.h"
-#include "win/screen_edges.h"
-#include "win/space_reconfigure.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
+#include <KDecoration2/Decoration>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/surface.h>
-
-#include <KDecoration2/Decoration>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <map>
 #include <xcb/xcb_icccm.h>

@@ -6,16 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "render/compositor.h"
-#include "render/scene.h"
-#include "win/active_window.h"
-#include "win/move.h"
-#include "win/screen.h"
-#include "win/screen_edges.h"
-#include "win/wayland/space.h"
-
+#include <KGlobalAccel>
+#include <KScreenLocker/KsldApp>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/keyboard.h>
@@ -25,13 +17,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
-
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
-
-#include <KGlobalAccel>
-#include <KScreenLocker/KsldApp>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 

@@ -6,19 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "base/x11/atoms.h"
-#include "utils/blocker.h"
-#include "win/actions.h"
-#include "win/activation.h"
-#include "win/stacking_order.h"
-#include "win/transient.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>
-
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>
 

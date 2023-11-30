@@ -6,19 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "win/deco.h"
-#include "win/deco/client_impl.h"
-#include "win/net.h"
-#include "win/transient.h"
-#include "win/user_actions_menu.h"
-
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 

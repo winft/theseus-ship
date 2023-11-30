@@ -6,20 +6,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/compositor.h"
-#include "render/effect/interface/anidata_p.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "script/effect.h"
-#include "win/actions.h"
-
-#include <QJSValue>
-#include <QQmlEngine>
+#include <render/effect/interface/anidata_p.h>
 
 #include <KConfigGroup>
 #include <KGlobalAccel>
-
+#include <QJSValue>
+#include <QQmlEngine>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/registry.h>

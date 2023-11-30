@@ -6,17 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "base/x11/atoms.h"
-#include "input/cursor.h"
-#include "render/effects.h"
-#include "win/active_window.h"
-#include "win/input.h"
-#include "win/move.h"
-#include "win/placement.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/plasmashell.h>
@@ -24,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_range.hpp>
 #include <linux/input.h>

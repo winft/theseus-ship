@@ -5,20 +5,15 @@
 */
 #include "lib/setup.h"
 
-#include "input/wayland/platform.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/region.h>
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/virtual_keyboard_v1.h>
-
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 #include <Wrapland/Server/virtual_keyboard_v1.h>
-
 #include <linux/input.h>
 #include <memory>
 

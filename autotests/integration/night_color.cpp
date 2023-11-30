@@ -5,10 +5,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/post/constants.h"
-#include "render/post/night_color_manager.h"
-
 #include <KConfigGroup>
 #include <catch2/generators/catch_generators.hpp>
 

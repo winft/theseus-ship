@@ -6,13 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "input/keyboard_redirect.h"
-#include "input/pointer_redirect.h"
-#include "win/user_actions_menu.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/keyboard.h>
 #include <Wrapland/Client/pointer.h>
@@ -20,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
-
 #include <linux/input.h>
 
 using namespace Wrapland::Client;

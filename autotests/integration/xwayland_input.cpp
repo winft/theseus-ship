@@ -6,17 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/deco.h"
-#include "win/screen_edges.h"
-#include "win/wayland/space.h"
-#include "win/x11/window.h"
-
+#include <QSocketNotifier>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
-
-#include <QSocketNotifier>
 #include <xcb/xcb_icccm.h>
 
 namespace KWin::detail::test

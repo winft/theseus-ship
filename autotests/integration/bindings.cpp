@@ -6,14 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "script/platform.h"
-#include "script/script.h"
-#include "win/control.h"
-#include "win/move.h"
-#include "win/wayland/window.h"
-
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingReply>

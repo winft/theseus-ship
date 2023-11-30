@@ -6,14 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/active_window.h"
-#include "win/control.h"
-#include "win/move.h"
-#include "win/stacking_order.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/surface.h>
 #include <catch2/generators/catch_generators.hpp>
 

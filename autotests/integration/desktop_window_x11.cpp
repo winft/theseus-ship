@@ -6,14 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "base/x11/xcb/proto.h"
-#include "input/cursor.h"
-#include "win/deco.h"
-#include "win/screen_edges.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
 #include <xcb/xcb_icccm.h>
 
 namespace KWin::detail::test

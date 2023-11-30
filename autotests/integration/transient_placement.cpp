@@ -6,14 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/control.h"
-#include "win/deco.h"
-#include "win/move.h"
-#include "win/screen_edges.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/event_queue.h>
@@ -27,7 +19,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/touch.h>
 #include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 #include <catch2/generators/catch_generators.hpp>

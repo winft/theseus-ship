@@ -6,19 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/options.h"
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-
-#include "win/activation.h"
-#include "win/move.h"
-#include "win/screen.h"
-#include "win/wayland/space.h"
-
+#include <KConfigGroup>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>
-
-#include <KConfigGroup>
 #include <catch2/generators/catch_generators.hpp>
 
 namespace KWin::detail::test

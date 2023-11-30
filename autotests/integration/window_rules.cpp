@@ -6,17 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "base/x11/atoms.h"
-#include "input/cursor.h"
-#include "win/deco.h"
-#include "win/rules/book.h"
-#include "win/rules/ruling.h"
-#include "win/screen_edges.h"
-#include "win/space_reconfigure.h"
-#include "win/wayland/space.h"
-#include "win/x11/window.h"
-
 #include <catch2/generators/catch_generators.hpp>
 #include <xcb/xcb_icccm.h>
 

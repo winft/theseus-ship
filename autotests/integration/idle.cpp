@@ -8,7 +8,6 @@
 #include <Wrapland/Client/idle_notify_v1.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
-
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/idle_notify_v1.h>
 #include <catch2/generators/catch_generators.hpp>

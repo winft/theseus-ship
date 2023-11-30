@@ -7,21 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/active_window.h"
-#include "win/controlling.h"
-#include "win/input.h"
-#include "win/rules/book.h"
-#include "win/rules/ruling.h"
-#include "win/setup.h"
-#include "win/space_reconfigure.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
-
 #include <linux/input.h>
 
 using namespace Wrapland::Client;

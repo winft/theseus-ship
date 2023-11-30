@@ -6,15 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "render/compositor.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "win/desktop_space.h"
-#include "win/move.h"
-#include "win/x11/window.h"
-
 #include <KConfigGroup>
 #include <xcb/xcb_icccm.h>
 

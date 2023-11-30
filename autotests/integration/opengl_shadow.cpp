@@ -6,15 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/compositor.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "render/shadow.h"
-#include "render/window.h"
-#include "win/deco.h"
-#include "win/space_reconfigure.h"
-
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationShadow>
 #include <QByteArray>

@@ -6,26 +6,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "input/keyboard_redirect.h"
-#include "input/xkb/helpers.h"
-#include "win/active_window.h"
-#include "win/input.h"
-#include "win/meta.h"
-#include "win/shortcut_dialog.h"
-#include "win/user_actions_menu.h"
-#include "win/x11/window.h"
-
+#include <KGlobalAccel>
+#include <QKeySequenceEdit>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
-
-#include <KGlobalAccel>
-#include <QKeySequenceEdit>
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
-
 #include <xcb/xcb_icccm.h>
 
 using namespace Wrapland::Client;

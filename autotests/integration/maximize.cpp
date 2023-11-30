@@ -6,26 +6,15 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/active_window.h"
-#include "win/deco.h"
-#include "win/deco/bridge.h"
-#include "win/deco/settings.h"
-#include "win/space_reconfigure.h"
-#include "win/wayland/window.h"
-
+#include <KDecoration2/DecoratedClient>
+#include <KDecoration2/Decoration>
+#include <KDecoration2/DecorationSettings>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
 #include <Wrapland/Server/xdg_decoration.h>
-
-#include <KDecoration2/DecoratedClient>
-#include <KDecoration2/Decoration>
-#include <KDecoration2/DecorationSettings>
 #include <catch2/generators/catch_generators.hpp>
 
 using namespace Wrapland::Client;

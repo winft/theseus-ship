@@ -6,18 +6,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "win/geo.h"
-
 #include <KConfigGroup>
-
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/wl_output.h>

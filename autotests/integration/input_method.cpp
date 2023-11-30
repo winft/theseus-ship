@@ -6,22 +6,16 @@
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/input_method_v2.h>
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/text_input_v3.h>
-
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/input_method_v2.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 #include <Wrapland/Server/text_input_v3.h>
-
 #include <memory>
 
 namespace KWin::detail::test

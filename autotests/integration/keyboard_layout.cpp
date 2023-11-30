@@ -6,14 +6,6 @@
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/dbus/keyboard_layouts_v2.h"
-#include "input/keyboard_redirect.h"
-#include "input/xkb/helpers.h"
-#include "input/xkb/layout_manager.h"
-#include "win/activation.h"
-#include "win/wayland/window.h"
-
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <QAction>
@@ -23,7 +15,6 @@
 #include <QDBusMetaType>
 #include <QDBusPendingCall>
 #include <Wrapland/Client/surface.h>
-
 #include <linux/input.h>
 
 extern "C" {

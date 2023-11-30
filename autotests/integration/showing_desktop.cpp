@@ -6,11 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "win/activation.h"
-#include "win/net.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/surface.h>
 #include <catch2/generators/catch_generators.hpp>

@@ -7,26 +7,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/output_helpers.h"
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "render/effects.h"
-#include "win/active_window.h"
-#include "win/control.h"
-#include "win/controlling.h"
-#include "win/deco/bridge.h"
-#include "win/deco/settings.h"
-#include "win/input.h"
-#include "win/meta.h"
-#include "win/screen.h"
-#include "win/transient.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
-
+#include <QDBusConnection>
 #include <Wrapland/Client/appmenu.h>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -35,21 +19,15 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
 #include <Wrapland/Server/client.h>
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/surface.h>
 #include <Wrapland/Server/xdg_decoration.h>
-
-#include <QDBusConnection>
-
-// system
+#include <catch2/generators/catch_generators.hpp>
+#include <csignal>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include <catch2/generators/catch_generators.hpp>
-#include <csignal>
 
 using namespace Wrapland::Client;
 

@@ -5,13 +5,6 @@
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/effects.h"
-#include "render/window.h"
-#include "win/screen.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/layer_shell_v1.h>
 #include <Wrapland/Client/output.h>
 #include <Wrapland/Client/surface.h>

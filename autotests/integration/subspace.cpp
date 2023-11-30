@@ -6,12 +6,6 @@
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "win/desktop_set.h"
-#include "win/screen.h"
-#include "win/wayland/window.h"
-#include <win/wayland/subspace_manager.h>
-
 #include <Wrapland/Client/surface.h>
 #include <catch2/generators/catch_generators.hpp>
 

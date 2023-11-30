@@ -6,19 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/compositor.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "render/qpainter/shadow.h"
-#include "render/window.h"
-#include "shadow.h"
-#include "win/deco.h"
-#include "win/space_reconfigure.h"
-
-#include <algorithm>
-#include <cmath>
-
+#include <KDecoration2/Decoration>
+#include <KDecoration2/DecorationShadow>
 #include <QByteArray>
 #include <QDir>
 #include <QImage>
@@ -27,16 +16,15 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QPainter>
 #include <QPair>
 #include <QVector>
-
-#include <KDecoration2/Decoration>
-#include <KDecoration2/DecorationShadow>
 #include <Wrapland/Client/shadow.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Server/shadow.h>
 #include <Wrapland/Server/surface.h>
+#include <algorithm>
 #include <catch2/generators/catch_generators.hpp>
+#include <cmath>
 
 using namespace Wrapland::Client;
 
