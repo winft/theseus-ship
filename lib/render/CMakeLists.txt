@@ -18,7 +18,6 @@ add_library(render SHARED)
 target_link_libraries(render
   PUBLIC
     KF6::Notifications
-    KF6::Plasma
     epoxy::epoxy
     win
 )
