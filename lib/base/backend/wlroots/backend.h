@@ -86,11 +86,6 @@ public:
         }
     }
 
-    clockid_t get_clockid() const
-    {
-        return CLOCK_MONOTONIC;
-    }
-
     void start()
     {
         if (!wlr_backend_start(native)) {

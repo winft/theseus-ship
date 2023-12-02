@@ -27,8 +27,6 @@ class KWIN_EXPORT platform : public QObject
 public:
     ~platform() override;
 
-    virtual clockid_t get_clockid() const;
-
     output_topology topology;
 
 Q_SIGNALS:

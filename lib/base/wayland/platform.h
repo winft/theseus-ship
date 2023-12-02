@@ -72,11 +72,6 @@ public:
         singleton_interface::get_outputs = {};
     }
 
-    clockid_t get_clockid() const override
-    {
-        return backend.get_clockid();
-    }
-
     base::operation_mode operation_mode;
     base::config config;
     std::unique_ptr<base::options> options;

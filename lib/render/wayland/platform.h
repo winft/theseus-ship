@@ -49,12 +49,10 @@ public:
         , options{std::make_unique<render::options>(base.operation_mode, base.config.main)}
         , backend{*this}
         , night_color{std::make_unique<render::post::night_color_manager<Base>>(base)}
-        , presentation{std::make_unique<wayland::presentation>(
-              base.get_clockid(),
-              [&] {
-                  return std::make_unique<Wrapland::Server::PresentationManager>(
-                      base.server->display.get());
-              })}
+        , presentation{std::make_unique<wayland::presentation>([&] {
+            return std::make_unique<Wrapland::Server::PresentationManager>(
+                base.server->display.get());
+        })}
         , dbus{std::make_unique<dbus::compositing<type>>(*this)}
     {
         singleton_interface::get_egl_data = [this] { return egl_data; };

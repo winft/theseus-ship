@@ -10,9 +10,4 @@ namespace KWin::base
 
 platform::~platform() = default;
 
-clockid_t platform::get_clockid() const
-{
-    return CLOCK_MONOTONIC;
-}
-
 }
