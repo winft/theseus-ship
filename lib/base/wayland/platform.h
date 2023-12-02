@@ -68,6 +68,7 @@ public:
 
     ~platform() override
     {
+        platform_cleanup(*this);
         singleton_interface::get_outputs = {};
     }
 

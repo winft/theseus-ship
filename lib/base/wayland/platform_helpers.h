@@ -14,6 +14,25 @@ namespace KWin::base::wayland
 {
 
 template<typename Platform>
+void platform_cleanup(Platform& platform)
+{
+    // need to unload all effects prior to destroying X connection as they might do X calls
+    if (platform.mod.render->effects) {
+        platform.mod.render->effects->unloadAllEffects();
+    }
+
+    if constexpr (requires(Platform platform) { platform.mod.xwayland; }) {
+        // Kill Xwayland before terminating its connection.
+        platform.mod.xwayland = {};
+    }
+    platform.server->terminateClientConnections();
+
+    // Block compositor to prevent further compositing from crashing with a null workspace.
+    // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
+    platform.mod.render->lock();
+}
+
+template<typename Platform>
 void platform_init(Platform& platform)
 {
     auto session = std::make_unique<seat::backend::wlroots::session>(

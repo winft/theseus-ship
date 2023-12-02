@@ -87,25 +87,6 @@ setup::setup(std::string const& test_name,
 
 setup::~setup()
 {
-    // TODO(romangg): can this be done in the end?
-    clients.clear();
-
-    // need to unload all effects prior to destroying X connection as they might do X calls
-    // also before destroy Workspace, as effects might call into Workspace
-    if (effects) {
-        base->mod.render->effects->unloadAllEffects();
-    }
-
-#if USE_XWL
-    // Kill Xwayland before terminating its connection.
-    base->mod.xwayland.reset();
-#endif
-    base->server->terminateClientConnections();
-
-    // Block compositor to prevent further compositing from crashing with a null workspace.
-    // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    base->mod.render->lock();
-
     current_setup = nullptr;
 }
 

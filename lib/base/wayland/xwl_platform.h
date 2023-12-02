@@ -73,6 +73,7 @@ public:
 
     ~xwl_platform() override
     {
+        platform_cleanup(*this);
         singleton_interface::get_outputs = {};
     }
 

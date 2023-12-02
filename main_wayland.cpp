@@ -123,25 +123,12 @@ ApplicationWayland::ApplicationWayland(int& argc, char** argv)
 
 ApplicationWayland::~ApplicationWayland()
 {
-    // need to unload all effects prior to destroying X connection as they might do X calls
-    if (base->mod.render->effects) {
-        base->mod.render->effects->unloadAllEffects();
-    }
-
     if (exit_with_process && exit_with_process->state() != QProcess::NotRunning) {
         QObject::disconnect(exit_with_process, nullptr, this, nullptr);
         exit_with_process->terminate();
         exit_with_process->waitForFinished(5000);
         exit_with_process = nullptr;
     }
-
-    // Kill Xwayland before terminating its connection.
-    base->mod.xwayland = {};
-    base->server->terminateClientConnections();
-
-    // Block compositor to prevent further compositing from crashing with a null workspace.
-    // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    base->mod.render->lock();
 }
 
 void ApplicationWayland::start(base::operation_mode mode,
