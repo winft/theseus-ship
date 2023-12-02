@@ -101,8 +101,13 @@ public:
             return;
         }
 
-        QObject::connect(&base, &Base::output_added, qobject.get(), [this] { hard_reset(); });
-        QObject::connect(&base, &Base::output_removed, qobject.get(), [this] { hard_reset(); });
+        QObject::connect(base.qobject.get(), &Base::qobject_t::output_added, qobject.get(), [this] {
+            hard_reset();
+        });
+        QObject::connect(base.qobject.get(),
+                         &Base::qobject_t::output_removed,
+                         qobject.get(),
+                         [this] { hard_reset(); });
 
         assert(base.session);
         QObject::connect(base.session.get(),

@@ -299,7 +299,8 @@ TEST_CASE("pointer input", "[input]")
         QVERIFY(window);
         QVERIFY(!window->geo.frame.contains(cursor()->pos()));
 
-        QSignalSpy screensChangedSpy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy screensChangedSpy(setup.base->qobject.get(),
+                                     &base::platform_qobject::topology_changed);
         QVERIFY(screensChangedSpy.isValid());
 
         // Now let's remove the screen containing the cursor.

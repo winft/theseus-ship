@@ -39,10 +39,11 @@ struct platform_mod {
 };
 
 template<typename Mod = platform_mod>
-class platform : public base::platform
+class platform
 {
 public:
     using type = platform<Mod>;
+    using qobject_t = platform_qobject;
     using backend_t = backend::wlroots::backend<type>;
     using output_t = output<type>;
 
@@ -54,7 +55,8 @@ public:
              std::string const& socket_name,
              base::wayland::start_options flags,
              backend::wlroots::start_options options)
-        : config{std::move(config)}
+        : qobject{std::make_unique<platform_qobject>([this] { return topology.max_scale; })}
+        , config{std::move(config)}
         , server{std::make_unique<wayland::server<type>>(*this, socket_name, flags)}
         , backend{*this, options}
     {
@@ -66,13 +68,15 @@ public:
     platform(type&& other) = delete;
     platform& operator=(type&& other) = delete;
 
-    ~platform() override
+    virtual ~platform()
     {
         platform_cleanup(*this);
         singleton_interface::get_outputs = {};
     }
 
+    std::unique_ptr<platform_qobject> qobject;
     base::operation_mode operation_mode;
+    output_topology topology;
     base::config config;
     std::unique_ptr<base::options> options;
 

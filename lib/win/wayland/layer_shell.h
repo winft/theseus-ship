@@ -200,13 +200,15 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
             return;
         }
 
-        QObject::connect(
-            &win->space.base, &base::platform::topology_changed, win->qobject.get(), [win] {
-                auto geo = layer_surface_recommended_geometry(win);
-                if (win->geo.update.frame != geo) {
-                    win->setFrameGeometry(geo);
-                }
-            });
+        QObject::connect(win->space.base.qobject.get(),
+                         &base::platform_qobject::topology_changed,
+                         win->qobject.get(),
+                         [win] {
+                             auto geo = layer_surface_recommended_geometry(win);
+                             if (win->geo.update.frame != geo) {
+                                 win->setFrameGeometry(geo);
+                             }
+                         });
 
         if (win->pending_configures.empty()) {
             // wlr-layer-shell protocol stipulates a single configure event on first commit.

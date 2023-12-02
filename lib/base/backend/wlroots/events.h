@@ -58,7 +58,7 @@ void add_new_output(Backend& backend, wlr_output* native)
     backend.frontend->outputs.push_back(output);
     backend.frontend->server->output_manager->commit_changes();
 
-    Q_EMIT backend.frontend->output_added(output);
+    Q_EMIT backend.frontend->qobject->output_added(output);
 }
 
 template<typename Backend>

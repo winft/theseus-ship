@@ -43,10 +43,11 @@ struct xwl_platform_mod {
 };
 
 template<typename Mod = xwl_platform_mod>
-class xwl_platform : public base::platform
+class xwl_platform
 {
 public:
     using type = xwl_platform<Mod>;
+    using qobject_t = platform_qobject;
     using backend_t = backend::wlroots::backend<type>;
     using output_t = output<type>;
 
@@ -58,7 +59,8 @@ public:
                  std::string const& socket_name,
                  base::wayland::start_options flags,
                  backend::wlroots::start_options options)
-        : config{std::move(config)}
+        : qobject{std::make_unique<platform_qobject>([this] { return topology.max_scale; })}
+        , config{std::move(config)}
         , server{std::make_unique<wayland::server<type>>(*this, socket_name, flags)}
         , backend{*this, options}
         , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
@@ -71,13 +73,15 @@ public:
     xwl_platform(type&& other) = delete;
     xwl_platform& operator=(type&& other) = delete;
 
-    ~xwl_platform() override
+    virtual ~xwl_platform()
     {
         platform_cleanup(*this);
         singleton_interface::get_outputs = {};
     }
 
+    std::unique_ptr<platform_qobject> qobject;
     base::operation_mode operation_mode;
+    output_topology topology;
     base::config config;
     base::x11::data x11_data;
     std::unique_ptr<base::options> options;

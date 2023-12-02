@@ -49,8 +49,8 @@ void init_space(Space& space)
                      space.deco->qobject.get(),
                      [&] { space.deco->reconfigure(); });
 
-    QObject::connect(&space.base,
-                     &base::platform::topology_changed,
+    QObject::connect(space.base.qobject.get(),
+                     &base::platform_qobject::topology_changed,
                      space.qobject.get(),
                      [&](auto old, auto topo) {
                          if (old.size != topo.size) {

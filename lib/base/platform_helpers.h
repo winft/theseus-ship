@@ -18,18 +18,22 @@ namespace KWin::base
 template<typename Platform>
 void platform_init(Platform& platform)
 {
-    QObject::connect(&platform, &Platform::output_added, &platform, [&platform](auto output) {
-        if (!platform.topology.current) {
-            platform.topology.current = output;
-        }
-    });
-    QObject::connect(&platform, &platform::output_removed, &platform, [&platform](auto output) {
-        if (output == platform.topology.current) {
-            platform.topology.current = nullptr;
-        }
-    });
+    auto qobject = platform.qobject.get();
 
-    singleton_interface::platform = &platform;
+    QObject::connect(
+        qobject, &Platform::qobject_t::output_added, qobject, [&platform](auto output) {
+            if (!platform.topology.current) {
+                platform.topology.current = output;
+            }
+        });
+    QObject::connect(
+        qobject, &Platform::qobject_t::output_removed, qobject, [&platform](auto output) {
+            if (output == platform.topology.current) {
+                platform.topology.current = nullptr;
+            }
+        });
+
+    singleton_interface::platform = qobject;
     singleton_interface::get_outputs = [&platform]() -> std::vector<base::output*> {
         // TODO(romangg): Use ranges::to once we use C++23.
         auto range = platform.outputs

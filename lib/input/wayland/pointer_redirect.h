@@ -68,8 +68,8 @@ public:
     {
         device_redirect_init(this);
 
-        QObject::connect(&redirect->platform.base,
-                         &base::platform::topology_changed,
+        QObject::connect(redirect->platform.base.qobject.get(),
+                         &base::platform_qobject::topology_changed,
                          qobject.get(),
                          [this] { updateAfterScreenChange(); });
         if (redirect->platform.base.server->has_screen_locker_integration()) {

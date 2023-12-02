@@ -111,7 +111,7 @@ private:
 
         QObject::connect(frontend->drm_lease_device.get(),
                          &Wrapland::Server::drm_lease_device_v1::needs_new_client_fd,
-                         frontend,
+                         frontend->qobject.get(),
                          [abs = frontend, native_drm_backend] {
                              // TODO(romangg): wait in case not DRM master at the moment.
                              auto fd = wlr_drm_backend_get_non_master_fd(native_drm_backend);
@@ -119,7 +119,7 @@ private:
                          });
         QObject::connect(frontend->drm_lease_device.get(),
                          &Wrapland::Server::drm_lease_device_v1::leased,
-                         frontend,
+                         frontend->qobject.get(),
                          [this](auto lease) {
                              try {
                                  this->process_drm_leased(lease);
@@ -164,9 +164,11 @@ private:
         leases.push_back(std::make_unique<drm_lease>(lease, outputs));
         auto drm_lease = leases.back().get();
 
-        QObject::connect(drm_lease, &drm_lease::finished, frontend, [this, drm_lease] {
-            remove_all_if(leases, [drm_lease](auto& lease) { return lease.get() == drm_lease; });
-        });
+        QObject::connect(
+            drm_lease, &drm_lease::finished, frontend->qobject.get(), [this, drm_lease] {
+                remove_all_if(leases,
+                              [drm_lease](auto& lease) { return lease.get() == drm_lease; });
+            });
 
         qCDebug(KWIN_CORE) << "DRM resources have been leased to client";
     }

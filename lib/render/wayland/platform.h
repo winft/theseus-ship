@@ -136,15 +136,18 @@ public:
                              &space_t::qobject_t::current_subspace_changed,
                              this->qobject.get(),
                              [this] { full_repaint(*this); });
-            QObject::connect(
-                &base, &base::platform::output_removed, this->qobject.get(), [this](auto output) {
-                    for (auto& win : this->space->windows) {
-                        std::visit(overload{[&](auto&& win) {
-                                       remove_all(win->render_data.repaint_outputs, output);
-                                   }},
-                                   win);
-                    }
-                });
+            QObject::connect(base.qobject.get(),
+                             &base::platform_qobject::output_removed,
+                             this->qobject.get(),
+                             [this](auto output) {
+                                 for (auto& win : this->space->windows) {
+                                     std::visit(overload{[&](auto&& win) {
+                                                    remove_all(win->render_data.repaint_outputs,
+                                                               output);
+                                                }},
+                                                win);
+                                 }
+                             });
             QObject::connect(
                 space.qobject.get(), &win::space_qobject::destroyed, this->qobject.get(), [this] {
                     for (auto& output : base.outputs) {

@@ -113,7 +113,7 @@ public:
             remove_all(backend->frontend->outputs, this);
             remove_all(backend->frontend->all_outputs, this);
             backend->frontend->server->output_manager->commit_changes();
-            Q_EMIT backend->frontend->output_removed(this);
+            Q_EMIT backend->frontend->qobject->output_removed(this);
         }
     }
 

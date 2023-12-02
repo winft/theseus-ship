@@ -234,7 +234,7 @@ TEST_CASE("screen edges", "[input],[win]")
             REQUIRE(!e->activatesForTouchGesture());
         }
 
-        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy changedSpy(setup.base->qobject.get(), &base::platform_qobject::topology_changed);
         QVERIFY(changedSpy.isValid());
 
         setup.set_outputs({{0, 0, 1024, 768}});
@@ -319,7 +319,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
     SECTION("callback")
     {
-        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy changedSpy(setup.base->qobject.get(), &base::platform_qobject::topology_changed);
         QVERIFY(changedSpy.isValid());
 
         auto const geometries = std::vector<QRect>{{0, 0, 1024, 768}, {200, 768, 1024, 768}};
@@ -557,7 +557,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
         setup.set_outputs(1);
 
-        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy changedSpy(setup.base->qobject.get(), &base::platform_qobject::topology_changed);
         QVERIFY(changedSpy.isValid());
 
         auto const geometries = std::vector<QRect>{test_data.geo1, test_data.geo2};

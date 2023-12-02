@@ -54,7 +54,8 @@ TEST_CASE("screen changes", "[base]")
     outputAnnouncedSpy.clear();
 
     // let's announce a new output
-    QSignalSpy outputs_changed_spy(setup.base.get(), &base::platform::topology_changed);
+    QSignalSpy outputs_changed_spy(setup.base->qobject.get(),
+                                   &base::platform_qobject::topology_changed);
     QVERIFY(outputs_changed_spy.isValid());
 
     auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};

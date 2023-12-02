@@ -103,9 +103,10 @@ public:
                          &compositor_qobject::aboutToToggleCompositing,
                          qobject.get(),
                          [this] { overlay_window = nullptr; });
-        QObject::connect(&base, &base::platform::topology_changed, qobject.get(), [this] {
-            full_repaint(*this);
-        });
+        QObject::connect(base.qobject.get(),
+                         &base::platform_qobject::topology_changed,
+                         qobject.get(),
+                         [this] { full_repaint(*this); });
     }
 
     virtual ~platform()
@@ -149,9 +150,10 @@ public:
     {
         if (!this->space) {
             // On first start setup connections.
-            QObject::connect(&space.base, &base::platform::x11_reset, this->qobject.get(), [this] {
-                compositor_claim(*this);
-            });
+            QObject::connect(base.qobject.get(),
+                             &base::platform_qobject::x11_reset,
+                             this->qobject.get(),
+                             [this] { compositor_claim(*this); });
             QObject::connect(space.stacking.order.qobject.get(),
                              &win::stacking_order_qobject::changed,
                              this->qobject.get(),
@@ -160,15 +162,18 @@ public:
                              &space_t::qobject_t::current_subspace_changed,
                              this->qobject.get(),
                              [this] { full_repaint(*this); });
-            QObject::connect(
-                &base, &base::platform::output_removed, this->qobject.get(), [this](auto output) {
-                    for (auto& win : this->space->windows) {
-                        std::visit(overload{[&](auto&& win) {
-                                       remove_all(win->render_data.repaint_outputs, output);
-                                   }},
-                                   win);
-                    }
-                });
+            QObject::connect(base.qobject.get(),
+                             &base::platform_qobject::output_removed,
+                             this->qobject.get(),
+                             [this](auto output) {
+                                 for (auto& win : this->space->windows) {
+                                     std::visit(overload{[&](auto&& win) {
+                                                    remove_all(win->render_data.repaint_outputs,
+                                                               output);
+                                                }},
+                                                win);
+                                 }
+                             });
             this->space = &space;
         }
 

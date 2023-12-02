@@ -251,7 +251,8 @@ TEST_CASE("plasma surface", "[win]")
         QCOMPARE(c->geo.frame, QRect(590, 657, 100, 50));
 
         // change the screen size
-        QSignalSpy screensChangedSpy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy screensChangedSpy(setup.base->qobject.get(),
+                                     &base::platform_qobject::topology_changed);
         QVERIFY(screensChangedSpy.isValid());
 
         auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};

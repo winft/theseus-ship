@@ -325,7 +325,8 @@ TEST_CASE("layer shell", "[win]")
         QCOMPARE(window->geo.frame,
                  target_geo(output_geo, render_size, QMargins(), align::center, align::center));
 
-        QSignalSpy topology_spy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy topology_spy(setup.base->qobject.get(),
+                                &base::platform_qobject::topology_changed);
         QVERIFY(topology_spy.isValid());
 
         // Now let's change the size of the output.

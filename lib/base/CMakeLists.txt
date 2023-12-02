@@ -45,7 +45,6 @@ target_sources(base
     singleton_interface.cpp
     logging.cpp
     options.cpp
-    platform.cpp
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")

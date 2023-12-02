@@ -37,15 +37,16 @@ void window_setup_geometry(Win& win)
                      win.qobject.get(),
                      &Win::qobject_t::needsRepaint);
 
-    QObject::connect(&win.space.base, &base::platform::topology_changed, win.qobject.get(), [&win] {
+    auto qbase = win.space.base.qobject.get();
+    QObject::connect(qbase, &base::platform_qobject::topology_changed, win.qobject.get(), [&win] {
         check_screen(win);
     });
     QObject::connect(
-        &win.space.base, &base::platform::output_added, win.qobject.get(), [&win](auto output) {
+        qbase, &base::platform_qobject::output_added, win.qobject.get(), [&win](auto output) {
             handle_output_added(win, static_cast<typename Win::output_t*>(output));
         });
     QObject::connect(
-        &win.space.base, &base::platform::output_removed, win.qobject.get(), [&win](auto output) {
+        qbase, &base::platform_qobject::output_removed, win.qobject.get(), [&win](auto output) {
             handle_output_removed(win, static_cast<typename Win::output_t*>(output));
         });
 

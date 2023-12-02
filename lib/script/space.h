@@ -534,21 +534,23 @@ public:
                          this,
                          &space::currentDesktopChanged);
 
-        auto& base = ref_space->base;
-        QObject::connect(
-            &base, &base::platform::topology_changed, this, [this](auto old_topo, auto new_topo) {
-                if (old_topo.size != new_topo.size) {
-                    Q_EMIT this->virtualScreenSizeChanged();
-                    Q_EMIT this->virtualScreenGeometryChanged();
-                }
-            });
-        QObject::connect(&base, &base::platform::output_added, this, [this](auto output) {
+        auto qbase = ref_space->base.qobject.get();
+        QObject::connect(qbase,
+                         &base::platform_qobject::topology_changed,
+                         this,
+                         [this](auto old_topo, auto new_topo) {
+                             if (old_topo.size != new_topo.size) {
+                                 Q_EMIT this->virtualScreenSizeChanged();
+                                 Q_EMIT this->virtualScreenGeometryChanged();
+                             }
+                         });
+        QObject::connect(qbase, &base::platform_qobject::output_added, this, [this](auto output) {
             using out_t = typename RefSpace::base_t::output_t;
             auto& out = static_cast<out_t&>(*output);
             outputs.emplace_back(std::make_unique<output_impl<out_t>>(out));
             Q_EMIT Space::screensChanged();
         });
-        QObject::connect(&base, &base::platform::output_removed, this, [this](auto output) {
+        QObject::connect(qbase, &base::platform_qobject::output_removed, this, [this](auto output) {
             remove_all_if(outputs, [output](auto&& out) { return &out->ref_out == output; });
             Q_EMIT Space::screensChanged();
         });

@@ -40,10 +40,11 @@ struct platform_mod {
 };
 
 template<typename Mod = platform_mod>
-class platform : public base::platform
+class platform
 {
 public:
     using type = platform<Mod>;
+    using qobject_t = platform_qobject;
     using output_t = base::x11::output<type>;
 
     using render_t = typename Mod::render_t;
@@ -51,14 +52,15 @@ public:
     using space_t = typename Mod::space_t;
 
     platform(base::config config)
-        : config{std::move(config)}
+        : qobject{std::make_unique<platform_qobject>([this] { return topology.max_scale; })}
+        , config{std::move(config)}
         , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
     {
         operation_mode = operation_mode::x11;
         platform_init(*this);
     }
 
-    ~platform() override
+    virtual ~platform()
     {
         for (auto out : outputs) {
             delete out;
@@ -78,7 +80,9 @@ public:
         update_outputs_impl<base::x11::xcb::randr::current_resources>();
     }
 
+    std::unique_ptr<platform_qobject> qobject;
     base::operation_mode operation_mode;
+    output_topology topology;
     base::config config;
     base::x11::data x11_data;
 
@@ -123,7 +127,7 @@ private:
             qCDebug(KWIN_CORE) << "  removed:" << x11_old_out->name();
             auto old_out = *old_it;
             old_it = static_cast<decltype(old_it)>(this->outputs.erase(std::next(old_it).base()));
-            Q_EMIT output_removed(old_out);
+            Q_EMIT qobject->output_removed(old_out);
             delete old_out;
         }
 
@@ -139,7 +143,7 @@ private:
             if (it == this->outputs.end()) {
                 qCDebug(KWIN_CORE) << "  added:" << out->name();
                 this->outputs.push_back(out.release());
-                Q_EMIT output_added(this->outputs.back());
+                Q_EMIT qobject->output_added(this->outputs.back());
             } else {
                 // Update data of lasting output.
                 (*it)->data = out->data;

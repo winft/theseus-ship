@@ -172,8 +172,8 @@ void setup_handler(Handler& handler)
                      &EffectsHandler::mouseChanged);
 
     auto& base = handler.scene.platform.base;
-    QObject::connect(&base,
-                     &Handler::base_t::topology_changed,
+    QObject::connect(base.qobject.get(),
+                     &Handler::base_t::qobject_t::topology_changed,
                      &handler,
                      [&handler](auto old_topo, auto new_topo) {
                          if (old_topo.size != new_topo.size) {
@@ -235,12 +235,12 @@ void setup_handler(Handler& handler)
         }
     }
 
-    QObject::connect(&handler.scene.platform.base,
-                     &Handler::base_t::output_added,
+    QObject::connect(handler.scene.platform.base.qobject.get(),
+                     &Handler::base_t::qobject_t::output_added,
                      &handler,
                      &Handler::slotOutputEnabled);
-    QObject::connect(&handler.scene.platform.base,
-                     &Handler::base_t::output_removed,
+    QObject::connect(handler.scene.platform.base.qobject.get(),
+                     &Handler::base_t::qobject_t::output_removed,
                      &handler,
                      &Handler::slotOutputDisabled);
 

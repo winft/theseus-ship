@@ -33,7 +33,7 @@ tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
               }
           });
     connect(base::singleton_interface::platform,
-            &base::platform::topology_changed,
+            &base::platform_qobject::topology_changed,
             this,
             &tabbox_switcher_item::screen_geometry_changed);
 }

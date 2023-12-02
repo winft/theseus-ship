@@ -86,7 +86,7 @@ void Integration::initialize()
             [this] {
                 assert(base::singleton_interface::platform);
                 QObject::connect(base::singleton_interface::platform,
-                                 &base::platform::topology_changed,
+                                 &base::platform_qobject::topology_changed,
                                  this,
                                  &Integration::initScreens);
                 initScreens();
