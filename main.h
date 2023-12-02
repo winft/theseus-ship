@@ -7,9 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "base/platform.h"
 #include "debug/perf/ftrace.h"
-#include "input/platform.h"
+#include <base/logging.h>
 
 #include <base/config-kwin.h>
 #include <render/effect/interface/effect_window.h>

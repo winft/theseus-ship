@@ -5,7 +5,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "base/platform.h"
 #include "base/x11/event_filter.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/helpers.h"

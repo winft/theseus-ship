@@ -10,10 +10,9 @@
 #include "dbus/virtual_desktop_manager.h"
 #include "rules.h"
 #include "tabbox/tabbox.h"
+#include <base/platform_qobject.h>
 #include <win/options.h>
 #include <win/space_reconfigure.h>
-
-#include "base/platform.h"
 
 #include <KLocalizedContext>
 #include <QObject>

@@ -15,10 +15,10 @@
 #include "win/transient.h"
 #include <win/wayland/space_windows.h>
 
-#include "base/platform.h"
 #include "base/wayland/output.h"
 #include "base/wayland/output_helpers.h"
 #include "base/wayland/server.h"
+#include <base/platform_qobject.h>
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/layer_shell_v1.h>

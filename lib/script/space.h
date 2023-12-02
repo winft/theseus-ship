@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "base/output.h"
 #include "base/output_helpers.h"
-#include "base/platform.h"
 #include "debug/support_info.h"
 #include "kwin_export.h"
 #include "win/activation.h"
@@ -19,6 +18,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/move.h"
 #include "win/output_space.h"
 #include "win/screen.h"
+#include <base/platform_qobject.h>
 #include <kwin_export.h>
 #include <win/subspace.h>
 #include <win/subspace_manager.h>

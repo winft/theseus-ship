@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/logging.h"
 #include "base/os/clock/skew_notifier.h"
 #include "base/output.h"
-#include "base/platform.h"
 #include "base/seat/session.h"
 #include "utils/gamma_ramp.h"
 

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "base/logging.h"
-#include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "base/x11/event_filter.h"
 #include "base/x11/output.h"
@@ -16,6 +15,7 @@
 #include "render/x11/platform.h"
 #include "win/x11/space.h"
 #include <base/platform_helpers.h>
+#include <base/platform_qobject.h>
 #include <base/x11/data.h>
 #include <base/x11/event_filter_manager.h>
 

@@ -7,10 +7,10 @@
 
 #include "output.h"
 
-#include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
 #include <base/backend/wlroots/backend.h>
+#include <base/platform_qobject.h>
 #include <base/wayland/platform_helpers.h>
 #include <base/x11/data.h>
 #include <base/x11/event_filter_manager.h>

@@ -7,11 +7,11 @@
 
 #include "output.h"
 
-#include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
 #include "render/wayland/platform.h"
 #include <base/backend/wlroots/backend.h>
+#include <base/platform_qobject.h>
 #include <base/wayland/platform_helpers.h>
 #include <win/wayland/space.h>
 

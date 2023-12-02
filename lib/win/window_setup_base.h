@@ -11,7 +11,7 @@
 
 #include "base/output.h"
 #include "base/output_helpers.h"
-#include "base/platform.h"
+#include <base/platform_qobject.h>
 
 namespace KWin::win
 {

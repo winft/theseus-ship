@@ -6,7 +6,6 @@
 #pragma once
 
 #include "base/logging.h"
-#include "base/platform.h"
 #include "base/x11/xcb/helpers.h"
 #include "render/gl/gl.h"
 
