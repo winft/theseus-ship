@@ -127,10 +127,6 @@ public:
                          &win::space_qobject::wayland_window_added,
                          qobject.get(),
                          setup_move_resize_notify_on_signal);
-
-        // warp the cursor to center of screen
-        warp(QRect({}, redirect->platform.base.topology.size).center());
-        updateAfterScreenChange();
     }
 
     void updateAfterScreenChange()

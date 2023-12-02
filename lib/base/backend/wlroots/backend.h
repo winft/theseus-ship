@@ -100,6 +100,15 @@ public:
 #endif
     }
 
+    void start()
+    {
+        if (!wlr_backend_start(native)) {
+            throw std::exception();
+        }
+
+        base::update_output_topology(*frontend);
+    }
+
     gsl::not_null<Frontend*> frontend;
     std::vector<std::unique_ptr<drm_lease>> leases;
     std::vector<non_desktop_output<type>*> non_desktop_outputs;
@@ -109,7 +118,6 @@ public:
     bool align_horizontal{false};
 
 private:
-    void init();
     void setup_drm_leasing(Wrapland::Server::Display* display, wlr_backend* native_drm_backend)
     {
         frontend->drm_lease_device

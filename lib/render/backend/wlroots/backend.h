@@ -28,23 +28,11 @@ public:
     explicit backend(Frontend& frontend)
         : frontend{&frontend}
     {
-    }
-
-    void init()
-    {
-        // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
-        //                available in the ctor. Can we change that?
-        if (frontend->options->qobject->sw_compositing()) {
+        if (frontend.options->qobject->sw_compositing()) {
             qpainter = create_render_backend<qpainter_backend<backend>>(*this, "pixman");
         } else {
             egl = create_render_backend<egl_backend<backend>>(*this, "gles2");
         }
-
-        if (!wlr_backend_start(frontend->base.backend.native)) {
-            throw std::exception();
-        }
-
-        base::update_output_topology(frontend->base);
     }
 
     bool is_sw_compositing() const

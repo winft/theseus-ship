@@ -63,25 +63,10 @@ int main(int argc, char* argv[])
     base.operation_mode = base::operation_mode::wayland;
     base.options = base::create_options(base::operation_mode::wayland, base.config.main);
 
-    try {
-        base.mod.render = std::make_unique<base_t::render_t>(base);
-    } catch (std::system_error const& exc) {
-        std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
-        exit(exc.code().value());
-    }
-
+    base.mod.render = std::make_unique<base_t::render_t>(base);
     base.mod.input = std::make_unique<input::wayland::platform<base_t>>(
         base, input::config(KConfig::NoGlobals));
-
-    try {
-        base.mod.render->init();
-    } catch (std::exception const&) {
-        std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
-        QCoreApplication::exit(1);
-    }
-
     base.mod.space = std::make_unique<base_t::space_t>(*base.mod.render, *base.mod.input);
 
-    base.mod.render->start(*base.mod.space);
-    return app.exec();
+    return base::wayland::exec(base, app);
 }

@@ -8,6 +8,8 @@
 #include <base/platform_helpers.h>
 #include <base/seat/backend/wlroots/session.h>
 
+#include <QApplication>
+
 namespace KWin::base::wayland
 {
 
@@ -20,6 +22,21 @@ void platform_init(Platform& platform)
     platform.session = std::move(session);
 
     base::platform_init(platform);
+}
+
+template<typename Platform>
+void platform_start(Platform& platform)
+{
+    platform.backend.start();
+    platform.mod.render->start(*platform.mod.space);
+    platform.mod.space->input->pointer->warp(QRect({}, platform.topology.size).center());
+}
+
+template<typename Platform>
+int exec(Platform& platform, QApplication& app)
+{
+    platform_start(platform);
+    return app.exec();
 }
 
 }

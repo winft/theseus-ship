@@ -171,24 +171,11 @@ void ApplicationWayland::start(base::operation_mode mode,
 
     base->options = base::create_options(mode, base->config.main);
 
-    try {
-        using render_t = base_t::render_t;
-        base->mod.render = std::make_unique<render_t>(*base);
-    } catch (std::system_error const& exc) {
-        std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
-        exit(exc.code().value());
-    }
+    base->mod.render = std::make_unique<base_t::render_t>(*base);
 
     base->mod.input = std::make_unique<base_t::input_t>(*base, input::config(KConfig::NoGlobals));
     base->mod.input->mod.dbus
         = std::make_unique<input::dbus::device_manager<base_t::input_t>>(*base->mod.input);
-
-    try {
-        base->mod.render->init();
-    } catch (std::exception const&) {
-        std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
-        QCoreApplication::exit(1);
-    }
 
     base->mod.space = std::make_unique<base_t::space_t>(*base->mod.render, *base->mod.input);
     base->mod.space->mod.desktop
@@ -197,7 +184,7 @@ void ApplicationWayland::start(base::operation_mode mode,
     render::init_shortcuts(*base->mod.render);
     base->mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base->mod.space);
 
-    base->mod.render->start(*base->mod.space);
+    base::wayland::platform_start(*base);
 
     if (auto const& name = base->server->display->socket_name(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());

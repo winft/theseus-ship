@@ -69,11 +69,6 @@ public:
         singleton_interface::get_egl_data = {};
     }
 
-    void init()
-    {
-        backend.init();
-    }
-
     bool requiresCompositing() const
     {
         return true;

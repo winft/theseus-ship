@@ -125,14 +125,6 @@ void setup::start()
     assert(keyboard);
     assert(pointer);
     assert(touch);
-
-    try {
-        base->mod.render->init();
-    } catch (std::exception const&) {
-        std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
-        return;
-    }
-
     wlr_keyboard_init(keyboard, nullptr, "headless-keyboard");
     wlr_pointer_init(pointer, nullptr, "headless-pointer");
     wlr_touch_init(touch, nullptr, "headless-touch");
@@ -141,13 +133,6 @@ void setup::start()
     wlr_signal_emit_safe(&base->backend.native->events.new_input, pointer);
     wlr_signal_emit_safe(&base->backend.native->events.new_input, touch);
 
-    // Must set physical size for calculation of screen edges corner offset.
-    // TODO(romangg): Make the corner offset calculation not depend on that.
-    auto out = base->outputs.at(0);
-    auto metadata = out->wrapland_output()->get_metadata();
-    metadata.physical_size = {1280, 1024};
-    out->wrapland_output()->set_metadata(metadata);
-
     base->mod.space = std::make_unique<base_t::space_t>(*base->mod.render, *base->mod.input);
     base->mod.space->mod.desktop
         = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->mod.space);
@@ -155,7 +140,15 @@ void setup::start()
     render::init_shortcuts(*base->mod.render);
     base->mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base->mod.space);
 
-    base->mod.render->start(*base->mod.space);
+    base::wayland::platform_start(*base);
+
+    // Must set physical size for calculation of screen edges corner offset.
+    // TODO(romangg): Make the corner offset calculation not depend on that.
+    auto out = base->outputs.at(0);
+    auto metadata = out->wrapland_output()->get_metadata();
+    metadata.physical_size = {1280, 1024};
+    out->wrapland_output()->set_metadata(metadata);
+
     base->server->init_screen_locker();
 
     if (base->operation_mode == base::operation_mode::xwayland) {
