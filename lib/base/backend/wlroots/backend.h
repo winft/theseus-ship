@@ -50,12 +50,7 @@ public:
         if (::flags(options & start_options::headless)) {
             native = wlr_headless_backend_create(frontend.server->display->native());
         } else {
-#if HAVE_WLR_SESSION_ON_AUTOCREATE
             native = wlr_backend_autocreate(frontend.server->display->native(), &wlroots_session);
-#else
-            native = wlr_backend_autocreate(frontend.server->display->native());
-            wlroots_session = wlr_backend_get_session(native);
-#endif
         }
 
         destroyed->receiver = this;
@@ -93,11 +88,7 @@ public:
 
     clockid_t get_clockid() const
     {
-#if HAVE_WLR_PRESENT_CLOCK_MONOTONIC
         return CLOCK_MONOTONIC;
-#else
-        return wlr_backend_get_presentation_clock(native);
-#endif
     }
 
     void start()

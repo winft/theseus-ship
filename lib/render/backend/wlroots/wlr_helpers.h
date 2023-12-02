@@ -104,16 +104,14 @@ std::vector<Format> get_drm_formats(wlr_drm_format_set const* set)
     std::vector<Format> formats;
 
     for (size_t fmt_index = 0; fmt_index < set->len; fmt_index++) {
-#if HAVE_WLR_VALUE_DRM_FORMATS
         auto fmt = set->formats[fmt_index];
-#else
-        auto fmt = *set->formats[fmt_index];
-#endif
         Format format;
         format.format = fmt.format;
+
         for (size_t mod_index = 0; mod_index < fmt.len; mod_index++) {
             format.modifiers.insert(fmt.modifiers[mod_index]);
         }
+
         formats.push_back(std::move(format));
     }
 
