@@ -6,10 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "generic_scene_opengl.h"
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/compositor.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/subsurface.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
@@ -39,7 +35,7 @@ TEST_CASE("buffer size change", "[render]")
         QVERIFY(client);
 
         // add a first repaint
-        render::full_repaint(*setup->base->render);
+        render::full_repaint(*setup->base->mod.render);
 
         // now change buffer size
         render(surface, QSize(30, 10), Qt::red);
@@ -47,7 +43,7 @@ TEST_CASE("buffer size change", "[render]")
         QSignalSpy damagedSpy(client->qobject.get(), &win::window_qobject::damaged);
         QVERIFY(damagedSpy.isValid());
         QVERIFY(damagedSpy.wait());
-        render::full_repaint(*setup->base->render);
+        render::full_repaint(*setup->base->mod.render);
     }
 
     SECTION("shm on subsurface")
@@ -72,7 +68,7 @@ TEST_CASE("buffer size change", "[render]")
         QVERIFY(parent);
 
         // add a first repaint
-        render::full_repaint(*setup->base->render);
+        render::full_repaint(*setup->base->mod.render);
 
         // change buffer size of sub surface
         QSignalSpy damagedParentSpy(parent->qobject.get(), &win::window_qobject::damaged);
@@ -84,7 +80,7 @@ TEST_CASE("buffer size change", "[render]")
         QTRY_COMPARE(damagedParentSpy.count(), 2);
 
         // add a second repaint
-        render::full_repaint(*setup->base->render);
+        render::full_repaint(*setup->base->mod.render);
     }
 }
 

@@ -42,7 +42,7 @@ public:
             xcb_allow_events(
                 tabbox.space.base.x11_data.connection, XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
             if (!tabbox.is_shown() && tabbox.is_displayed()) {
-                if (auto& effects = tabbox.space.base.render->effects;
+                if (auto& effects = tabbox.space.base.mod.render->effects;
                     effects && effects->isMouseInterception()) {
                     // pass on to effects, effects will filter out the event
                     return false;

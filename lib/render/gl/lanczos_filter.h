@@ -64,7 +64,7 @@ public:
         auto const screenRect
             = std::visit(overload{[this](auto&& win) {
                              auto const output = win->topo.central_output;
-                             return win::space_window_area(*m_scene->platform.base.space,
+                             return win::space_window_area(*m_scene->platform.base.mod.space,
                                                            win::area_option::screen,
                                                            output,
                                                            win::get_subspace(*win));
@@ -319,7 +319,7 @@ protected:
             m_offscreenTarget = nullptr;
             m_offscreenTex = nullptr;
 
-            for (auto win : m_scene->platform.base.space->windows) {
+            for (auto win : m_scene->platform.base.mod.space->windows) {
                 std::visit(
                     overload{[&](auto&& win) { discardCacheTexture(win->render->effect.get()); }},
                     win);

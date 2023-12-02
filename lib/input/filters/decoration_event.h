@@ -135,11 +135,10 @@ public:
 
                 if ((event.orientation == axis_orientation::vertical)
                     && win::titlebar_positioned_under_mouse(window)) {
-                    win::perform_mouse_command(
-                        *window,
-                        this->redirect.platform.base.space->options->operationTitlebarMouseWheel(
-                            event.delta * -1),
-                        this->redirect.pointer->pos().toPoint());
+                    win::perform_mouse_command(*window,
+                                               this->redirect.platform.base.mod.space->options
+                                                   ->operationTitlebarMouseWheel(event.delta * -1),
+                                               this->redirect.pointer->pos().toPoint());
                 }
                 return true;
             }},

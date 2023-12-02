@@ -6,18 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "input/pointer_redirect.h"
-#include "win/deco.h"
-#include "win/deco/bridge.h"
-#include "win/deco/client_impl.h"
-#include "win/deco/settings.h"
-#include "win/move.h"
-#include "win/screen_edges.h"
-#include "win/space_reconfigure.h"
-#include "win/wayland/window.h"
-
+#include <KDecoration2/Decoration>
+#include <KDecoration2/DecorationSettings>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/keyboard.h>
@@ -26,10 +16,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
-#include <KDecoration2/Decoration>
-#include <KDecoration2/DecorationSettings>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 
@@ -119,7 +105,7 @@ TEST_CASE("decoration input", "[input],[win]")
         // let's render
         auto c = render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);
         VERIFY(c);
-        COMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         COMPARE(c->userCanSetNoBorder(), true);
         COMPARE(win::decoration(c) != nullptr, true);
 
@@ -168,10 +154,10 @@ TEST_CASE("decoration input", "[input],[win]")
 
         MOTION(QPoint(c->geo.frame.center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
-        QVERIFY(setup.base->space->input->pointer->focus.deco.client);
-        QCOMPARE(
-            setup.base->space->input->pointer->focus.deco.client->decoration()->sectionUnderMouse(),
-            Qt::TitleBarArea);
+        QVERIFY(setup.base->mod.space->input->pointer->focus.deco.client);
+        QCOMPARE(setup.base->mod.space->input->pointer->focus.deco.client->decoration()
+                     ->sectionUnderMouse(),
+                 Qt::TitleBarArea);
 
         // TODO: mouse wheel direction looks wrong to me
         // simulate wheel
@@ -188,12 +174,12 @@ TEST_CASE("decoration input", "[input],[win]")
         // test top most deco pixel, BUG: 362860
         win::move(c, QPoint(0, 0));
         MOTION(test_data.deco_point);
-        QVERIFY(setup.base->space->input->pointer->focus.deco.client);
-        QVERIFY(setup.base->space->input->pointer->focus.deco.window);
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), c);
-        REQUIRE(
-            setup.base->space->input->pointer->focus.deco.client->decoration()->sectionUnderMouse()
-            == test_data.expected_section);
+        QVERIFY(setup.base->mod.space->input->pointer->focus.deco.client);
+        QVERIFY(setup.base->mod.space->input->pointer->focus.deco.window);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), c);
+        REQUIRE(setup.base->mod.space->input->pointer->focus.deco.client->decoration()
+                    ->sectionUnderMouse()
+                == test_data.expected_section);
         pointer_axis_vertical(5.0, timestamp++, 0);
         QVERIFY(!c->control->keep_below);
 
@@ -236,12 +222,12 @@ TEST_CASE("decoration input", "[input],[win]")
         // test top most deco pixel, BUG: 362860
         win::move(c, QPoint(0, 0));
         MOTION(test_data.deco_point);
-        QVERIFY(setup.base->space->input->pointer->focus.deco.client);
-        QVERIFY(setup.base->space->input->pointer->focus.deco.window);
-        QCOMPARE(get_wayland_window(setup.base->space->input->pointer->focus.window), c);
-        REQUIRE(
-            setup.base->space->input->pointer->focus.deco.client->decoration()->sectionUnderMouse()
-            == test_data.expected_section);
+        QVERIFY(setup.base->mod.space->input->pointer->focus.deco.client);
+        QVERIFY(setup.base->mod.space->input->pointer->focus.deco.window);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->pointer->focus.window), c);
+        REQUIRE(setup.base->mod.space->input->pointer->focus.deco.client->decoration()
+                    ->sectionUnderMouse()
+                == test_data.expected_section);
         // double click
         PRESS;
         RELEASE;
@@ -292,12 +278,12 @@ TEST_CASE("decoration input", "[input],[win]")
 
         // double click
         touch_down(0, test_data.deco_point, timestamp++);
-        QVERIFY(setup.base->space->input->touch->focus.deco.client);
-        QVERIFY(setup.base->space->input->touch->focus.deco.window);
-        QCOMPARE(get_wayland_window(setup.base->space->input->touch->focus.window), c);
-        REQUIRE(
-            setup.base->space->input->touch->focus.deco.client->decoration()->sectionUnderMouse()
-            == test_data.expected_section);
+        QVERIFY(setup.base->mod.space->input->touch->focus.deco.client);
+        QVERIFY(setup.base->mod.space->input->touch->focus.deco.window);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->input->touch->focus.window), c);
+        REQUIRE(setup.base->mod.space->input->touch->focus.deco.client->decoration()
+                    ->sectionUnderMouse()
+                == test_data.expected_section);
         touch_up(0, timestamp++);
         QVERIFY(!win::on_all_subspaces(*c));
         touch_down(0, test_data.deco_point, timestamp++);
@@ -325,8 +311,8 @@ TEST_CASE("decoration input", "[input],[win]")
         //
         // TODO: Test input position with different border sizes.
         // TODO: We should test with the fake decoration to have a fixed test environment.
-        auto const hasBorders
-            = setup.base->space->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
+        auto const hasBorders = setup.base->mod.space->deco->settings()->borderSize()
+            != KDecoration2::BorderSize::None;
         auto deviation = [hasBorders] { return hasBorders ? -1 : 0; };
 
         MOTION(QPoint(c->geo.frame.x(), 0));
@@ -462,7 +448,7 @@ TEST_CASE("decoration input", "[input],[win]")
 
         touch_down(0, p, timestamp++);
         QVERIFY(!win::is_move(c));
-        QCOMPARE(setup.base->space->input->touch->decorationPressId(), 0);
+        QCOMPARE(setup.base->mod.space->input->touch->decorationPressId(), 0);
         touch_motion(0, p + test_data.offset, timestamp++);
         const QPoint oldPos = c->geo.pos();
         QVERIFY(win::is_move(c));
@@ -477,7 +463,7 @@ TEST_CASE("decoration input", "[input],[win]")
 
         // again
         touch_down(1, p + test_data.offset, timestamp++);
-        QCOMPARE(setup.base->space->input->touch->decorationPressId(), 1);
+        QCOMPARE(setup.base->mod.space->input->touch->decorationPressId(), 1);
         QVERIFY(!win::is_move(c));
         touch_motion(1,
                      QPoint(c->geo.frame.center().x(),
@@ -516,7 +502,7 @@ TEST_CASE("decoration input", "[input],[win]")
         setup.base->config.main->group("org.kde.kdecoration2")
             .writeEntry("BorderSize", QStringLiteral("None"));
         setup.base->config.main->sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         // now create window
         auto c = showWindow();
@@ -583,15 +569,15 @@ TEST_CASE("decoration input", "[input],[win]")
         group.writeEntry("CommandAll2", "Move");
         group.writeEntry("CommandAll3", "Move");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
         REQUIRE(
-            setup.base->space->options->qobject->commandAllModifier()
+            setup.base->mod.space->options->qobject->commandAllModifier()
             == (modifier.key_name == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier));
-        QCOMPARE(setup.base->space->options->qobject->commandAll1(),
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll1(),
                  win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->space->options->qobject->commandAll2(),
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll2(),
                  win::mouse_cmd::unrestricted_move);
-        QCOMPARE(setup.base->space->options->qobject->commandAll3(),
+        QCOMPARE(setup.base->mod.space->options->qobject->commandAll3(),
                  win::mouse_cmd::unrestricted_move);
 
         // create a window
@@ -649,7 +635,7 @@ TEST_CASE("decoration input", "[input],[win]")
         group.writeEntry("CommandAllKey", modifier.key_name);
         group.writeEntry("CommandAllWheel", "change opacity");
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         auto c = showWindow();
         QVERIFY(c);
@@ -704,10 +690,10 @@ TEST_CASE("decoration input", "[input],[win]")
         const QPoint tapPoint(c->geo.frame.center().x(),
                               win::frame_to_client_pos(c, QPoint()).y() / 2);
 
-        QVERIFY(!setup.base->space->input->touch->focus.deco.client);
+        QVERIFY(!setup.base->mod.space->input->touch->focus.deco.client);
         touch_down(0, tapPoint, timestamp++);
-        QVERIFY(setup.base->space->input->touch->focus.deco.client);
-        QCOMPARE(setup.base->space->input->touch->focus.deco.client->decoration(),
+        QVERIFY(setup.base->mod.space->input->touch->focus.deco.client);
+        QCOMPARE(setup.base->mod.space->input->touch->focus.deco.client->decoration(),
                  win::decoration(c));
         QCOMPARE(hoverMoveSpy.count(), 1);
         QCOMPARE(hoverLeaveSpy.count(), 0);
@@ -748,7 +734,7 @@ TEST_CASE("decoration input", "[input],[win]")
         QSignalSpy keyEvent(keyboard, &Wrapland::Client::Keyboard::keyChanged);
         QVERIFY(keyEvent.isValid());
 
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::internalClientAdded);
         QVERIFY(clientAddedSpy.isValid());
         c->control->deco.client->requestShowToolTip(QStringLiteral("test"));
@@ -756,7 +742,7 @@ TEST_CASE("decoration input", "[input],[win]")
 
         QVERIFY(clientAddedSpy.wait());
         auto win_id = clientAddedSpy.first().first().value<quint32>();
-        auto internal = get_internal_window(setup.base->space->windows_map.at(win_id));
+        auto internal = get_internal_window(setup.base->mod.space->windows_map.at(win_id));
         QVERIFY(internal);
         QVERIFY(internal->isInternal());
         QVERIFY(internal->internalWindow()->flags().testFlag(Qt::ToolTip));

@@ -14,7 +14,6 @@
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
-#include <desktop/platform.h>
 #include <win/stacking_state.h>
 #include <win/wayland/internal_window.h>
 #include <win/wayland/subspace_manager.h>
@@ -24,19 +23,23 @@
 namespace KWin::win::wayland
 {
 
-template<typename Render, typename Input>
+struct space_mod {
+};
+
+template<typename Base, typename Mod = space_mod>
 class space
 {
 public:
-    using type = space<Render, Input>;
+    using type = space<Base, Mod>;
     using qobject_t = space_qobject;
-    using base_t = typename Input::base_t;
-    using input_t = typename Input::redirect_t;
+    using base_t = Base;
+    using input_t = typename base_t::input_t::redirect_t;
     using wayland_window = wayland::window<type>;
     using internal_window_t = internal_window<type>;
     using window_t = std::variant<wayland_window*, internal_window_t*>;
     using render_outline_t = typename base_t::render_t::qobject_t::outline_t;
 
+    template<typename Render, typename Input>
     space(Render& render, Input& input)
         : base{input.base}
     {
@@ -110,6 +113,7 @@ public:
     std::unique_ptr<win::options> options;
 
     win::space_areas areas;
+    std::unique_ptr<QQmlEngine> qml_engine;
     std::unique_ptr<rules::book> rule_book;
 
     int initial_subspace{1};
@@ -159,7 +163,8 @@ public:
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-    std::unique_ptr<desktop::platform> desktop;
+
+    Mod mod;
 
     std::unique_ptr<Wrapland::Server::Compositor> compositor;
     std::unique_ptr<Wrapland::Server::Subcompositor> subcompositor;

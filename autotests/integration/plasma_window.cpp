@@ -6,24 +6,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/geo.h"
-#include "win/screen_edges.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
+#include <KScreenLocker/KsldApp>
+#include <QPainter>
+#include <QRasterWindow>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmawindowmanagement.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
-
-#include <KScreenLocker/KsldApp>
-
-#include <QPainter>
-#include <QRasterWindow>
 #include <xcb/xcb_icccm.h>
 
 using namespace Wrapland::Client;
@@ -100,12 +90,12 @@ struct x11_test_window {
         xcb_map_window(client.connection, client.window);
         xcb_flush(client.connection);
 
-        QSignalSpy window_spy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
+        QSignalSpy window_spy(setup.base->mod.space->qobject.get(), &space::qobject_t::clientAdded);
         QVERIFY(window_spy.isValid());
         QVERIFY(window_spy.wait());
 
         auto window_id = window_spy.first().first().value<quint32>();
-        server.window = get_x11_window(setup.base->space->windows_map.at(window_id));
+        server.window = get_x11_window(setup.base->mod.space->windows_map.at(window_id));
         QVERIFY(server.window);
         QCOMPARE(server.window->xcb_windows.client, client.window);
         QVERIFY(win::decoration(server.window));
@@ -262,13 +252,13 @@ TEST_CASE("plasma window", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->mod.space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QVERIFY(win::decoration(client));
@@ -383,7 +373,7 @@ TEST_CASE("plasma window", "[win]")
         QVERIFY(plasmaWindowCreatedSpy.isValid());
 
         // this time we use a QSignalSpy on XdgShellClient as it'a a little bit more complex setup
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
 
@@ -394,7 +384,7 @@ TEST_CASE("plasma window", "[win]")
         auto outputs_count = setup.base->outputs.size();
         TRY_REQUIRE(clientAddedSpy.count() == static_cast<int>(outputs_count));
 
-        QVERIFY(get_wayland_window(setup.base->space->windows_map.at(
+        QVERIFY(get_wayland_window(setup.base->mod.space->windows_map.at(
                                        clientAddedSpy.first().first().value<quint32>()))
                     ->isLockScreen());
 
@@ -491,7 +481,7 @@ TEST_CASE("plasma window", "[win]")
 
         auto compare_stacks = [&]() {
             auto const& plasma_stack = window_management->stacking_order_uuid();
-            auto const& unfiltered_stack = setup.base->space->stacking.order.stack;
+            auto const& unfiltered_stack = setup.base->mod.space->stacking.order.stack;
             auto stack = std::decay_t<decltype(unfiltered_stack)>();
 
             std::copy_if(unfiltered_stack.begin(),
@@ -537,7 +527,7 @@ TEST_CASE("plasma window", "[win]")
         compare_stacks();
 
         // Now raise the Xwayland window.
-        win::raise_window(*setup.base->space,
+        win::raise_window(*setup.base->mod.space,
                           std::get<x11_test_window>(windows.at(1)).server.window);
 
         QVERIFY(stacking_spy.wait());

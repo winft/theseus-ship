@@ -6,26 +6,15 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/active_window.h"
-#include "win/deco.h"
-#include "win/deco/bridge.h"
-#include "win/deco/settings.h"
-#include "win/space_reconfigure.h"
-#include "win/wayland/window.h"
-
+#include <KDecoration2/DecoratedClient>
+#include <KDecoration2/Decoration>
+#include <KDecoration2/DecorationSettings>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
 #include <Wrapland/Server/xdg_decoration.h>
-
-#include <KDecoration2/DecoratedClient>
-#include <KDecoration2/Decoration>
-#include <KDecoration2/DecorationSettings>
 #include <catch2/generators/catch_generators.hpp>
 
 using namespace Wrapland::Client;
@@ -75,8 +64,8 @@ TEST_CASE("maximize", "[win]")
 
         // When there are no borders, there is no change to them when maximizing.
         // TODO: we should test both cases with fixed fake decoration for autotests.
-        auto const hasBorders
-            = setup.base->space->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
+        auto const hasBorders = setup.base->mod.space->deco->settings()->borderSize()
+            != KDecoration2::BorderSize::None;
 
         // now maximize
         QSignalSpy bordersChangedSpy(decoration, &KDecoration2::Decoration::bordersChanged);
@@ -88,7 +77,7 @@ TEST_CASE("maximize", "[win]")
                                            &win::window_qobject::frame_geometry_changed);
         QVERIFY(geometryShapeChangedSpy.isValid());
 
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 2);
 
@@ -119,7 +108,7 @@ TEST_CASE("maximize", "[win]")
         QVERIFY(decoration->borderTop() != 0);
 
         // now unmaximize again
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -191,8 +180,8 @@ TEST_CASE("maximize", "[win]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("BorderlessMaximizedWindows", true);
         group.sync();
-        win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->space->options->qobject->borderlessMaximizedWindows(), true);
+        win::space_reconfigure(*setup.base->mod.space);
+        QCOMPARE(setup.base->mod.space->options->qobject->borderlessMaximizedWindows(), true);
 
         // Create the test client.
         std::unique_ptr<Surface> surface(create_surface());
@@ -249,8 +238,8 @@ TEST_CASE("maximize", "[win]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("BorderlessMaximizedWindows", true);
         group.sync();
-        win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->space->options->qobject->borderlessMaximizedWindows(), true);
+        win::space_reconfigure(*setup.base->mod.space);
+        QCOMPARE(setup.base->mod.space->options->qobject->borderlessMaximizedWindows(), true);
 
         // Create the test client.
         std::unique_ptr<Surface> surface(create_surface());
@@ -296,7 +285,7 @@ TEST_CASE("maximize", "[win]")
 
         // Maximize the client.
         const QRect maximizeRestoreGeometry = client->geo.frame;
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -319,7 +308,7 @@ TEST_CASE("maximize", "[win]")
         QVERIFY(!win::decoration(client));
 
         // Restore the client.
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
         QVERIFY(configureRequestedSpy.wait());
         QCOMPARE(configureRequestedSpy.count(), 4);
 
@@ -350,8 +339,8 @@ TEST_CASE("maximize", "[win]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("BorderlessMaximizedWindows", true);
         group.sync();
-        win::space_reconfigure(*setup.base->space);
-        QCOMPARE(setup.base->space->options->qobject->borderlessMaximizedWindows(), true);
+        win::space_reconfigure(*setup.base->mod.space);
+        QCOMPARE(setup.base->mod.space->options->qobject->borderlessMaximizedWindows(), true);
 
         std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> xdgShellToplevel(create_xdg_shell_toplevel(surface));

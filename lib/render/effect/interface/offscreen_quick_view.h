@@ -31,7 +31,7 @@ class GLTexture;
  * blitting is performed when we update our FBO to keep kwin's render loop
  * as fast as possible.
  */
-class KWIN_EXPORT EffectQuickView : public QObject
+class KWIN_EXPORT OffscreenQuickView : public QObject
 {
     Q_OBJECT
 public:
@@ -47,12 +47,12 @@ public:
      * Construct a new KWinQuickView explicitly stating an export mode. \a alpha indicates
      * whether the view is translucent or not.
      */
-    explicit EffectQuickView(ExportMode exportMode = ExportMode::Texture, bool alpha = true);
+    explicit OffscreenQuickView(ExportMode exportMode = ExportMode::Texture, bool alpha = true);
 
     /**
      * Note that this may change the current GL Context
      */
-    ~EffectQuickView();
+    ~OffscreenQuickView();
 
     QSize size() const;
 
@@ -140,15 +140,14 @@ private:
 };
 
 /**
- * The KWinQuickScene class extends KWinQuickView
- * adding QML support. This will represent a context
- * powered by an engine
+ * The OffscreenQuickScene class extends OffscreenQuickView adding QML support. This will represent
+ * a context powered by an engine
  */
-class KWIN_EXPORT EffectQuickScene : public EffectQuickView
+class KWIN_EXPORT OffscreenQuickScene : public OffscreenQuickView
 {
 public:
-    explicit EffectQuickScene(ExportMode exportMode = ExportMode::Texture, bool alpha = true);
-    ~EffectQuickScene();
+    explicit OffscreenQuickScene(ExportMode exportMode = ExportMode::Texture, bool alpha = true);
+    ~OffscreenQuickScene();
 
     /** top level item in the given source*/
     QQuickItem* rootItem() const;

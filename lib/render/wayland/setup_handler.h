@@ -15,7 +15,7 @@ void effect_setup_handler(Handler& handler)
 {
     handler.reconfigure();
 
-    auto space = handler.scene.platform.base.space.get();
+    auto space = handler.scene.platform.base.mod.space.get();
 
     // TODO(romangg): We do this for every window here, even for windows that are not an xdg-shell
     //                type window. Restrict that?
@@ -25,7 +25,7 @@ void effect_setup_handler(Handler& handler)
                      [&handler](auto win_id) {
                          std::visit(
                              overload{[&](auto&& win) { effect_setup_window(handler, *win); }},
-                             handler.scene.platform.base.space->windows_map.at(win_id));
+                             handler.scene.platform.base.mod.space->windows_map.at(win_id));
                      });
 
     // TODO(romangg): We do this here too for every window.

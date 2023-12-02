@@ -6,13 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "input/keyboard_redirect.h"
-#include "input/pointer_redirect.h"
-#include "win/user_actions_menu.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/keyboard.h>
 #include <Wrapland/Client/pointer.h>
@@ -20,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
-
 #include <linux/input.h>
 
 using namespace Wrapland::Client;
@@ -51,8 +43,8 @@ TEST_CASE("no crash useractions menu", "[win]")
     auto client = render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
-    setup.base->space->user_actions_menu->show(QRect(), client);
-    auto& userActionsMenu = setup.base->space->user_actions_menu;
+    setup.base->mod.space->user_actions_menu->show(QRect(), client);
+    auto& userActionsMenu = setup.base->mod.space->user_actions_menu;
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
 
@@ -62,7 +54,7 @@ TEST_CASE("no crash useractions menu", "[win]")
     QVERIFY(!userActionsMenu->hasClient());
 
     // and show again, this triggers BUG 382063
-    setup.base->space->user_actions_menu->show(QRect(), client);
+    setup.base->mod.space->user_actions_menu->show(QRect(), client);
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
 }

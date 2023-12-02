@@ -17,7 +17,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/geo.h"
 #include "win/space_qobject.h"
 
-#include <render/effect/interface/effect_quick_view.h>
+#include <render/effect/interface/offscreen_quick_view.h>
 #include <render/effect/interface/paint_clipper.h>
 #include <render/effect/interface/paint_data.h>
 
@@ -650,7 +650,7 @@ public:
     {
     }
 
-    virtual void paintEffectQuickView(EffectQuickView* view) = 0;
+    virtual void paintOffscreenQuickView(OffscreenQuickView* view) = 0;
 
     // The region which actually has been painted by paintScreen() and should be
     // copied from the buffer to the screen. I.e. the region returned from scene::paintScreen().

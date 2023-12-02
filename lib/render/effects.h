@@ -25,10 +25,10 @@
 
 #include <render/effect/interface/effect.h>
 #include <render/effect/interface/effect_frame.h>
-#include <render/effect/interface/effect_quick_view.h>
 #include <render/effect/interface/effect_screen.h>
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/offscreen_quick_view.h>
 
 #include <QHash>
 #include <QMouseEvent>
@@ -272,7 +272,11 @@ public:
 
     bool isScreenLocked() const override
     {
-        return get_space().desktop->screen_locker_watcher->is_locked();
+        auto const& mod = get_space().mod;
+        if constexpr (requires(decltype(mod) mod) { mod.desktop; }) {
+            return mod.desktop->screen_locker_watcher->is_locked();
+        }
+        return false;
     }
 
     QPainter* scenePainter() override
@@ -366,16 +370,17 @@ public:
     QList<QKeySequence> registerGlobalShortcut(QList<QKeySequence> const& shortcut,
                                                QAction* action) override
     {
-        scene.platform.base.input->shortcuts->register_keyboard_shortcut(action, shortcut);
-        scene.platform.base.input->registerShortcut(
+        scene.platform.base.mod.input->shortcuts->register_keyboard_shortcut(action, shortcut);
+        scene.platform.base.mod.input->registerShortcut(
             shortcut.empty() ? QKeySequence() : shortcut.front(), action);
-        return scene.platform.base.input->shortcuts->get_keyboard_shortcut(action);
+        return scene.platform.base.mod.input->shortcuts->get_keyboard_shortcut(action);
     }
 
     QList<QKeySequence> registerGlobalShortcutAndDefault(QList<QKeySequence> const& shortcut,
                                                          QAction* action) override
     {
-        scene.platform.base.input->shortcuts->register_keyboard_default_shortcut(action, shortcut);
+        scene.platform.base.mod.input->shortcuts->register_keyboard_default_shortcut(action,
+                                                                                     shortcut);
         return registerGlobalShortcut(shortcut, action);
     }
 
@@ -383,7 +388,7 @@ public:
                                  Qt::MouseButton pointerButtons,
                                  QAction* action) override
     {
-        scene.platform.base.input->shortcuts->registerPointerShortcut(
+        scene.platform.base.mod.input->shortcuts->registerPointerShortcut(
             action, modifiers, pointerButtons);
     }
 
@@ -391,7 +396,7 @@ public:
                               PointerAxisDirection axis,
                               QAction* action) override
     {
-        scene.platform.base.input->shortcuts->registerAxisShortcut(
+        scene.platform.base.mod.input->shortcuts->registerAxisShortcut(
             action, modifiers, static_cast<win::pointer_axis_direction>(axis));
     }
 
@@ -400,7 +405,7 @@ public:
                                        QAction* action,
                                        std::function<void(qreal)> progressCallback) override
     {
-        scene.platform.base.input->shortcuts->registerTouchpadSwipe(
+        scene.platform.base.mod.input->shortcuts->registerTouchpadSwipe(
             static_cast<win::swipe_direction>(direction), fingerCount, action, progressCallback);
     }
 
@@ -409,7 +414,7 @@ public:
                                        QAction* action,
                                        std::function<void(qreal)> progressCallback) override
     {
-        scene.platform.base.input->shortcuts->registerTouchpadPinch(
+        scene.platform.base.mod.input->shortcuts->registerTouchpadPinch(
             static_cast<win::pinch_direction>(direction), fingerCount, action, progressCallback);
     }
 
@@ -418,7 +423,7 @@ public:
                                           QAction* action,
                                           std::function<void(qreal)> progressCallback) override
     {
-        scene.platform.base.input->shortcuts->registerTouchscreenSwipe(
+        scene.platform.base.mod.input->shortcuts->registerTouchscreenSwipe(
             action, progressCallback, static_cast<win::swipe_direction>(direction), fingerCount);
     }
 
@@ -531,16 +536,15 @@ public:
 
     QQmlEngine* qmlEngine() const override
     {
-        auto& script = scene.platform.base.script;
-        return script ? script->qml_engine : nullptr;
+        return scene.platform.base.mod.space->qml_engine.get();
     }
 
-    void renderEffectQuickView(EffectQuickView* effectQuickView) const override
+    void renderOffscreenQuickView(OffscreenQuickView* view) const override
     {
-        if (!effectQuickView->isVisible()) {
+        if (!view->isVisible()) {
             return;
         }
-        scene.paintEffectQuickView(effectQuickView);
+        scene.paintOffscreenQuickView(view);
     }
 
     void moveWindow(EffectWindow* w,
@@ -961,7 +965,7 @@ public:
         }
 
         // Might be at shutdown with space already gone.
-        if (scene.platform.base.space && get_space().edges) {
+        if (scene.platform.base.mod.space && get_space().edges) {
             for (auto& [key, id] : it->second) {
                 get_space().edges->unreserve(static_cast<win::electric_border>(key), id);
             }
@@ -1003,7 +1007,7 @@ public:
 
     KSharedConfigPtr inputConfig() const override
     {
-        return scene.platform.base.input->config.main;
+        return scene.platform.base.mod.input->config.main;
     }
 
     void reconfigure_effect_impl(QString const& name) override
@@ -1052,7 +1056,7 @@ public:
 
     auto& get_space() const
     {
-        return *scene.platform.base.space;
+        return *scene.platform.base.mod.space;
     }
 
     QList<EffectScreen*> m_effectScreens;

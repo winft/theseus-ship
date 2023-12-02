@@ -7,8 +7,6 @@
 
 #include "base/utils.h"
 #include "base/wayland/output.h"
-#include <render/backend/wlroots/output.h>
-#include <render/backend/wlroots/platform.h>
 
 #include <wayland-server-core.h>
 
@@ -32,17 +30,18 @@ void output_handle_destroy(wl_listener* listener, void* /*data*/)
     delete output;
 }
 
-template<typename Platform>
-class output : public base::wayland::output<typename Platform::abstract_type>
+template<typename Backend>
+class output : public base::wayland::output<typename Backend::frontend_type>
 {
 public:
     using type = output;
-    using abstract_type = base::wayland::output<typename Platform::abstract_type>;
+    using abstract_type = base::wayland::output<typename Backend::frontend_type>;
+    using render_t = typename Backend::render_t::output_t;
 
-    output(wlr_output* wlr_out, Platform* platform)
-        : abstract_type(*platform)
+    output(wlr_output* wlr_out, Backend* backend)
+        : abstract_type(*backend->frontend)
         , native{wlr_out}
-        , platform{platform}
+        , backend{backend}
     {
         wlr_out->data = this;
 
@@ -101,8 +100,7 @@ public:
                               modes,
                               current_mode.id != -1 ? &current_mode : nullptr);
 
-        this->render = std::make_unique<render_output>(
-            *this, static_cast<typename Platform::render_t&>(*platform->render));
+        this->render = std::make_unique<render_t>(*this, backend->frontend->mod.render->backend);
     }
 
     ~output() override
@@ -111,11 +109,11 @@ public:
         if (native) {
             wlr_output_destroy(native);
         }
-        if (platform) {
-            remove_all(platform->outputs, this);
-            remove_all(platform->all_outputs, this);
-            platform->server->output_manager->commit_changes();
-            Q_EMIT platform->output_removed(this);
+        if (backend) {
+            remove_all(backend->frontend->outputs, this);
+            remove_all(backend->frontend->all_outputs, this);
+            backend->frontend->server->output_manager->commit_changes();
+            Q_EMIT backend->frontend->output_removed(this);
         }
     }
 
@@ -126,7 +124,7 @@ public:
 
         if (set_on) {
             wlr_output_commit(native);
-            base::wayland::output_set_dpms_on(*this, *platform);
+            wayland::output_set_dpms_on(*this, *backend->frontend);
             return;
         }
 
@@ -138,7 +136,7 @@ public:
 
         get_render(this->render)->disable();
         wlr_output_commit(native);
-        base::wayland::output_set_dmps_off(mode, *this, *platform);
+        wayland::output_set_dmps_off(mode, *this, *backend->frontend);
     }
 
     bool change_backend_state(Wrapland::Server::output_state const& state) override
@@ -172,11 +170,9 @@ public:
     }
 
     wlr_output* native;
-    Platform* platform;
+    Backend* backend;
 
 private:
-    using render_output = render::backend::wlroots::output<output, typename Platform::render_t>;
-
     base::event_receiver<output> destroy_rec;
 
     void set_native_mode(wlr_output* output, int mode_index)
@@ -197,9 +193,9 @@ private:
     }
 
     template<typename AbstractRenderOutput>
-    render_output* get_render(std::unique_ptr<AbstractRenderOutput>& output)
+    render_t* get_render(std::unique_ptr<AbstractRenderOutput>& output)
     {
-        return static_cast<render_output*>(output.get());
+        return static_cast<render_t*>(output.get());
     }
 };
 

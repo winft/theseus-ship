@@ -13,7 +13,7 @@ namespace KWin::render
 template<typename Platform>
 void init_shortcuts(Platform& platform)
 {
-    post::init_night_color_shortcuts(*platform.base.input, *platform.night_color);
+    post::init_night_color_shortcuts(*platform.base.mod.input, *platform.night_color);
 }
 
 }

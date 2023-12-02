@@ -151,8 +151,8 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 
     QObject::connect(win->qobject.get(),
                      &Win::qobject_t::needsRepaint,
-                     win->space.base.render->qobject.get(),
-                     [win] { win->space.base.render->schedule_repaint(win); });
+                     win->space.base.mod.render->qobject.get(),
+                     [win] { win->space.base.mod.render->schedule_repaint(win); });
     QObject::connect(layer_surface,
                      &WS::LayerSurfaceV1::resourceDestroyed,
                      win->qobject.get(),

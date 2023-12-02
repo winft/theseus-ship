@@ -6,12 +6,12 @@
 #include "setup.h"
 
 #include "base/config.h"
-#include "base/seat/backend/wlroots/session.h"
-#include "input/backend/wlroots/platform.h"
-#include "render/backend/wlroots/platform.h"
 #include "render/shortcuts_init.h"
 #include "win/shortcuts_init.h"
 #include <desktop/kde/platform.h>
+#include <input/wayland/platform.h>
+#include <render/wayland/platform.h>
+#include <render/wayland/xwl_platform.h>
 
 extern "C" {
 #include <wlr/backend/headless.h>
@@ -70,23 +70,12 @@ setup::setup(std::string const& test_name,
                                     base::backend::wlroots::start_options::headless);
     base->operation_mode = mode;
 
-    auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend);
+    auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend.native);
     auto out = wlr_headless_add_output(headless_backend, 1280, 1024);
     wlr_output_enable(out, true);
 
-    base->session = std::make_unique<base::seat::backend::wlroots::session>(base->wlroots_session,
-                                                                            headless_backend);
-
     try {
-#if USE_XWL
-        using render_t = render::backend::wlroots::
-            platform<base_t, render::wayland::xwl_platform<base_t::abstract_type>>;
-#else
-        using render_t
-            = render::backend::wlroots::platform<base_t,
-                                                 render::wayland::platform<base_t::abstract_type>>;
-#endif
-        base->render = std::make_unique<render_t>(*base);
+        base->mod.render = std::make_unique<base_t::render_t>(*base);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
         throw;
@@ -104,20 +93,20 @@ setup::~setup()
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
     if (effects) {
-        base->render->effects->unloadAllEffects();
+        base->mod.render->effects->unloadAllEffects();
     }
 
 #if USE_XWL
     // Kill Xwayland before terminating its connection.
-    base->xwayland.reset();
+    base->mod.xwayland.reset();
 #endif
     base->server->terminateClientConnections();
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    base->render->lock();
+    base->mod.render->lock();
 
-    base->space.reset();
+    base->mod.space.reset();
 
     current_setup = nullptr;
 }
@@ -125,9 +114,10 @@ setup::~setup()
 void setup::start()
 {
     base->options = base::create_options(base->operation_mode, base->config.main);
-    base->input = std::make_unique<input::backend::wlroots::platform<base_t>>(
-        *base, base->backend, input::config(KConfig::SimpleConfig));
-    base->input->install_shortcuts();
+    base->mod.input
+        = std::make_unique<base_t::input_t>(*base, input::config(KConfig::SimpleConfig));
+    base->mod.input->mod.dbus
+        = std::make_unique<input::dbus::device_manager<base_t::input_t>>(*base->mod.input);
 
     keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
     pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));
@@ -137,7 +127,7 @@ void setup::start()
     assert(touch);
 
     try {
-        base->render->init();
+        base->mod.render->init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         return;
@@ -147,9 +137,9 @@ void setup::start()
     wlr_pointer_init(pointer, nullptr, "headless-pointer");
     wlr_touch_init(touch, nullptr, "headless-touch");
 
-    wlr_signal_emit_safe(&base->backend->events.new_input, keyboard);
-    wlr_signal_emit_safe(&base->backend->events.new_input, pointer);
-    wlr_signal_emit_safe(&base->backend->events.new_input, touch);
+    wlr_signal_emit_safe(&base->backend.native->events.new_input, keyboard);
+    wlr_signal_emit_safe(&base->backend.native->events.new_input, pointer);
+    wlr_signal_emit_safe(&base->backend.native->events.new_input, touch);
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.
@@ -158,14 +148,14 @@ void setup::start()
     metadata.physical_size = {1280, 1024};
     out->wrapland_output()->set_metadata(metadata);
 
-    base->space = std::make_unique<base_t::space_t>(*base->render, *base->input);
-    base->space->desktop = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->space);
-    input::wayland::add_dbus(base->input.get());
-    win::init_shortcuts(*base->space);
-    render::init_shortcuts(*base->render);
-    base->script = std::make_unique<scripting::platform<base_t::space_t>>(*base->space);
+    base->mod.space = std::make_unique<base_t::space_t>(*base->mod.render, *base->mod.input);
+    base->mod.space->mod.desktop
+        = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->mod.space);
+    win::init_shortcuts(*base->mod.space);
+    render::init_shortcuts(*base->mod.render);
+    base->mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base->mod.space);
 
-    base->render->start(*base->space);
+    base->mod.render->start(*base->mod.space);
     base->server->init_screen_locker();
 
     if (base->operation_mode == base::operation_mode::xwayland) {
@@ -209,7 +199,7 @@ void setup::set_outputs(std::vector<output> const& outputs)
     for (auto&& output : outputs) {
         auto const size = output.geometry.size() * output.scale;
 
-        auto out = wlr_headless_add_output(base->backend, size.width(), size.height());
+        auto out = wlr_headless_add_output(base->backend.native, size.width(), size.height());
         wlr_output_enable(out, true);
         base->all_outputs.back()->force_geometry(output.geometry);
     }
@@ -233,8 +223,8 @@ void setup::create_xwayland()
     };
 
     try {
-        base->xwayland
-            = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->space, status_callback);
+        base->mod.xwayland
+            = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "System error creating Xwayland: " << exc.what() << std::endl;
     } catch (std::exception const& exc) {

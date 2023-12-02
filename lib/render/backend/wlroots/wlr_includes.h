@@ -21,18 +21,17 @@ typedef EGLBoolean(EGLAPIENTRYP PFNEGLQUERYWAYLANDBUFFERWLPROC)(EGLDisplay dpy,
 #endif
 
 extern "C" {
+#define static
 #include <wlr/backend.h>
 #include <wlr/backend/drm.h>
 #include <wlr/interfaces/wlr_buffer.h>
-#include <wlr/types/wlr_buffer.h>
-#include <wlr/util/log.h>
-#include <wlr/util/region.h>
-
-#define static
 #include <wlr/render/allocator.h>
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
 #include <wlr/render/pixman.h>
 #include <wlr/render/wlr_texture.h>
+#include <wlr/types/wlr_buffer.h>
+#include <wlr/util/log.h>
+#include <wlr/util/region.h>
 #undef static
 }

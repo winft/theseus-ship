@@ -7,13 +7,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/placement.h"
-#include "win/space_reconfigure.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/shm_pool.h>
@@ -71,13 +64,13 @@ TEST_CASE("placement", "[win]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("Placement", policy_to_string(policy));
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
     };
 
     auto createAndPlaceWindow = [&](QSize const& defaultSize) {
         PlaceWindowResult rc;
 
-        QSignalSpy window_spy(setup.base->space->qobject.get(),
+        QSignalSpy window_spy(setup.base->mod.space->qobject.get(),
                               &space::qobject_t::wayland_window_added);
         assert(window_spy.isValid());
 
@@ -101,7 +94,7 @@ TEST_CASE("placement", "[win]")
         cfgdata = rc.toplevel->get_configure_data();
 
         auto window_id = window_spy.first().first().value<quint32>();
-        auto window = get_wayland_window(setup.base->space->windows_map.at(window_id));
+        auto window = get_wayland_window(setup.base->mod.space->windows_map.at(window_id));
 
         assert(first_size.isEmpty() || first_size == cfgdata.size);
         rc.initiallyConfiguredSize = cfgdata.size;
@@ -229,7 +222,7 @@ TEST_CASE("placement", "[win]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("Placement", policy_to_string(win::placement::centered));
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         std::unique_ptr<Surface> surface(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface));
@@ -248,7 +241,7 @@ TEST_CASE("placement", "[win]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("Placement", policy_to_string(win::placement::under_mouse));
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         cursor()->set_pos(QPoint(200, 300));
         QCOMPARE(cursor()->pos(), QPoint(200, 300));
@@ -270,7 +263,7 @@ TEST_CASE("placement", "[win]")
         auto group = setup.base->config.main->group("Windows");
         group.writeEntry("Placement", policy_to_string(win::placement::random));
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         std::unique_ptr<Surface> surface1(create_surface());
         std::unique_ptr<XdgShellToplevel> shellSurface1(create_xdg_shell_toplevel(surface1));

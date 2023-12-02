@@ -183,7 +183,7 @@ ApplicationX11::ApplicationX11(int &argc, char **argv)
 
 ApplicationX11::~ApplicationX11()
 {
-    base.space.reset();
+    base.mod.space.reset();
     if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE) {
         // If there was no --replace (no new WM)
         xcb_set_input_focus(base.x11_data.connection,
@@ -202,8 +202,8 @@ void ApplicationX11::lostSelection()
 {
     sendPostedEvents();
     event_filter.reset();
-    base.space.reset();
-    base.render.reset();
+    base.mod.space.reset();
+    base.mod.render.reset();
 
     // Remove windowmanager privileges
     base::x11::xcb::select_input(
@@ -216,7 +216,6 @@ void ApplicationX11::start()
     setQuitOnLastWindowClosed(false);
     setQuitLockEnabled(false);
 
-    using base_t = base::x11::platform;
     base.is_crash_restart = crashes > 0;
 
     crashChecking();
@@ -249,11 +248,11 @@ void ApplicationX11::start()
         }
 
         base.session = std::make_unique<base::seat::backend::logind::session>();
-        base.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
-        base.input = std::make_unique<input::x11::platform<base_t>>(base);
+        base.mod.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
+        base.mod.input = std::make_unique<input::x11::platform<base_t>>(base);
 
         base.update_outputs();
-        auto render = static_cast<render::backend::x11::platform<base_t>*>(base.render.get());
+        auto render = static_cast<render::backend::x11::platform<base_t>*>(base.mod.render.get());
         try {
             render->init();
         } catch (std::exception const&) {
@@ -262,22 +261,22 @@ void ApplicationX11::start()
         }
 
         try {
-            base.space = std::make_unique<base_t::space_t>(*base.render, *base.input);
+            base.mod.space = std::make_unique<base_t::space_t>(*base.mod.render, *base.mod.input);
         } catch(std::exception& ex) {
             qCCritical(KWIN_CORE) << "Abort since space creation fails with:" << ex.what();
             exit(1);
         }
 
-        base.space->desktop
-            = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base.space);
-        win::init_shortcuts(*base.space);
-        render::init_shortcuts(*base.render);
+        base.mod.space->mod.desktop
+            = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base.mod.space);
+        win::init_shortcuts(*base.mod.space);
+        render::init_shortcuts(*base.mod.render);
 
-        event_filter = std::make_unique<win::x11::xcb_event_filter<base_t::space_t>>(*base.space);
+        event_filter = std::make_unique<win::x11::xcb_event_filter<base_t::space_t>>(*base.mod.space);
         installNativeEventFilter(event_filter.get());
 
-        base.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.space);
-        render->start(*base.space);
+        base.mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.mod.space);
+        render->start(*base.mod.space);
 
         // Trigger possible errors, there's still a chance to abort.
         base::x11::xcb::sync(base.x11_data.connection);

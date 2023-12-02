@@ -6,8 +6,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef KWIN_MAIN_WAYLAND_H
 #define KWIN_MAIN_WAYLAND_H
 
-#include <base/backend/wlroots/platform.h>
+#include <base/wayland/platform.h>
 #include <base/wayland/xwl_platform.h>
+#include <desktop/platform.h>
+#include <script/platform.h>
 
 #include <QApplication>
 #include <QProcessEnvironment>
@@ -15,6 +17,29 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 namespace KWin
 {
+
+template<typename Base>
+struct input_mod {
+    using platform_t = input::wayland::platform<Base, input_mod>;
+    std::unique_ptr<input::dbus::device_manager<platform_t>> dbus;
+};
+
+struct space_mod {
+    std::unique_ptr<desktop::platform> desktop;
+};
+
+struct base_mod {
+    using platform_t = base::wayland::xwl_platform<base_mod>;
+    using render_t = render::wayland::xwl_platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t, input_mod<platform_t>>;
+    using space_t = win::wayland::xwl_space<platform_t, space_mod>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
+    std::unique_ptr<xwl::xwayland<space_t>> xwayland;
+    std::unique_ptr<scripting::platform<space_t>> script;
+};
 
 class ApplicationWayland : public QApplication
 {
@@ -42,7 +67,7 @@ private:
     QStringList m_applicationsToStart;
     QString m_sessionArgument;
 
-    using base_t = base::backend::wlroots::platform<base::wayland::xwl_platform>;
+    using base_t = base::wayland::xwl_platform<base_mod>;
     std::unique_ptr<base_t> base;
 
     QProcess* exit_with_process{nullptr};

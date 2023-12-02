@@ -7,6 +7,7 @@
 
 #include "control/headless/keyboard.h"
 #include "control/keyboard.h"
+#include <base/backend/wlroots/helpers.h>
 #include <input/backend/wlroots/device_helpers.h>
 
 #include "base/utils.h"
@@ -22,25 +23,27 @@ extern "C" {
 namespace KWin::input::backend::wlroots
 {
 
-template<typename Platform>
+template<typename Backend>
 class keyboard;
 
-template<typename Platform>
+template<typename Backend>
 void keyboard_handle_destroy(struct wl_listener* listener, void* /*data*/)
 {
-    base::event_receiver<keyboard<Platform>>* event_receiver_struct
+    base::event_receiver<keyboard<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto keyboard = event_receiver_struct->receiver;
 
-    keyboard->backend = nullptr;
-    platform_remove_keyboard(keyboard, *keyboard->platform);
+    keyboard->native = nullptr;
+    if (keyboard->backend) {
+        platform_remove_keyboard(keyboard, *keyboard->backend->frontend);
+    }
     delete keyboard;
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_key(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<keyboard<Platform>>* event_receiver_struct
+    base::event_receiver<keyboard<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto keyboard = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_keyboard_key_event*>(data);
@@ -58,13 +61,13 @@ void handle_key(struct wl_listener* listener, void* data)
     Q_EMIT keyboard->key_changed(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_modifiers(struct wl_listener* listener, void* /*data*/)
 {
-    base::event_receiver<keyboard<Platform>>* event_receiver_struct
+    base::event_receiver<keyboard<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto keyboard = event_receiver_struct->receiver;
-    auto& mods = keyboard->backend->modifiers;
+    auto& mods = keyboard->native->modifiers;
 
     auto event = modifiers_event{
         mods.depressed,
@@ -79,47 +82,47 @@ void handle_modifiers(struct wl_listener* listener, void* /*data*/)
     Q_EMIT keyboard->modifiers_changed(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 class keyboard : public input::keyboard
 {
 public:
-    keyboard(wlr_input_device* dev, Platform* platform)
-        : input::keyboard(platform->xkb.context, platform->xkb.compose_table)
-        , platform{platform}
+    keyboard(wlr_input_device* dev, Backend* backend)
+        : input::keyboard(backend->frontend->xkb.context, backend->frontend->xkb.compose_table)
+        , backend{backend}
     {
-        backend = wlr_keyboard_from_input_device(dev);
+        native = wlr_keyboard_from_input_device(dev);
 
         if (auto libinput = get_libinput_device(dev)) {
-            control = std::make_unique<keyboard_control>(libinput, platform->config.main);
-        } else if (base::backend::wlroots::get_headless_backend(platform->backend)) {
+            control = std::make_unique<keyboard_control>(libinput, backend->frontend->config.main);
+        } else if (base::backend::wlroots::get_headless_backend(backend->native)) {
             auto headless_control = std::make_unique<headless::keyboard_control>();
             headless_control->data.is_alpha_numeric_keyboard = true;
             this->control = std::move(headless_control);
         }
 
         destroyed.receiver = this;
-        destroyed.event.notify = keyboard_handle_destroy<Platform>;
+        destroyed.event.notify = keyboard_handle_destroy<Backend>;
 
-        wl_signal_add(&backend->base.events.destroy, &destroyed.event);
+        wl_signal_add(&native->base.events.destroy, &destroyed.event);
 
         key_rec.receiver = this;
-        key_rec.event.notify = handle_key<Platform>;
-        wl_signal_add(&backend->events.key, &key_rec.event);
+        key_rec.event.notify = handle_key<Backend>;
+        wl_signal_add(&native->events.key, &key_rec.event);
 
         modifiers_rec.receiver = this;
-        modifiers_rec.event.notify = handle_modifiers<Platform>;
-        wl_signal_add(&backend->events.modifiers, &modifiers_rec.event);
+        modifiers_rec.event.notify = handle_modifiers<Backend>;
+        wl_signal_add(&native->events.modifiers, &modifiers_rec.event);
     }
 
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
     ~keyboard() override = default;
 
-    Platform* platform;
-    wlr_keyboard* backend{nullptr};
+    Backend* backend;
+    wlr_keyboard* native{nullptr};
 
 private:
-    using er = base::event_receiver<keyboard<Platform>>;
+    using er = base::event_receiver<keyboard<Backend>>;
     er destroyed;
     er key_rec;
     er modifiers_rec;

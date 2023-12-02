@@ -6,18 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "input/keyboard_redirect.h"
-#include "input/xkb/helpers.h"
-#include "win/screen_edges.h"
-#include "win/space_reconfigure.h"
-
 #include <KConfigGroup>
 #include <KGlobalAccel>
-
 #include <QDBusConnection>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 
@@ -158,7 +149,7 @@ TEST_CASE("no global shortcuts", "[input]")
         group.writeEntry("Shift", config.shift);
         group.writeEntry("Control", config.control);
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         // configured shortcut should trigger
         quint32 timestamp = 1;
@@ -184,15 +175,16 @@ TEST_CASE("no global shortcuts", "[input]")
         KGlobalAccel::self()->setShortcut(action.get(),
                                           QList<QKeySequence>{Qt::META | Qt::SHIFT | Qt::Key_W},
                                           KGlobalAccel::NoAutoloading);
-        setup.base->input->registerShortcut(Qt::META | Qt::SHIFT | Qt::Key_W, action.get());
+        setup.base->mod.input->registerShortcut(Qt::META | Qt::SHIFT | Qt::Key_W, action.get());
 
         // press meta+shift+w
         quint32 timestamp = 0;
         keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-        QCOMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input), Qt::MetaModifier);
+        QCOMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->mod.input),
+                 Qt::MetaModifier);
 
         keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-        REQUIRE(input::xkb::get_active_keyboard_modifiers(*setup.base->input)
+        REQUIRE(input::xkb::get_active_keyboard_modifiers(*setup.base->mod.input)
                 == (Qt::ShiftModifier | Qt::MetaModifier));
 
         keyboard_key_pressed(KEY_W, timestamp++);
@@ -213,7 +205,7 @@ TEST_CASE("no global shortcuts", "[input]")
         QSignalSpy actionSpy(action.get(), &QAction::triggered);
         QVERIFY(actionSpy.isValid());
 
-        setup.base->input->shortcuts->registerPointerShortcut(
+        setup.base->mod.input->shortcuts->registerPointerShortcut(
             action.get(), Qt::MetaModifier, Qt::LeftButton);
 
         // try to trigger the shortcut
@@ -247,7 +239,7 @@ TEST_CASE("no global shortcuts", "[input]")
                 = sign > 0 ? win::pointer_axis_direction::left : win::pointer_axis_direction::right;
         }
 
-        setup.base->input->shortcuts->registerAxisShortcut(
+        setup.base->mod.input->shortcuts->registerAxisShortcut(
             action.get(), Qt::MetaModifier, axisDirection);
 
         // try to trigger the shortcut
@@ -269,7 +261,7 @@ TEST_CASE("no global shortcuts", "[input]")
     SECTION("screen edge")
     {
         // based on LockScreentestScreenEdge
-        QSignalSpy screenEdgeSpy(setup.base->space->edges->qobject.get(),
+        QSignalSpy screenEdgeSpy(setup.base->mod.space->edges->qobject.get(),
                                  &win::screen_edger_qobject::approaching);
         QVERIFY(screenEdgeSpy.isValid());
         QCOMPARE(screenEdgeSpy.count(), 0);

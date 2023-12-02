@@ -314,7 +314,7 @@ protected:
             auto cursor = this->platform.software_cursor.get();
 
             // don't paint if we use hardware cursor or the cursor is hidden
-            if (!cursor->enabled || this->platform.base.space->input->cursor->is_hidden()
+            if (!cursor->enabled || this->platform.base.mod.space->input->cursor->is_hidden()
                 || cursor->image().isNull()) {
                 return;
             }
@@ -344,7 +344,7 @@ protected:
 
             // get cursor position in projection coordinates
             auto const cursorPos
-                = this->platform.base.space->input->cursor->pos() - cursor->hotspot();
+                = this->platform.base.mod.space->input->cursor->pos() - cursor->hotspot();
             auto mvp = render.projection * render.view;
             mvp.translate(cursorPos.x(), cursorPos.y());
 
@@ -439,7 +439,7 @@ protected:
         }
     }
 
-    void paintEffectQuickView(EffectQuickView* view) override
+    void paintOffscreenQuickView(OffscreenQuickView* view) override
     {
         auto texture = view->bufferAsTexture();
         if (!texture) {

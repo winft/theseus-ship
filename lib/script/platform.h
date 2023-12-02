@@ -35,7 +35,6 @@
 #include <memory>
 
 class QQmlContext;
-class QQmlEngine;
 class QAction;
 class QMenu;
 class QRecursiveMutex;
@@ -61,7 +60,8 @@ public:
     platform_wrap(base::options& options,
                   win::options& win_opts,
                   render::options& render_opts,
-                  base::config& config);
+                  base::config& config,
+                  QQmlEngine& engine);
     ~platform_wrap() override;
 
     Q_SCRIPTABLE Q_INVOKABLE int loadScript(const QString& filePath,
@@ -82,7 +82,7 @@ public:
     virtual void reserve_touch(win::electric_border border, QAction* action) = 0;
     virtual void register_shortcut(QKeySequence const& shortcut, QAction* action) = 0;
 
-    QQmlEngine* qml_engine;
+    QQmlEngine& qml_engine;
     QQmlContext* declarative_script_shared_context;
     base::config& config;
     std::unique_ptr<scripting::options> options;
@@ -117,8 +117,9 @@ public:
     platform(Space& space)
         : platform_wrap(*space.base.options,
                         *space.options,
-                        *space.base.render->options,
-                        space.base.config)
+                        *space.base.mod.render->options,
+                        space.base.config,
+                        *space.qml_engine)
         , space{space}
     {
         singleton_interface::register_shortcut
@@ -151,7 +152,7 @@ public:
             3,
             0,
             "Workspace",
-            [this](QQmlEngine* qmlEngine, QJSEngine* jsEngine) -> qt_script_space* {
+            [this](auto qmlEngine, QJSEngine* jsEngine) -> qt_script_space* {
                 Q_UNUSED(qmlEngine)
                 Q_UNUSED(jsEngine)
                 return new template_space<qt_script_space, Space>(&this->space);
@@ -164,16 +165,16 @@ public:
         qmlRegisterAnonymousType<win::subspace>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
 
-        if (auto& render = space.base.render; render->effects) {
+        if (auto& render = space.base.mod.render; render->effects) {
             add_effect_loader(*render);
         }
 
-        QObject::connect(space.base.render->qobject.get(),
+        QObject::connect(space.base.mod.render->qobject.get(),
                          &Space::base_t::render_t::qobject_t::compositingToggled,
                          this,
                          [this](bool on) {
                              if (on) {
-                                 add_effect_loader(*this->space.base.render);
+                                 add_effect_loader(*this->space.base.mod.render);
                              }
                          });
 
@@ -214,8 +215,8 @@ public:
 
     void register_shortcut(QKeySequence const& shortcut, QAction* action) override
     {
-        space.base.input->shortcuts->register_keyboard_shortcut(action, {shortcut});
-        space.base.input->registerShortcut(shortcut, action);
+        space.base.mod.input->shortcuts->register_keyboard_shortcut(action, {shortcut});
+        space.base.mod.input->registerShortcut(shortcut, action);
     }
 
     /**

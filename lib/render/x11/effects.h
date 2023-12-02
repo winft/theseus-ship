@@ -76,7 +76,7 @@ public:
 
     void defineCursor(Qt::CursorShape shape) override
     {
-        auto const c = win::x11::xcb_cursor_get(*this->scene.platform.base.space, shape);
+        auto const c = win::x11::xcb_cursor_get(*this->scene.platform.base.mod.space, shape);
         if (c != XCB_CURSOR_NONE) {
             mouse_intercept.window.define_cursor(c);
         }
@@ -146,11 +146,12 @@ public:
 protected:
     bool doGrabKeyboard() override
     {
-        if (!this->scene.platform.base.input->grab_keyboard()) {
+        if (!this->scene.platform.base.mod.input->grab_keyboard()) {
             return false;
         }
 
-        auto xkb = this->scene.platform.base.space->input->xinput->fake_devices.keyboard->xkb.get();
+        auto xkb
+            = this->scene.platform.base.mod.space->input->xinput->fake_devices.keyboard->xkb.get();
         using xkb_keyboard_t = std::remove_pointer_t<decltype(xkb)>;
         keyboard_intercept.filter
             = std::make_unique<keyboard_intercept_filter<type, xkb_keyboard_t>>(*this, *xkb);
@@ -160,7 +161,7 @@ protected:
 
     void doUngrabKeyboard() override
     {
-        this->scene.platform.base.input->ungrab_keyboard();
+        this->scene.platform.base.mod.input->ungrab_keyboard();
         keyboard_intercept.filter.reset();
     }
 
@@ -193,14 +194,15 @@ protected:
 
         // Raise electric border windows above the input windows so they can still be triggered.
         base::x11::xcb::restack_windows_with_raise(
-            base.x11_data.connection, win::x11::screen_edges_windows(*base.space->edges));
+            base.x11_data.connection, win::x11::screen_edges_windows(*base.mod.space->edges));
     }
 
     void doStopMouseInterception() override
     {
         mouse_intercept.window.unmap();
         mouse_intercept.filter.reset();
-        win::x11::stack_screen_edges_under_override_redirect(this->scene.platform.base.space.get());
+        win::x11::stack_screen_edges_under_override_redirect(
+            this->scene.platform.base.mod.space.get());
     }
 
     void doCheckInputWindowStacking() override
@@ -211,7 +213,7 @@ protected:
         // TODO: Do both at once.
         auto const& base = this->scene.platform.base;
         base::x11::xcb::restack_windows_with_raise(
-            base.x11_data.connection, win::x11::screen_edges_windows(*base.space->edges));
+            base.x11_data.connection, win::x11::screen_edges_windows(*base.mod.space->edges));
     }
 
     void handle_effect_destroy(Effect& effect) override

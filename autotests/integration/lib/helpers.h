@@ -13,6 +13,7 @@
 
 #include "base/output.h"
 #include "win/wayland/window.h"
+#include <script/platform.h>
 
 #if USE_XWL
 #include <base/wayland/xwl_platform.h>
@@ -41,14 +42,47 @@ namespace KWin::detail::test
 
 class client;
 
+template<typename Base>
+struct input_mod {
+    using platform_t = input::wayland::platform<Base, input_mod>;
+    std::unique_ptr<input::dbus::device_manager<platform_t>> dbus;
+};
+
+struct space_mod {
+    std::unique_ptr<desktop::platform> desktop;
+};
+
 #if USE_XWL
-using space = win::wayland::xwl_space<render::wayland::xwl_platform<base::wayland::xwl_platform>,
-                                      input::wayland::platform<base::wayland::xwl_platform>>;
+struct base_mod {
+    using platform_t = base::wayland::xwl_platform<base_mod>;
+    using render_t = render::wayland::xwl_platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t, input_mod<platform_t>>;
+    using space_t = win::wayland::xwl_space<platform_t, space_mod>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
+    std::unique_ptr<xwl::xwayland<space_t>> xwayland;
+    std::unique_ptr<scripting::platform<space_t>> script;
+};
+
+using base_t = base::wayland::xwl_platform<base_mod>;
 #else
-using space = win::wayland::space<render::wayland::platform<base::wayland::platform>,
-                                  input::wayland::platform<base::wayland::platform>>;
+struct base_mod {
+    using platform_t = base::wayland::platform<base_mod>;
+    using render_t = render::wayland::platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t, input_mod<platform_t>>;
+    using space_t = win::wayland::space<platform_t, space_mod>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
+    std::unique_ptr<scripting::platform<space_t>> script;
+};
+using base_t = base::wayland::platform<base_mod>;
 #endif
 
+using space = base_t::space_t;
 using wayland_window = win::wayland::window<space>;
 
 struct KWIN_EXPORT output {

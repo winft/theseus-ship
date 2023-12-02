@@ -6,9 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/x11/xcb/geometry_hints.h"
-#include "base/x11/xcb/window.h"
-
 #include <catch2/generators/catch_generators.hpp>
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>

@@ -93,7 +93,7 @@ void space_setup_init(Space& space, Render& render, Input& input)
     space.rule_book = std::make_unique<rules::book>();
     space.subspace_manager = std::make_unique<subspace_manager>();
     space.outline = Space::render_outline_t::create(
-        render, [&space] { return space.outline->create_visual(*space.base.render); });
+        render, [&space] { return space.outline->create_visual(*space.base.mod.render); });
     space.deco = std::make_unique<deco::bridge<Space>>(space);
     space.appmenu = std::make_unique<dbus::appmenu>(dbus::create_appmenu_callbacks(space));
     space.user_actions_menu = std::make_unique<win::user_actions_menu<Space>>(space);

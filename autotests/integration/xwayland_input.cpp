@@ -6,17 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/deco.h"
-#include "win/screen_edges.h"
-#include "win/wayland/space.h"
-#include "win/x11/window.h"
-
+#include <QSocketNotifier>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
-
-#include <QSocketNotifier>
 #include <xcb/xcb_icccm.h>
 
 namespace KWin::detail::test
@@ -136,13 +128,13 @@ TEST_CASE("xwayland input", "[input],[xwl]")
         xcb_map_window(c.get(), w);
         xcb_flush(c.get());
 
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.last().first().value<quint32>();
-        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->mod.space->windows_map.at(client_id));
         QVERIFY(client);
         QVERIFY(win::decoration(client));
         QVERIFY(!client->hasStrut());

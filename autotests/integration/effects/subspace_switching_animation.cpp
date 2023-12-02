@@ -6,13 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/compositor.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "render/scene.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 #include <catch2/generators/catch_generators.hpp>
@@ -35,7 +28,7 @@ TEST_CASE("subspace switching animation", "[effect]")
     test::setup setup("subspace-switching-animation");
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -45,12 +38,12 @@ TEST_CASE("subspace switching animation", "[effect]")
 
     setup.start();
 
-    auto& scene = setup.base->render->scene;
+    auto& scene = setup.base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
     // We need at least 2 subspaces for the test.
-    auto& subs = setup.base->space->subspace_manager;
+    auto& subs = setup.base->mod.space->subspace_manager;
     win::subspace_manager_set_count(*subs, 2);
     QCOMPARE(win::subspaces_get_current_x11id(*subs), 1u);
     QCOMPARE(subs->subspaces.size(), 2u);
@@ -69,7 +62,7 @@ TEST_CASE("subspace switching animation", "[effect]")
     QCOMPARE(client->topo.subspaces.front(), subs->subspaces.front());
 
     // Load effect that will be tested.
-    auto& effectsImpl = setup.base->render->effects;
+    auto& effectsImpl = setup.base->mod.render->effects;
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);

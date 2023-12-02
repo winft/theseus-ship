@@ -10,8 +10,8 @@
 #include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
-#include "script/platform.h"
-#include "utils/algorithm.h"
+#include <base/backend/wlroots/backend.h>
+#include <base/wayland/platform_helpers.h>
 #include <base/x11/data.h>
 #include <base/x11/event_filter_manager.h>
 #include <render/wayland/xwl_platform.h>
@@ -27,69 +27,66 @@
 namespace KWin::base::wayland
 {
 
+template<typename Mod>
+class xwl_platform;
+
+struct xwl_platform_mod {
+    using platform_t = base::wayland::xwl_platform<xwl_platform_mod>;
+    using render_t = render::wayland::xwl_platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t>;
+    using space_t = win::wayland::xwl_space<platform_t>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
+    std::unique_ptr<xwl::xwayland<space_t>> xwayland;
+};
+
+template<typename Mod = xwl_platform_mod>
 class xwl_platform : public base::platform
 {
 public:
-    using output_t = output<xwl_platform>;
-    using render_t = render::wayland::xwl_platform<xwl_platform>;
-    using input_t = input::wayland::platform<xwl_platform>;
-    using space_t = win::wayland::xwl_space<render_t, input_t>;
+    using type = xwl_platform<Mod>;
+    using backend_t = backend::wlroots::backend<type>;
+    using output_t = output<type>;
 
-    xwl_platform(base::config config)
-        : config{std::move(config)}
-        , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
-    {
-        init_platform(*this);
-        init_singleton_interface();
-    }
+    using render_t = typename Mod::render_t;
+    using input_t = typename Mod::input_t;
+    using space_t = typename Mod::space_t;
 
     xwl_platform(base::config config,
                  std::string const& socket_name,
-                 base::wayland::start_options flags)
+                 base::wayland::start_options flags,
+                 backend::wlroots::start_options options)
         : config{std::move(config)}
+        , server{std::make_unique<wayland::server<type>>(*this, socket_name, flags)}
+        , backend{*this, options}
         , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
-        , server{std::make_unique<wayland::server<xwl_platform>>(*this, socket_name, flags)}
     {
-        init_platform(*this);
-        init_singleton_interface();
+        wayland::platform_init(*this);
     }
 
-    xwl_platform(xwl_platform const&) = delete;
-    xwl_platform& operator=(xwl_platform const&) = delete;
-    xwl_platform(xwl_platform&& other) = delete;
-    xwl_platform& operator=(xwl_platform&& other) = delete;
+    xwl_platform(type const&) = delete;
+    xwl_platform& operator=(type const&) = delete;
+    xwl_platform(type&& other) = delete;
+    xwl_platform& operator=(type&& other) = delete;
 
     ~xwl_platform() override
     {
         singleton_interface::get_outputs = {};
     }
 
-    void enable_output(output_t* output)
+    clockid_t get_clockid() const override
     {
-        assert(!contains(outputs, output));
-        outputs.push_back(output);
-        Q_EMIT output_added(output);
-    }
-
-    void disable_output(output_t* output)
-    {
-        assert(contains(outputs, output));
-        remove_all(outputs, output);
-        Q_EMIT output_removed(output);
+        return backend.get_clockid();
     }
 
     base::operation_mode operation_mode;
     base::config config;
     base::x11::data x11_data;
-
     std::unique_ptr<base::options> options;
-    std::unique_ptr<base::seat::session> session;
-    std::unique_ptr<x11::event_filter_manager> x11_event_filters;
 
-    QProcessEnvironment process_environment;
-
-    std::unique_ptr<wayland::server<xwl_platform>> server;
-
+    std::unique_ptr<wayland::server<type>> server;
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
 
     // All outputs, including disabled ones.
@@ -97,24 +94,13 @@ public:
 
     // Enabled outputs only, so outputs that are relevant for our compositing.
     std::vector<output_t*> outputs;
+    std::unique_ptr<base::seat::session> session;
+    backend_t backend;
+    QProcessEnvironment process_environment;
 
-    std::unique_ptr<render_t> render;
-    std::unique_ptr<input_t> input;
-    std::unique_ptr<space_t> space;
-    std::unique_ptr<scripting::platform<space_t>> script;
-    std::unique_ptr<xwl::xwayland<space_t>> xwayland;
+    std::unique_ptr<x11::event_filter_manager> x11_event_filters;
 
-private:
-    void init_singleton_interface() const
-    {
-        singleton_interface::get_outputs = [this] {
-            std::vector<base::output*> vec;
-            for (auto&& output : outputs) {
-                vec.push_back(output);
-            }
-            return vec;
-        };
-    }
+    Mod mod;
 };
 
 }

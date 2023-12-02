@@ -320,7 +320,7 @@ public:
                     return nullptr;
                 }
                 using space_t = std::remove_reference_t<decltype(win->space)>;
-                auto outputs = win->space.base.script->workspaceWrapper()->screens();
+                auto outputs = win->space.base.mod.script->workspaceWrapper()->screens();
                 auto it = std::find_if(outputs.begin(), outputs.end(), [win](auto out) {
                     auto out_impl
                         = static_cast<output_impl<typename space_t::base_t::output_t>*>(out);

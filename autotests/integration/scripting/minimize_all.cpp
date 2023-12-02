@@ -61,10 +61,10 @@ TEST_CASE("minimize all", "[script]")
     test_outputs_default();
     setup_wayland_connection();
 
-    setup.base->script->loadScript(locateMainScript(s_scriptName), s_scriptName);
-    QTRY_VERIFY(setup.base->script->isScriptLoaded(s_scriptName));
+    setup.base->mod.script->loadScript(locateMainScript(s_scriptName), s_scriptName);
+    QTRY_VERIFY(setup.base->mod.script->isScriptLoaded(s_scriptName));
 
-    auto script = setup.base->script->findScript(s_scriptName);
+    auto script = setup.base->mod.script->findScript(s_scriptName);
     QVERIFY(script);
     QSignalSpy runningChangedSpy(script, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());

@@ -6,12 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/compositor.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 #include <catch2/generators/catch_generators.hpp>
@@ -35,7 +29,7 @@ TEST_CASE("no crash reinit compositor", "[render]")
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
 
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -46,14 +40,14 @@ TEST_CASE("no crash reinit compositor", "[render]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = setup.base->render->scene;
+    auto& scene = setup.base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
     auto effect_name = GENERATE(as<QString>{}, "fade", "glide", "scale");
 
     // Make sure that we have the right effects ptr.
-    auto& effectsImpl = setup.base->render->effects;
+    auto& effectsImpl = setup.base->mod.render->effects;
     QVERIFY(effectsImpl);
 
     // Create the test client.
@@ -86,7 +80,7 @@ TEST_CASE("no crash reinit compositor", "[render]")
     QTRY_VERIFY(effect->isActive());
 
     // Re-initialize the compositor, effects will be destroyed and created again.
-    setup.base->render->reinitialize();
+    setup.base->mod.render->reinitialize();
 
     // By this time the compositor should still be alive.
 }

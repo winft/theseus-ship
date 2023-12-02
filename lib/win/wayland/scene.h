@@ -66,11 +66,11 @@ void setup_scale_scene_notify(Win& win)
     // window quads.
     QObject::connect(win.surface,
                      &Wrapland::Server::Surface::committed,
-                     win.space.base.render->scene.get(),
+                     win.space.base.mod.render->scene.get(),
                      [&] {
                          if (win.surface->state().updates
                              & Wrapland::Server::surface_change::scale) {
-                             win.space.base.render->scene->windowGeometryShapeChanged(&win);
+                             win.space.base.mod.render->scene->windowGeometryShapeChanged(&win);
                          }
                      });
 }
@@ -80,12 +80,12 @@ void setup_compositing(Win& win)
 {
     static_assert(!Win::is_toplevel);
     assert(!win.remnant);
-    assert(win.space.base.render->scene);
+    assert(win.space.base.mod.render->scene);
 
     discard_shape(win);
     win.render_data.damage_region = QRect({}, win.geo.size());
 
-    add_scene_window(*win.space.base.render->scene, win);
+    add_scene_window(*win.space.base.mod.render->scene, win);
 }
 
 }

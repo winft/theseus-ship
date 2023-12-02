@@ -6,22 +6,16 @@
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/input_method_v2.h>
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/text_input_v3.h>
-
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/input_method_v2.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 #include <Wrapland/Server/text_input_v3.h>
-
 #include <memory>
 
 namespace KWin::detail::test
@@ -122,7 +116,7 @@ TEST_CASE("input method", "[input],[win]")
         popup.server_popup_surface
             = popup_spy.front().front().value<Wrapland::Server::input_method_popup_surface_v2*>();
 
-        popup.window = win::wayland::space_windows_find(*setup.base->space,
+        popup.window = win::wayland::space_windows_find(*setup.base->mod.space,
                                                         popup.server_popup_surface->surface());
         QVERIFY(popup.window);
 
@@ -240,11 +234,11 @@ TEST_CASE("input method", "[input],[win]")
          * Create an input method popup and a text-input client afterwards. Verify that the popup is
          * drawn with acceptable geometry and the window is destroyed on release.
          */
-        QSignalSpy window_added_spy(setup.base->space->qobject.get(),
+        QSignalSpy window_added_spy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::wayland_window_added);
         QVERIFY(window_added_spy.isValid());
 
-        QSignalSpy window_removed_spy(setup.base->space->qobject.get(),
+        QSignalSpy window_removed_spy(setup.base->mod.space->qobject.get(),
                                       &space::qobject_t::wayland_window_removed);
         QVERIFY(window_removed_spy.isValid());
 
@@ -271,7 +265,8 @@ TEST_CASE("input method", "[input],[win]")
         render_popup();
 
         auto signal_id = window_added_spy.back().front().value<quint32>();
-        QCOMPARE(popup.window, get_wayland_window(setup.base->space->windows_map.at(signal_id)));
+        QCOMPARE(popup.window,
+                 get_wayland_window(setup.base->mod.space->windows_map.at(signal_id)));
 
         QVERIFY(popup.window->isInputMethod());
         QVERIFY(!popup.text_area.intersects(popup.window->geo.frame));
@@ -299,11 +294,11 @@ TEST_CASE("input method", "[input],[win]")
          * Create a text-input client and an input method popup afterwards. Verify that the popup is
          * drawn with acceptable geometry and the window is destroyed on release.
          */
-        QSignalSpy window_added_spy(setup.base->space->qobject.get(),
+        QSignalSpy window_added_spy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::wayland_window_added);
         QVERIFY(window_added_spy.isValid());
 
-        QSignalSpy window_removed_spy(setup.base->space->qobject.get(),
+        QSignalSpy window_removed_spy(setup.base->mod.space->qobject.get(),
                                       &space::qobject_t::wayland_window_removed);
         QVERIFY(window_removed_spy.isValid());
 
@@ -338,7 +333,8 @@ TEST_CASE("input method", "[input],[win]")
         render_popup();
 
         auto signal_id = window_added_spy.back().front().value<quint32>();
-        QCOMPARE(popup.window, get_wayland_window(setup.base->space->windows_map.at(signal_id)));
+        QCOMPARE(popup.window,
+                 get_wayland_window(setup.base->mod.space->windows_map.at(signal_id)));
 
         QVERIFY(popup.window->isInputMethod());
         QVERIFY(!popup.text_area.intersects(popup.window->geo.frame));

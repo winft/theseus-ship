@@ -6,15 +6,6 @@
 */
 #include "lib/setup.h"
 
-#include "base/backend/wlroots/platform.h"
-#include "base/wayland/server.h"
-#include "input/dbus/keyboard_layouts_v2.h"
-#include "input/keyboard_redirect.h"
-#include "input/xkb/helpers.h"
-#include "input/xkb/layout_manager.h"
-#include "win/activation.h"
-#include "win/wayland/window.h"
-
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <QAction>
@@ -24,7 +15,6 @@
 #include <QDBusMetaType>
 #include <QDBusPendingCall>
 #include <Wrapland/Client/surface.h>
-
 #include <linux/input.h>
 
 extern "C" {
@@ -180,9 +170,9 @@ TEST_CASE("keyboard layout", "[input]")
 
     auto get_xkb_keys = [&](int index = -1) {
         if (index < 0) {
-            return input::xkb::get_primary_xkb_keyboard(*setup->base->input);
+            return input::xkb::get_primary_xkb_keyboard(*setup->base->mod.input);
         }
-        return setup->base->input->keyboards.at(index)->xkb.get();
+        return setup->base->mod.input->keyboards.at(index)->xkb.get();
     };
 
     auto reset_setup = [&]() {
@@ -215,7 +205,7 @@ TEST_CASE("keyboard layout", "[input]")
         auto keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
         auto name = "headless-keyboard" + std::to_string(keyboards_index);
         wlr_keyboard_init(keyboard, nullptr, name.c_str());
-        wlr_signal_emit_safe(&setup->base->backend->events.new_input, keyboard);
+        wlr_signal_emit_safe(&setup->base->backend.native->events.new_input, keyboard);
         return keyboard;
     };
 
@@ -254,7 +244,7 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(get_xkb_keys()->layout_name_from_index(0), "English (US)");
 
         // Create a new keymap.
-        auto lay_group = setup->base->input->config.xkb->group("Layout");
+        auto lay_group = setup->base->mod.input->config.xkb->group("Layout");
         lay_group.writeEntry("LayoutList", QStringLiteral("de,us"));
         lay_group.sync();
 
@@ -276,7 +266,7 @@ TEST_CASE("keyboard layout", "[input]")
 
         // Currently no way to destroy a headless input device. Enable this check once we can
         // destroy the second keyboard before going into the next test function.
-        auto layout_group = setup->base->input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
         layout_group.writeEntry("LayoutList", QStringLiteral("de,us"));
         layout_group.sync();
         reconfigure_layouts();
@@ -297,7 +287,7 @@ TEST_CASE("keyboard layout", "[input]")
         KConfigGroup layout_group;
 
         auto reset_layouts = [&] {
-            layout_group = setup->base->input->config.xkb->group("Layout");
+            layout_group = setup->base->mod.input->config.xkb->group("Layout");
             layout_group.writeEntry("LayoutList", QStringLiteral("de,us,de(neo)"));
             layout_group.sync();
             reconfigure_layouts();
@@ -376,7 +366,7 @@ TEST_CASE("keyboard layout", "[input]")
         // This test verifies that per-layout global shortcuts are working correctly.
 
         // First configure layouts and the XKB toggle action.
-        auto layout_group = setup->base->input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.writeEntry("Options", QStringLiteral("grp:ctrls_toggle"));
         layout_group.sync();
@@ -480,7 +470,7 @@ TEST_CASE("keyboard layout", "[input]")
         // Verifies that per-layout global shortcuts are working correctly.
 
         // First configure layouts.
-        auto layout_group = setup->base->input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.sync();
 
@@ -568,7 +558,7 @@ TEST_CASE("keyboard layout", "[input]")
                      .value());
 
         // Reconfigure to two layouts.
-        auto layout_group = setup->base->input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de"));
         layout_group.sync();
         reconfigure_layouts();
@@ -591,7 +581,7 @@ TEST_CASE("keyboard layout", "[input]")
 
     SECTION("subspace_policy")
     {
-        auto layout_group = setup->base->input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.writeEntry("SwitchMode", QStringLiteral("Desktop"));
         layout_group.sync();
@@ -600,7 +590,7 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(get_xkb_keys()->layouts_count(), 3u);
         QCOMPARE(get_xkb_keys()->layout_name(), "English (US)");
 
-        auto get_subsp_mgr = [&] { return setup->base->space->subspace_manager.get(); };
+        auto get_subsp_mgr = [&] { return setup->base->mod.space->subspace_manager.get(); };
 
         win::subspace_manager_set_count(*get_subsp_mgr(), 4);
         QCOMPARE(get_subsp_mgr()->subspaces.size(), 4u);
@@ -672,14 +662,14 @@ TEST_CASE("keyboard layout", "[input]")
         QVERIFY(deletedDesktopSpy.wait());
         reset_setup();
 
-        layout_group = setup->base->input->config.xkb->group("Layout");
+        layout_group = setup->base->mod.input->config.xkb->group("Layout");
         QCOMPARE(layout_group.keyList().filter(QStringLiteral("LayoutDefault")).count(), 1);
     }
 
     SECTION("window_policy")
     {
         enum Layout { us, de, de_neo, bad };
-        auto layout_group = setup->base->input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.writeEntry("SwitchMode", QStringLiteral("Window"));
         layout_group.sync();
@@ -712,16 +702,16 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(get_xkb_keys()->layout_name(), "German (Neo 2)");
 
         // Activate other window.
-        win::activate_window(*setup->base->space, *client1.window);
+        win::activate_window(*setup->base->mod.space, *client1.window);
         QCOMPARE(get_xkb_keys()->layout_name(), "German");
-        win::activate_window(*setup->base->space, *client2.window);
+        win::activate_window(*setup->base->mod.space, *client2.window);
         QCOMPARE(get_xkb_keys()->layout_name(), "German (Neo 2)");
     }
 
     SECTION("application_policy")
     {
         enum Layout { us, de, de_neo, bad };
-        auto layout_group = setup->base->input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.writeEntry("SwitchMode", QStringLiteral("WinClass"));
         layout_group.sync();
@@ -758,18 +748,18 @@ TEST_CASE("keyboard layout", "[input]")
         client2 = create_render_client("org.kde.foo", Qt::red);
 
         // Resetting layouts should trigger layout application for current client.
-        win::activate_window(*setup->base->space, *client1.window);
-        win::activate_window(*setup->base->space, *client2.window);
+        win::activate_window(*setup->base->mod.space, *client1.window);
+        win::activate_window(*setup->base->mod.space, *client2.window);
         TRY_REQUIRE(spies->v1.layout_changed.size() == 1);
         QCOMPARE(get_xkb_keys()->layout_name(), "German (Neo 2)");
 
         // Activate other window.
-        win::activate_window(*setup->base->space, *client1.window);
+        win::activate_window(*setup->base->mod.space, *client1.window);
 
         // It is the same application and should not switch the layout.
         QVERIFY(!spies->v1.layout_changed.wait(1000));
         QCOMPARE(get_xkb_keys()->layout_name(), "German (Neo 2)");
-        win::activate_window(*setup->base->space, *client2.window);
+        win::activate_window(*setup->base->mod.space, *client2.window);
         QVERIFY(!spies->v1.layout_changed.wait(1000));
         QCOMPARE(get_xkb_keys()->layout_name(), "German (Neo 2)");
 
@@ -782,7 +772,7 @@ TEST_CASE("keyboard layout", "[input]")
         client1 = {};
         client2 = {};
         reset_setup();
-        layout_group = setup->base->input->config.xkb->group("Layout");
+        layout_group = setup->base->mod.input->config.xkb->group("Layout");
 
         QCOMPARE(layout_group.keyList().filter(QStringLiteral("LayoutDefault")).count(), 1);
     }
@@ -807,17 +797,17 @@ TEST_CASE("keyboard layout", "[input]")
         QVERIFY(!(get_xkb_keys()->leds & input::keyboard_leds::num_lock));
 
         // Let's reconfigure to enable through config.
-        auto group = setup->base->input->config.main->group("Keyboard");
+        auto group = setup->base->mod.input->config.main->group("Keyboard");
         group.writeEntry("NumLock", 0);
         group.sync();
 
         // Without resetting the done flag should not be on.
-        setup->base->input->xkb.reconfigure();
+        setup->base->mod.input->xkb.reconfigure();
         QVERIFY(!(get_xkb_keys()->leds & input::keyboard_leds::num_lock));
 
         // With the done flag unset it changes though.
         get_xkb_keys()->startup_num_lock_done = false;
-        setup->base->input->xkb.reconfigure();
+        setup->base->mod.input->xkb.reconfigure();
         QVERIFY(flags(get_xkb_keys()->leds & input::keyboard_leds::num_lock));
 
         // Pressing should result in it being off.
@@ -833,7 +823,7 @@ TEST_CASE("keyboard layout", "[input]")
         // Now reconfigure to disable on load.
         group.writeEntry("NumLock", 1);
         group.sync();
-        setup->base->input->xkb.reconfigure();
+        setup->base->mod.input->xkb.reconfigure();
         QVERIFY(!(get_xkb_keys()->leds & input::keyboard_leds::num_lock));
     }
 }

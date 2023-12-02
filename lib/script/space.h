@@ -1026,7 +1026,7 @@ protected:
 
     bool is_effect_active_impl(QString const& plugin_id) const override
     {
-        if (auto& effects = ref_space->base.render->effects) {
+        if (auto& effects = ref_space->base.mod.render->effects) {
             return effects->is_effect_active(plugin_id);
         }
         return false;

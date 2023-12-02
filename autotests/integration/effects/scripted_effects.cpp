@@ -6,20 +6,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/compositor.h"
-#include "render/effect/interface/anidata_p.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "script/effect.h"
-#include "win/actions.h"
-
-#include <QJSValue>
-#include <QQmlEngine>
+#include <render/effect/interface/anidata_p.h>
 
 #include <KConfigGroup>
 #include <KGlobalAccel>
-
+#include <QJSValue>
+#include <QQmlEngine>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/registry.h>
@@ -67,7 +59,7 @@ QList<QAction*> ScriptedEffectWithDebugSpy::actions()
 ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy(test::setup& setup)
     : scripting::effect(
         *KWin::effects,
-        [&]() -> render::options& { return *setup.base->render->options; },
+        [&]() -> render::options& { return *setup.base->mod.render->options; },
         [&] { return setup.base->topology.size; })
     , setup{setup}
 {
@@ -120,7 +112,7 @@ TEST_CASE("scripted effects", "[effect]")
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
 
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -128,13 +120,13 @@ TEST_CASE("scripted effects", "[effect]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render);
+    QVERIFY(setup.base->mod.render);
 
-    auto& scene = setup.base->render->scene;
+    auto& scene = setup.base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
-    win::subspace_manager_set_count(*setup.base->space->subspace_manager, 2);
+    win::subspace_manager_set_count(*setup.base->mod.space->subspace_manager, 2);
 
     setup_wayland_connection();
 
@@ -162,7 +154,7 @@ TEST_CASE("scripted effects", "[effect]")
         shellSurface->setTitle("WindowA");
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         waitFor("windowAdded - WindowA");
         waitFor("stackingOrder - 1 WindowA");
@@ -178,7 +170,7 @@ TEST_CASE("scripted effects", "[effect]")
         waitFor("windowClosed - WindowA");
 
         // desktop management
-        win::subspaces_set_current(*setup.base->space->subspace_manager, 2);
+        win::subspaces_set_current(*setup.base->mod.space->subspace_manager, 2);
         waitFor("desktopChanged - 1 2");
     }
 
@@ -236,7 +228,7 @@ TEST_CASE("scripted effects", "[effect]")
         shellSurface->setTitle("Window 1");
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         {
             const auto state = effect->state();
@@ -342,13 +334,13 @@ TEST_CASE("scripted effects", "[effect]")
         shellSurface->setTitle("Window 1");
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         QCOMPARE(effects->hasActiveFullScreenEffect(), false);
         QCOMPARE(effectMain->isActiveFullScreenEffect(), false);
 
         // trigger animation
-        win::subspaces_set_current(*setup.base->space->subspace_manager, 2);
+        win::subspaces_set_current(*setup.base->mod.space->subspace_manager, 2);
 
         QCOMPARE(effects->activeFullScreenEffect(), effectMain);
         QCOMPARE(effects->hasActiveFullScreenEffect(), true);
@@ -362,7 +354,7 @@ TEST_CASE("scripted effects", "[effect]")
 
         // after 500ms trigger another full screen animation
         QTest::qWait(500);
-        win::subspaces_set_current(*setup.base->space->subspace_manager, 1);
+        win::subspaces_set_current(*setup.base->mod.space->subspace_manager, 1);
         QCOMPARE(effects->activeFullScreenEffect(), effectMain);
 
         // after 1000ms (+a safety margin for time based tests) we should still be the active full
@@ -400,7 +392,7 @@ TEST_CASE("scripted effects", "[effect]")
         QVERIFY(shellSurface);
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         // no active animations at the beginning
         QCOMPARE(effect->state().count(), 0);
@@ -420,7 +412,7 @@ TEST_CASE("scripted effects", "[effect]")
         } else {
             // the test effect doesn't keep the window alive, so it should be
             // removed immediately
-            QSignalSpy deletedRemovedSpy(setup.base->space->qobject.get(),
+            QSignalSpy deletedRemovedSpy(setup.base->mod.space->qobject.get(),
                                          &space::qobject_t::window_deleted);
             QVERIFY(deletedRemovedSpy.isValid());
             TRY_REQUIRE_WITH_TIMEOUT(deletedRemovedSpy.count() == 1, 100);
@@ -447,7 +439,7 @@ TEST_CASE("scripted effects", "[effect]")
         QVERIFY(shellSurface);
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         // the test effect should grab the test client successfully
         QCOMPARE(effectOutputSpy.count(), 1);
@@ -480,7 +472,7 @@ TEST_CASE("scripted effects", "[effect]")
         QVERIFY(shellSurface);
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         // effect that initially held the grab should still hold the grab
         QCOMPARE(ownerOutputSpy.count(), 1);
@@ -517,7 +509,7 @@ TEST_CASE("scripted effects", "[effect]")
         QVERIFY(shellSurface);
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         // verify that the owner in fact held the grab
         QCOMPARE(ownerOutputSpy.count(), 1);
@@ -548,7 +540,7 @@ TEST_CASE("scripted effects", "[effect]")
         QVERIFY(shellSurface);
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         // the test effect should grab the test client successfully
         QCOMPARE(effectOutputSpy.count(), 1);
@@ -589,7 +581,7 @@ TEST_CASE("scripted effects", "[effect]")
         QVERIFY(shellSurface);
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         auto around = [](std::chrono::milliseconds elapsed,
                          std::chrono::milliseconds pivot,
@@ -666,7 +658,7 @@ TEST_CASE("scripted effects", "[effect]")
         QVERIFY(shellSurface);
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         auto around = [](std::chrono::milliseconds elapsed,
                          std::chrono::milliseconds pivot,

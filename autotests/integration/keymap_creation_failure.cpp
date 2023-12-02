@@ -6,12 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/keyboard_redirect.h"
-#include "input/xkb/layout_manager.h"
-
 #include <KConfigGroup>
-
 #include <linux/input.h>
 
 using namespace Wrapland::Client;
@@ -32,9 +27,9 @@ TEST_CASE("keymap creation failure", "[input]")
     test::setup setup("keymap-create-fail");
     setup.start();
 
-    setup.base->input->xkb.setConfig(KSharedConfig::openConfig({}, KConfig::SimpleConfig));
+    setup.base->mod.input->xkb.setConfig(KSharedConfig::openConfig({}, KConfig::SimpleConfig));
 
-    auto layoutGroup = setup.base->input->config.xkb->group("Layout");
+    auto layoutGroup = setup.base->mod.input->config.xkb->group("Layout");
     layoutGroup.writeEntry("LayoutList", QStringLiteral("no"));
     layoutGroup.writeEntry("Model", "no");
     layoutGroup.writeEntry("Options", "no");

@@ -61,7 +61,7 @@ void map(Win* win)
     // XComposite invalidates backing pixmaps on unmap (minimize, different subspace, etc.). We kept
     // the last known good pixmap around for use in effects, but now we want to have access to the
     // new pixmap.
-    if (win->space.base.render->scene) {
+    if (win->space.base.mod.render->scene) {
         discard_buffer(*win);
     }
 
@@ -133,7 +133,7 @@ void internal_hide(Win* win)
         update_hidden_preview(win);
     }
 
-    win->space.base.render->addRepaint(visible_rect(win));
+    win->space.base.mod.render->addRepaint(visible_rect(win));
     process_window_hidden(win->space, *win);
     Q_EMIT win->qobject->windowHidden();
 }
@@ -141,7 +141,7 @@ void internal_hide(Win* win)
 template<typename Win>
 void internal_keep(Win* win)
 {
-    assert(win->space.base.render->scene);
+    assert(win->space.base.mod.render->scene);
 
     if (win->mapping == mapping_state::kept) {
         return;
@@ -161,7 +161,7 @@ void internal_keep(Win* win)
     }
 
     update_hidden_preview(win);
-    win->space.base.render->addRepaint(visible_rect(win));
+    win->space.base.mod.render->addRepaint(visible_rect(win));
     process_window_hidden(win->space, *win);
 }
 
@@ -174,14 +174,14 @@ void update_visibility(Win* win)
         return;
     }
 
-    auto render_options = win->space.base.render->options.get();
+    auto render_options = win->space.base.mod.render->options.get();
     using hidden_preview_t =
         typename std::remove_pointer_t<decltype(render_options)>::hidden_preview_t;
 
     if (win->hidden) {
         win->net_info->setState(net::Hidden, net::Hidden);
         win::set_skip_taskbar(win, true);
-        if (win->space.base.render->scene
+        if (win->space.base.mod.render->scene
             && render_options->qobject->hiddenPreviews() == hidden_preview_t::always) {
             internal_keep(win);
         } else {
@@ -194,7 +194,7 @@ void update_visibility(Win* win)
 
     if (win->control->minimized) {
         win->net_info->setState(net::Hidden, net::Hidden);
-        if (win->space.base.render->scene
+        if (win->space.base.mod.render->scene
             && render_options->qobject->hiddenPreviews() == hidden_preview_t::always) {
             internal_keep(win);
         } else {
@@ -205,7 +205,7 @@ void update_visibility(Win* win)
 
     win->net_info->setState(net::States(), net::Hidden);
     if (!on_current_subspace(*win)) {
-        if (win->space.base.render->scene
+        if (win->space.base.mod.render->scene
             && render_options->qobject->hiddenPreviews() != hidden_preview_t::never) {
             internal_keep(win);
         } else {

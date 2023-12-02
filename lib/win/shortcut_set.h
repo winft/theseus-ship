@@ -24,7 +24,7 @@ bool shortcut_available(Space& space, const QKeySequence& cut, Win* ignore)
     }
 
     // Check if the shortcut is already registered.
-    auto const registeredShortcuts = space.base.input->shortcuts->get_keyboard_shortcut(cut);
+    auto const registeredShortcuts = space.base.mod.input->shortcuts->get_keyboard_shortcut(cut);
     for (auto const& shortcut : registeredShortcuts) {
         // Only return "not available" if is not a client activation shortcut, as it may be no
         // longer valid.
@@ -163,7 +163,7 @@ void shortcut_dialog_create(Space& space, Win* window)
                      space.qobject.get(),
                      [&space](auto&& seq) {
                          auto const conflicts
-                             = space.base.input->shortcuts->get_keyboard_shortcut(seq);
+                             = space.base.mod.input->shortcuts->get_keyboard_shortcut(seq);
                          if (conflicts.empty()) {
                              space.client_keys_dialog->allow_shortcut(seq);
                          } else {
@@ -203,7 +203,7 @@ void window_shortcut_updated(Space& space, Win* window)
         if (action == nullptr) {
             // new shortcut
             action = new QAction(space.qobject.get());
-            space.base.input->setup_action_for_global_accel(action);
+            space.base.mod.input->setup_action_for_global_accel(action);
             action->setProperty("componentName", QStringLiteral(KWIN_NAME));
             action->setObjectName(key);
             action->setText(i18n("Activate Window (%1)", win::caption(window)));
@@ -214,11 +214,11 @@ void window_shortcut_updated(Space& space, Win* window)
 
         // no autoloading, since it's configured explicitly here and is not meant to be reused
         // (the key is the window id anyway, which is kind of random)
-        space.base.input->shortcuts->override_keyboard_shortcut(
+        space.base.mod.input->shortcuts->override_keyboard_shortcut(
             action, QList<QKeySequence>() << window->control->shortcut);
         action->setEnabled(true);
     } else {
-        space.base.input->shortcuts->remove_keyboard_shortcut(action);
+        space.base.mod.input->shortcuts->remove_keyboard_shortcut(action);
         delete action;
     }
 }

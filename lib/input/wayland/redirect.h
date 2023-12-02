@@ -64,7 +64,7 @@ public:
 
     redirect(Space& space)
         : qobject{std::make_unique<redirect_qobject>()}
-        , platform{*space.base.input}
+        , platform{*space.base.mod.input}
         , space{space}
         , config_watcher{KConfigWatcher::create(platform.config.main)}
         , input_method{std::make_unique<wayland::input_method<type>>(*this)}

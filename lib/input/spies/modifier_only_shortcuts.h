@@ -51,8 +51,14 @@ public:
         if (event.state == key_state::pressed) {
             const bool wasEmpty = m_pressedKeys.isEmpty();
             m_pressedKeys.insert(event.keycode);
-            if (wasEmpty && m_pressedKeys.size() == 1
-                && !this->redirect.space.desktop->screen_locker_watcher->is_locked()
+
+            auto const& space_mod = this->redirect.space.mod;
+            auto is_screen_locked = false;
+            if constexpr (requires(decltype(space_mod) mod) { mod.desktop; }) {
+                is_screen_locked = space_mod.desktop->screen_locker_watcher->is_locked();
+            }
+
+            if (wasEmpty && m_pressedKeys.size() == 1 && !is_screen_locked
                 && m_pressedButtons == Qt::NoButton && m_cachedMods == Qt::NoModifier) {
                 m_modifier = Qt::KeyboardModifier(int(mods));
             } else {

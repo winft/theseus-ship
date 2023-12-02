@@ -219,21 +219,24 @@ private:
                        m_shortcutOperation->setEnabled(
                            win->control->rules.checkShortcut(QString()).isNull());
 
-                       // drop the existing scripts menu
-                       delete m_scriptsMenu;
-                       m_scriptsMenu = nullptr;
-                       // ask scripts whether they want to add entries for the given Client
-                       auto scriptActions
-                           = space.base.script->actionsForUserActionMenu(win, m_scriptsMenu);
-                       if (!scriptActions.isEmpty()) {
-                           m_scriptsMenu = new QMenu(m_menu);
-                           m_scriptsMenu->setPalette(win->control->palette.q_palette());
-                           m_scriptsMenu->addActions(scriptActions);
+                       if constexpr (requires(decltype(space) space) { space.base.mod.script; }) {
+                           // drop the existing scripts menu
+                           delete m_scriptsMenu;
+                           m_scriptsMenu = nullptr;
 
-                           QAction* action = m_scriptsMenu->menuAction();
-                           // set it as the first item after desktop
-                           m_menu->insertAction(m_closeOperation, action);
-                           action->setText(i18n("&Extensions"));
+                           // ask scripts whether they want to add entries for the given Client
+                           auto scriptActions = space.base.mod.script->actionsForUserActionMenu(
+                               win, m_scriptsMenu);
+                           if (!scriptActions.isEmpty()) {
+                               m_scriptsMenu = new QMenu(m_menu);
+                               m_scriptsMenu->setPalette(win->control->palette.q_palette());
+                               m_scriptsMenu->addActions(scriptActions);
+
+                               QAction* action = m_scriptsMenu->menuAction();
+                               // set it as the first item after desktop
+                               m_menu->insertAction(m_closeOperation, action);
+                               action->setText(i18n("&Extensions"));
+                           }
                        }
 
                        auto has_rules{false};
@@ -597,7 +600,7 @@ private:
         });
 
         auto setShortcut = [this](QAction* action, const QString& actionName) {
-            auto const shortcuts = space.base.input->shortcuts->get_keyboard_shortcut(
+            auto const shortcuts = space.base.mod.input->shortcuts->get_keyboard_shortcut(
                 space.qobject->template findChild<QAction*>(actionName));
             if (!shortcuts.isEmpty()) {
                 action->setShortcut(shortcuts.first());
@@ -757,7 +760,7 @@ private:
         auto shortcut = [this](const QString& name) {
             auto action = space.qobject->template findChild<QAction*>(name);
             Q_ASSERT(action != nullptr);
-            auto const shortcuts = space.base.input->shortcuts->get_keyboard_shortcut(action);
+            auto const shortcuts = space.base.mod.input->shortcuts->get_keyboard_shortcut(action);
             return QStringLiteral("%1 (%2)")
                 .arg(action->text())
                 .arg(shortcuts.isEmpty() ? QString()

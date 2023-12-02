@@ -5,20 +5,15 @@
 */
 #include "lib/setup.h"
 
-#include "input/wayland/platform.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/region.h>
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/virtual_keyboard_v1.h>
-
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 #include <Wrapland/Server/virtual_keyboard_v1.h>
-
 #include <linux/input.h>
 #include <memory>
 
@@ -112,7 +107,7 @@ TEST_CASE("virtual keyboard", "[input]")
         QVERIFY(client_keymap_spy.isValid());
 
         auto window = create_window(focus_client);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window.window);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window.window);
 
         // After focus we don't yet get the current keymap as none was set yet.
         QVERIFY(!client_keymap_spy.wait(500));
@@ -123,7 +118,7 @@ TEST_CASE("virtual keyboard", "[input]")
         keyboard_key_released(KEY_Y, timestamp++);
         QVERIFY(client_keymap_spy.wait());
 
-        QSignalSpy vk_spy(setup.base->input->virtual_keyboard.get(),
+        QSignalSpy vk_spy(setup.base->mod.input->virtual_keyboard.get(),
                           &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
         QVERIFY(vk_spy.isValid());
 
@@ -156,7 +151,7 @@ TEST_CASE("virtual keyboard", "[input]")
     SECTION("keys")
     {
         // Verifies that keys are processed.
-        QSignalSpy vk_spy(setup.base->input->virtual_keyboard.get(),
+        QSignalSpy vk_spy(setup.base->mod.input->virtual_keyboard.get(),
                           &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created);
         QVERIFY(vk_spy.isValid());
 
@@ -187,7 +182,7 @@ TEST_CASE("virtual keyboard", "[input]")
         QVERIFY(key_spy.isValid());
 
         auto window = create_window(focus_client);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), window.window);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), window.window);
 
         // Now we press on the virtual keyboard and we should get the new new keymap.
         int timestamp{0};

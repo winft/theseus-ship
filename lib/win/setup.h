@@ -22,8 +22,8 @@ void setup_space_window_connections(Space* space, Win* win)
     // TODO(romangg): Move into a different function about compositor(render) <-> window setup.
     QObject::connect(win->qobject.get(),
                      &window_qobject::needsRepaint,
-                     space->base.render->qobject.get(),
-                     [win] { win->space.base.render->schedule_repaint(win); });
+                     space->base.mod.render->qobject.get(),
+                     [win] { win->space.base.mod.render->schedule_repaint(win); });
     QObject::connect(
         win->qobject.get(), &window_qobject::minimizedChanged, space->qobject.get(), [space, win] {
             Q_EMIT space->qobject->clientMinimizedChanged(win->meta.signal_id);

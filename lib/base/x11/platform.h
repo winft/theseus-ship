@@ -14,8 +14,8 @@
 #include "base/x11/randr_filter.h"
 #include "input/x11/platform.h"
 #include "render/x11/platform.h"
-#include "script/platform.h"
 #include "win/x11/space.h"
+#include <base/platform_helpers.h>
 #include <base/x11/data.h>
 #include <base/x11/event_filter_manager.h>
 
@@ -25,30 +25,37 @@
 namespace KWin::base::x11
 {
 
+template<typename Mod>
+class platform;
+
+struct platform_mod {
+    using platform_t = base::x11::platform<platform_mod>;
+    using render_t = render::x11::platform<platform_t>;
+    using input_t = input::x11::platform<platform_t>;
+    using space_t = win::x11::space<platform_t>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
+};
+
+template<typename Mod = platform_mod>
 class platform : public base::platform
 {
 public:
-    using output_t = base::x11::output<platform>;
-    using render_t = render::x11::platform<platform>;
-    using input_t = input::x11::platform<platform>;
-    using space_t = win::x11::space<render_t, input_t>;
+    using type = platform<Mod>;
+    using output_t = base::x11::output<type>;
+
+    using render_t = typename Mod::render_t;
+    using input_t = typename Mod::input_t;
+    using space_t = typename Mod::space_t;
 
     platform(base::config config)
         : config{std::move(config)}
         , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
     {
         operation_mode = operation_mode::x11;
-
-        init_platform(*this);
-
-        singleton_interface::platform = this;
-        singleton_interface::get_outputs = [this] {
-            std::vector<base::output*> vec;
-            for (auto&& output : outputs) {
-                vec.push_back(output);
-            }
-            return vec;
-        };
+        platform_init(*this);
     }
 
     ~platform() override
@@ -63,7 +70,7 @@ public:
     void update_outputs()
     {
         if (!randr_filter) {
-            randr_filter = std::make_unique<base::x11::randr_filter<platform>>(*this);
+            randr_filter = std::make_unique<base::x11::randr_filter<type>>(*this);
             update_outputs_impl<base::x11::xcb::randr::screen_resources>();
             return;
         }
@@ -80,10 +87,8 @@ public:
     std::unique_ptr<x11::event_filter_manager> x11_event_filters;
 
     std::vector<output_t*> outputs;
-    std::unique_ptr<render_t> render;
-    std::unique_ptr<input_t> input;
-    std::unique_ptr<space_t> space;
-    std::unique_ptr<scripting::platform<space_t>> script;
+
+    Mod mod;
 
     bool is_crash_restart{false};
 

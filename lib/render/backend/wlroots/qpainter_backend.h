@@ -15,21 +15,21 @@ namespace KWin::render::backend::wlroots
 {
 
 template<typename Platform>
-class qpainter_backend : public qpainter::backend<qpainter::scene<typename Platform::abstract_type>>
+class qpainter_backend : public qpainter::backend<qpainter::scene<typename Platform::frontend_type>>
 {
 public:
     using type = qpainter_backend<Platform>;
-    using qpainter_scene = qpainter::scene<typename Platform::abstract_type>;
+    using qpainter_scene = qpainter::scene<typename Platform::frontend_type>;
     using abstract_type = qpainter::backend<qpainter_scene>;
     using output_t = typename Platform::output_t;
     using qpainter_output_t = qpainter_output<output_t>;
-    using base_output_t = typename Platform::base_t::output_t;
+    using base_output_t = typename Platform::frontend_type::base_t::output_t;
 
     qpainter_backend(Platform& platform)
         : qpainter::backend<qpainter_scene>()
         , platform{platform}
     {
-        for (auto& out : platform.base.all_outputs) {
+        for (auto& out : platform.frontend->base.all_outputs) {
             auto render = static_cast<typename Platform::output_t*>(out->render.get());
             get_qpainter_output(*out)
                 = std::make_unique<qpainter_output_t>(*render, platform.renderer);

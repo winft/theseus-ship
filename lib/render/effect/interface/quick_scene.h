@@ -6,8 +6,8 @@
 #pragma once
 
 #include <base/kwin_export.h>
-#include <render/effect/interface/effect_quick_view.h>
 #include <render/effect/interface/effect_screen.h>
+#include <render/effect/interface/offscreen_quick_view.h>
 #include <render/effect/interface/paint_data.h>
 
 #include <QQmlComponent>
@@ -26,7 +26,7 @@ class QuickSceneEffectPrivate;
  *
  * @see QuickSceneEffect, OffscreenQuickView
  */
-class KWIN_EXPORT QuickSceneView : public EffectQuickView
+class KWIN_EXPORT QuickSceneView : public OffscreenQuickView
 {
     Q_OBJECT
     Q_PROPERTY(QuickSceneEffect* effect READ effect CONSTANT)

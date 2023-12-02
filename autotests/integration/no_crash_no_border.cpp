@@ -6,18 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "render/compositor.h"
-#include "render/scene.h"
-#include "win/deco.h"
-#include "win/screen_edges.h"
-
+#include <KDecoration2/Decoration>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
-#include <KDecoration2/Decoration>
-
 #include <linux/input.h>
 
 namespace KWin::detail::test
@@ -41,7 +32,7 @@ TEST_CASE("no crash no border", "[win]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = setup.base->render->scene;
+    auto& scene = setup.base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -68,7 +59,7 @@ TEST_CASE("no crash no border", "[win]")
     // let's render
     auto c = render_and_wait_for_shown(surface, QSize(500, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+    QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
     QVERIFY(!win::decoration(c));
 }
 

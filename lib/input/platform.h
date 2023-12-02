@@ -6,7 +6,6 @@
 #pragma once
 
 #include "config.h"
-#include "dbus/device_manager.h"
 #include "keyboard.h"
 #include "platform_qobject.h"
 #include "singleton_interface.h"

@@ -31,6 +31,8 @@ target_sources(base
       output.h
       output_helpers.h
       output_topology.h
+      platform.h
+      platform_helpers.h
       singleton_interface.h
       types.h
       utils.h

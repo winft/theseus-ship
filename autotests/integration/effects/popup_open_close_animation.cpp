@@ -6,19 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "win/deco.h"
-#include "win/deco/client_impl.h"
-#include "win/net.h"
-#include "win/transient.h"
-#include "win/user_actions_menu.h"
-
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 
@@ -39,7 +29,7 @@ TEST_CASE("popup open close animation", "[effect]")
     test::setup setup("popup-open-close-animation", operation_mode);
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -56,7 +46,7 @@ TEST_CASE("popup open close animation", "[effect]")
         // to animate popups(e.g. popup menus, tooltips, etc).
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->effects;
+        auto& effectsImpl = setup.base->mod.render->effects;
         QVERIFY(effectsImpl);
 
         // Create the main window.
@@ -121,7 +111,7 @@ TEST_CASE("popup open close animation", "[effect]")
         // to animate the user actions popup.
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->effects;
+        auto& effectsImpl = setup.base->mod.render->effects;
         QVERIFY(effectsImpl);
 
         // Create the test client.
@@ -143,8 +133,8 @@ TEST_CASE("popup open close animation", "[effect]")
         QVERIFY(!effect->isActive());
 
         // Show the user actions popup.
-        setup.base->space->user_actions_menu->show(QRect(), client);
-        auto& userActionsMenu = setup.base->space->user_actions_menu;
+        setup.base->mod.space->user_actions_menu->show(QRect(), client);
+        auto& userActionsMenu = setup.base->mod.space->user_actions_menu;
         QTRY_VERIFY(userActionsMenu->isShown());
         QVERIFY(userActionsMenu->hasClient());
         QVERIFY(effect->isActive());
@@ -173,7 +163,7 @@ TEST_CASE("popup open close animation", "[effect]")
         // to animate decoration tooltips.
 
         // Make sure that we have the right effects ptr.
-        auto& effectsImpl = setup.base->render->effects;
+        auto& effectsImpl = setup.base->mod.render->effects;
         QVERIFY(effectsImpl);
 
         // Create the test client.
@@ -200,14 +190,14 @@ TEST_CASE("popup open close animation", "[effect]")
         QVERIFY(!effect->isActive());
 
         // Show a decoration tooltip.
-        QSignalSpy tooltipAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy tooltipAddedSpy(setup.base->mod.space->qobject.get(),
                                    &win::space_qobject::internalClientAdded);
         QVERIFY(tooltipAddedSpy.isValid());
         client->control->deco.client->requestShowToolTip(QStringLiteral("KWin rocks!"));
         QVERIFY(tooltipAddedSpy.wait());
 
         auto tooltip_id = tooltipAddedSpy.first().first().value<quint32>();
-        auto tooltip = get_internal_window(setup.base->space->windows_map.at(tooltip_id));
+        auto tooltip = get_internal_window(setup.base->mod.space->windows_map.at(tooltip_id));
         QVERIFY(tooltip);
         QVERIFY(tooltip->isInternal());
         QVERIFY(win::is_popup(tooltip));

@@ -126,8 +126,10 @@ bool do_start_move_resize(Win& win)
         has_grab = true;
     }
 
-    if constexpr (requires(decltype(win.space.base.input) input) { input->ungrab_keyboard(); }) {
-        if (!has_grab && win.space.base.input->grab_keyboard(win.frameId())) {
+    if constexpr (requires(decltype(win.space.base.mod.input) input) {
+                      input->ungrab_keyboard();
+                  }) {
+        if (!has_grab && win.space.base.mod.input->grab_keyboard(win.frameId())) {
             has_grab = win.move_resize_has_keyboard_grab = true;
         }
     } else {
@@ -162,9 +164,11 @@ void leave_move_resize(Win& win)
         win.move_needs_server_update = false;
     }
 
-    if constexpr (requires(decltype(win.space.base.input) input) { input->ungrab_keyboard(); }) {
+    if constexpr (requires(decltype(win.space.base.mod.input) input) {
+                      input->ungrab_keyboard();
+                  }) {
         if (win.move_resize_has_keyboard_grab) {
-            win.space.base.input->ungrab_keyboard();
+            win.space.base.mod.input->ungrab_keyboard();
         }
     }
 

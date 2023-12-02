@@ -22,7 +22,6 @@
 #include "win/desktop_space.h"
 #include "win/screen_edges.h"
 #include "win/stacking_order.h"
-#include <desktop/platform.h>
 #include <win/kill_window.h>
 #include <win/space_reconfigure.h>
 #include <win/stacking_state.h>
@@ -36,19 +35,23 @@
 namespace KWin::win::x11
 {
 
-template<typename Render, typename Input>
+struct space_mod {
+};
+
+template<typename Base, typename Mod = space_mod>
 class space
 {
 public:
-    using type = space<Render, Input>;
+    using type = space<Base, Mod>;
     using qobject_t = space_qobject;
-    using base_t = typename Input::base_t;
-    using input_t = typename Input::redirect_t;
+    using base_t = Base;
+    using input_t = typename base_t::input_t::redirect_t;
     using x11_window = window<type>;
     using window_t = std::variant<x11_window*>;
     using window_group_t = x11::group<type>;
     using render_outline_t = typename base_t::render_t::qobject_t::outline_t;
 
+    template<typename Render, typename Input>
     space(Render& render, Input& input)
         : base{input.base}
     {
@@ -195,7 +198,7 @@ public:
     bool tabbox_grab()
     {
         base::x11::update_time_from_clock(base);
-        if (!base.input->grab_keyboard()) {
+        if (!base.mod.input->grab_keyboard()) {
             return false;
         }
 
@@ -218,7 +221,7 @@ public:
     void tabbox_ungrab()
     {
         base::x11::update_time_from_clock(base);
-        base.input->ungrab_keyboard();
+        base.mod.input->ungrab_keyboard();
 
         assert(tabbox->grab.forced_global_mouse);
         tabbox->grab.forced_global_mouse = false;
@@ -238,6 +241,7 @@ public:
 
     win::space_areas areas;
     std::unique_ptr<base::x11::atoms> atoms;
+    std::unique_ptr<QQmlEngine> qml_engine;
     std::unique_ptr<rules::book> rule_book;
 
     std::unique_ptr<base::x11::event_filter> m_wasUserInteractionFilter;
@@ -305,7 +309,8 @@ public:
     std::unique_ptr<osd_notification<input_t>> osd;
     std::unique_ptr<kill_window<type>> window_killer;
     std::unique_ptr<win::user_actions_menu<type>> user_actions_menu;
-    std::unique_ptr<desktop::platform> desktop;
+
+    Mod mod;
 
     std::vector<window_t> windows;
     std::unordered_map<uint32_t, window_t> windows_map;

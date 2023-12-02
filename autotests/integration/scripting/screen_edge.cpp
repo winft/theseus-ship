@@ -38,7 +38,7 @@ TEST_CASE("screen edge script", "[script]")
 
     // disable all effects to prevent them grabbing edges
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
@@ -49,12 +49,12 @@ TEST_CASE("screen edge script", "[script]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->script);
+    QVERIFY(setup.base->mod.script);
 
-    setup.base->space->edges->time_threshold = {};
-    setup.base->space->edges->reactivate_threshold = {};
+    setup.base->mod.space->edges->time_threshold = {};
+    setup.base->mod.space->edges->reactivate_threshold = {};
 
-    auto triggerConfigReload = [&]() { win::space_reconfigure(*setup.base->space); };
+    auto triggerConfigReload = [&]() { win::space_reconfigure(*setup.base->mod.space); };
 
     SECTION("edge")
     {
@@ -81,11 +81,11 @@ TEST_CASE("screen edge script", "[script]")
             .writeEntry("Edge", int(test_data.edge));
         config->sync();
 
-        QVERIFY(!setup.base->script->isScriptLoaded(scriptToLoad));
-        const int id = setup.base->script->loadScript(scriptToLoad);
+        QVERIFY(!setup.base->mod.script->isScriptLoaded(scriptToLoad));
+        const int id = setup.base->mod.script->loadScript(scriptToLoad);
         QVERIFY(id != -1);
-        QVERIFY(setup.base->script->isScriptLoaded(scriptToLoad));
-        auto s = setup.base->script->findScript(scriptToLoad);
+        QVERIFY(setup.base->mod.script->isScriptLoaded(scriptToLoad));
+        auto s = setup.base->mod.script->findScript(scriptToLoad);
         QVERIFY(s);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         QVERIFY(runningChangedSpy.isValid());
@@ -95,14 +95,14 @@ TEST_CASE("screen edge script", "[script]")
         QCOMPARE(runningChangedSpy.first().first().toBool(), true);
 
         // triggering the edge will result in show desktop being triggered
-        QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
+        QSignalSpy showDesktopSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
         // trigger the edge
         cursor()->set_pos(test_data.trigger_pos);
         QCOMPARE(showDesktopSpy.count(), 1);
-        QVERIFY(setup.base->space->showing_desktop);
+        QVERIFY(setup.base->mod.space->showing_desktop);
     }
 
     SECTION("touch edge")
@@ -127,11 +127,11 @@ TEST_CASE("screen edge script", "[script]")
             .writeEntry("Edge", int(test_data.edge));
         config->sync();
 
-        QVERIFY(!setup.base->script->isScriptLoaded(scriptToLoad));
-        auto const id = setup.base->script->loadScript(scriptToLoad);
+        QVERIFY(!setup.base->mod.script->isScriptLoaded(scriptToLoad));
+        auto const id = setup.base->mod.script->loadScript(scriptToLoad);
         QVERIFY(id != -1);
-        QVERIFY(setup.base->script->isScriptLoaded(scriptToLoad));
-        auto s = setup.base->script->findScript(scriptToLoad);
+        QVERIFY(setup.base->mod.script->isScriptLoaded(scriptToLoad));
+        auto s = setup.base->mod.script->findScript(scriptToLoad);
         QVERIFY(s);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         QVERIFY(runningChangedSpy.isValid());
@@ -140,7 +140,7 @@ TEST_CASE("screen edge script", "[script]")
         QCOMPARE(runningChangedSpy.count(), 1);
         QCOMPARE(runningChangedSpy.first().first().toBool(), true);
         // triggering the edge will result in show desktop being triggered
-        QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
+        QSignalSpy showDesktopSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
@@ -151,7 +151,7 @@ TEST_CASE("screen edge script", "[script]")
         touch_up(0, timestamp++);
         QVERIFY(showDesktopSpy.wait());
         QCOMPARE(showDesktopSpy.count(), 1);
-        QVERIFY(setup.base->space->showing_desktop);
+        QVERIFY(setup.base->mod.space->showing_desktop);
     }
 
     SECTION("edge unregister")
@@ -159,8 +159,8 @@ TEST_CASE("screen edge script", "[script]")
         const QString scriptToLoad = QFINDTESTDATA("./scripts/screenedgeunregister.js");
         QVERIFY(!scriptToLoad.isEmpty());
 
-        setup.base->script->loadScript(scriptToLoad);
-        auto s = setup.base->script->findScript(scriptToLoad);
+        setup.base->mod.script->loadScript(scriptToLoad);
+        auto s = setup.base->mod.script->findScript(scriptToLoad);
         auto configGroup = s->config();
         configGroup.writeEntry("Edge", int(KWin::ElectricLeft));
         configGroup.sync();
@@ -170,7 +170,7 @@ TEST_CASE("screen edge script", "[script]")
         s->run();
         QVERIFY(runningChangedSpy.wait());
 
-        QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
+        QSignalSpy showDesktopSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
@@ -186,7 +186,7 @@ TEST_CASE("screen edge script", "[script]")
 
         // reset
         cursor()->set_pos(500, 500);
-        win::toggle_show_desktop(*setup.base->space);
+        win::toggle_show_desktop(*setup.base->mod.space);
         showDesktopSpy.clear();
 
         // trigger again, to show that retriggering works
@@ -195,7 +195,7 @@ TEST_CASE("screen edge script", "[script]")
 
         // reset
         cursor()->set_pos(500, 500);
-        win::toggle_show_desktop(*setup.base->space);
+        win::toggle_show_desktop(*setup.base->mod.space);
         showDesktopSpy.clear();
 
         // make the script unregister the edge
@@ -212,15 +212,15 @@ TEST_CASE("screen edge script", "[script]")
     {
         const QString scriptToLoad = QFINDTESTDATA("./scripts/screenedgetouch.qml");
         QVERIFY(!scriptToLoad.isEmpty());
-        QVERIFY(setup.base->script->loadDeclarativeScript(scriptToLoad) != -1);
-        QVERIFY(setup.base->script->isScriptLoaded(scriptToLoad));
+        QVERIFY(setup.base->mod.script->loadDeclarativeScript(scriptToLoad) != -1);
+        QVERIFY(setup.base->mod.script->isScriptLoaded(scriptToLoad));
 
-        auto s = setup.base->script->findScript(scriptToLoad);
+        auto s = setup.base->mod.script->findScript(scriptToLoad);
         QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
         s->run();
         QTRY_COMPARE(runningChangedSpy.count(), 1);
 
-        QSignalSpy showDesktopSpy(setup.base->space->qobject.get(),
+        QSignalSpy showDesktopSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::showingDesktopChanged);
         QVERIFY(showDesktopSpy.isValid());
 
@@ -239,9 +239,9 @@ TEST_CASE("screen edge script", "[script]")
                                  QFINDTESTDATA("./scripts/touchScreenedge.js")};
     for (const QString& script : scripts) {
         if (!script.isEmpty()) {
-            if (setup.base->script->isScriptLoaded(script)) {
-                QVERIFY(setup.base->script->unloadScript(script));
-                QTRY_VERIFY(!setup.base->script->isScriptLoaded(script));
+            if (setup.base->mod.script->isScriptLoaded(script)) {
+                QVERIFY(setup.base->mod.script->unloadScript(script));
+                QTRY_VERIFY(!setup.base->mod.script->isScriptLoaded(script));
             }
         }
     }

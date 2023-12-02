@@ -34,7 +34,7 @@ template<typename Redirect>
 bool get_modifier_command(Redirect& redirect, uint32_t key, win::mouse_cmd& command)
 {
     if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(redirect.platform)
-        != redirect.platform.base.space->options->qobject->commandAllModifier()) {
+        != redirect.platform.base.mod.space->options->qobject->commandAllModifier()) {
         return false;
     }
     if (redirect.pointer->isConstrained()) {
@@ -46,13 +46,13 @@ bool get_modifier_command(Redirect& redirect, uint32_t key, win::mouse_cmd& comm
     auto qt_key = button_to_qt_mouse_button(key);
     switch (qt_key) {
     case Qt::LeftButton:
-        command = redirect.platform.base.space->options->qobject->commandAll1();
+        command = redirect.platform.base.mod.space->options->qobject->commandAll1();
         break;
     case Qt::MiddleButton:
-        command = redirect.platform.base.space->options->qobject->commandAll2();
+        command = redirect.platform.base.mod.space->options->qobject->commandAll2();
         break;
     case Qt::RightButton:
-        command = redirect.platform.base.space->options->qobject->commandAll3();
+        command = redirect.platform.base.mod.space->options->qobject->commandAll3();
         break;
     default:
         // nothing
@@ -103,7 +103,7 @@ bool get_wheel_modifier_command(Redirect& redirect,
                                 win::mouse_cmd& command)
 {
     if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(redirect.platform)
-        != redirect.platform.base.space->options->qobject->commandAllModifier()) {
+        != redirect.platform.base.mod.space->options->qobject->commandAllModifier()) {
         return false;
     }
     if (redirect.pointer->isConstrained()) {
@@ -114,7 +114,7 @@ bool get_wheel_modifier_command(Redirect& redirect,
     }
 
     auto veritcal_delta = (orientation == axis_orientation::vertical) ? -1 * delta : 0;
-    command = redirect.platform.base.space->options->operationWindowMouseWheel(veritcal_delta);
+    command = redirect.platform.base.mod.space->options->operationWindowMouseWheel(veritcal_delta);
 
     return true;
 }

@@ -242,11 +242,11 @@ effect_frame_impl::effect_frame_impl(EffectsHandler& effects,
     : effects{effects}
     , m_view{new effect_frame_quick_scene(style, staticSize, position, alignment)}
 {
-    connect(m_view, &EffectQuickView::repaintNeeded, this, [this] {
+    connect(m_view, &OffscreenQuickView::repaintNeeded, this, [this] {
         this->effects.addRepaint(geometry());
     });
     connect(m_view,
-            &EffectQuickView::geometryChanged,
+            &OffscreenQuickView::geometryChanged,
             this,
             [this](const QRect& oldGeometry, const QRect& newGeometry) {
                 this->effects.addRepaint(oldGeometry);
@@ -291,7 +291,7 @@ void effect_frame_impl::free()
 
 const QRect& effect_frame_impl::geometry() const
 {
-    // Can't forward to EffectQuickView::geometry() because we return a reference.
+    // Can't forward to OffscreenQuickView::geometry() because we return a reference.
     return m_geometry;
 }
 
@@ -344,7 +344,7 @@ void effect_frame_impl::render(const QRegion& region, double opacity, double fra
     m_view->setOpacity(opacity);
     m_view->setFrameOpacity(frameOpacity);
 
-    effects.renderEffectQuickView(m_view);
+    effects.renderOffscreenQuickView(m_view);
 }
 
 const QString& effect_frame_impl::text() const

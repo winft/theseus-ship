@@ -22,12 +22,12 @@ void idle_update(Win& window)
     if (is_visible && window.surface && window.surface->inhibitsIdle()) {
         if (!window.inhibit_idle) {
             window.inhibit_idle = true;
-            window.space.base.input->idle.inhibit();
+            window.space.base.mod.input->idle.inhibit();
         }
     } else {
         if (window.inhibit_idle) {
             window.inhibit_idle = false;
-            window.space.base.input->idle.uninhibit();
+            window.space.base.mod.input->idle.uninhibit();
         }
     }
 }
@@ -62,7 +62,7 @@ void idle_setup(Win& window)
     QObject::connect(qwin, &Win::qobject_t::closed, qwin, [&window] {
         if (window.inhibit_idle) {
             window.inhibit_idle = false;
-            window.space.base.input->idle.uninhibit();
+            window.space.base.mod.input->idle.uninhibit();
         }
     });
 

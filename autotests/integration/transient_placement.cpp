@@ -6,14 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/control.h"
-#include "win/deco.h"
-#include "win/move.h"
-#include "win/screen_edges.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/event_queue.h>
@@ -27,7 +19,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/touch.h>
 #include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Client/xdgdecoration.h>
-
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 #include <catch2/generators/catch_generators.hpp>
@@ -506,8 +497,9 @@ TEST_CASE("transient placement", "[win]")
         plasmaSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
 
         // Placement area still full screen.
-        QVERIFY(win::space_window_area(*setup.base->space, win::area_option::placement, 0, 1)
-                == win::space_window_area(*setup.base->space, win::area_option::fullscreen, 0, 1));
+        QVERIFY(
+            win::space_window_area(*setup.base->mod.space, win::area_option::placement, 0, 1)
+            == win::space_window_area(*setup.base->mod.space, win::area_option::fullscreen, 0, 1));
 
         // Now map the panel and placement area is reduced.
         auto dock = render_and_wait_for_shown(surface, QSize(1280, 50), Qt::blue);
@@ -516,8 +508,9 @@ TEST_CASE("transient placement", "[win]")
         QVERIFY(win::is_dock(dock));
         QCOMPARE(dock->geo.frame, QRect(0, get_output(0)->geometry().height() - 50, 1280, 50));
         QCOMPARE(dock->hasStrut(), true);
-        QVERIFY(win::space_window_area(*setup.base->space, win::area_option::placement, 0, 1)
-                != win::space_window_area(*setup.base->space, win::area_option::fullscreen, 0, 1));
+        QVERIFY(
+            win::space_window_area(*setup.base->mod.space, win::area_option::placement, 0, 1)
+            != win::space_window_area(*setup.base->mod.space, win::area_option::fullscreen, 0, 1));
 
         // Create parent
         auto parentSurface = create_surface();
@@ -532,7 +525,7 @@ TEST_CASE("transient placement", "[win]")
         win::move(parent, {0, get_output(0)->geometry().height() - 300});
         win::keep_in_area(
             parent,
-            win::space_window_area(*setup.base->space, win::area_option::placement, parent),
+            win::space_window_area(*setup.base->mod.space, win::area_option::placement, parent),
             false);
         QCOMPARE(parent->geo.frame,
                  QRect(0, get_output(0)->geometry().height() - 600 - 50, 800, 600));

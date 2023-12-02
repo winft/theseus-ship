@@ -10,6 +10,8 @@
 
 #include "base/x11/platform.h"
 #include "render/backend/x11/platform.h"
+#include <desktop/platform.h>
+#include <script/platform.h>
 
 #include <QApplication>
 #include <memory>
@@ -24,6 +26,22 @@ class xcb_event_filter;
 }
 
 class KWinSelectionOwner;
+
+struct space_mod {
+    std::unique_ptr<desktop::platform> desktop;
+};
+
+struct base_mod {
+    using platform_t = base::x11::platform<base_mod>;
+    using render_t = render::x11::platform<platform_t>;
+    using input_t = input::x11::platform<platform_t>;
+    using space_t = win::x11::space<platform_t, space_mod>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
+    std::unique_ptr<scripting::platform<space_t>> script;
+};
 
 class ApplicationX11 : public QApplication
 {
@@ -48,10 +66,11 @@ private:
 
     static void crashHandler(int signal);
 
-    base::x11::platform base;
+    using base_t = base::x11::platform<base_mod>;
+    base_t base;
 
     QScopedPointer<KWinSelectionOwner> owner;
-    std::unique_ptr<win::x11::xcb_event_filter<base::x11::platform::space_t>> event_filter;
+    std::unique_ptr<win::x11::xcb_event_filter<base_t::space_t>> event_filter;
     bool m_replace;
 };
 

@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorationoptions.h"
 
 #include <base/config-kwin.h>
-#include <render/effect/interface/effect_quick_view.h>
 #include <render/effect/interface/effects_handler.h>
+#include <render/effect/interface/offscreen_quick_view.h>
 
 // KDecoration2
 #include <KDecoration2/DecoratedClient>
@@ -316,14 +316,17 @@ bool Decoration::init()
         m_item->setParentItem(visualParent.value<QQuickItem*>());
         visualParent.value<QQuickItem*>()->setProperty("drawBackground", false);
     } else {
-        m_view = std::make_unique<KWin::EffectQuickView>(KWin::EffectQuickView::ExportMode::Image);
+        m_view = std::make_unique<KWin::OffscreenQuickView>(
+            KWin::OffscreenQuickView::ExportMode::Image);
         m_item->setParentItem(m_view->contentItem());
         auto updateSize = [this]() { m_item->setSize(m_view->contentItem()->size()); };
         updateSize();
         connect(m_view->contentItem(), &QQuickItem::widthChanged, m_item, updateSize);
         connect(m_view->contentItem(), &QQuickItem::heightChanged, m_item, updateSize);
-        connect(
-            m_view.get(), &KWin::EffectQuickView::repaintNeeded, this, &Decoration::updateBuffer);
+        connect(m_view.get(),
+                &KWin::OffscreenQuickView::repaintNeeded,
+                this,
+                &Decoration::updateBuffer);
     }
 
     m_supportsMask = m_item->property("supportsMask").toBool();

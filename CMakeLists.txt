@@ -111,10 +111,10 @@ set_package_properties(KF6Kirigami2 PROPERTIES
     TYPE RUNTIME
 )
 
-find_package(KF6Plasma ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}
+find_package(Plasma ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}
   CONFIG
 )
-set_package_properties(KF6Plasma PROPERTIES
+set_package_properties(Plasma PROPERTIES
     DESCRIPTION "A QtQuick based components set"
     PURPOSE "Required at runtime for several QML effects"
     TYPE RUNTIME
@@ -335,6 +335,7 @@ endif()
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
 target_link_libraries(kwin_x11
   desktop-kde
+  kwinft::script
   kwinft::x11
   KF6::Crash
 )
@@ -346,9 +347,9 @@ kcoreaddons_target_static_plugins(kwin_x11 NAMESPACE "kwin/effects/plugins")
 add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
   desktop-kde
+  kwinft::script
   kwinft::wayland
   kwinft::xwayland
-  script
   KF6IdleTimeKWinPlugin
   KF6WindowSystemKWinPlugin
   KWinQpaPlugin

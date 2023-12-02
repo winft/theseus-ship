@@ -6,20 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "render/compositor.h"
-#include "render/scene.h"
-#include "win/deco.h"
-#include "win/screen_edges.h"
-#include "win/space_reconfigure.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
 #include <KDecoration2/Decoration>
-
 #include <QQuickItem>
-
 #include <linux/input.h>
 
 namespace KWin::detail::test
@@ -42,7 +30,7 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
     setup.set_outputs(2);
     test_outputs_default();
 
-    auto& scene = app()->base->render->scene;
+    auto& scene = app()->base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -58,8 +46,8 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
         group.writeEntry("BorderlessMaximizedWindows", true);
         group.sync();
 
-        win::space_reconfigure(*app()->base->space);
-        QCOMPARE(app()->base->space->options->qobject->borderlessMaximizedWindows(), true);
+        win::space_reconfigure(*app()->base->mod.space);
+        QCOMPARE(app()->base->mod.space->options->qobject->borderlessMaximizedWindows(), true);
 
         // create an xcb window
         xcb_connection_t* c = xcb_connect(nullptr, nullptr);
@@ -83,13 +71,13 @@ TEST_CASE("no crash aurorae destroy deco", "[win],[xwl]")
         xcb_flush(c);
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(app()->base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(app()->base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = get_x11_window(app()->base->space->windows_map.at(client_id));
+        auto client = get_x11_window(app()->base->mod.space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QVERIFY(win::decoration(client) != nullptr);

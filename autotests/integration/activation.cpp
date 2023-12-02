@@ -6,14 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/active_window.h"
-#include "win/control.h"
-#include "win/move.h"
-#include "win/stacking_order.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/surface.h>
 #include <catch2/generators/catch_generators.hpp>
 
@@ -85,19 +77,19 @@ TEST_CASE("activation", "[win]")
         win::move(client4, QPoint(1580, 200));
 
         // Switch to window to the left.
-        win::activate_window_direction(*setup.base->space, win::direction::west);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::west);
         REQUIRE(client3->control->active);
 
         // Switch to window to the left.
-        win::activate_window_direction(*setup.base->space, win::direction::west);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::west);
         REQUIRE(client2->control->active);
 
         // Switch to window to the left.
-        win::activate_window_direction(*setup.base->space, win::direction::west);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::west);
         REQUIRE(client1->control->active);
 
         // Switch to window to the left.
-        win::activate_window_direction(*setup.base->space, win::direction::west);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::west);
         REQUIRE(client4->control->active);
 
         // Destroy all clients.
@@ -153,19 +145,19 @@ TEST_CASE("activation", "[win]")
         win::move(client4, QPoint(1580, 200));
 
         // Switch to window to the right.
-        win::activate_window_direction(*setup.base->space, win::direction::east);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::east);
         REQUIRE(client1->control->active);
 
         // Switch to window to the right.
-        win::activate_window_direction(*setup.base->space, win::direction::east);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::east);
         REQUIRE(client2->control->active);
 
         // Switch to window to the right.
-        win::activate_window_direction(*setup.base->space, win::direction::east);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::east);
         REQUIRE(client3->control->active);
 
         // Switch to window to the right.
-        win::activate_window_direction(*setup.base->space, win::direction::east);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::east);
         REQUIRE(client4->control->active);
 
         // Destroy all clients.
@@ -221,19 +213,19 @@ TEST_CASE("activation", "[win]")
         win::move(client4, QPoint(200, 1424));
 
         // Switch to window above.
-        win::activate_window_direction(*setup.base->space, win::direction::north);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::north);
         REQUIRE(client3->control->active);
 
         // Switch to window above.
-        win::activate_window_direction(*setup.base->space, win::direction::north);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::north);
         REQUIRE(client2->control->active);
 
         // Switch to window above.
-        win::activate_window_direction(*setup.base->space, win::direction::north);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::north);
         REQUIRE(client1->control->active);
 
         // Switch to window above.
-        win::activate_window_direction(*setup.base->space, win::direction::north);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::north);
         REQUIRE(client4->control->active);
 
         // Destroy all clients.
@@ -289,19 +281,19 @@ TEST_CASE("activation", "[win]")
         win::move(client4, QPoint(200, 1424));
 
         // Switch to window below.
-        win::activate_window_direction(*setup.base->space, win::direction::south);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::south);
         REQUIRE(client1->control->active);
 
         // Switch to window below.
-        win::activate_window_direction(*setup.base->space, win::direction::south);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::south);
         REQUIRE(client2->control->active);
 
         // Switch to window below.
-        win::activate_window_direction(*setup.base->space, win::direction::south);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::south);
         REQUIRE(client3->control->active);
 
         // Switch to window below.
-        win::activate_window_direction(*setup.base->space, win::direction::south);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::south);
         REQUIRE(client4->control->active);
 
         // Destroy all clients.
@@ -336,7 +328,7 @@ TEST_CASE("activation", "[win]")
         REQUIRE(configureRequestedSpy1.isValid());
 
         REQUIRE(configureRequestedSpy1.wait());
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
 
         REQUIRE(configureRequestedSpy1.wait());
 
@@ -360,7 +352,7 @@ TEST_CASE("activation", "[win]")
         REQUIRE(configureRequestedSpy2.isValid());
 
         REQUIRE(configureRequestedSpy2.wait());
-        win::active_window_maximize(*setup.base->space);
+        win::active_window_maximize(*setup.base->mod.space);
 
         REQUIRE(configureRequestedSpy2.wait());
 
@@ -373,7 +365,7 @@ TEST_CASE("activation", "[win]")
 
         REQUIRE(geometryChangedSpy2.wait());
 
-        auto const stackingOrder = setup.base->space->stacking.order.stack;
+        auto const stackingOrder = setup.base->mod.space->stacking.order.stack;
         REQUIRE(index_of(stackingOrder, space::window_t(client1))
                 < index_of(stackingOrder, space::window_t(client2)));
         REQUIRE(client1->maximizeMode() == win::maximize_mode::full);
@@ -396,15 +388,15 @@ TEST_CASE("activation", "[win]")
         win::move(client4, QPoint(1580, 200));
 
         // Switch to window to the left.
-        win::activate_window_direction(*setup.base->space, win::direction::west);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::west);
         REQUIRE(client3->control->active);
 
         // Switch to window to the left.
-        win::activate_window_direction(*setup.base->space, win::direction::west);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::west);
         REQUIRE(client2->control->active);
 
         // Switch to window to the left.
-        win::activate_window_direction(*setup.base->space, win::direction::west);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::west);
         REQUIRE(client4->control->active);
 
         // Destroy all clients.
@@ -439,7 +431,7 @@ TEST_CASE("activation", "[win]")
         REQUIRE(configureRequestedSpy1.isValid());
 
         REQUIRE(configureRequestedSpy1.wait());
-        win::active_window_set_fullscreen(*setup.base->space);
+        win::active_window_set_fullscreen(*setup.base->mod.space);
 
         REQUIRE(configureRequestedSpy1.wait());
 
@@ -461,7 +453,7 @@ TEST_CASE("activation", "[win]")
         REQUIRE(configureRequestedSpy2.isValid());
 
         REQUIRE(configureRequestedSpy2.wait());
-        win::active_window_set_fullscreen(*setup.base->space);
+        win::active_window_set_fullscreen(*setup.base->mod.space);
 
         REQUIRE(configureRequestedSpy2.wait());
 
@@ -474,7 +466,7 @@ TEST_CASE("activation", "[win]")
 
         REQUIRE(geometryChangedSpy2.wait());
 
-        auto const stackingOrder = setup.base->space->stacking.order.stack;
+        auto const stackingOrder = setup.base->mod.space->stacking.order.stack;
         REQUIRE(index_of(stackingOrder, space::window_t(client1))
                 < index_of(stackingOrder, space::window_t(client2)));
         REQUIRE(client1->control->fullscreen);
@@ -497,15 +489,15 @@ TEST_CASE("activation", "[win]")
         win::move(client4, QPoint(200, 1424));
 
         // Switch to window above.
-        win::activate_window_direction(*setup.base->space, win::direction::north);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::north);
         REQUIRE(client3->control->active);
 
         // Switch to window above.
-        win::activate_window_direction(*setup.base->space, win::direction::north);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::north);
         REQUIRE(client2->control->active);
 
         // Switch to window above.
-        win::activate_window_direction(*setup.base->space, win::direction::north);
+        win::activate_window_direction(*setup.base->mod.space, win::direction::north);
         REQUIRE(client4->control->active);
 
         // Destroy all clients.

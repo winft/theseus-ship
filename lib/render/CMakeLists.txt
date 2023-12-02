@@ -17,8 +17,8 @@ add_library(render SHARED)
 
 target_link_libraries(render
   PUBLIC
+    KF6::ConfigQml
     KF6::Notifications
-    KF6::Plasma
     epoxy::epoxy
     win
 )
@@ -39,14 +39,15 @@ target_sources(render
       effect/interface/effect_frame.h
       effect/interface/effect_integration.h
       effect/interface/effect_plugin_factory.h
-      effect/interface/effect_quick_view.h
       effect/interface/effect_screen.h
       effect/interface/effect_togglable_state.h
       effect/interface/effect_window.h
       effect/interface/effects_handler.h
       effect/interface/motions.h
+      effect/interface/offscreen_quick_view.h
       effect/interface/paint_clipper.h
       effect/interface/paint_data.h
+      effect/interface/quick_scene.h
       effect/interface/time_line.h
       effect/interface/types.h
       effect/interface/window_quad.h
@@ -109,11 +110,11 @@ target_sources(render
     effect/interface/effect.cpp
     effect/interface/effect_frame.cpp
     effect/interface/effect_plugin_factory.cpp
-    effect/interface/effect_quick_view.cpp
     effect/interface/effect_screen.cpp
     effect/interface/effect_togglable_state.cpp
     effect/interface/effect_window.cpp
     effect/interface/effects_handler.cpp
+    effect/interface/offscreen_quick_view.cpp
     effect/interface/quick_scene.cpp
     effect/interface/motions.cpp
     effect/interface/paint_clipper.cpp

@@ -6,14 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/compositor.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "win/wayland/window.h"
-
 #include <KConfigGroup>
-
 #include <Wrapland/Client/buffer.h>
 #include <Wrapland/Client/surface.h>
 
@@ -33,7 +26,7 @@ TEST_CASE("fade", "[effect]")
     // disable all effects - we don't want to have it interact with the rendering
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -42,11 +35,11 @@ TEST_CASE("fade", "[effect]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render);
+    QVERIFY(setup.base->mod.render);
     setup_wayland_connection();
 
     // load the translucency effect
-    auto& e = setup.base->render->effects;
+    auto& e = setup.base->mod.render->effects;
 
     QSignalSpy effectLoadedSpy(e->loader.get(), &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());

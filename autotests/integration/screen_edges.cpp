@@ -6,21 +6,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "base/x11/xcb/proto.h"
-#include "input/cursor.h"
-#include "win/actions.h"
-#include "win/activation.h"
-#include "win/screen_edges.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-
+#include <KConfigGroup>
+#include <QDateTime>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>
-
-#include <KConfigGroup>
-
-#include <QDateTime>
 #include <catch2/generators/catch_generators.hpp>
 
 namespace KWin::detail::test
@@ -59,11 +48,12 @@ TEST_CASE("screen edges", "[input],[win]")
 
     auto reset_edger = [&](KSharedConfig::Ptr config) {
         setup.base->config.main = config;
-        setup.base->space->edges = std::make_unique<win::screen_edger<space>>(*setup.base->space);
+        setup.base->mod.space->edges
+            = std::make_unique<win::screen_edger<space>>(*setup.base->mod.space);
     };
 
     auto unreserve = [&](uint32_t id, win::electric_border border) {
-        setup.base->space->edges->unreserve(border, id);
+        setup.base->mod.space->edges->unreserve(border, id);
     };
 
     auto unreserve_many = [&](std::deque<uint32_t>& border_ids, win::electric_border border) {
@@ -74,7 +64,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
     SECTION("init")
     {
-        auto& screenEdges = setup.base->space->edges;
+        auto& screenEdges = setup.base->mod.space->edges;
         QCOMPARE(screenEdges->desktop_switching.always, false);
         QCOMPARE(screenEdges->desktop_switching.when_moving_client, false);
         REQUIRE(screenEdges->time_threshold == std::chrono::milliseconds(150));
@@ -174,7 +164,7 @@ TEST_CASE("screen edges", "[input],[win]")
         config->sync();
 
         reset_edger(config);
-        auto& screenEdges = setup.base->space->edges;
+        auto& screenEdges = setup.base->mod.space->edges;
 
         // we don't have multiple desktops, so it's returning false
         REQUIRE(screenEdges->desktop_switching.always);
@@ -193,7 +183,7 @@ TEST_CASE("screen edges", "[input],[win]")
         // set some reasonable virtual desktops
         config->group("Desktops").writeEntry("Number", 4);
         config->sync();
-        auto& subs = setup.base->space->subspace_manager;
+        auto& subs = setup.base->mod.space->subspace_manager;
         subs->config = config;
         win::subspace_manager_load(*subs);
         win::subspace_manager_update_layout(*subs);
@@ -293,7 +283,7 @@ TEST_CASE("screen edges", "[input],[win]")
         }
 
         // Let's start a window move. First create a window.
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -303,10 +293,10 @@ TEST_CASE("screen edges", "[input],[win]")
         render(surface, QSize(100, 50), Qt::blue);
         flush_wayland_connection();
         QVERIFY(clientAddedSpy.wait());
-        auto client = get_wayland_window(setup.base->space->stacking.active);
+        auto client = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(client);
 
-        win::set_move_resize_window(*setup.base->space, *client);
+        win::set_move_resize_window(*setup.base->mod.space, *client);
         for (int i = 0; i < 8; ++i) {
             auto& e = screenEdges->edges.at(i);
             QVERIFY(e->reserved_count > 0);
@@ -324,7 +314,7 @@ TEST_CASE("screen edges", "[input],[win]")
             QCOMPARE(e->activatesForTouchGesture(), false);
             QCOMPARE(e->approach_geometry, expectedGeometries.at(i * 2 + 1));
         }
-        win::unset_move_resize_window(*setup.base->space);
+        win::unset_move_resize_window(*setup.base->mod.space);
     }
 
     SECTION("callback")
@@ -337,7 +327,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
         QCOMPARE(changedSpy.count(), 1);
 
-        auto& screenEdges = setup.base->space->edges;
+        auto& screenEdges = setup.base->mod.space->edges;
 
         TestObject callback;
         auto cb = [&](auto eb) { return callback.callback(eb); };
@@ -484,7 +474,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
     SECTION("callback with check")
     {
-        auto& screenEdges = setup.base->space->edges;
+        auto& screenEdges = setup.base->mod.space->edges;
 
         TestObject callback;
         auto cb = [&](auto eb) { return callback.callback(eb); };
@@ -603,7 +593,7 @@ TEST_CASE("screen edges", "[input],[win]")
         setup.set_outputs(geometries);
 
         reset_edger(config);
-        auto& screenEdges = setup.base->space->edges;
+        auto& screenEdges = setup.base->mod.space->edges;
 
         TestObject callback;
         auto cb = [&](auto eb) { return callback.callback(eb); };
@@ -637,7 +627,7 @@ TEST_CASE("screen edges", "[input],[win]")
         config->group("Windows").writeEntry("ElectricBorderPushbackPixels", 1);
         config->sync();
 
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -648,11 +638,11 @@ TEST_CASE("screen edges", "[input],[win]")
         flush_wayland_connection();
         QVERIFY(clientAddedSpy.wait());
 
-        auto client = get_window<wayland_window>(setup.base->space->stacking.active);
+        auto client = get_window<wayland_window>(setup.base->mod.space->stacking.active);
         QVERIFY(client);
 
         reset_edger(config);
-        auto& screenEdges = setup.base->space->edges;
+        auto& screenEdges = setup.base->mod.space->edges;
 
         TestObject callback;
         auto cb = [&](auto eb) { return callback.callback(eb); };
@@ -681,7 +671,7 @@ TEST_CASE("screen edges", "[input],[win]")
         client->setFrameGeometry(QRect({}, setup.base->topology.size));
         win::set_active(client, true);
         client->setFullScreen(true);
-        win::set_active_window(*setup.base->space, *client);
+        win::set_active_window(*setup.base->mod.space, *client);
         Q_EMIT screenEdges->qobject->checkBlocking();
 
         // the signal doesn't trigger for corners, let's go over all windows just to be sure that it
@@ -723,7 +713,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QCOMPARE(cursor()->pos(), QPoint(1, 50));
 
         // just to be sure, let's set geometry back
-        client->setFrameGeometry(QRect({}, setup.base->space->size));
+        client->setFrameGeometry(QRect({}, setup.base->mod.space->size));
         Q_EMIT screenEdges->checkBlocking();
         cursor()->set_pos(0, 50);
         QVERIFY(spy.isEmpty());
@@ -748,7 +738,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
     SECTION("client edge")
     {
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::wayland_window_added);
         QVERIFY(clientAddedSpy.isValid());
         auto surface = create_surface();
@@ -759,12 +749,12 @@ TEST_CASE("screen edges", "[input],[win]")
         flush_wayland_connection();
         QVERIFY(clientAddedSpy.wait());
 
-        auto client = get_wayland_window(setup.base->space->stacking.active);
+        auto client = get_wayland_window(setup.base->mod.space->stacking.active);
         QVERIFY(client);
 
         client->setFrameGeometry(QRect(10, 50, 10, 50));
 
-        auto& screenEdges = setup.base->space->edges;
+        auto& screenEdges = setup.base->mod.space->edges;
         screenEdges->reserve(client, win::electric_border::bottom);
         auto& edge = screenEdges->edges.back();
 
@@ -825,8 +815,8 @@ TEST_CASE("screen edges", "[input],[win]")
         screenEdges->reserve(client, win::electric_border::right);
         QCOMPARE(client->isHiddenInternal(), true);
 
-        // now let's emulate the removal of a Client through base.space
-        Q_EMIT setup.base->space->qobject->clientRemoved(client->meta.signal_id);
+        // now let's emulate the removal of a Client through base.mod.space
+        Q_EMIT setup.base->mod.space->qobject->clientRemoved(client->meta.signal_id);
         for (auto& e : screenEdges->edges) {
             QVERIFY(!e->client());
         }
@@ -874,7 +864,7 @@ TEST_CASE("screen edges", "[input],[win]")
         config->sync();
 
         reset_edger(config);
-        auto& screenEdges = setup.base->space->edges;
+        auto& screenEdges = setup.base->mod.space->edges;
 
         // we don't have multiple desktops, so it's returning false
         // TODO(romangg): Possible on Wayland. Needs investigation.
@@ -966,7 +956,7 @@ TEST_CASE("screen edges", "[input],[win]")
         config->sync();
 
         reset_edger(config);
-        auto& screenEdges = setup.base->space->edges;
+        auto& screenEdges = setup.base->mod.space->edges;
 
         // none of our actions should be reserved
         auto& edges = screenEdges->edges;

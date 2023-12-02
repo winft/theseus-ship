@@ -9,7 +9,7 @@
 #pragma once
 
 #include <render/effect/interface/effect.h>
-#include <render/effect/interface/effect_quick_view.h>
+#include <render/effect/interface/offscreen_quick_view.h>
 
 #include <QElapsedTimer>
 
@@ -48,7 +48,7 @@ Q_SIGNALS:
     void paintChanged();
 
 private:
-    std::unique_ptr<EffectQuickScene> m_scene;
+    std::unique_ptr<OffscreenQuickScene> m_scene;
 
     int m_maximumFps = 0;
 

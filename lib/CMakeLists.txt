@@ -20,14 +20,8 @@ target_link_libraries(x11
   PUBLIC
     base-x11
     debug-common
-    desktop
     input-x11-backend
     render-x11-backend
-
-    # TODO(romangg): Linking against script lib is needed at the moment because in the base platform
-    #                the script platform is composited, but in the future it should be made possible
-    #                to build the wlroots backend lib without it.
-    script
     win-x11-backend
 )
 
@@ -44,16 +38,9 @@ add_library(kwinft::wayland ALIAS wayland)
 target_link_libraries(wayland
   PUBLIC
     debug-wl
-    desktop
     input-wl
     render-wl
     win-wl
-
-    # TODO(romangg): Linking against script lib is needed at the moment because in the base platform
-    #                the script platform is composited, but in the future it should be made possible
-    #                to build the wlroots backend lib without it.
-    script
-
     Libinput::Libinput
     Pixman::Pixman
     wlroots::wlroots
@@ -64,25 +51,25 @@ target_sources(wayland
   PUBLIC
     FILE_SET HEADERS
     FILES
+      base/backend/wlroots/backend.h
       base/backend/wlroots/drm_lease.h
+      base/backend/wlroots/events.h
+      base/backend/wlroots/helpers.h
       base/backend/wlroots/non_desktop_output.h
       base/backend/wlroots/output.h
-      base/backend/wlroots/platform.h
-      base/backend/wlroots/platform_events.h
-      base/backend/wlroots/platform_helpers.h
+      input/backend/wlroots/backend.h
       input/backend/wlroots/device_helpers.h
       input/backend/wlroots/keyboard.h
-      input/backend/wlroots/platform.h
       input/backend/wlroots/pointer.h
       input/backend/wlroots/switch.h
       input/backend/wlroots/touch.h
+      render/backend/wlroots/backend.h
       render/backend/wlroots/egl_backend.h
       render/backend/wlroots/egl_helpers.h
       render/backend/wlroots/egl_output.h
       render/backend/wlroots/egl_texture.h
       render/backend/wlroots/output.h
       render/backend/wlroots/output_event.h
-      render/backend/wlroots/platform.h
       render/backend/wlroots/qpainter_backend.h
       render/backend/wlroots/qpainter_output.h
       render/backend/wlroots/texture_update.h

@@ -9,6 +9,7 @@
 #include "effect/contrast_integration.h"
 #include "effect/slide_integration.h"
 #include <render/wayland/effect/xwayland.h>
+#include <render/wayland/effects.h>
 
 #include "base/wayland/server.h"
 #include "render/effects.h"
@@ -19,20 +20,6 @@
 
 namespace KWin::render::wayland
 {
-
-// KScreen effect is only available on X11.
-class kscreen_integration : public effect::kscreen_integration
-{
-    void add(Effect& /*effect*/, update_function const& /*update*/) override
-    {
-    }
-    void remove(Effect& /*effect*/) override
-    {
-    }
-    void change_state(Effect& /*effect*/, double /*state*/) override
-    {
-    }
-};
 
 template<typename Scene>
 class xwl_effects_handler_impl : public render::effects_handler_impl<Scene>
@@ -68,7 +55,7 @@ public:
     EffectWindow* find_window_by_surface(Wrapland::Server::Surface* surface) const override
     {
         if (auto win
-            = win::wayland::space_windows_find(*this->scene.platform.base.space, surface)) {
+            = win::wayland::space_windows_find(*this->scene.platform.base.mod.space, surface)) {
             return win->render->effect.get();
         }
         return nullptr;
@@ -142,7 +129,7 @@ public:
 protected:
     void doStartMouseInterception(Qt::CursorShape shape) override
     {
-        auto& space = this->scene.platform.base.space;
+        auto& space = this->scene.platform.base.mod.space;
         space->input->pointer->setEffectsOverrideCursor(shape);
         if (auto& mov_res = space->move_resize_window) {
             std::visit(overload{[&](auto&& win) { win::end_move_resize(win); }}, *mov_res);
@@ -151,7 +138,7 @@ protected:
 
     void doStopMouseInterception() override
     {
-        this->scene.platform.base.space->input->pointer->removeEffectsOverrideCursor();
+        this->scene.platform.base.mod.space->input->pointer->removeEffectsOverrideCursor();
     }
 
     void handle_effect_destroy(Effect& effect) override

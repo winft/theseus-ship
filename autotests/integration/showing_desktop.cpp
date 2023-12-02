@@ -6,11 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "win/activation.h"
-#include "win/net.h"
-#include "win/wayland/window.h"
-
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/surface.h>
 #include <catch2/generators/catch_generators.hpp>
@@ -48,14 +43,14 @@ TEST_CASE("showing desktop", "[win]")
         auto client2 = render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
         QVERIFY(client1 != client2);
 
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client2);
-        win::toggle_show_desktop(*setup.base->space);
-        QVERIFY(setup.base->space->showing_desktop);
-        win::toggle_show_desktop(*setup.base->space);
-        QVERIFY(!setup.base->space->showing_desktop);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), client2);
+        win::toggle_show_desktop(*setup.base->mod.space);
+        QVERIFY(setup.base->mod.space->showing_desktop);
+        win::toggle_show_desktop(*setup.base->mod.space);
+        QVERIFY(!setup.base->mod.space->showing_desktop);
 
-        QVERIFY(get_wayland_window(setup.base->space->stacking.active));
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client2);
+        QVERIFY(get_wayland_window(setup.base->mod.space->stacking.active));
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), client2);
     }
 
     SECTION("restore focus with desktop window")
@@ -91,15 +86,15 @@ TEST_CASE("showing desktop", "[win]")
         auto client2 = render_and_wait_for_shown(surface2, QSize(100, 50), Qt::blue);
         QVERIFY(client1 != client2);
 
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client2);
-        win::toggle_show_desktop(*setup.base->space);
-        QVERIFY(setup.base->space->showing_desktop);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), desktop);
-        win::toggle_show_desktop(*setup.base->space);
-        QVERIFY(!setup.base->space->showing_desktop);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), client2);
+        win::toggle_show_desktop(*setup.base->mod.space);
+        QVERIFY(setup.base->mod.space->showing_desktop);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), desktop);
+        win::toggle_show_desktop(*setup.base->mod.space);
+        QVERIFY(!setup.base->mod.space->showing_desktop);
 
-        QVERIFY(get_wayland_window(setup.base->space->stacking.active));
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), client2);
+        QVERIFY(get_wayland_window(setup.base->mod.space->stacking.active));
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), client2);
     }
 }
 

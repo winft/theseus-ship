@@ -15,16 +15,12 @@ module.exports = {
             2,
             'always',
             [
-                'debug',
-                'deco',
-                'effect',
                 'input',
-                'hw',
-                'qpa',
-                'scene',
-                'script',
-                'space',
-                'xwl'
+                'plugin',
+                'render',
+                'win',
+                'wl',       // wayland
+                'x11',
             ]
         ],
         'subject-case': [

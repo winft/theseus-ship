@@ -6,17 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "base/x11/atoms.h"
-#include "input/cursor.h"
-#include "render/effects.h"
-#include "win/active_window.h"
-#include "win/input.h"
-#include "win/move.h"
-#include "win/placement.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/plasmashell.h>
@@ -24,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_range.hpp>
 #include <linux/input.h>
@@ -82,7 +70,7 @@ TEST_CASE("move resize window", "[win]")
     QVERIFY(wait_for_wayland_pointer());
 
     auto get_x11_window_from_id
-        = [&](uint32_t id) { return get_x11_window(setup.base->space->windows_map.at(id)); };
+        = [&](uint32_t id) { return get_x11_window(setup.base->mod.space->windows_map.at(id)); };
 
     SECTION("move")
     {
@@ -96,7 +84,7 @@ TEST_CASE("move resize window", "[win]")
 
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
 
         QSignalSpy geometryChangedSpy(c->qobject.get(),
@@ -125,12 +113,12 @@ TEST_CASE("move resize window", "[win]")
                                                    &EffectWindow::windowFinishUserMovedResized);
         QVERIFY(windowFinishUserMovedResizedSpy.isValid());
 
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(win::is_move(c), false);
 
         // begin move
-        win::active_window_move(*setup.base->space);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), c);
+        win::active_window_move(*setup.base->mod.space);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), c);
         QCOMPARE(startMoveResizedSpy.count(), 1);
         QCOMPARE(moveResizedChangedSpy.count(), 1);
         QCOMPARE(windowStartUserMovedResizedSpy.count(), 1);
@@ -169,7 +157,7 @@ TEST_CASE("move resize window", "[win]")
         QCOMPARE(windowFinishUserMovedResizedSpy.count(), 1);
         QCOMPARE(c->geo.frame, QRect(16, 32, 100, 50));
         QCOMPARE(win::is_move(c), false);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         surface.reset();
         QVERIFY(wait_for_destroyed(c));
     }
@@ -211,7 +199,7 @@ TEST_CASE("move resize window", "[win]")
         QVERIFY(cfgdata.updates.testFlag(xdg_shell_toplevel_configure_change::size));
 
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
         QSignalSpy geometryChangedSpy(c->qobject.get(),
                                       &win::window_qobject::frame_geometry_changed);
@@ -230,11 +218,11 @@ TEST_CASE("move resize window", "[win]")
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
         // begin resize
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(win::is_move(c), false);
         QCOMPARE(win::is_resize(c), false);
-        win::active_window_resize(*setup.base->space);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), c);
+        win::active_window_resize(*setup.base->mod.space);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), c);
         QCOMPARE(startMoveResizedSpy.count(), 1);
         QCOMPARE(moveResizedChangedSpy.count(), 1);
         QCOMPARE(win::is_resize(c), true);
@@ -297,7 +285,7 @@ TEST_CASE("move resize window", "[win]")
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
         QCOMPARE(moveResizedChangedSpy.count(), 2);
         QCOMPARE(win::is_resize(c), false);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
 
         // XdgShellClient currently doesn't send final configure event.
         REQUIRE_FALSE(configureRequestedSpy.wait(500));
@@ -338,7 +326,7 @@ TEST_CASE("move resize window", "[win]")
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         QCOMPARE(c->geo.frame, QRect(0, 0, 100, 50));
 
         // let's place it centered
@@ -347,7 +335,7 @@ TEST_CASE("move resize window", "[win]")
 
         auto method_call = get_space_pack_method(test_data.method_name);
         QVERIFY(method_call);
-        method_call(*setup.base->space.get());
+        method_call(*setup.base->mod.space.get());
 
         REQUIRE(c->geo.frame == test_data.expected_geo);
         surface.reset();
@@ -393,12 +381,12 @@ TEST_CASE("move resize window", "[win]")
             auto c = render_and_wait_for_shown(surface, QSize(10, 10), Qt::blue);
 
             QVERIFY(c);
-            QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+            QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
             QCOMPARE(c->geo.frame.size(), QSize(10, 10));
             // let's place it centered
             win::place_centered(c, QRect(0, 0, 1280, 1024));
             QCOMPARE(c->geo.frame, QRect(635, 507, 10, 10));
-            method_call(*setup.base->space.get());
+            method_call(*setup.base->mod.space.get());
             QCOMPARE(c->geo.frame, expectedGeometry);
         };
         renderWindow(surface1, &win::active_window_pack_left<space>, QRect(0, 507, 10, 10));
@@ -413,14 +401,14 @@ TEST_CASE("move resize window", "[win]")
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
         // let's place it centered
         win::place_centered(c, QRect(0, 0, 1280, 1024));
         QCOMPARE(c->geo.frame, QRect(590, 487, 100, 50));
 
         auto method_call = get_space_pack_method(test_data.method_name);
         QVERIFY(method_call);
-        method_call(*setup.base->space.get());
+        method_call(*setup.base->mod.space.get());
         REQUIRE(c->geo.frame == test_data.expected_geo);
     }
 
@@ -447,8 +435,8 @@ TEST_CASE("move resize window", "[win]")
 
         auto window = render_and_wait_for_shown(surface1, QSize(650, 514), Qt::blue);
         QVERIFY(window);
-        win::active_window_pack_right(*setup.base->space);
-        win::active_window_pack_down(*setup.base->space);
+        win::active_window_pack_right(*setup.base->mod.space);
+        win::active_window_pack_down(*setup.base->mod.space);
 
         std::unique_ptr<Surface> surface(create_surface());
         QVERIFY(surface);
@@ -461,7 +449,7 @@ TEST_CASE("move resize window", "[win]")
 
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
         QVERIFY(c);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         // Configure event due to activation.
         QVERIFY(configure_spy.wait());
@@ -477,7 +465,7 @@ TEST_CASE("move resize window", "[win]")
         // Now according to test data grow/shrink vertically/horizontally.
         auto method_call = get_space_grow_shrink_method(test_data.method_name);
         QVERIFY(method_call);
-        method_call(*setup.base->space.get());
+        method_call(*setup.base->mod.space.get());
 
         QVERIFY(configure_spy.wait());
         QCOMPARE(configure_spy.count(), 2);
@@ -514,14 +502,14 @@ TEST_CASE("move resize window", "[win]")
         auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
         QVERIFY(c);
-        QCOMPARE(c, get_wayland_window(setup.base->space->stacking.active));
+        QCOMPARE(c, get_wayland_window(setup.base->mod.space->stacking.active));
         QVERIFY(!win::is_move(c));
 
         // let's trigger the left button
         quint32 timestamp = 1;
         pointer_button_pressed(BTN_LEFT, timestamp++);
         QVERIFY(!win::is_move(c));
-        win::active_window_move(*setup.base->space);
+        win::active_window_move(*setup.base->mod.space);
         QVERIFY(win::is_move(c));
 
         // let's press another button
@@ -671,7 +659,7 @@ TEST_CASE("move resize window", "[win]")
         xcb_map_window(c.get(), w);
         xcb_flush(c.get());
 
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &win::space_qobject::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -694,7 +682,7 @@ TEST_CASE("move resize window", "[win]")
         QSignalSpy moveStepSpy(client->qobject.get(),
                                &win::window_qobject::clientStepUserMovedResized);
         QVERIFY(moveStepSpy.isValid());
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
 
         // use NETRootInfo to trigger a move request
         win::x11::net::root_info root(c.get(), win::x11::net::Properties());
@@ -702,7 +690,7 @@ TEST_CASE("move resize window", "[win]")
         xcb_flush(c.get());
 
         QVERIFY(moveStartSpy.wait());
-        QCOMPARE(get_x11_window(setup.base->space->move_resize_window), client);
+        QCOMPARE(get_x11_window(setup.base->mod.space->move_resize_window), client);
         QVERIFY(win::is_move(client));
         QCOMPARE(client->geo.restore.max, origGeo);
         QCOMPARE(cursor()->pos(), origGeo.center());
@@ -784,7 +772,7 @@ TEST_CASE("move resize window", "[win]")
         xcb_map_window(c.get(), w);
         xcb_flush(c.get());
 
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &win::space_qobject::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -808,7 +796,7 @@ TEST_CASE("move resize window", "[win]")
         QVERIFY(testWindow->isMovable());
         // panel is not yet hidden, we should snap against it
         REQUIRE(win::adjust_window_position(
-                    *setup.base->space, *testWindow, test_data.target_point, false)
+                    *setup.base->mod.space, *testWindow, test_data.target_point, false)
                 == test_data.expected_adjusted_point);
 
         // now let's hide the panel
@@ -817,7 +805,7 @@ TEST_CASE("move resize window", "[win]")
         xcb_change_property(c.get(),
                             XCB_PROP_MODE_REPLACE,
                             w,
-                            setup.base->space->atoms->kde_screen_edge_show,
+                            setup.base->mod.space->atoms->kde_screen_edge_show,
                             XCB_ATOM_CARDINAL,
                             32,
                             1,
@@ -827,7 +815,7 @@ TEST_CASE("move resize window", "[win]")
 
         // now try to snap again
         QCOMPARE(win::adjust_window_position(
-                     *setup.base->space, *testWindow, test_data.target_point, false),
+                     *setup.base->mod.space, *testWindow, test_data.target_point, false),
                  test_data.target_point);
 
         // and destroy the panel again
@@ -842,7 +830,7 @@ TEST_CASE("move resize window", "[win]")
 
         // snap once more
         REQUIRE(win::adjust_window_position(
-                    *setup.base->space, *testWindow, test_data.target_point, false)
+                    *setup.base->mod.space, *testWindow, test_data.target_point, false)
                 == test_data.target_point);
 
         // and close
@@ -904,7 +892,7 @@ TEST_CASE("move resize window", "[win]")
 
         // panel is not yet hidden, we should snap against it
         REQUIRE(win::adjust_window_position(
-                    *setup.base->space, *testWindow, test_data.target_point, false)
+                    *setup.base->mod.space, *testWindow, test_data.target_point, false)
                 == test_data.expected_adjusted_point);
 
         // now let's hide the panel
@@ -915,7 +903,7 @@ TEST_CASE("move resize window", "[win]")
 
         // now try to snap again
         QCOMPARE(win::adjust_window_position(
-                     *setup.base->space, *testWindow, test_data.target_point, false),
+                     *setup.base->mod.space, *testWindow, test_data.target_point, false),
                  test_data.target_point);
 
         // and destroy the panel again
@@ -928,7 +916,7 @@ TEST_CASE("move resize window", "[win]")
 
         // snap once more
         QCOMPARE(win::adjust_window_position(
-                     *setup.base->space, *testWindow, test_data.target_point, false),
+                     *setup.base->mod.space, *testWindow, test_data.target_point, false),
                  test_data.target_point);
 
         // and close
@@ -961,12 +949,12 @@ TEST_CASE("move resize window", "[win]")
             client->qobject.get(), &win::window_qobject::clientFinishUserMovedResized);
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(win::is_move(client), false);
         QCOMPARE(win::is_resize(client), false);
-        win::active_window_move(*setup.base->space);
+        win::active_window_move(*setup.base->mod.space);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), client);
         QCOMPARE(win::is_move(client), true);
         QCOMPARE(win::is_resize(client), false);
 
@@ -975,7 +963,7 @@ TEST_CASE("move resize window", "[win]")
         surface.reset();
         QVERIFY(wait_for_destroyed(client));
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 0);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
     }
 
     SECTION("destroy resize window")
@@ -1000,12 +988,12 @@ TEST_CASE("move resize window", "[win]")
             client->qobject.get(), &win::window_qobject::clientFinishUserMovedResized);
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(win::is_move(client), false);
         QCOMPARE(win::is_resize(client), false);
-        win::active_window_resize(*setup.base->space);
+        win::active_window_resize(*setup.base->mod.space);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), client);
         QCOMPARE(win::is_move(client), false);
         QCOMPARE(win::is_resize(client), true);
 
@@ -1014,7 +1002,7 @@ TEST_CASE("move resize window", "[win]")
         surface.reset();
         QVERIFY(wait_for_destroyed(client));
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 0);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
     }
 
     SECTION("unmap move window")
@@ -1039,12 +1027,12 @@ TEST_CASE("move resize window", "[win]")
             client->qobject.get(), &win::window_qobject::clientFinishUserMovedResized);
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(win::is_move(client), false);
         QCOMPARE(win::is_resize(client), false);
-        win::active_window_move(*setup.base->space);
+        win::active_window_move(*setup.base->mod.space);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), client);
         QCOMPARE(win::is_move(client), true);
         QCOMPARE(win::is_resize(client), false);
 
@@ -1055,7 +1043,7 @@ TEST_CASE("move resize window", "[win]")
         surface->commit(Surface::CommitFlag::None);
         QVERIFY(hiddenSpy.wait());
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 0);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(win::is_move(client), false);
         QCOMPARE(win::is_resize(client), false);
 
@@ -1087,12 +1075,12 @@ TEST_CASE("move resize window", "[win]")
             client->qobject.get(), &win::window_qobject::clientFinishUserMovedResized);
         QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(win::is_move(client), false);
         QCOMPARE(win::is_resize(client), false);
-        win::active_window_resize(*setup.base->space);
+        win::active_window_resize(*setup.base->mod.space);
         QCOMPARE(clientStartMoveResizedSpy.count(), 1);
-        QCOMPARE(get_wayland_window(setup.base->space->move_resize_window), client);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->move_resize_window), client);
         QCOMPARE(win::is_move(client), false);
         QCOMPARE(win::is_resize(client), true);
 
@@ -1103,7 +1091,7 @@ TEST_CASE("move resize window", "[win]")
         surface->commit(Surface::CommitFlag::None);
         QVERIFY(hiddenSpy.wait());
         QCOMPARE(clientFinishUserMovedResizedSpy.count(), 0);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
         QCOMPARE(win::is_move(client), false);
         QCOMPARE(win::is_resize(client), false);
 
@@ -1133,7 +1121,7 @@ TEST_CASE("move resize window", "[win]")
         QVERIFY(configureRequestedSpy.isValid());
         QVERIFY(configureRequestedSpy.wait());
 
-        win::active_window_move(*setup.base->space);
+        win::active_window_move(*setup.base->mod.space);
         QCOMPARE(win::is_move(client), true);
 
         QVERIFY(configureRequestedSpy.wait());
@@ -1164,7 +1152,7 @@ TEST_CASE("move resize window", "[win]")
 
         QCOMPARE(client->control->fullscreen, true);
         QCOMPARE(win::is_move(client), false);
-        QVERIFY(!setup.base->space->move_resize_window);
+        QVERIFY(!setup.base->mod.space->move_resize_window);
 
         // Let's pretend that the client crashed.
         shellSurface.reset();
@@ -1187,13 +1175,13 @@ TEST_CASE("move resize window", "[win]")
         auto client = render_and_wait_for_shown(surface, QSize(500, 800), Qt::blue);
         QVERIFY(client);
 
-        win::active_window_move(*setup.base->space);
+        win::active_window_move(*setup.base->mod.space);
         QCOMPARE(win::is_move(client), true);
         win::set_maximize(client, true, true);
 
         // TODO(romangg): The client is still in move state at this point. Is this correct?
         REQUIRE_FALSE(!win::is_move(client));
-        REQUIRE_FALSE(!setup.base->space->move_resize_window);
+        REQUIRE_FALSE(!setup.base->mod.space->move_resize_window);
 
         // Let's pretend that the client crashed.
         shellSurface.reset();

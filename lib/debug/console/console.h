@@ -105,7 +105,7 @@ public:
 
         connect(m_ui->quitButton, &QAbstractButton::clicked, this, &console::deleteLater);
 
-        initGLTab(*space.base.render->scene);
+        initGLTab(*space.base.mod.render->scene);
     }
 
 protected:

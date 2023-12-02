@@ -6,21 +6,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/compositor.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "render/scene.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
 #include <KConfigGroup>
-
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/slide.h>
 #include <Wrapland/Client/surface.h>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <xcb/xcb_icccm.h>
 
@@ -51,7 +41,7 @@ TEST_CASE("slidingpopups", "[effect]")
     // disable all effects - we don't want to have it interact with the rendering
     auto config = setup.base->config.main;
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    auto const builtinNames = render::effect_loader(*setup.base->render).listOfKnownEffects();
+    auto const builtinNames = render::effect_loader(*setup.base->mod.render).listOfKnownEffects();
 
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -64,15 +54,15 @@ TEST_CASE("slidingpopups", "[effect]")
     config->sync();
 
     setup.start();
-    QVERIFY(setup.base->render);
-    auto& effects_impl = setup.base->render->effects;
+    QVERIFY(setup.base->mod.render);
+    auto& effects_impl = setup.base->mod.render->effects;
     while (!effects_impl->loadedEffects().isEmpty()) {
         auto const effect = effects_impl->loadedEffects().constFirst();
         effects_impl->unloadEffect(effect);
         QVERIFY(!effects_impl->isEffectLoaded(effect));
     }
 
-    auto& scene = setup.base->render->scene;
+    auto& scene = setup.base->mod.render->scene;
     QVERIFY(scene);
     REQUIRE(scene->isOpenGl());
 
@@ -90,7 +80,7 @@ TEST_CASE("slidingpopups", "[effect]")
                        QStringList{QStringLiteral("slidingpopups"), QStringLiteral("scale")});
 
         // find the effectsloader
-        auto& e = setup.base->render->effects;
+        auto& e = setup.base->mod.render->effects;
         auto effectloader = e->findChild<render::basic_effect_loader*>();
         QVERIFY(effectloader);
         QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);
@@ -172,13 +162,13 @@ TEST_CASE("slidingpopups", "[effect]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
 
         auto client_id = windowCreatedSpy.first().first().value<quint32>();
-        auto client = get_x11_window(setup.base->space->windows_map.at(client_id));
+        auto client = get_x11_window(setup.base->mod.space->windows_map.at(client_id));
         QVERIFY(client);
         QCOMPARE(client->xcb_windows.client, w);
         QVERIFY(win::is_normal(client));
@@ -229,7 +219,7 @@ TEST_CASE("slidingpopups", "[effect]")
                        QStringList{QStringLiteral("slidingpopups"), QStringLiteral("scale")});
 
         // find the effectsloader
-        auto& e = setup.base->render->effects;
+        auto& e = setup.base->mod.render->effects;
         auto effectloader = e->findChild<render::basic_effect_loader*>();
         QVERIFY(effectloader);
         QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);

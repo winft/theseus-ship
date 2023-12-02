@@ -6,12 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/x11/xcb/atom.h"
-#include "base/x11/xcb/motif_hints.h"
-#include "base/x11/xcb/proto.h"
-#include "base/x11/xcb/window.h"
-#include "win/x11/net/win_info.h"
-
 #include <catch2/generators/catch_generators.hpp>
 #include <xcb/xcb.h>
 

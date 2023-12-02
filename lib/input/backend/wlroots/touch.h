@@ -22,23 +22,25 @@ extern "C" {
 namespace KWin::input::backend::wlroots
 {
 
-template<typename Platform>
+template<typename Backend>
 class touch;
 
-template<typename Platform>
+template<typename Backend>
 void touch_handle_destroy(struct wl_listener* listener, void* /*data*/)
 {
-    base::event_receiver<touch<Platform>>* event_receiver_struct
+    base::event_receiver<touch<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
-    platform_remove_touch(touch, *touch->platform);
+    if (touch->backend) {
+        platform_remove_touch(touch, *touch->backend->frontend);
+    }
     delete touch;
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_down(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<touch<Platform>>* event_receiver_struct
+    base::event_receiver<touch<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_touch_down_event*>(data);
@@ -55,10 +57,10 @@ void handle_down(struct wl_listener* listener, void* data)
     Q_EMIT touch->qobject->down(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_up(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<touch<Platform>>* event_receiver_struct
+    base::event_receiver<touch<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_touch_up_event*>(data);
@@ -74,10 +76,10 @@ void handle_up(struct wl_listener* listener, void* data)
     Q_EMIT touch->qobject->up(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void touch_handle_motion(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<touch<Platform>>* event_receiver_struct
+    base::event_receiver<touch<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_touch_motion_event*>(data);
@@ -94,10 +96,10 @@ void touch_handle_motion(struct wl_listener* listener, void* data)
     Q_EMIT touch->qobject->motion(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_cancel(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<touch<Platform>>* event_receiver_struct
+    base::event_receiver<touch<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_touch_cancel_event*>(data);
@@ -113,59 +115,60 @@ void handle_cancel(struct wl_listener* listener, void* data)
     Q_EMIT touch->qobject->cancel(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void touch_handle_frame(struct wl_listener* listener, void* /*data*/)
 {
-    base::event_receiver<touch<Platform>>* event_receiver_struct
+    base::event_receiver<touch<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
 
     Q_EMIT touch->qobject->frame();
 }
 
-template<typename Platform>
-class touch : public input::touch_impl<typename Platform::base_t>
+template<typename Backend>
+class touch : public input::touch_impl<typename Backend::frontend_type::base_t>
 {
 public:
-    using er = base::event_receiver<touch<Platform>>;
+    using er = base::event_receiver<touch<Backend>>;
 
-    touch(wlr_input_device* dev, Platform* platform)
-        : touch_impl<typename Platform::base_t>(platform->base)
-        , platform{platform}
+    touch(wlr_input_device* dev, Backend* backend)
+        : touch_impl<typename Backend::frontend_type::base_t>(backend->frontend->base)
+        , backend{backend}
     {
-        auto backend = wlr_touch_from_input_device(dev);
+        auto native = wlr_touch_from_input_device(dev);
 
         if (auto libinput = get_libinput_device(dev)) {
-            this->control = std::make_unique<touch_control>(libinput, platform->config.main);
+            this->control
+                = std::make_unique<touch_control>(libinput, backend->frontend->config.main);
         }
         this->output = this->get_output();
 
         destroyed.receiver = this;
-        destroyed.event.notify = touch_handle_destroy<Platform>;
+        destroyed.event.notify = touch_handle_destroy<Backend>;
         wl_signal_add(&dev->events.destroy, &destroyed.event);
 
         down_rec.receiver = this;
-        down_rec.event.notify = handle_down<Platform>;
-        wl_signal_add(&backend->events.down, &down_rec.event);
+        down_rec.event.notify = handle_down<Backend>;
+        wl_signal_add(&native->events.down, &down_rec.event);
 
         up_rec.receiver = this;
-        up_rec.event.notify = handle_up<Platform>;
-        wl_signal_add(&backend->events.up, &up_rec.event);
+        up_rec.event.notify = handle_up<Backend>;
+        wl_signal_add(&native->events.up, &up_rec.event);
 
         motion_rec.receiver = this;
-        motion_rec.event.notify = touch_handle_motion<Platform>;
-        wl_signal_add(&backend->events.motion, &motion_rec.event);
+        motion_rec.event.notify = touch_handle_motion<Backend>;
+        wl_signal_add(&native->events.motion, &motion_rec.event);
 
         cancel_rec.receiver = this;
-        cancel_rec.event.notify = handle_cancel<Platform>;
-        wl_signal_add(&backend->events.cancel, &cancel_rec.event);
+        cancel_rec.event.notify = handle_cancel<Backend>;
+        wl_signal_add(&native->events.cancel, &cancel_rec.event);
 
         frame_rec.receiver = this;
-        frame_rec.event.notify = touch_handle_frame<Platform>;
-        wl_signal_add(&backend->events.frame, &frame_rec.event);
+        frame_rec.event.notify = touch_handle_frame<Backend>;
+        wl_signal_add(&native->events.frame, &frame_rec.event);
     }
 
-    Platform* platform;
+    Backend* backend;
 
 private:
     er destroyed;

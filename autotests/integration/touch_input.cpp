@@ -6,11 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "win/deco.h"
-#include "win/move.h"
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/seat.h>
@@ -74,7 +69,7 @@ TEST_CASE("touch input", "[input]")
         auto c = render_and_wait_for_shown(client.surface, QSize(100, 50), Qt::blue);
 
         REQUIRE(c);
-        REQUIRE(get_wayland_window(setup.base->space->stacking.active) == c);
+        REQUIRE(get_wayland_window(setup.base->mod.space->stacking.active) == c);
 
         clients.push_back(std::move(client));
         return c;

@@ -6,20 +6,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "base/x11/xcb/window.h"
-#include "win/control.h"
-#include "win/deco.h"
-#include "win/wayland/window.h"
-
+#include <QPainter>
+#include <QRasterWindow>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <catch2/generators/catch_generators.hpp>
-
-#include <QPainter>
-#include <QRasterWindow>
 
 namespace KWin::detail::test
 {
@@ -63,8 +56,8 @@ TEST_CASE("debug console", "[debug]")
 
     auto create_model = [&] {
         auto model = std::make_unique<debug::wayland_console_model>();
-        debug::model_setup_connections(*model, *setup.base->space);
-        debug::wayland_model_setup_connections(*model, *setup.base->space);
+        debug::model_setup_connections(*model, *setup.base->mod.space);
+        debug::wayland_model_setup_connections(*model, *setup.base->mod.space);
         return model;
     };
 
@@ -228,7 +221,7 @@ TEST_CASE("debug console", "[debug]")
                                       values);
         window.map();
 
-        QSignalSpy unmanaged_server_spy(setup.base->space->qobject.get(),
+        QSignalSpy unmanaged_server_spy(setup.base->mod.space->qobject.get(),
                                         &space::qobject_t::unmanagedAdded);
         QVERIFY(unmanaged_server_spy.isValid());
 
@@ -242,7 +235,7 @@ TEST_CASE("debug console", "[debug]")
 
         QTRY_COMPARE(unmanaged_server_spy.count(), 1);
         auto win_id = unmanaged_server_spy.first().first().value<quint32>();
-        auto server_unmanaged = get_x11_window(setup.base->space->windows_map.at(win_id));
+        auto server_unmanaged = get_x11_window(setup.base->mod.space->windows_map.at(win_id));
 
         QModelIndex clientIndex = model->index(0, 0, unmanagedTopLevelIndex);
         QVERIFY(clientIndex.isValid());
@@ -490,11 +483,11 @@ TEST_CASE("debug console", "[debug]")
         // this test verifies that the DebugConsole gets destroyed when closing the window
         // BUG: 369858
 
-        auto console = new debug::console(*setup.base->space);
+        auto console = new debug::console(*setup.base->mod.space);
         QSignalSpy destroyedSpy(console, &QObject::destroyed);
         QVERIFY(destroyedSpy.isValid());
 
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
                                   &space::qobject_t::internalClientAdded);
         QVERIFY(clientAddedSpy.isValid());
         console->show();
@@ -502,7 +495,7 @@ TEST_CASE("debug console", "[debug]")
         QTRY_COMPARE(clientAddedSpy.count(), 1);
 
         auto win_id = clientAddedSpy.first().first().value<quint32>();
-        auto c = get_internal_window(setup.base->space->windows_map.at(win_id));
+        auto c = get_internal_window(setup.base->mod.space->windows_map.at(win_id));
         QVERIFY(c);
         QVERIFY(c->isInternal());
         QCOMPARE(c->internalWindow(), console->windowHandle());

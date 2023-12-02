@@ -13,6 +13,8 @@
 #include "input/dbus/dbus.h"
 #include "input/platform.h"
 #include "input/types.h"
+#include <input/backend/wlroots/backend.h>
+#include <input/dbus/device_manager.h>
 
 #include <QPointF>
 #include <Wrapland/Server/display.h>
@@ -20,23 +22,28 @@
 namespace KWin::input::wayland
 {
 
-template<typename Base>
+struct platform_mod {
+};
+
+template<typename Base, typename Mod = platform_mod>
 class platform
 {
 public:
     using base_t = Base;
-    using type = platform<Base>;
+    using type = platform<Base, Mod>;
     using space_t = typename Base::space_t;
     using redirect_t = redirect<space_t>;
+    using backend_t = backend::wlroots::backend<type>;
 
     platform(Base& base, input::config config)
-        : qobject{std::make_unique<platform_qobject>()}
+        : base{base}
+        , qobject{std::make_unique<platform_qobject>()}
         , config{std::move(config)}
+        , backend{*this}
         , xkb{xkb::manager<type>(this)}
         , kde_idle{std::make_unique<Wrapland::Server::kde_idle>(base.server->display.get())}
-        , idle_notifier{std::make_unique<Wrapland::Server::idle_notifier_v1>(
-              base.server->display.get())}
-        , base{base}
+        , idle_notifier{
+              std::make_unique<Wrapland::Server::idle_notifier_v1>(base.server->display.get())}
     {
         qRegisterMetaType<button_state>();
         qRegisterMetaType<key_state>();
@@ -52,6 +59,10 @@ public:
                          &Wrapland::Server::idle_notifier_v1::notification_created,
                          this->qobject.get(),
                          [this](auto notif) { idle_setup_notification(idle, notif); });
+
+        shortcuts = std::make_unique<global_shortcuts_manager>();
+        shortcuts->init();
+        setup_touchpad_shortcuts();
     }
 
     platform(platform const&) = delete;
@@ -84,13 +95,6 @@ public:
     {
         registerShortcut(shortcut, action);
         QObject::connect(action, &QAction::triggered, receiver, slot);
-    }
-
-    void install_shortcuts()
-    {
-        this->shortcuts = std::make_unique<global_shortcuts_manager>();
-        this->shortcuts->init();
-        setup_touchpad_shortcuts();
     }
 
     void update_keyboard_leds(input::keyboard_leds leds)
@@ -166,6 +170,7 @@ public:
         return false;
     }
 
+    Base& base;
     std::unique_ptr<platform_qobject> qobject;
     input::config config;
 
@@ -174,16 +179,16 @@ public:
     std::vector<switch_device*> switches;
     std::vector<touch*> touchs;
 
+    backend_t backend;
     std::unique_ptr<Wrapland::Server::virtual_keyboard_manager_v1> virtual_keyboard;
 
     input::xkb::manager<type> xkb;
     std::unique_ptr<global_shortcuts_manager> shortcuts;
-    std::unique_ptr<dbus::device_manager<type>> dbus;
     input::idle idle;
     std::unique_ptr<Wrapland::Server::kde_idle> kde_idle;
     std::unique_ptr<Wrapland::Server::idle_notifier_v1> idle_notifier;
 
-    Base& base;
+    Mod mod;
 
 private:
     void setup_touchpad_shortcuts()
@@ -227,11 +232,5 @@ private:
 
     bool touchpads_enabled{true};
 };
-
-template<typename Input>
-void add_dbus(Input* platform)
-{
-    platform->dbus = std::make_unique<dbus::device_manager<Input>>(*platform);
-}
 
 }

@@ -6,9 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/x11/xcb/window.h"
-#include "win/x11/client_machine.h"
-
 #include <catch2/generators/catch_generators.hpp>
 #include <netdb.h>
 #include <sys/socket.h>

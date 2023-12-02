@@ -12,7 +12,6 @@
 #include "helpers.h"
 #include "types.h"
 
-#include "base/backend/wlroots/platform.h"
 #include "base/types.h"
 #include "base/wayland/server.h"
 
@@ -27,12 +26,6 @@ namespace KWin::detail::test
 {
 
 struct setup final {
-#if USE_XWL
-    using base_t = base::backend::wlroots::platform<base::wayland::xwl_platform>;
-#else
-    using base_t = base::backend::wlroots::platform<base::wayland::platform>;
-#endif
-
     setup(std::string const& test_name);
     setup(std::string const& test_name, base::operation_mode mode);
     setup(std::string const& test_name,

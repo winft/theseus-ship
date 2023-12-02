@@ -6,14 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "script/effect.h"
-#include "win/wayland/window.h"
-
 #include <KDecoration2/Decoration>
-
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/shm_pool.h>
@@ -27,7 +20,7 @@ TEST_CASE("no crash cancel animation", "[render]")
     test::setup setup("no-crash-cancel-animation");
     setup.start();
 
-    REQUIRE(setup.base->render);
+    REQUIRE(setup.base->mod.render);
     REQUIRE(effects);
 
     setup_wayland_connection();
@@ -38,11 +31,11 @@ TEST_CASE("no crash cancel animation", "[render]")
                                             10,
                                             QString(),
                                             *effects,
-                                            *setup.base->render);
+                                            *setup.base->mod.render);
     QVERIFY(effect);
 
-    setup.base->render->effects->loader->effectLoaded(effect, "crashy");
-    QVERIFY(setup.base->render->effects->isEffectLoaded(QStringLiteral("crashy")));
+    setup.base->mod.render->effects->loader->effectLoaded(effect, "crashy");
+    QVERIFY(setup.base->mod.render->effects->isEffectLoaded(QStringLiteral("crashy")));
 
     using namespace Wrapland::Client;
 
@@ -56,7 +49,7 @@ TEST_CASE("no crash cancel animation", "[render]")
     // let's render
     auto c = render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+    QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
     // make sure we animate
     QTest::qWait(200);

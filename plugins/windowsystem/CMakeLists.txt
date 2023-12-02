@@ -14,6 +14,5 @@ target_link_libraries(KF6WindowSystemKWinPlugin
 PRIVATE
   render
   win
-  KF6::Plasma
   KF6::WindowSystem
 )

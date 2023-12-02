@@ -6,14 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "win/activation.h"
-#include "win/wayland/space.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-#include "xwl/data_bridge.h"
-#include "xwl/xwayland.h"
-
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <catch2/generators/catch_generators.hpp>
@@ -55,9 +47,10 @@ TEST_CASE("xwayland selections", "[win],[xwl]")
         const QString paste = QFINDTESTDATA(QStringLiteral("paste"));
         QVERIFY(!paste.isEmpty());
 
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
+                                  &space::qobject_t::clientAdded);
         QVERIFY(clientAddedSpy.isValid());
-        QSignalSpy shellClientAddedSpy(setup.base->space->qobject.get(),
+        QSignalSpy shellClientAddedSpy(setup.base->mod.space->qobject.get(),
                                        &space::qobject_t::wayland_window_added);
         QVERIFY(shellClientAddedSpy.isValid());
 
@@ -91,19 +84,20 @@ TEST_CASE("xwayland selections", "[win],[xwl]")
         if (copy_platform == QLatin1String("xcb")) {
             QVERIFY(clientAddedSpy.wait());
             auto copy_client_id = clientAddedSpy.first().first().value<quint32>();
-            copyClient = setup.base->space->windows_map.at(copy_client_id);
+            copyClient = setup.base->mod.space->windows_map.at(copy_client_id);
         } else {
             QVERIFY(shellClientAddedSpy.wait());
             auto copy_client_id = shellClientAddedSpy.first().first().value<quint32>();
-            copyClient = setup.base->space->windows_map.at(copy_client_id);
+            copyClient = setup.base->mod.space->windows_map.at(copy_client_id);
         }
         QVERIFY(copyClient);
-        if (setup.base->space->stacking.active != *copyClient) {
-            std::visit(
-                overload{[&setup](auto&& win) { win::activate_window(*setup.base->space, *win); }},
-                *copyClient);
+        if (setup.base->mod.space->stacking.active != *copyClient) {
+            std::visit(overload{[&setup](auto&& win) {
+                           win::activate_window(*setup.base->mod.space, *win);
+                       }},
+                       *copyClient);
         }
-        QCOMPARE(setup.base->space->stacking.active, copyClient);
+        QCOMPARE(setup.base->mod.space->stacking.active, copyClient);
         if (copy_platform == QLatin1String("xcb")) {
             QVERIFY(clipboardChangedSpy.isEmpty());
             QVERIFY(clipboardChangedSpy.wait());
@@ -132,26 +126,27 @@ TEST_CASE("xwayland selections", "[win],[xwl]")
         if (paste_platform == QLatin1String("xcb")) {
             QVERIFY(clientAddedSpy.wait());
             auto paste_client_id = clientAddedSpy.last().first().value<quint32>();
-            pasteClient = setup.base->space->windows_map.at(paste_client_id);
+            pasteClient = setup.base->mod.space->windows_map.at(paste_client_id);
         } else {
             QVERIFY(shellClientAddedSpy.wait());
             auto paste_client_id = shellClientAddedSpy.last().first().value<quint32>();
-            pasteClient = setup.base->space->windows_map.at(paste_client_id);
+            pasteClient = setup.base->mod.space->windows_map.at(paste_client_id);
         }
         QCOMPARE(clientAddedSpy.count(), 1);
         QCOMPARE(shellClientAddedSpy.count(), 1);
         QVERIFY(pasteClient);
 
-        if (setup.base->space->stacking.active != pasteClient) {
-            QSignalSpy clientActivatedSpy(setup.base->space->qobject.get(),
+        if (setup.base->mod.space->stacking.active != pasteClient) {
+            QSignalSpy clientActivatedSpy(setup.base->mod.space->qobject.get(),
                                           &space::qobject_t::clientActivated);
             QVERIFY(clientActivatedSpy.isValid());
-            std::visit(
-                overload{[&setup](auto&& win) { win::activate_window(*setup.base->space, *win); }},
-                *pasteClient);
+            std::visit(overload{[&setup](auto&& win) {
+                           win::activate_window(*setup.base->mod.space, *win);
+                       }},
+                       *pasteClient);
             QVERIFY(clientActivatedSpy.wait());
         }
-        QTRY_COMPARE(setup.base->space->stacking.active, pasteClient);
+        QTRY_COMPARE(setup.base->mod.space->stacking.active, pasteClient);
         QVERIFY(finishedSpy.wait());
         QCOMPARE(finishedSpy.first().first().toInt(), 0);
         delete paste_process;

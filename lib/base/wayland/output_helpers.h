@@ -10,6 +10,7 @@
 #include "base/logging.h"
 #include "base/output.h"
 #include "base/output_helpers.h"
+#include <utils/algorithm.h>
 
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/wlr_output_configuration_head_v1.h>
@@ -108,9 +109,13 @@ bool outputs_apply_config(Base& base, Wrapland::Server::wlr_output_configuration
     for (auto const& [output, state] : config_states) {
         if (old_states.at(output).enabled != state.enabled) {
             if (state.enabled) {
-                base.enable_output(output);
+                assert(!contains(base.outputs, output));
+                base.outputs.push_back(output);
+                Q_EMIT base.output_added(output);
             } else {
-                base.disable_output(output);
+                assert(contains(base.outputs, output));
+                remove_all(base.outputs, output);
+                Q_EMIT base.output_removed(output);
             }
         }
 
@@ -138,7 +143,7 @@ void turn_outputs_on(Base const& base, Filter& filter)
 template<typename Base>
 void check_outputs_on(Base const& base)
 {
-    if (!base.space || !base.space->input || !base.space->input->dpms_filter) {
+    if (!base.mod.space || !base.mod.space->input || !base.mod.space->input->dpms_filter) {
         // No DPMS filter exists, all outputs are on.
         return;
     }
@@ -146,7 +151,7 @@ void check_outputs_on(Base const& base)
     auto const& outs = base.outputs;
     if (std::all_of(outs.cbegin(), outs.cend(), [](auto&& out) { return out->is_dpms_on(); })) {
         // All outputs are on, disable the filter.
-        base.space->input->dpms_filter.reset();
+        base.mod.space->input->dpms_filter.reset();
     }
 }
 
@@ -198,7 +203,7 @@ void output_set_dmps_off(base::dpms_mode mode, typename Base::output_t& output, 
 {
     qCDebug(KWIN_CORE) << "DPMS mode set for output" << output.name() << "to Off.";
 
-    if (!base.space || !base.space->input) {
+    if (!base.mod.space || !base.mod.space->input) {
         qCWarning(KWIN_CORE) << "Abort setting DPMS. Can't create filter to set DPMS to on again.";
         return;
     }
@@ -207,7 +212,7 @@ void output_set_dmps_off(base::dpms_mode mode, typename Base::output_t& output, 
 
     if (output.is_enabled()) {
         output.m_output->set_dpms_mode(to_wayland_dpms_mode(mode));
-        create_dpms_filter(*base.space->input);
+        create_dpms_filter(*base.mod.space->input);
     }
 }
 

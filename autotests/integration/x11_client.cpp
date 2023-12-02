@@ -6,18 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "base/x11/atoms.h"
-#include "render/compositor.h"
-#include "render/effect_loader.h"
-#include "render/effects.h"
-#include "win/activation.h"
-#include "win/active_window.h"
-#include "win/meta.h"
-#include "win/stacking_order.h"
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
 #include <Wrapland/Client/surface.h>
 #include <catch2/generators/catch_generators.hpp>
 #include <xcb/xcb_icccm.h>
@@ -46,7 +34,7 @@ TEST_CASE("x11 window", "[win]")
     setup_wayland_connection();
 
     auto get_x11_window_from_id
-        = [&](uint32_t id) { return get_x11_window(setup.base->space->windows_map.at(id)); };
+        = [&](uint32_t id) { return get_x11_window(setup.base->mod.space->windows_map.at(id)); };
 
     SECTION("trim caption")
     {
@@ -98,7 +86,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -152,7 +140,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -164,10 +152,10 @@ TEST_CASE("x11 window", "[win]")
         QVERIFY(client->control->active);
         QCOMPARE(win::get_layer(*client), win::layer::normal);
 
-        win::active_window_set_fullscreen(*setup.base->space);
+        win::active_window_set_fullscreen(*setup.base->mod.space);
         QVERIFY(client->control->fullscreen);
         QCOMPARE(win::get_layer(*client), win::layer::active);
-        QCOMPARE(get_x11_window(setup.base->space->stacking.order.stack.back()), client);
+        QCOMPARE(get_x11_window(setup.base->mod.space->stacking.order.stack.back()), client);
 
         // now let's open a Wayland window
         std::unique_ptr<Surface> surface(create_surface());
@@ -176,54 +164,60 @@ TEST_CASE("x11 window", "[win]")
         QVERIFY(waylandClient);
         QVERIFY(waylandClient->control->active);
         QCOMPARE(win::get_layer(*waylandClient), win::layer::normal);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.order.stack.back()), waylandClient);
-        QCOMPARE(get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.order.stack.back()),
                  waylandClient);
+        QCOMPARE(
+            get_wayland_window(win::render_stack(setup.base->mod.space->stacking.order).back()),
+            waylandClient);
         QCOMPARE(win::get_layer(*client), win::layer::normal);
 
         // now activate fullscreen again
-        win::activate_window(*setup.base->space, *client);
+        win::activate_window(*setup.base->mod.space, *client);
         QTRY_VERIFY(client->control->active);
         QCOMPARE(win::get_layer(*client), win::layer::active);
-        QCOMPARE(get_x11_window(setup.base->space->stacking.order.stack.back()), client);
-        QCOMPARE(get_x11_window(win::render_stack(setup.base->space->stacking.order).back()),
+        QCOMPARE(get_x11_window(setup.base->mod.space->stacking.order.stack.back()), client);
+        QCOMPARE(get_x11_window(win::render_stack(setup.base->mod.space->stacking.order).back()),
                  client);
 
         // activate wayland window again
-        win::activate_window(*setup.base->space, *waylandClient);
+        win::activate_window(*setup.base->mod.space, *waylandClient);
         QTRY_VERIFY(waylandClient->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.order.stack.back()), waylandClient);
-        QCOMPARE(get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.order.stack.back()),
                  waylandClient);
+        QCOMPARE(
+            get_wayland_window(win::render_stack(setup.base->mod.space->stacking.order).back()),
+            waylandClient);
 
         // back to x window
-        win::activate_window(*setup.base->space, *client);
+        win::activate_window(*setup.base->mod.space, *client);
         QTRY_VERIFY(client->control->active);
         // remove fullscreen
         QVERIFY(client->control->fullscreen);
-        win::active_window_set_fullscreen(*setup.base->space);
+        win::active_window_set_fullscreen(*setup.base->mod.space);
         QVERIFY(!client->control->fullscreen);
         // and fullscreen again
-        win::active_window_set_fullscreen(*setup.base->space);
+        win::active_window_set_fullscreen(*setup.base->mod.space);
         QVERIFY(client->control->fullscreen);
-        QCOMPARE(get_x11_window(setup.base->space->stacking.order.stack.back()), client);
-        QCOMPARE(get_x11_window(win::render_stack(setup.base->space->stacking.order).back()),
+        QCOMPARE(get_x11_window(setup.base->mod.space->stacking.order.stack.back()), client);
+        QCOMPARE(get_x11_window(win::render_stack(setup.base->mod.space->stacking.order).back()),
                  client);
 
         // activate wayland window again
-        win::activate_window(*setup.base->space, *waylandClient);
+        win::activate_window(*setup.base->mod.space, *waylandClient);
         QTRY_VERIFY(waylandClient->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.order.stack.back()), waylandClient);
-        QCOMPARE(get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.order.stack.back()),
                  waylandClient);
+        QCOMPARE(
+            get_wayland_window(win::render_stack(setup.base->mod.space->stacking.order).back()),
+            waylandClient);
 
         // back to X11 window
-        win::activate_window(*setup.base->space, *client);
+        win::activate_window(*setup.base->mod.space, *client);
         QTRY_VERIFY(client->control->active);
 
         // remove fullscreen
         QVERIFY(client->control->fullscreen);
-        win::active_window_set_fullscreen(*setup.base->space);
+        win::active_window_set_fullscreen(*setup.base->mod.space);
         QVERIFY(!client->control->fullscreen);
 
         // Wait a moment for the X11 client to catch up.
@@ -248,16 +242,18 @@ TEST_CASE("x11 window", "[win]")
 
         QVERIFY(fullscreen_spy.wait());
         QTRY_VERIFY(client->control->fullscreen);
-        QCOMPARE(get_x11_window(setup.base->space->stacking.order.stack.back()), client);
-        QCOMPARE(get_x11_window(win::render_stack(setup.base->space->stacking.order).back()),
+        QCOMPARE(get_x11_window(setup.base->mod.space->stacking.order.stack.back()), client);
+        QCOMPARE(get_x11_window(win::render_stack(setup.base->mod.space->stacking.order).back()),
                  client);
 
         // activate wayland window again
-        win::activate_window(*setup.base->space, *waylandClient);
+        win::activate_window(*setup.base->mod.space, *waylandClient);
         QTRY_VERIFY(waylandClient->control->active);
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.order.stack.back()), waylandClient);
-        QCOMPARE(get_wayland_window(win::render_stack(setup.base->space->stacking.order).back()),
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.order.stack.back()),
                  waylandClient);
+        QCOMPARE(
+            get_wayland_window(win::render_stack(setup.base->mod.space->stacking.order).back()),
+            waylandClient);
         QCOMPARE(win::get_layer(*client), win::layer::normal);
 
         // close the window
@@ -304,7 +300,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -322,9 +318,9 @@ TEST_CASE("x11 window", "[win]")
         QVERIFY(waylandClient->control->active);
 
         // activate no window
-        win::unset_active_window(*setup.base->space);
+        win::unset_active_window(*setup.base->mod.space);
         QVERIFY(!waylandClient->control->active);
-        QVERIFY(!setup.base->space->stacking.active);
+        QVERIFY(!setup.base->mod.space->stacking.active);
 
         // and close Wayland window again
         shellSurface.reset();
@@ -373,7 +369,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -394,7 +390,7 @@ TEST_CASE("x11 window", "[win]")
             client->space.qobject.get(),
             [&setup, &deletedUuid](auto win_id) {
                 std::visit(overload{[&](auto&& win) { deletedUuid = win->meta.internal_id; }},
-                           setup.base->space->windows_map.at(win_id));
+                           setup.base->mod.space->windows_map.at(win_id));
             });
 
         win::x11::net::root_info rootInfo(c.get(), win::x11::net::WMAllProperties);
@@ -469,7 +465,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_flush(c.get());
 
         // we should get a client for it
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -501,7 +497,8 @@ TEST_CASE("x11 window", "[win]")
         // this test verifies that a caption set through WM_NAME is read correctly
 
         // open glxgears as that one only uses WM_NAME
-        QSignalSpy clientAddedSpy(setup.base->space->qobject.get(), &space::qobject_t::clientAdded);
+        QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
+                                  &space::qobject_t::clientAdded);
         QVERIFY(clientAddedSpy.isValid());
 
         QProcess glxgears;
@@ -511,9 +508,9 @@ TEST_CASE("x11 window", "[win]")
 
         QVERIFY(clientAddedSpy.wait());
         QCOMPARE(clientAddedSpy.count(), 1);
-        QCOMPARE(setup.base->space->windows.size(), 1);
+        QCOMPARE(setup.base->mod.space->windows.size(), 1);
 
-        auto glxgearsClient = get_x11_window(setup.base->space->windows.front());
+        auto glxgearsClient = get_x11_window(setup.base->mod.space->windows.front());
         QVERIFY(glxgearsClient);
         QCOMPARE(win::caption(glxgearsClient), QStringLiteral("glxgears"));
 
@@ -556,7 +553,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_map_window(c.get(), w);
         xcb_flush(c.get());
 
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -664,7 +661,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_change_property(c.get(),
                             XCB_PROP_MODE_REPLACE,
                             w,
-                            setup.base->space->atoms->wm_client_leader,
+                            setup.base->mod.space->atoms->wm_client_leader,
                             XCB_ATOM_WINDOW,
                             32,
                             1,
@@ -672,7 +669,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_map_window(c.get(), w);
         xcb_flush(c.get());
 
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
         QVERIFY(windowCreatedSpy.wait());
@@ -684,7 +681,7 @@ TEST_CASE("x11 window", "[win]")
 
         QCOMPARE(client->control->fullscreen, false);
         QCOMPARE(win::get_layer(*client), win::layer::normal);
-        win::active_window_set_fullscreen(*setup.base->space);
+        win::active_window_set_fullscreen(*setup.base->mod.space);
         QCOMPARE(client->control->fullscreen, true);
         QCOMPARE(win::get_layer(*client), win::layer::active);
 
@@ -712,7 +709,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_change_property(c.get(),
                             XCB_PROP_MODE_REPLACE,
                             w2,
-                            setup.base->space->atoms->wm_client_leader,
+                            setup.base->mod.space->atoms->wm_client_leader,
                             XCB_ATOM_WINDOW,
                             32,
                             1,
@@ -734,7 +731,7 @@ TEST_CASE("x11 window", "[win]")
         QCOMPARE(win::get_layer(*client), win::layer::normal);
 
         // activating the fullscreen window again, should move it to active layer
-        win::activate_window(*setup.base->space, *client);
+        win::activate_window(*setup.base->mod.space, *client);
         QTRY_COMPARE(win::get_layer(*client), win::layer::active);
     }
 
@@ -749,7 +746,7 @@ TEST_CASE("x11 window", "[win]")
         auto connection = create_xcb_connection();
         QVERIFY(!xcb_connection_has_error(connection.get()));
 
-        QSignalSpy windowCreatedSpy(setup.base->space->qobject.get(),
+        QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
         QVERIFY(windowCreatedSpy.isValid());
 
@@ -778,7 +775,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_change_property(connection.get(),
                             XCB_PROP_MODE_REPLACE,
                             window1,
-                            setup.base->space->atoms->wm_client_leader,
+                            setup.base->mod.space->atoms->wm_client_leader,
                             XCB_ATOM_WINDOW,
                             32,
                             1,
@@ -811,7 +808,7 @@ TEST_CASE("x11 window", "[win]")
         xcb_change_property(connection.get(),
                             XCB_PROP_MODE_REPLACE,
                             window2,
-                            setup.base->space->atoms->wm_client_leader,
+                            setup.base->mod.space->atoms->wm_client_leader,
                             XCB_ATOM_WINDOW,
                             32,
                             1,

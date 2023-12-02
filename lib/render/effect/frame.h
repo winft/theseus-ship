@@ -8,7 +8,7 @@
 #include "kwin_export.h"
 
 #include <render/effect/interface/effect_frame.h>
-#include <render/effect/interface/effect_quick_view.h>
+#include <render/effect/interface/offscreen_quick_view.h>
 
 #include <QFont>
 #include <QIcon>
@@ -21,7 +21,7 @@ class EffectsHandler;
 namespace render
 {
 
-class effect_frame_quick_scene : public EffectQuickScene
+class effect_frame_quick_scene : public OffscreenQuickScene
 {
     Q_OBJECT
 

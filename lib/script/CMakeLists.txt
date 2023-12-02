@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 add_library(script SHARED)
+add_library(kwinft::script ALIAS script)
 
 target_link_libraries(script
   PUBLIC

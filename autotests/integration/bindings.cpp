@@ -6,14 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "script/platform.h"
-#include "script/script.h"
-#include "win/control.h"
-#include "win/move.h"
-#include "win/wayland/window.h"
-
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingReply>
@@ -86,27 +78,27 @@ TEST_CASE("bindings", "[input],[win]")
             QDBusConnection::sessionBus().asyncCall(msg);
         };
         invokeShortcut(QStringLiteral("Switch Window Up"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c1);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c1);
         invokeShortcut(QStringLiteral("Switch Window Right"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c2);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c2);
         invokeShortcut(QStringLiteral("Switch Window Down"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c3);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c3);
         invokeShortcut(QStringLiteral("Switch Window Left"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c4);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c4);
         // test opposite direction
         invokeShortcut(QStringLiteral("Switch Window Left"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c3);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c3);
         invokeShortcut(QStringLiteral("Switch Window Down"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c2);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c2);
         invokeShortcut(QStringLiteral("Switch Window Right"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c1);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c1);
         invokeShortcut(QStringLiteral("Switch Window Up"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c4);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c4);
     }
 
     SECTION("switch window script")
     {
-        QVERIFY(setup.base->script);
+        QVERIFY(setup.base->mod.script);
 
         // first create windows
         auto surface1 = create_surface();
@@ -140,10 +132,10 @@ TEST_CASE("bindings", "[input],[win]")
             out << "workspace." << slot << "()";
             out.flush();
 
-            auto const id = setup.base->script->loadScript(tmpFile.fileName());
+            auto const id = setup.base->mod.script->loadScript(tmpFile.fileName());
             QVERIFY(id != -1);
-            QVERIFY(setup.base->script->isScriptLoaded(tmpFile.fileName()));
-            auto s = setup.base->script->findScript(tmpFile.fileName());
+            QVERIFY(setup.base->mod.script->isScriptLoaded(tmpFile.fileName()));
+            auto s = setup.base->mod.script->findScript(tmpFile.fileName());
             QVERIFY(s);
             QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
             QVERIFY(runningChangedSpy.isValid());
@@ -152,13 +144,13 @@ TEST_CASE("bindings", "[input],[win]")
         };
 
         runScript(QStringLiteral("slotSwitchWindowUp"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c1);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c1);
         runScript(QStringLiteral("slotSwitchWindowRight"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c2);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c2);
         runScript(QStringLiteral("slotSwitchWindowDown"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c3);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c3);
         runScript(QStringLiteral("slotSwitchWindowLeft"));
-        QTRY_COMPARE(get_wayland_window(setup.base->space->stacking.active), c4);
+        QTRY_COMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c4);
     }
 
     SECTION("switch window script")
@@ -166,7 +158,7 @@ TEST_CASE("bindings", "[input],[win]")
         auto subspace = GENERATE(range(2, 20));
 
         // first go to subspace one
-        auto& vd_manager = setup.base->space->subspace_manager;
+        auto& vd_manager = setup.base->mod.space->subspace_manager;
         win::subspaces_set_current(*vd_manager, *vd_manager->subspaces.front());
 
         // now create a window
@@ -178,7 +170,7 @@ TEST_CASE("bindings", "[input],[win]")
         QSignalSpy subspacesChangedSpy(c->qobject.get(), &win::window_qobject::subspaces_changed);
         QVERIFY(subspacesChangedSpy.isValid());
 
-        QCOMPARE(get_wayland_window(setup.base->space->stacking.active), c);
+        QCOMPARE(get_wayland_window(setup.base->mod.space->stacking.active), c);
 
         win::subspace_manager_set_count(*vd_manager, subspace);
 

@@ -6,16 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "lib/setup.h"
 
-#include "base/wayland/server.h"
-#include "input/cursor.h"
-#include "input/keyboard_redirect.h"
-#include "input/xkb/helpers.h"
-#include "win/space_reconfigure.h"
-
 #include <KConfigGroup>
-
 #include <QDBusConnection>
-
 #include <catch2/generators/catch_generators.hpp>
 #include <linux/input.h>
 
@@ -150,7 +142,7 @@ TEST_CASE("modifier only shortcut", "[input]")
         group.writeEntry("Shift", config.shift);
         group.writeEntry("Control", config.control);
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         // configured shortcut should trigger
         quint32 timestamp = 1;
@@ -194,32 +186,32 @@ TEST_CASE("modifier only shortcut", "[input]")
 
         // mouse button pressed before clicking modifier
         pointer_button_pressed(BTN_LEFT, timestamp++);
-        QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::LeftButton);
+        QTRY_COMPARE(setup.base->mod.space->input->qtButtonStates(), Qt::LeftButton);
 
         keyboard_key_pressed(modifier, timestamp++);
         keyboard_key_released(modifier, timestamp++);
         pointer_button_released(BTN_LEFT, timestamp++);
-        QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::NoButton);
+        QTRY_COMPARE(setup.base->mod.space->input->qtButtonStates(), Qt::NoButton);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // mouse button press before mod press, release before mod release
         pointer_button_pressed(BTN_LEFT, timestamp++);
-        QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::LeftButton);
+        QTRY_COMPARE(setup.base->mod.space->input->qtButtonStates(), Qt::LeftButton);
 
         keyboard_key_pressed(modifier, timestamp++);
         pointer_button_released(BTN_LEFT, timestamp++);
         keyboard_key_released(modifier, timestamp++);
-        QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::NoButton);
+        QTRY_COMPARE(setup.base->mod.space->input->qtButtonStates(), Qt::NoButton);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // mouse button click while mod is pressed
         keyboard_key_pressed(modifier, timestamp++);
         pointer_button_pressed(BTN_LEFT, timestamp++);
-        QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::LeftButton);
+        QTRY_COMPARE(setup.base->mod.space->input->qtButtonStates(), Qt::LeftButton);
 
         pointer_button_released(BTN_LEFT, timestamp++);
         keyboard_key_released(modifier, timestamp++);
-        QTRY_COMPARE(setup.base->space->input->qtButtonStates(), Qt::NoButton);
+        QTRY_COMPARE(setup.base->mod.space->input->qtButtonStates(), Qt::NoButton);
         QCOMPARE(triggeredSpy.count(), 2);
 
         // scroll while mod is pressed
@@ -265,7 +257,7 @@ TEST_CASE("modifier only shortcut", "[input]")
             "Shift", QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
         group.writeEntry("Control", QStringList());
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         // first test that the normal shortcut triggers
         quint32 timestamp = 1;
@@ -277,7 +269,7 @@ TEST_CASE("modifier only shortcut", "[input]")
         // now capslock
         keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
         keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-        QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input),
+        QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->mod.input),
                      Qt::ShiftModifier);
         QTRY_COMPARE(triggeredSpy.count(), 1);
 
@@ -285,7 +277,7 @@ TEST_CASE("modifier only shortcut", "[input]")
         // shift still triggers
         keyboard_key_pressed(modifier, timestamp++);
         keyboard_key_released(modifier, timestamp++);
-        QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input),
+        QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->mod.input),
                      Qt::ShiftModifier);
         QTRY_COMPARE(triggeredSpy.count(), 2);
 
@@ -296,13 +288,13 @@ TEST_CASE("modifier only shortcut", "[input]")
         group.writeEntry("Shift", QStringList{});
         group.writeEntry("Control", QStringList());
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-        TRY_REQUIRE(input::xkb::get_active_keyboard_modifiers(*setup.base->input)
+        TRY_REQUIRE(input::xkb::get_active_keyboard_modifiers(*setup.base->mod.input)
                     == (Qt::ShiftModifier | Qt::MetaModifier));
         TRY_REQUIRE(input::xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(
-                        *setup.base->input)
+                        *setup.base->mod.input)
                     == Qt::MetaModifier);
 
         keyboard_key_released(KEY_LEFTMETA, timestamp++);
@@ -315,12 +307,13 @@ TEST_CASE("modifier only shortcut", "[input]")
             "Shift", QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
         group.writeEntry("Control", QStringList());
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         // release caps lock
         keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
         keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-        QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->input), Qt::NoModifier);
+        QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(*setup.base->mod.input),
+                     Qt::NoModifier);
         QTRY_COMPARE(triggeredSpy.count(), 3);
     }
 
@@ -375,19 +368,19 @@ TEST_CASE("modifier only shortcut", "[input]")
         group.writeEntry("Shift", config.shift);
         group.writeEntry("Control", config.control);
         group.sync();
-        win::space_reconfigure(*setup.base->space);
+        win::space_reconfigure(*setup.base->mod.space);
 
         // trigger once to verify the shortcut works
         quint32 timestamp = 1;
-        QVERIFY(!setup.base->space->global_shortcuts_disabled);
+        QVERIFY(!setup.base->mod.space->global_shortcuts_disabled);
         keyboard_key_pressed(modifier, timestamp++);
         keyboard_key_released(modifier, timestamp++);
         QTRY_COMPARE(triggeredSpy.count(), 1);
         triggeredSpy.clear();
 
         // now disable global shortcuts
-        win::set_global_shortcuts_disabled(*setup.base->space, true);
-        QVERIFY(setup.base->space->global_shortcuts_disabled);
+        win::set_global_shortcuts_disabled(*setup.base->mod.space, true);
+        QVERIFY(setup.base->mod.space->global_shortcuts_disabled);
         // Should not get triggered
         keyboard_key_pressed(modifier, timestamp++);
         keyboard_key_released(modifier, timestamp++);
@@ -395,8 +388,8 @@ TEST_CASE("modifier only shortcut", "[input]")
         triggeredSpy.clear();
 
         // enable again
-        win::set_global_shortcuts_disabled(*setup.base->space, false);
-        QVERIFY(!setup.base->space->global_shortcuts_disabled);
+        win::set_global_shortcuts_disabled(*setup.base->mod.space, false);
+        QVERIFY(!setup.base->mod.space->global_shortcuts_disabled);
         // should get triggered again
         keyboard_key_pressed(modifier, timestamp++);
         keyboard_key_released(modifier, timestamp++);

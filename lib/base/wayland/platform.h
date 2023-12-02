@@ -11,8 +11,8 @@
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
 #include "render/wayland/platform.h"
-#include "script/platform.h"
-#include "utils/algorithm.h"
+#include <base/backend/wlroots/backend.h>
+#include <base/wayland/platform_helpers.h>
 #include <win/wayland/space.h>
 
 #include <QProcessEnvironment>
@@ -24,65 +24,63 @@
 namespace KWin::base::wayland
 {
 
+template<typename Mod>
+class platform;
+
+struct platform_mod {
+    using platform_t = base::wayland::platform<platform_mod>;
+    using render_t = render::wayland::platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t>;
+    using space_t = win::wayland::space<platform_t>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
+};
+
+template<typename Mod = platform_mod>
 class platform : public base::platform
 {
 public:
-    using output_t = output<platform>;
-    using render_t = render::wayland::platform<platform>;
-    using input_t = input::wayland::platform<platform>;
-    using space_t = win::wayland::space<render_t, input_t>;
+    using type = platform<Mod>;
+    using backend_t = backend::wlroots::backend<type>;
+    using output_t = output<type>;
 
-    platform(base::config config)
-        : config{std::move(config)}
-    {
-        init_platform(*this);
-        init_singleton_interface();
-    }
+    using render_t = typename Mod::render_t;
+    using input_t = typename Mod::input_t;
+    using space_t = typename Mod::space_t;
 
     platform(base::config config,
              std::string const& socket_name,
-             base::wayland::start_options flags)
+             base::wayland::start_options flags,
+             backend::wlroots::start_options options)
         : config{std::move(config)}
-        , server{std::make_unique<wayland::server<platform>>(*this, socket_name, flags)}
+        , server{std::make_unique<wayland::server<type>>(*this, socket_name, flags)}
+        , backend{*this, options}
     {
-        init_platform(*this);
-        init_singleton_interface();
+        wayland::platform_init(*this);
     }
 
-    platform(platform const&) = delete;
-    platform& operator=(platform const&) = delete;
-    platform(platform&& other) = delete;
-    platform& operator=(platform&& other) = delete;
+    platform(type const&) = delete;
+    platform& operator=(type const&) = delete;
+    platform(type&& other) = delete;
+    platform& operator=(type&& other) = delete;
 
     ~platform() override
     {
         singleton_interface::get_outputs = {};
     }
 
-    void enable_output(output_t* output)
+    clockid_t get_clockid() const override
     {
-        assert(!contains(outputs, output));
-        outputs.push_back(output);
-        Q_EMIT output_added(output);
-    }
-
-    void disable_output(output_t* output)
-    {
-        assert(contains(outputs, output));
-        remove_all(outputs, output);
-        Q_EMIT output_removed(output);
+        return backend.get_clockid();
     }
 
     base::operation_mode operation_mode;
     base::config config;
-
     std::unique_ptr<base::options> options;
-    std::unique_ptr<base::seat::session> session;
 
-    QProcessEnvironment process_environment;
-
-    std::unique_ptr<wayland::server<platform>> server;
-
+    std::unique_ptr<wayland::server<type>> server;
     std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
 
     // All outputs, including disabled ones.
@@ -91,22 +89,11 @@ public:
     // Enabled outputs only, so outputs that are relevant for our compositing.
     std::vector<output_t*> outputs;
 
-    std::unique_ptr<render_t> render;
-    std::unique_ptr<input_t> input;
-    std::unique_ptr<space_t> space;
-    std::unique_ptr<scripting::platform<space_t>> script;
+    std::unique_ptr<base::seat::session> session;
+    backend_t backend;
+    QProcessEnvironment process_environment;
 
-private:
-    void init_singleton_interface() const
-    {
-        singleton_interface::get_outputs = [this] {
-            std::vector<base::output*> vec;
-            for (auto&& output : outputs) {
-                vec.push_back(output);
-            }
-            return vec;
-        };
-    }
+    Mod mod;
 };
 
 }

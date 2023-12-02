@@ -80,7 +80,7 @@ std::unique_ptr<Shadow> create_shadow(typename Shadow::window_t& win)
         return {};
     }
 
-    auto shadow = ref_win->space.base.render->scene->createShadow(&win);
+    auto shadow = ref_win->space.base.mod.render->scene->createShadow(&win);
     if (!update_shadow<Shadow, RefWin>(*shadow)) {
         return {};
     }

@@ -132,7 +132,7 @@ void finish_unmanaged_removal(Win* win, Win* remnant)
     assert(contains(space.windows, var_win(win)));
 
     remove_window_from_lists(space, win);
-    space.base.render->addRepaint(visible_rect(win));
+    space.base.mod.render->addRepaint(visible_rect(win));
 
     Q_EMIT space.qobject->unmanagedRemoved(win->meta.signal_id);
 
@@ -264,7 +264,7 @@ void release_window(Win* win, bool on_shutdown)
     win->geo.update.block++;
 
     if (on_current_subspace(*win) && win->isShown()) {
-        space.base.render->addRepaint(visible_rect(win));
+        space.base.mod.render->addRepaint(visible_rect(win));
     }
 
     // Grab X during the release to make removing of properties, setting to withdrawn state
@@ -382,7 +382,7 @@ void destroy_window(Win* win)
     win->geo.update.block++;
 
     if (on_current_subspace(*win) && win->isShown()) {
-        win->space.base.render->addRepaint(visible_rect(win));
+        win->space.base.mod.render->addRepaint(visible_rect(win));
     }
 
     // So that it's not considered visible anymore

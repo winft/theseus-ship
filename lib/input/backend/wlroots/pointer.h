@@ -20,23 +20,25 @@ extern "C" {
 namespace KWin::input::backend::wlroots
 {
 
-template<typename Platform>
+template<typename Backend>
 class pointer;
 
-template<typename Platform>
+template<typename Backend>
 void pointer_handle_destroy(struct wl_listener* listener, void* /*data*/)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
-    platform_remove_pointer(pointer, *pointer->platform);
+    if (pointer->backend) {
+        platform_remove_pointer(pointer, *pointer->backend->frontend);
+    }
     delete pointer;
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_motion(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_motion_event*>(data);
@@ -53,10 +55,10 @@ void handle_motion(struct wl_listener* listener, void* data)
     Q_EMIT pointer->motion(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_motion_absolute(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_motion_absolute_event*>(data);
@@ -72,10 +74,10 @@ void handle_motion_absolute(struct wl_listener* listener, void* data)
     Q_EMIT pointer->motion_absolute(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_button(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_button_event*>(data);
@@ -92,10 +94,10 @@ void handle_button(struct wl_listener* listener, void* data)
     Q_EMIT pointer->button_changed(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_axis(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_axis_event*>(data);
@@ -129,10 +131,10 @@ void handle_axis(struct wl_listener* listener, void* data)
     Q_EMIT pointer->axis_changed(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_swipe_begin(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_swipe_begin_event*>(data);
@@ -148,10 +150,10 @@ void handle_swipe_begin(struct wl_listener* listener, void* data)
     Q_EMIT pointer->swipe_begin(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_swipe_update(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_swipe_update_event*>(data);
@@ -168,10 +170,10 @@ void handle_swipe_update(struct wl_listener* listener, void* data)
     Q_EMIT pointer->swipe_update(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_swipe_end(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_swipe_end_event*>(data);
@@ -187,10 +189,10 @@ void handle_swipe_end(struct wl_listener* listener, void* data)
     Q_EMIT pointer->swipe_end(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_pinch_begin(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_pinch_begin_event*>(data);
@@ -206,10 +208,10 @@ void handle_pinch_begin(struct wl_listener* listener, void* data)
     Q_EMIT pointer->pinch_begin(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_pinch_update(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_pinch_update_event*>(data);
@@ -228,10 +230,10 @@ void handle_pinch_update(struct wl_listener* listener, void* data)
     Q_EMIT pointer->pinch_update(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_pinch_end(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_pinch_end_event*>(data);
@@ -247,10 +249,10 @@ void handle_pinch_end(struct wl_listener* listener, void* data)
     Q_EMIT pointer->pinch_end(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_hold_begin(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_hold_begin_event*>(data);
@@ -266,10 +268,10 @@ void handle_hold_begin(struct wl_listener* listener, void* data)
     Q_EMIT pointer->hold_begin(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_hold_end(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_pointer_hold_end_event*>(data);
@@ -285,93 +287,93 @@ void handle_hold_end(struct wl_listener* listener, void* data)
     Q_EMIT pointer->hold_end(event);
 }
 
-template<typename Platform>
+template<typename Backend>
 void handle_frame(struct wl_listener* listener, void* /*data*/)
 {
-    base::event_receiver<pointer<Platform>>* event_receiver_struct
+    base::event_receiver<pointer<Backend>>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto pointer = event_receiver_struct->receiver;
 
     Q_EMIT pointer->frame();
 }
 
-template<typename Platform>
+template<typename Backend>
 class pointer : public input::pointer
 {
 public:
-    using er = base::event_receiver<pointer<Platform>>;
+    using er = base::event_receiver<pointer<Backend>>;
 
-    pointer(wlr_input_device* dev, Platform* platform)
-        : platform{platform}
+    pointer(wlr_input_device* dev, Backend* backend)
+        : backend{backend}
     {
-        auto backend = wlr_pointer_from_input_device(dev);
+        auto native = wlr_pointer_from_input_device(dev);
 
         if (auto libinput = get_libinput_device(dev)) {
-            control = std::make_unique<pointer_control>(libinput, platform->config.main);
+            control = std::make_unique<pointer_control>(libinput, backend->frontend->config.main);
         }
 
         destroyed.receiver = this;
-        destroyed.event.notify = pointer_handle_destroy<Platform>;
+        destroyed.event.notify = pointer_handle_destroy<Backend>;
         wl_signal_add(&dev->events.destroy, &destroyed.event);
 
         motion_rec.receiver = this;
-        motion_rec.event.notify = handle_motion<Platform>;
-        wl_signal_add(&backend->events.motion, &motion_rec.event);
+        motion_rec.event.notify = handle_motion<Backend>;
+        wl_signal_add(&native->events.motion, &motion_rec.event);
 
         motion_absolute_rec.receiver = this;
-        motion_absolute_rec.event.notify = handle_motion_absolute<Platform>;
-        wl_signal_add(&backend->events.motion_absolute, &motion_absolute_rec.event);
+        motion_absolute_rec.event.notify = handle_motion_absolute<Backend>;
+        wl_signal_add(&native->events.motion_absolute, &motion_absolute_rec.event);
 
         button_rec.receiver = this;
-        button_rec.event.notify = handle_button<Platform>;
-        wl_signal_add(&backend->events.button, &button_rec.event);
+        button_rec.event.notify = handle_button<Backend>;
+        wl_signal_add(&native->events.button, &button_rec.event);
 
         axis_rec.receiver = this;
-        axis_rec.event.notify = handle_axis<Platform>;
-        wl_signal_add(&backend->events.axis, &axis_rec.event);
+        axis_rec.event.notify = handle_axis<Backend>;
+        wl_signal_add(&native->events.axis, &axis_rec.event);
 
         swipe_begin_rec.receiver = this;
-        swipe_begin_rec.event.notify = handle_swipe_begin<Platform>;
-        wl_signal_add(&backend->events.swipe_begin, &swipe_begin_rec.event);
+        swipe_begin_rec.event.notify = handle_swipe_begin<Backend>;
+        wl_signal_add(&native->events.swipe_begin, &swipe_begin_rec.event);
 
         swipe_update_rec.receiver = this;
-        swipe_update_rec.event.notify = handle_swipe_update<Platform>;
-        wl_signal_add(&backend->events.swipe_update, &swipe_update_rec.event);
+        swipe_update_rec.event.notify = handle_swipe_update<Backend>;
+        wl_signal_add(&native->events.swipe_update, &swipe_update_rec.event);
 
         swipe_end_rec.receiver = this;
-        swipe_end_rec.event.notify = handle_swipe_end<Platform>;
-        wl_signal_add(&backend->events.swipe_end, &swipe_end_rec.event);
+        swipe_end_rec.event.notify = handle_swipe_end<Backend>;
+        wl_signal_add(&native->events.swipe_end, &swipe_end_rec.event);
 
         pinch_begin_rec.receiver = this;
-        pinch_begin_rec.event.notify = handle_pinch_begin<Platform>;
-        wl_signal_add(&backend->events.pinch_begin, &pinch_begin_rec.event);
+        pinch_begin_rec.event.notify = handle_pinch_begin<Backend>;
+        wl_signal_add(&native->events.pinch_begin, &pinch_begin_rec.event);
 
         pinch_update_rec.receiver = this;
-        pinch_update_rec.event.notify = handle_pinch_update<Platform>;
-        wl_signal_add(&backend->events.pinch_update, &pinch_update_rec.event);
+        pinch_update_rec.event.notify = handle_pinch_update<Backend>;
+        wl_signal_add(&native->events.pinch_update, &pinch_update_rec.event);
 
         pinch_end_rec.receiver = this;
-        pinch_end_rec.event.notify = handle_pinch_end<Platform>;
-        wl_signal_add(&backend->events.pinch_end, &pinch_end_rec.event);
+        pinch_end_rec.event.notify = handle_pinch_end<Backend>;
+        wl_signal_add(&native->events.pinch_end, &pinch_end_rec.event);
 
         hold_begin_rec.receiver = this;
-        hold_begin_rec.event.notify = handle_hold_begin<Platform>;
-        wl_signal_add(&backend->events.hold_begin, &hold_begin_rec.event);
+        hold_begin_rec.event.notify = handle_hold_begin<Backend>;
+        wl_signal_add(&native->events.hold_begin, &hold_begin_rec.event);
 
         hold_end_rec.receiver = this;
-        hold_end_rec.event.notify = handle_hold_end<Platform>;
-        wl_signal_add(&backend->events.hold_end, &hold_end_rec.event);
+        hold_end_rec.event.notify = handle_hold_end<Backend>;
+        wl_signal_add(&native->events.hold_end, &hold_end_rec.event);
 
         frame_rec.receiver = this;
-        frame_rec.event.notify = handle_frame<Platform>;
-        wl_signal_add(&backend->events.frame, &frame_rec.event);
+        frame_rec.event.notify = handle_frame<Backend>;
+        wl_signal_add(&native->events.frame, &frame_rec.event);
     }
 
     pointer(pointer const&) = delete;
     pointer& operator=(pointer const&) = delete;
     ~pointer() override = default;
 
-    Platform* platform;
+    Backend* backend;
 
 private:
     er destroyed;

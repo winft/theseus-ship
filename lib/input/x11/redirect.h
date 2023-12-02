@@ -30,7 +30,7 @@ public:
 
     redirect(Space& space)
         : qobject{std::make_unique<redirect_qobject>()}
-        , platform{*space.base.input}
+        , platform{*space.base.mod.input}
         , keyboard{std::make_unique<keyboard_redirect<type>>(this)}
         , pointer{std::make_unique<pointer_redirect<type>>(this)}
         , cursor{std::make_unique<x11::cursor>(platform.base.x11_data,

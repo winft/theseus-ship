@@ -276,7 +276,7 @@ public:
     {
         if (!is_natively_shown && is_displayed()) {
             // tabbox has been replaced, check effects
-            if (auto& effects = space.base.render->effects;
+            if (auto& effects = space.base.mod.render->effects;
                 effects && effects->checkInputWindowEvent(event)) {
                 return true;
             }
@@ -308,7 +308,7 @@ public:
     {
         if (!is_natively_shown && is_displayed()) {
             // tabbox has been replaced, check effects
-            if (auto& effects = space.base.render->effects;
+            if (auto& effects = space.base.mod.render->effects;
                 effects && effects->checkInputWindowEvent(event)) {
                 return true;
             }
@@ -367,8 +367,8 @@ public:
         key(s_appAltRev, [this] { slot_walk_back_through_current_app_windows_alternative(); });
 
         QObject::connect(
-            space.base.input->shortcuts.get(),
-            &decltype(space.base.input->shortcuts)::element_type::keyboard_shortcut_changed,
+            space.base.mod.input->shortcuts.get(),
+            &decltype(space.base.mod.input->shortcuts)::element_type::keyboard_shortcut_changed,
             qobject.get(),
             [this](auto action, auto const& seq) { global_shortcut_changed(action, seq); });
     }
@@ -770,7 +770,7 @@ private:
             //  CDE style raise / lower
             cde_walk_through_windows(forward);
         } else {
-            if (areModKeysDepressed(*space.base.input, shortcut)) {
+            if (areModKeysDepressed(*space.base.mod.input, shortcut)) {
                 if (start_kde_walk_through_windows(mode)) {
                     kde_walk_through_windows(forward);
                 }
@@ -913,11 +913,11 @@ private:
         a->setObjectName(QString::fromUtf8(action_name.untranslatedText()));
         a->setText(action_name.toString());
 
-        space.base.input->shortcuts->register_keyboard_shortcut(a,
-                                                                QList<QKeySequence>() << shortcut);
-        space.base.input->registerShortcut(shortcut, a, qobject.get(), slot);
+        space.base.mod.input->shortcuts->register_keyboard_shortcut(
+            a, QList<QKeySequence>() << shortcut);
+        space.base.mod.input->registerShortcut(shortcut, a, qobject.get(), slot);
 
-        auto cuts = space.base.input->shortcuts->get_keyboard_shortcut(a);
+        auto cuts = space.base.mod.input->shortcuts->get_keyboard_shortcut(a);
         global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
     }
 
