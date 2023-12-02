@@ -123,10 +123,6 @@ ApplicationWayland::ApplicationWayland(int& argc, char** argv)
 
 ApplicationWayland::~ApplicationWayland()
 {
-    if (!base->server) {
-        return;
-    }
-
     // need to unload all effects prior to destroying X connection as they might do X calls
     if (base->mod.render->effects) {
         base->mod.render->effects->unloadAllEffects();
@@ -140,17 +136,12 @@ ApplicationWayland::~ApplicationWayland()
     }
 
     // Kill Xwayland before terminating its connection.
-    base->mod.xwayland.reset();
+    base->mod.xwayland = {};
     base->server->terminateClientConnections();
 
-    if (base->mod.render) {
-        // Block compositor to prevent further compositing from crashing with a null workspace.
-        // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-        base->mod.render->lock();
-    }
-
-    base->mod.space.reset();
-    base->mod.render.reset();
+    // Block compositor to prevent further compositing from crashing with a null workspace.
+    // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
+    base->mod.render->lock();
 }
 
 void ApplicationWayland::start(base::operation_mode mode,

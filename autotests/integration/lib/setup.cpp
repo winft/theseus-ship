@@ -106,8 +106,6 @@ setup::~setup()
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
     base->mod.render->lock();
 
-    base->mod.space.reset();
-
     current_setup = nullptr;
 }
 
