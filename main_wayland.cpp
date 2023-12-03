@@ -139,9 +139,6 @@ void ApplicationWayland::start(base::operation_mode mode,
 {
     assert(mode != base::operation_mode::x11);
 
-    app->setQuitOnLastWindowClosed(false);
-    app->setQuitLockEnabled(false);
-
     base = std::make_unique<base_t>(base::wayland::platform_arguments{
         .config = base::config(KConfig::OpenFlag::FullConfig, "kwinrc"),
         .socket_name = socket_name,
@@ -324,9 +321,8 @@ int main(int argc, char* argv[])
     qunsetenv("QT_DEVICE_PIXEL_RATIO");
     qputenv("QSG_RENDER_LOOP", "basic");
 
-    KWin::base::app_singleton app_singleton;
-    QApplication app(argc, argv);
-    KWin::ApplicationWayland a(app);
+    KWin::base::app_singleton app(argc, argv);
+    KWin::ApplicationWayland a(*app.qapp);
 
     // Reset QT_QPA_PLATFORM so we don't propagate it to our children (e.g. apps launched from the
     // overview effect).
@@ -335,8 +331,10 @@ int main(int argc, char* argv[])
     KSignalHandler::self()->watchSignal(SIGTERM);
     KSignalHandler::self()->watchSignal(SIGINT);
     KSignalHandler::self()->watchSignal(SIGHUP);
-    QObject::connect(
-        KSignalHandler::self(), &KSignalHandler::signalReceived, &app, &QCoreApplication::exit);
+    QObject::connect(KSignalHandler::self(),
+                     &KSignalHandler::signalReceived,
+                     app.qapp.get(),
+                     &QCoreApplication::exit);
 
     KWin::app_create_about_data();
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
@@ -381,7 +379,7 @@ int main(int argc, char* argv[])
         i18n("Applications to start once Wayland and Xwayland server are started"),
         QStringLiteral("[/path/to/application...]"));
 
-    parser.process(app);
+    parser.process(*app.qapp);
     KWin::app_process_command_line(a, &parser);
 
     if (parser.isSet(exitWithSessionOption)) {
@@ -404,5 +402,5 @@ int main(int argc, char* argv[])
     a.setApplicationsToStart(parser.positionalArguments());
     a.start(op_mode, parser.value(waylandSocketOption).toStdString(), flags, environment);
 
-    return app.exec();
+    return app.qapp->exec();
 }

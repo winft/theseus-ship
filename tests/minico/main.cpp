@@ -41,19 +41,17 @@ int main(int argc, char* argv[])
     qunsetenv("QT_DEVICE_PIXEL_RATIO");
     qputenv("QSG_RENDER_LOOP", "basic");
 
-    KWin::base::app_singleton app_singleton;
-    QApplication app(argc, argv);
+    KWin::base::app_singleton app(argc, argv);
 
     qunsetenv("QT_QPA_PLATFORM");
-
-    app.setQuitOnLastWindowClosed(false);
-    app.setQuitLockEnabled(false);
 
     KSignalHandler::self()->watchSignal(SIGTERM);
     KSignalHandler::self()->watchSignal(SIGINT);
     KSignalHandler::self()->watchSignal(SIGHUP);
-    QObject::connect(
-        KSignalHandler::self(), &KSignalHandler::signalReceived, &app, &QCoreApplication::exit);
+    QObject::connect(KSignalHandler::self(),
+                     &KSignalHandler::signalReceived,
+                     app.qapp.get(),
+                     &QCoreApplication::exit);
 
     using base_t = base::wayland::platform<>;
     base_t base({.config = base::config(KConfig::OpenFlag::FullConfig, "kwinft-minimalrc")});

@@ -24,14 +24,11 @@ int main(int argc, char* argv[])
 
     KWin::detail::test::prepare_app_env(argv[0]);
 
-    KWin::base::app_singleton app_singleton;
-    QApplication app(argc, argv);
+    KWin::base::app_singleton app(argc, argv);
 
-    app.setQuitOnLastWindowClosed(false);
-
-    auto const own_path = app.libraryPaths().constLast();
-    app.removeLibraryPath(own_path);
-    app.addLibraryPath(own_path);
+    auto const own_path = app.qapp->libraryPaths().constLast();
+    app.qapp->removeLibraryPath(own_path);
+    app.qapp->addLibraryPath(own_path);
 
     return Catch::Session().run(argc, argv);
 }

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <base/app_singleton.h>
 #include <base/config.h>
 #include <base/platform_helpers.h>
 #include <base/seat/backend/wlroots/session.h>
@@ -71,10 +72,10 @@ void platform_start(Platform& platform)
 }
 
 template<typename Platform>
-int exec(Platform& platform, QApplication& app)
+int exec(Platform& platform, app_singleton& app)
 {
     platform_start(platform);
-    return app.exec();
+    return app.qapp->exec();
 }
 
 }

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <QApplication>
 #include <QObject>
 #include <kwin_export.h>
 
@@ -15,7 +16,8 @@ class KWIN_EXPORT app_singleton : public QObject
 {
     Q_OBJECT
 public:
-    app_singleton();
+    app_singleton(int& argc, char** argv);
+    std::unique_ptr<QApplication> qapp;
 
 Q_SIGNALS:
     void platform_created();
