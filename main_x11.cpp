@@ -381,7 +381,7 @@ void ApplicationX11::crashHandler(int signal)
 
 int main(int argc, char* argv[])
 {
-    KWin::app_setup_localized_string();
+    KLocalizedString::setApplicationDomain("kwin");
 
     int primaryScreen = 0;
     xcb_connection_t* c = xcb_connect(nullptr, &primaryScreen);

@@ -291,7 +291,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    KWin::app_setup_localized_string();
+    KLocalizedString::setApplicationDomain("kwin");
     KWin::gainRealTime();
 
     signal(SIGPIPE, SIG_IGN);

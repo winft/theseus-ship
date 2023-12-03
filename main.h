@@ -64,9 +64,4 @@ inline void app_create_about_data()
     KAboutData::setApplicationData(aboutData);
 }
 
-inline void app_setup_localized_string()
-{
-    KLocalizedString::setApplicationDomain("kwin");
-}
-
 }
