@@ -20,10 +20,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QQuickWindow>
 #include <memory>
 
-#if __has_include(<malloc.h>)
-#include <malloc.h>
-#endif
-
 namespace KWin
 {
 
@@ -87,20 +83,6 @@ void app_process_command_line(App& app, QCommandLineParser* parser)
     if constexpr (requires(App app) { app.crashes; }) {
         app.crashes = parser->value("crashes").toInt();
     }
-}
-
-inline void app_setup_malloc()
-{
-#ifdef M_TRIM_THRESHOLD
-    // Prevent fragmentation of the heap by malloc (glibc).
-    //
-    // The default threshold is 128*1024, which can result in a large memory usage
-    // due to fragmentation especially if we use the raster graphicssystem. On the
-    // otherside if the threshold is too low, free() starts to permanently ask the kernel
-    // about shrinking the heap.
-    const int pagesize = sysconf(_SC_PAGESIZE);
-    mallopt(M_TRIM_THRESHOLD, 5 * pagesize);
-#endif
 }
 
 inline void app_setup_localized_string()

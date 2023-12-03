@@ -381,7 +381,6 @@ void ApplicationX11::crashHandler(int signal)
 
 int main(int argc, char* argv[])
 {
-    KWin::app_setup_malloc();
     KWin::app_setup_localized_string();
 
     int primaryScreen = 0;

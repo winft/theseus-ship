@@ -291,7 +291,6 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    KWin::app_setup_malloc();
     KWin::app_setup_localized_string();
     KWin::gainRealTime();
 
