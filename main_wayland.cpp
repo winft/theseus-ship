@@ -338,11 +338,6 @@ int main(int argc, char* argv[])
     parser.addOption(xwaylandOption);
     parser.addOption(waylandSocketOption);
 
-    QCommandLineOption libinputOption(QStringLiteral("libinput"),
-                                      i18n("Enable libinput support for input events processing. "
-                                           "Note: never use in a nested session.	(deprecated)"));
-    parser.addOption(libinputOption);
-
     QCommandLineOption screenLockerOption(QStringLiteral("lockscreen"),
                                           i18n("Starts the session in locked mode."));
     parser.addOption(screenLockerOption);
