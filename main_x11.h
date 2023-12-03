@@ -62,7 +62,6 @@ private Q_SLOTS:
 
 private:
     void crashChecking();
-    void setupCrashHandler();
 
     static void crashHandler(int signal);
 

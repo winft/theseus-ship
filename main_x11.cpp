@@ -256,25 +256,23 @@ void ApplicationX11::start()
     owner->claim(m_replace || crashes > 0, true);
 }
 
-void ApplicationX11::setupCrashHandler()
-{
-    KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);
-}
-
 void ApplicationX11::crashChecking()
 {
-    setupCrashHandler();
+    KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);
+
     if (crashes >= 4) {
         // Something has gone seriously wrong
         qCDebug(KWIN_CORE) << "More than 3 crashes recently. Exiting now.";
         ::exit(1);
     }
+
     if (crashes >= 2) {
         // Disable compositing if we have had too many crashes
         qCDebug(KWIN_CORE) << "More than 1 crash recently. Disabling compositing.";
         KConfigGroup compgroup(KSharedConfig::openConfig(), "Compositing");
         compgroup.writeEntry("Enabled", false);
     }
+
     // Reset crashes count if we stay up for more that 15 seconds
     QTimer::singleShot(15 * 1000, this, [] { crashes = 0; });
 }
