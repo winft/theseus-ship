@@ -31,15 +31,9 @@
 #include <KPluginMetaData>
 #include <KSignalHandler>
 
-#include <QComboBox>
 #include <QCommandLineParser>
-#include <QDialog>
-#include <QDialogButtonBox>
 #include <QFile>
-#include <QLabel>
-#include <QPushButton>
 #include <QSurfaceFormat>
-#include <QVBoxLayout>
 #include <QtDBus>
 #include <QtGui/private/qtx11extras_p.h>
 #include <qplatformdefs.h>
@@ -54,56 +48,6 @@ constexpr char kwin_internal_name[]{"kwin_x11"};
 
 namespace KWin
 {
-
-class AlternativeWMDialog : public QDialog
-{
-public:
-    AlternativeWMDialog()
-        : QDialog()
-    {
-        QWidget* mainWidget = new QWidget(this);
-        QVBoxLayout* layout = new QVBoxLayout(mainWidget);
-        QString text = i18n(
-            "KWin is unstable.\n"
-            "It seems to have crashed several times in a row.\n"
-            "You can select another window manager to run:");
-        QLabel* textLabel = new QLabel(text, mainWidget);
-        layout->addWidget(textLabel);
-        wmList = new QComboBox(mainWidget);
-        wmList->setEditable(true);
-        layout->addWidget(wmList);
-
-        addWM(QStringLiteral("metacity"));
-        addWM(QStringLiteral("openbox"));
-        addWM(QStringLiteral("fvwm2"));
-        addWM(kwin_internal_name);
-
-        QVBoxLayout* mainLayout = new QVBoxLayout(this);
-        mainLayout->addWidget(mainWidget);
-        QDialogButtonBox* buttons
-            = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-        buttons->button(QDialogButtonBox::Ok)->setDefault(true);
-        connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
-        connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
-        mainLayout->addWidget(buttons);
-
-        raise();
-    }
-
-    void addWM(const QString& wm)
-    {
-        // TODO: Check if WM is installed
-        if (!QStandardPaths::findExecutable(wm).isEmpty())
-            wmList->addItem(wm);
-    }
-    QString selectedWM() const
-    {
-        return wmList->currentText();
-    }
-
-private:
-    QComboBox* wmList;
-};
 
 class KWinSelectionOwner : public base::x11::selection_owner
 {
@@ -321,25 +265,12 @@ void ApplicationX11::crashChecking()
     setupCrashHandler();
     if (crashes >= 4) {
         // Something has gone seriously wrong
-        AlternativeWMDialog dialog;
-        auto cmd = QString(kwin_internal_name);
-        if (dialog.exec() == QDialog::Accepted)
-            cmd = dialog.selectedWM();
-        else
-            ::exit(1);
-        if (cmd.length() > 500) {
-            qCDebug(KWIN_CORE) << "Command is too long, truncating";
-            cmd = cmd.left(500);
-        }
-        qCDebug(KWIN_CORE) << "Starting" << cmd << "and exiting";
-        char buf[1024];
-        sprintf(buf, "%s &", cmd.toLatin1().data());
-        system(buf);
+        qCDebug(KWIN_CORE) << "More than 3 crashes recently. Exiting now.";
         ::exit(1);
     }
     if (crashes >= 2) {
         // Disable compositing if we have had too many crashes
-        qCDebug(KWIN_CORE) << "Too many crashes recently, disabling compositing";
+        qCDebug(KWIN_CORE) << "More than 1 crash recently. Disabling compositing.";
         KConfigGroup compgroup(KSharedConfig::openConfig(), "Compositing");
         compgroup.writeEntry("Enabled", false);
     }
