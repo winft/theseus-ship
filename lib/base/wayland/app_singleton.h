@@ -6,6 +6,7 @@
 #pragma once
 
 #include <base/app_singleton.h>
+#include <base/config-kwin.h>
 
 namespace KWin::base::wayland
 {
@@ -20,6 +21,13 @@ public:
 
         qunsetenv("QT_DEVICE_PIXEL_RATIO");
         qputenv("QSG_RENDER_LOOP", "basic");
+
+#if HAVE_SCHED_RESET_ON_FORK
+        int const minPriority = sched_get_priority_min(SCHED_RR);
+        sched_param sp;
+        sp.sched_priority = minPriority;
+        sched_setscheduler(0, SCHED_RR | SCHED_RESET_ON_FORK, &sp);
+#endif
 
         qapp = std::make_unique<QApplication>(argc, argv);
         prepare_qapp();
