@@ -51,7 +51,6 @@ namespace KWin
 
 class KWinSelectionOwner : public base::x11::selection_owner
 {
-    Q_OBJECT
 public:
     KWinSelectionOwner(xcb_connection_t* con, int screen)
         : selection_owner(make_selection_atom(con, screen), screen)
@@ -407,5 +406,3 @@ int main(int argc, char* argv[])
 
     return a.exec();
 }
-
-#include "main_x11.moc"
