@@ -332,7 +332,8 @@ int main(int argc, char* argv[])
         QStringLiteral("socket"));
 
     QCommandLineParser parser;
-    KWin::app_setup_command_line(&parser);
+    parser.setApplicationDescription(i18n("KWinFT Wayland Window Manager"));
+    KAboutData::applicationData().setupCommandLine(&parser);
 
     parser.addOption(xwaylandOption);
     parser.addOption(waylandSocketOption);

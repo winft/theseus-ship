@@ -43,8 +43,8 @@ inline void app_create_about_data()
     KAboutData aboutData(QStringLiteral(KWIN_NAME),           // The program name used internally
                          i18n("KWinFT"),                      // A displayable program name string
                          QStringLiteral(KWIN_VERSION_STRING), // The program version string
-                         i18n("KDE window manager"), // Short description of what the app does
-                         KAboutLicense::GPL,         // The license this code is released under
+                         "",                                  // Description is set per binary.
+                         KAboutLicense::GPL, // The license this code is released under
                          i18n("(c) 1999-2020, The KDE Developers"), // Copyright Statement
                          QString(),
                          QStringLiteral("kwinft.org"),
@@ -62,12 +62,6 @@ inline void app_create_about_data()
     aboutData.addAuthor(
         i18n("Roman Gilg"), QStringLiteral("Project lead"), QStringLiteral("subdiff@gmail.com"));
     KAboutData::setApplicationData(aboutData);
-}
-
-inline void app_setup_command_line(QCommandLineParser* parser)
-{
-    parser->setApplicationDescription(i18n("KDE window manager"));
-    KAboutData::applicationData().setupCommandLine(parser);
 }
 
 inline void app_setup_localized_string()

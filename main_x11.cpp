@@ -442,7 +442,8 @@ int main(int argc, char* argv[])
         i18n("Replace already-running ICCCM2.0-compliant window manager"));
 
     QCommandLineParser parser;
-    KWin::app_setup_command_line(&parser);
+    parser.setApplicationDescription(i18n("KWinFT X11 Window Manager"));
+    KAboutData::applicationData().setupCommandLine(&parser);
 
     parser.addOption(crashesOption);
     parser.addOption(replaceOption);
