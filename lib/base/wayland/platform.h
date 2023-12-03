@@ -51,14 +51,12 @@ public:
     using input_t = typename Mod::input_t;
     using space_t = typename Mod::space_t;
 
-    platform(base::config config,
-             std::string const& socket_name,
-             base::wayland::start_options flags,
-             backend::wlroots::start_options options)
+    platform(platform_arguments const& args)
         : qobject{std::make_unique<platform_qobject>([this] { return topology.max_scale; })}
-        , config{std::move(config)}
-        , server{std::make_unique<wayland::server<type>>(*this, socket_name, flags)}
-        , backend{*this, options}
+        , operation_mode{args.mode}
+        , config{args.config}
+        , server{std::make_unique<wayland::server<type>>(*this, args.socket_name, args.flags)}
+        , backend{*this, args.headless}
     {
         wayland::platform_init(*this);
     }

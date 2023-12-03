@@ -9,6 +9,7 @@
 #include "output.h"
 #include "platform_helpers.h"
 #include <base/backend/wlroots/events.h>
+#include <base/backend/wlroots/helpers.h>
 #include <base/backend/wlroots/non_desktop_output.h>
 #include <base/logging.h>
 
@@ -37,7 +38,7 @@ public:
 
     using render_t = typename frontend_type::render_t::backend_t;
 
-    backend(Frontend& frontend, start_options options)
+    backend(Frontend& frontend, bool headless)
         : frontend{&frontend}
         , destroyed{std::make_unique<event_receiver<type>>()}
         , new_output{std::make_unique<event_receiver<type>>()}
@@ -47,7 +48,7 @@ public:
         // TODO(romangg): Make this dependent on KWIN_CORE debug verbosity.
         wlr_log_init(WLR_DEBUG, nullptr);
 
-        if (::flags(options & start_options::headless)) {
+        if (headless) {
             native = wlr_headless_backend_create(frontend.server->display->native());
         } else {
             native = wlr_backend_autocreate(frontend.server->display->native(), &wlroots_session);

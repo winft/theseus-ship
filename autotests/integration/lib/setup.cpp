@@ -8,6 +8,7 @@
 #include "base/config.h"
 #include "render/shortcuts_init.h"
 #include "win/shortcuts_init.h"
+#include <base/backend/wlroots/helpers.h>
 #include <desktop/kde/platform.h>
 #include <input/wayland/platform.h>
 #include <render/wayland/platform.h>
@@ -64,11 +65,13 @@ setup::setup(std::string const& test_name,
     qunsetenv("XKB_DEFAULT_VARIANT");
     qunsetenv("XKB_DEFAULT_OPTIONS");
 
-    base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::SimpleConfig, ""),
-                                    socket_name,
-                                    flags,
-                                    base::backend::wlroots::start_options::headless);
-    base->operation_mode = mode;
+    base = std::make_unique<base_t>(base::wayland::platform_arguments{
+        .config = base::config(KConfig::OpenFlag::SimpleConfig, ""),
+        .socket_name = socket_name,
+        .flags = flags,
+        .mode = mode,
+        .headless = true,
+    });
 
     auto headless_backend = base::backend::wlroots::get_headless_backend(base->backend.native);
     auto out = wlr_headless_add_output(headless_backend, 1280, 1024);

@@ -5,13 +5,32 @@
 */
 #pragma once
 
+#include <base/config.h>
 #include <base/platform_helpers.h>
 #include <base/seat/backend/wlroots/session.h>
+#include <base/types.h>
+#include <utils/flags.h>
 
 #include <QApplication>
+#include <string>
 
 namespace KWin::base::wayland
 {
+
+enum class start_options {
+    none = 0x0,
+    lock_screen = 0x1,
+    no_lock_screen_integration = 0x2,
+    no_global_shortcuts = 0x4,
+};
+
+struct platform_arguments {
+    base::config config;
+    std::string socket_name;
+    start_options flags{start_options::none};
+    operation_mode mode{operation_mode::wayland};
+    bool headless{false};
+};
 
 template<typename Platform>
 void platform_cleanup(Platform& platform)
@@ -59,3 +78,5 @@ int exec(Platform& platform, QApplication& app)
 }
 
 }
+
+ENUM_FLAGS(KWin::base::wayland::start_options)
