@@ -21,7 +21,6 @@ int main(int argc, char* argv[])
     using base_t = base::wayland::platform<>;
     base_t base({.config = base::config(KConfig::OpenFlag::FullConfig, "kwinft-minimalrc")});
 
-    base.options = base::create_options(base::operation_mode::wayland, base.config.main);
     base.mod.render = std::make_unique<base_t::render_t>(base);
     base.mod.input = std::make_unique<input::wayland::platform<base_t>>(
         base, input::config(KConfig::NoGlobals));

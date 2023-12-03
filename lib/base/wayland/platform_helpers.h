@@ -7,6 +7,7 @@
 
 #include <app_singleton.h>
 #include <base/config.h>
+#include <base/options.h>
 #include <base/platform_helpers.h>
 #include <base/seat/backend/wlroots/session.h>
 #include <base/types.h>
@@ -59,6 +60,8 @@ void platform_init(Platform& platform)
         platform.backend.wlroots_session, platform.backend.native);
     session->take_control(platform.server->display->native());
     platform.session = std::move(session);
+
+    platform.options = create_options(platform.operation_mode, platform.config.main);
 
     base::platform_init(platform);
 }

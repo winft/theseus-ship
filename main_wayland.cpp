@@ -146,8 +146,6 @@ void ApplicationWayland::start(base::operation_mode mode,
         .flags = flags,
     });
 
-    base->options = base::create_options(mode, base->config.main);
-
     base->mod.render = std::make_unique<base_t::render_t>(*base);
 
     base->mod.input = std::make_unique<base_t::input_t>(*base, input::config(KConfig::NoGlobals));
