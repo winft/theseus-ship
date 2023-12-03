@@ -9,8 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <input/wayland/platform.h>
 #include <script/platform.h>
 
-#include <KCrash>
-#include <KLocalizedString>
 #include <KSignalHandler>
 #include <QApplication>
 #include <iostream>
@@ -23,7 +21,6 @@ int main(int argc, char* argv[])
 {
     using namespace KWin;
 
-    KCrash::setDrKonqiEnabled(false);
     KLocalizedString::setApplicationDomain("kwin");
 
     signal(SIGPIPE, SIG_IGN);
