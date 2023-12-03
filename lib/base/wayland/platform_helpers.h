@@ -20,7 +20,7 @@ namespace KWin::base::wayland
 enum class start_options {
     none = 0x0,
     lock_screen = 0x1,
-    no_lock_screen_integration = 0x2,
+    lock_screen_integration = 0x2,
     no_global_shortcuts = 0x4,
 };
 

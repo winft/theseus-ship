@@ -122,7 +122,7 @@ public:
      */
     bool has_screen_locker_integration() const
     {
-        return !(m_initFlags & start_options::no_lock_screen_integration);
+        return flags(m_initFlags & start_options::lock_screen_integration);
     }
 
     /**

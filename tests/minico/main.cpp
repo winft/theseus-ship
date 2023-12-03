@@ -56,8 +56,7 @@ int main(int argc, char* argv[])
         KSignalHandler::self(), &KSignalHandler::signalReceived, &app, &QCoreApplication::exit);
 
     using base_t = base::wayland::platform<>;
-    base_t base({.config = base::config(KConfig::OpenFlag::FullConfig, "kwinft-minimalrc"),
-                 .flags = base::wayland::start_options::no_lock_screen_integration});
+    base_t base({.config = base::config(KConfig::OpenFlag::FullConfig, "kwinft-minimalrc")});
     base.options = base::create_options(base::operation_mode::wayland, base.config.main);
 
     base.mod.render = std::make_unique<base_t::render_t>(base);

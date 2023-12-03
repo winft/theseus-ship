@@ -389,8 +389,8 @@ int main(int argc, char* argv[])
     auto flags = KWin::base::wayland::start_options::none;
     if (parser.isSet(screenLockerOption)) {
         flags = KWin::base::wayland::start_options::lock_screen;
-    } else if (parser.isSet(noScreenLockerOption)) {
-        flags = KWin::base::wayland::start_options::no_lock_screen_integration;
+    } else if (!parser.isSet(noScreenLockerOption)) {
+        flags = KWin::base::wayland::start_options::lock_screen_integration;
     }
     if (parser.isSet(noGlobalShortcutsOption)) {
         flags |= KWin::base::wayland::start_options::no_global_shortcuts;

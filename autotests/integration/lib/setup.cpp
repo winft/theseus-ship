@@ -34,7 +34,7 @@ setup::setup(std::string const& test_name)
 }
 
 setup::setup(std::string const& test_name, base::operation_mode mode)
-    : setup(test_name, mode, base::wayland::start_options::none)
+    : setup(test_name, mode, base::wayland::start_options::lock_screen_integration)
 {
 }
 
