@@ -69,7 +69,7 @@ private:
     using base_t = base::x11::platform<base_mod>;
     base_t base;
 
-    QScopedPointer<KWinSelectionOwner> owner;
+    std::unique_ptr<KWinSelectionOwner> owner;
     std::unique_ptr<win::x11::xcb_event_filter<base_t::space_t>> event_filter;
     bool m_replace;
 };

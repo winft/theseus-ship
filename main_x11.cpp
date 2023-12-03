@@ -130,7 +130,6 @@ int ApplicationX11::crashes = 0;
 ApplicationX11::ApplicationX11(int& argc, char** argv)
     : QApplication(argc, argv)
     , base{base::config(KConfig::OpenFlag::FullConfig, "kwinrc")}
-    , owner()
     , m_replace(false)
 {
     app_init();
@@ -142,7 +141,7 @@ ApplicationX11::ApplicationX11(int& argc, char** argv)
 ApplicationX11::~ApplicationX11()
 {
     base.mod.space.reset();
-    if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE) {
+    if (owner && owner->ownerWindow() != XCB_WINDOW_NONE) {
         // If there was no --replace (no new WM)
         xcb_set_input_focus(base.x11_data.connection,
                             XCB_INPUT_FOCUS_POINTER_ROOT,
@@ -180,8 +179,9 @@ void ApplicationX11::start()
     base.x11_data.screen_number = QX11Info::appScreen();
     base::x11::xcb::extensions::create(base.x11_data);
 
-    owner.reset(new KWinSelectionOwner(base.x11_data.connection, base.x11_data.screen_number));
-    connect(owner.data(), &KWinSelectionOwner::failedToClaimOwnership, [] {
+    owner = std::make_unique<KWinSelectionOwner>(base.x11_data.connection,
+                                                 base.x11_data.screen_number);
+    QObject::connect(owner.get(), &KWinSelectionOwner::failedToClaimOwnership, [] {
         fputs(i18n("kwin: unable to claim manager selection, another wm running? (try using "
                    "--replace)\n")
                   .toLocal8Bit()
@@ -189,8 +189,9 @@ void ApplicationX11::start()
               stderr);
         ::exit(1);
     });
-    connect(owner.data(), &KWinSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
-    connect(owner.data(), &KWinSelectionOwner::claimedOwnership, [this] {
+    QObject::connect(
+        owner.get(), &KWinSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
+    QObject::connect(owner.get(), &KWinSelectionOwner::claimedOwnership, [this] {
         base.options = base::create_options(base::operation_mode::x11, base.config.main);
 
         // Check  whether another windowmanager is running
