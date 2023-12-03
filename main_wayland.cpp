@@ -7,45 +7,19 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "main.h"
 
-#include "base/wayland/server.h"
-#include "input/wayland/cursor.h"
-#include "input/wayland/redirect.h"
-#include "render/effects.h"
-#include "render/shortcuts_init.h"
-#include "script/platform.h"
-#include "win/shortcuts_init.h"
-#include "win/wayland/space.h"
-#include "xwl/xwayland.h"
 #include <base/wayland/app_singleton.h>
 #include <desktop/kde/platform.h>
-#include <input/wayland/platform.h>
-#include <render/wayland/xwl_platform.h>
+#include <render/shortcuts_init.h>
+#include <win/shortcuts_init.h>
 
-// Wrapland
-#include <Wrapland/Server/display.h>
-#include <Wrapland/Server/seat.h>
-// KDE
-#include <KLocalizedString>
-#include <KPluginMetaData>
 #include <KShell>
 #include <KSignalHandler>
 #include <KUpdateLaunchEnvironmentJob>
-
-// Qt
 #include <QApplication>
 #include <QCommandLineParser>
-#include <QDBusConnection>
 #include <QDebug>
-#include <QFileInfo>
 #include <QProcess>
-#include <QWindow>
-#include <qplatformdefs.h>
-
-#include <sched.h>
 #include <sys/resource.h>
-
-#include <iomanip>
-#include <iostream>
 
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
 Q_IMPORT_PLUGIN(KWindowSystemKWinPlugin)
