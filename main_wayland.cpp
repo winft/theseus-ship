@@ -25,7 +25,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/seat.h>
 // KDE
-#include <KCrash>
 #include <KLocalizedString>
 #include <KPluginMetaData>
 #include <KShell>
@@ -87,14 +86,6 @@ static void restoreNofileLimit()
                   << std::endl;
     }
 }
-
-void disableDrKonqi()
-{
-    KCrash::setDrKonqiEnabled(false);
-}
-// run immediately, before Q_CORE_STARTUP functions
-// that would enable drkonqi
-Q_CONSTRUCTOR_FUNCTION(disableDrKonqi)
 
 //************************************
 // ApplicationWayland

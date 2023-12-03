@@ -346,7 +346,6 @@ target_link_libraries(kwin_wayland
   KF6IdleTimeKWinPlugin
   KF6WindowSystemKWinPlugin
   KWinQpaPlugin
-  KF6::Crash
   KF6::DBusAddons
 )
 
