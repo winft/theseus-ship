@@ -296,68 +296,74 @@ int main(int argc, char* argv[])
                      &QCoreApplication::exit);
 
     KWin::app_create_about_data();
-    QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
-                                      i18n("Start a rootless Xwayland server."));
-    QCommandLineOption waylandSocketOption(
-        QStringList{QStringLiteral("s"), QStringLiteral("socket")},
-        i18n("Name of the Wayland socket to listen on. If not set \"wayland-0\" is used."),
-        QStringLiteral("socket"));
+
+    struct {
+        QCommandLineOption xwl = {
+            QStringLiteral("xwayland"),
+            i18n("Start a rootless Xwayland server."),
+        };
+        QCommandLineOption socket = {
+            QStringList{QStringLiteral("s"), QStringLiteral("socket")},
+            i18n("Name of the Wayland socket to listen on. If not set \"wayland-0\" is used."),
+            QStringLiteral("socket"),
+        };
+        QCommandLineOption lockscreen = {
+            QStringLiteral("lockscreen"),
+            i18n("Starts the session in locked mode."),
+        };
+        QCommandLineOption no_lockscreen = {
+            QStringLiteral("no-lockscreen"),
+            i18n("Starts the session without lock screen support."),
+        };
+        QCommandLineOption no_global_shortcuts = {
+            QStringLiteral("no-global-shortcuts"),
+            i18n("Starts the session without global shortcuts support."),
+        };
+        QCommandLineOption exit_with_session = {
+            QStringLiteral("exit-with-session"),
+            i18n("Exit after the session application, which is started by KWin, closed."),
+            QStringLiteral("/path/to/session"),
+        };
+    } options;
 
     QCommandLineParser parser;
     parser.setApplicationDescription(i18n("KWinFT Wayland Window Manager"));
     KAboutData::applicationData().setupCommandLine(&parser);
 
-    parser.addOption(xwaylandOption);
-    parser.addOption(waylandSocketOption);
-
-    QCommandLineOption screenLockerOption(QStringLiteral("lockscreen"),
-                                          i18n("Starts the session in locked mode."));
-    parser.addOption(screenLockerOption);
-
-    QCommandLineOption noScreenLockerOption(
-        QStringLiteral("no-lockscreen"), i18n("Starts the session without lock screen support."));
-    parser.addOption(noScreenLockerOption);
-
-    QCommandLineOption noGlobalShortcutsOption(
-        QStringLiteral("no-global-shortcuts"),
-        i18n("Starts the session without global shortcuts support."));
-    parser.addOption(noGlobalShortcutsOption);
-
-    QCommandLineOption exitWithSessionOption(
-        QStringLiteral("exit-with-session"),
-        i18n("Exit after the session application, which is started by KWin, closed."),
-        QStringLiteral("/path/to/session"));
-    parser.addOption(exitWithSessionOption);
-
-    parser.addPositionalArgument(
-        QStringLiteral("applications"),
-        i18n("Applications to start once Wayland and Xwayland server are started"),
-        QStringLiteral("[/path/to/application...]"));
+    parser.addOption(options.xwl);
+    parser.addOption(options.socket);
+    parser.addOption(options.no_lockscreen);
+    parser.addOption(options.no_global_shortcuts);
+    parser.addOption(options.lockscreen);
+    parser.addOption(options.exit_with_session);
+    parser.addPositionalArgument(QStringLiteral("applications"),
+                                 i18n("Applications to start once server is started"),
+                                 QStringLiteral("[/path/to/application...]"));
 
     parser.process(*app.qapp);
     KAboutData::applicationData().processCommandLine(&parser);
 
-    qDebug("Starting KWinFT (Wayland) %s", KWIN_VERSION_STRING);
-
-    if (parser.isSet(exitWithSessionOption)) {
-        a.setSessionArgument(parser.value(exitWithSessionOption));
+    if (parser.isSet(options.exit_with_session)) {
+        a.setSessionArgument(parser.value(options.exit_with_session));
     }
 
     auto flags = KWin::base::wayland::start_options::none;
-    if (parser.isSet(screenLockerOption)) {
+    if (parser.isSet(options.lockscreen)) {
         flags = KWin::base::wayland::start_options::lock_screen;
-    } else if (!parser.isSet(noScreenLockerOption)) {
+    } else if (!parser.isSet(options.no_lockscreen)) {
         flags = KWin::base::wayland::start_options::lock_screen_integration;
     }
-    if (parser.isSet(noGlobalShortcutsOption)) {
+    if (parser.isSet(options.no_global_shortcuts)) {
         flags |= KWin::base::wayland::start_options::no_global_shortcuts;
     }
 
-    auto op_mode = parser.isSet(xwaylandOption) ? KWin::base::operation_mode::xwayland
-                                                : KWin::base::operation_mode::wayland;
+    auto op_mode = parser.isSet(options.xwl) ? KWin::base::operation_mode::xwayland
+                                             : KWin::base::operation_mode::wayland;
 
     a.setApplicationsToStart(parser.positionalArguments());
-    a.start(op_mode, parser.value(waylandSocketOption).toStdString(), flags, environment);
+
+    qDebug("Starting KWinFT (Wayland) %s", KWIN_VERSION_STRING);
+    a.start(op_mode, parser.value(options.socket).toStdString(), flags, environment);
 
     return app.qapp->exec();
 }
