@@ -370,6 +370,8 @@ int main(int argc, char* argv[])
     parser.process(*app.qapp);
     KAboutData::applicationData().processCommandLine(&parser);
 
+    qDebug("Starting KWinFT (Wayland) %s", KWIN_VERSION_STRING);
+
     if (parser.isSet(exitWithSessionOption)) {
         a.setSessionArgument(parser.value(exitWithSessionOption));
     }

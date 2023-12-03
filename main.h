@@ -25,8 +25,6 @@ namespace KWin
 
 inline void app_init()
 {
-    qDebug("Starting KWinFT %s", KWIN_VERSION_STRING);
-
     if (!Perf::Ftrace::setEnabled(qEnvironmentVariableIsSet("KWIN_PERF_FTRACE"))) {
         qCWarning(KWIN_CORE) << "Can't enable Ftrace via environment variable.";
     }

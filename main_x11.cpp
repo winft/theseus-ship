@@ -450,6 +450,8 @@ int main(int argc, char* argv[])
 
     parser.process(a);
 
+    qDebug("Starting KWinFT (X11) %s", KWIN_VERSION_STRING);
+
     KAboutData::applicationData().processCommandLine(&parser);
     a.crashes = parser.value("crashes").toInt();
 
