@@ -435,12 +435,16 @@ int main(int argc, char* argv[])
 
     KWin::app_create_about_data();
 
+    QCommandLineOption crashesOption(
+        "crashes", i18n("Indicate that KWin has recently crashed n times"), QStringLiteral("n"));
     QCommandLineOption replaceOption(
         QStringLiteral("replace"),
         i18n("Replace already-running ICCCM2.0-compliant window manager"));
 
     QCommandLineParser parser;
     KWin::app_setup_command_line(&parser);
+
+    parser.addOption(crashesOption);
     parser.addOption(replaceOption);
 
     parser.process(a);
