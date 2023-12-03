@@ -59,12 +59,24 @@ static rlimit originalNofileLimit = {
     .rlim_max = 0,
 };
 
-static bool bumpNofileLimit()
+static void restoreNofileLimit()
 {
+    if (setrlimit(RLIMIT_NOFILE, &originalNofileLimit) == -1) {
+        std::cerr << "Failed to restore RLIMIT_NOFILE limit, legacy apps might be broken"
+                  << std::endl;
+    }
+}
+
+static void bumpNofileLimit()
+{
+    // It's easy to exceed the file descriptor limit because many things are backed using fds
+    // nowadays, e.g. dmabufs, shm buffers, etc. Bump the RLIMIT_NOFILE limit to handle that.
+    // Some apps may still use select(), so we reset the limit to its original value in fork().
+
     if (getrlimit(RLIMIT_NOFILE, &originalNofileLimit) == -1) {
         std::cerr << "Failed to bump RLIMIT_NOFILE limit, getrlimit() failed: " << strerror(errno)
                   << std::endl;
-        return false;
+        return;
     }
 
     rlimit limit = originalNofileLimit;
@@ -73,18 +85,10 @@ static bool bumpNofileLimit()
     if (setrlimit(RLIMIT_NOFILE, &limit) == -1) {
         std::cerr << "Failed to bump RLIMIT_NOFILE limit, setrlimit() failed: " << strerror(errno)
                   << std::endl;
-        return false;
+        return;
     }
 
-    return true;
-}
-
-static void restoreNofileLimit()
-{
-    if (setrlimit(RLIMIT_NOFILE, &originalNofileLimit) == -1) {
-        std::cerr << "Failed to restore RLIMIT_NOFILE limit, legacy apps might be broken"
-                  << std::endl;
-    }
+    pthread_atfork(nullptr, nullptr, restoreNofileLimit);
 }
 
 //************************************
@@ -267,6 +271,7 @@ int main(int argc, char* argv[])
     }
 
     KLocalizedString::setApplicationDomain("kwin");
+    KWin::bumpNofileLimit();
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -276,13 +281,6 @@ int main(int argc, char* argv[])
     sigaddset(&userSignals, SIGUSR1);
     sigaddset(&userSignals, SIGUSR2);
     pthread_sigmask(SIG_BLOCK, &userSignals, nullptr);
-
-    // It's easy to exceed the file descriptor limit because many things are backed using fds
-    // nowadays, e.g. dmabufs, shm buffers, etc. Bump the RLIMIT_NOFILE limit to handle that.
-    // Some apps may still use select(), so we reset the limit to its original value in fork().
-    if (KWin::bumpNofileLimit()) {
-        pthread_atfork(nullptr, nullptr, KWin::restoreNofileLimit);
-    }
 
     auto environment = QProcessEnvironment::systemEnvironment();
 
