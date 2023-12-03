@@ -57,6 +57,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
             </property>
            </widget>
           </item>
+          <!--
           <item row="1" column="0">
            <widget class="QLabel" name="label_3">
             <property name="text">
@@ -80,6 +81,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
             </property>
            </widget>
           </item>
+          -->
          </layout>
         </widget>
        </item>
@@ -504,12 +506,14 @@ otherwise it will remain active</string>
    <extends>QPushButton</extends>
    <header>kcolorbutton.h</header>
   </customwidget>
+  <!--
   <customwidget>
    <class>KUrlRequester</class>
    <extends>QFrame</extends>
    <header>kurlrequester.h</header>
    <container>1</container>
   </customwidget>
+  -->
   <customwidget>
    <class>KShortcutsEditor</class>
    <extends>QWidget</extends>

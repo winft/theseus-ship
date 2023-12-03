@@ -71,7 +71,9 @@ CubeEffectConfig::CubeEffectConfig(QObject* parent, const KPluginMetaData& data)
     capsSelectionChanged();
     connect(
         m_ui.kcfg_Caps, &QCheckBox::stateChanged, this, &CubeEffectConfig::capsSelectionChanged);
+#if 0
     m_ui.kcfg_Wallpaper->setNameFilter(QStringLiteral("*.png *.jpeg *.jpg "));
+#endif
     CubeConfig::instance(KWIN_CONFIG);
     addConfig(CubeConfig::self(), &m_ui);
     load();

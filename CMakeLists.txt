@@ -85,7 +85,6 @@ find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
     Declarative
     KCMUtils
-    KIO
     NewStuff
     Service
     XmlGui
