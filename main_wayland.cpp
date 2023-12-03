@@ -34,6 +34,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KUpdateLaunchEnvironmentJob>
 
 // Qt
+#include <QApplication>
 #include <QCommandLineParser>
 #include <QDBusConnection>
 #include <QDebug>
@@ -115,8 +116,8 @@ void gainRealTime()
 // ApplicationWayland
 //************************************
 
-ApplicationWayland::ApplicationWayland(int& argc, char** argv)
-    : QApplication(argc, argv)
+ApplicationWayland::ApplicationWayland(QApplication& app)
+    : app{&app}
 {
     app_init();
 }
@@ -124,7 +125,7 @@ ApplicationWayland::ApplicationWayland(int& argc, char** argv)
 ApplicationWayland::~ApplicationWayland()
 {
     if (exit_with_process && exit_with_process->state() != QProcess::NotRunning) {
-        QObject::disconnect(exit_with_process, nullptr, this, nullptr);
+        QObject::disconnect(exit_with_process, nullptr, app, nullptr);
         exit_with_process->terminate();
         exit_with_process->waitForFinished(5000);
         exit_with_process = nullptr;
@@ -138,8 +139,8 @@ void ApplicationWayland::start(base::operation_mode mode,
 {
     assert(mode != base::operation_mode::x11);
 
-    setQuitOnLastWindowClosed(false);
-    setQuitLockEnabled(false);
+    app->setQuitOnLastWindowClosed(false);
+    app->setQuitLockEnabled(false);
 
     base = std::make_unique<base_t>(base::wayland::platform_arguments{
         .config = base::config(KConfig::OpenFlag::FullConfig, "kwinrc"),
@@ -215,27 +216,27 @@ void ApplicationWayland::startSession()
         QStringList arguments = KShell::splitArgs(m_sessionArgument);
         if (!arguments.isEmpty()) {
             QString program = arguments.takeFirst();
-            auto p = new QProcess(this);
+            auto p = new QProcess(app);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
             p->setProcessEnvironment(process_environment);
-            connect(p,
-                    qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
-                    this,
-                    [this, p](int code, QProcess::ExitStatus status) {
-                        exit_with_process = nullptr;
-                        p->deleteLater();
-                        if (status == QProcess::CrashExit) {
-                            qWarning() << "Session process has crashed";
-                            QCoreApplication::exit(-1);
-                            return;
-                        }
+            QObject::connect(p,
+                             qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
+                             app,
+                             [this, p](int code, QProcess::ExitStatus status) {
+                                 exit_with_process = nullptr;
+                                 p->deleteLater();
+                                 if (status == QProcess::CrashExit) {
+                                     qWarning() << "Session process has crashed";
+                                     QCoreApplication::exit(-1);
+                                     return;
+                                 }
 
-                        if (code) {
-                            qWarning() << "Session process exited with code" << code;
-                        }
+                                 if (code) {
+                                     qWarning() << "Session process exited with code" << code;
+                                 }
 
-                        QCoreApplication::exit(code);
-                    });
+                                 QCoreApplication::exit(code);
+                             });
             p->setProgram(program);
             p->setArguments(arguments);
             p->start();
@@ -257,7 +258,7 @@ void ApplicationWayland::startSession()
             QString program = arguments.takeFirst();
             // note: this will kill the started process when we exit
             // this is going to happen anyway as we are the wayland and X server the app connects to
-            auto p = new QProcess(this);
+            auto p = new QProcess(app);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
             p->setProcessEnvironment(process_environment);
             p->setProgram(program);
@@ -272,7 +273,7 @@ void ApplicationWayland::startSession()
     // there the service name comes from), but we can also do it in a plain setup without session.
     // Registering the service names indicates that we're live and all env vars are exported.
     auto env_sync_job = new KUpdateLaunchEnvironmentJob(process_environment);
-    QObject::connect(env_sync_job, &KUpdateLaunchEnvironmentJob::finished, this, []() {
+    QObject::connect(env_sync_job, &KUpdateLaunchEnvironmentJob::finished, app, []() {
         QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWinWrapper"));
     });
 }
@@ -324,7 +325,8 @@ int main(int argc, char* argv[])
     qputenv("QSG_RENDER_LOOP", "basic");
 
     KWin::base::app_singleton app_singleton;
-    KWin::ApplicationWayland a(argc, argv);
+    QApplication app(argc, argv);
+    KWin::ApplicationWayland a(app);
 
     // Reset QT_QPA_PLATFORM so we don't propagate it to our children (e.g. apps launched from the
     // overview effect).
@@ -334,7 +336,7 @@ int main(int argc, char* argv[])
     KSignalHandler::self()->watchSignal(SIGINT);
     KSignalHandler::self()->watchSignal(SIGHUP);
     QObject::connect(
-        KSignalHandler::self(), &KSignalHandler::signalReceived, &a, &QCoreApplication::exit);
+        KSignalHandler::self(), &KSignalHandler::signalReceived, &app, &QCoreApplication::exit);
 
     KWin::app_create_about_data();
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
@@ -379,7 +381,7 @@ int main(int argc, char* argv[])
         i18n("Applications to start once Wayland and Xwayland server are started"),
         QStringLiteral("[/path/to/application...]"));
 
-    parser.process(a);
+    parser.process(app);
     KWin::app_process_command_line(a, &parser);
 
     if (parser.isSet(exitWithSessionOption)) {
@@ -402,5 +404,5 @@ int main(int argc, char* argv[])
     a.setApplicationsToStart(parser.positionalArguments());
     a.start(op_mode, parser.value(waylandSocketOption).toStdString(), flags, environment);
 
-    return a.exec();
+    return app.exec();
 }
