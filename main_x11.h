@@ -47,7 +47,7 @@ class ApplicationX11 : public QApplication
 {
     Q_OBJECT
 public:
-    ApplicationX11(int &argc, char **argv);
+    ApplicationX11(int& argc, char** argv);
     ~ApplicationX11() override;
 
     void start();

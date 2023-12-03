@@ -51,10 +51,12 @@ public:
                base::wayland::start_options flags,
                QProcessEnvironment environment);
 
-    void setApplicationsToStart(const QStringList &applications) {
+    void setApplicationsToStart(const QStringList& applications)
+    {
         m_applicationsToStart = applications;
     }
-    void setSessionArgument(const QString &session) {
+    void setSessionArgument(const QString& session)
+    {
         m_sessionArgument = session;
     }
 
