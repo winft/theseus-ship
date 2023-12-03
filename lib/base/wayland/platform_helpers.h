@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include <base/app_singleton.h>
+#include <app_singleton.h>
 #include <base/config.h>
 #include <base/platform_helpers.h>
 #include <base/seat/backend/wlroots/session.h>

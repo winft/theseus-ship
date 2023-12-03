@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "config-kwin.h"
 #include "main.h"
 
-#include "base/app_singleton.h"
 #include "base/wayland/server.h"
 #include "input/wayland/cursor.h"
 #include "input/wayland/redirect.h"
@@ -18,6 +17,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/shortcuts_init.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
+#include <base/wayland/app_singleton.h>
 #include <desktop/kde/platform.h>
 #include <input/wayland/platform.h>
 #include <render/wayland/xwl_platform.h>
@@ -321,7 +321,7 @@ int main(int argc, char* argv[])
     qunsetenv("QT_DEVICE_PIXEL_RATIO");
     qputenv("QSG_RENDER_LOOP", "basic");
 
-    KWin::base::app_singleton app(argc, argv);
+    KWin::base::wayland::app_singleton app(argc, argv);
     KWin::ApplicationWayland a(*app.qapp);
 
     // Reset QT_QPA_PLATFORM so we don't propagate it to our children (e.g. apps launched from the

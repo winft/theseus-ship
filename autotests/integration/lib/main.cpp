@@ -5,8 +5,8 @@
 */
 #include "catch_macros.h"
 
-#include "base/app_singleton.h"
 #include "helpers.h"
+#include <base/wayland/app_singleton.h>
 
 #include <KCrash>
 #include <QApplication>
@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 
     KWin::detail::test::prepare_app_env(argv[0]);
 
-    KWin::base::app_singleton app(argc, argv);
+    KWin::base::wayland::app_singleton app(argc, argv);
 
     auto const own_path = app.qapp->libraryPaths().constLast();
     app.qapp->removeLibraryPath(own_path);

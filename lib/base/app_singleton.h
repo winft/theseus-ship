@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include <base/singleton_interface.h>
+
 #include <QApplication>
 #include <QObject>
 #include <kwin_export.h>
@@ -16,8 +18,19 @@ class KWIN_EXPORT app_singleton : public QObject
 {
     Q_OBJECT
 public:
-    app_singleton(int& argc, char** argv);
     std::unique_ptr<QApplication> qapp;
+
+protected:
+    app_singleton()
+    {
+        singleton_interface::app_singleton = this;
+    }
+
+    void prepare_qapp()
+    {
+        qapp->setQuitOnLastWindowClosed(false);
+        qapp->setQuitLockEnabled(false);
+    }
 
 Q_SIGNALS:
     void platform_created();

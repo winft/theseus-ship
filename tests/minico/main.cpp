@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include <base/app_singleton.h>
+#include <base/wayland/app_singleton.h>
 #include <base/wayland/platform.h>
 #include <desktop/platform.h>
 #include <input/wayland/platform.h>
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
     qunsetenv("QT_DEVICE_PIXEL_RATIO");
     qputenv("QSG_RENDER_LOOP", "basic");
 
-    KWin::base::app_singleton app(argc, argv);
+    KWin::base::wayland::app_singleton app(argc, argv);
 
     qunsetenv("QT_QPA_PLATFORM");
 

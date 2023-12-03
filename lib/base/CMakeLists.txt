@@ -37,7 +37,6 @@ target_sources(base
       types.h
       utils.h
   PRIVATE
-    app_singleton.cpp
     os/clock/skew_notifier.cpp
     os/clock/skew_notifier_engine.cpp
     seat/session.cpp
@@ -124,6 +123,7 @@ target_sources(base-wl
     FILE_SET HEADERS
     BASE_DIRS wayland
     FILES
+      wayland/app_singleton.h
       wayland/filtered_display.h
       wayland/output.h
       wayland/output_helpers.h
