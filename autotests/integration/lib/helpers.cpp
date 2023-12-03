@@ -391,12 +391,10 @@ void prepare_app_env(std::string const& qpa_plugin_path)
 {
     QStandardPaths::setTestModeEnabled(true);
 
-    setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);
     setenv(
         "QT_QPA_PLATFORM_PLUGIN_PATH",
         QFileInfo(QString::fromStdString(qpa_plugin_path)).absolutePath().toLocal8Bit().constData(),
         true);
-    setenv("KWIN_FORCE_OWN_QPA", "1", true);
     setenv("XDG_CURRENT_DESKTOP", "KDE", true);
     setenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL", "0", true);
 

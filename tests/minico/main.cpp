@@ -32,15 +32,7 @@ int main(int argc, char* argv[])
     sigaddset(&userSignals, SIGUSR2);
     pthread_sigmask(SIG_BLOCK, &userSignals, nullptr);
 
-    setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);
-    setenv("KWIN_FORCE_OWN_QPA", "1", true);
-
-    qunsetenv("QT_DEVICE_PIXEL_RATIO");
-    qputenv("QSG_RENDER_LOOP", "basic");
-
     KWin::base::wayland::app_singleton app(argc, argv);
-
-    qunsetenv("QT_QPA_PLATFORM");
 
     KSignalHandler::self()->watchSignal(SIGTERM);
     KSignalHandler::self()->watchSignal(SIGINT);

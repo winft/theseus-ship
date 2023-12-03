@@ -21,8 +21,7 @@ QPlatformIntegration* KWinIntegrationPlugin::create(const QString& system,
                                                     const QStringList& paramList)
 {
     Q_UNUSED(paramList)
-    if (!QCoreApplication::applicationFilePath().endsWith(QLatin1String("kwin_wayland"))
-        && !qEnvironmentVariableIsSet("KWIN_FORCE_OWN_QPA")) {
+    if (!qEnvironmentVariableIsSet("KWIN_FORCE_OWN_QPA")) {
         // Not KWin
         return nullptr;
     }

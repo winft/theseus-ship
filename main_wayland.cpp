@@ -315,18 +315,8 @@ int main(int argc, char* argv[])
 
     auto environment = QProcessEnvironment::systemEnvironment();
 
-    // enforce our internal qpa plugin, unfortunately command line switch has precedence
-    setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);
-
-    qunsetenv("QT_DEVICE_PIXEL_RATIO");
-    qputenv("QSG_RENDER_LOOP", "basic");
-
     KWin::base::wayland::app_singleton app(argc, argv);
     KWin::ApplicationWayland a(*app.qapp);
-
-    // Reset QT_QPA_PLATFORM so we don't propagate it to our children (e.g. apps launched from the
-    // overview effect).
-    qunsetenv("QT_QPA_PLATFORM");
 
     KSignalHandler::self()->watchSignal(SIGTERM);
     KSignalHandler::self()->watchSignal(SIGINT);
