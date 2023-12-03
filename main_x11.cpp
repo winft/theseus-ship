@@ -448,7 +448,10 @@ int main(int argc, char* argv[])
     parser.addOption(replaceOption);
 
     parser.process(a);
-    KWin::app_process_command_line(a, &parser);
+
+    KAboutData::applicationData().processCommandLine(&parser);
+    a.crashes = parser.value("crashes").toInt();
+
     a.setReplace(parser.isSet(replaceOption));
 
     // perform sanity checks

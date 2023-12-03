@@ -70,17 +70,6 @@ inline void app_setup_command_line(QCommandLineParser* parser)
     KAboutData::applicationData().setupCommandLine(parser);
 }
 
-template<typename App>
-void app_process_command_line(App& app, QCommandLineParser* parser)
-{
-    KAboutData aboutData = KAboutData::applicationData();
-    aboutData.processCommandLine(parser);
-
-    if constexpr (requires(App app) { app.crashes; }) {
-        app.crashes = parser->value("crashes").toInt();
-    }
-}
-
 inline void app_setup_localized_string()
 {
     KLocalizedString::setApplicationDomain("kwin");

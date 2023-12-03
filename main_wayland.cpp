@@ -367,7 +367,7 @@ int main(int argc, char* argv[])
         QStringLiteral("[/path/to/application...]"));
 
     parser.process(*app.qapp);
-    KWin::app_process_command_line(a, &parser);
+    KAboutData::applicationData().processCommandLine(&parser);
 
     if (parser.isSet(exitWithSessionOption)) {
         a.setSessionArgument(parser.value(exitWithSessionOption));
