@@ -73,12 +73,14 @@ public:
         setup_workspace();
 
         using base_t = std::decay_t<decltype(platform.base)>;
-        QObject::connect(&platform.base, &base_t::output_added, this->qobject.get(), [this] {
-            base::wayland::check_outputs_on(this->platform.base);
-        });
-        QObject::connect(&platform.base, &base_t::output_removed, this->qobject.get(), [this] {
-            base::wayland::check_outputs_on(this->platform.base);
-        });
+        QObject::connect(platform.base.qobject.get(),
+                         &base_t::qobject_t::output_added,
+                         this->qobject.get(),
+                         [this] { base::wayland::check_outputs_on(this->platform.base); });
+        QObject::connect(platform.base.qobject.get(),
+                         &base_t::qobject_t::output_removed,
+                         this->qobject.get(),
+                         [this] { base::wayland::check_outputs_on(this->platform.base); });
     }
 
     ~redirect()

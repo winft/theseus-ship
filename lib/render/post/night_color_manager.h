@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "base/logging.h"
 #include "base/os/clock/skew_notifier.h"
 #include "base/output.h"
-#include "base/platform.h"
 #include "base/seat/session.h"
 #include "utils/gamma_ramp.h"
 
@@ -101,8 +100,13 @@ public:
             return;
         }
 
-        QObject::connect(&base, &Base::output_added, qobject.get(), [this] { hard_reset(); });
-        QObject::connect(&base, &Base::output_removed, qobject.get(), [this] { hard_reset(); });
+        QObject::connect(base.qobject.get(), &Base::qobject_t::output_added, qobject.get(), [this] {
+            hard_reset();
+        });
+        QObject::connect(base.qobject.get(),
+                         &Base::qobject_t::output_removed,
+                         qobject.get(),
+                         [this] { hard_reset(); });
 
         assert(base.session);
         QObject::connect(base.session.get(),

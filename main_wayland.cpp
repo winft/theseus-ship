@@ -5,48 +5,21 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "main_wayland.h"
 
-#include "config-kwin.h"
 #include "main.h"
 
-#include "base/app_singleton.h"
-#include "base/wayland/server.h"
-#include "input/wayland/cursor.h"
-#include "input/wayland/redirect.h"
-#include "render/effects.h"
-#include "render/shortcuts_init.h"
-#include "script/platform.h"
-#include "win/shortcuts_init.h"
-#include "win/wayland/space.h"
-#include "xwl/xwayland.h"
+#include <base/wayland/app_singleton.h>
 #include <desktop/kde/platform.h>
-#include <input/wayland/platform.h>
-#include <render/wayland/xwl_platform.h>
+#include <render/shortcuts_init.h>
+#include <win/shortcuts_init.h>
 
-// Wrapland
-#include <Wrapland/Server/display.h>
-#include <Wrapland/Server/seat.h>
-// KDE
-#include <KCrash>
-#include <KLocalizedString>
-#include <KPluginMetaData>
 #include <KShell>
 #include <KSignalHandler>
 #include <KUpdateLaunchEnvironmentJob>
-
-// Qt
+#include <QApplication>
 #include <QCommandLineParser>
-#include <QDBusConnection>
 #include <QDebug>
-#include <QFileInfo>
 #include <QProcess>
-#include <QWindow>
-#include <qplatformdefs.h>
-
-#include <sched.h>
 #include <sys/resource.h>
-
-#include <iomanip>
-#include <iostream>
 
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
 Q_IMPORT_PLUGIN(KWindowSystemKWinPlugin)
@@ -60,26 +33,6 @@ static rlimit originalNofileLimit = {
     .rlim_max = 0,
 };
 
-static bool bumpNofileLimit()
-{
-    if (getrlimit(RLIMIT_NOFILE, &originalNofileLimit) == -1) {
-        std::cerr << "Failed to bump RLIMIT_NOFILE limit, getrlimit() failed: " << strerror(errno)
-                  << std::endl;
-        return false;
-    }
-
-    rlimit limit = originalNofileLimit;
-    limit.rlim_cur = limit.rlim_max;
-
-    if (setrlimit(RLIMIT_NOFILE, &limit) == -1) {
-        std::cerr << "Failed to bump RLIMIT_NOFILE limit, setrlimit() failed: " << strerror(errno)
-                  << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
 static void restoreNofileLimit()
 {
     if (setrlimit(RLIMIT_NOFILE, &originalNofileLimit) == -1) {
@@ -88,69 +41,48 @@ static void restoreNofileLimit()
     }
 }
 
-void disableDrKonqi()
+static void bumpNofileLimit()
 {
-    KCrash::setDrKonqiEnabled(false);
-}
-// run immediately, before Q_CORE_STARTUP functions
-// that would enable drkonqi
-Q_CONSTRUCTOR_FUNCTION(disableDrKonqi)
+    // It's easy to exceed the file descriptor limit because many things are backed using fds
+    // nowadays, e.g. dmabufs, shm buffers, etc. Bump the RLIMIT_NOFILE limit to handle that.
+    // Some apps may still use select(), so we reset the limit to its original value in fork().
 
-enum class RealTimeFlags { DontReset, ResetOnFork };
+    if (getrlimit(RLIMIT_NOFILE, &originalNofileLimit) == -1) {
+        std::cerr << "Failed to bump RLIMIT_NOFILE limit, getrlimit() failed: " << strerror(errno)
+                  << std::endl;
+        return;
+    }
 
-namespace
-{
-void gainRealTime()
-{
-#if HAVE_SCHED_RESET_ON_FORK
-    const int minPriority = sched_get_priority_min(SCHED_RR);
-    sched_param sp;
-    sp.sched_priority = minPriority;
-    sched_setscheduler(0, SCHED_RR | SCHED_RESET_ON_FORK, &sp);
-#endif
-}
+    rlimit limit = originalNofileLimit;
+    limit.rlim_cur = limit.rlim_max;
+
+    if (setrlimit(RLIMIT_NOFILE, &limit) == -1) {
+        std::cerr << "Failed to bump RLIMIT_NOFILE limit, setrlimit() failed: " << strerror(errno)
+                  << std::endl;
+        return;
+    }
+
+    pthread_atfork(nullptr, nullptr, restoreNofileLimit);
 }
 
 //************************************
 // ApplicationWayland
 //************************************
 
-ApplicationWayland::ApplicationWayland(int& argc, char** argv)
-    : QApplication(argc, argv)
+ApplicationWayland::ApplicationWayland(QApplication& app)
+    : app{&app}
 {
     app_init();
 }
 
 ApplicationWayland::~ApplicationWayland()
 {
-    if (!base->server) {
-        return;
-    }
-
-    // need to unload all effects prior to destroying X connection as they might do X calls
-    if (base->mod.render->effects) {
-        base->mod.render->effects->unloadAllEffects();
-    }
-
     if (exit_with_process && exit_with_process->state() != QProcess::NotRunning) {
-        QObject::disconnect(exit_with_process, nullptr, this, nullptr);
+        QObject::disconnect(exit_with_process, nullptr, app, nullptr);
         exit_with_process->terminate();
         exit_with_process->waitForFinished(5000);
         exit_with_process = nullptr;
     }
-
-    // Kill Xwayland before terminating its connection.
-    base->mod.xwayland.reset();
-    base->server->terminateClientConnections();
-
-    if (base->mod.render) {
-        // Block compositor to prevent further compositing from crashing with a null workspace.
-        // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-        base->mod.render->lock();
-    }
-
-    base->mod.space.reset();
-    base->mod.render.reset();
 }
 
 void ApplicationWayland::start(base::operation_mode mode,
@@ -160,35 +92,18 @@ void ApplicationWayland::start(base::operation_mode mode,
 {
     assert(mode != base::operation_mode::x11);
 
-    setQuitOnLastWindowClosed(false);
-    setQuitLockEnabled(false);
+    base = std::make_unique<base_t>(base::wayland::platform_arguments{
+        .config = base::config(KConfig::OpenFlag::FullConfig, "kwinrc"),
+        .socket_name = socket_name,
+        .mode = mode,
+        .flags = flags,
+    });
 
-    base = std::make_unique<base_t>(base::config(KConfig::OpenFlag::FullConfig, "kwinrc"),
-                                    socket_name,
-                                    flags,
-                                    base::backend::wlroots::start_options::none);
-    base->operation_mode = mode;
-
-    base->options = base::create_options(mode, base->config.main);
-
-    try {
-        using render_t = base_t::render_t;
-        base->mod.render = std::make_unique<render_t>(*base);
-    } catch (std::system_error const& exc) {
-        std::cerr << "FATAL ERROR: render creation failed: " << exc.what() << std::endl;
-        exit(exc.code().value());
-    }
+    base->mod.render = std::make_unique<base_t::render_t>(*base);
 
     base->mod.input = std::make_unique<base_t::input_t>(*base, input::config(KConfig::NoGlobals));
     base->mod.input->mod.dbus
         = std::make_unique<input::dbus::device_manager<base_t::input_t>>(*base->mod.input);
-
-    try {
-        base->mod.render->init();
-    } catch (std::exception const&) {
-        std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
-        QCoreApplication::exit(1);
-    }
 
     base->mod.space = std::make_unique<base_t::space_t>(*base->mod.render, *base->mod.input);
     base->mod.space->mod.desktop
@@ -197,7 +112,7 @@ void ApplicationWayland::start(base::operation_mode mode,
     render::init_shortcuts(*base->mod.render);
     base->mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base->mod.space);
 
-    base->mod.render->start(*base->mod.space);
+    base::wayland::platform_start(*base);
 
     if (auto const& name = base->server->display->socket_name(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
@@ -249,27 +164,27 @@ void ApplicationWayland::startSession()
         QStringList arguments = KShell::splitArgs(m_sessionArgument);
         if (!arguments.isEmpty()) {
             QString program = arguments.takeFirst();
-            auto p = new QProcess(this);
+            auto p = new QProcess(app);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
             p->setProcessEnvironment(process_environment);
-            connect(p,
-                    qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
-                    this,
-                    [this, p](int code, QProcess::ExitStatus status) {
-                        exit_with_process = nullptr;
-                        p->deleteLater();
-                        if (status == QProcess::CrashExit) {
-                            qWarning() << "Session process has crashed";
-                            QCoreApplication::exit(-1);
-                            return;
-                        }
+            QObject::connect(p,
+                             qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
+                             app,
+                             [this, p](int code, QProcess::ExitStatus status) {
+                                 exit_with_process = nullptr;
+                                 p->deleteLater();
+                                 if (status == QProcess::CrashExit) {
+                                     qWarning() << "Session process has crashed";
+                                     QCoreApplication::exit(-1);
+                                     return;
+                                 }
 
-                        if (code) {
-                            qWarning() << "Session process exited with code" << code;
-                        }
+                                 if (code) {
+                                     qWarning() << "Session process exited with code" << code;
+                                 }
 
-                        QCoreApplication::exit(code);
-                    });
+                                 QCoreApplication::exit(code);
+                             });
             p->setProgram(program);
             p->setArguments(arguments);
             p->start();
@@ -291,7 +206,7 @@ void ApplicationWayland::startSession()
             QString program = arguments.takeFirst();
             // note: this will kill the started process when we exit
             // this is going to happen anyway as we are the wayland and X server the app connects to
-            auto p = new QProcess(this);
+            auto p = new QProcess(app);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
             p->setProcessEnvironment(process_environment);
             p->setProgram(program);
@@ -306,7 +221,7 @@ void ApplicationWayland::startSession()
     // there the service name comes from), but we can also do it in a plain setup without session.
     // Registering the service names indicates that we're live and all env vars are exported.
     auto env_sync_job = new KUpdateLaunchEnvironmentJob(process_environment);
-    QObject::connect(env_sync_job, &KUpdateLaunchEnvironmentJob::finished, this, []() {
+    QObject::connect(env_sync_job, &KUpdateLaunchEnvironmentJob::finished, app, []() {
         QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWinWrapper"));
     });
 }
@@ -329,9 +244,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    KWin::app_setup_malloc();
-    KWin::app_setup_localized_string();
-    KWin::gainRealTime();
+    KLocalizedString::setApplicationDomain("kwin");
+    KWin::bumpNofileLimit();
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -342,99 +256,88 @@ int main(int argc, char* argv[])
     sigaddset(&userSignals, SIGUSR2);
     pthread_sigmask(SIG_BLOCK, &userSignals, nullptr);
 
-    // It's easy to exceed the file descriptor limit because many things are backed using fds
-    // nowadays, e.g. dmabufs, shm buffers, etc. Bump the RLIMIT_NOFILE limit to handle that.
-    // Some apps may still use select(), so we reset the limit to its original value in fork().
-    if (KWin::bumpNofileLimit()) {
-        pthread_atfork(nullptr, nullptr, KWin::restoreNofileLimit);
-    }
-
     auto environment = QProcessEnvironment::systemEnvironment();
 
-    // enforce our internal qpa plugin, unfortunately command line switch has precedence
-    setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);
-
-    qunsetenv("QT_DEVICE_PIXEL_RATIO");
-    qputenv("QSG_RENDER_LOOP", "basic");
-
-    KWin::base::app_singleton app_singleton;
-    KWin::ApplicationWayland a(argc, argv);
-
-    // Reset QT_QPA_PLATFORM so we don't propagate it to our children (e.g. apps launched from the
-    // overview effect).
-    qunsetenv("QT_QPA_PLATFORM");
+    KWin::base::wayland::app_singleton app(argc, argv);
+    KWin::ApplicationWayland a(*app.qapp);
 
     KSignalHandler::self()->watchSignal(SIGTERM);
     KSignalHandler::self()->watchSignal(SIGINT);
     KSignalHandler::self()->watchSignal(SIGHUP);
-    QObject::connect(
-        KSignalHandler::self(), &KSignalHandler::signalReceived, &a, &QCoreApplication::exit);
+    QObject::connect(KSignalHandler::self(),
+                     &KSignalHandler::signalReceived,
+                     app.qapp.get(),
+                     &QCoreApplication::exit);
 
     KWin::app_create_about_data();
-    QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
-                                      i18n("Start a rootless Xwayland server."));
-    QCommandLineOption waylandSocketOption(
-        QStringList{QStringLiteral("s"), QStringLiteral("socket")},
-        i18n("Name of the Wayland socket to listen on. If not set \"wayland-0\" is used."),
-        QStringLiteral("socket"));
+
+    struct {
+        QCommandLineOption xwl = {
+            QStringLiteral("xwayland"),
+            i18n("Start a rootless Xwayland server."),
+        };
+        QCommandLineOption socket = {
+            QStringList{QStringLiteral("s"), QStringLiteral("socket")},
+            i18n("Name of the Wayland socket to listen on. If not set \"wayland-0\" is used."),
+            QStringLiteral("socket"),
+        };
+        QCommandLineOption lockscreen = {
+            QStringLiteral("lockscreen"),
+            i18n("Starts the session in locked mode."),
+        };
+        QCommandLineOption no_lockscreen = {
+            QStringLiteral("no-lockscreen"),
+            i18n("Starts the session without lock screen support."),
+        };
+        QCommandLineOption no_global_shortcuts = {
+            QStringLiteral("no-global-shortcuts"),
+            i18n("Starts the session without global shortcuts support."),
+        };
+        QCommandLineOption exit_with_session = {
+            QStringLiteral("exit-with-session"),
+            i18n("Exit after the session application, which is started by KWin, closed."),
+            QStringLiteral("/path/to/session"),
+        };
+    } options;
 
     QCommandLineParser parser;
-    KWin::app_setup_command_line(&parser);
+    parser.setApplicationDescription(i18n("KWinFT Wayland Window Manager"));
+    KAboutData::applicationData().setupCommandLine(&parser);
 
-    parser.addOption(xwaylandOption);
-    parser.addOption(waylandSocketOption);
+    parser.addOption(options.xwl);
+    parser.addOption(options.socket);
+    parser.addOption(options.no_lockscreen);
+    parser.addOption(options.no_global_shortcuts);
+    parser.addOption(options.lockscreen);
+    parser.addOption(options.exit_with_session);
+    parser.addPositionalArgument(QStringLiteral("applications"),
+                                 i18n("Applications to start once server is started"),
+                                 QStringLiteral("[/path/to/application...]"));
 
-    QCommandLineOption libinputOption(QStringLiteral("libinput"),
-                                      i18n("Enable libinput support for input events processing. "
-                                           "Note: never use in a nested session.	(deprecated)"));
-    parser.addOption(libinputOption);
+    parser.process(*app.qapp);
+    KAboutData::applicationData().processCommandLine(&parser);
 
-    QCommandLineOption screenLockerOption(QStringLiteral("lockscreen"),
-                                          i18n("Starts the session in locked mode."));
-    parser.addOption(screenLockerOption);
-
-    QCommandLineOption noScreenLockerOption(
-        QStringLiteral("no-lockscreen"), i18n("Starts the session without lock screen support."));
-    parser.addOption(noScreenLockerOption);
-
-    QCommandLineOption noGlobalShortcutsOption(
-        QStringLiteral("no-global-shortcuts"),
-        i18n("Starts the session without global shortcuts support."));
-    parser.addOption(noGlobalShortcutsOption);
-
-    QCommandLineOption exitWithSessionOption(
-        QStringLiteral("exit-with-session"),
-        i18n("Exit after the session application, which is started by KWin, closed."),
-        QStringLiteral("/path/to/session"));
-    parser.addOption(exitWithSessionOption);
-
-    parser.addPositionalArgument(
-        QStringLiteral("applications"),
-        i18n("Applications to start once Wayland and Xwayland server are started"),
-        QStringLiteral("[/path/to/application...]"));
-
-    parser.process(a);
-    KWin::app_process_command_line(a, &parser);
-
-    if (parser.isSet(exitWithSessionOption)) {
-        a.setSessionArgument(parser.value(exitWithSessionOption));
+    if (parser.isSet(options.exit_with_session)) {
+        a.setSessionArgument(parser.value(options.exit_with_session));
     }
 
     auto flags = KWin::base::wayland::start_options::none;
-    if (parser.isSet(screenLockerOption)) {
+    if (parser.isSet(options.lockscreen)) {
         flags = KWin::base::wayland::start_options::lock_screen;
-    } else if (parser.isSet(noScreenLockerOption)) {
-        flags = KWin::base::wayland::start_options::no_lock_screen_integration;
+    } else if (!parser.isSet(options.no_lockscreen)) {
+        flags = KWin::base::wayland::start_options::lock_screen_integration;
     }
-    if (parser.isSet(noGlobalShortcutsOption)) {
+    if (parser.isSet(options.no_global_shortcuts)) {
         flags |= KWin::base::wayland::start_options::no_global_shortcuts;
     }
 
-    auto op_mode = parser.isSet(xwaylandOption) ? KWin::base::operation_mode::xwayland
-                                                : KWin::base::operation_mode::wayland;
+    auto op_mode = parser.isSet(options.xwl) ? KWin::base::operation_mode::xwayland
+                                             : KWin::base::operation_mode::wayland;
 
     a.setApplicationsToStart(parser.positionalArguments());
-    a.start(op_mode, parser.value(waylandSocketOption).toStdString(), flags, environment);
 
-    return a.exec();
+    qDebug("Starting KWinFT (Wayland) %s", KWIN_VERSION_STRING);
+    a.start(op_mode, parser.value(options.socket).toStdString(), flags, environment);
+
+    return app.qapp->exec();
 }

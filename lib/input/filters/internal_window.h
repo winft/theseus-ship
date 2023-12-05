@@ -7,7 +7,6 @@
 
 #include "helpers.h"
 
-#include "base/platform.h"
 #include "base/wayland/server.h"
 #include "input/event_filter.h"
 #include "input/keyboard_redirect.h"

@@ -15,12 +15,12 @@ namespace KWin::base
 
 class app_singleton;
 class output;
-class platform;
+class platform_qobject;
 
 /// Only for exceptional use in environments without dependency injection support (e.g. Qt plugins).
 struct KWIN_EXPORT singleton_interface {
     static base::app_singleton* app_singleton;
-    static base::platform* platform;
+    static base::platform_qobject* platform;
     static std::function<std::vector<output*>()> get_outputs;
 };
 

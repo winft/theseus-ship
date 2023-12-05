@@ -14,6 +14,7 @@
 #include "input/event_spy.h"
 #include "input/qt_event.h"
 #include "utils/blocker.h"
+#include <base/platform_qobject.h>
 #include <win/input.h>
 
 #include <KScreenLocker/KsldApp>
@@ -68,8 +69,8 @@ public:
     {
         device_redirect_init(this);
 
-        QObject::connect(&redirect->platform.base,
-                         &base::platform::topology_changed,
+        QObject::connect(redirect->platform.base.qobject.get(),
+                         &base::platform_qobject::topology_changed,
                          qobject.get(),
                          [this] { updateAfterScreenChange(); });
         if (redirect->platform.base.server->has_screen_locker_integration()) {
@@ -127,10 +128,6 @@ public:
                          &win::space_qobject::wayland_window_added,
                          qobject.get(),
                          setup_move_resize_notify_on_signal);
-
-        // warp the cursor to center of screen
-        warp(QRect({}, redirect->platform.base.topology.size).center());
-        updateAfterScreenChange();
     }
 
     void updateAfterScreenChange()

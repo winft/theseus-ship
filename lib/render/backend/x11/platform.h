@@ -39,6 +39,7 @@ public:
         : render::x11::platform<Base>(base)
         , m_x11Display(QX11Info::display())
     {
+        XRenderUtils::init(base.x11_data.connection, base.x11_data.root_window);
     }
 
     ~platform() override
@@ -60,8 +61,6 @@ public:
         if (!QX11Info::isPlatformX11()) {
             throw std::exception();
         }
-
-        XRenderUtils::init(this->base.x11_data.connection, this->base.x11_data.root_window);
     }
 
     gl::backend<gl::scene<abstract_type>, abstract_type>* get_opengl_backend() override

@@ -49,12 +49,10 @@ public:
         , options{std::make_unique<render::options>(base.operation_mode, base.config.main)}
         , backend{*this}
         , night_color{std::make_unique<render::post::night_color_manager<Base>>(base)}
-        , presentation{std::make_unique<wayland::presentation>(
-              base.get_clockid(),
-              [&] {
-                  return std::make_unique<Wrapland::Server::PresentationManager>(
-                      base.server->display.get());
-              })}
+        , presentation{std::make_unique<wayland::presentation>([&] {
+            return std::make_unique<Wrapland::Server::PresentationManager>(
+                base.server->display.get());
+        })}
         , dbus{std::make_unique<dbus::compositing<type>>(*this)}
     {
         singleton_interface::get_egl_data = [this] { return egl_data; };
@@ -67,11 +65,6 @@ public:
     virtual ~platform()
     {
         singleton_interface::get_egl_data = {};
-    }
-
-    void init()
-    {
-        backend.init();
     }
 
     bool requiresCompositing() const
@@ -143,15 +136,18 @@ public:
                              &space_t::qobject_t::current_subspace_changed,
                              this->qobject.get(),
                              [this] { full_repaint(*this); });
-            QObject::connect(
-                &base, &base::platform::output_removed, this->qobject.get(), [this](auto output) {
-                    for (auto& win : this->space->windows) {
-                        std::visit(overload{[&](auto&& win) {
-                                       remove_all(win->render_data.repaint_outputs, output);
-                                   }},
-                                   win);
-                    }
-                });
+            QObject::connect(base.qobject.get(),
+                             &base::platform_qobject::output_removed,
+                             this->qobject.get(),
+                             [this](auto output) {
+                                 for (auto& win : this->space->windows) {
+                                     std::visit(overload{[&](auto&& win) {
+                                                    remove_all(win->render_data.repaint_outputs,
+                                                               output);
+                                                }},
+                                                win);
+                                 }
+                             });
             QObject::connect(
                 space.qobject.get(), &win::space_qobject::destroyed, this->qobject.get(), [this] {
                     for (auto& output : base.outputs) {

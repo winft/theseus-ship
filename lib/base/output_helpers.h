@@ -86,7 +86,7 @@ void update_output_topology(Base& base)
         topo.max_scale = max_scale;
     }
 
-    Q_EMIT base.topology_changed(old_topo, base.topology);
+    Q_EMIT base.qobject->topology_changed(old_topo, base.topology);
 }
 
 template<typename Base, typename Output>
@@ -97,7 +97,7 @@ void set_current_output(Base& base, Output* output)
     }
     auto old_topo = base.topology;
     base.topology.current = output;
-    Q_EMIT base.current_output_changed(old_topo.current, output);
+    Q_EMIT base.qobject->current_output_changed(old_topo.current, output);
 }
 
 template<typename Base>

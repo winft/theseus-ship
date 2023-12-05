@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "utils/flags.h"
-
 extern "C" {
 #define static
 #include <wlr/backend.h>
@@ -51,11 +49,4 @@ inline wlr_backend* get_headless_backend(wlr_backend* backend)
     return get_backend(backend, wlr_backend_is_headless);
 }
 
-enum class start_options {
-    none = 0x0,
-    headless = 0x1,
-};
-
 }
-
-ENUM_FLAGS(KWin::base::backend::wlroots::start_options)

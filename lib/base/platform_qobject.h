@@ -5,36 +5,32 @@
 */
 #pragma once
 
-#include "config.h"
-#include "options.h"
-#include "output.h"
-#include "output_topology.h"
-#include "seat/session.h"
-#include "types.h"
-
-#include "kwin_export.h"
+#include <base/output.h>
+#include <base/output_topology.h>
 
 #include <QObject>
-#include <memory>
-#include <vector>
+#include <functional>
 
 namespace KWin::base
 {
 
-class KWIN_EXPORT platform : public QObject
+class KWIN_EXPORT platform_qobject : public QObject
 {
     Q_OBJECT
+
 public:
-    ~platform() override;
+    platform_qobject(std::function<double()> get_scale)
+        : get_scale{get_scale}
+    {
+    }
 
-    virtual clockid_t get_clockid() const;
-
-    output_topology topology;
+    std::function<double()> get_scale;
 
 Q_SIGNALS:
     void output_added(KWin::base::output*);
     void output_removed(KWin::base::output*);
-    void topology_changed(output_topology const& old_topo, output_topology const& topo);
+    void topology_changed(KWin::base::output_topology const& old_topo,
+                          KWin::base::output_topology const& topo);
 
     // TODO(romangg): Either remove since it's only used in a test or find a better way to design
     //                the API. The current output is part of the output topology, but it shouldn't

@@ -9,6 +9,7 @@
 #include "output.h"
 #include "platform_helpers.h"
 #include <base/backend/wlroots/events.h>
+#include <base/backend/wlroots/helpers.h>
 #include <base/backend/wlroots/non_desktop_output.h>
 #include <base/logging.h>
 
@@ -37,7 +38,7 @@ public:
 
     using render_t = typename frontend_type::render_t::backend_t;
 
-    backend(Frontend& frontend, start_options options)
+    backend(Frontend& frontend, bool headless)
         : frontend{&frontend}
         , destroyed{std::make_unique<event_receiver<type>>()}
         , new_output{std::make_unique<event_receiver<type>>()}
@@ -47,15 +48,10 @@ public:
         // TODO(romangg): Make this dependent on KWIN_CORE debug verbosity.
         wlr_log_init(WLR_DEBUG, nullptr);
 
-        if (::flags(options & start_options::headless)) {
+        if (headless) {
             native = wlr_headless_backend_create(frontend.server->display->native());
         } else {
-#if HAVE_WLR_SESSION_ON_AUTOCREATE
             native = wlr_backend_autocreate(frontend.server->display->native(), &wlroots_session);
-#else
-            native = wlr_backend_autocreate(frontend.server->display->native());
-            wlroots_session = wlr_backend_get_session(native);
-#endif
         }
 
         destroyed->receiver = this;
@@ -91,13 +87,13 @@ public:
         }
     }
 
-    clockid_t get_clockid() const
+    void start()
     {
-#if HAVE_WLR_PRESENT_CLOCK_MONOTONIC
-        return CLOCK_MONOTONIC;
-#else
-        return wlr_backend_get_presentation_clock(native);
-#endif
+        if (!wlr_backend_start(native)) {
+            throw std::exception();
+        }
+
+        base::update_output_topology(*frontend);
     }
 
     gsl::not_null<Frontend*> frontend;
@@ -109,7 +105,6 @@ public:
     bool align_horizontal{false};
 
 private:
-    void init();
     void setup_drm_leasing(Wrapland::Server::Display* display, wlr_backend* native_drm_backend)
     {
         frontend->drm_lease_device
@@ -117,7 +112,7 @@ private:
 
         QObject::connect(frontend->drm_lease_device.get(),
                          &Wrapland::Server::drm_lease_device_v1::needs_new_client_fd,
-                         frontend,
+                         frontend->qobject.get(),
                          [abs = frontend, native_drm_backend] {
                              // TODO(romangg): wait in case not DRM master at the moment.
                              auto fd = wlr_drm_backend_get_non_master_fd(native_drm_backend);
@@ -125,7 +120,7 @@ private:
                          });
         QObject::connect(frontend->drm_lease_device.get(),
                          &Wrapland::Server::drm_lease_device_v1::leased,
-                         frontend,
+                         frontend->qobject.get(),
                          [this](auto lease) {
                              try {
                                  this->process_drm_leased(lease);
@@ -170,9 +165,11 @@ private:
         leases.push_back(std::make_unique<drm_lease>(lease, outputs));
         auto drm_lease = leases.back().get();
 
-        QObject::connect(drm_lease, &drm_lease::finished, frontend, [this, drm_lease] {
-            remove_all_if(leases, [drm_lease](auto& lease) { return lease.get() == drm_lease; });
-        });
+        QObject::connect(
+            drm_lease, &drm_lease::finished, frontend->qobject.get(), [this, drm_lease] {
+                remove_all_if(leases,
+                              [drm_lease](auto& lease) { return lease.get() == drm_lease; });
+            });
 
         qCDebug(KWIN_CORE) << "DRM resources have been leased to client";
     }

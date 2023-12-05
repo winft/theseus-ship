@@ -27,8 +27,10 @@ public:
     {
         changed_timer->setSingleShot(true);
         changed_timer->setInterval(100);
-        QObject::connect(
-            changed_timer.get(), &QTimer::timeout, &platform, &Platform::update_outputs);
+        QObject::connect(changed_timer.get(),
+                         &QTimer::timeout,
+                         platform.qobject.get(),
+                         [&platform] { platform.update_outputs(); });
     }
 
     bool event(xcb_generic_event_t* event) override

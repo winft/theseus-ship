@@ -111,11 +111,11 @@ bool outputs_apply_config(Base& base, Wrapland::Server::wlr_output_configuration
             if (state.enabled) {
                 assert(!contains(base.outputs, output));
                 base.outputs.push_back(output);
-                Q_EMIT base.output_added(output);
+                Q_EMIT base.qobject->output_added(output);
             } else {
                 assert(contains(base.outputs, output));
                 remove_all(base.outputs, output);
-                Q_EMIT base.output_removed(output);
+                Q_EMIT base.qobject->output_removed(output);
             }
         }
 

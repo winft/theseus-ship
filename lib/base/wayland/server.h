@@ -11,7 +11,7 @@
 
 #include "base/logging.h"
 #include "kwin_export.h"
-#include "utils/flags.h"
+#include <base/wayland/platform_helpers.h>
 
 #include <KScreenLocker/KsldApp>
 #include <QObject>
@@ -35,20 +35,6 @@
 #include <memory>
 #include <sys/socket.h>
 #include <vector>
-
-namespace KWin::base::wayland
-{
-
-enum class start_options {
-    none = 0x0,
-    lock_screen = 0x1,
-    no_lock_screen_integration = 0x2,
-    no_global_shortcuts = 0x4,
-};
-
-}
-
-ENUM_FLAGS(KWin::base::wayland::start_options)
 
 namespace KWin::base::wayland
 {
@@ -136,7 +122,7 @@ public:
      */
     bool has_screen_locker_integration() const
     {
-        return !(m_initFlags & start_options::no_lock_screen_integration);
+        return flags(m_initFlags & start_options::lock_screen_integration);
     }
 
     /**

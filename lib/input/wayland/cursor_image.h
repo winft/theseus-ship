@@ -76,8 +76,8 @@ public:
 
         QObject::connect(
             &cursor, &Cursor::theme_changed, qobject.get(), [this] { m_cursorTheme = {}; });
-        QObject::connect(&redirect.platform.base,
-                         &Cursor::redirect_t::platform_t::base_t::topology_changed,
+        QObject::connect(redirect.platform.base.qobject.get(),
+                         &Cursor::redirect_t::platform_t::base_t::qobject_t::topology_changed,
                          qobject.get(),
                          [this] { m_cursorTheme = {}; });
 

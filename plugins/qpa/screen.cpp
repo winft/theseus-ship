@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "integration.h"
 
 #include "base/output_helpers.h"
-#include "base/platform.h"
 #include "platformcursor.h"
 
 namespace KWin

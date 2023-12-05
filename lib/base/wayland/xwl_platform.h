@@ -7,10 +7,10 @@
 
 #include "output.h"
 
-#include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "input/wayland/platform.h"
 #include <base/backend/wlroots/backend.h>
+#include <base/platform_qobject.h>
 #include <base/wayland/platform_helpers.h>
 #include <base/x11/data.h>
 #include <base/x11/event_filter_manager.h>
@@ -43,10 +43,11 @@ struct xwl_platform_mod {
 };
 
 template<typename Mod = xwl_platform_mod>
-class xwl_platform : public base::platform
+class xwl_platform
 {
 public:
     using type = xwl_platform<Mod>;
+    using qobject_t = platform_qobject;
     using backend_t = backend::wlroots::backend<type>;
     using output_t = output<type>;
 
@@ -54,13 +55,12 @@ public:
     using input_t = typename Mod::input_t;
     using space_t = typename Mod::space_t;
 
-    xwl_platform(base::config config,
-                 std::string const& socket_name,
-                 base::wayland::start_options flags,
-                 backend::wlroots::start_options options)
-        : config{std::move(config)}
-        , server{std::make_unique<wayland::server<type>>(*this, socket_name, flags)}
-        , backend{*this, options}
+    xwl_platform(platform_arguments const& args)
+        : qobject{std::make_unique<platform_qobject>([this] { return topology.max_scale; })}
+        , operation_mode{args.mode}
+        , config{args.config}
+        , server{std::make_unique<wayland::server<type>>(*this, args.socket_name, args.flags)}
+        , backend{*this, args.headless}
         , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
     {
         wayland::platform_init(*this);
@@ -71,17 +71,15 @@ public:
     xwl_platform(type&& other) = delete;
     xwl_platform& operator=(type&& other) = delete;
 
-    ~xwl_platform() override
+    virtual ~xwl_platform()
     {
+        platform_cleanup(*this);
         singleton_interface::get_outputs = {};
     }
 
-    clockid_t get_clockid() const override
-    {
-        return backend.get_clockid();
-    }
-
+    std::unique_ptr<platform_qobject> qobject;
     base::operation_mode operation_mode;
+    output_topology topology;
     base::config config;
     base::x11::data x11_data;
     std::unique_ptr<base::options> options;

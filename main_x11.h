@@ -47,7 +47,7 @@ class ApplicationX11 : public QApplication
 {
     Q_OBJECT
 public:
-    ApplicationX11(int &argc, char **argv);
+    ApplicationX11(int& argc, char** argv);
     ~ApplicationX11() override;
 
     void start();
@@ -62,14 +62,13 @@ private Q_SLOTS:
 
 private:
     void crashChecking();
-    void setupCrashHandler();
 
     static void crashHandler(int signal);
 
     using base_t = base::x11::platform<base_mod>;
     base_t base;
 
-    QScopedPointer<KWinSelectionOwner> owner;
+    std::unique_ptr<KWinSelectionOwner> owner;
     std::unique_ptr<win::x11::xcb_event_filter<base_t::space_t>> event_filter;
     bool m_replace;
 };

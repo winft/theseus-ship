@@ -48,16 +48,15 @@ class presentation : public QObject
 {
 public:
     presentation(
-        clockid_t clockid,
         std::function<std::unique_ptr<Wrapland::Server::PresentationManager>()> manager_factory)
         : presentation_manager{manager_factory()}
     {
         struct timespec ts;
-        if (auto ret = clock_gettime(clockid, &ts); ret != 0) {
+        if (auto ret = clock_gettime(CLOCK_MONOTONIC, &ts); ret != 0) {
             throw std::system_error(
                 ret, std::generic_category(), "Could not get presentation clock.");
         }
-        presentation_manager->setClockId(clockid);
+        presentation_manager->setClockId(CLOCK_MONOTONIC);
     }
 
     template<typename Window, typename Output>

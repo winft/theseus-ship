@@ -9,7 +9,7 @@ namespace KWin::base
 {
 
 base::app_singleton* singleton_interface::app_singleton{nullptr};
-base::platform* singleton_interface::platform{nullptr};
+base::platform_qobject* singleton_interface::platform{nullptr};
 std::function<std::vector<output*>()> singleton_interface::get_outputs{};
 
 }

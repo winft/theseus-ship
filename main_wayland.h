@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <desktop/platform.h>
 #include <script/platform.h>
 
-#include <QApplication>
 #include <QProcessEnvironment>
 #include <memory>
 
@@ -41,22 +40,23 @@ struct base_mod {
     std::unique_ptr<scripting::platform<space_t>> script;
 };
 
-class ApplicationWayland : public QApplication
+class ApplicationWayland
 {
-    Q_OBJECT
 public:
-    ApplicationWayland(int &argc, char **argv);
-    ~ApplicationWayland() override;
+    ApplicationWayland(QApplication& app);
+    ~ApplicationWayland();
 
     void start(base::operation_mode mode,
                std::string const& socket_name,
                base::wayland::start_options flags,
                QProcessEnvironment environment);
 
-    void setApplicationsToStart(const QStringList &applications) {
+    void setApplicationsToStart(const QStringList& applications)
+    {
         m_applicationsToStart = applications;
     }
-    void setSessionArgument(const QString &session) {
+    void setSessionArgument(const QString& session)
+    {
         m_sessionArgument = session;
     }
 
@@ -64,6 +64,7 @@ private:
     void create_xwayland();
     void startSession();
 
+    QApplication* app;
     QStringList m_applicationsToStart;
     QString m_sessionArgument;
 

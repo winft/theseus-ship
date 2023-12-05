@@ -94,7 +94,8 @@ TEST_CASE("screens", "[base]")
             // gap
             data{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}, {30, 60}, 3});
 
-        QSignalSpy topology_spy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy topology_spy(setup.base->qobject.get(),
+                                &base::platform_qobject::topology_changed);
         QVERIFY(topology_spy.isValid());
 
         setup.set_outputs(test_data.geometries);
@@ -107,8 +108,8 @@ TEST_CASE("screens", "[base]")
     {
         auto const& base = setup.base;
 
-        QSignalSpy output_added_spy(base.get(), &base::platform::output_added);
-        QSignalSpy output_removed_spy(base.get(), &base::platform::output_removed);
+        QSignalSpy output_added_spy(base->qobject.get(), &base::platform_qobject::output_added);
+        QSignalSpy output_removed_spy(base->qobject.get(), &base::platform_qobject::output_removed);
         QVERIFY(output_added_spy.isValid());
         QVERIFY(output_removed_spy.isValid());
 
@@ -134,7 +135,7 @@ TEST_CASE("screens", "[base]")
         QCOMPARE(base->outputs.size(), 1);
 
         // Setting the same geometries should emit the signal again.
-        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy changedSpy(setup.base->qobject.get(), &base::platform_qobject::topology_changed);
         QVERIFY(changedSpy.isValid());
 
         output_added_spy.clear();
@@ -173,7 +174,7 @@ TEST_CASE("screens", "[base]")
                  {0, 0, 300, 300},
                  3});
 
-        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy changedSpy(setup.base->qobject.get(), &base::platform_qobject::topology_changed);
         QVERIFY(changedSpy.isValid());
 
         setup.set_outputs(test_data.geometries);
@@ -199,7 +200,8 @@ TEST_CASE("screens", "[base]")
         setup.set_outputs(2);
         QCOMPARE(base->outputs.size(), 2);
 
-        QSignalSpy current_changed_spy(base.get(), &base::platform::current_output_changed);
+        QSignalSpy current_changed_spy(base->qobject.get(),
+                                       &base::platform_qobject::current_output_changed);
         QVERIFY(current_changed_spy.isValid());
 
         set_current_output(test_data.current);
@@ -211,9 +213,10 @@ TEST_CASE("screens", "[base]")
 
     SECTION("current window")
     {
-        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy changedSpy(setup.base->qobject.get(), &base::platform_qobject::topology_changed);
         QVERIFY(changedSpy.isValid());
-        QSignalSpy current_output_spy(setup.base.get(), &base::platform::current_output_changed);
+        QSignalSpy current_output_spy(setup.base->qobject.get(),
+                                      &base::platform_qobject::current_output_changed);
         QVERIFY(current_output_spy.isValid());
 
         std::vector<QRect> geometries{{QRect{0, 0, 100, 100}, QRect{100, 0, 100, 100}}};
@@ -307,7 +310,7 @@ TEST_CASE("screens", "[base]")
             // gap
             data{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}, {15, 30}, 0});
 
-        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy changedSpy(setup.base->qobject.get(), &base::platform_qobject::topology_changed);
         QVERIFY(changedSpy.isValid());
 
         auto group = setup.base->config.main->group("Windows");
@@ -351,7 +354,7 @@ TEST_CASE("screens", "[base]")
             // gap
             data{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}, {15, 30}, 1});
 
-        QSignalSpy changedSpy(setup.base.get(), &base::platform::topology_changed);
+        QSignalSpy changedSpy(setup.base->qobject.get(), &base::platform_qobject::topology_changed);
         QVERIFY(changedSpy.isValid());
 
         auto group = setup.base->config.main->group("Windows");

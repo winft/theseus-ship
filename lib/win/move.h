@@ -18,7 +18,6 @@
 #include "window_area.h"
 
 #include "base/output_helpers.h"
-#include "base/platform.h"
 
 #include <QApplication>
 #include <QWidget>

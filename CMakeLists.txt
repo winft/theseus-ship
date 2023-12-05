@@ -85,7 +85,6 @@ find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
     Declarative
     KCMUtils
-    KIO
     NewStuff
     Service
     XmlGui
@@ -198,17 +197,11 @@ set_package_properties(Pixman PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building wlroots backend."
 )
-find_package(wlroots 0.16.0)
+find_package(wlroots 0.17.0)
 set_package_properties(wlroots PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building wlroots backend."
 )
-
-if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.17)
-  set(HAVE_WLR_SESSION_ON_AUTOCREATE 1)
-  set(HAVE_WLR_VALUE_DRM_FORMATS 1)
-  set(HAVE_WLR_PRESENT_CLOCK_MONOTONIC 1)
-endif()
 
 find_package(X11)
 set_package_properties(X11 PROPERTIES
@@ -353,7 +346,6 @@ target_link_libraries(kwin_wayland
   KF6IdleTimeKWinPlugin
   KF6WindowSystemKWinPlugin
   KWinQpaPlugin
-  KF6::Crash
   KF6::DBusAddons
 )
 

@@ -8,13 +8,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "backingstore.h"
 #include "base/app_singleton.h"
-#include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "offscreensurface.h"
 #include "render/singleton_interface.h"
 #include "screen.h"
 #include "sharingplatformcontext.h"
 #include "window.h"
+#include <base/platform_qobject.h>
 
 #include <QCoreApplication>
 #include <QtConcurrentRun>
@@ -86,7 +86,7 @@ void Integration::initialize()
             [this] {
                 assert(base::singleton_interface::platform);
                 QObject::connect(base::singleton_interface::platform,
-                                 &base::platform::topology_changed,
+                                 &base::platform_qobject::topology_changed,
                                  this,
                                  &Integration::initScreens);
                 initScreens();

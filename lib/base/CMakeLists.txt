@@ -31,13 +31,12 @@ target_sources(base
       output.h
       output_helpers.h
       output_topology.h
-      platform.h
       platform_helpers.h
+      platform_qobject.h
       singleton_interface.h
       types.h
       utils.h
   PRIVATE
-    app_singleton.cpp
     os/clock/skew_notifier.cpp
     os/clock/skew_notifier_engine.cpp
     seat/session.cpp
@@ -45,7 +44,6 @@ target_sources(base
     singleton_interface.cpp
     logging.cpp
     options.cpp
-    platform.cpp
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -125,6 +123,7 @@ target_sources(base-wl
     FILE_SET HEADERS
     BASE_DIRS wayland
     FILES
+      wayland/app_singleton.h
       wayland/filtered_display.h
       wayland/output.h
       wayland/output_helpers.h

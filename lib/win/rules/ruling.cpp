@@ -8,7 +8,6 @@
 
 #include "base/output.h"
 #include "base/output_helpers.h"
-#include "base/platform.h"
 #include "utils/algorithm.h"
 #include "utils/geo.h"
 #include "win/setup.h"

@@ -6,8 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "window.h"
 
-#include "base/platform.h"
 #include "base/singleton_interface.h"
+#include <base/platform_qobject.h>
 
 #include <logging.h>
 
@@ -23,7 +23,7 @@ static quint32 s_windowId = 0;
 Window::Window(QWindow* window)
     : QPlatformWindow(window)
     , m_windowId(++s_windowId)
-    , m_scale(base::singleton_interface::platform->topology.max_scale)
+    , m_scale(base::singleton_interface::platform->get_scale())
 {
     Q_ASSERT(!window->property("_KWIN_WINDOW_IS_OFFSCREEN").toBool());
 }

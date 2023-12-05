@@ -35,6 +35,5 @@ if (KWIN_BUILD_KCMS)
   target_link_libraries(kwin_cube_config
     KF6::GlobalAccel
     KF6::XmlGui
-    KF6::KIOWidgets
   )
 endif()

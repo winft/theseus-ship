@@ -9,7 +9,6 @@
 #include "screen.h"
 
 #include "base/output_helpers.h"
-#include "base/platform.h"
 
 namespace KWin::win
 {

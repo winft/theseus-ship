@@ -9,7 +9,6 @@ target_link_libraries(minico
   KF6IdleTimeKWinPlugin
   KF6WindowSystemKWinPlugin
   KWinQpaPlugin
-  KF6::Crash
 )
 
 install(TARGETS minico)

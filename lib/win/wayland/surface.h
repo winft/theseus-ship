@@ -5,8 +5,8 @@
 */
 #pragma once
 
-#include "base/platform.h"
 #include "win/scene.h"
+#include <base/platform_qobject.h>
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/surface.h>
@@ -50,10 +50,11 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
             win->qobject.get(), &Win::qobject_t::frame_geometry_changed, win->qobject.get(), [win] {
                 update_surface_outputs(win);
             });
-        win->notifiers.screens_update_outputs = QObject::connect(
-            &win->space.base, &base::platform::topology_changed, win->qobject.get(), [win] {
-                update_surface_outputs(win);
-            });
+        win->notifiers.screens_update_outputs
+            = QObject::connect(win->space.base.qobject.get(),
+                               &base::platform_qobject::topology_changed,
+                               win->qobject.get(),
+                               [win] { update_surface_outputs(win); });
     }
 
     win->surface = surface;

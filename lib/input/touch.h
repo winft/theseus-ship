@@ -53,15 +53,16 @@ public:
     touch_impl(Base& base)
         : base{base}
     {
-        QObject::connect(&base, &Base::topology_changed, qobject.get(), [this] {
-            if (!control) {
-                return;
-            }
-            output = get_output();
-            if (output) {
-                control->set_orientation(to_qt_orientation(output->transform()));
-            }
-        });
+        QObject::connect(
+            base.qobject.get(), &Base::qobject_t::topology_changed, qobject.get(), [this] {
+                if (!control) {
+                    return;
+                }
+                output = get_output();
+                if (output) {
+                    control->set_orientation(to_qt_orientation(output->transform()));
+                }
+            });
     }
 
     touch_impl(touch_impl const&) = delete;

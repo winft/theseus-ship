@@ -167,7 +167,7 @@ public:
 
             space.base.mod.render->selection_owner = {};
             space.base.x11_data.connection = nullptr;
-            Q_EMIT space.base.x11_reset();
+            Q_EMIT space.base.qobject->x11_reset();
         }
 
         if (xwayland_process->state() != QProcess::NotRunning) {
@@ -299,7 +299,7 @@ private:
 
         status_callback(0);
         win::x11::init_space(space);
-        Q_EMIT space.base.x11_reset();
+        Q_EMIT space.base.qobject->x11_reset();
 
         // Trigger possible errors, there's still a chance to abort
         base::x11::xcb::sync(space.base.x11_data.connection);

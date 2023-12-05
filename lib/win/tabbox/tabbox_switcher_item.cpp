@@ -5,11 +5,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "tabbox_switcher_item.h"
 
-#include "base/platform.h"
 #include "base/singleton_interface.h"
 #include "tabbox_handler.h"
 #include "win/screen.h"
 #include "win/singleton_interface.h"
+#include <base/platform_qobject.h>
 
 #include <QAbstractItemModel>
 
@@ -33,7 +33,7 @@ tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
               }
           });
     connect(base::singleton_interface::platform,
-            &base::platform::topology_changed,
+            &base::platform_qobject::topology_changed,
             this,
             &tabbox_switcher_item::screen_geometry_changed);
 }

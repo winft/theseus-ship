@@ -6,7 +6,6 @@
 #pragma once
 
 #include "base/options.h"
-#include "base/platform.h"
 #include <base/config-kwin.h>
 #include <render/gl/interface/platform.h>
 

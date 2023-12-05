@@ -25,8 +25,8 @@ void effect_setup_handler(Handler& handler)
             = std::make_unique<filter>(handler, *base.mod.space, base.x11_data.root_window);
     };
 
-    QObject::connect(&handler.scene.platform.base,
-                     &base::platform::x11_reset,
+    QObject::connect(handler.scene.platform.base.qobject.get(),
+                     &base::platform_qobject::x11_reset,
                      &handler,
                      [&handler, make_property_filter] {
                          handler.registered_atoms.clear();
