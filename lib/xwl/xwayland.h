@@ -193,13 +193,8 @@ public:
 private:
     void continue_startup_with_x11()
     {
-        auto screenNumber = 0;
-
-        if (xcb_connection_fd == -1) {
-            core.x11.connection = xcb_connect(nullptr, &screenNumber);
-        } else {
-            core.x11.connection = xcb_connect_to_fd(xcb_connection_fd, nullptr);
-        }
+        assert(xcb_connection_fd != -1);
+        core.x11.connection = xcb_connect_to_fd(xcb_connection_fd, nullptr);
 
         if (int error = xcb_connection_has_error(core.x11.connection)) {
             std::cerr << "FATAL ERROR connecting to Xwayland server: " << error << std::endl;
@@ -214,7 +209,7 @@ private:
         space.base.x11_data.connection = core.x11.connection;
 
         // we don't support X11 multi-head in Wayland
-        space.base.x11_data.screen_number = screenNumber;
+        space.base.x11_data.screen_number = 0;
         space.base.x11_data.root_window = base::x11::get_default_screen(space.base.x11_data)->root;
         base::x11::xcb::extensions::create(space.base.x11_data);
 
