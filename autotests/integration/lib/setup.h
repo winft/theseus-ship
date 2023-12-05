@@ -49,7 +49,6 @@ struct setup final {
     wlr_touch* touch{nullptr};
 
     std::vector<client> clients;
-    bool ready{false};
 
 private:
     void create_xwayland();

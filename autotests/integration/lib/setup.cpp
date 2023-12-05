@@ -135,7 +135,6 @@ void setup::start()
 
     if (base->operation_mode == base::operation_mode::xwayland) {
         create_xwayland();
-        TRY_REQUIRE_WITH_TIMEOUT(ready, 10000);
     }
 }
 
@@ -190,11 +189,10 @@ void setup::add_client(global_selection globals)
 void setup::create_xwayland()
 {
 #if USE_XWL
-    auto status_callback = [this](auto error) {
+    auto status_callback = [](auto error) {
         if (error) {
             std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
         }
-        ready = !error;
     };
 
     try {
@@ -205,6 +203,9 @@ void setup::create_xwayland()
     } catch (std::exception const& exc) {
         std::cerr << "Exception creating Xwayland: " << exc.what() << std::endl;
     }
+
+    // Wait so we can access the connection from our side in our tests for creating windows etc.
+    TRY_REQUIRE_WITH_TIMEOUT(base->x11_data.connection, 10000);
 #endif
 }
 

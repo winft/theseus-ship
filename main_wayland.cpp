@@ -123,9 +123,8 @@ void ApplicationWayland::start(base::operation_mode mode,
 
     if (base->operation_mode == base::operation_mode::xwayland) {
         create_xwayland();
-    } else {
-        startSession();
     }
+    startSession();
 }
 
 void ApplicationWayland::create_xwayland()
@@ -137,9 +136,6 @@ void ApplicationWayland::create_xwayland()
             std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
             exit(error);
         }
-        base->process_environment.insert(QStringLiteral("DISPLAY"),
-                                         base->mod.xwayland->socket->name().c_str());
-        startSession();
     };
 
     try {
@@ -152,6 +148,9 @@ void ApplicationWayland::create_xwayland()
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(1);
     }
+
+    base->process_environment.insert(QStringLiteral("DISPLAY"),
+                                     base->mod.xwayland->socket->name().c_str());
 }
 
 void ApplicationWayland::startSession()
