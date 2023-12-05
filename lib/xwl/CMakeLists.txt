@@ -30,6 +30,7 @@ target_sources(xwayland
       selection_data.h
       selection_wl.h
       selection_x11.h
+      socket.h
       sources.h
       sources_ext.h
       surface.h
@@ -40,6 +41,7 @@ target_sources(xwayland
       x11_visit.h
       xwayland.h
   PRIVATE
+    socket.cpp
     sources_ext.cpp
     transfer.cpp
 )

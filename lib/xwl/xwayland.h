@@ -17,6 +17,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/wayland/xwl_window.h"
 #include "win/x11/space_setup.h"
 #include "win/x11/xcb_event_filter.h"
+#include <xwl/socket.h>
 
 #include <KLocalizedString>
 #include <QAbstractEventDispatcher>
@@ -37,25 +38,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::xwl
 {
 
-inline void read_display(int pipe)
-{
-    QFile readPipe;
-    if (!readPipe.open(pipe, QIODevice::ReadOnly)) {
-        std::cerr << "FATAL ERROR failed to open pipe to start X Server" << std::endl;
-        exit(1);
-    }
-    auto displayNumber = readPipe.readLine();
-
-    displayNumber.prepend(QByteArray(":"));
-    displayNumber.remove(displayNumber.size() - 1, 1);
-    std::cout << "X-Server started on display " << displayNumber.constData() << std::endl;
-
-    setenv("DISPLAY", displayNumber.constData(), true);
-
-    // close our pipe
-    close(pipe);
-}
-
 template<typename Space>
 class xwayland : public QObject
 {
@@ -70,10 +52,23 @@ public:
         , space{space}
         , status_callback{status_callback}
     {
+        socket = std::make_unique<xwl::socket>(socket::mode::transfer_fds_on_exec);
+        if (!socket->is_valid()) {
+            throw std::runtime_error("Failed to create Xwayland connection sockets");
+        }
+
+        std::vector<int> fds_to_close;
+        auto fds_cleanup = qScopeGuard([&fds_to_close] {
+            for (auto fd : fds_to_close) {
+                close(fd);
+            }
+        });
+
         int pipeFds[2];
         if (pipe(pipeFds) != 0) {
             throw std::runtime_error("Failed to create pipe to start Xwayland");
         }
+        fds_to_close.push_back(pipeFds[1]);
 
         int sx[2];
         if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) < 0) {
@@ -112,12 +107,21 @@ public:
         }
 
         xwayland_process->setProcessEnvironment(env);
-        xwayland_process->setArguments({QStringLiteral("-displayfd"),
-                                        QString::number(pipeFds[1]),
-                                        QStringLiteral("-rootless"),
-                                        QStringLiteral("-wm"),
-                                        QString::number(fd)});
 
+        QStringList arguments;
+        arguments << socket->name().c_str();
+
+        for (auto socket : socket->file_descriptors) {
+            auto dup_socket = dup(socket);
+            fds_to_close.push_back(dup_socket);
+            arguments << QStringLiteral("-listenfd") << QString::number(dup_socket);
+        }
+
+        arguments << QStringLiteral("-displayfd") << QString::number(pipeFds[1]);
+        arguments << QStringLiteral("-rootless");
+        arguments << QStringLiteral("-wm") << QString::number(fd);
+
+        xwayland_process->setArguments(arguments);
         xwayland_fail_notifier = QObject::connect(
             xwayland_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
                 if (error == QProcess::FailedToStart) {
@@ -128,24 +132,17 @@ public:
                 this->status_callback(1);
             });
 
-        auto const xDisplayPipe = pipeFds[0];
-        QObject::connect(xwayland_process, &QProcess::started, this, [this, xDisplayPipe] {
-            QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
-            QObject::connect(watcher,
-                             &QFutureWatcher<void>::finished,
-                             this,
-                             &xwayland::continue_startup_with_x11,
-                             Qt::QueuedConnection);
-            QObject::connect(watcher,
-                             &QFutureWatcher<void>::finished,
-                             watcher,
-                             &QFutureWatcher<void>::deleteLater,
-                             Qt::QueuedConnection);
-            watcher->setFuture(QtConcurrent::run(read_display, xDisplayPipe));
+        // When Xwayland starts writing the display name to displayfd, it is ready. Alternatively,
+        // the Xwayland can send us the SIGUSR1 signal, but it's already reserved for VT hand-off.
+        ready_notifier = std::make_unique<QSocketNotifier>(pipeFds[0], QSocketNotifier::Read);
+        connect(ready_notifier.get(), &QSocketNotifier::activated, this, [this]() {
+            close(ready_notifier->socket());
+            ready_notifier = {};
+            continue_startup_with_x11();
         });
 
+        qputenv("DISPLAY", socket->name().c_str());
         xwayland_process->start();
-        close(pipeFds[1]);
     }
 
     ~xwayland() override
@@ -191,6 +188,7 @@ public:
     }
 
     std::unique_ptr<xwl::data_bridge<Space>> data_bridge;
+    std::unique_ptr<xwl::socket> socket;
 
 private:
     void continue_startup_with_x11()
@@ -249,9 +247,9 @@ private:
                          processXcbEvents);
 
         // create selection owner for WM_S0 - magic X display number expected by XWayland
-        base::x11::selection_owner owner(
+        wm_owner = std::make_unique<base::x11::selection_owner>(
             "WM_S0", core.x11.connection, space.base.x11_data.root_window);
-        owner.claim(true);
+        wm_owner->claim(true);
 
         space.atoms = std::make_unique<base::x11::atoms>(core.x11.connection);
         core.x11.atoms = space.atoms.get();
@@ -294,9 +292,6 @@ private:
                                       space.base.x11_data.root_window,
                                       win::x11::xcb_cursor_get(space, Qt::ArrowCursor));
 
-        space.base.process_environment.insert(QStringLiteral("DISPLAY"),
-                                              QString::fromUtf8(qgetenv("DISPLAY")));
-
         status_callback(0);
         win::x11::init_space(space);
         Q_EMIT space.base.qobject->x11_reset();
@@ -318,6 +313,8 @@ private:
 
     Space& space;
     std::function<void(int code)> status_callback;
+    std::unique_ptr<QSocketNotifier> ready_notifier;
+    std::unique_ptr<base::x11::selection_owner> wm_owner;
 };
 
 }

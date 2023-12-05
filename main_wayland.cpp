@@ -137,6 +137,8 @@ void ApplicationWayland::create_xwayland()
             std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
             exit(error);
         }
+        base->process_environment.insert(QStringLiteral("DISPLAY"),
+                                         base->mod.xwayland->socket->name().c_str());
         startSession();
     };
 
