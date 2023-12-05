@@ -270,24 +270,6 @@ private:
                 }
             });
 
-        // Check  whether another windowmanager is running
-        uint32_t const maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
-        unique_cptr<xcb_generic_error_t> redirectCheck(
-            xcb_request_check(space.base.x11_data.connection,
-                              xcb_change_window_attributes_checked(space.base.x11_data.connection,
-                                                                   space.base.x11_data.root_window,
-                                                                   XCB_CW_EVENT_MASK,
-                                                                   maskValues)));
-
-        if (redirectCheck) {
-            fputs(i18n("kwin_wayland: an X11 window manager is running on the X11 Display.\n")
-                      .toLocal8Bit()
-                      .constData(),
-                  stderr);
-            status_callback(1);
-            return;
-        }
-
         base::x11::xcb::define_cursor(space.base.x11_data.connection,
                                       space.base.x11_data.root_window,
                                       win::x11::xcb_cursor_get(space, Qt::ArrowCursor));
