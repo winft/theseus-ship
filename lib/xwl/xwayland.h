@@ -44,13 +44,9 @@ class xwayland : public QObject
 public:
     using window_t = typename Space::window_t;
 
-    /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
-     *  indicate a critical error happened at runtime.
-     */
-    xwayland(Space& space, std::function<void(int code)> status_callback)
+    xwayland(Space& space)
         : core{&space}
         , space{space}
-        , status_callback{status_callback}
     {
         socket = std::make_unique<xwl::socket>(socket::mode::transfer_fds_on_exec);
         if (!socket->is_valid()) {
@@ -129,7 +125,7 @@ public:
                 } else {
                     std::cerr << "FATAL ERROR: Xwayland failed, going to exit now" << std::endl;
                 }
-                this->status_callback(1);
+                exit(1);
             });
 
         // When Xwayland starts writing the display name to displayfd, it is ready. Alternatively,
@@ -198,8 +194,7 @@ private:
 
         if (int error = xcb_connection_has_error(core.x11.connection)) {
             std::cerr << "FATAL ERROR connecting to Xwayland server: " << error << std::endl;
-            status_callback(1);
-            return;
+            exit(1);
         }
 
         auto iter = xcb_setup_roots_iterator(xcb_get_setup(core.x11.connection));
@@ -269,7 +264,6 @@ private:
                                       space.base.x11_data.root_window,
                                       win::x11::xcb_cursor_get(space, Qt::ArrowCursor));
 
-        status_callback(0);
         win::x11::init_space(space);
         Q_EMIT space.base.qobject->x11_reset();
 
@@ -289,7 +283,6 @@ private:
     std::unique_ptr<win::x11::xcb_event_filter<Space>> event_filter;
 
     Space& space;
-    std::function<void(int code)> status_callback;
     std::unique_ptr<QSocketNotifier> ready_notifier;
     std::unique_ptr<base::x11::selection_owner> wm_owner;
 };

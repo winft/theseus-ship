@@ -129,18 +129,8 @@ void ApplicationWayland::start(base::operation_mode mode,
 
 void ApplicationWayland::create_xwayland()
 {
-    auto status_callback = [this](auto error) {
-        if (error) {
-            // we currently exit on Xwayland errors always directly
-            // TODO: restart Xwayland
-            std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
-            exit(error);
-        }
-    };
-
     try {
-        base->mod.xwayland
-            = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space, status_callback);
+        base->mod.xwayland = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

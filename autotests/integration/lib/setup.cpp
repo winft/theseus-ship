@@ -189,15 +189,8 @@ void setup::add_client(global_selection globals)
 void setup::create_xwayland()
 {
 #if USE_XWL
-    auto status_callback = [](auto error) {
-        if (error) {
-            std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
-        }
-    };
-
     try {
-        base->mod.xwayland
-            = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space, status_callback);
+        base->mod.xwayland = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space);
     } catch (std::system_error const& exc) {
         std::cerr << "System error creating Xwayland: " << exc.what() << std::endl;
     } catch (std::exception const& exc) {
