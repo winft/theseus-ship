@@ -59,7 +59,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
     </group>
     <group name="Effect-windowview">
         <entry key="BorderActivateAll" type="IntList">
-            <default>int(como::win::electric_border::top_left)</default>
+            <default>int(como::win::electric_border::none)</default>
         </entry>
         <entry name="BorderActivatePresentWindows" key="BorderActivate" type="IntList">
             <default>int(como::win::electric_border::none)</default>
@@ -84,9 +84,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
             <default>int(como::win::electric_border::none)</default>
         </entry>
     </group>
-    <group name="Effect-Overview">
+    <group name="Effect-overview">
         <entry name="BorderActivateOverview" key="BorderActivate" type="IntList">
-            <default>int(como::win::electric_border::none)</default>
+            <default>int(como::win::electric_border::top_left)</default>
         </entry>
     </group>
     <group name="TabBox">

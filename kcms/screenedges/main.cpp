@@ -108,8 +108,11 @@ void KWinScreenEdgesConfig::save()
     // and reconfigure the effects
     OrgKdeKwinEffectsInterface interface(
         QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
+
+    interface.reconfigureEffect(QStringLiteral("overview"));
     interface.reconfigureEffect(QStringLiteral("windowview"));
     interface.reconfigureEffect(QStringLiteral("cube"));
+
     for (auto const& effectId : qAsConst(m_effects)) {
         interface.reconfigureEffect(effectId);
     }
@@ -172,6 +175,7 @@ void KWinScreenEdgesConfig::monitorInit()
     m_form->monitorAddItem(i18n("%1 - Cube", cubeName));
     m_form->monitorAddItem(i18n("%1 - Cylinder", cubeName));
     m_form->monitorAddItem(i18n("%1 - Sphere", cubeName));
+    m_form->monitorAddItem(i18n("Overview"));
 
     m_form->monitorAddItem(i18n("Toggle window switching"));
     m_form->monitorAddItem(i18n("Toggle alternative window switching"));
@@ -256,6 +260,9 @@ void KWinScreenEdgesConfig::monitorLoadSettings()
     // PresentWindows BorderActivateClass
     m_form->monitorChangeEdge(m_data->settings()->borderActivateClass(), PresentWindowsClass);
 
+    // Overview
+    m_form->monitorChangeEdge(m_data->settings()->borderActivateOverview(), Overview);
+
     // Desktop Cube
     m_form->monitorChangeEdge(m_data->settings()->borderActivateCube(), Cube);
     m_form->monitorChangeEdge(m_data->settings()->borderActivateCylinder(), Cylinder);
@@ -322,6 +329,10 @@ void KWinScreenEdgesConfig::monitorLoadDefaultSettings()
     m_form->monitorChangeDefaultEdge(m_data->settings()->defaultBorderActivateClassValue(),
                                      PresentWindowsClass);
 
+    // Overview
+    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultBorderActivateOverviewValue(),
+                                     Overview);
+
     // Desktop Cube
     m_form->monitorChangeDefaultEdge(m_data->settings()->defaultBorderActivateCubeValue(), Cube);
     m_form->monitorChangeDefaultEdge(m_data->settings()->defaultBorderActivateCylinderValue(),
@@ -367,6 +378,9 @@ void KWinScreenEdgesConfig::monitorSaveSettings()
     m_data->settings()->setBorderActivateClass(
         m_form->monitorCheckEffectHasEdgeInt(PresentWindowsClass));
 
+    // Overview
+    m_data->settings()->setBorderActivateOverview(m_form->monitorCheckEffectHasEdgeInt(Overview));
+
     // Desktop Cube
     m_data->settings()->setBorderActivateCube(m_form->monitorCheckEffectHasEdgeInt(Cube));
     m_data->settings()->setBorderActivateCylinder(m_form->monitorCheckEffectHasEdgeInt(Cylinder));
@@ -402,6 +416,9 @@ void KWinScreenEdgesConfig::monitorShowEvent()
     bool enabled = config.readEntry("windowviewEnabled", true);
     m_form->monitorItemSetEnabled(PresentWindowsCurrent, enabled);
     m_form->monitorItemSetEnabled(PresentWindowsAll, enabled);
+
+    // Overview
+    m_form->monitorItemSetEnabled(Overview, config.readEntry("overviewEnabled", true));
 
     // Desktop Cube
     enabled = config.readEntry("cube", true);
