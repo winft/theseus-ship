@@ -50,6 +50,7 @@ private:
         Cube,
         Cylinder,
         Sphere,
+        Overview,
         TabBox,
         TabBoxAlternative,
         EffectCount
