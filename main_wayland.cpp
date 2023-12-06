@@ -122,29 +122,20 @@ void ApplicationWayland::start(base::operation_mode mode,
     base->server->init_screen_locker();
 
     if (base->operation_mode == base::operation_mode::xwayland) {
-        create_xwayland();
-    }
-    startSession();
-}
+        try {
+            base->mod.xwayland = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space);
+        } catch (std::system_error const& exc) {
+            std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+            exit(exc.code().value());
+        } catch (std::exception const& exc) {
+            std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+            exit(1);
+        }
 
-void ApplicationWayland::create_xwayland()
-{
-    try {
-        base->mod.xwayland = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space);
-    } catch (std::system_error const& exc) {
-        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
-        exit(exc.code().value());
-    } catch (std::exception const& exc) {
-        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
-        exit(1);
+        base->process_environment.insert(QStringLiteral("DISPLAY"),
+                                         base->mod.xwayland->socket->name().c_str());
     }
 
-    base->process_environment.insert(QStringLiteral("DISPLAY"),
-                                     base->mod.xwayland->socket->name().c_str());
-}
-
-void ApplicationWayland::startSession()
-{
     auto process_environment = base->process_environment;
 
     // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.

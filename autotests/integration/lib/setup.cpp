@@ -133,9 +133,20 @@ void setup::start()
 
     base->server->init_screen_locker();
 
+#if USE_XWL
     if (base->operation_mode == base::operation_mode::xwayland) {
-        create_xwayland();
+        try {
+            base->mod.xwayland = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space);
+        } catch (std::system_error const& exc) {
+            std::cerr << "System error creating Xwayland: " << exc.what() << std::endl;
+        } catch (std::exception const& exc) {
+            std::cerr << "Exception creating Xwayland: " << exc.what() << std::endl;
+        }
+
+        // Wait so we can access the connection from our side in our tests for creating windows etc.
+        TRY_REQUIRE_WITH_TIMEOUT(base->x11_data.connection, 10000);
     }
+#endif
 }
 
 void setup::set_outputs(size_t count)
@@ -184,22 +195,6 @@ void setup::set_outputs(std::vector<output> const& outputs)
 void setup::add_client(global_selection globals)
 {
     clients.emplace_back(globals);
-}
-
-void setup::create_xwayland()
-{
-#if USE_XWL
-    try {
-        base->mod.xwayland = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space);
-    } catch (std::system_error const& exc) {
-        std::cerr << "System error creating Xwayland: " << exc.what() << std::endl;
-    } catch (std::exception const& exc) {
-        std::cerr << "Exception creating Xwayland: " << exc.what() << std::endl;
-    }
-
-    // Wait so we can access the connection from our side in our tests for creating windows etc.
-    TRY_REQUIRE_WITH_TIMEOUT(base->x11_data.connection, 10000);
-#endif
 }
 
 setup* app()

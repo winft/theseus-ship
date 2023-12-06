@@ -61,9 +61,6 @@ public:
     }
 
 private:
-    void create_xwayland();
-    void startSession();
-
     QApplication* app;
     QStringList m_applicationsToStart;
     QString m_sessionArgument;
