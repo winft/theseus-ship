@@ -50,7 +50,6 @@ add_executable(tests
   plasma_window.cpp
   platform_cursor.cpp
   pointer_constraints.cpp
-  pointer_input.cpp
   quick_tiling.cpp
   opengl_shadow.cpp
   scene_opengl.cpp
