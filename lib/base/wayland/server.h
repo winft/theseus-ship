@@ -58,14 +58,6 @@ public:
         create_globals();
     }
 
-    server(Base& base, int socket_fd, start_options flags)
-        : server(base, flags)
-    {
-        display->add_socket_fd(socket_fd);
-        display->start(Wrapland::Server::Display::StartMode::ConnectClientsOnly);
-        create_globals();
-    }
-
     void terminateClientConnections()
     {
         for (auto client : display->clients()) {
