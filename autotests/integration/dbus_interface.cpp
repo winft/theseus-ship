@@ -34,18 +34,6 @@ QDBusPendingCall getWindowInfo(const QUuid& uuid)
     return QDBusConnection::sessionBus().asyncCall(msg);
 }
 
-void xcb_connection_deleter(xcb_connection_t* pointer)
-{
-    xcb_disconnect(pointer);
-}
-
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
-
-xcb_connection_ptr create_xcb_connection()
-{
-    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
-}
-
 }
 
 TEST_CASE("dbus interface", "[base]")
@@ -193,7 +181,7 @@ TEST_CASE("dbus interface", "[base]")
 
     SECTION("get window info for x11 client")
     {
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 600, 400);
         xcb_window_t w = xcb_generate_id(c.get());

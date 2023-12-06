@@ -12,18 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::detail::test
 {
 
-namespace
-{
-
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
-
-xcb_connection_ptr create_xcb_connection()
-{
-    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_disconnect);
-}
-
-}
-
 TEST_CASE("window rules", "[win]")
 {
     test::setup setup("window-rules", base::operation_mode::xwayland);
@@ -70,7 +58,7 @@ TEST_CASE("window rules", "[win]")
         win::space_reconfigure(*setup.base->mod.space);
 
         // create the test window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
 
         xcb_window_t w = xcb_generate_id(c.get());
@@ -158,7 +146,7 @@ TEST_CASE("window rules", "[win]")
         win::space_reconfigure(*setup.base->mod.space);
 
         // create the test window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
 
         xcb_window_t w = xcb_generate_id(c.get());

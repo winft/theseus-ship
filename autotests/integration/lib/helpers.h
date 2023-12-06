@@ -19,6 +19,8 @@
 #include <base/wayland/xwl_platform.h>
 #include <render/wayland/xwl_platform.h>
 #include <win/wayland/xwl_space.h>
+
+struct xcb_connection_t;
 #else
 #include <base/wayland/platform.h>
 #include <render/wayland/platform.h>
@@ -26,6 +28,7 @@
 #endif
 
 #include <Wrapland/Client/xdg_shell.h>
+#include <memory>
 
 struct wl_signal;
 struct wlr_input_device;
@@ -335,4 +338,9 @@ KWIN_EXPORT void prepare_app_env(std::string const& qpa_plugin_path);
 KWIN_EXPORT void prepare_sys_env(std::string const& socket_name);
 KWIN_EXPORT std::string create_socket_name(std::string base);
 
+#if USE_XWL
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
+
+KWIN_EXPORT xcb_connection_ptr xcb_connection_create();
+#endif
 }

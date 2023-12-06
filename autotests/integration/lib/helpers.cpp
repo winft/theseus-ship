@@ -782,4 +782,16 @@ void hold_cancel(uint32_t time)
     wlr_signal_emit_safe(&test_app->pointer->events.hold_end, &event);
 }
 
+#if USE_XWL
+static void xcb_connection_deleter(xcb_connection_t* pointer)
+{
+    xcb_disconnect(pointer);
+}
+
+xcb_connection_ptr xcb_connection_create()
+{
+    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
+}
+#endif
+
 }

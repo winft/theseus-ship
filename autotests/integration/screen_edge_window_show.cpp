@@ -12,18 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::detail::test
 {
 
-namespace
-{
-
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
-
-xcb_connection_ptr create_xcb_connection()
-{
-    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_disconnect);
-}
-
-}
-
 TEST_CASE("screen edge window show", "[win]")
 {
     test::setup setup("screen-edge-window-show", base::operation_mode::xwayland);
@@ -66,7 +54,7 @@ TEST_CASE("screen edge window show", "[win]")
             data{{2540, 10, 20, 1000}, {2540, 70, 20, 800}, 1, {2559, 60}});
 
         // create the test window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
 
         // atom for the screenedge show hide functionality
@@ -197,7 +185,7 @@ TEST_CASE("screen edge window show", "[win]")
             data{{2540, 10, 20, 1000}, 1, {2559, 60}, {2200, 60}});
 
         // create the test window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
 
         // atom for the screenedge show hide functionality

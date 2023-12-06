@@ -32,13 +32,6 @@ std::unique_ptr<Win, void (*)(Win*)> create_deleted(space::window_t deleted)
     return {std::get<Win*>(deleted), deleted_deleter<Win>};
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
-
-xcb_connection_ptr create_xcb_connection()
-{
-    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_disconnect);
-}
-
 }
 
 TEST_CASE("stacking order", "[win]")
@@ -303,7 +296,7 @@ TEST_CASE("stacking order", "[win]")
         // We need to wait until the remnant from previous test is gone.
         QTRY_VERIFY(setup.base->mod.space->windows.empty());
 
-        auto conn = create_xcb_connection();
+        auto conn = xcb_connection_create();
 
         QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
@@ -428,7 +421,7 @@ TEST_CASE("stacking order", "[win]")
     {
         const QRect geometry = QRect(0, 0, 128, 128);
 
-        auto conn = create_xcb_connection();
+        auto conn = xcb_connection_create();
 
         QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
@@ -572,7 +565,7 @@ TEST_CASE("stacking order", "[win]")
 
         const QRect geometry = QRect(0, 0, 128, 128);
 
-        auto conn = create_xcb_connection();
+        auto conn = xcb_connection_create();
 
         QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
@@ -706,7 +699,7 @@ TEST_CASE("stacking order", "[win]")
 
         const QRect geometry = QRect(0, 0, 128, 128);
 
-        auto conn = create_xcb_connection();
+        auto conn = xcb_connection_create();
 
         QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
                                     &space::qobject_t::clientAdded);
