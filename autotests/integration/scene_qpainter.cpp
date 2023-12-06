@@ -69,6 +69,11 @@ TEST_CASE("scene qpainter", "[render]")
 
         QVERIFY(!cursorImage.isNull());
         p.drawImage(cursor()->pos() - sw_cursor->hotspot(), cursorImage);
+
+        // TODO(romangg): For unknown reason the following comparison only passes when Xwayland is
+        //                running. Investigate why the buffer depends on it.
+        xcb_connection_create();
+
         QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(setup.base->outputs.at(0)));
     }
 

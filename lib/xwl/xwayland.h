@@ -42,6 +42,7 @@ template<typename Space>
 class xwayland : public QObject
 {
 public:
+    using type = xwayland<Space>;
     using window_t = typename Space::window_t;
 
     xwayland(Space& space)
@@ -51,6 +52,22 @@ public:
         socket = std::make_unique<xwl::socket>(socket::mode::transfer_fds_on_exec);
         if (!socket->is_valid()) {
             throw std::runtime_error("Failed to create Xwayland connection sockets");
+        }
+
+        for (auto fd : socket->file_descriptors) {
+            auto notifier = new QSocketNotifier(fd, QSocketNotifier::Read, this);
+            QObject::connect(notifier, &QSocketNotifier::activated, this, &type::start);
+        }
+
+        qputenv("DISPLAY", socket->name().c_str());
+        space.base.process_environment.insert(QStringLiteral("DISPLAY"), socket->name().c_str());
+    }
+
+private:
+    void start()
+    {
+        if (xwayland_process) {
+            return;
         }
 
         std::vector<int> fds_to_close;
@@ -137,11 +154,10 @@ public:
             continue_startup_with_x11();
         });
 
-        qputenv("DISPLAY", socket->name().c_str());
-        space.base.process_environment.insert(QStringLiteral("DISPLAY"), socket->name().c_str());
         xwayland_process->start();
     }
 
+public:
     ~xwayland() override
     {
         data_bridge.reset();
@@ -164,7 +180,7 @@ public:
             Q_EMIT space.base.qobject->x11_reset();
         }
 
-        if (xwayland_process->state() != QProcess::NotRunning) {
+        if (xwayland_process && xwayland_process->state() != QProcess::NotRunning) {
             QObject::disconnect(xwayland_process, nullptr, this, nullptr);
             xwayland_process->terminate();
             xwayland_process->waitForFinished(5000);

@@ -21,6 +21,10 @@ TEST_CASE("xwayland selections", "[win],[xwl]")
     test_outputs_default();
     setup_wayland_connection();
 
+    // Start Xwayland on demand.
+    // TODO(romangg): Could it also work with real on demand creation by the paste/copy X client?
+    xcb_connection_create();
+
     SECTION("sync")
     {
         enum class sync_direction {

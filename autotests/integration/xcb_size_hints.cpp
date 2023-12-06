@@ -18,6 +18,9 @@ TEST_CASE("xcb size hints", "[win],[xwl]")
     test::setup setup("xcb-size-hints", base::operation_mode::xwayland);
     setup.start();
 
+    // Start Xwayland on demand.
+    xcb_connection_create();
+
     auto connection = setup.base->x11_data.connection;
     auto root_window = setup.base->x11_data.root_window;
 

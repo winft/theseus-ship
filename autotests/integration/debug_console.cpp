@@ -212,6 +212,9 @@ TEST_CASE("debug console", "[debug]")
         QSignalSpy rowsInsertedSpy(model.get(), &QAbstractItemModel::rowsInserted);
         QVERIFY(rowsInsertedSpy.isValid());
 
+        // Start Xwayland on demand.
+        xcb_connection_create();
+
         // let's create an override redirect window
         const uint32_t values[] = {true};
         base::x11::xcb::window window(setup.base->x11_data.connection,

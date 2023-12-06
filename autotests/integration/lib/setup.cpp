@@ -142,9 +142,6 @@ void setup::start()
         } catch (std::exception const& exc) {
             std::cerr << "Exception creating Xwayland: " << exc.what() << std::endl;
         }
-
-        // Wait so we can access the connection from our side in our tests for creating windows etc.
-        TRY_REQUIRE_WITH_TIMEOUT(base->x11_data.connection, 10000);
     }
 #endif
 }

@@ -59,6 +59,9 @@ TEST_CASE("client machine", "[win],[xwl]")
                             hostname.constData());
     };
 
+    // Start Xwayland on demand.
+    xcb_connection_create();
+
     SECTION("host name")
     {
         struct data {
