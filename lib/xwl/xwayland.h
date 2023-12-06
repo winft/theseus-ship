@@ -18,6 +18,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "win/x11/space_setup.h"
 #include "win/x11/xcb_event_filter.h"
 #include <xwl/socket.h>
+#include <xwl/xauthority.h>
 
 #include <KLocalizedString>
 #include <QAbstractEventDispatcher>
@@ -26,6 +27,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QObject>
 #include <QProcess>
 #include <QSocketNotifier>
+#include <QTemporaryFile>
 #include <QThread>
 #include <QtConcurrentRun>
 
@@ -57,6 +59,16 @@ public:
         for (auto fd : socket->file_descriptors) {
             auto notifier = new QSocketNotifier(fd, QSocketNotifier::Read, this);
             QObject::connect(notifier, &QSocketNotifier::activated, this, &type::start);
+        }
+
+        if (!qEnvironmentVariableIsSet("KWIN_WAYLAND_NO_XAUTHORITY")) {
+            if (xauthority_generate_file(socket->display, xauthority_file)) {
+                auto const name = xauthority_file.fileName().toLatin1();
+                qputenv("XAUTHORITY", name);
+                space.base.process_environment.insert(QStringLiteral("XAUTHORITY"), name);
+            } else {
+                qCWarning(KWIN_CORE) << "Failed to create an Xauthority file";
+            }
         }
 
         qputenv("DISPLAY", socket->name().c_str());
@@ -123,6 +135,10 @@ private:
 
         QStringList arguments;
         arguments << socket->name().c_str();
+
+        if (auto name = xauthority_file.fileName(); !name.isEmpty()) {
+            arguments << QStringLiteral("-auth") << name;
+        }
 
         for (auto socket : socket->file_descriptors) {
             auto dup_socket = dup(socket);
@@ -302,6 +318,7 @@ private:
     Space& space;
     std::unique_ptr<QSocketNotifier> ready_notifier;
     std::unique_ptr<base::x11::selection_owner> wm_owner;
+    QTemporaryFile xauthority_file;
 };
 
 }

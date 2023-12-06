@@ -40,10 +40,12 @@ target_sources(xwayland
       wl_visit.h
       x11_visit.h
       xwayland.h
+      xauthority.h
   PRIVATE
     socket.cpp
     sources_ext.cpp
     transfer.cpp
+    xauthority.cpp
 )
 
 set_target_properties(xwayland PROPERTIES
