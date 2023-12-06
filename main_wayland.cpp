@@ -131,9 +131,6 @@ void ApplicationWayland::start(base::operation_mode mode,
             std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
             exit(1);
         }
-
-        base->process_environment.insert(QStringLiteral("DISPLAY"),
-                                         base->mod.xwayland->socket->name().c_str());
     }
 
     auto process_environment = base->process_environment;

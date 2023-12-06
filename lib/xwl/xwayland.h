@@ -138,6 +138,7 @@ public:
         });
 
         qputenv("DISPLAY", socket->name().c_str());
+        space.base.process_environment.insert(QStringLiteral("DISPLAY"), socket->name().c_str());
         xwayland_process->start();
     }
 
