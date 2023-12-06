@@ -54,7 +54,7 @@ public:
         : server(base, flags)
     {
         display->set_socket_name(socket);
-        display->start(Wrapland::Server::Display::StartMode::ConnectToSocket);
+        display->start();
         create_globals();
     }
 
