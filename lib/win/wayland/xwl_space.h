@@ -19,6 +19,7 @@
 #include "win/x11/space_areas.h"
 #include "xwl/surface.h"
 #include <debug/console/wayland/xwl_console.h>
+#include <win/kill_window.h>
 #include <win/stacking_state.h>
 #include <win/wayland/internal_window.h>
 #include <win/wayland/subspace_manager.h>

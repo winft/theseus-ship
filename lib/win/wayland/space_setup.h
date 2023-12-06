@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include <desktop/kde/dbus/kwin.h>
 #include <win/singleton_interface.h>
 #include <win/space_setup.h>
 #include <win/user_actions_menu.h>
