@@ -57,7 +57,6 @@ int ApplicationX11::crashes = 0;
 ApplicationX11::ApplicationX11(int& argc, char** argv)
     : QApplication(argc, argv)
     , base{base::config(KConfig::OpenFlag::FullConfig, "kwinrc")}
-    , m_replace(false)
 {
     app_init();
 
@@ -70,12 +69,7 @@ ApplicationX11::~ApplicationX11()
     base.mod.space.reset();
 }
 
-void ApplicationX11::setReplace(bool replace)
-{
-    m_replace = replace;
-}
-
-void ApplicationX11::start()
+void ApplicationX11::start(bool replace)
 {
     setQuitOnLastWindowClosed(false);
     setQuitLockEnabled(false);
@@ -147,7 +141,7 @@ void ApplicationX11::start()
 
     // we need to do an XSync here, otherwise the QPA might crash us later on
     base::x11::xcb::sync(base.x11_data.connection);
-    base.owner->claim(m_replace || crashes > 0, true);
+    base.owner->claim(replace || crashes > 0, true);
 }
 
 void ApplicationX11::crashChecking()
@@ -279,8 +273,6 @@ int main(int argc, char* argv[])
     KAboutData::applicationData().processCommandLine(&parser);
     a.crashes = parser.value("crashes").toInt();
 
-    a.setReplace(parser.isSet(replaceOption));
-
     // perform sanity checks
     if (a.platformName().toLower() != QStringLiteral("xcb")) {
         fprintf(stderr,
@@ -297,7 +289,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    a.start();
+    a.start(parser.isSet(replaceOption));
 
     return a.exec();
 }

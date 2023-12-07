@@ -42,9 +42,7 @@ public:
     ApplicationX11(int& argc, char** argv);
     ~ApplicationX11() override;
 
-    void start();
-
-    void setReplace(bool replace);
+    void start(bool replace);
     void notifyKSplash();
 
     static int crashes;
@@ -56,7 +54,6 @@ private:
 
     using base_t = base::x11::platform<base_mod>;
     base_t base;
-    bool m_replace;
 };
 
 }
