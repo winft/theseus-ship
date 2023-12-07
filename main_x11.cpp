@@ -65,9 +65,6 @@ ApplicationX11::ApplicationX11(int& argc, char** argv)
     , base{base::config(KConfig::OpenFlag::FullConfig, "kwinrc")}
 {
     app_init();
-
-    base.x11_data.connection = QX11Info::connection();
-    base.x11_data.root_window = QX11Info::appRootWindow();
 }
 
 ApplicationX11::~ApplicationX11()
@@ -83,7 +80,6 @@ void ApplicationX11::start(bool replace)
     KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);
     base::x11::platform_init_crash_count(base, crash_count);
 
-    base.x11_data.screen_number = QX11Info::appScreen();
     base::x11::xcb::extensions::create(base.x11_data);
     base::backend::x11::wm_selection_owner_create(base);
 

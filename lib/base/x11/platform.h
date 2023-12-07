@@ -58,6 +58,11 @@ public:
         , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
     {
         operation_mode = operation_mode::x11;
+
+        x11_data.connection = QX11Info::connection();
+        x11_data.root_window = QX11Info::appRootWindow();
+        x11_data.screen_number = QX11Info::appScreen();
+
         platform_init(*this);
     }
 
