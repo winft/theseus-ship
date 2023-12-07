@@ -108,6 +108,21 @@ target_sources(base-x11
     x11/xcb/extensions.cpp
 )
 
+add_library(base-x11-backend SHARED)
+target_link_libraries(base-x11-backend
+  PUBLIC
+    base-x11
+)
+
+target_sources(base-x11-backend
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      backend/x11/wm_selection_owner.h
+  PRIVATE
+    backend/x11/wm_selection_owner.cpp
+)
+
 add_library(base-wl SHARED)
 
 target_link_libraries(base-wl
@@ -141,7 +156,7 @@ set_target_properties(base base-x11 base-wl PROPERTIES
    PREFIX libkwinft-
 )
 
-install(TARGETS base base-x11 base-wl
+install(TARGETS base base-x11 base-x11-backend base-wl
   EXPORT kwinft-export
   LIBRARY NAMELINK_SKIP
   FILE_SET HEADERS DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinft/base
