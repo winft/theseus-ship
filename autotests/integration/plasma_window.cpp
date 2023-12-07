@@ -63,7 +63,7 @@ struct wayland_test_window {
 struct x11_test_window {
     x11_test_window(test::setup& setup, QSize const& size)
     {
-        client.connection = xcb_connect(nullptr, nullptr);
+        client.connection = xcb_connection_create().release();
         QVERIFY(!xcb_connection_has_error(client.connection));
 
         auto const geo = QRect({0, 0}, size);
@@ -187,13 +187,6 @@ void HelperWindow::paintEvent(QPaintEvent* event)
     p.fillRect(0, 0, width(), height(), Qt::red);
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
-
-xcb_connection_ptr create_xcb_connection()
-{
-    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_disconnect);
-}
-
 template<typename Win>
 std::string get_internal_id(Win& win)
 {
@@ -224,7 +217,7 @@ TEST_CASE("plasma window", "[win]")
         QVERIFY(plasmaWindowCreatedSpy.isValid());
 
         // create an xcb window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 100, 200);
         xcb_window_t w = xcb_generate_id(c.get());

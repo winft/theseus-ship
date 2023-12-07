@@ -15,18 +15,6 @@ using namespace Wrapland::Client;
 namespace KWin::detail::test
 {
 
-namespace
-{
-
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
-
-xcb_connection_ptr create_xcb_connection()
-{
-    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_disconnect);
-}
-
-}
-
 TEST_CASE("x11 window", "[win]")
 {
     test::setup setup("x11-window", base::operation_mode::xwayland);
@@ -54,7 +42,7 @@ TEST_CASE("x11 window", "[win]")
                  "Testing nonprintable:, emoij:\360\237\230\203, non-characters:"});
 
         // create an xcb window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 100, 200);
         xcb_window_t w = xcb_generate_id(c.get());
@@ -114,7 +102,7 @@ TEST_CASE("x11 window", "[win]")
         QCOMPARE(setup.base->outputs.size(), 1);
 
         // first create an X11 window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 100, 200);
         xcb_window_t w = xcb_generate_id(c.get());
@@ -274,7 +262,7 @@ TEST_CASE("x11 window", "[win]")
         // was a Wayland client
 
         // create an X11 window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 100, 200);
         xcb_window_t w = xcb_generate_id(c.get());
@@ -343,7 +331,7 @@ TEST_CASE("x11 window", "[win]")
     SECTION("x11 window id")
     {
         // create an X11 window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 100, 200);
         xcb_window_t w = xcb_generate_id(c.get());
@@ -433,7 +421,7 @@ TEST_CASE("x11 window", "[win]")
     {
         // verifies that caption is updated correctly when the X11 window updates it
         // BUG: 383444
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 100, 200);
         xcb_window_t w = xcb_generate_id(c.get());
@@ -522,7 +510,7 @@ TEST_CASE("x11 window", "[win]")
     {
         // BUG 384760
         // create first window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 100, 200);
         xcb_window_t w = xcb_generate_id(c.get());
@@ -636,7 +624,7 @@ TEST_CASE("x11 window", "[win]")
         // then a second window is created which is in the same window group
         // BUG: 388310
 
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 100, 200);
         xcb_window_t w = xcb_generate_id(c.get());
@@ -743,7 +731,7 @@ TEST_CASE("x11 window", "[win]")
 
         QSKIP("Focus is not restored properly when the active client is about to be unmapped");
 
-        auto connection = create_xcb_connection();
+        auto connection = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(connection.get()));
 
         QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),

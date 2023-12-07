@@ -69,6 +69,11 @@ TEST_CASE("scene qpainter", "[render]")
 
         QVERIFY(!cursorImage.isNull());
         p.drawImage(cursor()->pos() - sw_cursor->hotspot(), cursorImage);
+
+        // TODO(romangg): For unknown reason the following comparison only passes when Xwayland is
+        //                running. Investigate why the buffer depends on it.
+        xcb_connection_create();
+
         QCOMPARE(referenceImage, *scene->backend()->bufferForScreen(setup.base->outputs.at(0)));
     }
 
@@ -290,13 +295,6 @@ TEST_CASE("scene qpainter", "[render]")
     {
         // this test verifies the condition of BUG: 382748
 
-        struct XcbConnectionDeleter {
-            static inline void cleanup(xcb_connection_t* pointer)
-            {
-                xcb_disconnect(pointer);
-            }
-        };
-
         // create X11 window
         QSignalSpy windowAddedSpy(effects, &EffectsHandler::windowAdded);
         QVERIFY(windowAddedSpy.isValid());
@@ -313,12 +311,12 @@ TEST_CASE("scene qpainter", "[render]")
         QVERIFY(frameRenderedSpy.wait());
 
         // create an xcb window
-        QScopedPointer<xcb_connection_t, XcbConnectionDeleter> c(xcb_connect(nullptr, nullptr));
-        QVERIFY(!xcb_connection_has_error(c.data()));
+        auto con = xcb_connection_create();
+        QVERIFY(!xcb_connection_has_error(con.get()));
         const QRect windowGeometry(0, 0, 100, 200);
-        xcb_window_t w = xcb_generate_id(c.data());
+        xcb_window_t w = xcb_generate_id(con.get());
         uint32_t value = base::x11::get_default_screen(setup.base->x11_data)->white_pixel;
-        xcb_create_window(c.data(),
+        xcb_create_window(con.get(),
                           XCB_COPY_FROM_PARENT,
                           w,
                           setup.base->x11_data.root_window,
@@ -335,9 +333,9 @@ TEST_CASE("scene qpainter", "[render]")
         memset(&hints, 0, sizeof(hints));
         xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
         xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
-        xcb_icccm_set_wm_normal_hints(c.data(), w, &hints);
-        xcb_map_window(c.data(), w);
-        xcb_flush(c.data());
+        xcb_icccm_set_wm_normal_hints(con.get(), w, &hints);
+        xcb_map_window(con.get(), w);
+        xcb_flush(con.get());
 
         // we should get a client for it
         QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
@@ -401,14 +399,13 @@ TEST_CASE("scene qpainter", "[render]")
             compareImage);
 
         // and destroy the window again
-        xcb_unmap_window(c.data(), w);
-        xcb_flush(c.data());
+        xcb_unmap_window(con.get(), w);
+        xcb_flush(con.get());
 
         QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
         QVERIFY(windowClosedSpy.isValid());
         QVERIFY(windowClosedSpy.wait());
-        xcb_destroy_window(c.data(), w);
-        c.reset();
+        xcb_destroy_window(con.get(), w);
     }
 }
 

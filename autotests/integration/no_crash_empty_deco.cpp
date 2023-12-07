@@ -33,11 +33,11 @@ TEST_CASE("no crash empty deco", "[win]")
     cursor()->set_pos(QPoint(640, 512));
 
     // create an xcb window
-    xcb_connection_t* c = xcb_connect(nullptr, nullptr);
-    QVERIFY(!xcb_connection_has_error(c));
+    auto con = xcb_connection_create();
+    QVERIFY(!xcb_connection_has_error(con.get()));
 
-    xcb_window_t w = xcb_generate_id(c);
-    xcb_create_window(c,
+    xcb_window_t w = xcb_generate_id(con.get());
+    xcb_create_window(con.get(),
                       XCB_COPY_FROM_PARENT,
                       w,
                       setup.base->x11_data.root_window,
@@ -50,8 +50,8 @@ TEST_CASE("no crash empty deco", "[win]")
                       XCB_COPY_FROM_PARENT,
                       0,
                       nullptr);
-    xcb_map_window(c, w);
-    xcb_flush(c);
+    xcb_map_window(con.get(), w);
+    xcb_flush(con.get());
 
     // we should get a client for it
     QSignalSpy windowCreatedSpy(setup.base->mod.space->qobject.get(),
@@ -70,10 +70,9 @@ TEST_CASE("no crash empty deco", "[win]")
     QCOMPARE(client->geo.frame, QRect(0, 0, 0, 0));
 
     // and destroy the window again
-    xcb_unmap_window(c, w);
-    xcb_destroy_window(c, w);
-    xcb_flush(c);
-    xcb_disconnect(c);
+    xcb_unmap_window(con.get(), w);
+    xcb_destroy_window(con.get(), w);
+    xcb_flush(con.get());
 
     QSignalSpy windowClosedSpy(client->qobject.get(), &win::window_qobject::closed);
     QVERIFY(windowClosedSpy.isValid());

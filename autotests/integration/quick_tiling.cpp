@@ -29,13 +29,6 @@ namespace KWin::detail::test
 namespace
 {
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
-
-xcb_connection_ptr create_xcb_connection()
-{
-    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_disconnect);
-}
-
 Wrapland::Client::xdg_shell_states get_client_tiles(win::quicktiles tiles)
 {
     Wrapland::Client::xdg_shell_states states;
@@ -550,7 +543,7 @@ TEST_CASE("quick tiling", "[win]")
                  win::quicktiles::left | win::quicktiles::bottom},
             data{win::quicktiles::maximize, {0, 0, 1280, 1024}, 0, win::quicktiles::none});
 
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 100, 200);
         xcb_window_t w = xcb_generate_id(c.get());
@@ -641,7 +634,7 @@ TEST_CASE("quick tiling", "[win]")
                        data{win::quicktiles::right | win::quicktiles::bottom, {640, 512, 640, 512}},
                        data{win::quicktiles::maximize, {0, 0, 1280, 1024}});
 
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         const QRect windowGeometry(0, 0, 100, 200);
         xcb_window_t w = xcb_generate_id(c.get());

@@ -782,4 +782,24 @@ void hold_cancel(uint32_t time)
     wlr_signal_emit_safe(&test_app->pointer->events.hold_end, &event);
 }
 
+#if USE_XWL
+static void xcb_connection_deleter(xcb_connection_t* pointer)
+{
+    xcb_disconnect(pointer);
+}
+
+xcb_connection_ptr xcb_connection_create()
+{
+    QFutureWatcher<xcb_connection_t*> watcher;
+    QEventLoop loop;
+    loop.connect(&watcher, &QFutureWatcher<xcb_connection_t*>::finished, &loop, &QEventLoop::quit);
+
+    auto future = QtConcurrent::run([]() { return xcb_connect(nullptr, nullptr); });
+    watcher.setFuture(future);
+    loop.exec();
+
+    return xcb_connection_ptr(future.result(), xcb_connection_deleter);
+}
+#endif
+
 }

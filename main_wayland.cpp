@@ -122,38 +122,17 @@ void ApplicationWayland::start(base::operation_mode mode,
     base->server->init_screen_locker();
 
     if (base->operation_mode == base::operation_mode::xwayland) {
-        create_xwayland();
-    } else {
-        startSession();
-    }
-}
-
-void ApplicationWayland::create_xwayland()
-{
-    auto status_callback = [this](auto error) {
-        if (error) {
-            // we currently exit on Xwayland errors always directly
-            // TODO: restart Xwayland
-            std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
-            exit(error);
+        try {
+            base->mod.xwayland = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space);
+        } catch (std::system_error const& exc) {
+            std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+            exit(exc.code().value());
+        } catch (std::exception const& exc) {
+            std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+            exit(1);
         }
-        startSession();
-    };
-
-    try {
-        base->mod.xwayland
-            = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space, status_callback);
-    } catch (std::system_error const& exc) {
-        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
-        exit(exc.code().value());
-    } catch (std::exception const& exc) {
-        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
-        exit(1);
     }
-}
 
-void ApplicationWayland::startSession()
-{
     auto process_environment = base->process_environment;
 
     // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.

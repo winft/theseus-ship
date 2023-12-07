@@ -17,13 +17,6 @@ namespace KWin::detail::test
 namespace
 {
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
-
-xcb_connection_ptr create_xcb_connection()
-{
-    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_disconnect);
-}
-
 class X11EventReaderHelper : public QObject
 {
     Q_OBJECT
@@ -87,7 +80,7 @@ TEST_CASE("xwayland input", "[input],[xwl]")
         // this test simulates a pointer enter and pointer leave on an X11 window
 
         // create the test window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
         if (xcb_get_setup(c.get())->release_number < 11800000) {
             QSKIP("XWayland 1.18 required");

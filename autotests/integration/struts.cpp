@@ -17,18 +17,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin::detail::test
 {
 
-namespace
-{
-
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
-
-xcb_connection_ptr create_xcb_connection()
-{
-    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_disconnect);
-}
-
-}
-
 TEST_CASE("struts", "[win]")
 {
     test::setup setup("struts", base::operation_mode::xwayland);
@@ -806,7 +794,7 @@ TEST_CASE("struts", "[win]")
                  QRegion());
 
         // create an xcb window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
 
         xcb_window_t w = xcb_generate_id(c.get());
@@ -979,7 +967,7 @@ TEST_CASE("struts", "[win]")
         QCOMPARE(setup.base->topology.size, QSize(1920, 1848));
 
         // create an xcb window
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
 
         xcb_window_t w = xcb_generate_id(c.get());
@@ -1082,7 +1070,7 @@ TEST_CASE("struts", "[win]")
         QCOMPARE(setup.base->topology.size, QSize(3046, 1050));
 
         // create the panel
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
 
         xcb_window_t w = xcb_generate_id(c.get());
@@ -1229,7 +1217,7 @@ TEST_CASE("struts", "[win]")
         QCOMPARE(setup.base->topology.size, QSize(3046, 1050));
 
         // create the panel on the right screen, left edge
-        auto c = create_xcb_connection();
+        auto c = xcb_connection_create();
         QVERIFY(!xcb_connection_has_error(c.get()));
 
         xcb_window_t w = xcb_generate_id(c.get());
