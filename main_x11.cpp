@@ -13,7 +13,6 @@
 
 #include "base/options.h"
 #include "base/seat/backend/logind/session.h"
-#include "base/x11/xcb/helpers.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/shortcuts_init.h"
@@ -21,7 +20,6 @@
 #include "win/shortcuts_init.h"
 #include "win/x11/space.h"
 #include "win/x11/space_event.h"
-#include <base/backend/x11/wm_selection.h>
 #include <base/x11/platform_helpers.h>
 #include <desktop/kde/platform.h>
 
@@ -80,11 +78,7 @@ void ApplicationX11::start(bool replace)
     KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);
     base::x11::platform_init_crash_count(base, crash_count);
 
-    base::x11::xcb::extensions::create(base.x11_data);
-    base::backend::x11::wm_selection_owner_create(base);
-
-    using wm_owner_t = base::backend::x11::wm_selection_owner;
-    QObject::connect(base.owner.get(), &wm_owner_t::claimedOwnership, [this] {
+    auto handle_ownership_claimed = [this] {
         base.options = base::create_options(base::operation_mode::x11, base.config.main);
 
         // Check  whether another windowmanager is running
@@ -138,11 +132,9 @@ void ApplicationX11::start(bool replace)
         // Trigger possible errors, there's still a chance to abort.
         base::x11::xcb::sync(base.x11_data.connection);
         notifyKSplash();
-    });
+    };
 
-    // we need to do an XSync here, otherwise the QPA might crash us later on
-    base::x11::xcb::sync(base.x11_data.connection);
-    base.owner->claim(replace || base.crash_count > 0, true);
+    base::x11::platform_start(base, replace, handle_ownership_claimed);
 }
 
 void ApplicationX11::notifyKSplash()
