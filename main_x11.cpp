@@ -22,6 +22,7 @@
 #include "win/x11/space.h"
 #include "win/x11/space_event.h"
 #include <base/backend/x11/wm_selection.h>
+#include <base/x11/platform_helpers.h>
 #include <desktop/kde/platform.h>
 
 #include <KConfigGroup>
@@ -79,7 +80,8 @@ void ApplicationX11::start(bool replace)
     setQuitOnLastWindowClosed(false);
     setQuitLockEnabled(false);
 
-    crashChecking();
+    KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);
+    base::x11::platform_init_crash_count(base, crash_count);
 
     base.x11_data.screen_number = QX11Info::appScreen();
     base::x11::xcb::extensions::create(base.x11_data);
@@ -145,30 +147,6 @@ void ApplicationX11::start(bool replace)
     // we need to do an XSync here, otherwise the QPA might crash us later on
     base::x11::xcb::sync(base.x11_data.connection);
     base.owner->claim(replace || base.crash_count > 0, true);
-}
-
-void ApplicationX11::crashChecking()
-{
-    KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);
-
-    if (base.crash_count >= 4) {
-        // Something has gone seriously wrong
-        qCDebug(KWIN_CORE) << "More than 3 crashes recently. Exiting now.";
-        ::exit(1);
-    }
-
-    if (base.crash_count >= 2) {
-        // Disable compositing if we have had too many crashes
-        qCDebug(KWIN_CORE) << "More than 1 crash recently. Disabling compositing.";
-        KConfigGroup compgroup(KSharedConfig::openConfig(), "Compositing");
-        compgroup.writeEntry("Enabled", false);
-    }
-
-    // Reset crashes count if we stay up for more that 15 seconds
-    QTimer::singleShot(15 * 1000, this, [this] {
-        base.crash_count = 0;
-        crash_count = 0;
-    });
 }
 
 void ApplicationX11::notifyKSplash()
@@ -277,8 +255,7 @@ int main(int argc, char* argv[])
     qDebug("Starting KWinFT (X11) %s", KWIN_VERSION_STRING);
 
     KAboutData::applicationData().processCommandLine(&parser);
-    a.base.crash_count = parser.value("crashes").toInt();
-    crash_count = a.base.crash_count;
+    crash_count = parser.value("crashes").toInt();
 
     // perform sanity checks
     if (a.platformName().toLower() != QStringLiteral("xcb")) {

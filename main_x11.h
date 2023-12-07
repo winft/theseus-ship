@@ -45,8 +45,6 @@ public:
     void start(bool replace);
     void notifyKSplash();
 
-    void crashChecking();
-
     static void crashHandler(int signal);
 
     using base_t = base::x11::platform<base_mod>;

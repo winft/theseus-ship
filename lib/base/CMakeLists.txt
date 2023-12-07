@@ -120,6 +120,8 @@ target_sources(base-x11-backend
     FILES
       backend/x11/wm_selection.h
       backend/x11/wm_selection_owner.h
+      x11/platform.h
+      x11/platform_helpers.h
   PRIVATE
     backend/x11/wm_selection_owner.cpp
 )
