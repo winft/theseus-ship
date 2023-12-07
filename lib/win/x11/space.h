@@ -29,6 +29,7 @@
 #include <win/x11/debug.h>
 #include <win/x11/netinfo_helpers.h>
 #include <win/x11/tabbox_filter.h>
+#include <win/x11/xcb_event_filter.h>
 
 #include <vector>
 
@@ -102,6 +103,9 @@ public:
             });
 
         x11::init_space(*this);
+
+        event_filter = std::make_unique<win::x11::xcb_event_filter<type>>(*this);
+        qApp->installNativeEventFilter(event_filter.get());
     }
 
     virtual ~space()
@@ -323,6 +327,7 @@ public:
     std::optional<window_t> move_resize_window;
 
 private:
+    std::unique_ptr<xcb_event_filter<type>> event_filter;
     std::unique_ptr<base::x11::event_filter> edges_filter;
     std::unique_ptr<base::x11::event_filter> tabbox_filter;
 };

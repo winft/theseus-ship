@@ -22,7 +22,6 @@
 #include "win/shortcuts_init.h"
 #include "win/x11/space.h"
 #include "win/x11/space_event.h"
-#include "win/x11/xcb_event_filter.h"
 #include <desktop/kde/platform.h>
 
 #include <KConfigGroup>
@@ -157,7 +156,6 @@ void ApplicationX11::setReplace(bool replace)
 void ApplicationX11::lostSelection()
 {
     sendPostedEvents();
-    event_filter.reset();
     base.mod.space.reset();
     base.mod.render.reset();
 
@@ -237,10 +235,6 @@ void ApplicationX11::start()
             = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base.mod.space);
         win::init_shortcuts(*base.mod.space);
         render::init_shortcuts(*base.mod.render);
-
-        event_filter
-            = std::make_unique<win::x11::xcb_event_filter<base_t::space_t>>(*base.mod.space);
-        installNativeEventFilter(event_filter.get());
 
         base.mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.mod.space);
         render->start(*base.mod.space);

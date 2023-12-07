@@ -19,12 +19,6 @@
 namespace KWin
 {
 
-namespace win::x11
-{
-template<typename Space>
-class xcb_event_filter;
-}
-
 class KWinSelectionOwner;
 
 struct space_mod {
@@ -69,7 +63,6 @@ private:
     base_t base;
 
     std::unique_ptr<KWinSelectionOwner> owner;
-    std::unique_ptr<win::x11::xcb_event_filter<base_t::space_t>> event_filter;
     bool m_replace;
 };
 
