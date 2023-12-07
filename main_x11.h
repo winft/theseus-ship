@@ -10,7 +10,6 @@
 
 #include "base/x11/platform.h"
 #include "render/backend/x11/platform.h"
-#include <base/backend/x11/wm_selection_owner.h>
 #include <desktop/platform.h>
 #include <script/platform.h>
 
@@ -60,9 +59,6 @@ private:
 
     using base_t = base::x11::platform<base_mod>;
     base_t base;
-
-    using wm_owner_t = base::backend::x11::wm_selection_owner;
-    std::unique_ptr<wm_owner_t> owner;
     bool m_replace;
 };
 

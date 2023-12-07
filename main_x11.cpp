@@ -13,7 +13,6 @@
 
 #include "base/options.h"
 #include "base/seat/backend/logind/session.h"
-#include "base/x11/selection_owner.h"
 #include "base/x11/xcb/helpers.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
@@ -68,13 +67,6 @@ ApplicationX11::ApplicationX11(int& argc, char** argv)
 ApplicationX11::~ApplicationX11()
 {
     base.mod.space.reset();
-    if (owner && owner->ownerWindow() != XCB_WINDOW_NONE) {
-        // If there was no --replace (no new WM)
-        xcb_set_input_focus(base.x11_data.connection,
-                            XCB_INPUT_FOCUS_POINTER_ROOT,
-                            XCB_INPUT_FOCUS_POINTER_ROOT,
-                            base.x11_data.time);
-    }
 }
 
 void ApplicationX11::setReplace(bool replace)
@@ -105,8 +97,10 @@ void ApplicationX11::start()
     base.x11_data.screen_number = QX11Info::appScreen();
     base::x11::xcb::extensions::create(base.x11_data);
 
-    owner = std::make_unique<wm_owner_t>(base.x11_data.connection, base.x11_data.screen_number);
-    QObject::connect(owner.get(), &wm_owner_t::failedToClaimOwnership, [] {
+    using wm_owner_t = base::backend::x11::wm_selection_owner;
+    base.owner
+        = std::make_unique<wm_owner_t>(base.x11_data.connection, base.x11_data.screen_number);
+    QObject::connect(base.owner.get(), &wm_owner_t::failedToClaimOwnership, [] {
         fputs(i18n("kwin: unable to claim manager selection, another wm running? (try using "
                    "--replace)\n")
                   .toLocal8Bit()
@@ -114,8 +108,9 @@ void ApplicationX11::start()
               stderr);
         ::exit(1);
     });
-    QObject::connect(owner.get(), &wm_owner_t::lostOwnership, this, &ApplicationX11::lostSelection);
-    QObject::connect(owner.get(), &wm_owner_t::claimedOwnership, [this] {
+    QObject::connect(
+        base.owner.get(), &wm_owner_t::lostOwnership, this, &ApplicationX11::lostSelection);
+    QObject::connect(base.owner.get(), &wm_owner_t::claimedOwnership, [this] {
         base.options = base::create_options(base::operation_mode::x11, base.config.main);
 
         // Check  whether another windowmanager is running
@@ -173,7 +168,7 @@ void ApplicationX11::start()
 
     // we need to do an XSync here, otherwise the QPA might crash us later on
     base::x11::xcb::sync(base.x11_data.connection);
-    owner->claim(m_replace || crashes > 0, true);
+    base.owner->claim(m_replace || crashes > 0, true);
 }
 
 void ApplicationX11::crashChecking()

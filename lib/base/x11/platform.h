@@ -14,6 +14,7 @@
 #include "input/x11/platform.h"
 #include "render/x11/platform.h"
 #include "win/x11/space.h"
+#include <base/backend/x11/wm_selection_owner.h>
 #include <base/platform_helpers.h>
 #include <base/platform_qobject.h>
 #include <base/x11/data.h>
@@ -62,6 +63,13 @@ public:
 
     virtual ~platform()
     {
+        if (owner && owner->ownerWindow() != XCB_WINDOW_NONE) {
+            xcb_set_input_focus(x11_data.connection,
+                                XCB_INPUT_FOCUS_POINTER_ROOT,
+                                XCB_INPUT_FOCUS_POINTER_ROOT,
+                                x11_data.time);
+        }
+
         for (auto out : outputs) {
             delete out;
         }
@@ -86,6 +94,7 @@ public:
     base::config config;
     base::x11::data x11_data;
 
+    std::unique_ptr<backend::x11::wm_selection_owner> owner;
     std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;
     std::unique_ptr<x11::event_filter_manager> x11_event_filters;
