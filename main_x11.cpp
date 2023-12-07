@@ -67,7 +67,6 @@ ApplicationX11::ApplicationX11(int& argc, char** argv)
 
 ApplicationX11::~ApplicationX11()
 {
-    base.mod.space.reset();
 }
 
 void ApplicationX11::start(bool replace)

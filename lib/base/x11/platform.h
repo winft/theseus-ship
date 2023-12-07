@@ -21,6 +21,7 @@
 #include <base/x11/event_filter_manager.h>
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace KWin::base::x11
@@ -75,9 +76,6 @@ public:
                                 x11_data.time);
         }
 
-        for (auto out : outputs) {
-            delete out;
-        }
         singleton_interface::get_outputs = {};
         singleton_interface::platform = nullptr;
     }
@@ -105,7 +103,9 @@ public:
     std::unique_ptr<base::seat::session> session;
     std::unique_ptr<x11::event_filter_manager> x11_event_filters;
 
+    std::unordered_map<output_t*, std::unique_ptr<output_t>> owned_outputs;
     std::vector<output_t*> outputs;
+    std::unique_ptr<base::x11::event_filter> randr_filter;
 
     Mod mod;
 
@@ -141,7 +141,7 @@ private:
             auto old_out = *old_it;
             old_it = static_cast<decltype(old_it)>(this->outputs.erase(std::next(old_it).base()));
             Q_EMIT qobject->output_removed(old_out);
-            delete old_out;
+            owned_outputs.erase(old_out);
         }
 
         // Second check for added and changed outputs.
@@ -155,8 +155,10 @@ private:
 
             if (it == this->outputs.end()) {
                 qCDebug(KWIN_CORE) << "  added:" << out->name();
-                this->outputs.push_back(out.release());
-                Q_EMIT qobject->output_added(this->outputs.back());
+                auto out_ptr = out.get();
+                owned_outputs.insert({out_ptr, std::move(out)});
+                this->outputs.push_back(out_ptr);
+                Q_EMIT qobject->output_added(out_ptr);
             } else {
                 // Update data of lasting output.
                 (*it)->data = out->data;
@@ -165,8 +167,6 @@ private:
 
         update_output_topology(*this);
     }
-
-    std::unique_ptr<base::x11::event_filter> randr_filter;
 };
 
 }
