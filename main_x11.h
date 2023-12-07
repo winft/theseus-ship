@@ -49,9 +49,6 @@ public:
 
     static int crashes;
 
-private Q_SLOTS:
-    void lostSelection();
-
 private:
     void crashChecking();
 

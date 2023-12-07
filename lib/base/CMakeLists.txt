@@ -118,6 +118,7 @@ target_sources(base-x11-backend
   PUBLIC
     FILE_SET HEADERS
     FILES
+      backend/x11/wm_selection.h
       backend/x11/wm_selection_owner.h
   PRIVATE
     backend/x11/wm_selection_owner.cpp

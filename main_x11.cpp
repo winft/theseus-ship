@@ -21,6 +21,7 @@
 #include "win/shortcuts_init.h"
 #include "win/x11/space.h"
 #include "win/x11/space_event.h"
+#include <base/backend/x11/wm_selection.h>
 #include <desktop/kde/platform.h>
 
 #include <KConfigGroup>
@@ -74,18 +75,6 @@ void ApplicationX11::setReplace(bool replace)
     m_replace = replace;
 }
 
-void ApplicationX11::lostSelection()
-{
-    sendPostedEvents();
-    base.mod.space.reset();
-    base.mod.render.reset();
-
-    // Remove windowmanager privileges
-    base::x11::xcb::select_input(
-        base.x11_data.connection, base.x11_data.root_window, XCB_EVENT_MASK_PROPERTY_CHANGE);
-    quit();
-}
-
 void ApplicationX11::start()
 {
     setQuitOnLastWindowClosed(false);
@@ -94,22 +83,12 @@ void ApplicationX11::start()
     base.is_crash_restart = crashes > 0;
 
     crashChecking();
+
     base.x11_data.screen_number = QX11Info::appScreen();
     base::x11::xcb::extensions::create(base.x11_data);
+    base::backend::x11::wm_selection_owner_create(base);
 
     using wm_owner_t = base::backend::x11::wm_selection_owner;
-    base.owner
-        = std::make_unique<wm_owner_t>(base.x11_data.connection, base.x11_data.screen_number);
-    QObject::connect(base.owner.get(), &wm_owner_t::failedToClaimOwnership, [] {
-        fputs(i18n("kwin: unable to claim manager selection, another wm running? (try using "
-                   "--replace)\n")
-                  .toLocal8Bit()
-                  .constData(),
-              stderr);
-        ::exit(1);
-    });
-    QObject::connect(
-        base.owner.get(), &wm_owner_t::lostOwnership, this, &ApplicationX11::lostSelection);
     QObject::connect(base.owner.get(), &wm_owner_t::claimedOwnership, [this] {
         base.options = base::create_options(base::operation_mode::x11, base.config.main);
 
