@@ -45,9 +45,6 @@ public:
     void start(bool replace);
     void notifyKSplash();
 
-    static int crashes;
-
-private:
     void crashChecking();
 
     static void crashHandler(int signal);

@@ -93,6 +93,7 @@ public:
     output_topology topology;
     base::config config;
     base::x11::data x11_data;
+    int crash_count{0};
 
     std::unique_ptr<backend::x11::wm_selection_owner> owner;
     std::unique_ptr<base::options> options;
@@ -102,8 +103,6 @@ public:
     std::vector<output_t*> outputs;
 
     Mod mod;
-
-    bool is_crash_restart{false};
 
 private:
     template<typename Resources>

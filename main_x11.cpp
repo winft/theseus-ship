@@ -45,14 +45,19 @@ Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtWarningMsg)
 
 constexpr char kwin_internal_name[]{"kwin_x11"};
 
+namespace
+{
+
+int crash_count = 0;
+
+}
+
 namespace KWin
 {
 
 //************************************
 // ApplicationX11
 //************************************
-
-int ApplicationX11::crashes = 0;
 
 ApplicationX11::ApplicationX11(int& argc, char** argv)
     : QApplication(argc, argv)
@@ -73,8 +78,6 @@ void ApplicationX11::start(bool replace)
 {
     setQuitOnLastWindowClosed(false);
     setQuitLockEnabled(false);
-
-    base.is_crash_restart = crashes > 0;
 
     crashChecking();
 
@@ -101,7 +104,7 @@ void ApplicationX11::start(bool replace)
                   stderr);
             // If this is a crash-restart, DrKonqi may have stopped the process w/o killing the
             // connection.
-            if (crashes == 0) {
+            if (base.crash_count == 0) {
                 ::exit(1);
             }
         }
@@ -141,20 +144,20 @@ void ApplicationX11::start(bool replace)
 
     // we need to do an XSync here, otherwise the QPA might crash us later on
     base::x11::xcb::sync(base.x11_data.connection);
-    base.owner->claim(replace || crashes > 0, true);
+    base.owner->claim(replace || base.crash_count > 0, true);
 }
 
 void ApplicationX11::crashChecking()
 {
     KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);
 
-    if (crashes >= 4) {
+    if (base.crash_count >= 4) {
         // Something has gone seriously wrong
         qCDebug(KWIN_CORE) << "More than 3 crashes recently. Exiting now.";
         ::exit(1);
     }
 
-    if (crashes >= 2) {
+    if (base.crash_count >= 2) {
         // Disable compositing if we have had too many crashes
         qCDebug(KWIN_CORE) << "More than 1 crash recently. Disabling compositing.";
         KConfigGroup compgroup(KSharedConfig::openConfig(), "Compositing");
@@ -162,7 +165,10 @@ void ApplicationX11::crashChecking()
     }
 
     // Reset crashes count if we stay up for more that 15 seconds
-    QTimer::singleShot(15 * 1000, this, [] { crashes = 0; });
+    QTimer::singleShot(15 * 1000, this, [this] {
+        base.crash_count = 0;
+        crash_count = 0;
+    });
 }
 
 void ApplicationX11::notifyKSplash()
@@ -179,17 +185,17 @@ void ApplicationX11::notifyKSplash()
 
 void ApplicationX11::crashHandler(int signal)
 {
-    crashes++;
+    crash_count++;
 
     fprintf(stderr,
             "Application::crashHandler() called with signal %d; recent crashes: %d\n",
             signal,
-            crashes);
+            crash_count);
     char cmd[1024];
     sprintf(cmd,
             "%s --crashes %d &",
             QFile::encodeName(QCoreApplication::applicationFilePath()).constData(),
-            crashes);
+            crash_count);
 
     sleep(1);
     system(cmd);
@@ -271,7 +277,8 @@ int main(int argc, char* argv[])
     qDebug("Starting KWinFT (X11) %s", KWIN_VERSION_STRING);
 
     KAboutData::applicationData().processCommandLine(&parser);
-    a.crashes = parser.value("crashes").toInt();
+    a.base.crash_count = parser.value("crashes").toInt();
+    crash_count = a.base.crash_count;
 
     // perform sanity checks
     if (a.platformName().toLower() != QStringLiteral("xcb")) {
