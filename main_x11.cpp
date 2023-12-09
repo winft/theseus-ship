@@ -12,6 +12,7 @@
 #include <base/x11/app_singleton.h>
 #include <base/x11/platform.h>
 #include <base/x11/platform_helpers.h>
+#include <debug/perf/ftrace.h>
 #include <desktop/kde/platform.h>
 #include <render/backend/x11/platform.h>
 #include <render/shortcuts_init.h>
@@ -91,7 +92,10 @@ int main(int argc, char* argv[])
     signal(SIGPIPE, SIG_IGN);
 
     base::x11::app_singleton app(argc, argv);
-    app_init();
+
+    if (!Perf::Ftrace::setEnabled(qEnvironmentVariableIsSet("KWIN_PERF_FTRACE"))) {
+        qWarning() << "Can't enable Ftrace via environment variable.";
+    }
 
     KSignalHandler::self()->watchSignal(SIGTERM);
     KSignalHandler::self()->watchSignal(SIGINT);

@@ -188,7 +188,10 @@ int main(int argc, char* argv[])
                                  QStringLiteral("[/path/to/application...]"));
 
     base::wayland::app_singleton app(argc, argv);
-    app_init();
+
+    if (!Perf::Ftrace::setEnabled(qEnvironmentVariableIsSet("KWIN_PERF_FTRACE"))) {
+        qWarning() << "Can't enable Ftrace via environment variable.";
+    }
 
     KSignalHandler::self()->watchSignal(SIGTERM);
     KSignalHandler::self()->watchSignal(SIGINT);

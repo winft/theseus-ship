@@ -17,6 +17,7 @@
 #include <KLocalizedContext>
 #include <QObject>
 #include <QQmlEngine>
+#include <QQuickWindow>
 
 namespace KWin::win
 {
@@ -24,6 +25,9 @@ namespace KWin::win
 template<typename Space>
 void init_space(Space& space)
 {
+    // We want all QQuickWindows with an alpha buffer.
+    QQuickWindow::setDefaultAlphaBuffer(true);
+
     space.qml_engine = std::make_unique<QQmlEngine>();
     space.qml_engine->setProperty("_kirigamiTheme", QStringLiteral("KirigamiPlasmaStyle"));
     space.qml_engine->rootContext()->setContextObject(

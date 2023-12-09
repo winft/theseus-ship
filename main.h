@@ -7,34 +7,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "debug/perf/ftrace.h"
-#include <base/logging.h>
-
 #include <base/config-kwin.h>
-#include <render/effect/interface/effect_window.h>
 
 #include <KAboutData>
 #include <KLocalizedString>
-#include <QApplication>
-#include <QCommandLineParser>
-#include <QQuickWindow>
-#include <memory>
 
 namespace KWin
 {
-
-inline void app_init()
-{
-    if (!Perf::Ftrace::setEnabled(qEnvironmentVariableIsSet("KWIN_PERF_FTRACE"))) {
-        qCWarning(KWIN_CORE) << "Can't enable Ftrace via environment variable.";
-    }
-
-    qRegisterMetaType<KWin::EffectWindow*>();
-
-    // We want all QQuickWindows with an alpha buffer, do here as a later Workspace might create
-    // QQuickWindows.
-    QQuickWindow::setDefaultAlphaBuffer(true);
-}
 
 inline void app_create_about_data()
 {
