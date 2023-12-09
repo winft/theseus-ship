@@ -7,39 +7,24 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "main.h"
-#include <config-kwin.h>
 
-#include "base/options.h"
-#include "base/seat/backend/logind/session.h"
-#include "input/x11/platform.h"
-#include "input/x11/redirect.h"
-#include "render/shortcuts_init.h"
-#include "script/platform.h"
-#include "win/shortcuts_init.h"
-#include "win/x11/space.h"
-#include "win/x11/space_event.h"
+#include <base/seat/backend/logind/session.h>
 #include <base/x11/app_singleton.h>
 #include <base/x11/platform.h>
 #include <base/x11/platform_helpers.h>
 #include <desktop/kde/platform.h>
-#include <desktop/platform.h>
 #include <render/backend/x11/platform.h>
+#include <render/shortcuts_init.h>
 #include <script/platform.h>
+#include <win/shortcuts_init.h>
 
-#include <KConfigGroup>
 #include <KCrash>
-#include <KLocalizedString>
-#include <KPluginMetaData>
 #include <KSignalHandler>
-
-#include <QCommandLineParser>
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusPendingCall>
 #include <QFile>
-#include <QtDBus>
-#include <qplatformdefs.h>
-
-// system
 #include <iostream>
-#include <unistd.h>
 
 namespace
 {
