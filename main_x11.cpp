@@ -6,8 +6,6 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "main_x11.h"
-
 #include "main.h"
 #include <config-kwin.h>
 
@@ -21,8 +19,12 @@
 #include "win/x11/space.h"
 #include "win/x11/space_event.h"
 #include <base/x11/app_singleton.h>
+#include <base/x11/platform.h>
 #include <base/x11/platform_helpers.h>
 #include <desktop/kde/platform.h>
+#include <desktop/platform.h>
+#include <render/backend/x11/platform.h>
+#include <script/platform.h>
 
 #include <KConfigGroup>
 #include <KCrash>
@@ -39,39 +41,110 @@
 #include <iostream>
 #include <unistd.h>
 
-Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtWarningMsg)
-
-constexpr char kwin_internal_name[]{"kwin_x11"};
-
 namespace
 {
 
 int crash_count = 0;
+
+void notify_ksplash()
+{
+    // Tell KSplash that KWin has started
+    auto ksplash_progress_message
+        = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KSplash"),
+                                         QStringLiteral("/KSplash"),
+                                         QStringLiteral("org.kde.KSplash"),
+                                         QStringLiteral("setStage"));
+    ksplash_progress_message.setArguments(QList<QVariant>() << QStringLiteral("wm"));
+    QDBusConnection::sessionBus().asyncCall(ksplash_progress_message);
+}
+
+void crash_handler(int signal)
+{
+    crash_count++;
+
+    fprintf(
+        stderr, "crash_handler() called with signal %d; recent crashes: %d\n", signal, crash_count);
+    char cmd[1024];
+    sprintf(cmd,
+            "%s --crashes %d &",
+            QFile::encodeName(QCoreApplication::applicationFilePath()).constData(),
+            crash_count);
+
+    sleep(1);
+    system(cmd);
+}
 
 }
 
 namespace KWin
 {
 
-//************************************
-// ApplicationX11
-//************************************
+struct space_mod {
+    std::unique_ptr<desktop::platform> desktop;
+};
 
-ApplicationX11::ApplicationX11()
-    : base{base::config(KConfig::OpenFlag::FullConfig, "kwinrc")}
-{
+struct base_mod {
+    using platform_t = base::x11::platform<base_mod>;
+    using render_t = render::x11::platform<platform_t>;
+    using input_t = input::x11::platform<platform_t>;
+    using space_t = win::x11::space<platform_t, space_mod>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
+    std::unique_ptr<scripting::platform<space_t>> script;
+};
+
 }
 
-ApplicationX11::~ApplicationX11()
+int main(int argc, char* argv[])
 {
-}
+    using namespace KWin;
 
-void ApplicationX11::start(bool replace)
-{
-    KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);
+    KLocalizedString::setApplicationDomain("kwin");
+
+    signal(SIGPIPE, SIG_IGN);
+
+    base::x11::app_singleton app(argc, argv);
+    app_init();
+
+    KSignalHandler::self()->watchSignal(SIGTERM);
+    KSignalHandler::self()->watchSignal(SIGINT);
+    KSignalHandler::self()->watchSignal(SIGHUP);
+    QObject::connect(KSignalHandler::self(),
+                     &KSignalHandler::signalReceived,
+                     app.qapp.get(),
+                     &QCoreApplication::exit);
+
+    KWin::app_create_about_data();
+
+    QCommandLineOption crashesOption(
+        "crashes", i18n("Indicate that KWin has recently crashed n times"), QStringLiteral("n"));
+    QCommandLineOption replaceOption(
+        QStringLiteral("replace"),
+        i18n("Replace already-running ICCCM2.0-compliant window manager"));
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription(i18n("KWinFT X11 Window Manager"));
+    KAboutData::applicationData().setupCommandLine(&parser);
+
+    parser.addOption(crashesOption);
+    parser.addOption(replaceOption);
+
+    parser.process(*app.qapp);
+
+    qDebug("Starting KWinFT (X11) %s", KWIN_VERSION_STRING);
+
+    KAboutData::applicationData().processCommandLine(&parser);
+    crash_count = parser.value("crashes").toInt();
+
+    using base_t = base::x11::platform<base_mod>;
+    base_t base(base::config(KConfig::OpenFlag::FullConfig, "kwinrc"));
+
+    KCrash::setEmergencySaveFunction(crash_handler);
     base::x11::platform_init_crash_count(base, crash_count);
 
-    auto handle_ownership_claimed = [this] {
+    auto handle_ownership_claimed = [&base] {
         base.options = base::create_options(base::operation_mode::x11, base.config.main);
 
         // Check  whether another windowmanager is running
@@ -124,85 +197,10 @@ void ApplicationX11::start(bool replace)
 
         // Trigger possible errors, there's still a chance to abort.
         base::x11::xcb::sync(base.x11_data.connection);
-        notifyKSplash();
+        notify_ksplash();
     };
 
-    base::x11::platform_start(base, replace, handle_ownership_claimed);
-}
-
-void ApplicationX11::notifyKSplash()
-{
-    // Tell KSplash that KWin has started
-    QDBusMessage ksplashProgressMessage
-        = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KSplash"),
-                                         QStringLiteral("/KSplash"),
-                                         QStringLiteral("org.kde.KSplash"),
-                                         QStringLiteral("setStage"));
-    ksplashProgressMessage.setArguments(QList<QVariant>() << QStringLiteral("wm"));
-    QDBusConnection::sessionBus().asyncCall(ksplashProgressMessage);
-}
-
-void ApplicationX11::crashHandler(int signal)
-{
-    crash_count++;
-
-    fprintf(stderr,
-            "Application::crashHandler() called with signal %d; recent crashes: %d\n",
-            signal,
-            crash_count);
-    char cmd[1024];
-    sprintf(cmd,
-            "%s --crashes %d &",
-            QFile::encodeName(QCoreApplication::applicationFilePath()).constData(),
-            crash_count);
-
-    sleep(1);
-    system(cmd);
-}
-
-} // namespace
-
-int main(int argc, char* argv[])
-{
-    KLocalizedString::setApplicationDomain("kwin");
-
-    signal(SIGPIPE, SIG_IGN);
-
-    KWin::base::x11::app_singleton app(argc, argv);
-    KWin::ApplicationX11 a;
-    KWin::app_init();
-
-    KSignalHandler::self()->watchSignal(SIGTERM);
-    KSignalHandler::self()->watchSignal(SIGINT);
-    KSignalHandler::self()->watchSignal(SIGHUP);
-    QObject::connect(KSignalHandler::self(),
-                     &KSignalHandler::signalReceived,
-                     app.qapp.get(),
-                     &QCoreApplication::exit);
-
-    KWin::app_create_about_data();
-
-    QCommandLineOption crashesOption(
-        "crashes", i18n("Indicate that KWin has recently crashed n times"), QStringLiteral("n"));
-    QCommandLineOption replaceOption(
-        QStringLiteral("replace"),
-        i18n("Replace already-running ICCCM2.0-compliant window manager"));
-
-    QCommandLineParser parser;
-    parser.setApplicationDescription(i18n("KWinFT X11 Window Manager"));
-    KAboutData::applicationData().setupCommandLine(&parser);
-
-    parser.addOption(crashesOption);
-    parser.addOption(replaceOption);
-
-    parser.process(*app.qapp);
-
-    qDebug("Starting KWinFT (X11) %s", KWIN_VERSION_STRING);
-
-    KAboutData::applicationData().processCommandLine(&parser);
-    crash_count = parser.value("crashes").toInt();
-
-    a.start(parser.isSet(replaceOption));
+    base::x11::platform_start(base, parser.isSet(replaceOption), handle_ownership_claimed);
 
     return app.qapp->exec();
 }
