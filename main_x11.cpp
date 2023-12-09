@@ -20,6 +20,7 @@
 #include "win/shortcuts_init.h"
 #include "win/x11/space.h"
 #include "win/x11/space_event.h"
+#include <base/x11/app_singleton.h>
 #include <base/x11/platform_helpers.h>
 #include <desktop/kde/platform.h>
 
@@ -31,9 +32,7 @@
 
 #include <QCommandLineParser>
 #include <QFile>
-#include <QSurfaceFormat>
 #include <QtDBus>
-#include <QtGui/private/qtx11extras_p.h>
 #include <qplatformdefs.h>
 
 // system
@@ -58,11 +57,9 @@ namespace KWin
 // ApplicationX11
 //************************************
 
-ApplicationX11::ApplicationX11(int& argc, char** argv)
-    : QApplication(argc, argv)
-    , base{base::config(KConfig::OpenFlag::FullConfig, "kwinrc")}
+ApplicationX11::ApplicationX11()
+    : base{base::config(KConfig::OpenFlag::FullConfig, "kwinrc")}
 {
-    app_init();
 }
 
 ApplicationX11::~ApplicationX11()
@@ -71,9 +68,6 @@ ApplicationX11::~ApplicationX11()
 
 void ApplicationX11::start(bool replace)
 {
-    setQuitOnLastWindowClosed(false);
-    setQuitLockEnabled(false);
-
     KCrash::setEmergencySaveFunction(ApplicationX11::crashHandler);
     base::x11::platform_init_crash_count(base, crash_count);
 
@@ -172,55 +166,19 @@ int main(int argc, char* argv[])
 {
     KLocalizedString::setApplicationDomain("kwin");
 
-    int primaryScreen = 0;
-    xcb_connection_t* c = xcb_connect(nullptr, &primaryScreen);
-    if (!c || xcb_connection_has_error(c)) {
-        fprintf(stderr,
-                "%s: FATAL ERROR while trying to open display %s\n",
-                argv[0],
-                qgetenv("DISPLAY").constData());
-        exit(1);
-    }
-
-    xcb_disconnect(c);
-    c = nullptr;
-
     signal(SIGPIPE, SIG_IGN);
 
-    // enforce xcb plugin, unfortunately command line switch has precedence
-    setenv("QT_QPA_PLATFORM", "xcb", true);
-
-    // disable highdpi scaling
-    setenv("QT_ENABLE_HIGHDPI_SCALING", "0", true);
-
-    qunsetenv("QT_DEVICE_PIXEL_RATIO");
-    qunsetenv("QT_SCALE_FACTOR");
-    qunsetenv("QT_SCREEN_SCALE_FACTORS");
-
-    // KSMServer talks to us directly on DBus.
-    QCoreApplication::setAttribute(Qt::AA_DisableSessionManager);
-    // For sharing thumbnails between our scene graph and qtquick.
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-
-    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-    // shared opengl contexts must have the same reset notification policy
-    format.setOptions(QSurfaceFormat::ResetNotification);
-    // disables vsync for any QtQuick windows we create (BUG 406180)
-    format.setSwapInterval(0);
-    QSurfaceFormat::setDefaultFormat(format);
-
-    KWin::ApplicationX11 a(argc, argv);
-
-    // reset QT_QPA_PLATFORM so we don't propagate it to our children (e.g. apps launched from the
-    // overview effect)
-    qunsetenv("QT_QPA_PLATFORM");
-    qunsetenv("QT_ENABLE_HIGHDPI_SCALING");
+    KWin::base::x11::app_singleton app(argc, argv);
+    KWin::ApplicationX11 a;
+    KWin::app_init();
 
     KSignalHandler::self()->watchSignal(SIGTERM);
     KSignalHandler::self()->watchSignal(SIGINT);
     KSignalHandler::self()->watchSignal(SIGHUP);
-    QObject::connect(
-        KSignalHandler::self(), &KSignalHandler::signalReceived, &a, &QCoreApplication::exit);
+    QObject::connect(KSignalHandler::self(),
+                     &KSignalHandler::signalReceived,
+                     app.qapp.get(),
+                     &QCoreApplication::exit);
 
     KWin::app_create_about_data();
 
@@ -237,30 +195,14 @@ int main(int argc, char* argv[])
     parser.addOption(crashesOption);
     parser.addOption(replaceOption);
 
-    parser.process(a);
+    parser.process(*app.qapp);
 
     qDebug("Starting KWinFT (X11) %s", KWIN_VERSION_STRING);
 
     KAboutData::applicationData().processCommandLine(&parser);
     crash_count = parser.value("crashes").toInt();
 
-    // perform sanity checks
-    if (a.platformName().toLower() != QStringLiteral("xcb")) {
-        fprintf(stderr,
-                "%s: FATAL ERROR expecting platform xcb but got platform %s\n",
-                argv[0],
-                qPrintable(a.platformName()));
-        exit(1);
-    }
-    if (!QX11Info::display()) {
-        fprintf(stderr,
-                "%s: FATAL ERROR KWin requires Xlib support in the xcb plugin. Do not configure Qt "
-                "with -no-xcb-xlib\n",
-                argv[0]);
-        exit(1);
-    }
-
     a.start(parser.isSet(replaceOption));
 
-    return a.exec();
+    return app.qapp->exec();
 }

@@ -13,7 +13,6 @@
 #include <desktop/platform.h>
 #include <script/platform.h>
 
-#include <QApplication>
 #include <memory>
 
 namespace KWin
@@ -35,12 +34,11 @@ struct base_mod {
     std::unique_ptr<scripting::platform<space_t>> script;
 };
 
-class ApplicationX11 : public QApplication
+class ApplicationX11
 {
-    Q_OBJECT
 public:
-    ApplicationX11(int& argc, char** argv);
-    ~ApplicationX11() override;
+    ApplicationX11();
+    ~ApplicationX11();
 
     void start(bool replace);
     void notifyKSplash();
