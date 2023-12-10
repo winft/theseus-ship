@@ -203,6 +203,10 @@ set_package_properties(wlroots PROPERTIES
     PURPOSE "Required for building wlroots backend."
 )
 
+if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.18)
+  set(WLR_HAVE_SESSION_CREATE_LOOP 1)
+endif()
+
 find_package(X11)
 set_package_properties(X11 PROPERTIES
     DESCRIPTION "X11 libraries"
