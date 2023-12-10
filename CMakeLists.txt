@@ -205,6 +205,7 @@ set_package_properties(wlroots PROPERTIES
 
 if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.18)
   set(WLR_HAVE_SESSION_CREATE_LOOP 1)
+  set(WLR_HAVE_UTIL_TRANSFORM_HEADER 1)
 endif()
 
 find_package(X11)
