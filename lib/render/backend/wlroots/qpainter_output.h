@@ -38,12 +38,22 @@ public:
 
         auto const size = output.base.geometry().size();
 
+#if WLR_HAVE_NEW_PIXEL_COPY_API
+        assert(!current_render_pass);
+        current_render_pass
+            = wlr_output_begin_render_pass(native_out, &native_out->pending, nullptr, nullptr);
+#else
         wlr_output_attach_render(native_out, nullptr);
         wlr_renderer_begin(renderer, size.width(), size.height());
+#endif
 
         if (!buffer || size != buffer->size()) {
-            auto current_pixman_image = wlr_pixman_renderer_get_current_image(renderer);
-            auto pixman_format = pixman_image_get_format(current_pixman_image);
+#if WLR_HAVE_NEW_PIXEL_COPY_API
+            auto img = wlr_pixman_renderer_get_buffer_image(renderer, native_out->pending.buffer);
+#else
+            auto img = wlr_pixman_renderer_get_current_image(renderer);
+#endif
+            auto pixman_format = pixman_image_get_format(img);
             buffer = std::make_unique<QImage>(size, pixman_to_qt_image_format(pixman_format));
             if (buffer->isNull()) {
                 // TODO(romangg): handle oom
@@ -56,12 +66,24 @@ public:
 
     void present(QRegion const& /*damage*/)
     {
+        auto& base = static_cast<typename Output::base_t&>(output.base);
         auto buffer_bits = buffer->constBits();
+
+#if WLR_HAVE_NEW_PIXEL_COPY_API
+        auto pixman_data = pixman_image_get_data(
+            wlr_pixman_renderer_get_buffer_image(renderer, base.native->pending.buffer));
+#else
         auto pixman_data = pixman_image_get_data(wlr_pixman_renderer_get_current_image(renderer));
+#endif
 
         memcpy(pixman_data, buffer_bits, buffer->width() * buffer->height() * 4);
 
-        auto& base = static_cast<typename Output::base_t&>(output.base);
+#if WLR_HAVE_NEW_PIXEL_COPY_API
+        assert(current_render_pass);
+        wlr_render_pass_submit(current_render_pass);
+        current_render_pass = nullptr;
+#endif
+
         output.swap_pending = true;
 
         if (!base.native->enabled) {
@@ -104,6 +126,10 @@ private:
             return QImage::Format_RGBA8888;
         }
     }
+
+#if WLR_HAVE_NEW_PIXEL_COPY_API
+    wlr_render_pass* current_render_pass{nullptr};
+#endif
 };
 
 }

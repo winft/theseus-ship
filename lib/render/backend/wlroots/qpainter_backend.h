@@ -10,6 +10,7 @@
 
 #include "render/qpainter/backend.h"
 #include "render/qpainter/scene.h"
+#include <config-kwin.h>
 
 namespace KWin::render::backend::wlroots
 {
@@ -48,7 +49,9 @@ public:
 
     void present(base_output_t* output, QRegion const& damage) override
     {
+#if !WLR_HAVE_NEW_PIXEL_COPY_API
         wlr_renderer_end(platform.renderer);
+#endif
         get_qpainter_output(*output)->present(damage);
     }
 
