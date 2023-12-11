@@ -14,12 +14,14 @@
 #include "input/x11/platform.h"
 #include "render/x11/platform.h"
 #include "win/x11/space.h"
+#include <base/backend/x11/wm_selection_owner.h>
 #include <base/platform_helpers.h>
 #include <base/platform_qobject.h>
 #include <base/x11/data.h>
 #include <base/x11/event_filter_manager.h>
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace KWin::base::x11
@@ -57,14 +59,23 @@ public:
         , x11_event_filters{std::make_unique<base::x11::event_filter_manager>()}
     {
         operation_mode = operation_mode::x11;
+
+        x11_data.connection = QX11Info::connection();
+        x11_data.root_window = QX11Info::appRootWindow();
+        x11_data.screen_number = QX11Info::appScreen();
+
         platform_init(*this);
     }
 
     virtual ~platform()
     {
-        for (auto out : outputs) {
-            delete out;
+        if (owner && owner->ownerWindow() != XCB_WINDOW_NONE) {
+            xcb_set_input_focus(x11_data.connection,
+                                XCB_INPUT_FOCUS_POINTER_ROOT,
+                                XCB_INPUT_FOCUS_POINTER_ROOT,
+                                x11_data.time);
         }
+
         singleton_interface::get_outputs = {};
         singleton_interface::platform = nullptr;
     }
@@ -85,16 +96,18 @@ public:
     output_topology topology;
     base::config config;
     base::x11::data x11_data;
+    int crash_count{0};
 
+    std::unique_ptr<backend::x11::wm_selection_owner> owner;
     std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;
     std::unique_ptr<x11::event_filter_manager> x11_event_filters;
 
+    std::unordered_map<output_t*, std::unique_ptr<output_t>> owned_outputs;
     std::vector<output_t*> outputs;
+    std::unique_ptr<base::x11::event_filter> randr_filter;
 
     Mod mod;
-
-    bool is_crash_restart{false};
 
 private:
     template<typename Resources>
@@ -128,7 +141,7 @@ private:
             auto old_out = *old_it;
             old_it = static_cast<decltype(old_it)>(this->outputs.erase(std::next(old_it).base()));
             Q_EMIT qobject->output_removed(old_out);
-            delete old_out;
+            owned_outputs.erase(old_out);
         }
 
         // Second check for added and changed outputs.
@@ -142,8 +155,10 @@ private:
 
             if (it == this->outputs.end()) {
                 qCDebug(KWIN_CORE) << "  added:" << out->name();
-                this->outputs.push_back(out.release());
-                Q_EMIT qobject->output_added(this->outputs.back());
+                auto out_ptr = out.get();
+                owned_outputs.insert({out_ptr, std::move(out)});
+                this->outputs.push_back(out_ptr);
+                Q_EMIT qobject->output_added(out_ptr);
             } else {
                 // Update data of lasting output.
                 (*it)->data = out->data;
@@ -152,8 +167,6 @@ private:
 
         update_output_topology(*this);
     }
-
-    std::unique_ptr<base::x11::event_filter> randr_filter;
 };
 
 }

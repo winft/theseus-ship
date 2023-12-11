@@ -1,15 +1,16 @@
 /*
 SPDX-FileCopyrightText: 2014 Martin Gräßlin <mgraesslin@kde.org>
+SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "main_wayland.h"
-
 #include "main.h"
 
 #include <base/wayland/app_singleton.h>
+#include <base/wayland/xwl_platform.h>
 #include <desktop/kde/platform.h>
 #include <render/shortcuts_init.h>
+#include <script/platform.h>
 #include <win/shortcuts_init.h>
 
 #include <KShell>
@@ -28,10 +29,38 @@ Q_IMPORT_PLUGIN(KWinIdleTimePoller)
 namespace KWin
 {
 
+template<typename Base>
+struct input_mod {
+    using platform_t = input::wayland::platform<Base, input_mod>;
+    std::unique_ptr<input::dbus::device_manager<platform_t>> dbus;
+};
+
+struct space_mod {
+    std::unique_ptr<desktop::platform> desktop;
+};
+
+struct base_mod {
+    using platform_t = base::wayland::xwl_platform<base_mod>;
+    using render_t = render::wayland::xwl_platform<platform_t>;
+    using input_t = input::wayland::platform<platform_t, input_mod<platform_t>>;
+    using space_t = win::wayland::xwl_space<platform_t, space_mod>;
+
+    std::unique_ptr<render_t> render;
+    std::unique_ptr<input_t> input;
+    std::unique_ptr<space_t> space;
+    std::unique_ptr<xwl::xwayland<space_t>> xwayland;
+    std::unique_ptr<scripting::platform<space_t>> script;
+};
+
+}
+
 static rlimit originalNofileLimit = {
     .rlim_cur = 0,
     .rlim_max = 0,
 };
+
+namespace
+{
 
 static void restoreNofileLimit()
 {
@@ -65,150 +94,30 @@ static void bumpNofileLimit()
     pthread_atfork(nullptr, nullptr, restoreNofileLimit);
 }
 
-//************************************
-// ApplicationWayland
-//************************************
-
-ApplicationWayland::ApplicationWayland(QApplication& app)
-    : app{&app}
-{
-    app_init();
-}
-
-ApplicationWayland::~ApplicationWayland()
-{
-    if (exit_with_process && exit_with_process->state() != QProcess::NotRunning) {
-        QObject::disconnect(exit_with_process, nullptr, app, nullptr);
-        exit_with_process->terminate();
-        exit_with_process->waitForFinished(5000);
-        exit_with_process = nullptr;
+struct exit_process_t {
+    exit_process_t(QApplication& app)
+        : app{&app}
+    {
     }
-}
-
-void ApplicationWayland::start(base::operation_mode mode,
-                               std::string const& socket_name,
-                               base::wayland::start_options flags,
-                               QProcessEnvironment environment)
-{
-    assert(mode != base::operation_mode::x11);
-
-    base = std::make_unique<base_t>(base::wayland::platform_arguments{
-        .config = base::config(KConfig::OpenFlag::FullConfig, "kwinrc"),
-        .socket_name = socket_name,
-        .mode = mode,
-        .flags = flags,
-    });
-
-    base->mod.render = std::make_unique<base_t::render_t>(*base);
-
-    base->mod.input = std::make_unique<base_t::input_t>(*base, input::config(KConfig::NoGlobals));
-    base->mod.input->mod.dbus
-        = std::make_unique<input::dbus::device_manager<base_t::input_t>>(*base->mod.input);
-
-    base->mod.space = std::make_unique<base_t::space_t>(*base->mod.render, *base->mod.input);
-    base->mod.space->mod.desktop
-        = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base->mod.space);
-    win::init_shortcuts(*base->mod.space);
-    render::init_shortcuts(*base->mod.render);
-    base->mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base->mod.space);
-
-    base::wayland::platform_start(*base);
-
-    if (auto const& name = base->server->display->socket_name(); !name.empty()) {
-        environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
-    }
-
-    base->process_environment = environment;
-    base->server->init_screen_locker();
-
-    if (base->operation_mode == base::operation_mode::xwayland) {
-        try {
-            base->mod.xwayland = std::make_unique<xwl::xwayland<base_t::space_t>>(*base->mod.space);
-        } catch (std::system_error const& exc) {
-            std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
-            exit(exc.code().value());
-        } catch (std::exception const& exc) {
-            std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
-            exit(1);
+    ~exit_process_t()
+    {
+        if (process && process->state() != QProcess::NotRunning) {
+            QObject::disconnect(process, nullptr, app, nullptr);
+            process->terminate();
+            process->waitForFinished(5000);
         }
     }
 
-    auto process_environment = base->process_environment;
+    QApplication* app;
+    QProcess* process{nullptr};
+};
 
-    // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.
-    process_environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
-
-    // start session
-    if (!m_sessionArgument.isEmpty()) {
-        QStringList arguments = KShell::splitArgs(m_sessionArgument);
-        if (!arguments.isEmpty()) {
-            QString program = arguments.takeFirst();
-            auto p = new QProcess(app);
-            p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-            p->setProcessEnvironment(process_environment);
-            QObject::connect(p,
-                             qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
-                             app,
-                             [this, p](int code, QProcess::ExitStatus status) {
-                                 exit_with_process = nullptr;
-                                 p->deleteLater();
-                                 if (status == QProcess::CrashExit) {
-                                     qWarning() << "Session process has crashed";
-                                     QCoreApplication::exit(-1);
-                                     return;
-                                 }
-
-                                 if (code) {
-                                     qWarning() << "Session process exited with code" << code;
-                                 }
-
-                                 QCoreApplication::exit(code);
-                             });
-            p->setProgram(program);
-            p->setArguments(arguments);
-            p->start();
-            exit_with_process = p;
-        } else {
-            qWarning("Failed to launch the session process: %s is an invalid command",
-                     qPrintable(m_sessionArgument));
-        }
-    }
-    // start the applications passed to us as command line arguments
-    if (!m_applicationsToStart.isEmpty()) {
-        for (const QString& application : qAsConst(m_applicationsToStart)) {
-            QStringList arguments = KShell::splitArgs(application);
-            if (arguments.isEmpty()) {
-                qWarning("Failed to launch application: %s is an invalid command",
-                         qPrintable(application));
-                continue;
-            }
-            QString program = arguments.takeFirst();
-            // note: this will kill the started process when we exit
-            // this is going to happen anyway as we are the wayland and X server the app connects to
-            auto p = new QProcess(app);
-            p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-            p->setProcessEnvironment(process_environment);
-            p->setProgram(program);
-            p->setArguments(arguments);
-            p->startDetached();
-            p->deleteLater();
-        }
-    }
-
-    // Need to create a launch environment job for Plasma components to catch up in a systemd boot.
-    // This implies we're running in a full Plasma session i.e. when we use the wrapper (that's
-    // there the service name comes from), but we can also do it in a plain setup without session.
-    // Registering the service names indicates that we're live and all env vars are exported.
-    auto env_sync_job = new KUpdateLaunchEnvironmentJob(process_environment);
-    QObject::connect(env_sync_job, &KUpdateLaunchEnvironmentJob::finished, app, []() {
-        QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWinWrapper"));
-    });
 }
-
-} // namespace
 
 int main(int argc, char* argv[])
 {
+    using namespace KWin;
+
     // Redirect stderr output. This is useful as a workaround for missing logs in systemd journal
     // when launching a full Plasma session.
     if (auto log_path = getenv("KWIN_LOG_PATH")) {
@@ -224,7 +133,7 @@ int main(int argc, char* argv[])
     }
 
     KLocalizedString::setApplicationDomain("kwin");
-    KWin::bumpNofileLimit();
+    bumpNofileLimit();
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -234,21 +143,6 @@ int main(int argc, char* argv[])
     sigaddset(&userSignals, SIGUSR1);
     sigaddset(&userSignals, SIGUSR2);
     pthread_sigmask(SIG_BLOCK, &userSignals, nullptr);
-
-    auto environment = QProcessEnvironment::systemEnvironment();
-
-    KWin::base::wayland::app_singleton app(argc, argv);
-    KWin::ApplicationWayland a(*app.qapp);
-
-    KSignalHandler::self()->watchSignal(SIGTERM);
-    KSignalHandler::self()->watchSignal(SIGINT);
-    KSignalHandler::self()->watchSignal(SIGHUP);
-    QObject::connect(KSignalHandler::self(),
-                     &KSignalHandler::signalReceived,
-                     app.qapp.get(),
-                     &QCoreApplication::exit);
-
-    KWin::app_create_about_data();
 
     struct {
         QCommandLineOption xwl = {
@@ -293,30 +187,154 @@ int main(int argc, char* argv[])
                                  i18n("Applications to start once server is started"),
                                  QStringLiteral("[/path/to/application...]"));
 
+    base::wayland::app_singleton app(argc, argv);
+
+    if (!Perf::Ftrace::setEnabled(qEnvironmentVariableIsSet("KWIN_PERF_FTRACE"))) {
+        qWarning() << "Can't enable Ftrace via environment variable.";
+    }
+
+    KSignalHandler::self()->watchSignal(SIGTERM);
+    KSignalHandler::self()->watchSignal(SIGINT);
+    KSignalHandler::self()->watchSignal(SIGHUP);
+    QObject::connect(KSignalHandler::self(),
+                     &KSignalHandler::signalReceived,
+                     app.qapp.get(),
+                     &QCoreApplication::exit);
+
+    app_create_about_data();
+
     parser.process(*app.qapp);
     KAboutData::applicationData().processCommandLine(&parser);
 
-    if (parser.isSet(options.exit_with_session)) {
-        a.setSessionArgument(parser.value(options.exit_with_session));
-    }
-
-    auto flags = KWin::base::wayland::start_options::none;
+    auto flags = base::wayland::start_options::none;
     if (parser.isSet(options.lockscreen)) {
-        flags = KWin::base::wayland::start_options::lock_screen;
+        flags = base::wayland::start_options::lock_screen;
     } else if (!parser.isSet(options.no_lockscreen)) {
-        flags = KWin::base::wayland::start_options::lock_screen_integration;
+        flags = base::wayland::start_options::lock_screen_integration;
     }
     if (parser.isSet(options.no_global_shortcuts)) {
-        flags |= KWin::base::wayland::start_options::no_global_shortcuts;
+        flags |= base::wayland::start_options::no_global_shortcuts;
     }
 
-    auto op_mode = parser.isSet(options.xwl) ? KWin::base::operation_mode::xwayland
-                                             : KWin::base::operation_mode::wayland;
-
-    a.setApplicationsToStart(parser.positionalArguments());
-
     qDebug("Starting KWinFT (Wayland) %s", KWIN_VERSION_STRING);
-    a.start(op_mode, parser.value(options.socket).toStdString(), flags, environment);
+
+    exit_process_t exit_process(*app.qapp);
+
+    using base_t = base::wayland::xwl_platform<base_mod>;
+    base_t base({
+        .config = base::config(KConfig::OpenFlag::FullConfig, "kwinrc"),
+        .socket_name = parser.value(options.socket).toStdString(),
+        .flags = flags,
+        .mode = parser.isSet(options.xwl) ? base::operation_mode::xwayland
+                                          : base::operation_mode::wayland,
+    });
+
+    base.mod.render = std::make_unique<base_t::render_t>(base);
+
+    base.mod.input = std::make_unique<base_t::input_t>(base, input::config(KConfig::NoGlobals));
+    base.mod.input->mod.dbus
+        = std::make_unique<input::dbus::device_manager<base_t::input_t>>(*base.mod.input);
+
+    base.mod.space = std::make_unique<base_t::space_t>(*base.mod.render, *base.mod.input);
+    base.mod.space->mod.desktop
+        = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base.mod.space);
+    win::init_shortcuts(*base.mod.space);
+    render::init_shortcuts(*base.mod.render);
+    base.mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.mod.space);
+
+    base::wayland::platform_start(base);
+
+    base.process_environment = QProcessEnvironment::systemEnvironment();
+
+    if (auto const& name = base.server->display->socket_name(); !name.empty()) {
+        base.process_environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
+    }
+
+    base.server->init_screen_locker();
+
+    if (base.operation_mode == base::operation_mode::xwayland) {
+        try {
+            base.mod.xwayland = std::make_unique<xwl::xwayland<base_t::space_t>>(*base.mod.space);
+        } catch (std::system_error const& exc) {
+            std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+            exit(exc.code().value());
+        } catch (std::exception const& exc) {
+            std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+            exit(1);
+        }
+    }
+
+    auto process_environment = base.process_environment;
+
+    // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.
+    process_environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
+
+    // start session
+    if (parser.isSet(options.exit_with_session) /*&& !m_sessionArgument.isEmpty()*/) {
+        auto arguments = KShell::splitArgs(parser.value(options.exit_with_session));
+        if (!arguments.isEmpty()) {
+            QString program = arguments.takeFirst();
+            auto p = new QProcess(app.qapp.get());
+            p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
+            p->setProcessEnvironment(process_environment);
+            QObject::connect(p,
+                             qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
+                             app.qapp.get(),
+                             [&exit_process, p](auto code, auto status) {
+                                 exit_process.process = {};
+                                 p->deleteLater();
+                                 if (status == QProcess::CrashExit) {
+                                     qWarning() << "Session process has crashed";
+                                     QCoreApplication::exit(-1);
+                                     return;
+                                 }
+
+                                 if (code) {
+                                     qWarning() << "Session process exited with code" << code;
+                                 }
+
+                                 QCoreApplication::exit(code);
+                             });
+            p->setProgram(program);
+            p->setArguments(arguments);
+            p->start();
+            exit_process.process = p;
+        } else {
+            qWarning("Failed to launch the session process: %s is an invalid command",
+                     qPrintable(parser.value(options.exit_with_session)));
+        }
+    }
+
+    // start the applications passed to us as command line arguments
+    if (auto apps = parser.positionalArguments(); !apps.isEmpty()) {
+        for (auto const& app_name : qAsConst(apps)) {
+            auto arguments = KShell::splitArgs(app_name);
+            if (arguments.isEmpty()) {
+                qWarning("Failed to launch application: %s is an invalid command",
+                         qPrintable(app_name));
+                continue;
+            }
+            QString program = arguments.takeFirst();
+            // note: this will kill the started process when we exit
+            // this is going to happen anyway as we are the wayland and X server the app connects to
+            auto p = new QProcess(app.qapp.get());
+            p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
+            p->setProcessEnvironment(process_environment);
+            p->setProgram(program);
+            p->setArguments(arguments);
+            p->startDetached();
+            p->deleteLater();
+        }
+    }
+
+    // Need to create a launch environment job for Plasma components to catch up in a systemd boot.
+    // This implies we're running in a full Plasma session i.e. when we use the wrapper (that's
+    // there the service name comes from), but we can also do it in a plain setup without session.
+    // Registering the service names indicates that we're live and all env vars are exported.
+    auto env_sync_job = new KUpdateLaunchEnvironmentJob(process_environment);
+    QObject::connect(env_sync_job, &KUpdateLaunchEnvironmentJob::finished, app.qapp.get(), []() {
+        QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWinWrapper"));
+    });
 
     return app.qapp->exec();
 }

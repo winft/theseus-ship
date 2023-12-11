@@ -9,6 +9,7 @@
 #include "active_window.h"
 #include "kill_window.h"
 #include "types.h"
+#include <win/subspace_manager.h>
 
 #include <KLazyLocalizedString>
 #include <KLocalizedString>

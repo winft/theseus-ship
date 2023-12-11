@@ -54,15 +54,7 @@ public:
         : server(base, flags)
     {
         display->set_socket_name(socket);
-        display->start(Wrapland::Server::Display::StartMode::ConnectToSocket);
-        create_globals();
-    }
-
-    server(Base& base, int socket_fd, start_options flags)
-        : server(base, flags)
-    {
-        display->add_socket_fd(socket_fd);
-        display->start(Wrapland::Server::Display::StartMode::ConnectClientsOnly);
+        display->start();
         create_globals();
     }
 

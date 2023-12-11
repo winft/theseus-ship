@@ -18,8 +18,6 @@ public:
     {
         setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);
         setenv("KWIN_FORCE_OWN_QPA", "1", true);
-
-        qunsetenv("QT_DEVICE_PIXEL_RATIO");
         qputenv("QSG_RENDER_LOOP", "basic");
 
 #if HAVE_SCHED_RESET_ON_FORK

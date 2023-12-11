@@ -14,6 +14,7 @@
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
+#include <win/kill_window.h>
 #include <win/stacking_state.h>
 #include <win/wayland/internal_window.h>
 #include <win/wayland/subspace_manager.h>

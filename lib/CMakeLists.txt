@@ -18,7 +18,7 @@ add_library(kwinft::x11 ALIAS x11)
 
 target_link_libraries(x11
   PUBLIC
-    base-x11
+    base-x11-backend
     debug-common
     input-x11-backend
     render-x11-backend

@@ -9,6 +9,10 @@
 #include "compositor.h"
 #include "effects.h"
 
+// TODO(romangg): This header should only be included when linking against the debug library. But
+//                then we also need to comment out the calls below.
+#include <debug/perf/ftrace.h>
+
 #include <render/backend/x11/deco_renderer.h>
 #include <render/dbus/compositing.h>
 #include <render/gl/backend.h>

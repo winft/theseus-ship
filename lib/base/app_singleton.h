@@ -23,6 +23,8 @@ public:
 protected:
     app_singleton()
     {
+        qunsetenv("QT_DEVICE_PIXEL_RATIO");
+
         singleton_interface::app_singleton = this;
     }
 
