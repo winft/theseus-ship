@@ -170,7 +170,7 @@ public:
     /**
      * Register a list of windows for managing.
      */
-    inline void manage(const EffectWindowList& list)
+    inline void manage(QList<EffectWindow*> const& list)
     {
         for (int i = 0; i < list.size(); i++)
             manage(list.at(i));

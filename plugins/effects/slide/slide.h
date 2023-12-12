@@ -131,7 +131,7 @@ private:
         QList<win::subspace*> visibleDesktops;
     } m_paintCtx;
 
-    EffectWindowList m_elevatedWindows;
+    QList<EffectWindow*> m_elevatedWindows;
     std::unordered_map<EffectWindow*, EffectWindowVisibleRef> window_refs;
 };
 

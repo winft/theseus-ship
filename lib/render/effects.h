@@ -730,9 +730,9 @@ public:
         return nullptr;
     }
 
-    EffectWindowList stackingOrder() const override
+    QList<EffectWindow*> stackingOrder() const override
     {
-        EffectWindowList ret;
+        QList<EffectWindow*> ret;
         for (auto win : win::render_stack(get_space().stacking.order)) {
             std::visit(overload{[&](auto&& win) {
                            if (auto eff_win = win->render->effect.get()) {
@@ -756,11 +756,11 @@ public:
 #endif
     }
 
-    EffectWindowList currentTabBoxWindowList() const override
+    QList<EffectWindow*> currentTabBoxWindowList() const override
     {
 #if KWIN_BUILD_TABBOX
         const auto clients = get_space().tabbox->current_client_list();
-        EffectWindowList ret;
+        QList<EffectWindow*> ret;
         ret.reserve(clients.size());
         std::transform(
             std::cbegin(clients), std::cend(clients), std::back_inserter(ret), [](auto win) {
@@ -769,7 +769,7 @@ public:
             });
         return ret;
 #else
-        return EffectWindowList();
+        return {};
 #endif
     }
 

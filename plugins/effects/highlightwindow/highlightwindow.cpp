@@ -103,7 +103,7 @@ void HighlightWindowEffect::slotWindowDeleted(EffectWindow* w)
 
 void HighlightWindowEffect::prepareHighlighting()
 {
-    const EffectWindowList windows = effects->stackingOrder();
+    auto const windows = effects->stackingOrder();
     for (EffectWindow* window : windows) {
         if (!isHighlightWindow(window)) {
             continue;
@@ -118,7 +118,7 @@ void HighlightWindowEffect::prepareHighlighting()
 
 void HighlightWindowEffect::finishHighlighting()
 {
-    const EffectWindowList windows = effects->stackingOrder();
+    auto const windows = effects->stackingOrder();
     for (EffectWindow* window : windows) {
         if (isHighlightWindow(window)) {
             startRevertAnimation(window);

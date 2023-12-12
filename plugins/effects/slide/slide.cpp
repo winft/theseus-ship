@@ -327,7 +327,7 @@ void SlideEffect::finishedSwitching()
     if (m_state == State::Inactive) {
         return;
     }
-    const EffectWindowList windows = effects->stackingOrder();
+    auto const windows = effects->stackingOrder();
     for (EffectWindow* w : windows) {
         w->setData(WindowForceBackgroundContrastRole, QVariant());
         w->setData(WindowForceBlurRole, QVariant());

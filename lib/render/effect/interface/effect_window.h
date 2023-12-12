@@ -37,7 +37,7 @@ public:
     {
     }
 
-    virtual EffectWindowList members() const = 0;
+    virtual QList<EffectWindow*> members() const = 0;
 };
 
 /**
@@ -586,7 +586,7 @@ public:
     virtual bool isModal() const = 0;
     Q_SCRIPTABLE virtual KWin::EffectWindow* findModal() = 0;
     Q_SCRIPTABLE virtual KWin::EffectWindow* transientFor() = 0;
-    Q_SCRIPTABLE virtual KWin::EffectWindowList mainWindows() const = 0;
+    Q_SCRIPTABLE virtual QList<KWin::EffectWindow*> mainWindows() const = 0;
 
     /**
      * Returns whether the window should be excluded from window switching effects.
@@ -881,4 +881,3 @@ private:
 }
 
 Q_DECLARE_METATYPE(KWin::EffectWindow*)
-Q_DECLARE_METATYPE(KWin::EffectWindowList)
