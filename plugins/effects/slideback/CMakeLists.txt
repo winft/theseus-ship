@@ -8,6 +8,7 @@
 # Source files
 set(slideback_SOURCES
     main.cpp
+    motions.cpp
     slideback.cpp
 )
 

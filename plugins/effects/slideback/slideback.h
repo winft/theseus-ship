@@ -7,7 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_SLIDEBACK_H
 
 #include <render/effect/interface/effect.h>
-#include <render/effect/interface/motions.h>
+
+#include "motions.h"
 
 namespace KWin
 {
