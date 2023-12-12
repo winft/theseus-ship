@@ -14,13 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin
 {
 
-class CubeSlideEffectConfigForm : public QWidget, public Ui::CubeSlideEffectConfigForm
-{
-    Q_OBJECT
-public:
-    explicit CubeSlideEffectConfigForm(QWidget* parent);
-};
-
 class CubeSlideEffectConfig : public KCModule
 {
     Q_OBJECT
@@ -31,7 +24,7 @@ public Q_SLOTS:
     void save() override;
 
 private:
-    CubeSlideEffectConfigForm* m_ui;
+    Ui::CubeSlideEffectConfigForm m_ui;
 };
 
 } // namespace

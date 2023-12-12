@@ -26,19 +26,10 @@ K_PLUGIN_CLASS(KWin::CubeEffectConfig)
 namespace KWin
 {
 
-CubeEffectConfigForm::CubeEffectConfigForm(QWidget* parent)
-    : QWidget(parent)
-{
-    setupUi(this);
-}
-
 CubeEffectConfig::CubeEffectConfig(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
-    , m_ui(widget())
 {
-    QVBoxLayout* layout = new QVBoxLayout(widget());
-
-    layout->addWidget(&m_ui);
+    m_ui.setupUi(widget());
 
     m_ui.tabWidget->setTabText(0, i18nc("@title:tab Basic Settings", "Basic"));
     m_ui.tabWidget->setTabText(1, i18nc("@title:tab Advanced Settings", "Advanced"));
@@ -75,7 +66,7 @@ CubeEffectConfig::CubeEffectConfig(QObject* parent, const KPluginMetaData& data)
     m_ui.kcfg_Wallpaper->setNameFilter(QStringLiteral("*.png *.jpeg *.jpg "));
 #endif
     CubeConfig::instance(KWIN_CONFIG);
-    addConfig(CubeConfig::self(), &m_ui);
+    addConfig(CubeConfig::self(), widget());
     load();
 }
 
