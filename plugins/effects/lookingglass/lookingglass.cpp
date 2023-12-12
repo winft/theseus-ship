@@ -52,7 +52,7 @@ LookingGlassEffect::LookingGlassEffect()
     , m_enabled(false)
     , m_valid(false)
 {
-    initConfig<LookingGlassConfig>();
+    LookingGlassConfig::instance(effects->config());
     QAction* a;
     a = KStandardAction::zoomIn(this, SLOT(zoomIn()), this);
     effects->registerGlobalShortcutAndDefault({static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal}, a);

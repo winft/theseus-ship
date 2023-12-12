@@ -50,7 +50,7 @@ void update_function(BlurEffect& effect, KWin::effect::region_update const& upda
 
 BlurEffect::BlurEffect()
 {
-    initConfig<BlurConfig>();
+    BlurConfig::instance(effects->config());
     shader = new BlurShader(this);
 
     init_blur_strength_values();

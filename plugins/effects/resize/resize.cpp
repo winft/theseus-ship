@@ -28,7 +28,7 @@ ResizeEffect::ResizeEffect()
     , m_active(false)
     , m_resizeWindow(nullptr)
 {
-    initConfig<ResizeConfig>();
+    ResizeConfig::instance(effects->config());
     reconfigure(ReconfigureAll);
 
     connect(effects, &EffectsHandler::windowAdded, this, &ResizeEffect::slotWindowAdded);

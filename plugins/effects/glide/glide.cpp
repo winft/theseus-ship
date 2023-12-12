@@ -33,7 +33,7 @@ static const QSet<QString> s_blacklist{
 
 GlideEffect::GlideEffect()
 {
-    initConfig<GlideConfig>();
+    GlideConfig::instance(effects->config());
     reconfigure(ReconfigureAll);
 
     connect(effects, &EffectsHandler::windowAdded, this, &GlideEffect::windowAdded);

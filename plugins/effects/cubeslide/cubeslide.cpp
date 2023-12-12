@@ -27,7 +27,7 @@ CubeSlideEffect::CubeSlideEffect()
     , desktopChangedWhileMoving(false)
     , progressRestriction(0.0f)
 {
-    initConfig<CubeSlideConfig>();
+    CubeSlideConfig::instance(effects->config());
     connect(effects, &EffectsHandler::windowAdded, this, &CubeSlideEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::windowDeleted, this, &CubeSlideEffect::slotWindowDeleted);
     connect(effects, &EffectsHandler::desktopChanged, this, &CubeSlideEffect::slotDesktopChanged);

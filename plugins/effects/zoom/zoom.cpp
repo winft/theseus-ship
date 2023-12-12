@@ -51,7 +51,7 @@ ZoomEffect::ZoomEffect()
     , moveFactor(20.0)
     , lastPresentTime(std::chrono::milliseconds::zero())
 {
-    initConfig<ZoomConfig>();
+    ZoomConfig::instance(effects->config());
     QAction* a = nullptr;
     a = KStandardAction::zoomIn(this, SLOT(zoomIn()), this);
     effects->registerGlobalShortcutAndDefault({Qt::META | Qt::Key_Plus, Qt::META | Qt::Key_Equal},

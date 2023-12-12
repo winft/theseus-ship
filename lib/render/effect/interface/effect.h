@@ -435,27 +435,12 @@ public Q_SLOTS:
 protected:
     xcb_connection_t* xcbConnection() const;
     uint32_t x11RootWindow() const;
-
-    /**
-     * An implementing class can call this with it's kconfig compiled singleton class.
-     * This method will perform the instance on the class.
-     * @since 5.9
-     */
-    template<typename T>
-    void initConfig();
-    KSharedConfigPtr get_config();
 };
 
 template<typename T>
 int Effect::animationTime(int defaultDuration)
 {
     return animationTime(T::duration() != 0 ? T::duration() : defaultDuration);
-}
-
-template<typename T>
-void Effect::initConfig()
-{
-    T::instance(get_config());
 }
 
 }

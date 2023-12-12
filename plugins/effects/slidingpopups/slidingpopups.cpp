@@ -101,7 +101,7 @@ void update_function(SlidingPopupsEffect& effect, KWin::effect::anim_update cons
 
 SlidingPopupsEffect::SlidingPopupsEffect()
 {
-    initConfig<SlidingPopupsConfig>();
+    SlidingPopupsConfig::instance(effects->config());
     config.distance = QFontMetrics(QGuiApplication::font()).height() * 8;
 
     connect(effects, &EffectsHandler::windowClosed, this, &SlidingPopupsEffect::slide_out);

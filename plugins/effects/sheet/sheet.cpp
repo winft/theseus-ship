@@ -21,7 +21,7 @@ namespace KWin
 
 SheetEffect::SheetEffect()
 {
-    initConfig<SheetConfig>();
+    SheetConfig::instance(effects->config());
     reconfigure(ReconfigureAll);
 
     connect(effects, &EffectsHandler::windowAdded, this, &SheetEffect::slotWindowAdded);

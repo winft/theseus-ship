@@ -35,7 +35,7 @@ MagnifierEffect::MagnifierEffect()
     , m_texture(nullptr)
     , m_fbo(nullptr)
 {
-    initConfig<MagnifierConfig>();
+    MagnifierConfig::instance(effects->config());
     QAction* a;
     a = KStandardAction::zoomIn(this, &MagnifierEffect::zoomIn, this);
     effects->registerGlobalShortcutAndDefault({static_cast<Qt::Key>(Qt::META) + Qt::Key_Equal}, a);
