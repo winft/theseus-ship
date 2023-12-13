@@ -285,7 +285,11 @@ void tabbox_handler_private::show()
         wheel_angle_delta = 0;
         w->installEventFilter(q);
         // pretend to activate the window to enable accessibility notifications
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
         QWindowSystemInterface::handleWindowActivated(w, Qt::TabFocusReason);
+#else
+        QWindowSystemInterface::handleFocusWindowChanged(w, Qt::TabFocusReason);
+#endif
     }
 }
 
