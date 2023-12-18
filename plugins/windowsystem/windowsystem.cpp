@@ -66,4 +66,20 @@ quint32 WindowSystem::lastInputSerial(QWindow* /*window*/)
     return 0;
 }
 
+void WindowSystem::exportWindow(QWindow* window)
+{
+    Q_UNUSED(window);
+}
+
+void WindowSystem::unexportWindow(QWindow* window)
+{
+    Q_UNUSED(window);
+}
+
+void WindowSystem::setMainWindow(QWindow* window, const QString& handle)
+{
+    Q_UNUSED(window);
+    Q_UNUSED(handle);
+}
+
 }
