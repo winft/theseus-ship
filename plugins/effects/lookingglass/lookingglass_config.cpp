@@ -29,21 +29,13 @@ K_PLUGIN_CLASS(KWin::LookingGlassEffectConfig)
 namespace KWin
 {
 
-LookingGlassEffectConfigForm::LookingGlassEffectConfigForm(QWidget* parent)
-    : QWidget(parent)
-{
-    setupUi(this);
-}
-
 LookingGlassEffectConfig::LookingGlassEffectConfig(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
-    , m_ui(widget())
 {
-    QVBoxLayout* layout = new QVBoxLayout(widget());
-    layout->addWidget(&m_ui);
+    m_ui.setupUi(widget());
 
     LookingGlassConfig::instance(KWIN_CONFIG);
-    addConfig(LookingGlassConfig::self(), &m_ui);
+    addConfig(LookingGlassConfig::self(), widget());
     connect(
         m_ui.editor, &KShortcutsEditor::keyChange, this, &LookingGlassEffectConfig::markAsChanged);
 

@@ -22,7 +22,7 @@ namespace KWin
 
 SlideEffect::SlideEffect()
 {
-    initConfig<SlideConfig>();
+    SlideConfig::instance(effects->config());
     reconfigure(ReconfigureAll);
 
     connect(effects, &EffectsHandler::desktopChanged, this, &SlideEffect::desktopChanged);
@@ -327,7 +327,7 @@ void SlideEffect::finishedSwitching()
     if (m_state == State::Inactive) {
         return;
     }
-    const EffectWindowList windows = effects->stackingOrder();
+    auto const windows = effects->stackingOrder();
     for (EffectWindow* w : windows) {
         w->setData(WindowForceBackgroundContrastRole, QVariant());
         w->setData(WindowForceBlurRole, QVariant());

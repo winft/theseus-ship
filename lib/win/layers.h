@@ -50,18 +50,6 @@ bool is_active_fullscreen(Win const* win)
 }
 
 template<typename Win>
-layer layer_for_dock(Win const& win)
-{
-    assert(win.control);
-
-    if (win.control->keep_above) {
-        // slight hack for the autohiding panels
-        return win::layer::above;
-    }
-    return win::layer::dock;
-}
-
-template<typename Win>
 layer belong_to_layer(Win* win)
 {
     // NOTICE while showingDesktop, desktops move to the AboveLayer
@@ -90,7 +78,7 @@ layer belong_to_layer(Win* win)
         if (win->space.showing_desktop) {
             return win::layer::notification;
         }
-        return win->layer_for_dock();
+        return layer::above;
     }
     if (is_on_screen_display(win)) {
         return win::layer::on_screen_display;

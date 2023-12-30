@@ -18,7 +18,7 @@ namespace KWin
 
 MagicLampEffect::MagicLampEffect()
 {
-    initConfig<MagicLampConfig>();
+    MagicLampConfig::instance(effects->config());
     reconfigure(ReconfigureAll);
     connect(effects, &EffectsHandler::windowAdded, this, &MagicLampEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::windowDeleted, this, &MagicLampEffect::slotWindowDeleted);
@@ -439,8 +439,13 @@ void MagicLampEffect::postPaintScreen()
 
 void MagicLampEffect::slotWindowAdded(EffectWindow* w)
 {
-    connect(w, &EffectWindow::windowMinimized, this, &MagicLampEffect::slotWindowMinimized);
-    connect(w, &EffectWindow::windowUnminimized, this, &MagicLampEffect::slotWindowUnminimized);
+    connect(w, &EffectWindow::minimizedChanged, this, [this, w]() {
+        if (w->isMinimized()) {
+            slotWindowMinimized(w);
+        } else {
+            slotWindowUnminimized(w);
+        }
+    });
 }
 
 void MagicLampEffect::slotWindowDeleted(EffectWindow* w)

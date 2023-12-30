@@ -83,7 +83,7 @@ target_link_libraries(input-x11-backend
     KF6::GlobalAccel
     X11::Xi
     XCB::CURSOR
-    ${XKBX11_LIBRARIES}
+    PkgConfig::XKBX11
 )
 
 target_sources(input-x11-backend

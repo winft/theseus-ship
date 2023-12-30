@@ -177,7 +177,7 @@ TEST_CASE("maximize", "[win]")
         // Border with BorderlessMaximizedWindows
 
         // adjust config
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("BorderlessMaximizedWindows", true);
         group.sync();
         win::space_reconfigure(*setup.base->mod.space);
@@ -235,7 +235,7 @@ TEST_CASE("maximize", "[win]")
         // decoration when the borderless maximized option is on.
 
         // Enable the borderless maximized windows option.
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("BorderlessMaximizedWindows", true);
         group.sync();
         win::space_reconfigure(*setup.base->mod.space);
@@ -336,7 +336,7 @@ TEST_CASE("maximize", "[win]")
         // clients to render client-side decorations instead (BUG 405385)
 
         // adjust config
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("BorderlessMaximizedWindows", true);
         group.sync();
         win::space_reconfigure(*setup.base->mod.space);

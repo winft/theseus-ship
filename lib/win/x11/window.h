@@ -273,11 +273,6 @@ public:
         return geometry_hints.resize_increments();
     }
 
-    win::layer layer_for_dock() const
-    {
-        return win::layer_for_dock(*this);
-    }
-
     // When another window is created, checks if this window is a child for it.
     void checkTransient(type* window)
     {

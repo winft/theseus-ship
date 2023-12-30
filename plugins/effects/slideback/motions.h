@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include <kwin_export.h>
 #include <render/effect/interface/effect_window.h>
 #include <render/effect/interface/paint_data.h>
 
@@ -20,7 +19,7 @@ class EffectWindow;
  * @internal
  */
 template<typename T>
-class KWIN_EXPORT Motion
+class Motion
 {
 public:
     /**
@@ -120,7 +119,7 @@ private:
  * 1D space. Although it can be used directly by itself it is
  * recommended to use a motion manager instead.
  */
-class KWIN_EXPORT Motion1D : public Motion<double>
+class Motion1D : public Motion<double>
 {
 public:
     explicit Motion1D(double initial = 0.0, double strength = 0.08, double smoothness = 4.0);
@@ -135,7 +134,7 @@ public:
  * 2D space. Although it can be used directly by itself it is
  * recommended to use a motion manager instead.
  */
-class KWIN_EXPORT Motion2D : public Motion<QPointF>
+class Motion2D : public Motion<QPointF>
 {
 public:
     explicit Motion2D(QPointF initial = QPointF(), double strength = 0.08, double smoothness = 4.0);
@@ -155,7 +154,7 @@ public:
  * are moving at any given time it can also be used as a notifier as
  * to see whether the effect is active or not.
  */
-class KWIN_EXPORT WindowMotionManager
+class WindowMotionManager
 {
 public:
     /**
@@ -171,7 +170,7 @@ public:
     /**
      * Register a list of windows for managing.
      */
-    inline void manage(const EffectWindowList& list)
+    inline void manage(QList<EffectWindow*> const& list)
     {
         for (int i = 0; i < list.size(); i++)
             manage(list.at(i));

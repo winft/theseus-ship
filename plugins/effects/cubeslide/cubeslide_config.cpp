@@ -19,22 +19,13 @@ K_PLUGIN_CLASS(KWin::CubeSlideEffectConfig)
 namespace KWin
 {
 
-CubeSlideEffectConfigForm::CubeSlideEffectConfigForm(QWidget* parent)
-    : QWidget(parent)
-{
-    setupUi(this);
-}
-
 CubeSlideEffectConfig::CubeSlideEffectConfig(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
 {
-    m_ui = new CubeSlideEffectConfigForm(widget());
-
-    QVBoxLayout* layout = new QVBoxLayout(widget());
-    layout->addWidget(m_ui);
+    m_ui.setupUi(widget());
 
     CubeSlideConfig::instance(KWIN_CONFIG);
-    addConfig(CubeSlideConfig::self(), m_ui);
+    addConfig(CubeSlideConfig::self(), widget());
 
     load();
 }

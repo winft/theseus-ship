@@ -43,7 +43,6 @@ target_sources(render
       effect/interface/effect_togglable_state.h
       effect/interface/effect_window.h
       effect/interface/effects_handler.h
-      effect/interface/motions.h
       effect/interface/offscreen_quick_view.h
       effect/interface/paint_clipper.h
       effect/interface/paint_data.h
@@ -116,7 +115,6 @@ target_sources(render
     effect/interface/effects_handler.cpp
     effect/interface/offscreen_quick_view.cpp
     effect/interface/quick_scene.cpp
-    effect/interface/motions.cpp
     effect/interface/paint_clipper.cpp
     effect/interface/time_line.cpp
     effect/interface/window_quad.cpp

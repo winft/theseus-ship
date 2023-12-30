@@ -479,11 +479,6 @@ public:
         x11::handle_kill_window(*this);
     }
 
-    layer layer_for_dock() const
-    {
-        return win::layer_for_dock(*this);
-    }
-
     void debug(QDebug& stream) const
     {
         x11::print_window_debug_info(*this, stream);

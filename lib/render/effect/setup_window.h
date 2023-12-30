@@ -48,14 +48,14 @@ void setup_window_connections(Win& window)
         qtwin, &win::window_qobject::clientMinimized, eff_win, [eff_win](auto animate) {
             // TODO: notify effects even if it should not animate?
             if (animate) {
-                Q_EMIT eff_win->windowMinimized(eff_win);
+                Q_EMIT eff_win->minimizedChanged(eff_win);
             }
         });
     QObject::connect(
         qtwin, &win::window_qobject::clientUnminimized, eff_win, [eff_win](auto animate) {
             // TODO: notify effects even if it should not animate?
             if (animate) {
-                Q_EMIT eff_win->windowUnminimized(eff_win);
+                Q_EMIT eff_win->minimizedChanged(eff_win);
             }
         });
     QObject::connect(qtwin, &win::window_qobject::modalChanged, eff_win, [eff_win] {

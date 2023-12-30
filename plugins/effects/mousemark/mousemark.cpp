@@ -36,7 +36,7 @@ static consteval QPoint nullPoint()
 
 MouseMarkEffect::MouseMarkEffect()
 {
-    initConfig<MouseMarkConfig>();
+    MouseMarkConfig::instance(effects->config());
 
     QAction* a = new QAction(this);
     a->setObjectName(QStringLiteral("ClearMouseMarks"));

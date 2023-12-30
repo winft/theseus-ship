@@ -1277,11 +1277,11 @@ public:
             return;
         }
 
-        KConfigGroup screenEdgesConfig = config->group("ScreenEdges");
+        KConfigGroup screenEdgesConfig = config->group(QStringLiteral("ScreenEdges"));
         setRemainActiveOnFullscreen(screenEdgesConfig.readEntry("RemainActiveOnFullscreen", false));
 
         // TODO: migrate settings to a group ScreenEdges
-        auto windowsConfig = config->group("Windows");
+        auto windowsConfig = config->group(QStringLiteral("Windows"));
 
         time_threshold
             = std::chrono::milliseconds(windowsConfig.readEntry("ElectricBorderDelay", 150));
@@ -1303,7 +1303,7 @@ public:
         const int pushBack = windowsConfig.readEntry("ElectricBorderPushbackPixels", 1);
         cursor_push_back_distance = QSize(pushBack, pushBack);
 
-        auto borderConfig = config->group("ElectricBorders");
+        auto borderConfig = config->group(QStringLiteral("ElectricBorders"));
         setActionForBorder(electric_border::top_left,
                            &actions.top_left,
                            electricBorderAction(borderConfig.readEntry("TopLeft", "None")));
@@ -1329,7 +1329,7 @@ public:
                            &actions.left,
                            electricBorderAction(borderConfig.readEntry("Left", "None")));
 
-        borderConfig = config->group("TouchEdges");
+        borderConfig = config->group(QStringLiteral("TouchEdges"));
         setActionForTouchBorder(electric_border::top,
                                 electricBorderAction(borderConfig.readEntry("Top", "None")));
         setActionForTouchBorder(electric_border::right,

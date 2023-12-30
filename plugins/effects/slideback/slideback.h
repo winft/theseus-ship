@@ -7,7 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define KWIN_SLIDEBACK_H
 
 #include <render/effect/interface/effect.h>
-#include <render/effect/interface/motions.h>
+
+#include "motions.h"
 
 namespace KWin
 {
@@ -41,10 +42,10 @@ public Q_SLOTS:
 
 private:
     WindowMotionManager motionManager;
-    EffectWindowList usableOldStackingOrder;
-    EffectWindowList oldStackingOrder;
-    EffectWindowList coveringWindows;
-    EffectWindowList elevatedList;
+    QList<EffectWindow*> usableOldStackingOrder;
+    QList<EffectWindow*> oldStackingOrder;
+    QList<EffectWindow*> coveringWindows;
+    QList<EffectWindow*> elevatedList;
     EffectWindow *m_justMapped, *m_upmostWindow;
     QHash<EffectWindow*, QRect> destinationList;
     int m_tabboxActive;
@@ -54,7 +55,7 @@ private:
     QRect getSlideDestination(const QRect& windowUnderGeometry, const QRect& windowOverGeometry);
     bool isWindowUsable(EffectWindow* w);
     bool intersects(EffectWindow* windowUnder, const QRect& windowOverGeometry);
-    EffectWindowList usableWindows(const EffectWindowList& allWindows);
+    QList<EffectWindow*> usableWindows(QList<EffectWindow*> const& allWindows);
     QRect getModalGroupGeometry(EffectWindow* w);
     void windowRaised(EffectWindow* w);
 };

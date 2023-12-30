@@ -17,7 +17,7 @@ TEST_CASE("screen edge window show", "[win]")
     test::setup setup("screen-edge-window-show", base::operation_mode::xwayland);
 
     // set custom config which disable touch edge
-    auto group = setup.base->config.main->group("TabBox");
+    auto group = setup.base->config.main->group(QStringLiteral("TabBox"));
     group.writeEntry(QStringLiteral("TouchBorderActivate"), "9");
     group.sync();
 

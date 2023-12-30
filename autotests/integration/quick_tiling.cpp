@@ -63,7 +63,7 @@ TEST_CASE("quick tiling", "[win]")
     test::setup setup("quick-tiling", base::operation_mode::xwayland);
 
     // set custom config which disables the Outline
-    auto group = setup.base->config.main->group("Outline");
+    auto group = setup.base->config.main->group(QStringLiteral("Outline"));
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
     group.sync();
 

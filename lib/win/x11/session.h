@@ -195,7 +195,7 @@ void store_session(Space& space, QString const& sessionName, sm_save_phase phase
     qCDebug(KWIN_CORE) << "storing session" << sessionName << "in phase" << phase;
     KConfig* config = get_session_config(sessionName, QString());
 
-    KConfigGroup cg(config, "Session");
+    KConfigGroup cg(config, QStringLiteral("Session"));
     int count = 0;
     int active_client = -1;
 
@@ -307,7 +307,7 @@ template<typename Space>
 void load_session_info(Space& space, QString const& sessionName)
 {
     space.session.clear();
-    KConfigGroup cg(get_session_config(sessionName, QString()), "Session");
+    KConfigGroup cg(get_session_config(sessionName, QString()), QStringLiteral("Session"));
     add_session_info(space, cg);
 }
 

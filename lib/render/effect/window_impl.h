@@ -754,9 +754,9 @@ public:
                           *window.ref_win);
     }
 
-    EffectWindowList mainWindows() const override
+    QList<EffectWindow*> mainWindows() const override
     {
-        return std::visit(overload{[](auto&& ref_win) -> EffectWindowList {
+        return std::visit(overload{[](auto&& ref_win) -> QList<EffectWindow*> {
                               if (ref_win->control || ref_win->remnant) {
                                   return getMainWindows(ref_win);
                               }
@@ -890,10 +890,10 @@ public:
 
 private:
     template<typename T>
-    static EffectWindowList getMainWindows(T* c)
+    static QList<EffectWindow*> getMainWindows(T* c)
     {
         const auto leads = c->transient->leads();
-        EffectWindowList ret;
+        QList<EffectWindow*> ret;
         ret.reserve(leads.size());
         std::transform(std::cbegin(leads),
                        std::cend(leads),

@@ -64,7 +64,7 @@ void update_function(KscreenEffect& effect, KWin::effect::fade_update const& upd
 KscreenEffect::KscreenEffect()
     : Effect()
 {
-    initConfig<KscreenConfig>();
+    KscreenConfig::instance(effects->config());
 
     auto& kscreen_integration = effects->get_kscreen_integration();
     auto update = [this](auto&& data) { update_function(*this, data); };

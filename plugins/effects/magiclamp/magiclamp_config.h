@@ -14,13 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin
 {
 
-class MagicLampEffectConfigForm : public QWidget, public Ui::MagicLampEffectConfigForm
-{
-    Q_OBJECT
-public:
-    explicit MagicLampEffectConfigForm(QWidget* parent);
-};
-
 class MagicLampEffectConfig : public KCModule
 {
     Q_OBJECT
@@ -31,7 +24,7 @@ public Q_SLOTS:
     void save() override;
 
 private:
-    MagicLampEffectConfigForm m_ui;
+    Ui::MagicLampEffectConfigForm m_ui;
 };
 
 } // namespace

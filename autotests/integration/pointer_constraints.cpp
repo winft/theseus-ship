@@ -36,7 +36,7 @@ TEST_CASE("pointer constraints", "[input]")
     test::setup setup("pointer-constraints", operation_mode);
 
     // set custom config which disables the OnScreenNotification
-    auto group = setup.base->config.main->group("OnScreenNotification");
+    auto group = setup.base->config.main->group(QStringLiteral("OnScreenNotification"));
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
     group.sync();
 
@@ -111,7 +111,7 @@ TEST_CASE("pointer constraints", "[input]")
 
         // modifier + click should be ignored
         // first ensure the settings are ok
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", QStringLiteral("Meta"));
         group.writeEntry("CommandAll1", "Move");
         group.writeEntry("CommandAll2", "Move");

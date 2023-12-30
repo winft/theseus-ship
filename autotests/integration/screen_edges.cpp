@@ -160,7 +160,8 @@ TEST_CASE("screen edges", "[input],[win]")
     SECTION("create initial edges")
     {
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-        config->group("Windows").writeEntry("ElectricBorders", 2 /*ElectricAlways*/);
+        config->group(QStringLiteral("Windows"))
+            .writeEntry("ElectricBorders", 2 /*ElectricAlways*/);
         config->sync();
 
         reset_edger(config);
@@ -181,7 +182,7 @@ TEST_CASE("screen edges", "[input],[win]")
         QCOMPARE(win::x11::screen_edges_windows(*screenEdges).size(), 0);
 
         // set some reasonable virtual desktops
-        config->group("Desktops").writeEntry("Number", 4);
+        config->group(QStringLiteral("Desktops")).writeEntry("Number", 4);
         config->sync();
         auto& subs = setup.base->mod.space->subspace_manager;
         subs->config = config;
@@ -267,7 +268,8 @@ TEST_CASE("screen edges", "[input],[win]")
         }
 
         // disable desktop switching again
-        config->group("Windows").writeEntry("ElectricBorders", 1 /*ElectricMoveOnly*/);
+        config->group(QStringLiteral("Windows"))
+            .writeEntry("ElectricBorders", 1 /*ElectricMoveOnly*/);
         screenEdges->reconfigure();
         REQUIRE(!screenEdges->desktop_switching.always);
         REQUIRE(screenEdges->desktop_switching.when_moving_client);
@@ -435,7 +437,7 @@ TEST_CASE("screen edges", "[input],[win]")
 
         // let's disable pushback
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-        config->group("Windows").writeEntry("ElectricBorderPushbackPixels", 0);
+        config->group(QStringLiteral("Windows")).writeEntry("ElectricBorderPushbackPixels", 0);
         config->sync();
         screenEdges->config = config;
         screenEdges->reconfigure();
@@ -586,7 +588,8 @@ TEST_CASE("screen edges", "[input],[win]")
                                   data{win::electric_border::left, 10, {50, 0}, {50, 0}});
 
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-        config->group("Windows").writeEntry("ElectricBorderPushbackPixels", test_data.pushback);
+        config->group(QStringLiteral("Windows"))
+            .writeEntry("ElectricBorderPushbackPixels", test_data.pushback);
         config->sync();
 
         auto const geometries = std::vector<QRect>{{0, 0, 1024, 768}, {200, 768, 1024, 768}};
@@ -624,7 +627,7 @@ TEST_CASE("screen edges", "[input],[win]")
     SECTION("fullscreen blocking")
     {
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-        config->group("Windows").writeEntry("ElectricBorderPushbackPixels", 1);
+        config->group(QStringLiteral("Windows")).writeEntry("ElectricBorderPushbackPixels", 1);
         config->sync();
 
         QSignalSpy clientAddedSpy(setup.base->mod.space->qobject.get(),
@@ -856,7 +859,7 @@ TEST_CASE("screen edges", "[input],[win]")
     SECTION("touch edge")
     {
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-        auto group = config->group("TouchEdges");
+        auto group = config->group(QStringLiteral("TouchEdges"));
         group.writeEntry("Top", "krunner");
         group.writeEntry("Left", "krunner");
         group.writeEntry("Bottom", "krunner");
@@ -948,7 +951,7 @@ TEST_CASE("screen edges", "[input],[win]")
                                   data{win::electric_border::bottom, {50, 99}, {0, -200}});
 
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-        auto group = config->group("TouchEdges");
+        auto group = config->group(QStringLiteral("TouchEdges"));
         group.writeEntry("Top", "none");
         group.writeEntry("Left", "none");
         group.writeEntry("Bottom", "none");

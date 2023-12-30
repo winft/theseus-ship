@@ -13,7 +13,10 @@ effects.windowAdded.connect(function (window) {
         keepAlive: false
     });
 
-    window.windowMinimized.connect(() => {
+    window.minimizedChanged.connect(() => {
+        if (!window.minimized) {
+            return;
+        }
         if (complete(window.animation)) {
             sendTestResponse('ok');
         } else {

@@ -131,7 +131,7 @@ void KWinScreenEdgesConfig::monitorInit()
     m_form->monitorAddItem(i18n("Toggle window switching"));
     m_form->monitorAddItem(i18n("Toggle alternative window switching"));
 
-    KConfigGroup config(m_config, "Plugins");
+    KConfigGroup config(m_config, QStringLiteral("Plugins"));
     const auto effects = KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"), QStringLiteral("kwin/builtin-effects/")) << KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"), QStringLiteral("kwin/effects/"));
 
     for (KPluginMetaData const& effect : effects) {
@@ -277,7 +277,7 @@ void KWinScreenEdgesConfig::monitorSaveSettings()
 void KWinScreenEdgesConfig::monitorShowEvent()
 {
     // Check if they are enabled
-    KConfigGroup config(m_config, "Plugins");
+    KConfigGroup config(m_config, QStringLiteral("Plugins"));
 
     // Present Windows
     bool enabled = config.readEntry("windowviewEnabled", true);
@@ -291,7 +291,7 @@ void KWinScreenEdgesConfig::monitorShowEvent()
     m_form->monitorItemSetEnabled(Sphere, enabled);
 
     // tabbox, depends on reasonable focus policy.
-    KConfigGroup config2(m_config, "Windows");
+    KConfigGroup config2(m_config, QStringLiteral("Windows"));
     QString focusPolicy = config2.readEntry("FocusPolicy", QString());
     bool reasonable = focusPolicy != "FocusStrictlyUnderMouse" && focusPolicy != "FocusUnderMouse";
     m_form->monitorItemSetEnabled(TabBox, reasonable);

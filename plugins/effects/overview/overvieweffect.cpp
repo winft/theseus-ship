@@ -196,7 +196,7 @@ OverviewEffect::OverviewEffect()
 
     connect(effects, &EffectsHandler::screenAboutToLock, this, &OverviewEffect::realDeactivate);
 
-    initConfig<OverviewConfig>();
+    OverviewConfig::instance(effects->config());
     reconfigure(ReconfigureAll);
 
     setSource(QUrl(QStringLiteral("qrc:/overview/qml/main.qml")));
@@ -337,12 +337,6 @@ void OverviewEffect::activate()
 
 void OverviewEffect::deactivate()
 {
-    auto const screens = effects->screens();
-    for (auto const screen : screens) {
-        if (auto view = viewForScreen(screen)) {
-            QMetaObject::invokeMethod(view->rootItem(), "stop");
-        }
-    }
     m_shutdownTimer->start(animationDuration());
     m_overviewState->deactivate();
 }

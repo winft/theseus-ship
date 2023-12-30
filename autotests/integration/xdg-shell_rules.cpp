@@ -30,9 +30,9 @@ TEST_CASE("xdg-shell rules", "[win]")
     auto get_config = [&]() -> std::tuple<KSharedConfigPtr, KConfigGroup> {
         auto config = setup.base->config.main;
 
-        auto group = config->group("1");
+        auto group = config->group(QStringLiteral("1"));
         group.deleteGroup();
-        config->group("General").writeEntry("count", 1);
+        config->group(QStringLiteral("General")).writeEntry("count", 1);
         return {config, group};
     };
 

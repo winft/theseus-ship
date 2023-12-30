@@ -29,7 +29,7 @@ TEST_CASE("tabbox", "[win]")
     test::setup setup("tabbox", operation_mode);
 
     auto c = setup.base->config.main;
-    c->group("TabBox").writeEntry("ShowTabBox", false);
+    c->group(QStringLiteral("TabBox")).writeEntry("ShowTabBox", false);
     c->sync();
 
     setup.start();

@@ -147,9 +147,4 @@ bool Effect::perform(Feature /*feature*/, const QVariantList& /*arguments*/)
     return false;
 }
 
-KSharedConfigPtr Effect::get_config()
-{
-    return effects->config();
-}
-
 }

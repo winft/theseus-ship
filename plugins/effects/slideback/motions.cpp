@@ -5,7 +5,7 @@
 */
 #include "motions.h"
 
-#include "effects_handler.h"
+#include <render/effect/interface/effects_handler.h>
 
 namespace KWin
 {

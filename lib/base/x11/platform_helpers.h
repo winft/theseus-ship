@@ -29,7 +29,7 @@ void platform_init_crash_count(Platform& platform, int& crash_count)
     if (platform.crash_count >= 2) {
         // Disable compositing if we have had too many crashes
         qCDebug(KWIN_CORE) << "More than 1 crash recently. Disabling compositing.";
-        KConfigGroup compgroup(KSharedConfig::openConfig(), "Compositing");
+        KConfigGroup compgroup(KSharedConfig::openConfig(), QStringLiteral("Compositing"));
         compgroup.writeEntry("Enabled", false);
     }
 

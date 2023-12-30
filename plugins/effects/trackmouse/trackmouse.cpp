@@ -30,7 +30,7 @@ namespace KWin
 TrackMouseEffect::TrackMouseEffect()
     : m_angle(0)
 {
-    initConfig<TrackMouseConfig>();
+    TrackMouseConfig::instance(effects->config());
     m_angleBase = 90.0;
     m_mousePolling = false;
 

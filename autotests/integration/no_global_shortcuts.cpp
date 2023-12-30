@@ -143,7 +143,7 @@ TEST_CASE("no global shortcuts", "[input]")
         QSignalSpy triggeredSpy(&target, &Target::shortcutTriggered);
         QVERIFY(triggeredSpy.isValid());
 
-        auto group = setup.base->config.main->group("ModifierOnlyShortcuts");
+        auto group = setup.base->config.main->group(QStringLiteral("ModifierOnlyShortcuts"));
         group.writeEntry("Meta", config.meta);
         group.writeEntry("Alt", config.alt);
         group.writeEntry("Shift", config.shift);

@@ -67,7 +67,7 @@ class KWIN_EXPORT EffectsHandler : public QObject
      * if used manually.
      */
     Q_PROPERTY(qreal animationTimeFactor READ animationTimeFactor)
-    Q_PROPERTY(KWin::EffectWindowList stackingOrder READ stackingOrder)
+    Q_PROPERTY(QList<KWin::EffectWindow*> stackingOrder READ stackingOrder)
     /**
      * Whether window decorations use the alpha channel.
      */
@@ -412,12 +412,12 @@ public:
      */
     Q_SCRIPTABLE KWin::EffectWindow* findWindow(const QUuid& id) const;
 
-    virtual EffectWindowList stackingOrder() const = 0;
+    virtual QList<EffectWindow*> stackingOrder() const = 0;
     // window will be temporarily painted as if being at the top of the stack
     Q_SCRIPTABLE virtual void setElevatedWindow(KWin::EffectWindow* w, bool set) = 0;
 
     virtual void setTabBoxWindow(EffectWindow*) = 0;
-    virtual EffectWindowList currentTabBoxWindowList() const = 0;
+    virtual QList<EffectWindow*> currentTabBoxWindowList() const = 0;
     virtual void refTabBox() = 0;
     virtual void unrefTabBox() = 0;
     virtual void closeTabBox() = 0;

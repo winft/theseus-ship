@@ -57,7 +57,6 @@ enum class layer {
     desktop = first,
     below,
     normal,
-    dock,
     above,
     notification,          // layer for windows of type notification
     active,                // active fullscreen, or active dialog

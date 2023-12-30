@@ -27,21 +27,13 @@ namespace KWin
 
 static const QString s_toggleTrackMouseActionName = QStringLiteral("TrackMouse");
 
-TrackMouseEffectConfigForm::TrackMouseEffectConfigForm(QWidget* parent)
-    : QWidget(parent)
-{
-    setupUi(this);
-}
-
 TrackMouseEffectConfig::TrackMouseEffectConfig(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
 {
     TrackMouseConfig::instance(KWIN_CONFIG);
-    m_ui = new TrackMouseEffectConfigForm(widget());
-    QVBoxLayout* layout = new QVBoxLayout(widget());
-    layout->addWidget(m_ui);
+    m_ui.setupUi(widget());
 
-    addConfig(TrackMouseConfig::self(), m_ui);
+    addConfig(TrackMouseConfig::self(), widget());
 
     m_actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
     m_actionCollection->setComponentDisplayName(i18n("KWin"));
@@ -55,7 +47,7 @@ TrackMouseEffectConfig::TrackMouseEffectConfig(QObject* parent, const KPluginMet
     KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>());
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>());
 
-    connect(m_ui->shortcut,
+    connect(m_ui.shortcut,
             &KKeySequenceWidget::keySequenceChanged,
             this,
             &TrackMouseEffectConfig::shortcutChanged);
@@ -72,7 +64,7 @@ void TrackMouseEffectConfig::load()
     if (QAction* a = m_actionCollection->action(s_toggleTrackMouseActionName)) {
         auto shortcuts = KGlobalAccel::self()->shortcut(a);
         if (!shortcuts.isEmpty()) {
-            m_ui->shortcut->setKeySequence(shortcuts.first());
+            m_ui.shortcut->setKeySequence(shortcuts.first());
         }
     }
 }
@@ -89,7 +81,7 @@ void TrackMouseEffectConfig::save()
 void TrackMouseEffectConfig::defaults()
 {
     KCModule::defaults();
-    m_ui->shortcut->clearKeySequence();
+    m_ui.shortcut->clearKeySequence();
 }
 
 void TrackMouseEffectConfig::shortcutChanged(const QKeySequence& seq)

@@ -61,7 +61,7 @@ public:
     layout_manager(Redirect& redirect, KSharedConfigPtr const& config)
         : qobject{std::make_unique<layout_manager_qobject>([this] { reconfigure(); })}
         , redirect{redirect}
-        , m_configGroup(config->group("Layout"))
+        , m_configGroup(config->group(QStringLiteral("Layout")))
     {
         auto switchKeyboardAction = new QAction(qobject.get());
         switchKeyboardAction->setObjectName(QStringLiteral("Switch to Next Keyboard Layout"));

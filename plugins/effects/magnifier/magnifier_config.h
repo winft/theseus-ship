@@ -16,13 +16,6 @@ class KActionCollection;
 namespace KWin
 {
 
-class MagnifierEffectConfigForm : public QWidget, public Ui::MagnifierEffectConfigForm
-{
-    Q_OBJECT
-public:
-    explicit MagnifierEffectConfigForm(QWidget* parent);
-};
-
 class MagnifierEffectConfig : public KCModule
 {
     Q_OBJECT
@@ -33,7 +26,7 @@ public:
     void defaults() override;
 
 private:
-    MagnifierEffectConfigForm m_ui;
+    Ui::MagnifierEffectConfigForm m_ui;
     KActionCollection* m_actionCollection;
 };
 

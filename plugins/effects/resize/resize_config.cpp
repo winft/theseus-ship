@@ -20,23 +20,13 @@ K_PLUGIN_CLASS(KWin::ResizeEffectConfig)
 namespace KWin
 {
 
-ResizeEffectConfigForm::ResizeEffectConfigForm(QWidget* parent)
-    : QWidget(parent)
-{
-    setupUi(this);
-}
-
 ResizeEffectConfig::ResizeEffectConfig(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
 {
-    m_ui = new ResizeEffectConfigForm(widget());
-
-    QVBoxLayout* layout = new QVBoxLayout(widget());
-
-    layout->addWidget(m_ui);
+    m_ui.setupUi(widget());
 
     ResizeConfig::instance(KWIN_CONFIG);
-    addConfig(ResizeConfig::self(), m_ui);
+    addConfig(ResizeConfig::self(), widget());
 
     load();
 }

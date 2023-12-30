@@ -61,7 +61,7 @@ TEST_CASE("placement", "[win]")
     cursor()->set_pos(QPoint(512, 512));
 
     auto setPlacementPolicy = [&](win::placement policy) {
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("Placement", policy_to_string(policy));
         group.sync();
         win::space_reconfigure(*setup.base->mod.space);
@@ -219,7 +219,7 @@ TEST_CASE("placement", "[win]")
     {
         // This test verifies that Centered placement policy works.
 
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("Placement", policy_to_string(win::placement::centered));
         group.sync();
         win::space_reconfigure(*setup.base->mod.space);
@@ -238,7 +238,7 @@ TEST_CASE("placement", "[win]")
     {
         // This test verifies that Under Mouse placement policy works.
 
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("Placement", policy_to_string(win::placement::under_mouse));
         group.sync();
         win::space_reconfigure(*setup.base->mod.space);
@@ -260,7 +260,7 @@ TEST_CASE("placement", "[win]")
     {
         // This test verifies that Random placement policy works.
 
-        auto group = setup.base->config.main->group("Windows");
+        auto group = setup.base->config.main->group(QStringLiteral("Windows"));
         group.writeEntry("Placement", policy_to_string(win::placement::random));
         group.sync();
         win::space_reconfigure(*setup.base->mod.space);

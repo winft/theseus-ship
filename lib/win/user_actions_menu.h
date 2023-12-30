@@ -789,7 +789,9 @@ private:
             abort();
         if (!type.isEmpty()) {
             KConfig cfg(QStringLiteral("kwin_dialogsrc"));
-            KConfigGroup cg(&cfg, "Notification Messages"); // Depends on KMessageBox
+
+            // Depends on KMessageBox
+            KConfigGroup cg(&cfg, QStringLiteral("Notification Messages"));
             if (!cg.readEntry(type, true))
                 return;
             args << QStringLiteral("--dontagain") << QLatin1String("kwin_dialogsrc:") + type;

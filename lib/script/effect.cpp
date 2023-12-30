@@ -193,7 +193,6 @@ effect::~effect() = default;
 bool effect::init(QString const& effectName, QString const& pathToScript, KSharedConfigPtr config)
 {
     qRegisterMetaType<QJSValueList>();
-    qRegisterMetaType<EffectWindowList>();
 
     QFile scriptFile(pathToScript);
     if (!scriptFile.open(QIODevice::ReadOnly)) {

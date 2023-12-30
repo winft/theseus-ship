@@ -24,7 +24,6 @@ class Effect;
 class EffectWindow;
 
 typedef QPair<QString, Effect*> EffectPair;
-typedef QList<EffectWindow*> EffectWindowList;
 
 enum WindowQuadType {
     WindowQuadError, // for the stupid default ctor

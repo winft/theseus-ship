@@ -16,13 +16,6 @@ class KActionCollection;
 namespace KWin
 {
 
-class LookingGlassEffectConfigForm : public QWidget, public Ui::LookingGlassEffectConfigForm
-{
-    Q_OBJECT
-public:
-    explicit LookingGlassEffectConfigForm(QWidget* parent);
-};
-
 class LookingGlassEffectConfig : public KCModule
 {
     Q_OBJECT
@@ -33,7 +26,7 @@ public:
     void defaults() override;
 
 private:
-    LookingGlassEffectConfigForm m_ui;
+    Ui::LookingGlassEffectConfigForm m_ui;
     KActionCollection* m_actionCollection;
 };
 

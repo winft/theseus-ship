@@ -91,7 +91,7 @@ public:
     {
         // first off, check whether we figured that we'll crash on detection because of a buggy
         // driver
-        KConfigGroup gl_workaround_group(this->base.config.main, "Compositing");
+        KConfigGroup gl_workaround_group(this->base.config.main, QStringLiteral("Compositing"));
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
         if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL")
             && gl_workaround_group.readEntry(unsafeKey, false))
@@ -120,7 +120,7 @@ public:
     {
         // first off, check whether we figured that we'll crash on detection because of a buggy
         // driver
-        KConfigGroup gl_workaround_group(this->base.config.main, "Compositing");
+        KConfigGroup gl_workaround_group(this->base.config.main, QStringLiteral("Compositing"));
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
         if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL")
             && gl_workaround_group.readEntry(unsafeKey, false))
@@ -143,7 +143,7 @@ public:
     void createOpenGLSafePoint(opengl_safe_point safePoint) override
     {
         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-        auto group = KConfigGroup(this->base.config.main, "Compositing");
+        auto group = KConfigGroup(this->base.config.main, QStringLiteral("Compositing"));
         switch (safePoint) {
         case opengl_safe_point::pre_init:
             group.writeEntry(unsafeKey, true);
@@ -168,8 +168,8 @@ public:
                     m_openGLFreezeProtection,
                     [configName] {
                         const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-                        auto group
-                            = KConfigGroup(KSharedConfig::openConfig(configName), "Compositing");
+                        auto group = KConfigGroup(KSharedConfig::openConfig(configName),
+                                                  QStringLiteral("Compositing"));
                         group.writeEntry(unsafeKey, true);
                         group.sync();
                         KCrash::setDrKonqiEnabled(false);

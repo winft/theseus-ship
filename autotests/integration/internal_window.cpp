@@ -560,7 +560,7 @@ TEST_CASE("internal window", "[win]")
         QVERIFY(internalClient);
         QVERIFY(win::decoration(internalClient));
 
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", "Meta");
         group.writeEntry("CommandAll1", "Move");
         group.writeEntry("CommandAll2", "Move");
@@ -607,7 +607,7 @@ TEST_CASE("internal window", "[win]")
         QVERIFY(internalClient);
         QVERIFY(win::decoration(internalClient));
 
-        auto group = setup.base->config.main->group("MouseBindings");
+        auto group = setup.base->config.main->group(QStringLiteral("MouseBindings"));
         group.writeEntry("CommandAllKey", "Meta");
         group.writeEntry("CommandAllWheel", "change opacity");
         group.sync();

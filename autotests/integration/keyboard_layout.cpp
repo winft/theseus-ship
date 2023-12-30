@@ -179,11 +179,11 @@ TEST_CASE("keyboard layout", "[input]")
         setup = {};
 
         auto cfg = KSharedConfig::openConfig("kxkbrc");
-        auto const old_layout_group = cfg->group("Layout");
+        auto const old_layout_group = cfg->group(QStringLiteral("Layout"));
 
         setup = std::make_unique<test::setup>("keyboard-layout");
 
-        auto layout_group = cfg->group("Layout");
+        auto layout_group = cfg->group(QStringLiteral("Layout"));
         old_layout_group.copyTo(&layout_group);
         cfg->sync();
 
@@ -244,7 +244,7 @@ TEST_CASE("keyboard layout", "[input]")
         QCOMPARE(get_xkb_keys()->layout_name_from_index(0), "English (US)");
 
         // Create a new keymap.
-        auto lay_group = setup->base->mod.input->config.xkb->group("Layout");
+        auto lay_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
         lay_group.writeEntry("LayoutList", QStringLiteral("de,us"));
         lay_group.sync();
 
@@ -266,7 +266,7 @@ TEST_CASE("keyboard layout", "[input]")
 
         // Currently no way to destroy a headless input device. Enable this check once we can
         // destroy the second keyboard before going into the next test function.
-        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
         layout_group.writeEntry("LayoutList", QStringLiteral("de,us"));
         layout_group.sync();
         reconfigure_layouts();
@@ -287,7 +287,7 @@ TEST_CASE("keyboard layout", "[input]")
         KConfigGroup layout_group;
 
         auto reset_layouts = [&] {
-            layout_group = setup->base->mod.input->config.xkb->group("Layout");
+            layout_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
             layout_group.writeEntry("LayoutList", QStringLiteral("de,us,de(neo)"));
             layout_group.sync();
             reconfigure_layouts();
@@ -366,7 +366,7 @@ TEST_CASE("keyboard layout", "[input]")
         // This test verifies that per-layout global shortcuts are working correctly.
 
         // First configure layouts and the XKB toggle action.
-        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.writeEntry("Options", QStringLiteral("grp:ctrls_toggle"));
         layout_group.sync();
@@ -470,7 +470,7 @@ TEST_CASE("keyboard layout", "[input]")
         // Verifies that per-layout global shortcuts are working correctly.
 
         // First configure layouts.
-        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.sync();
 
@@ -558,7 +558,7 @@ TEST_CASE("keyboard layout", "[input]")
                      .value());
 
         // Reconfigure to two layouts.
-        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de"));
         layout_group.sync();
         reconfigure_layouts();
@@ -581,7 +581,7 @@ TEST_CASE("keyboard layout", "[input]")
 
     SECTION("subspace_policy")
     {
-        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.writeEntry("SwitchMode", QStringLiteral("Desktop"));
         layout_group.sync();
@@ -662,14 +662,14 @@ TEST_CASE("keyboard layout", "[input]")
         QVERIFY(deletedDesktopSpy.wait());
         reset_setup();
 
-        layout_group = setup->base->mod.input->config.xkb->group("Layout");
+        layout_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
         QCOMPARE(layout_group.keyList().filter(QStringLiteral("LayoutDefault")).count(), 1);
     }
 
     SECTION("window_policy")
     {
         enum Layout { us, de, de_neo, bad };
-        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.writeEntry("SwitchMode", QStringLiteral("Window"));
         layout_group.sync();
@@ -711,7 +711,7 @@ TEST_CASE("keyboard layout", "[input]")
     SECTION("application_policy")
     {
         enum Layout { us, de, de_neo, bad };
-        auto layout_group = setup->base->mod.input->config.xkb->group("Layout");
+        auto layout_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
         layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
         layout_group.writeEntry("SwitchMode", QStringLiteral("WinClass"));
         layout_group.sync();
@@ -772,7 +772,7 @@ TEST_CASE("keyboard layout", "[input]")
         client1 = {};
         client2 = {};
         reset_setup();
-        layout_group = setup->base->mod.input->config.xkb->group("Layout");
+        layout_group = setup->base->mod.input->config.xkb->group(QStringLiteral("Layout"));
 
         QCOMPARE(layout_group.keyList().filter(QStringLiteral("LayoutDefault")).count(), 1);
     }
@@ -797,7 +797,7 @@ TEST_CASE("keyboard layout", "[input]")
         QVERIFY(!(get_xkb_keys()->leds & input::keyboard_leds::num_lock));
 
         // Let's reconfigure to enable through config.
-        auto group = setup->base->mod.input->config.main->group("Keyboard");
+        auto group = setup->base->mod.input->config.main->group(QStringLiteral("Keyboard"));
         group.writeEntry("NumLock", 0);
         group.sync();
 

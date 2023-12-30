@@ -106,7 +106,7 @@ TEST_CASE("opengl shadow", "[render]")
         QDir(QCoreApplication::applicationDirPath()).absoluteFilePath("fakes"));
 
     // Change decoration theme.
-    auto group = setup.base->config.main->group("org.kde.kdecoration2");
+    auto group = setup.base->config.main->group(QStringLiteral("org.kde.kdecoration2"));
     group.writeEntry("library", "org.kde.test.fakedecowithshadows");
     group.sync();
     win::space_reconfigure(*setup.base->mod.space);

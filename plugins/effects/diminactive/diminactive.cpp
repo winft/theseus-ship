@@ -33,7 +33,7 @@ static inline bool belongToSameGroup(const EffectWindow* w1, const EffectWindow*
 
 DimInactiveEffect::DimInactiveEffect()
 {
-    initConfig<DimInactiveConfig>();
+    DimInactiveConfig::instance(effects->config());
     reconfigure(ReconfigureAll);
 
     connect(effects, &EffectsHandler::windowActivated, this, &DimInactiveEffect::windowActivated);

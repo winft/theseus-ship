@@ -14,9 +14,9 @@ template<typename Space>
 void update_tabbox(Space& space)
 {
 #if KWIN_BUILD_TABBOX
-    if (space.tabbox->is_displayed()) {
-        space.tabbox->reset(true);
-    }
+    // Need to reset the client model even if the task switcher is hidden otherwise there
+    // might be dangling pointers. Consider rewriting client model logic!
+    space.tabbox->reset(true);
 #endif
 }
 

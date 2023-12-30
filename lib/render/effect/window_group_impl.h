@@ -21,10 +21,10 @@ public:
     {
     }
 
-    EffectWindowList members() const override
+    QList<EffectWindow*> members() const override
     {
         const auto memberList = group->members;
-        EffectWindowList ret;
+        QList<EffectWindow*> ret;
         ret.reserve(memberList.size());
         std::transform(std::cbegin(memberList),
                        std::cend(memberList),

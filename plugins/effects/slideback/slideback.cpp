@@ -38,8 +38,8 @@ void SlideBackEffect::slotStackingOrderChanged()
         return;
     }
 
-    EffectWindowList newStackingOrder = effects->stackingOrder(),
-                     usableNewStackingOrder = usableWindows(newStackingOrder);
+    auto newStackingOrder = effects->stackingOrder();
+    auto usableNewStackingOrder = usableWindows(newStackingOrder);
     if (usableNewStackingOrder == usableOldStackingOrder || usableNewStackingOrder.isEmpty()) {
         oldStackingOrder = newStackingOrder;
         usableOldStackingOrder = usableNewStackingOrder;
@@ -204,7 +204,7 @@ void SlideBackEffect::postPaintWindow(EffectWindow* w)
                 // somewhere else restore the stacking order of all windows not intersecting any
                 // more except panels
                 if (coveringWindows.contains(w)) {
-                    EffectWindowList tmpList;
+                    QList<EffectWindow*> tmpList;
                     for (auto const& tmp : qAsConst(elevatedList)) {
                         QRect elevatedGeometry = tmp->frameGeometry();
                         if (motionManager.isManaging(tmp)) {
@@ -294,7 +294,11 @@ void SlideBackEffect::slotWindowAdded(EffectWindow* w)
 {
     m_justMapped = w;
 
-    connect(w, &EffectWindow::windowUnminimized, this, &SlideBackEffect::slotWindowUnminimized);
+    connect(w, &EffectWindow::minimizedChanged, this, [this, w]() {
+        if (!w->isMinimized()) {
+            slotWindowUnminimized(w);
+        }
+    });
 }
 
 void SlideBackEffect::slotWindowUnminimized(EffectWindow* w)
@@ -330,9 +334,9 @@ bool SlideBackEffect::intersects(EffectWindow* windowUnder, const QRect& windowO
     return windowUnderGeometry.intersects(windowOverGeometry);
 }
 
-EffectWindowList SlideBackEffect::usableWindows(const EffectWindowList& allWindows)
+QList<EffectWindow*> SlideBackEffect::usableWindows(QList<EffectWindow*> const& allWindows)
 {
-    EffectWindowList retList;
+    QList<EffectWindow*> retList;
     auto isWindowVisible = [](const EffectWindow* window) {
         return window && effects->virtualScreenGeometry().intersects(window->frameGeometry());
     };

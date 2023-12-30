@@ -14,13 +14,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace KWin
 {
 
-class CubeEffectConfigForm : public QWidget, public Ui::CubeEffectConfigForm
-{
-    Q_OBJECT
-public:
-    explicit CubeEffectConfigForm(QWidget* parent);
-};
-
 class CubeEffectConfig : public KCModule
 {
     Q_OBJECT
@@ -34,7 +27,7 @@ private Q_SLOTS:
     void capsSelectionChanged();
 
 private:
-    CubeEffectConfigForm m_ui;
+    Ui::CubeEffectConfigForm m_ui;
     KActionCollection* m_actionCollection;
 };
 

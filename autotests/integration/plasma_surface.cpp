@@ -197,7 +197,7 @@ TEST_CASE("plasma surface", "[win]")
         QCOMPARE(panel->hasStrut(), false);
         QCOMPARE(win::space_window_area(*setup.base->mod.space, win::area_option::maximize, 0, 0),
                  QRect(0, 0, 1280, 1024));
-        QCOMPARE(win::get_layer(*panel), KWin::win::layer::normal);
+        QCOMPARE(win::get_layer(*panel), KWin::win::layer::above);
 
         // create a Window
         std::unique_ptr<Surface> surface2(create_surface());
@@ -215,8 +215,8 @@ TEST_CASE("plasma surface", "[win]")
 
         auto stackingOrder = setup.base->mod.space->stacking.order.stack;
         QCOMPARE(stackingOrder.size(), 2);
-        QCOMPARE(get_wayland_window(stackingOrder.front()), panel);
-        QCOMPARE(get_wayland_window(stackingOrder.back()), c);
+        QCOMPARE(get_wayland_window(stackingOrder.front()), c);
+        QCOMPARE(get_wayland_window(stackingOrder.back()), panel);
 
         QSignalSpy stackingOrderChangedSpy(setup.base->mod.space->stacking.order.qobject.get(),
                                            &win::stacking_order_qobject::changed);
@@ -224,7 +224,8 @@ TEST_CASE("plasma surface", "[win]")
 
         // trigger screenedge
         cursor()->set_pos(test_data.trigger_point);
-        QCOMPARE(stackingOrderChangedSpy.count(), 1);
+        QCOMPARE(stackingOrderChangedSpy.count(), 0);
+
         stackingOrder = setup.base->mod.space->stacking.order.stack;
         QCOMPARE(stackingOrder.size(), 2);
         QCOMPARE(get_wayland_window(stackingOrder.front()), c);
@@ -308,7 +309,7 @@ TEST_CASE("plasma surface", "[win]")
         auto test_data = GENERATE(data{PlasmaShellSurface::PanelBehavior::AlwaysVisible,
                                        true,
                                        {0, 50, 1280, 974},
-                                       win::layer::dock},
+                                       win::layer::above},
                                   data{PlasmaShellSurface::PanelBehavior::AutoHide,
                                        false,
                                        {0, 0, 1280, 1024},
@@ -316,7 +317,7 @@ TEST_CASE("plasma surface", "[win]")
                                   data{PlasmaShellSurface::PanelBehavior::WindowsCanCover,
                                        false,
                                        {0, 0, 1280, 1024},
-                                       win::layer::normal},
+                                       win::layer::above},
                                   data{PlasmaShellSurface::PanelBehavior::WindowsGoBelow,
                                        false,
                                        {0, 0, 1280, 1024},
