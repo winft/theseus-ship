@@ -65,9 +65,6 @@ public:
     void save() override;
     void defaults() override;
 
-    bool isDefaults() const;
-    bool isSaveNeeded() const;
-
 protected:
     void initialize(KWinOptionsSettings* settings);
 
@@ -78,8 +75,6 @@ private Q_SLOTS:
 
 private:
     bool standAlone;
-    bool m_unmanagedChangeState = false;
-    bool m_unmanagedDefaultState = true;
 
     KWinFocusConfigForm* m_ui;
     KWinOptionsSettings* m_settings;
@@ -94,9 +89,6 @@ public:
     KMovingConfig(bool _standAlone, KWinOptionsSettings* settings, QWidget* parent);
 
     void save() override;
-
-    bool isDefaults() const;
-    bool isSaveNeeded() const;
 
 protected:
     void initialize(KWinOptionsSettings* settings);
@@ -117,9 +109,6 @@ public:
                     QWidget* parent);
 
     void save() override;
-
-    bool isDefaults() const;
-    bool isSaveNeeded() const;
 
 protected:
     void initialize(KWinOptionsSettings* settings, KWinOptionsKDEGlobalsSettings* globalSettings);

@@ -45,9 +45,6 @@ public:
 
     void save() override;
 
-    bool isDefaults() const;
-    bool isSaveNeeded() const;
-
 protected:
     void initialize(KWinOptionsSettings* settings);
 
