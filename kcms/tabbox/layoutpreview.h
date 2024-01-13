@@ -36,7 +36,14 @@ class ExampleClientModel : public QAbstractListModel
 {
     Q_OBJECT
 public:
-    enum { CaptionRole = Qt::UserRole + 1, MinimizedRole, DesktopNameRole, IconRole, WindowIdRole };
+    enum {
+        CaptionRole = Qt::UserRole + 1,
+        MinimizedRole,
+        DesktopNameRole,
+        IconRole,
+        WindowIdRole,
+        CloseableRole,
+    };
 
     explicit ExampleClientModel(QObject* parent = nullptr);
     ~ExampleClientModel() override;
