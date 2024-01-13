@@ -39,7 +39,7 @@ void WindowThumbnailItem::findImage()
     switch (m_wId) {
     case Konqueror:
         imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                           "kwin/kcm_kwintabbox/konqueror.png");
+                                           "kwin/kcm_kwintabbox/falkon.png");
         break;
     case Systemsettings:
         imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
@@ -55,7 +55,7 @@ void WindowThumbnailItem::findImage()
         break;
     case Desktop:
         imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                           "wallpapers/Next/contents/screenshot.png");
+                                           "wallpapers/Next/contents/images/1280x800.png");
         if (imagePath.isNull()) {
             imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
                                                "kwin/kcm_kwintabbox/desktop.png");
