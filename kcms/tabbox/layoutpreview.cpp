@@ -28,6 +28,7 @@ LayoutPreview::LayoutPreview(const QString& path, bool showDesktopThumbnail, QOb
     QQmlComponent* component = new QQmlComponent(engine, this);
     qmlRegisterType<WindowThumbnailItem>("org.kde.kwin", 3, 0, "WindowThumbnail");
     qmlRegisterType<SwitcherItem>("org.kde.kwin", 3, 0, "TabBoxSwitcher");
+    qmlRegisterType<DesktopBackground>("org.kde.kwin", 3, 0, "DesktopBackground");
     qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
     component->loadUrl(QUrl::fromLocalFile(path));
     if (component->isError()) {
@@ -244,5 +245,27 @@ void SwitcherItem::decrementIndex()
     }
     setCurrentIndex(index);
 }
+
+DesktopBackground::DesktopBackground(QQuickItem* parent)
+    : WindowThumbnailItem(parent)
+{
+    setWId(WindowThumbnailItem::Desktop);
+
+    connect(this, &QQuickItem::windowChanged, this, &DesktopBackground::stretchToScreen);
+    stretchToScreen();
+};
+
+void DesktopBackground::stretchToScreen()
+{
+    const QQuickWindow* w = window();
+    if (!w) {
+        return;
+    }
+    const QScreen* screen = w->screen();
+    if (!screen) {
+        return;
+    }
+    setImplicitSize(screen->size().width(), screen->size().height());
+};
 
 }
