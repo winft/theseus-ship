@@ -130,6 +130,8 @@ void KWinScreenEdgesConfig::monitorInit()
     m_form->monitorAddItem(i18n("%1 - All Desktops", presentWindowsName));
     m_form->monitorAddItem(i18n("%1 - Current Desktop", presentWindowsName));
     m_form->monitorAddItem(i18n("%1 - Current Application", presentWindowsName));
+    m_form->monitorAddItem(i18n("Overview"));
+
     const QString cubeName = "Cube";
     m_form->monitorAddItem(i18n("%1 - Cube", cubeName));
     m_form->monitorAddItem(i18n("%1 - Cylinder", cubeName));
@@ -206,6 +208,9 @@ void KWinScreenEdgesConfig::monitorLoadSettings()
                               PresentWindowsCurrent);
     // PresentWindows BorderActivateClass
     m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateClass(), PresentWindowsClass);
+
+    // Overview
+    m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateOverview(), Overview);
 
     // Desktop Cube BorderActivate
     m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateCube(), Cube);
@@ -299,6 +304,10 @@ void KWinScreenEdgesConfig::monitorSaveSettings()
     m_data->settings()->setTouchBorderActivateClass(
         m_form->monitorCheckEffectHasEdgeInt(PresentWindowsClass));
 
+    // Overview
+    m_data->settings()->setTouchBorderActivateOverview(
+        m_form->monitorCheckEffectHasEdgeInt(Overview));
+
     // Desktop Cube
     m_data->settings()->setTouchBorderActivateCube(m_form->monitorCheckEffectHasEdgeInt(Cube));
     m_data->settings()->setTouchBorderActivateCylinder(
@@ -335,6 +344,9 @@ void KWinScreenEdgesConfig::monitorShowEvent()
     bool enabled = config.readEntry("windowviewEnabled", true);
     m_form->monitorItemSetEnabled(PresentWindowsCurrent, enabled);
     m_form->monitorItemSetEnabled(PresentWindowsAll, enabled);
+
+    // Overview
+    m_form->monitorItemSetEnabled(Overview, config.readEntry("overviewEnabled", true));
 
     // Desktop Cube
     enabled = config.readEntry("cube", true);
