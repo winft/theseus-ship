@@ -52,6 +52,10 @@ bool is_trusted_origin(Wrapland::Server::Client* client)
 
 QStringList fetch_requested_interfaces(Wrapland::Server::Client* client)
 {
+    if (!client->security_context_app_id().empty()) {
+        return desktop::kde::fetchRequestedInterfacesForDesktopId(
+            client->security_context_app_id().c_str());
+    }
     return desktop::kde::fetchRequestedInterfaces(client->executablePath().c_str());
 }
 
