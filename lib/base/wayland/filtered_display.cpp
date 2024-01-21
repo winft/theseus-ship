@@ -63,6 +63,10 @@ filtered_display::filtered_display()
 bool filtered_display::allowInterface(Wrapland::Server::Client* client,
                                       QByteArray const& interfaceName)
 {
+    if (!client->security_context_app_id().empty()
+        && interfaceName == QByteArrayLiteral("wp_security_context_manager_v1")) {
+        return false;
+    }
     if (client->processId() == getpid()) {
         return true;
     }
