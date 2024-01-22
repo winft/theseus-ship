@@ -52,6 +52,10 @@ bool is_trusted_origin(Wrapland::Server::Client* client)
 
 QStringList fetch_requested_interfaces(Wrapland::Server::Client* client)
 {
+    if (!client->security_context_app_id().empty()) {
+        return desktop::kde::fetchRequestedInterfacesForDesktopId(
+            client->security_context_app_id().c_str());
+    }
     return desktop::kde::fetchRequestedInterfaces(client->executablePath().c_str());
 }
 
@@ -63,6 +67,10 @@ filtered_display::filtered_display()
 bool filtered_display::allowInterface(Wrapland::Server::Client* client,
                                       QByteArray const& interfaceName)
 {
+    if (!client->security_context_app_id().empty()
+        && interfaceName == QByteArrayLiteral("wp_security_context_manager_v1")) {
+        return false;
+    }
     if (client->processId() == getpid()) {
         return true;
     }

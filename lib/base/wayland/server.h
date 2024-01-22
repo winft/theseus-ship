@@ -29,6 +29,7 @@
 #include <Wrapland/Server/primary_selection.h>
 #include <Wrapland/Server/relative_pointer_v1.h>
 #include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/security_context_v1.h>
 #include <Wrapland/Server/viewporter.h>
 #include <Wrapland/Server/wlr_output_manager_v1.h>
 #include <Wrapland/Server/xdg_output.h>
@@ -236,6 +237,7 @@ public:
     std::unique_ptr<Wrapland::Server::ShadowManager> shadow_manager;
     std::unique_ptr<Wrapland::Server::DpmsManager> dpms_manager;
     std::unique_ptr<Wrapland::Server::RelativePointerManagerV1> relative_pointer_manager_v1;
+    std::unique_ptr<Wrapland::Server::security_context_manager_v1> security_context_manager_v1;
 
     Wrapland::Server::Client* screen_locker_client_connection{nullptr};
 
@@ -274,6 +276,8 @@ private:
 
         shadow_manager = std::make_unique<Wrapland::Server::ShadowManager>(display.get());
         dpms_manager = std::make_unique<Wrapland::Server::DpmsManager>(display.get());
+        security_context_manager_v1
+            = std::make_unique<Wrapland::Server::security_context_manager_v1>(display.get());
 
         auto& wlr_output_manager = output_manager->create_wlr_manager_v1();
         QObject::connect(&wlr_output_manager,

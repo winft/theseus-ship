@@ -7,6 +7,7 @@
 #pragma once
 
 #include <KApplicationTrader>
+#include <KService>
 #include <QFileInfo>
 #include <QLoggingCategory>
 
@@ -43,6 +44,15 @@ static QStringList fetchProcessServiceField(const QString& executablePath, const
     }
 
     return fieldValues;
+}
+
+static inline QStringList fetchRequestedInterfacesForDesktopId(QString const& id)
+{
+    auto const service = KService::serviceByDesktopName(id);
+    if (!service) {
+        return {};
+    }
+    return service->property<QStringList>(s_waylandInterfaceName);
 }
 
 static inline QStringList fetchRequestedInterfaces(const QString& executablePath)
