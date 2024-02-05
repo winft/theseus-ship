@@ -4,7 +4,6 @@
 
 File=kwinoptions_settings.kcfg
 ClassName=KWinOptionsSettings
-IncludeFiles=como/win/types.h
 Mutators=true
 DefaultValueGetters=true
 ParentInConstructor=true
