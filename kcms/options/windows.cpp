@@ -83,7 +83,6 @@ void KFocusConfig::initialize(KWinOptionsSettings* settings)
 void KFocusConfig::updateMultiScreen()
 {
     m_ui->multiscreenBehaviorLabel->setVisible(QApplication::screens().count() > 1);
-    m_ui->kcfg_ActiveMouseScreen->setVisible(QApplication::screens().count() > 1);
     m_ui->kcfg_SeparateScreenFocus->setVisible(QApplication::screens().count() > 1);
 }
 
@@ -191,12 +190,6 @@ void KFocusConfig::focusPolicyChanged()
     // the delayed focus related widgets are: delayFocus
     m_ui->delayFocusOnLabel->setEnabled(focusPolicy != CLICK_TO_FOCUS);
     m_ui->kcfg_DelayFocusInterval->setEnabled(focusPolicy != CLICK_TO_FOCUS);
-
-    // on by default for non click to focus policies
-    if (m_settings->activeMouseScreen() == m_settings->defaultActiveMouseScreenValue()) {
-        m_ui->kcfg_ActiveMouseScreen->setChecked(focusPolicy != CLICK_TO_FOCUS
-                                                 && focusPolicy != CLICK_TO_FOCUS_MOUSE_PRECEDENT);
-    }
 }
 
 void KFocusConfig::load(void)
