@@ -85,14 +85,6 @@ find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
     DBusAddons
 )
 
-# optional frameworks
-find_package(KF6DocTools ${KF6_MIN_VERSION} CONFIG)
-set_package_properties(KF6DocTools PROPERTIES
-    PURPOSE "Enable building documentation"
-    TYPE OPTIONAL
-)
-add_feature_info("KF6DocTools" KF6DocTools_FOUND "Enable building documentation")
-
 find_package(KF6Kirigami2 ${KF6_MIN_VERSION} CONFIG)
 set_package_properties(KF6Kirigami2 PROPERTIES
     DESCRIPTION "A QtQuick based components set"
@@ -363,10 +355,6 @@ add_custom_target(kwin_wayland_wrapper ALL COMMAND
     ${CMAKE_COMMAND} -E create_symlink
     kwin_wayland ${CMAKE_CURRENT_BINARY_DIR}/bin/kwin_wayland_wrapper
 )
-
-if (KF6DocTools_FOUND)
-    add_subdirectory(docs)
-endif()
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
