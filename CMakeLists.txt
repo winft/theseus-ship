@@ -45,16 +45,6 @@ find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Widgets
 )
 
-find_package(Qt6Test ${QT_MIN_VERSION} CONFIG QUIET)
-set_package_properties(Qt6Test PROPERTIES
-    PURPOSE "Required for tests"
-    TYPE OPTIONAL
-)
-add_feature_info("Qt6Test" Qt6Test_FOUND "Required for building tests")
-if (NOT Qt6Test_FOUND)
-    set(BUILD_TESTING OFF CACHE BOOL "Build the testing tree.")
-endif()
-
 include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
@@ -373,13 +363,6 @@ add_custom_target(kwin_wayland_wrapper ALL COMMAND
     ${CMAKE_COMMAND} -E create_symlink
     kwin_wayland ${CMAKE_CURRENT_BINARY_DIR}/bin/kwin_wayland_wrapper
 )
-
-########### install files ###############
-
-if (BUILD_TESTING)
-    add_subdirectory(autotests)
-    add_subdirectory(tests)
-endif()
 
 if (KF6DocTools_FOUND)
     add_subdirectory(docs)

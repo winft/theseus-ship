@@ -4,8 +4,6 @@
 stages:
   - Compliance
   - Build
-  - Analysis
-  - Deploy
 
 variables:
   IMAGE_BASE: ${CI_REGISTRY}/kwinft/ci-images/archlinux/kwinft-base
@@ -21,7 +19,6 @@ include:
     ref: master
     file:
       - '/analysis/gitlab-ci/static.yml'
-      - '/analysis/gitlab-ci/tests.yml'
       - '/docs/gitlab-ci/commits.yml'
 
 
@@ -106,58 +103,3 @@ Master Build:
 Stable Build:
   <<: *common-build
   <<: *common-stable
-
-
-####################################################################################################
-#
-# Analysis
-#
-
-.common-test:
-  extends: .tests-with-coverage
-  stage: Analysis
-  image: $IMAGE
-  variables:
-    # Following tests are currently disabled on CI:
-    # * lockscreen, modifier-only-shortcut: flaky on CI because the lockscreen greeter process likes to
-    #   freeze off. Also see: https://bugreports.qt.io/browse/QTBUG-82911
-    # * all others: the GLES2 backend of wlroots can't be run in CI/without GPU at the moment,
-    #   see https://gitlab.freedesktop.org/wlroots/wlroots/-/issues/2871
-    CTEST_ARGS: "-E 'lockscreen|modifier only shortcut|no crash empty deco|no crash no border\
-    |scene opengl|opengl shadow|no crash reinit compositor|buffer size change\
-    |no crash aurorae destroy deco|slidingpopups|scripted effects|window open close animation\
-    |subspace switching animation|minimize animation'"
-    GCOVR_ARGS: --gcov-executable '/usr/bin/llvm-cov gcov' -e tests
-
-Master Tests:
-  extends: .common-test
-  <<: *common-master
-  needs:
-    - job: Master Build
-      artifacts: true
-
-Stable Tests:
-  extends: .common-test
-  <<: *common-stable
-  needs:
-    - job: Stable Build
-      artifacts: true
-
-
-####################################################################################################
-#
-# Deploy
-#
-
-Add Coverage:
-  extends: .add-coverage
-  stage: Deploy
-  variables:
-    COVERAGE_JOB: Master Tests
-
-pages:
-  extends: .pages-coverage
-  stage: Deploy
-  needs:
-    - job: Master Tests
-      artifacts: true

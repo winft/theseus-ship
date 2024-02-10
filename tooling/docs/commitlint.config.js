@@ -44,8 +44,7 @@ module.exports = {
                 'perf',
                 'refactor',
                 'revert',
-                'style',
-                'test'
+                'style'
             ]
         ]
     }
