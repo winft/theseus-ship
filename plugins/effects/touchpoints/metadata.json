@@ -1,9 +1,0 @@
-{
-    "KPlugin": {
-        "Category": "Appearance",
-        "Description": "Visualize touch points",
-        "EnabledByDefault": false,
-        "License": "GPL",
-        "Name": "Touch Points"
-    }
-}

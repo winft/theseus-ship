@@ -15,9 +15,7 @@
 
 class KActionCollection;
 
-namespace KWin
-{
-namespace win
+namespace theseus_ship
 {
 
 class ShortcutSettings : public KConfigSkeleton
@@ -36,5 +34,4 @@ private:
     KActionCollection *m_actionCollection = nullptr;
 };
 
-}
 }

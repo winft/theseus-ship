@@ -27,32 +27,32 @@ SPDX-License-Identifier: GPL-2.0-or-later
     </group>
     <group name="Effect-windowview">
         <entry key="TouchBorderActivateAll" type="IntList">
-            <default>int(win::electric_border::none)</default>
+            <default>int(como::win::electric_border::none)</default>
         </entry>
         <entry name="TouchBorderActivatePresentWindows" key="TouchBorderActivate" type="IntList">
-            <default>int(win::electric_border::none)</default>
+            <default>int(como::win::electric_border::none)</default>
         </entry>
         <entry key="TouchBorderActivateClass" type="IntList">
-            <default>int(win::electric_border::none)</default>
+            <default>int(como::win::electric_border::none)</default>
         </entry>
     </group>
     <group name="Effect-Cube">
         <entry name="TouchBorderActivateCube" key="TouchBorderActivate" type="IntList">
-            <default>int(win::electric_border::none)</default>
+            <default>int(como::win::electric_border::none)</default>
         </entry>
         <entry key="TouchBorderActivateCylinder" type="IntList">
-            <default>int(win::electric_border::none)</default>
+            <default>int(como::win::electric_border::none)</default>
         </entry>
         <entry key="TouchBorderActivateSphere" type="IntList">
-            <default>int(win::electric_border::none)</default>
+            <default>int(como::win::electric_border::none)</default>
         </entry>
     </group>
     <group name="TabBox">
         <entry name="TouchBorderActivateTabBox" key="TouchBorderActivate" type="IntList">
-            <default>int(win::electric_border::none)</default>
+            <default>int(como::win::electric_border::none)</default>
         </entry>
         <entry key="TouchBorderAlternativeActivate" type="IntList">
-            <default>int(win::electric_border::none)</default>
+            <default>int(como::win::electric_border::none)</default>
         </entry>
     </group>
 </kcfg>

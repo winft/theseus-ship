@@ -8,15 +8,15 @@
 #define KWIN_RULES_MODEL_H
 
 #include "ruleitem.h"
-#include "rules_settings.h"
-#include "win/dbus/virtual_desktop_types.h"
-#include "win/rules/ruling.h"
+#include <como/win/rules/rules_settings.h>
+#include <como/win/dbus/virtual_desktop_types.h>
+#include <como/win/rules/ruling.h>
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
 #include <QObject>
 
-namespace KWin
+namespace theseus_ship
 {
 
 class RulesModel : public QAbstractListModel
@@ -58,8 +58,8 @@ public:
     bool hasRule(const QString &key) const;
     RuleItem *ruleItem(const QString &key) const;
 
-    win::rules::settings* settings() const;
-    void setSettings(win::rules::settings* settings);
+    como::win::rules::settings* settings() const;
+    void setSettings(como::win::rules::settings* settings);
 
     void setSuggestedProperties(const QVariantMap &info);
 
@@ -105,8 +105,8 @@ private Q_SLOTS:
 private:
     QList<RuleItem *> m_ruleList;
     QHash<QString, RuleItem *> m_rules;
-    win::dbus::subspace_data_vector m_virtualDesktops;
-    win::rules::settings* m_settings{nullptr};
+    como::win::dbus::subspace_data_vector m_virtualDesktops;
+    como::win::rules::settings* m_settings{nullptr};
 };
 
 }

@@ -14,7 +14,7 @@ set(plugin_SRCS
 
 add_library(kdecorationprivatedeclarative SHARED ${plugin_SRCS})
 target_link_libraries(kdecorationprivatedeclarative
-  win
+  como::win
   KDecoration2::KDecoration
   KDecoration2::KDecoration2Private
   KF6::CoreAddons

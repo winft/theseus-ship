@@ -12,8 +12,7 @@ set(kcm_screenedges_SRCS
     kwinscreenedgeconfigform.cpp
 )
 qt_add_dbus_interface(kcm_screenedges_SRCS
-  ${KWIN_SOURCE_DIR}/lib/render/effect/interface/org.kde.kwin.Effects.xml
-  kwin_effects_interface
+  ${KWIN_EFFECTS_INTERFACE} kwin_effects_interface
 )
 
 set(kcm_kwinscreenedges_PART_SRCS main.cpp ${kcm_screenedges_SRCS})
@@ -24,7 +23,7 @@ kcmutils_generate_module_data(
     MODULE_DATA_CLASS_NAME KWinScreenEdgeData
     SETTINGS_HEADERS kwinscreenedgesettings.h
     SETTINGS_CLASSES KWinScreenEdgeSettings
-    NAMESPACE KWin
+    NAMESPACE theseus_ship
 )
 
 ki18n_wrap_ui(kcm_kwinscreenedges_PART_SRCS main.ui)
@@ -37,6 +36,7 @@ set(kcm_screenedges_LIBS
   KF6::Package
   KF6::Svg
   Qt::DBus
+  como::win
 )
 target_link_libraries(kcm_kwinscreenedges ${X11_LIBRARIES} ${kcm_screenedges_LIBS})
 
@@ -52,7 +52,7 @@ kcmutils_generate_module_data(
     MODULE_DATA_CLASS_NAME KWinTouchScreenData
     SETTINGS_HEADERS kwintouchscreensettings.h
     SETTINGS_CLASSES KWinTouchScreenSettings
-    NAMESPACE KWin
+    NAMESPACE theseus_ship
 )
 
 ki18n_wrap_ui(kcm_kwintouchscreenedges_PART_SRCS main.ui touch.ui)

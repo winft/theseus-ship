@@ -77,7 +77,7 @@ PreviewClient::PreviewClient(DecoratedClient *c, Decoration *decoration)
             Q_EMIT iconChanged(m_icon);
         }
     );
-    connect(&m_palette, &KWin::win::deco::palette::changed, [this]() {
+    connect(&m_palette, &como::win::deco::palette::changed, [this]() {
         Q_EMIT paletteChanged(m_palette.get_qt_palette());
     });
     auto emitEdgesChanged = [this, c]() {

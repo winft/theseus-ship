@@ -17,10 +17,10 @@
 
 K_PLUGIN_FACTORY_WITH_JSON(DesktopEffectsKCMFactory,
                            "kcm_kwin_effects.json",
-                           registerPlugin<KWin::DesktopEffectsKCM>();
-                           registerPlugin<KWin::DesktopEffectsData>();)
+                           registerPlugin<theseus_ship::DesktopEffectsKCM>();
+                           registerPlugin<theseus_ship::DesktopEffectsData>();)
 
-namespace KWin
+namespace theseus_ship
 {
 
 DesktopEffectsKCM::DesktopEffectsKCM(QObject *parent, const KPluginMetaData &metaData)
@@ -85,6 +85,6 @@ void DesktopEffectsKCM::updateNeedsSave()
     setRepresentsDefaults(m_model->isDefaults());
 }
 
-} // namespace KWin
+}
 
 #include "kcm.moc"

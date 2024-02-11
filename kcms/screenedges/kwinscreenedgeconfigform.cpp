@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "kwinscreenedgeconfigform.h"
 #include "ui_main.h"
 
-namespace KWin
+namespace theseus_ship
 {
 
 KWinScreenEdgesConfigForm::KWinScreenEdgesConfigForm(QWidget *parent)
@@ -116,10 +116,10 @@ void KWinScreenEdgesConfigForm::groupChanged()
     if (ui->kcfg_ElectricBorders->currentIndex() == 2) {
         hide = true;
     }
-    monitorHideEdge(win::electric_border::top, hide);
-    monitorHideEdge(win::electric_border::right, hide);
-    monitorHideEdge(win::electric_border::bottom, hide);
-    monitorHideEdge(win::electric_border::left, hide);
+    monitorHideEdge(como::win::electric_border::top, hide);
+    monitorHideEdge(como::win::electric_border::right, hide);
+    monitorHideEdge(como::win::electric_border::bottom, hide);
+    monitorHideEdge(como::win::electric_border::left, hide);
 }
 
 void KWinScreenEdgesConfigForm::updateDefaultIndicators()

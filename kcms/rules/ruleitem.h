@@ -13,7 +13,7 @@
 #include <QIcon>
 
 
-namespace KWin
+namespace theseus_ship
 {
 
 class RuleItem : public QObject

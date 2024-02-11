@@ -3,7 +3,7 @@
 ; SPDX-License-Identifier: GPL-2.0-or-later
 
 File=kwinswitcheffectsettings.kcfg
-NameSpace=KWin::win
+NameSpace=theseus_ship
 ClassName=SwitchEffectSettings
 Mutators=true
 DefaultValueGetters=true

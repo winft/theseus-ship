@@ -20,7 +20,7 @@ kcmutils_add_qml_kcm(kcm_kwin_virtualdesktops SOURCES ${kcm_kwin_virtualdesktops
 
 target_link_libraries(kcm_kwin_virtualdesktops
   kcmkwincommon
-  win
+  como::win
   KF6::KCMUtils
   KF6::I18n
   KF6::XmlGui

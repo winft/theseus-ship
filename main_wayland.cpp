@@ -6,12 +6,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "main.h"
 
-#include <base/wayland/app_singleton.h>
-#include <base/wayland/xwl_platform.h>
-#include <desktop/kde/platform.h>
-#include <render/shortcuts_init.h>
-#include <script/platform.h>
-#include <win/shortcuts_init.h>
+#include <como/base/wayland/app_singleton.h>
+#include <como/base/wayland/xwl_platform.h>
+#include <como/desktop/kde/platform.h>
+#include <como/render/shortcuts_init.h>
+#include <como/script/platform.h>
+#include <como/win/shortcuts_init.h>
 
 #include <KShell>
 #include <KSignalHandler>
@@ -22,34 +22,30 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QProcess>
 #include <sys/resource.h>
 
-Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
-Q_IMPORT_PLUGIN(KWindowSystemKWinPlugin)
-Q_IMPORT_PLUGIN(KWinIdleTimePoller)
-
-namespace KWin
+namespace theseus_ship
 {
 
 template<typename Base>
 struct input_mod {
-    using platform_t = input::wayland::platform<Base, input_mod>;
-    std::unique_ptr<input::dbus::device_manager<platform_t>> dbus;
+    using platform_t = como::input::wayland::platform<Base, input_mod>;
+    std::unique_ptr<como::input::dbus::device_manager<platform_t>> dbus;
 };
 
 struct space_mod {
-    std::unique_ptr<desktop::platform> desktop;
+    std::unique_ptr<como::desktop::platform> desktop;
 };
 
 struct base_mod {
-    using platform_t = base::wayland::xwl_platform<base_mod>;
-    using render_t = render::wayland::xwl_platform<platform_t>;
-    using input_t = input::wayland::platform<platform_t, input_mod<platform_t>>;
-    using space_t = win::wayland::xwl_space<platform_t, space_mod>;
+    using platform_t = como::base::wayland::xwl_platform<base_mod>;
+    using render_t = como::render::wayland::xwl_platform<platform_t>;
+    using input_t = como::input::wayland::platform<platform_t, input_mod<platform_t>>;
+    using space_t = como::win::wayland::xwl_space<platform_t, space_mod>;
 
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
-    std::unique_ptr<xwl::xwayland<space_t>> xwayland;
-    std::unique_ptr<scripting::platform<space_t>> script;
+    std::unique_ptr<como::xwl::xwayland<space_t>> xwayland;
+    std::unique_ptr<como::scripting::platform<space_t>> script;
 };
 
 }
@@ -116,7 +112,7 @@ struct exit_process_t {
 
 int main(int argc, char* argv[])
 {
-    using namespace KWin;
+    using namespace theseus_ship;
 
     // Redirect stderr output. This is useful as a workaround for missing logs in systemd journal
     // when launching a full Plasma session.
@@ -187,9 +183,9 @@ int main(int argc, char* argv[])
                                  i18n("Applications to start once server is started"),
                                  QStringLiteral("[/path/to/application...]"));
 
-    base::wayland::app_singleton app(argc, argv);
+    como::base::wayland::app_singleton app(argc, argv);
 
-    if (!Perf::Ftrace::setEnabled(qEnvironmentVariableIsSet("KWIN_PERF_FTRACE"))) {
+    if (!como::Perf::Ftrace::setEnabled(qEnvironmentVariableIsSet("KWIN_PERF_FTRACE"))) {
         qWarning() << "Can't enable Ftrace via environment variable.";
     }
 
@@ -206,43 +202,43 @@ int main(int argc, char* argv[])
     parser.process(*app.qapp);
     KAboutData::applicationData().processCommandLine(&parser);
 
-    auto flags = base::wayland::start_options::none;
+    auto flags = como::base::wayland::start_options::none;
     if (parser.isSet(options.lockscreen)) {
-        flags = base::wayland::start_options::lock_screen;
+        flags = como::base::wayland::start_options::lock_screen;
     } else if (!parser.isSet(options.no_lockscreen)) {
-        flags = base::wayland::start_options::lock_screen_integration;
+        flags = como::base::wayland::start_options::lock_screen_integration;
     }
     if (parser.isSet(options.no_global_shortcuts)) {
-        flags |= base::wayland::start_options::no_global_shortcuts;
+        flags |= como::base::wayland::start_options::no_global_shortcuts;
     }
 
-    qDebug("Starting KWinFT (Wayland) %s", KWIN_VERSION_STRING);
+    qDebug("Starting Theseus' Ship (Wayland) %s", "0.0.0");
 
     exit_process_t exit_process(*app.qapp);
 
-    using base_t = base::wayland::xwl_platform<base_mod>;
+    using base_t = como::base::wayland::xwl_platform<base_mod>;
     base_t base({
-        .config = base::config(KConfig::OpenFlag::FullConfig, "kwinrc"),
+        .config = como::base::config(KConfig::OpenFlag::FullConfig, "kwinrc"),
         .socket_name = parser.value(options.socket).toStdString(),
         .flags = flags,
-        .mode = parser.isSet(options.xwl) ? base::operation_mode::xwayland
-                                          : base::operation_mode::wayland,
+        .mode = parser.isSet(options.xwl) ? como::base::operation_mode::xwayland
+                                          : como::base::operation_mode::wayland,
     });
 
     base.mod.render = std::make_unique<base_t::render_t>(base);
 
-    base.mod.input = std::make_unique<base_t::input_t>(base, input::config(KConfig::NoGlobals));
+    base.mod.input = std::make_unique<base_t::input_t>(base, como::input::config(KConfig::NoGlobals));
     base.mod.input->mod.dbus
-        = std::make_unique<input::dbus::device_manager<base_t::input_t>>(*base.mod.input);
+        = std::make_unique<como::input::dbus::device_manager<base_t::input_t>>(*base.mod.input);
 
     base.mod.space = std::make_unique<base_t::space_t>(*base.mod.render, *base.mod.input);
     base.mod.space->mod.desktop
-        = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base.mod.space);
-    win::init_shortcuts(*base.mod.space);
-    render::init_shortcuts(*base.mod.render);
-    base.mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.mod.space);
+        = std::make_unique<como::desktop::kde::platform<base_t::space_t>>(*base.mod.space);
+    como::win::init_shortcuts(*base.mod.space);
+    como::render::init_shortcuts(*base.mod.render);
+    base.mod.script = std::make_unique<como::scripting::platform<base_t::space_t>>(*base.mod.space);
 
-    base::wayland::platform_start(base);
+    como::base::wayland::platform_start(base);
 
     base.process_environment = QProcessEnvironment::systemEnvironment();
 
@@ -252,9 +248,9 @@ int main(int argc, char* argv[])
 
     base.server->init_screen_locker();
 
-    if (base.operation_mode == base::operation_mode::xwayland) {
+    if (base.operation_mode == como::base::operation_mode::xwayland) {
         try {
-            base.mod.xwayland = std::make_unique<xwl::xwayland<base_t::space_t>>(*base.mod.space);
+            base.mod.xwayland = std::make_unique<como::xwl::xwayland<base_t::space_t>>(*base.mod.space);
         } catch (std::system_error const& exc) {
             std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
             exit(exc.code().value());

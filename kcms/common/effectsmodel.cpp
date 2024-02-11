@@ -23,7 +23,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QDirIterator>
 #include <QStandardPaths>
 
-namespace KWin
+namespace theseus_ship
 {
 
 static QString translatedCategory(const QString &category)

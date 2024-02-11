@@ -5,14 +5,14 @@
 */
 #include "rulebookmodel.h"
 
-#include "utils/algorithm.h"
+#include <como/utils/algorithm.h>
 
-namespace KWin
+namespace theseus_ship
 {
 
 RuleBookModel::RuleBookModel(QObject *parent)
     : QAbstractListModel(parent)
-    , m_ruleBook(new win::rules::book_settings(this))
+    , m_ruleBook(new como::win::rules::book_settings(this))
 {
 }
 
@@ -88,7 +88,7 @@ bool RuleBookModel::insertRows(int row, int count, const QModelIndex &parent)
         auto settings = m_ruleBook->insertRuleSettingsAt(row + i);
 
         // We want ExactMatch as default for new rules in the UI
-        settings->setWmclassmatch(enum_index(win::rules::name_match::exact));
+        settings->setWmclassmatch(como::enum_index(como::win::rules::name_match::exact));
     }
     endInsertRows();
 
@@ -140,7 +140,7 @@ QString RuleBookModel::descriptionAt(int row) const
     return m_ruleBook->ruleSettingsAt(row)->description();
 }
 
-win::rules::settings *RuleBookModel::ruleSettingsAt(int row) const
+como::win::rules::settings *RuleBookModel::ruleSettingsAt(int row) const
 {
     Q_ASSERT(row >= 0 && row < rowCount());
     return m_ruleBook->ruleSettingsAt(row);
@@ -158,7 +158,7 @@ void RuleBookModel::setDescriptionAt(int row, const QString &description)
     Q_EMIT dataChanged(index(row), index(row), {});
 }
 
-void RuleBookModel::setRuleSettingsAt(int row, win::rules::settings const& settings)
+void RuleBookModel::setRuleSettingsAt(int row, como::win::rules::settings const& settings)
 {
     Q_ASSERT(row >= 0 && row < rowCount());
 
@@ -186,7 +186,7 @@ bool RuleBookModel::isSaveNeeded()
     return m_ruleBook->usrIsSaveNeeded();
 }
 
-void RuleBookModel::copySettingsTo(win::rules::settings *dest, win::rules::settings const& source)
+void RuleBookModel::copySettingsTo(como::win::rules::settings *dest, como::win::rules::settings const& source)
 {
     dest->setDefaults();
     auto const items = source.items();

@@ -7,8 +7,8 @@
 
 #include "rulesmodel.h"
 
-#include "utils/algorithm.h"
-#include "win/rules/ruling.h"
+#include <como/utils/algorithm.h>
+#include <como/win/rules/ruling.h>
 
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -26,7 +26,7 @@
 #include <netwm_def.h>
 
 
-namespace KWin
+namespace theseus_ship
 {
 
 RulesModel::RulesModel(QObject *parent)
@@ -39,8 +39,8 @@ RulesModel::RulesModel(QObject *parent)
     qmlRegisterUncreatableType<OptionsModel>("org.kde.kcms.kwinrules", 1, 0, "OptionsModel",
                                              QStringLiteral("Do not create objects of type OptionsModel"));
 
-    qDBusRegisterMetaType<KWin::win::dbus::subspace_data>();
-    qDBusRegisterMetaType<KWin::win::dbus::subspace_data_vector>();
+    qDBusRegisterMetaType<como::win::dbus::subspace_data>();
+    qDBusRegisterMetaType<como::win::dbus::subspace_data_vector>();
 
     populateRuleList();
 }
@@ -264,7 +264,7 @@ QStringList RulesModel::warningMessages() const
 bool RulesModel::wmclassWarning() const
 {
     const bool no_wmclass = !m_rules["wmclass"]->isEnabled()
-                                || m_rules["wmclass"]->policy() == enum_index(win::rules::name_match::unimportant);
+                                || m_rules["wmclass"]->policy() == como::enum_index(como::win::rules::name_match::unimportant);
     const bool alltypes = !m_rules["types"]->isEnabled()
                               || (m_rules["types"]->value() == 0)
                               || (m_rules["types"]->value() == NET::AllTypesMask)
@@ -280,19 +280,19 @@ bool RulesModel::geometryWarning() const
     }
 
     const bool ignoregeometry = m_rules["ignoregeometry"]->isEnabled()
-                                    && m_rules["ignoregeometry"]->policy() == enum_index(win::rules::action::force)
+                                    && m_rules["ignoregeometry"]->policy() == como::enum_index(como::win::rules::action::force)
                                     && m_rules["ignoregeometry"]->value() == true;
 
     const bool initialPos = m_rules["position"]->isEnabled()
-                                && (m_rules["position"]->policy() == enum_index(win::rules::action::apply)
-                                    || m_rules["position"]->policy() == enum_index(win::rules::action::remember));
+                                && (m_rules["position"]->policy() == como::enum_index(como::win::rules::action::apply)
+                                    || m_rules["position"]->policy() == como::enum_index(como::win::rules::action::remember));
 
     const bool initialSize = m_rules["size"]->isEnabled()
-                                && (m_rules["size"]->policy() == enum_index(win::rules::action::apply)
-                                    || m_rules["size"]->policy() == enum_index(win::rules::action::remember));
+                                && (m_rules["size"]->policy() == como::enum_index(como::win::rules::action::apply)
+                                    || m_rules["size"]->policy() == como::enum_index(como::win::rules::action::remember));
 
     const bool initialPlacement = m_rules["placement"]->isEnabled()
-                                    && m_rules["placement"]->policy() == enum_index(win::rules::action::force);
+                                    && m_rules["placement"]->policy() == como::enum_index(como::win::rules::action::force);
 
     return (!ignoregeometry && (initialPos || initialSize || initialPlacement));
 }
@@ -301,25 +301,25 @@ bool RulesModel::opacityWarning() const
 {
     auto opacityActive = m_rules["opacityactive"];
     const bool lowOpacityActive = opacityActive->isEnabled()
-        && opacityActive->policy() != enum_index(win::rules::action::unused)
-        && opacityActive->policy() != enum_index(win::rules::action::dont_affect)
+        && opacityActive->policy() != como::enum_index(como::win::rules::action::unused)
+        && opacityActive->policy() != como::enum_index(como::win::rules::action::dont_affect)
         && opacityActive->value().toInt() < 25;
 
     auto opacityInactive = m_rules["opacityinactive"];
     const bool lowOpacityInactive = opacityInactive->isEnabled()
-        && opacityActive->policy() != enum_index(win::rules::action::unused)
-        && opacityActive->policy() != enum_index(win::rules::action::dont_affect)
+        && opacityActive->policy() != como::enum_index(como::win::rules::action::unused)
+        && opacityActive->policy() != como::enum_index(como::win::rules::action::dont_affect)
         && opacityInactive->value().toInt() < 25;
 
     return lowOpacityActive || lowOpacityInactive;
 }
 
-win::rules::settings* RulesModel::settings() const
+como::win::rules::settings* RulesModel::settings() const
 {
     return m_settings;
 }
 
-void RulesModel::setSettings(win::rules::settings* settings)
+void RulesModel::setSettings(como::win::rules::settings* settings)
 {
     if (m_settings == settings) {
         return;
@@ -339,7 +339,7 @@ void RulesModel::setSettings(win::rules::settings* settings)
             continue;
         }
 
-        const bool isEnabled = configPolicyItem ? configPolicyItem->property() != enum_index(win::rules::action::unused)
+        const bool isEnabled = configPolicyItem ? configPolicyItem->property() != como::enum_index(como::win::rules::action::unused)
                                                 : !configItem->property().toString().isEmpty();
         rule->setEnabled(isEnabled);
 
@@ -816,15 +816,15 @@ QList<OptionsModel::Data> RulesModel::virtualDesktopsModelData() const
 QList<OptionsModel::Data> RulesModel::placementModelData() const
 {
     static const auto modelData = QList<OptionsModel::Data> {
-        { static_cast<int>(win::placement::global_default),    i18n("Default")             },
-        { static_cast<int>(win::placement::no_placement),      i18n("No Placement")        },
-        { static_cast<int>(win::placement::smart),             i18n("Minimal Overlapping") },
-        { static_cast<int>(win::placement::maximizing),        i18n("Maximized")           },
-        { static_cast<int>(win::placement::centered),          i18n("Centered")            },
-        { static_cast<int>(win::placement::random),            i18n("Random")              },
-        { static_cast<int>(win::placement::zero_cornered),     i18n("In Top-Left Corner")  },
-        { static_cast<int>(win::placement::under_mouse),       i18n("Under Mouse")         },
-        { static_cast<int>(win::placement::on_main_window),    i18n("On Main Window")      }
+        { static_cast<int>(como::win::placement::global_default),    i18n("Default")             },
+        { static_cast<int>(como::win::placement::no_placement),      i18n("No Placement")        },
+        { static_cast<int>(como::win::placement::smart),             i18n("Minimal Overlapping") },
+        { static_cast<int>(como::win::placement::maximizing),        i18n("Maximized")           },
+        { static_cast<int>(como::win::placement::centered),          i18n("Centered")            },
+        { static_cast<int>(como::win::placement::random),            i18n("Random")              },
+        { static_cast<int>(como::win::placement::zero_cornered),     i18n("In Top-Left Corner")  },
+        { static_cast<int>(como::win::placement::under_mouse),       i18n("Under Mouse")         },
+        { static_cast<int>(como::win::placement::on_main_window),    i18n("On Main Window")      }
     };
     return modelData;
 }
@@ -915,7 +915,7 @@ void RulesModel::updateVirtualDesktops()
                 if (!reply.isValid()) {
                     return;
                 }
-                m_virtualDesktops = qdbus_cast<KWin::win::dbus::subspace_data_vector>(reply.value());
+                m_virtualDesktops = qdbus_cast<como::win::dbus::subspace_data_vector>(reply.value());
                 Q_EMIT virtualDesktopsUpdated();
             }
     );

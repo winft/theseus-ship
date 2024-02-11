@@ -8,16 +8,16 @@
 */
 #include "main.h"
 
-#include <base/seat/backend/logind/session.h>
-#include <base/x11/app_singleton.h>
-#include <base/x11/platform.h>
-#include <base/x11/platform_helpers.h>
-#include <debug/perf/ftrace.h>
-#include <desktop/kde/platform.h>
-#include <render/backend/x11/platform.h>
-#include <render/shortcuts_init.h>
-#include <script/platform.h>
-#include <win/shortcuts_init.h>
+#include <como/base/seat/backend/logind/session.h>
+#include <como/base/x11/app_singleton.h>
+#include <como/base/x11/platform.h>
+#include <como/base/x11/platform_helpers.h>
+#include <como/debug/perf/ftrace.h>
+#include <como/desktop/kde/platform.h>
+#include <como/render/backend/x11/platform.h>
+#include <como/render/shortcuts_init.h>
+#include <como/script/platform.h>
+#include <como/win/shortcuts_init.h>
 
 #include <KCrash>
 #include <KSignalHandler>
@@ -62,38 +62,38 @@ void crash_handler(int signal)
 
 }
 
-namespace KWin
+namespace theseus_ship
 {
 
 struct space_mod {
-    std::unique_ptr<desktop::platform> desktop;
+    std::unique_ptr<como::desktop::platform> desktop;
 };
 
 struct base_mod {
-    using platform_t = base::x11::platform<base_mod>;
-    using render_t = render::x11::platform<platform_t>;
-    using input_t = input::x11::platform<platform_t>;
-    using space_t = win::x11::space<platform_t, space_mod>;
+    using platform_t = como::base::x11::platform<base_mod>;
+    using render_t = como::render::x11::platform<platform_t>;
+    using input_t = como::input::x11::platform<platform_t>;
+    using space_t = como::win::x11::space<platform_t, space_mod>;
 
     std::unique_ptr<render_t> render;
     std::unique_ptr<input_t> input;
     std::unique_ptr<space_t> space;
-    std::unique_ptr<scripting::platform<space_t>> script;
+    std::unique_ptr<como::scripting::platform<space_t>> script;
 };
 
 }
 
 int main(int argc, char* argv[])
 {
-    using namespace KWin;
+    using namespace theseus_ship;
 
     KLocalizedString::setApplicationDomain("kwin");
 
     signal(SIGPIPE, SIG_IGN);
 
-    base::x11::app_singleton app(argc, argv);
+    como::base::x11::app_singleton app(argc, argv);
 
-    if (!Perf::Ftrace::setEnabled(qEnvironmentVariableIsSet("KWIN_PERF_FTRACE"))) {
+    if (!como::Perf::Ftrace::setEnabled(qEnvironmentVariableIsSet("KWIN_PERF_FTRACE"))) {
         qWarning() << "Can't enable Ftrace via environment variable.";
     }
 
@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
                      app.qapp.get(),
                      &QCoreApplication::exit);
 
-    KWin::app_create_about_data();
+    app_create_about_data();
 
     QCommandLineOption crashesOption(
         "crashes", i18n("Indicate that KWin has recently crashed n times"), QStringLiteral("n"));
@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
         i18n("Replace already-running ICCCM2.0-compliant window manager"));
 
     QCommandLineParser parser;
-    parser.setApplicationDescription(i18n("KWinFT X11 Window Manager"));
+    parser.setApplicationDescription(i18n("Theseus' Ship X11 Window Manager"));
     KAboutData::applicationData().setupCommandLine(&parser);
 
     parser.addOption(crashesOption);
@@ -122,23 +122,24 @@ int main(int argc, char* argv[])
 
     parser.process(*app.qapp);
 
-    qDebug("Starting KWinFT (X11) %s", KWIN_VERSION_STRING);
+    qDebug("Starting Theseus' Ship (X11) %s", "0.0.0");
 
     KAboutData::applicationData().processCommandLine(&parser);
     crash_count = parser.value("crashes").toInt();
 
-    using base_t = base::x11::platform<base_mod>;
-    base_t base(base::config(KConfig::OpenFlag::FullConfig, "kwinrc"));
+    using base_t = como::base::x11::platform<base_mod>;
+    base_t base(como::base::config(KConfig::OpenFlag::FullConfig, "kwinrc"));
 
     KCrash::setEmergencySaveFunction(crash_handler);
-    base::x11::platform_init_crash_count(base, crash_count);
+    como::base::x11::platform_init_crash_count(base, crash_count);
 
     auto handle_ownership_claimed = [&base] {
-        base.options = base::create_options(base::operation_mode::x11, base.config.main);
+        base.options
+            = como::base::create_options(como::base::operation_mode::x11, base.config.main);
 
         // Check  whether another windowmanager is running
         const uint32_t maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
-        unique_cptr<xcb_generic_error_t> redirectCheck(
+        como::unique_cptr<xcb_generic_error_t> redirectCheck(
             xcb_request_check(base.x11_data.connection,
                               xcb_change_window_attributes_checked(base.x11_data.connection,
                                                                    base.x11_data.root_window,
@@ -156,12 +157,13 @@ int main(int argc, char* argv[])
             }
         }
 
-        base.session = std::make_unique<base::seat::backend::logind::session>();
-        base.mod.render = std::make_unique<render::backend::x11::platform<base_t>>(base);
-        base.mod.input = std::make_unique<input::x11::platform<base_t>>(base);
+        base.session = std::make_unique<como::base::seat::backend::logind::session>();
+        base.mod.render = std::make_unique<como::render::backend::x11::platform<base_t>>(base);
+        base.mod.input = std::make_unique<como::input::x11::platform<base_t>>(base);
 
         base.update_outputs();
-        auto render = static_cast<render::backend::x11::platform<base_t>*>(base.mod.render.get());
+        auto render
+            = static_cast<como::render::backend::x11::platform<base_t>*>(base.mod.render.get());
         try {
             render->init();
         } catch (std::exception const&) {
@@ -177,19 +179,19 @@ int main(int argc, char* argv[])
         }
 
         base.mod.space->mod.desktop
-            = std::make_unique<desktop::kde::platform<base_t::space_t>>(*base.mod.space);
-        win::init_shortcuts(*base.mod.space);
-        render::init_shortcuts(*base.mod.render);
+            = std::make_unique<como::desktop::kde::platform<base_t::space_t>>(*base.mod.space);
+        como::win::init_shortcuts(*base.mod.space);
+        como::render::init_shortcuts(*base.mod.render);
 
-        base.mod.script = std::make_unique<scripting::platform<base_t::space_t>>(*base.mod.space);
+        base.mod.script = std::make_unique<como::scripting::platform<base_t::space_t>>(*base.mod.space);
         render->start(*base.mod.space);
 
         // Trigger possible errors, there's still a chance to abort.
-        base::x11::xcb::sync(base.x11_data.connection);
+        como::base::x11::xcb::sync(base.x11_data.connection);
         notify_ksplash();
     };
 
-    base::x11::platform_start(base, parser.isSet(replaceOption), handle_ownership_claimed);
+    como::base::x11::platform_start(base, parser.isSet(replaceOption), handle_ownership_claimed);
 
     return app.qapp->exec();
 }

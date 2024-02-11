@@ -12,8 +12,8 @@ set(kwinrules_SRCS
     rulebookmodel.cpp
 )
 
-kconfig_add_kcfg_files(kwinrules_SRCS ../../lib/win/rules/kconfig/rules_settings.kcfgc)
-kconfig_add_kcfg_files(kwinrules_SRCS ../../lib/win/rules/kconfig/rules_book_settings_base.kcfgc)
+# kconfig_add_kcfg_files(kwinrules_SRCS ../../lib/win/rules/kconfig/rules_settings.kcfgc)
+# kconfig_add_kcfg_files(kwinrules_SRCS ../../lib/win/rules/kconfig/rules_book_settings_base.kcfgc)
 
 add_library(KWinRulesObjects STATIC ${kwinrules_SRCS})
 set_target_properties(KWinRulesObjects PROPERTIES
@@ -27,8 +27,8 @@ set(kwin_kcm_rules_XCB_LIBS
 )
 
 set(kcm_libs
-  input
-  win-x11
+  como::input
+  como::win-x11
   KF6::KCMUtils
   KF6::WindowSystem
 )

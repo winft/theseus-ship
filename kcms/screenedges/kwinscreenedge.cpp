@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "monitor.h"
 
-namespace KWin
+namespace theseus_ship
 {
 
 KWinScreenEdge::KWinScreenEdge(QWidget *parent)
@@ -22,7 +22,7 @@ KWinScreenEdge::~KWinScreenEdge()
 {
 }
 
-void KWinScreenEdge::monitorHideEdge(win::electric_border border, bool hidden)
+void KWinScreenEdge::monitorHideEdge(como::win::electric_border border, bool hidden)
 {
     auto const edge = KWinScreenEdge::electricBorderToMonitorEdge(border);
     monitor()->setEdgeHidden(edge, hidden);
@@ -31,7 +31,7 @@ void KWinScreenEdge::monitorHideEdge(win::electric_border border, bool hidden)
     }
 }
 
-void KWinScreenEdge::monitorEnableEdge(win::electric_border border, bool enabled)
+void KWinScreenEdge::monitorEnableEdge(como::win::electric_border border, bool enabled)
 {
     const int edge = KWinScreenEdge::electricBorderToMonitorEdge(border);
     monitor()->setEdgeEnabled(edge, enabled);
@@ -54,49 +54,49 @@ void KWinScreenEdge::monitorItemSetEnabled(int index, bool enabled)
 void KWinScreenEdge::monitorChangeEdge(const QList<int> &borderList, int index)
 {
     for (int border : borderList) {
-        monitorChangeEdge(static_cast<win::electric_border>(border), index);
+        monitorChangeEdge(static_cast<como::win::electric_border>(border), index);
     }
 }
 
-void KWinScreenEdge::monitorChangeEdge(win::electric_border border, int index)
+void KWinScreenEdge::monitorChangeEdge(como::win::electric_border border, int index)
 {
-    if (win::electric_border::_COUNT == border || win::electric_border::none == border) {
+    if (como::win::electric_border::_COUNT == border || como::win::electric_border::none == border) {
         return;
     }
     m_reference[border] = index;
     monitor()->selectEdgeItem(KWinScreenEdge::electricBorderToMonitorEdge(border), index);
 }
 
-QList<win::electric_border> KWinScreenEdge::monitorCheckEffectHasEdge(int index) const
+QList<como::win::electric_border> KWinScreenEdge::monitorCheckEffectHasEdge(int index) const
 {
-    QList<win::electric_border> list;
+    QList<como::win::electric_border> list;
     if (monitor()->selectedEdgeItem(Monitor::Top) == index) {
-        list.append(win::electric_border::top);
+        list.append(como::win::electric_border::top);
     }
     if (monitor()->selectedEdgeItem(Monitor::TopRight) == index) {
-        list.append(win::electric_border::top_right);
+        list.append(como::win::electric_border::top_right);
     }
     if (monitor()->selectedEdgeItem(Monitor::Right) == index) {
-        list.append(win::electric_border::right);
+        list.append(como::win::electric_border::right);
     }
     if (monitor()->selectedEdgeItem(Monitor::BottomRight) == index) {
-        list.append(win::electric_border::bottom_right);
+        list.append(como::win::electric_border::bottom_right);
     }
     if (monitor()->selectedEdgeItem(Monitor::Bottom) == index) {
-        list.append(win::electric_border::bottom);
+        list.append(como::win::electric_border::bottom);
     }
     if (monitor()->selectedEdgeItem(Monitor::BottomLeft) == index) {
-        list.append(win::electric_border::bottom_left);
+        list.append(como::win::electric_border::bottom_left);
     }
     if (monitor()->selectedEdgeItem(Monitor::Left) == index) {
-        list.append(win::electric_border::left);
+        list.append(como::win::electric_border::left);
     }
     if (monitor()->selectedEdgeItem(Monitor::TopLeft) == index) {
-        list.append(win::electric_border::top_left);
+        list.append(como::win::electric_border::top_left);
     }
 
     if (list.isEmpty()) {
-        list.append(win::electric_border::none);
+        list.append(como::win::electric_border::none);
     }
     return list;
 }
@@ -111,14 +111,14 @@ QList<int> KWinScreenEdge::monitorCheckEffectHasEdgeInt(int index) const
     return ret;
 }
 
-int KWinScreenEdge::selectedEdgeItem(win::electric_border border) const
+int KWinScreenEdge::selectedEdgeItem(como::win::electric_border border) const
 {
     return monitor()->selectedEdgeItem(KWinScreenEdge::electricBorderToMonitorEdge(border));
 }
 
-void KWinScreenEdge::monitorChangeDefaultEdge(win::electric_border border, int index)
+void KWinScreenEdge::monitorChangeDefaultEdge(como::win::electric_border border, int index)
 {
-    if (win::electric_border::_COUNT == border || win::electric_border::none == border) {
+    if (como::win::electric_border::_COUNT == border || como::win::electric_border::none == border) {
         return;
     }
     m_default[border] = index;
@@ -127,7 +127,7 @@ void KWinScreenEdge::monitorChangeDefaultEdge(win::electric_border border, int i
 void KWinScreenEdge::monitorChangeDefaultEdge(const QList<int> &borderList, int index)
 {
     for (int border : borderList) {
-        monitorChangeDefaultEdge(static_cast<win::electric_border>(border), index);
+        monitorChangeDefaultEdge(static_cast<como::win::electric_border>(border), index);
     }
 }
 
@@ -147,24 +147,24 @@ void KWinScreenEdge::setDefaults()
     onChanged();
 }
 
-int KWinScreenEdge::electricBorderToMonitorEdge(win::electric_border border)
+int KWinScreenEdge::electricBorderToMonitorEdge(como::win::electric_border border)
 {
     switch(border) {
-    case win::electric_border::top:
+    case como::win::electric_border::top:
         return Monitor::Top;
-    case win::electric_border::top_right:
+    case como::win::electric_border::top_right:
         return Monitor::TopRight;
-    case win::electric_border::right:
+    case como::win::electric_border::right:
         return Monitor::Right;
-    case win::electric_border::bottom_right:
+    case como::win::electric_border::bottom_right:
         return Monitor::BottomRight;
-    case win::electric_border::bottom:
+    case como::win::electric_border::bottom:
         return Monitor::Bottom;
-    case win::electric_border::bottom_left:
+    case como::win::electric_border::bottom_left:
         return Monitor::BottomLeft;
-    case win::electric_border::left:
+    case como::win::electric_border::left:
         return Monitor::Left;
-    case win::electric_border::top_left:
+    case como::win::electric_border::top_left:
         return Monitor::TopLeft;
     default: // ELECTRIC_COUNT and ElectricNone
         return Monitor::None;
@@ -210,4 +210,4 @@ bool KWinScreenEdge::isDefault() const
     return true;
 }
 
-} // namespace
+}

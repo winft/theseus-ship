@@ -12,7 +12,7 @@
 
 class VirtualDesktopsSettings;
 
-namespace KWin
+namespace theseus_ship
 {
 
 class AnimationsModel;

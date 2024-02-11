@@ -6,7 +6,7 @@
 #ifndef KDECOARTIONS_PREVIEW_CLIENT_H
 #define KDECOARTIONS_PREVIEW_CLIENT_H
 
-#include "../../../lib/win/deco/palette.h"
+#include <como/win/deco/palette.h>
 
 #include <KDecoration2/Private/DecoratedClientPrivate>
 #include <QObject>
@@ -168,7 +168,7 @@ private:
     QString m_caption;
     QIcon m_icon;
     QString m_iconName;
-    KWin::win::deco::palette m_palette;
+    como::win::deco::palette m_palette;
     bool m_active;
     bool m_closeable;
     bool m_keepBelow;

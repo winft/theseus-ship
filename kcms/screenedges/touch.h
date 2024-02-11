@@ -11,11 +11,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kcmodule.h>
 #include <ksharedconfig.h>
 
-#include "win/types.h"
+#include <como/win/types.h>
 
 class QShowEvent;
 
-namespace KWin
+namespace theseus_ship
 {
 class KWinTouchScreenData;
 class KWinTouchScreenEdgeConfigForm;
@@ -45,7 +45,7 @@ private:
     KWinTouchScreenData *m_data;
 
     enum EffectActions {
-        PresentWindowsAll = static_cast<int>(win::electric_border_action::count), // Start at the end of built in actions
+        PresentWindowsAll = static_cast<int>(como::win::electric_border_action::count), // Start at the end of built in actions
         PresentWindowsCurrent,
         PresentWindowsClass,
         Cube,

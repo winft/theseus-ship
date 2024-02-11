@@ -6,9 +6,8 @@
 */
 #include "kcmrules.h"
 
-#include "rules_settings.h"
-
-#include "utils/algorithm.h"
+#include <como/utils/algorithm.h>
+#include <como/win/rules/rules_settings.h>
 
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -21,7 +20,7 @@
 #include <netwm_def.h>
 
 
-namespace KWin
+namespace theseus_ship
 {
 
 KCMKWinRules::KCMKWinRules(QObject *parent, const KPluginMetaData &metaData, const QVariantList &arguments)
@@ -258,7 +257,7 @@ void KCMKWinRules::exportToFile(const QUrl &path, const QList<int> &indexes)
             continue;
         }
         auto const* origin = m_ruleBookModel->ruleSettingsAt(index);
-        win::rules::settings exported(config, origin->description());
+        como::win::rules::settings exported(config, origin->description());
 
         RuleBookModel::copySettingsTo(&exported, *origin);
         exported.save();
@@ -274,7 +273,7 @@ void KCMKWinRules::importFromFile(const QUrl &path)
     }
 
     for (const QString &groupName : groups) {
-        win::rules::settings settings(config, groupName);
+        como::win::rules::settings settings(config, groupName);
 
         const bool remove = settings.deleteRule();
         const QString importDescription = settings.description();
@@ -330,10 +329,10 @@ QModelIndex KCMKWinRules::findRuleWithProperties(const QVariantMap &info, bool w
         auto const* settings = m_ruleBookModel->ruleSettingsAt(row);
 
         // If the rule doesn't match try the next one
-        auto const rule = win::rules::ruling(settings);
+        auto const rule = como::win::rules::ruling(settings);
         /* clang-format off */
         if (!rule.matchWMClass(wmclass_class, wmclass_name)
-                || !rule.matchType(static_cast<win::win_type>(type))
+                || !rule.matchType(static_cast<como::win::win_type>(type))
                 || !rule.matchRole(role)
                 || !rule.matchTitle(title)
                 || !rule.matchClientMachine(machine, isLocalHost)) {
@@ -341,7 +340,7 @@ QModelIndex KCMKWinRules::findRuleWithProperties(const QVariantMap &info, bool w
         }
         /* clang-format on */
 
-        if (settings->wmclassmatch() != enum_index(win::rules::name_match::exact)) {
+        if (settings->wmclassmatch() != como::enum_index(como::win::rules::name_match::exact)) {
             continue; // too generic
         }
 
@@ -356,12 +355,12 @@ QModelIndex KCMKWinRules::findRuleWithProperties(const QVariantMap &info, bool w
             generic = false; // this can be considered specific enough (old X apps)
         }
         if (!wholeApp) {
-            if (settings->windowrolematch() != enum_index(win::rules::name_match::unimportant)) {
-                score += settings->windowrolematch() == enum_index(win::rules::name_match::exact) ? 5 : 1;
+            if (settings->windowrolematch() != como::enum_index(como::win::rules::name_match::unimportant)) {
+                score += settings->windowrolematch() == como::enum_index(como::win::rules::name_match::exact) ? 5 : 1;
                 generic = false;
             }
-            if (settings->titlematch() != enum_index(win::rules::name_match::unimportant)) {
-                score += settings->titlematch() == enum_index(win::rules::name_match::exact) ? 3 : 1;
+            if (settings->titlematch() != como::enum_index(como::win::rules::name_match::unimportant)) {
+                score += settings->titlematch() == como::enum_index(como::win::rules::name_match::exact) ? 3 : 1;
                 generic = false;
             }
             if (settings->types() != NET::AllTypesMask) {
@@ -398,7 +397,7 @@ QModelIndex KCMKWinRules::findRuleWithProperties(const QVariantMap &info, bool w
 }
 
 // Code adapted from original `findRule()` method in `kwin_rules_dialog::main.cpp`
-void KCMKWinRules::fillSettingsFromProperties(win::rules::settings* settings,
+void KCMKWinRules::fillSettingsFromProperties(como::win::rules::settings* settings,
                                               QVariantMap const& info,
                                               bool wholeApp) const
 {
@@ -417,19 +416,19 @@ void KCMKWinRules::fillSettingsFromProperties(win::rules::settings* settings,
         }
         // TODO maybe exclude some types? If yes, then also exclude them when searching.
         settings->setTypes(NET::AllTypesMask);
-        settings->setTitlematch(enum_index(win::rules::name_match::unimportant));
+        settings->setTitlematch(como::enum_index(como::win::rules::name_match::unimportant));
         settings->setClientmachine(machine); // set, but make unimportant
-        settings->setClientmachinematch(enum_index(win::rules::name_match::unimportant));
-        settings->setWindowrolematch(enum_index(win::rules::name_match::unimportant));
+        settings->setClientmachinematch(como::enum_index(como::win::rules::name_match::unimportant));
+        settings->setWindowrolematch(como::enum_index(como::win::rules::name_match::unimportant));
         if (wmclass_name == wmclass_class) {
             settings->setWmclasscomplete(false);
             settings->setWmclass(wmclass_class);
-            settings->setWmclassmatch(enum_index(win::rules::name_match::exact));
+            settings->setWmclassmatch(como::enum_index(como::win::rules::name_match::exact));
         } else {
             // WM_CLASS components differ - perhaps the app got -name argument
             settings->setWmclasscomplete(true);
             settings->setWmclass(QStringLiteral("%1 %2").arg(wmclass_name, wmclass_class));
-            settings->setWmclassmatch(enum_index(win::rules::name_match::exact));
+            settings->setWmclassmatch(como::enum_index(como::win::rules::name_match::exact));
         }
         return;
     }
@@ -443,28 +442,28 @@ void KCMKWinRules::fillSettingsFromProperties(win::rules::settings* settings,
         settings->setTypes(NET::WindowTypeMask(1 << type)); // convert type to its mask
     }
     settings->setTitle(title); // set, but make unimportant
-    settings->setTitlematch(enum_index(win::rules::name_match::unimportant));
+    settings->setTitlematch(como::enum_index(como::win::rules::name_match::unimportant));
     settings->setClientmachine(machine); // set, but make unimportant
-    settings->setClientmachinematch(enum_index(win::rules::name_match::unimportant));
+    settings->setClientmachinematch(como::enum_index(como::win::rules::name_match::unimportant));
     if (!role.isEmpty() && role != "unknown" && role != "unnamed") { // Qt sets this if not specified
         settings->setWindowrole(role);
-        settings->setWindowrolematch(enum_index(win::rules::name_match::exact));
+        settings->setWindowrolematch(como::enum_index(como::win::rules::name_match::exact));
         if (wmclass_name == wmclass_class) {
             settings->setWmclasscomplete(false);
             settings->setWmclass(wmclass_class);
-            settings->setWmclassmatch(enum_index(win::rules::name_match::exact));
+            settings->setWmclassmatch(como::enum_index(como::win::rules::name_match::exact));
         } else {
             // WM_CLASS components differ - perhaps the app got -name argument
             settings->setWmclasscomplete(true);
             settings->setWmclass(QStringLiteral("%1 %2").arg(wmclass_name, wmclass_class));
-            settings->setWmclassmatch(enum_index(win::rules::name_match::exact));
+            settings->setWmclassmatch(como::enum_index(como::win::rules::name_match::exact));
         }
     } else { // no role set
         if (wmclass_name != wmclass_class) {
             // WM_CLASS components differ - perhaps the app got -name argument
             settings->setWmclasscomplete(true);
             settings->setWmclass(QStringLiteral("%1 %2").arg(wmclass_name, wmclass_class));
-            settings->setWmclassmatch(enum_index(win::rules::name_match::exact));
+            settings->setWmclassmatch(como::enum_index(como::win::rules::name_match::exact));
         } else {
             // This is a window that has no role set, and both components of WM_CLASS
             // match (possibly only differing in case), which most likely means either
@@ -474,10 +473,10 @@ void KCMKWinRules::fillSettingsFromProperties(win::rules::settings* settings,
             // include window title in the matching, and pray it causes many more positive
             // matches than negative matches.
             // WM_CLASS components differ - perhaps the app got -name argument
-            settings->setTitlematch(enum_index(win::rules::name_match::exact));
+            settings->setTitlematch(como::enum_index(como::win::rules::name_match::exact));
             settings->setWmclasscomplete(false);
             settings->setWmclass(wmclass_class);
-            settings->setWmclassmatch(enum_index(win::rules::name_match::exact));
+            settings->setWmclassmatch(como::enum_index(como::win::rules::name_match::exact));
         }
     }
 }

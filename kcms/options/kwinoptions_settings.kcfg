@@ -129,7 +129,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
     </entry>
 
     <entry key="ActiveMouseScreen" type="Bool">
-        <default code="true">focusPolicy() != static_cast&lt;int&gt;(KWin::win::focus_policy::click)</default>
+        <default code="true">focusPolicy() != static_cast&lt;int&gt;(como::win::focus_policy::click)</default>
     </entry>
 
     <entry key="FocusStealingPreventionLevel" type="Int">

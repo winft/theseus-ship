@@ -10,9 +10,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <QWidget>
 
-#include "win/types.h"
+#include <como/win/types.h>
 
-namespace KWin
+namespace theseus_ship
 {
 
 class Monitor;
@@ -25,20 +25,20 @@ public:
     explicit KWinScreenEdge(QWidget *parent = nullptr);
     ~KWinScreenEdge() override;
 
-    void monitorHideEdge(win::electric_border border, bool hidden);
-    void monitorEnableEdge(win::electric_border border, bool enabled);
+    void monitorHideEdge(como::win::electric_border border, bool hidden);
+    void monitorEnableEdge(como::win::electric_border border, bool enabled);
 
     void monitorAddItem(const QString &item);
     void monitorItemSetEnabled(int index, bool enabled);
 
-    QList<win::electric_border> monitorCheckEffectHasEdge(int index) const;
+    QList<como::win::electric_border> monitorCheckEffectHasEdge(int index) const;
     QList<int> monitorCheckEffectHasEdgeInt(int index) const;
-    int selectedEdgeItem(win::electric_border border) const;
+    int selectedEdgeItem(como::win::electric_border border) const;
 
-    void monitorChangeEdge(win::electric_border border, int index);
+    void monitorChangeEdge(como::win::electric_border border, int index);
     void monitorChangeEdge(const QList<int> &borderList, int index);
 
-    void monitorChangeDefaultEdge(win::electric_border border, int index);
+    void monitorChangeDefaultEdge(como::win::electric_border border, int index);
     void monitorChangeDefaultEdge(const QList<int> &borderList, int index);
 
     // revert to reference settings and assess for saveNeeded and default changed
@@ -60,11 +60,11 @@ private:
     virtual bool isDefault() const;
 
     // internal use, return Monitor::None if border equals ELECTRIC_COUNT or ElectricNone
-    static int electricBorderToMonitorEdge(win::electric_border border);
+    static int electricBorderToMonitorEdge(como::win::electric_border border);
 
 private:
-    QHash<win::electric_border, int> m_reference; // reference settings
-    QHash<win::electric_border, int> m_default; // default settings
+    QHash<como::win::electric_border, int> m_reference; // reference settings
+    QHash<como::win::electric_border, int> m_default; // default settings
 };
 
 } // namespace

@@ -6,13 +6,13 @@
 
 #pragma once
 
-#include "win/rules/book_settings.h"
-#include "rules_settings.h"
+#include <como/win/rules/book_settings.h>
+#include <como/win/rules/rules_settings.h>
 
 #include <QAbstractListModel>
 
 
-namespace KWin
+namespace theseus_ship
 {
 
 class RuleBookModel : public QAbstractListModel
@@ -40,18 +40,18 @@ public:
     QString descriptionAt(int row) const;
     void setDescriptionAt(int row, const QString &description);
 
-    win::rules::settings *ruleSettingsAt(int row) const;
-    void setRuleSettingsAt(int row, win::rules::settings const& settings);
+    como::win::rules::settings *ruleSettingsAt(int row) const;
+    void setRuleSettingsAt(int row, como::win::rules::settings const& settings);
 
     void load();
     void save();
     bool isSaveNeeded();
 
     // Helper function to copy RuleSettings properties
-    static void copySettingsTo(win::rules::settings* dest, win::rules::settings const& source);
+    static void copySettingsTo(como::win::rules::settings* dest, como::win::rules::settings const& source);
 
 private:
-    win::rules::book_settings *m_ruleBook;
+    como::win::rules::book_settings *m_ruleBook;
 };
 
 } // namespace

@@ -17,9 +17,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KLocalizedString>
 #include <KApplicationTrader>
 
-namespace KWin
-{
-namespace win
+namespace theseus_ship
 {
 
 LayoutPreview::LayoutPreview(const QString &path, bool showDesktopThumbnail, QObject *parent)
@@ -252,6 +250,4 @@ void SwitcherItem::decrementIndex()
     setCurrentIndex(index);
 }
 
-} // namespace KWin
-} // namespace win
-
+}

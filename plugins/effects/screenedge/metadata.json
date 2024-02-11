@@ -1,9 +1,0 @@
-{
-    "KPlugin": {
-        "Category": "Appearance",
-        "Description": "Highlights a screen edge when approaching",
-        "EnabledByDefault": true,
-        "License": "GPL",
-        "Name": "Screen Edge"
-    }
-}
