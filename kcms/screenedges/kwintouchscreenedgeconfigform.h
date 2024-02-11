@@ -15,7 +15,7 @@ namespace Ui
 class KWinTouchScreenConfigUi;
 }
 
-namespace KWin
+namespace theseus_ship
 {
 
 class KWinTouchScreenEdgeConfigForm : public KWinScreenEdge

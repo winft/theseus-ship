@@ -11,10 +11,9 @@
 
 #include <KCModuleData>
 
-namespace KWin
+namespace theseus_ship
 {
-namespace win
-{
+
 class TabBoxSettings;
 class SwitchEffectSettings;
 class PluginsSettings;
@@ -38,8 +37,6 @@ private:
     PluginsSettings *m_pluginsConfig;
     ShortcutSettings *m_shortcutConfig;
 };
-
-}
 
 }
 

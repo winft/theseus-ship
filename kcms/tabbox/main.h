@@ -8,20 +8,17 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
-#include "win/tabbox/tabbox_config.h"
+#include <como/win/tabbox/tabbox_config.h>
 
 #include <kcmodule.h>
 #include <ksharedconfig.h>
 
-namespace KWin
+namespace theseus_ship
 {
+
 class KWinTabBoxConfigForm;
-namespace win
-{
 class KWinTabboxData;
 class TabBoxSettings;
-}
-
 
 class KWinTabBoxConfig : public KCModule
 {
@@ -49,7 +46,7 @@ private:
     KWinTabBoxConfigForm *m_alternativeTabBoxUi = nullptr;
     KSharedConfigPtr m_config;
 
-    win::KWinTabboxData *m_data;
+    KWinTabboxData *m_data;
 };
 
 } // namespace

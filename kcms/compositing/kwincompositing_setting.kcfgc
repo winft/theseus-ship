@@ -7,4 +7,4 @@ ClassName=KWinCompositingSetting
 Mutators=true
 DefaultValueGetters=true
 ParentInConstructor=true
-IncludeFiles=render/types.h
+IncludeFiles=como/render/types.h

@@ -7,25 +7,23 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include <base/config-kwin.h>
-
 #include <KAboutData>
 #include <KLocalizedString>
 
-namespace KWin
+namespace theseus_ship
 {
 
 inline void app_create_about_data()
 {
-    KAboutData aboutData(QStringLiteral(KWIN_NAME),           // The program name used internally
-                         i18n("KWinFT"),                      // A displayable program name string
-                         QStringLiteral(KWIN_VERSION_STRING), // The program version string
-                         "",                                  // Description is set per binary.
-                         KAboutLicense::GPL, // The license this code is released under
+    KAboutData aboutData(QStringLiteral("theseus-ship"), // The program name used internally
+                         i18n("Theseus' Ship"),          // A displayable program name string
+                         QStringLiteral(""),             // The program version string
+                         "",                             // Description is set per binary.
+                         KAboutLicense::GPL,             // The license this code is released under
                          i18n("(c) 1999-2020, The KDE Developers"), // Copyright Statement
                          QString(),
-                         QStringLiteral("kwinft.org"),
-                         QStringLiteral("https://gitlab.com/kwinft/kwinft/-/issues"));
+                         QStringLiteral("winft.org"),
+                         QStringLiteral("https://github.com/winft/theseus-ship/issues"));
 
     aboutData.addAuthor(i18n("Matthias Ettrich"), QString(), QStringLiteral("ettrich@kde.org"));
     aboutData.addAuthor(i18n("Cristian Tibirna"), QString(), QStringLiteral("tibirna@kde.org"));

@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QImage>
 #include <QQuickItem>
 
-namespace KWin
+namespace theseus_ship
 {
 
 class WindowThumbnailItem : public QQuickItem

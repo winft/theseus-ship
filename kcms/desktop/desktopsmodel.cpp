@@ -24,7 +24,7 @@
 #include <QRegularExpression>
 #include <QUuid>
 
-namespace KWin
+namespace theseus_ship
 {
 
 static const QString s_serviceName(QStringLiteral("org.kde.KWin"));
@@ -39,8 +39,8 @@ DesktopsModel::DesktopsModel(QObject *parent)
     , m_serverSideRows(-1)
     , m_rows(-1)
 {
-    qDBusRegisterMetaType<KWin::win::dbus::subspace_data>();
-    qDBusRegisterMetaType<KWin::win::dbus::subspace_data_vector>();
+    qDBusRegisterMetaType<como::win::dbus::subspace_data>();
+    qDBusRegisterMetaType<como::win::dbus::subspace_data_vector>();
 
     m_serviceWatcher = new QDBusServiceWatcher(s_serviceName,
         QDBusConnection::sessionBus(), QDBusServiceWatcher::WatchForOwnerChange);
@@ -56,7 +56,7 @@ DesktopsModel::DesktopsModel(QObject *parent)
                 s_virtualDesktopsInterface,
                 QStringLiteral("desktopCreated"),
                 this,
-                SLOT(desktopCreated(QString,KWin::win::dbus::subspace_data)));
+                SLOT(desktopCreated(QString,como::win::dbus::subspace_data)));
 
             QDBusConnection::sessionBus().disconnect(
                 s_serviceName,
@@ -72,7 +72,7 @@ DesktopsModel::DesktopsModel(QObject *parent)
                 s_virtualDesktopsInterface,
                 QStringLiteral("desktopDataChanged"),
                 this,
-                SLOT(desktopDataChanged(QString,KWin::win::dbus::subspace_data)));
+                SLOT(desktopDataChanged(QString,como::win::dbus::subspace_data)));
 
 
             QDBusConnection::sessionBus().disconnect(
@@ -431,7 +431,7 @@ void DesktopsModel::getAllAndConnect(const QDBusMessage &msg)
 {
     const QVariantMap &data = qdbus_cast<QVariantMap>(msg.arguments().at(0).value<QDBusArgument>());
 
-    const KWin::win::dbus::subspace_data_vector &desktops = qdbus_cast<KWin::win::dbus::subspace_data_vector>(
+    const como::win::dbus::subspace_data_vector &desktops = qdbus_cast<como::win::dbus::subspace_data_vector>(
         data.value(QStringLiteral("desktops")).value<QDBusArgument>()
     );
 
@@ -439,7 +439,7 @@ void DesktopsModel::getAllAndConnect(const QDBusMessage &msg)
     QStringList newServerSideDesktops;
     QHash<QString,QString> newServerSideNames;
 
-    for (const KWin::win::dbus::subspace_data &d : desktops) {
+    for (const como::win::dbus::subspace_data &d : desktops) {
         newServerSideDesktops.append(d.id);
         newServerSideNames[d.id] = d.name;
     }
@@ -487,7 +487,7 @@ void DesktopsModel::getAllAndConnect(const QDBusMessage &msg)
         s_virtualDesktopsInterface,
         QStringLiteral("desktopCreated"),
         this,
-        SLOT(desktopCreated(QString,KWin::win::dbus::subspace_data)));
+        SLOT(desktopCreated(QString,como::win::dbus::subspace_data)));
 
     if (!connected) {
         handleConnectionError();
@@ -515,7 +515,7 @@ void DesktopsModel::getAllAndConnect(const QDBusMessage &msg)
         s_virtualDesktopsInterface,
         QStringLiteral("desktopDataChanged"),
         this,
-        SLOT(desktopDataChanged(QString,KWin::win::dbus::subspace_data)));
+        SLOT(desktopDataChanged(QString,como::win::dbus::subspace_data)));
 
     if (!connected) {
         handleConnectionError();
@@ -538,7 +538,7 @@ void DesktopsModel::getAllAndConnect(const QDBusMessage &msg)
     }
 }
 
-void DesktopsModel::desktopCreated(const QString &id, const KWin::win::dbus::subspace_data &data)
+void DesktopsModel::desktopCreated(const QString &id, const como::win::dbus::subspace_data &data)
 {
     m_serverSideDesktops.insert(data.position, id);
     m_serverSideNames[data.id] = data.name;
@@ -584,7 +584,7 @@ void DesktopsModel::desktopRemoved(const QString &id)
     }
 }
 
-void DesktopsModel::desktopDataChanged(const QString &id, const KWin::win::dbus::subspace_data &data)
+void DesktopsModel::desktopDataChanged(const QString &id, const como::win::dbus::subspace_data &data)
 {
     const int desktopIndex = m_serverSideDesktops.indexOf(id);
 

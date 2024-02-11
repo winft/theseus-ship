@@ -11,7 +11,7 @@
 #include <QAbstractItemModel>
 #include <QQuickItem>
 
-namespace KWin
+namespace theseus_ship
 {
 
 class EffectsModel;
@@ -44,4 +44,4 @@ private:
     Q_DISABLE_COPY(DesktopEffectsKCM)
 };
 
-} // namespace KWin
+}

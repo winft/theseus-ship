@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "kwintouchscreenedgeconfigform.h"
 #include "ui_touch.h"
 
-namespace KWin
+namespace theseus_ship
 {
 
 KWinTouchScreenEdgeConfigForm::KWinTouchScreenEdgeConfigForm(QWidget *parent)

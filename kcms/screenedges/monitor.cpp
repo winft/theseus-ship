@@ -19,7 +19,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QScreen>
 #include <QWindow>
 
-namespace KWin
+namespace theseus_ship
 {
 
 static QScreen *screenFromWidget(const QWidget *widget)
@@ -307,4 +307,3 @@ bool Monitor::Corner::active() const
     return m_active;
 }
 } // namespace
-

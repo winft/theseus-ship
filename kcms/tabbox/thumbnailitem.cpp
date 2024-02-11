@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QSGImageNode>
 #include <QStandardPaths>
 
-namespace KWin
+namespace theseus_ship
 {
 
 WindowThumbnailItem::WindowThumbnailItem(QQuickItem* parent)
@@ -104,4 +104,4 @@ void WindowThumbnailItem::setSourceSize(const QSize &size)
     Q_EMIT sourceSizeChanged();
 }
 
-} // namespace KWin
+}

@@ -5,9 +5,9 @@
 */
 #include "ruleitem.h"
 
-#include "utils/geo.h"
+#include <como/utils/geo.h>
 
-namespace KWin
+namespace theseus_ship
 {
 
 RuleItem::RuleItem(const QString &key,
@@ -187,7 +187,7 @@ QVariant RuleItem::typedValue(const QVariant &value) const
     }
     case Point: {
         const QPoint point = value.toPoint();
-        return (point == geo::invalid_point) ? QPoint(0, 0) : point;
+        return (point == como::geo::invalid_point) ? QPoint(0, 0) : point;
     }
     case Size:
         return value.toSize();
@@ -205,4 +205,3 @@ QVariant RuleItem::typedValue(const QVariant &value) const
 }
 
 }   //namespace
-

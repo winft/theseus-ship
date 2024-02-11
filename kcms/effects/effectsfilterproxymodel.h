@@ -8,7 +8,7 @@
 
 #include <QSortFilterProxyModel>
 
-namespace KWin
+namespace theseus_ship
 {
 
 class EffectsFilterProxyModel : public QSortFilterProxyModel
@@ -48,4 +48,4 @@ private:
     Q_DISABLE_COPY(EffectsFilterProxyModel)
 };
 
-} // namespace KWin
+}

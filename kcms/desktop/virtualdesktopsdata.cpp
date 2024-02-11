@@ -10,7 +10,7 @@
 #include "animationsmodel.h"
 #include "virtualdesktopssettings.h"
 
-namespace KWin
+namespace theseus_ship
 {
 
 VirtualDesktopsData::VirtualDesktopsData(QObject *parent)

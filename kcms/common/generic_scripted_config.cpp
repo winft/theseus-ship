@@ -5,8 +5,7 @@
 */
 #include "generic_scripted_config.h"
 
-#include <base/config-kwin.h>
-#include <kwineffects_interface.h>
+#include <kwin_effects_interface.h>
 
 #include <KLocalizedString>
 #include <KLocalizedTranslator>
@@ -18,7 +17,7 @@
 #include <QUiLoader>
 #include <QVBoxLayout>
 
-namespace KWin::scripting
+namespace theseus_ship::scripting
 {
 
 QObject* generic_scripted_config_factory::create(const char* iface,
@@ -65,7 +64,7 @@ void generic_scripted_config::createUi()
 
     const QString packageRoot = QStandardPaths::locate(
         QStandardPaths::GenericDataLocation,
-        QLatin1String(KWIN_NAME) + QLatin1Char('/') + typeName() + QLatin1Char('/') + m_packageName,
+        QLatin1String("kwin") + QLatin1Char('/') + typeName() + QLatin1Char('/') + m_packageName,
         QStandardPaths::LocateDirectory);
     if (packageRoot.isEmpty()) {
         layout->addWidget(new QLabel(i18nc("Error message", "Could not locate package metadata")));
@@ -150,7 +149,7 @@ QString scripted_effect_config::typeName() const
 
 KConfigGroup scripted_effect_config::configGroup()
 {
-    return KSharedConfig::openConfig(QStringLiteral(KWIN_CONFIG))
+    return KSharedConfig::openConfig(QStringLiteral("kwinrc"))
         ->group(QLatin1String("Effect-") + packageName());
 }
 
@@ -173,7 +172,7 @@ scripting_config::~scripting_config()
 
 KConfigGroup scripting_config::configGroup()
 {
-    return KSharedConfig::openConfig(QStringLiteral(KWIN_CONFIG))
+    return KSharedConfig::openConfig(QStringLiteral("kwinrc"))
         ->group(QLatin1String("Script-") + packageName());
 }
 

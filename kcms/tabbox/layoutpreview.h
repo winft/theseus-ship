@@ -12,10 +12,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "thumbnailitem.h"
 
-namespace KWin
-{
-
-namespace win
+namespace theseus_ship
 {
 
 class SwitcherItem;
@@ -145,7 +142,6 @@ inline QObject *SwitcherItem::item() const
     return m_item;
 }
 
-} // namespace TabBox
-} // namespace KWin
+}
 
 #endif // KWIN_TABBOX_LAYOUTPREVIEW_H

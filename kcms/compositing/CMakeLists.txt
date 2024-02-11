@@ -16,7 +16,7 @@ set(kwincompositing_SRC
 kconfig_add_kcfg_files(kwincompositing_SRC kwincompositing_setting.kcfgc GENERATE_MOC)
 
 qt_add_dbus_interface(kwincompositing_SRC
-    ${KWIN_SOURCE_DIR}/lib/render/dbus/org.kde.kwin.Compositing.xml kwin_compositing_interface
+    ${KWIN_COMPOSITING_INTERFACE} kwin_compositing_interface
 )
 
 ki18n_wrap_ui(kwincompositing_SRC compositing.ui)
@@ -32,4 +32,5 @@ target_link_libraries(kwincompositing
   KF6::Service
   Qt::DBus
   Qt::Widgets
+  como::render
 )

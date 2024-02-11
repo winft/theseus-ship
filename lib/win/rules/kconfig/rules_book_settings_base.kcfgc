@@ -1,9 +1,0 @@
-; SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
-;
-; SPDX-License-Identifier: GPL-2.0-or-later
-
-File=rules_book_settings_base.kcfg
-NameSpace=KWin
-ClassName=book_settings_base
-Mutators=true
-ParentInConstructor=true

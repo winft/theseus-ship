@@ -45,7 +45,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
     </spacer>
    </item>
    <item>
-    <widget class="KWin::Monitor" name="monitor" native="true">
+    <widget class="theseus_ship::Monitor" name="monitor" native="true">
      <property name="minimumSize">
       <size>
        <width>200</width>
@@ -68,7 +68,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
  </widget>
  <customwidgets>
   <customwidget>
-   <class>KWin::Monitor</class>
+   <class>theseus_ship::Monitor</class>
    <extends>QWidget</extends>
    <header>monitor.h</header>
    <container>1</container>

@@ -7,14 +7,14 @@
 #ifndef KWIN_OPTIONS_MODEL_H
 #define KWIN_OPTIONS_MODEL_H
 
-#include "win/rules/ruling.h"
+#include <como/win/rules/ruling.h>
 
 #include <QAbstractListModel>
 #include <QIcon>
 #include <QVariant>
 
 
-namespace KWin {
+namespace theseus_ship {
 
 class OptionsModel : public QAbstractListModel
 {

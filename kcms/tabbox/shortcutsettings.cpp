@@ -104,9 +104,7 @@ void ShortcutItem::setProperty(const QVariant &p)
     m_action->setShortcut(p.value<QKeySequence>());
 }
 
-namespace KWin
-{
-namespace win
+namespace theseus_ship
 {
 
 ShortcutSettings::ShortcutSettings(QObject *parent)
@@ -166,5 +164,4 @@ bool ShortcutSettings::isDefault(const QString &name) const
     return action->shortcut() == m_actionCollection->defaultShortcut(action);
 }
 
-} // namespace TabBox
-} // namespace KWin
+}

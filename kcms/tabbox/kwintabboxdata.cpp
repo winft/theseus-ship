@@ -11,9 +11,7 @@
 #include "kwinpluginssettings.h"
 #include "shortcutsettings.h"
 
-namespace KWin
-{
-namespace win
+namespace theseus_ship
 {
 
 KWinTabboxData::KWinTabboxData(QObject *parent)
@@ -47,5 +45,5 @@ ShortcutSettings *KWinTabboxData::shortcutConfig() const
 {
     return m_shortcutConfig;
 }
-}
+
 }

@@ -1,9 +1,0 @@
-{
-    "KPlugin": {
-        "Category": "Focus",
-        "Description": "Slide back windows when another window is raised",
-        "EnabledByDefault": false,
-        "License": "GPL",
-        "Name": "Slide Back"
-    }
-}

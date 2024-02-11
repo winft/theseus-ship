@@ -11,10 +11,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "shortcutsettings.h"
 #include "ui_main.h"
 
-namespace KWin
+namespace theseus_ship
 {
-
-using namespace win;
 
 KWinTabBoxConfigForm::KWinTabBoxConfigForm(TabboxType type, TabBoxSettings *config, ShortcutSettings *shortcutsConfig, QWidget *parent)
     : QWidget(parent)
@@ -98,38 +96,38 @@ bool KWinTabBoxConfigForm::showTabBox() const
 int KWinTabBoxConfigForm::filterScreen() const
 {
     if (ui->filterScreens->isChecked()) {
-        return ui->currentScreen->isChecked() ? tabbox_config::OnlyCurrentScreenClients : tabbox_config::ExcludeCurrentScreenClients;
+        return ui->currentScreen->isChecked() ? como::win::tabbox_config::OnlyCurrentScreenClients : como::win::tabbox_config::ExcludeCurrentScreenClients;
     } else {
-        return tabbox_config::IgnoreMultiScreen;
+        return como::win::tabbox_config::IgnoreMultiScreen;
     }
 }
 
 int KWinTabBoxConfigForm::filterDesktop() const
 {
     if (ui->filterDesktops->isChecked()) {
-        return ui->currentDesktop->isChecked() ? tabbox_config::OnlyCurrentDesktopClients : tabbox_config::ExcludeCurrentDesktopClients;
+        return ui->currentDesktop->isChecked() ? como::win::tabbox_config::OnlyCurrentDesktopClients : como::win::tabbox_config::ExcludeCurrentDesktopClients;
     } else {
-        return tabbox_config::AllDesktopsClients;
+        return como::win::tabbox_config::AllDesktopsClients;
     }
 }
 
 int KWinTabBoxConfigForm::filterMinimization() const
 {
     if (ui->filterMinimization->isChecked()) {
-        return ui->visibleWindows->isChecked() ? tabbox_config::ExcludeMinimizedClients : tabbox_config::OnlyMinimizedClients;
+        return ui->visibleWindows->isChecked() ? como::win::tabbox_config::ExcludeMinimizedClients : como::win::tabbox_config::OnlyMinimizedClients;
     } else {
-        return tabbox_config::IgnoreMinimizedStatus;
+        return como::win::tabbox_config::IgnoreMinimizedStatus;
     }
 }
 
 int KWinTabBoxConfigForm::applicationMode() const
 {
-    return ui->oneAppWindow->isChecked() ? tabbox_config::OneWindowPerApplication : tabbox_config::AllWindowsAllApplications;
+    return ui->oneAppWindow->isChecked() ? como::win::tabbox_config::OneWindowPerApplication : como::win::tabbox_config::AllWindowsAllApplications;
 }
 
 int KWinTabBoxConfigForm::showDesktopMode() const
 {
-    return ui->showDesktop->isChecked() ? tabbox_config::ShowDesktopClient : tabbox_config::DoNotShowDesktopClient;
+    return ui->showDesktop->isChecked() ? como::win::tabbox_config::ShowDesktopClient : como::win::tabbox_config::DoNotShowDesktopClient;
 }
 
 int KWinTabBoxConfigForm::switchingMode() const
@@ -142,38 +140,38 @@ QString KWinTabBoxConfigForm::layoutName() const
     return ui->effectCombo->currentData().toString();
 }
 
-void KWinTabBoxConfigForm::setFilterScreen(win::tabbox_config::ClientMultiScreenMode mode)
+void KWinTabBoxConfigForm::setFilterScreen(como::win::tabbox_config::ClientMultiScreenMode mode)
 {
-    ui->filterScreens->setChecked(mode != tabbox_config::IgnoreMultiScreen);
-    ui->currentScreen->setChecked(mode == tabbox_config::OnlyCurrentScreenClients);
-    ui->otherScreens->setChecked(mode == tabbox_config::ExcludeCurrentScreenClients);
+    ui->filterScreens->setChecked(mode != como::win::tabbox_config::IgnoreMultiScreen);
+    ui->currentScreen->setChecked(mode == como::win::tabbox_config::OnlyCurrentScreenClients);
+    ui->otherScreens->setChecked(mode == como::win::tabbox_config::ExcludeCurrentScreenClients);
 }
 
-void KWinTabBoxConfigForm::setFilterDesktop(win::tabbox_config::ClientDesktopMode mode)
+void KWinTabBoxConfigForm::setFilterDesktop(como::win::tabbox_config::ClientDesktopMode mode)
 {
-    ui->filterDesktops->setChecked(mode != tabbox_config::AllDesktopsClients);
-    ui->currentDesktop->setChecked(mode == tabbox_config::OnlyCurrentDesktopClients);
-    ui->otherDesktops->setChecked(mode == tabbox_config::ExcludeCurrentDesktopClients);
+    ui->filterDesktops->setChecked(mode != como::win::tabbox_config::AllDesktopsClients);
+    ui->currentDesktop->setChecked(mode == como::win::tabbox_config::OnlyCurrentDesktopClients);
+    ui->otherDesktops->setChecked(mode == como::win::tabbox_config::ExcludeCurrentDesktopClients);
 }
 
-void KWinTabBoxConfigForm::setFilterMinimization(win::tabbox_config::ClientMinimizedMode mode)
+void KWinTabBoxConfigForm::setFilterMinimization(como::win::tabbox_config::ClientMinimizedMode mode)
 {
-    ui->filterMinimization->setChecked(mode != tabbox_config::IgnoreMinimizedStatus);
-    ui->visibleWindows->setChecked(mode == tabbox_config::ExcludeMinimizedClients);
-    ui->hiddenWindows->setChecked(mode == tabbox_config::OnlyMinimizedClients);
+    ui->filterMinimization->setChecked(mode != como::win::tabbox_config::IgnoreMinimizedStatus);
+    ui->visibleWindows->setChecked(mode == como::win::tabbox_config::ExcludeMinimizedClients);
+    ui->hiddenWindows->setChecked(mode == como::win::tabbox_config::OnlyMinimizedClients);
 }
 
-void KWinTabBoxConfigForm::setApplicationMode(win::tabbox_config::ClientApplicationsMode mode)
+void KWinTabBoxConfigForm::setApplicationMode(como::win::tabbox_config::ClientApplicationsMode mode)
 {
-    ui->oneAppWindow->setChecked(mode == tabbox_config::OneWindowPerApplication);
+    ui->oneAppWindow->setChecked(mode == como::win::tabbox_config::OneWindowPerApplication);
 }
 
-void KWinTabBoxConfigForm::setShowDesktopMode(win::tabbox_config::ShowDesktopMode mode)
+void KWinTabBoxConfigForm::setShowDesktopMode(como::win::tabbox_config::ShowDesktopMode mode)
 {
-    ui->showDesktop->setChecked(mode == tabbox_config::ShowDesktopClient);
+    ui->showDesktop->setChecked(mode == como::win::tabbox_config::ShowDesktopClient);
 }
 
-void KWinTabBoxConfigForm::setSwitchingModeChanged(win::tabbox_config::ClientSwitchingMode mode)
+void KWinTabBoxConfigForm::setSwitchingModeChanged(como::win::tabbox_config::ClientSwitchingMode mode)
 {
     ui->switchingModeCombo->setCurrentIndex(mode);
 }
@@ -266,12 +264,12 @@ void KWinTabBoxConfigForm::onShortcutChanged(const QKeySequence &seq)
 
 void KWinTabBoxConfigForm::updateUiFromConfig()
 {
-    setFilterScreen(static_cast<tabbox_config::ClientMultiScreenMode>(m_config->multiScreenMode()));
-    setFilterDesktop(static_cast<tabbox_config::ClientDesktopMode>(m_config->desktopMode()));
-    setFilterMinimization(static_cast<tabbox_config::ClientMinimizedMode>(m_config->minimizedMode()));
-    setApplicationMode(static_cast<tabbox_config::ClientApplicationsMode>(m_config->applicationsMode()));
-    setShowDesktopMode(static_cast<tabbox_config::ShowDesktopMode>(m_config->showDesktopMode()));
-    setSwitchingModeChanged(static_cast<tabbox_config::ClientSwitchingMode>(m_config->switchingMode()));
+    setFilterScreen(static_cast<como::win::tabbox_config::ClientMultiScreenMode>(m_config->multiScreenMode()));
+    setFilterDesktop(static_cast<como::win::tabbox_config::ClientDesktopMode>(m_config->desktopMode()));
+    setFilterMinimization(static_cast<como::win::tabbox_config::ClientMinimizedMode>(m_config->minimizedMode()));
+    setApplicationMode(static_cast<como::win::tabbox_config::ClientApplicationsMode>(m_config->applicationsMode()));
+    setShowDesktopMode(static_cast<como::win::tabbox_config::ShowDesktopMode>(m_config->showDesktopMode()));
+    setSwitchingModeChanged(static_cast<como::win::tabbox_config::ClientSwitchingMode>(m_config->switchingMode()));
     setLayoutName(m_config->layoutName());
 
     for (const auto &widget : {ui->scAll, ui->scAllReverse, ui->scCurrent, ui->scCurrentReverse}) {

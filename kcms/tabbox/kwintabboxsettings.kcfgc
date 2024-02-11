@@ -3,9 +3,9 @@
 ; SPDX-License-Identifier: GPL-2.0-or-later
 
 File=kwintabboxsettings.kcfg
-NameSpace=KWin::win
+NameSpace=theseus_ship
 ClassName=TabBoxSettings
-IncludeFiles=\"win/tabbox/tabbox_config.h\"
+IncludeFiles=como/win/tabbox/tabbox_config.h
 Mutators=true
 DefaultValueGetters=true
 ParentInConstructor=true

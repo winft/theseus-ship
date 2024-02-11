@@ -12,21 +12,18 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QWidget>
 #include <QStandardItemModel>
 
-#include "win/tabbox/tabbox_config.h"
+#include <como/win/tabbox/tabbox_config.h>
 
 namespace Ui
 {
 class KWinTabBoxConfigForm;
 }
 
-namespace KWin
+namespace theseus_ship
 {
 
-namespace win
-{
 class TabBoxSettings;
 class ShortcutSettings;
-}
 
 class KWinTabBoxConfigForm : public QWidget
 {
@@ -46,10 +43,10 @@ public:
         AddonEffect, // i.e not builtin effects
     };
 
-    explicit KWinTabBoxConfigForm(TabboxType type, win::TabBoxSettings *config, win::ShortcutSettings *shortcutsConfig, QWidget *parent = nullptr);
+    explicit KWinTabBoxConfigForm(TabboxType type, TabBoxSettings *config, ShortcutSettings *shortcutsConfig, QWidget *parent = nullptr);
     ~KWinTabBoxConfigForm() override;
 
-    win::TabBoxSettings *config() const;
+    TabBoxSettings *config() const;
     bool highlightWindows() const;
 
     void updateUiFromConfig();
@@ -91,17 +88,17 @@ private:
     QString layoutName() const;
 
     // UI property setters
-    void setFilterScreen(win::tabbox_config::ClientMultiScreenMode mode);
-    void setFilterDesktop(win::tabbox_config::ClientDesktopMode mode);
-    void setFilterMinimization(win::tabbox_config::ClientMinimizedMode mode);
-    void setApplicationMode(win::tabbox_config::ClientApplicationsMode mode);
-    void setShowDesktopMode(win::tabbox_config::ShowDesktopMode mode);
-    void setSwitchingModeChanged(win::tabbox_config::ClientSwitchingMode mode);
+    void setFilterScreen(como::win::tabbox_config::ClientMultiScreenMode mode);
+    void setFilterDesktop(como::win::tabbox_config::ClientDesktopMode mode);
+    void setFilterMinimization(como::win::tabbox_config::ClientMinimizedMode mode);
+    void setApplicationMode(como::win::tabbox_config::ClientApplicationsMode mode);
+    void setShowDesktopMode(como::win::tabbox_config::ShowDesktopMode mode);
+    void setSwitchingModeChanged(como::win::tabbox_config::ClientSwitchingMode mode);
     void setLayoutName(const QString &layoutName);
 
 private:
-    win::TabBoxSettings *m_config = nullptr;
-    win::ShortcutSettings *m_shortcuts = nullptr;
+    TabBoxSettings *m_config = nullptr;
+    ShortcutSettings *m_shortcuts = nullptr;
     bool m_showDefaultIndicator = false;
 
     bool m_isHighlightWindowsEnabled = true;

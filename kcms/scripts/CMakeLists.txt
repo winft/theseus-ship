@@ -18,7 +18,7 @@ target_link_libraries(kcm_kwin_scripts
   KF6::KCMUtilsCore
   KF6::Package
   Qt::DBus
-  base
+  como::base
 )
 
 install(FILES kwinscripts.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})

@@ -1,14 +1,10 @@
-# SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+# SPDX-FileCopyrightText: 2024 Roman Gilg <subdiff@gmail.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 cmake_minimum_required(VERSION 3.23 FATAL_ERROR)
 
-project(KWinFT VERSION 5.27.80)
-
-set(QT_MIN_VERSION "6.4.0")
-set(KF6_MIN_VERSION "5.240.0")
-set(KDE_COMPILERSETTINGS_LEVEL "5.84")
+project("Theseus' Ship" VERSION 5.27.80)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 20)
@@ -21,29 +17,21 @@ add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0
   -DQT_NO_CAST_TO_ASCII
 )
 
-# Prevent EGL headers from including platform headers, in particular Xlib.h.
-add_definitions(-DMESA_EGL_NO_X11_HEADERS)
-add_definitions(-DEGL_NO_X11)
-add_definitions(-DEGL_NO_PLATFORM_SPECIFIC_TYPES)
-
 find_package(ECM ${KF6_MIN_VERSION} REQUIRED NO_MODULE)
 
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib/cmake/modules ${ECM_MODULE_PATH})
+set(CMAKE_MODULE_PATH cmake/modules ${ECM_MODULE_PATH})
 
 include(FeatureSummary)
 include(WriteBasicConfigVersionFile)
 include(GenerateExportHeader)
 
 find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
-    Concurrent
-    Core
-    Core5Compat
-    DBus
-    Quick
-    UiTools
-    Widgets
+  UiTools
 )
+
+find_package(como REQUIRED 0.1)
+find_package(KWinDBusInterface CONFIG REQUIRED)
 
 include(KDEInstallDirs)
 include(KDECMakeSettings)
@@ -55,34 +43,9 @@ include(ECMConfiguredInstall)
 include(ECMQmlModule)
 include(ECMGenerateQmlTypes)
 
-# required frameworks by Core
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
-    Auth
-    Config
-    ConfigWidgets
-    CoreAddons
-    Crash
-    GlobalAccel
-    I18n
-    IdleTime
-    Notifications
-    Package
-    Svg
-    WidgetsAddons
-    WindowSystem
-)
-# required frameworks by config modules
-find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
-    Declarative
-    KCMUtils
-    NewStuff
-    Service
-    XmlGui
-)
-
-# Required frameworks by Wayland binary
-find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
-    DBusAddons
+  Crash
+  DBusAddons
 )
 
 find_package(KF6Kirigami2 ${KF6_MIN_VERSION} CONFIG)
@@ -174,23 +137,6 @@ set_package_properties(Threads PROPERTIES
 find_package(Libinput 1.9)
 set_package_properties(Libinput PROPERTIES TYPE REQUIRED PURPOSE "Required for input handling on Wayland.")
 
-find_package(Pixman)
-set_package_properties(Pixman PROPERTIES
-    TYPE REQUIRED
-    PURPOSE "Required for building wlroots backend."
-)
-find_package(wlroots 0.17.0)
-set_package_properties(wlroots PROPERTIES
-    TYPE REQUIRED
-    PURPOSE "Required for building wlroots backend."
-)
-
-if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.18)
-  set(WLR_HAVE_SESSION_CREATE_LOOP 1)
-  set(WLR_HAVE_UTIL_TRANSFORM_HEADER 1)
-  set(WLR_HAVE_NEW_PIXEL_COPY_API 1)
-endif()
-
 find_package(X11)
 set_package_properties(X11 PROPERTIES
     DESCRIPTION "X11 libraries"
@@ -218,33 +164,6 @@ find_package(XCB 1.10 REQUIRED COMPONENTS
 )
 set_package_properties(XCB PROPERTIES TYPE REQUIRED)
 
-find_package(Freetype REQUIRED)
-set_package_properties(Freetype PROPERTIES
-    DESCRIPTION "A font rendering engine"
-    URL "https://www.freetype.org"
-    TYPE REQUIRED
-    PURPOSE "Needed for KWin's QPA plugin."
-)
-find_package(Fontconfig REQUIRED)
-set_package_properties(Fontconfig PROPERTIES
-    TYPE REQUIRED
-    PURPOSE "Needed for KWin's QPA plugin."
-)
-
-find_package(Wrapland REQUIRED)
-set_package_properties(Wrapland PROPERTIES
-    TYPE REQUIRED
-    PURPOSE "Used as Wrapper library for Wayland protocol objects."
-)
-
-find_package(Xwayland)
-set_package_properties(Xwayland PROPERTIES
-    URL "https://x.org"
-    DESCRIPTION "Xwayland X server"
-    TYPE RUNTIME
-    PURPOSE "Needed for running kwin_wayland"
-)
-
 find_package(Libcap)
 set_package_properties(Libcap PROPERTIES
     TYPE OPTIONAL
@@ -252,62 +171,12 @@ set_package_properties(Libcap PROPERTIES
 )
 set(HAVE_LIBCAP ${Libcap_FOUND})
 
-find_package(QAccessibilityClient6 CONFIG)
-set_package_properties(QAccessibilityClient6 PROPERTIES
-    URL "https://www.kde.org"
-    DESCRIPTION "KDE client-side accessibility library"
-    TYPE OPTIONAL
-    PURPOSE "Required to enable accessibility features"
-)
-set(HAVE_ACCESSIBILITY ${QAccessibilityClient6_FOUND})
-
-include(ECMFindQmlModule)
-ecm_find_qmlmodule(QtQuick 2.3)
-ecm_find_qmlmodule(QtQuick.Controls 1.2)
-ecm_find_qmlmodule(QtQuick.Layouts 1.3)
-ecm_find_qmlmodule(QtQuick.Window 2.1)
-ecm_find_qmlmodule(QtMultimedia 5.0)
-ecm_find_qmlmodule(org.kde.kquickcontrolsaddons 2.0)
-ecm_find_qmlmodule(org.kde.plasma.core 2.0)
-ecm_find_qmlmodule(org.kde.plasma.components 2.0)
-
-########### configure tests ###############
-option(KWIN_BUILD_DECORATIONS "Enable building of KWin decorations." ON)
 option(KWIN_BUILD_KCMS "Enable building of KWin configuration modules." ON)
-option(KWIN_BUILD_TABBOX "Enable building of KWin Tabbox functionality" ON)
-option(KWIN_BUILD_PERF "Build internal tools for performance analysis at runtime." ON)
 
-# Binary name of KWin
-set(KWIN_NAME "kwin")
-set(KWIN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-set(HAVE_PERF ${KWIN_BUILD_PERF})
-
-include_directories(${XKB_INCLUDE_DIR})
-
-set(HAVE_EPOXY_GLX ${epoxy_HAS_GLX})
-
-include(CheckIncludeFile)
-include(CheckIncludeFiles)
-include(CheckSymbolExists)
-
-check_symbol_exists(SCHED_RESET_ON_FORK "sched.h" HAVE_SCHED_RESET_ON_FORK)
-add_feature_info("SCHED_RESET_ON_FORK"
-                 HAVE_SCHED_RESET_ON_FORK
-                 "Required for running kwin_wayland with real-time scheduling")
-
-########### global ###############
-include_directories(BEFORE
-    ${CMAKE_CURRENT_BINARY_DIR}/lib
-    ${CMAKE_CURRENT_BINARY_DIR}/lib/effect
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib/effect
-)
+configure_file(config-theseus-ship.h.cmake config-theseus-ship.h)
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(kconf_update)
-add_subdirectory(lib)
-add_subdirectory(plugins)
 
 if (KWIN_BUILD_KCMS)
     add_subdirectory(kcms)
@@ -315,9 +184,9 @@ endif()
 
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
 target_link_libraries(kwin_x11
-  desktop-kde
-  kwinft::script
-  kwinft::x11
+  como::desktop-kde
+  como::script
+  como::x11
   KF6::Crash
 )
 
@@ -327,13 +196,10 @@ kcoreaddons_target_static_plugins(kwin_x11 NAMESPACE "kwin/effects/plugins")
 
 add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
-  desktop-kde
-  kwinft::script
-  kwinft::wayland
-  kwinft::xwayland
-  KF6IdleTimeKWinPlugin
-  KF6WindowSystemKWinPlugin
-  KWinQpaPlugin
+  como::desktop-kde
+  como::script
+  como::wayland
+  como::xwayland
   KF6::DBusAddons
 )
 

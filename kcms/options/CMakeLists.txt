@@ -32,8 +32,7 @@ kconfig_add_kcfg_files(kcm_kwinoptions_PART_SRCS kwinoptions_settings.kcfgc GENE
 kconfig_add_kcfg_files(kcm_kwinoptions_PART_SRCS kwinoptions_kdeglobals_settings.kcfgc GENERATE_MOC)
 
 qt_add_dbus_interface(kcm_kwinoptions_PART_SRCS
-  ${KWIN_SOURCE_DIR}/lib/render/effect/interface/org.kde.kwin.Effects.xml
-  kwin_effects_interface
+  ${KWIN_EFFECTS_INTERFACE} kwin_effects_interface
 )
 
 kcoreaddons_add_plugin(kcm_kwinoptions SOURCES ${kcm_kwinoptions_PART_SRCS} INSTALL_NAMESPACE "plasma/kcms/systemsettings_qwidgets")
@@ -43,4 +42,5 @@ target_link_libraries(kcm_kwinoptions
   KF6::KCMUtils
   KF6::WindowSystem
   Qt::DBus
+  como::win
 )

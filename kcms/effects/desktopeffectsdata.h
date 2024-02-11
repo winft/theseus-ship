@@ -11,7 +11,7 @@
 
 #include <KCModuleData>
 
-namespace KWin
+namespace theseus_ship
 {
 class EffectsModel;
 

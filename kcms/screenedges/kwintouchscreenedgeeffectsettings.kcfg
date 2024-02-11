@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
     </kcfgfile>
     <group name="Effect-$(EffectName)">
         <entry key="TouchBorderActivate" type="IntList">
-            <default>int(win::electric_border::none)</default>
+            <default>int(como::win::electric_border::none)</default>
         </entry>
     </group>
 </kcfg>

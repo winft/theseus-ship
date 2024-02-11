@@ -41,13 +41,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 K_PLUGIN_FACTORY_WITH_JSON(KWinTabBoxConfigFactory,
                            "kcm_kwintabbox.json",
-                           registerPlugin<KWin::KWinTabBoxConfig>();
-                           registerPlugin<KWin::win::KWinTabboxData>();)
+                           registerPlugin<theseus_ship::KWinTabBoxConfig>();
+                           registerPlugin<theseus_ship::KWinTabboxData>();)
 
-namespace KWin
+namespace theseus_ship
 {
-
-using namespace win;
 
 KWinTabBoxConfig::KWinTabBoxConfig(QObject *parent, const KPluginMetaData &data)
     : KCModule(parent, data)

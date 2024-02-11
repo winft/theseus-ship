@@ -7,7 +7,7 @@
 #include "desktopeffectsdata.h"
 #include "effectsmodel.h"
 
-namespace KWin
+namespace theseus_ship
 {
 
 DesktopEffectsData::DesktopEffectsData(QObject *parent)

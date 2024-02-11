@@ -10,14 +10,14 @@
 
 #include <QAbstractListModel>
 
-#include "../../lib/win/dbus/virtual_desktop_types.h"
+#include <como/win/dbus/virtual_desktop_types.h>
 
 class QDBusArgument;
 class QDBusMessage;
 class QDBusServiceWatcher;
 
 
-namespace KWin
+namespace theseus_ship
 {
 
 /**
@@ -103,9 +103,9 @@ Q_SIGNALS:
 protected Q_SLOTS:
     void reset();
     void getAllAndConnect(const QDBusMessage &msg);
-    void desktopCreated(const QString &id, const KWin::win::dbus::subspace_data &data);
+    void desktopCreated(const QString &id, const como::win::dbus::subspace_data &data);
     void desktopRemoved(const QString &id);
-    void desktopDataChanged(const QString &id, const KWin::win::dbus::subspace_data &data);
+    void desktopDataChanged(const QString &id, const como::win::dbus::subspace_data &data);
     void desktopRowsChanged(uint rows);
     void updateModifiedState(bool server = false);
     void handleCallError();

@@ -12,7 +12,7 @@
 #include <KQuickConfigModule>
 
 
-namespace KWin
+namespace theseus_ship
 {
 
 namespace win::rules
@@ -58,7 +58,7 @@ private:
     void createRuleFromProperties();
 
     QModelIndex findRuleWithProperties(const QVariantMap &info, bool wholeApp) const;
-    void fillSettingsFromProperties(win::rules::settings* settings,
+    void fillSettingsFromProperties(como::win::rules::settings* settings,
                                     QVariantMap const& info,
                                     bool wholeApp) const;
 

@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #pragma once
 
-#include <kwin_export.h>
+#include <como_export.h>
 
 #include <KSharedConfig>
 
@@ -16,10 +16,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QUrl>
 #include <QWindow>
 
-namespace KWin
+namespace theseus_ship
 {
 
-class KWIN_EXPORT EffectsModel : public QAbstractItemModel
+class COMO_EXPORT EffectsModel : public QAbstractItemModel
 {
     Q_OBJECT
 
