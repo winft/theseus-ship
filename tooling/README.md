@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 SPDX-License-Identifier: GPL-2.0-or-later
 -->
 
-# KWinFT Tooling
+# Theseus' Ship Tooling
 ## Analysis
 Uses the analysis functionality from the [tooling repo][kwinft-tooling].
 
