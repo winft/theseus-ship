@@ -18,12 +18,13 @@ runs:
   using: "composite"
   steps:
     - name: Download artifact
-      uses: actions/download-artifact@v4
+      uses: dawidd6/action-download-artifact@v3
       with:
         name: tar-package
-        repository: ${{ inputs.repo }}
-        run-id: 7910974210
-        github-token: ${{ inputs.secret }}
+        repo: ${{ inputs.repo }}
+        branch: ${{ inputs.branch }}
+        workflow_search: true
+        github_token: ${{ inputs.secret }}
     - name: Untar
       run: tar -xf ${{ inputs.dep-name }}.tar.gz
       shell: bash
