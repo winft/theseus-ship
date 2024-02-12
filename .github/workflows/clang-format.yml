@@ -1,0 +1,13 @@
+name: Clang-Format
+on: workflow_call
+jobs:
+  clang-format:
+    name: Clang-Format
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - run: pacman -Sy --needed --quiet --noconfirm clang python
+      - run: bash tooling/analysis/clang-format.sh

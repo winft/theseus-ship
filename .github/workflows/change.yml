@@ -1,0 +1,24 @@
+name: Main Checks
+on:
+  - push
+  - pull_request
+jobs:
+  message-lint:
+    uses: ./.github/workflows/commit-lint.yml
+    with:
+      upstream-repo: https://github.com/winft/theseus-ship.git
+
+  # clang-format:
+  #   uses: ./.github/workflows/clang-format.yml
+
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      image: registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master
+    secrets: inherit
+
+  install:
+    uses: ./.github/workflows/install.yml
+    needs: build
+    with:
+      image: registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master

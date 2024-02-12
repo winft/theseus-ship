@@ -1,0 +1,36 @@
+name: Install Dependency via Artifact
+description: Uses deb package from other workflow to install on Arch
+inputs:
+  repo:
+    description: Path to repo where to download the dependency from
+    required: true
+  branch:
+    description: Branch from which to download the artifact
+    required: false
+    default: master
+  dep-name:
+    description: Name of the dependency file
+    required: true
+  secret:
+    description: Secret
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: tar-package
+        repository: ${{ inputs.repo }}
+        run-id: 7910974210
+        github-token: ${{ inputs.secret }}
+    - name: Untar
+      run: tar -xf ${{ inputs.dep-name }}.tar.gz
+      shell: bash
+    - name: Install
+      run: cp -r como/* /usr
+      shell: bash
+    - run: ls -l /usr/bin/minico
+      shell: bash
+    - run: ls -l /usr/include/como/base
+      shell: bash
