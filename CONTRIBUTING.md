@@ -1,76 +1,40 @@
 <!--
-SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
+SPDX-FileCopyrightText: 2024 Roman Gilg <subdiff@gmail.com>
 
 SPDX-License-Identifier: GPL-2.0-or-later
 -->
 
-# Contributing to KWinFT
+# Contributing to Theseus' Ship
 
- - [Logging and Debugging](#logging-and-debugging)
-   - [General information about the running instance](#general-information-about-the-running-instance)
-   - [Debug console](#debug-console)
-   - [Runtime logging](#runtime-logging)
-   - [Debugging with GDB](#debugging-with-gdb)
- - [Developing](#developing)
-   - [Compiling](#compiling)
-   - [Running Tests](#running-tests)
-   - [Learning Material](#learning-material)
- - [Submission Guideline](#submission-guideline)
- - [Commit Message Guideline](#commit-message-guideline)
- - [Contact](#contact)
+- [Contributing to Theseus' Ship](#contributing-to-theseus-ship)
+  - [Logging and Debugging](#logging-and-debugging)
+    - [Runtime logging](#runtime-logging)
+      - [Simple session logging](#simple-session-logging)
+      - [Live logging in a terminal](#live-logging-in-a-terminal)
+        - [X11: In-session logging](#x11-in-session-logging)
+        - [Wayland: Nested session logging](#wayland-nested-session-logging)
+        - [Wayland: VT session logging](#wayland-vt-session-logging)
+      - [Logging a Theseus' Ship Wayland session through SSH](#logging-a-theseus-ship-wayland-session-through-ssh)
+      - [Troubleshooting full session logging with systemd](#troubleshooting-full-session-logging-with-systemd)
+    - [Debugging with GDB](#debugging-with-gdb)
+      - [Access backtrace of past crashes](#access-backtrace-of-past-crashes)
+      - [Live backtraces](#live-backtraces)
+  - [Developing](#developing)
+    - [Compiling](#compiling)
+      - [Using FDBuild](#using-fdbuild)
+      - [Plasma Desktop Session Integration](#plasma-desktop-session-integration)
+  - [Submission Guideline](#submission-guideline)
+    - [Tooling](#tooling)
+  - [Contact](#contact)
 
 ## Logging and Debugging
-The first step in contributing to the project by either providing meaningful feedback or by directly
-sending in patches is always the analysis of KWinFT's runtime.
-For KWinFT that means querying general information about its internal state and studying its debug
-log while running and afterwards.
-
-### General information about the running instance
-Some general information about the running KWinFT instance can be queried via D-Bus by the following
-command (the qdbus tool must be installed):
-
-    qdbus org.kde.KWin /KWin supportInformation
-
-### Debug console
-KWinFT comes with an integrated debug console. You can launch it with:
-
-    qdbus org.kde.KWin /KWin org.kde.KWin.showDebugConsole
-
-Note that the debug console provides much more information when KWinFT is running as a Wayland
-compositor.
+Also note the [respective section](https://github.com/romangg/como/blob/lib-isolate/CONTRIBUTING.md#logging-and-debugging)
+in the contriubing guide of the Compositor Modules.
+Everything noted there effects Theseus' Ship as well.
 
 ### Runtime logging
-#### Preparations
-To show more debug information in the log as a first step the following lines should be added to the
-file
-`$HOME/.config/QtProject/qtlogging.ini`
-(create the file if it does not exist already):
-
-    [Rules]
-    kwin_core*=true
-    kwin_platform*=true
-    kwineffects*=true
-    kwin_wayland*=true
-    kwin_decorations*=true
-    org.kde.kwindowsystem*=true
-    kwin_tabbox*=true
-    kwin_qpa*=true
-    kwin_wl*=true
-    kwin_xwl*=true
-    kwin_perf*=true
-    wrapland*=true
-    kwin_libinput.info=true
-    kwin_libinput.warning=true
-    kwin_libinput.critical=true
-    kwin_libinput.debug=false
-
-The above list specifies `kwin_libinput.debug=false` because otherwise the log gets spammed with
-lines whenever a mouse button is pressed.
-In the same way other logging categories above can be switched on and off by changing the respective
-boolean value in this file. The change will become active after a restart of KWinFT.
-
 #### Simple session logging
-If you start KWinFT through SDDM as part of a full Plasma session
+If you start Theseus' Ship through SDDM as part of a full Plasma session
 you find its log output in the systemd journal.
 
 You can retrieve its output specifically with:
@@ -79,27 +43,27 @@ You can retrieve its output specifically with:
     journalctl --user -u plasma-kwin_wayland
 
 You can get live updates with the `-f` flag.
-Note also that in an X11 session we have the possibility to restart KWinFT.
+Note also that in an X11 session we have the possibility to restart Theseus' Ship.
 In this case only the first execution will log to the journal.
 
 #### Live logging in a terminal
 ##### X11: In-session logging
-In an X11 session it is very easy to log KWinFT from a terminal. Just execute the following command
-to restart KWinFT:
+In an X11 session it is very easy to log Theseus' Ship from a terminal. Just execute the following command
+to restart Theseus' Ship:
 
     kwin_x11 --replace
 
 This is of course not possible in a Wayland session because the session would immediately die with
-the Wayland server KWinFT being restarted.
+the Wayland server Theseus' Ship being restarted.
 
 ##### Wayland: Nested session logging
-KWinFT as a Wayland compositor can be started nested in another Wayland or X11 session
+Theseus' Ship as a Wayland compositor can be started nested in another Wayland or X11 session
 what will print its debug log directly to the terminal emulator it was started from.
 For that issue following command from the terminal emulator:
 
     dbus-run-session kwin_wayland --width=1920 --height=1080 --xwayland --exit-with-session konsole
 
-This will start a nested KWinFT Wayland session with a default output size of 1080p, having
+This will start a nested Theseus' Ship Wayland session with a default output size of 1080p, having
 Xwayland enabled and the application Konsole already running in it.
 This nested session will also go down automatically when the Konsole window *in the session* is
 closed.
@@ -110,8 +74,8 @@ emulator:
     dbus-run-session startplasma-wayland
 
 ##### Wayland: VT session logging
-Nested session logging is often not sufficient. The behavior of KWinFT as a Wayland compositor on
-real hardware can only be tested when KWinFT is started from a pristine non-graphical state.
+Nested session logging is often not sufficient. The behavior of Theseus' Ship as a Wayland compositor on
+real hardware can only be tested when Theseus' Ship is started from a pristine non-graphical state.
 
 To do this switch to a free different virtual terminal (VT) with the key combination `CTRL+ALT+F<x>`
 where `<x>` is a number from 1 onward.
@@ -122,43 +86,43 @@ output).
 A Wayland session started from SDDM is normally put onto the next free VT
 reachable with `CTRL+ALT+F2` since SDDM requires its Xserver to stay active on the first VT .
 
-After we found a free VT and we logged in to it a Wayland KWinFT session can be launched with the
+After we found a free VT and we logged in to it a Wayland Theseus' Ship session can be launched with the
 command:
 
-    dbus-run-session kwin_wayland --xwayland --exit-with-session konsole 2>&1 | tee my-kwinft-output
+    dbus-run-session kwin_wayland --xwayland --exit-with-session konsole 2>&1 | tee my-theseus-ship-output
 
 This is similar to above command for running it in a nested session but without the parameters
 defining the resolution
 (instead the best resolution is selected by the hardware driver automatically).
 
 Additionally the error output is redirected to the standard output (by `2>&1`)
-and then all output copied with *tee* into the file "my-kwinft-output" in the current working
+and then all output copied with *tee* into the file "my-theseus-ship-output" in the current working
 directory.
 The log can then be read from this file either after the session ended or live-updating with the
 command `tail -f` again.
 
 As above we can start a full Plasma session as well from terminal. For that issue the command:
 
-    dbus-run-session startplasma-wayland 2>&1 | tee my-kwinft-output
+    dbus-run-session startplasma-wayland 2>&1 | tee my-theseus-ship-output
 
-Again the log output is copied with tee into the file "my-kwinft-output" in the current working
+Again the log output is copied with tee into the file "my-theseus-ship-output" in the current working
 directory.
 
-Note that by default when one is running KWinFT through any of the startplasma
-methods, it is invoked using a wrapper that will automatically relaunch KWinFT
+Note that by default when one is running Theseus' Ship through any of the startplasma
+methods, it is invoked using a wrapper that will automatically relaunch Theseus' Ship
 when it crashes. In order to disable this behavior you can define the
 environment variable `KWIN_DISABLE_RELAUNCH`.
 
     export KWIN_DISABLE_RELAUNCH=1
 
-#### Logging a KWinFT Wayland session through SSH
-Starting KWinFT from a free VT as shown above is sufficient for quickly debugging singular issues
+#### Logging a Theseus' Ship Wayland session through SSH
+Starting Theseus' Ship from a free VT as shown above is sufficient for quickly debugging singular issues
 but for rapid prototyping it is not enough since it requires a VT switch and later on reading the
 debug output from a separate file.
 Additionally if the session crashes the VT might be stuck what can potentially even lead to an
 unusable device until after a hard reset (reboot via hardware key).
 
-It would be better if we could start a KWinFT session on a VT from a separate device and then seeing
+It would be better if we could start a Theseus' Ship session on a VT from a separate device and then seeing
 the log live on this secondary device and in case of stuck session kill the session on the VT from
 this second device.
 
@@ -166,10 +130,10 @@ With Secure Shell (SSH) this is possible.
 For that you need to [create a SSH session][ssh-intro] from your secondary device that connects to
 the testing device.
 That means your secondary device – where you will watch the log output at – is the *SSH client* and
-your testing device – where KWinFT will be executed on – is the *SSH server*.
+your testing device – where Theseus' Ship will be executed on – is the *SSH server*.
 
 Once this done on your testing device you need to go to a free VT again and login. You have now
-multiple options to launch KWinFT from your secondary device *on this VT* of the testing device:
+multiple options to launch Theseus' Ship from your secondary device *on this VT* of the testing device:
 * Start a terminal multiplexer like *GNU Screen* or *tmux* in the VT and attach to its session in
   the SSH session.
   * For Screen issue on the VT `screen -S tty` and then `screen -x tty` in the SSH session.
@@ -201,7 +165,7 @@ with the following content:
          }
      });
 
-In any case you should be now able to start KWinFT directly in the SSH session with:
+In any case you should be now able to start Theseus' Ship directly in the SSH session with:
 
     dbus-run-session kwin_wayland --xwayland --exit-with-session konsole
 
@@ -209,68 +173,31 @@ Or as part of a full Plasma session with:
 
     dbus-run-session startplasma-wayland
 
-This is very similar to starting KWinFT from the VT directly.
+This is very similar to starting Theseus' Ship from the VT directly.
 The only difference is that we do not redirect the output or copy it with tee to a file
 since we can now easily follow it on the screen of our second device.
 
 #### Troubleshooting full session logging with systemd
 As described above we can issue `dbus-run-session startplasma-wayland`
-to run KWinFT as part of a full Plasma session.
-In this case KWinFT is executed as a D-Bus activated systemd service
+to run Theseus' Ship as part of a full Plasma session.
+In this case Theseus' Ship is executed as a D-Bus activated systemd service
 and its log should be found in the system journal as described [above](#simple-session-logging).
 
 But there is currently the issue that the logs are not found in the journal
 when we launch the Plasma session through the `dbus-run-session` command.
-This is a problem in the Wayland session as we can't restart KWinFT from within
+This is a problem in the Wayland session as we can't restart Theseus' Ship from within
 and has been [reported upstream](https://github.com/systemd/systemd/issues/22242).
 
 But for now a workaround is available for the Wayland session
-to still allow retrieving KWinFT's logs.
+to still allow retrieving Theseus' Ship's logs.
 For that set the environment variable `KWIN_LOG_PATH`
-to specify a file where KWinFT's stderr output should be redirected:
+to specify a file where Theseus' Ship's stderr output should be redirected:
 
-    export KWIN_LOG_PATH="$HOME/kwinft-wayland.log"
+    export KWIN_LOG_PATH="$HOME/theseus-ship-wayland.log"
     dbus-run-session startplasma-wayland
 
-#### DRM logging
-In a Wayland session we talk through wlroots directly to the
-[Direct Rendering Manager (DRM)](https://en.wikipedia.org/wiki/Direct_Rendering_Manager)
-subsystem of the Linux kernel
-for showing graphical buffers and configuring outputs.
-
-Debugging issues with it directly can be difficult.
-A first step is to priunt out the DRM logs to dmesg what usually isn't done by default.
-How to enable such DRM logging is described in the
-[wlroots wiki](https://gitlab.freedesktop.org/wlroots/wlroots/-/wikis/DRM-Debugging).
-
-You can also use the following script
-to have a convenient way of enabling it temporarily
-from the command line:
-
-    #!/usr/bin/env bash
-
-    # Enable verbose DRM logging
-    echo 0xFE | sudo tee /sys/module/drm/parameters/debug > /dev/null
-    # Clear kernel logs
-    sudo dmesg -C
-    # Continuously write DRM logs to a file, in the background
-    sudo dmesg -w > $HOME/dmesg.log &
-
-    echo "DRM logging activated. Waiting for Ctrl+C..."
-    ( trap exit SIGINT ; read -r -d '' _ </dev/tty )
-
-    # Disable DRM logging
-    echo 0x00 | sudo tee /sys/module/drm/parameters/debug > /dev/null
-    echo
-    echo "Ctrl+C received. Disabled DRM logging and exit."
-
-Note that the DRM log output is very verbose.
-So only enable it shortly before triggering the faulty behavior
-and disable it directly afterwards again.
-You then find the dmesg log in `$HOME/dmesg.log`.
-
 ### Debugging with GDB
-If the KWinFT process crashes the GNU Debugger (GDB) can often provide valuable information
+If the Theseus' Ship process crashes the GNU Debugger (GDB) can often provide valuable information
 about the cause of the crash by reading out a backtrace leading to the crash.
 
 #### Access backtrace of past crashes
@@ -286,8 +213,8 @@ or
     bt
 
 where the first variant can be used
-when you want to analyse the most recent backtrace generated for KWinFT
-and in the secondary command `<pid>` is the PID of one past KWinFT process
+when you want to analyse the most recent backtrace generated for Theseus' Ship
+and in the secondary command `<pid>` is the PID of one past Theseus' Ship process
 in the list you read before with `coredumpctl`
 and that you want to analyse now with GDB.
 
@@ -298,13 +225,13 @@ through gdb like with the command
 
     dbus-run-session gdb --ex r --args kwin_wayland --xwayland --exit-with-session konsole
 
-with which a gdb-infused KWinFT Wayland session is either started as a nested session or on a VT
+with which a gdb-infused Theseus' Ship Wayland session is either started as a nested session or on a VT
 through SSH.
 
 It is not recommended to run above command directly from a VT since on a crash you will not be able
 to interact with GDB and even without a crash you will not be able to exit the process anymore.
 
-Another option is to attach GDB to an already running KWinFT process with the following command:
+Another option is to attach GDB to an already running Theseus' Ship process with the following command:
 
     sudo gdb --ex c --pid `pidof kwin_wayland`
 
@@ -315,56 +242,30 @@ since otherwise we would not be able to regain control after a crash or when the
 ## Developing
 
 ### Compiling
-To start writing code for KWinFT first the project needs to be compiled.
-You usually want to compile KWinFT from its
-[master branch](https://gitlab.com/kwinft/kwinft/-/commits/master/)
+To start writing code for Theseus' Ship first the project needs to be compiled.
+You usually want to compile Theseus' Ship from its
+[master branch](https://github.com/winft/theseus-ship/commits/master/)
 as it reflects the most recent state of development.
 
 #### Using FDBuild
-Since some of KWinFT's dependencies are moving targets in KDE
-that do not offer backwards compatibility guarantees,
-it is often required to build these KDE dependencies also from their master branches
-and rebuild them regularly from the most recent state of the master branch.
-The most convenient way for that is to use the
-[FDBuild](https://gitlab.com/kwinft/fdbuild)
-tool.
-It comes with a template mechanism
-that creates a subdirectory structure with all required KWinFT and KDE projects to build.
-For that issue the command:
+As with the Compositor Modules it is sometimes necessary to compile against KDE libraries
+from master branches when building Theseus' Ship from master.
+You can use [FDBuild's](https://gitlab.com/kwinft/fdbuild) template mechanism for that:
+
 ```
 fdbuild --init-with-template kwinft-plasma-meta
 ```
-After the project templating has finished,
-go into the toplevel directory of the just created subdirectory structure.
-FDBuild uses fdbuild.yaml files in directories it is supposed to work on
-to remember settings about the projects inside these directories.
 
-Important is the setting specifying the installation location of the projects.
-This is set in the fdbuild.yaml file inside the toplevel directory.
-Adjust the setting to your liking. Recommended is setting it to a subdirectory inside `/opt`,
-for example `/opt/kwinft`.
-
-Then simply run FDBuild without any arguments from the toplevel directory
-and FDBuild will try to compile and install all projects one after the other.
-
-Note that this will likely fail for several projects on the first run
-since you require additional dependencies.
-Check the FDBuild log output to find out what dependencies are missing.
-A complete list of required dependencies with drifting correctness is also listed
-[in the KDE Community Wiki](https://community.kde.org/Guidelines_and_HOWTOs/Build_from_source/Install_the_dependencies).
-
-Once you have installed additional dependencies and want to continue building the projects
-from where it failed command:
-```
-fdbuild --resume-from <project-that-failed>
-```
+More information about this can be found in the
+[respective section](https://github.com/romangg/como/blob/lib-isolate/CONTRIBUTING.md#using-fdbuild)
+of the Compositor Modules' contributing guide.
 
 #### Plasma Desktop Session Integration
-With this setup KWinFT can be run already as a standalone binary for example from a VT.
+With this setup Theseus' Ship can be run already as a standalone binary for example from a VT.
 In case you did not install into your `/usr` directory,
 as is recommended,
 additional steps are required
-to run a full Plasma Desktop session together with your self-compiled KWinFT.
+to run a full Plasma Desktop session together with your self-compiled Theseus' Ship.
 
 The Plasma Desktop session requires
 sourcing of some environment variables
@@ -385,95 +286,14 @@ and the session started directly from the drop-down menu inside SDDM. For that r
 <path-to-projects-toplevel-directory>/kde/plasma-workspace/login-sessions/install-sessions.sh
 ```
 
-### Running Tests
-KWinFT comes with over 100 integration tests
-which check the expected behavior of different parts of the application.
-
-#### Local Build
-To run all relevant tests go to the build directory of KWinFT and issue:
-```
-dbus-run-session ctest -E 'testLockScreen|testModifierOnlyShortcut'
-```
-
-This command is composited from two commands. Let's quickly explain the different parts:
-* `dbus-run-session`: starts a new DBus session for the tests, so your current session is unimpaired.
-* `ctest`: the CMake testing utility running binaries, that have been marked as tests in the CMake files.
-* `-E 'testLockScreen|testModifierOnlyShortcut'`: exclude two tests that are currently also not run on the CI.
-
-You can also run a single test.
-All tests are separate binaries in the `bin` directory inside the build directory.
-That means in order to test e.g. pointer input run from the build directory:
-```
-dbus-run-session bin/testPointerInput
-```
-
-You can also run a specific test function inside such a test.
-For example to run the
-[`testPopup` function](https://gitlab.com/kwinft/kwinft/-/blob/0435b1d/autotests/integration/pointer_input.cpp#L1229-1344)
-in the pointer input test run:
-```
-dbus-run-session bin/testPointerInput testPopup
-```
-
-#### Docker Build
-In case you don't have all dependencies installed locally
-or you want to replicate the exact conditions of the CI pipeline
-you can also use the Docker images of KWinFT's CI pipeline.
-
-For that you still need a source checkout.
-Then from this directory launch a container based either on the master or the stable image,
-depending on what version you want to test. This is the command for the master image:
-
-```
-docker run --rm -it --entrypoint /bin/bash -v $PWD:/kwinft registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master
-```
-
-Now similar to how it's done in the CI
-[build the project](https://gitlab.com/kwinft/kwinft/-/blob/5d15e2de6/.gitlab-ci.yml#L79-L85) and
-[run the test suite](https://gitlab.com/kwinft/tooling/-/blob/a8a50bae36/analysis/gitlab-ci/tests.yml#L21-25)
-from within the container:
-
-```
-Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
-export DISPLAY=:1
-export WAYLAND_DEBUG=1 MESA_DEBUG=1 LIBGL_DEBUG=verbose
-export QT_LOGGING_RULES="*=true"
-
-cmake -S /kwinft -B /kwinft/build -Wno-dev \
-    -GNinja \
-    -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON \
-    -DCMAKE_CXX_COMPILER=clang++ \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DBUILD_TESTING=ON
-
-cmake --build /kwinft/build
-
-dbus-run-session ctest --test-dir /kwinft/build -T Test --output-on-failure --no-compress-output \
--E 'testLockScreen|testModifierOnlyShortcut|testDontCrashEmptyDeco|testDontCrashNoBorder|
-|testSceneOpenGL|testSceneOpenGLShadow|testDontCrashReinitializeCompositor|testBufferSizeChange|
-|testDontCrashAuroraeDestroyDeco|testSlidingPopups|testScriptedEffects|testToplevelOpenCloseAnimation|
-|testDesktopSwitchingAnimation|testMinimizeAnimation'
-```
-
-### Learning Material
-The KWinFT source code is vast and complex.
-Understanding it requires time and practice.
-For the beginning there are still few available resources to get an overview:
-* [Xplain](https://magcius.github.io/xplain/article/), introduction and explanations for X11.
-* [How X Window Managers Work](https://jichu4n.com/posts/how-x-window-managers-work-and-how-to-write-one-part-i/),
-  series on how to write an X window manager.
-* [The Wayland Book](https://wayland-book.com/), explains fundamental concepts of Wayland.
-* [KWin now and tomorrow at XDC 2019](https://www.youtube.com/watch?v=vj70xmG_5Bs),
-  gives an overview about the internal structure of KWinFT.
-
 
 ## Submission Guideline
-Code contributions to KWinFT are very welcome but follow a strict process that is laid out in
+Code contributions to Theseus' Ship are very welcome but follow a strict process that is laid out in
 detail in Wrapland's [contributing document][wrapland-submissions].
 
 *Summarizing the main points:*
 
-* Use [merge requests][merge-request] directly for smaller contributions, but create
+* Use [pull requests][pull-requests] directly for smaller contributions, but create
   [issue tickets][issue] *beforehand* for [larger changes][wrapland-large-changes].
 * Adhere to the [KDE Frameworks Coding Style][frameworks-style].
 * Merge requests have to be posted against master or a feature branch. Commits to the stable branch
@@ -481,58 +301,20 @@ detail in Wrapland's [contributing document][wrapland-submissions].
 
 Also make sure to increase the default pipeline timeout to 2h in `Settings > CI/CD > General Pipelines > Timeout`.
 
-## Commit Message Guideline
-The [Conventional Commits 1.0.0][conventional-commits] specification is applied with the following
-amendments:
-
-* Only the following types are allowed:
-  * build: changes to the CMake build system, dependencies or other build-related tooling
-  * ci: changes to CI configuration files and scripts
-  * docs: documentation only changes to overall project or code
-  * feat: a new feature is added or a previously provided one explicitly removed
-  * fix: bug fix
-  * perf: performance improvement
-  * refactor: rewrite of code logic that neither fixes a bug nor adds a feature
-  * style: improvements to code style without logic change
-  * test: addition of a new test or correction of an existing one
-* Only the following optional scopes are allowed:
-  * debug: internal debug tools
-  * deco: window decorations
-  * effect: libkwineffects and internal effects handling
-  * input: libinput integration and input redirection
-  * hw: platform integration (drm, virtual, wayland,...)
-  * qpa: internal Qt Platform Abstraction plugin of KWinFT
-  * scene: composition of the overall scene
-  * script: API for KWinFT scripting
-  * space: virtual desktops and activities, workspace organisation and window placement
-  * xwl: XWayland integration
-* Any line of the message must be 90 characters or shorter.
-* Angular's [Revert][angular-revert] and [Subject][angular-subject] policies are applied.
-
-### Example
-
-    fix(deco): provide correct return value
-
-    For function exampleFunction the return value was incorrect.
-    Instead provide the correct value A by changing B to C.
-
 ### Tooling
 See [Wrapland's documentation][wrapland-tooling] for available tooling.
 
 ## Contact
 See [Wrapland's documentation][wrapland-contact] for contact information.
 
-[angular-revert]: https://github.com/angular/angular/blob/3cf2005a936bec2058610b0786dd0671dae3d358/CONTRIBUTING.md#revert
-[angular-subject]: https://github.com/angular/angular/blob/3cf2005a936bec2058610b0786dd0671dae3d358/CONTRIBUTING.md#subject
 [arch-core-dump]: https://wiki.archlinux.org/index.php/Core_dump
 [conventional-commits]: https://www.conventionalcommits.org/en/v1.0.0/#specification
 [frameworks-style]: https://community.kde.org/Policies/Frameworks_Coding_Style
-[issue]: https://gitlab.com/kwinft/kwinft/-/issues
-[merge-request]: https://gitlab.com/kwinft/kwinft/-/merge_requests
+[issue]: https://github.com/winft/theseus-ship/issues
+[pull-requests]: https://github.com/winft/theseus-ship/pulls
 [plasma-schedule]: https://community.kde.org/Schedules/Plasma_5
 [polkit-rule]: https://github.com/swaywm/wlroots/issues/2236#issuecomment-635934081
-[ssh-intro]: https://www.digitalocean.com/community/tutorials/ssh-essentials-working-with-ssh-servers-clients-and-keys
-[wrapland-contact]: https://gitlab.com/kwinft/wrapland/-/blob/master/CONTRIBUTING.md#contact
-[wrapland-large-changes]: https://gitlab.com/kwinft/wrapland/-/blob/master/CONTRIBUTING.md#issues-for-large-changes
-[wrapland-submissions]: https://gitlab.com/kwinft/wrapland/-/blob/master/CONTRIBUTING.md#submission-guideline
-[wrapland-tooling]: https://gitlab.com/kwinft/wrapland/-/blob/master/CONTRIBUTING.md#tooling
+[wrapland-contact]: https://github.com/winft/wrapland/blob/master/CONTRIBUTING.md#contact
+[wrapland-large-changes]: https://github.com/winft/wrapland/blob/master/CONTRIBUTING.md#issues-for-large-changes
+[wrapland-submissions]: https://github.com/winft/wrapland/blob/master/CONTRIBUTING.md#submission-guideline
+[wrapland-tooling]: https://github.com/winft/wrapland/blob/master/CONTRIBUTING.md#tooling
