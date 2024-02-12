@@ -1,0 +1,88 @@
+name: Build
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: Image to build
+        required: true
+        type: string
+      artifact-name:
+        description: Artifact name of build dir
+        required: false
+        type: string
+        default: 'build'
+      is-sanitized:
+        description: Should sanitizers be compiled into the build
+        required: false
+        type: boolean
+        default: false
+      ninja:
+        description: Should Ninja be used as generator
+        required: false
+        type: boolean
+        default: true
+      cmake-args:
+        description: Specify CMake arguments manually
+        required: false
+        type: string
+        default: ''
+jobs:
+  set-cmake-args:
+    name: CMake Args
+    runs-on: ubuntu-latest
+    env:
+      cmake-args: ''
+    outputs:
+      args: ${{ steps.set-output.outputs.result }}
+    steps:
+      - name: Set from manually specified CMake args
+        if: ${{ inputs.cmake-args != '' }}
+        run: echo \"cmake-args=${{ inputs.cmake-args }}\" >> $GITHUB_ENV;
+      - name: Set default CMake args for sanitized build
+        if: ${{ inputs.cmake-args == '' && inputs.is-sanitized }}
+        run: echo "cmake-args=-DECM_ENABLE_SANITIZERS='address;leak;undefined'" >> $GITHUB_ENV"
+      - name: Set default CMake args for coverage build
+        if: ${{ inputs.cmake-args == '' && !inputs.is-sanitized }}
+        run:
+          "echo \"cmake-args=-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_EXE_LINKER_FLAGS=--coverage\" >> $GITHUB_ENV"
+      - name: Set clang as compiler
+        if: ${{ inputs.cmake-args == '' }}
+        run:
+          "echo \"cmake-args=-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+            ${{ env.cmake-args }}\" >> $GITHUB_ENV"
+      - name: Set generator
+        if: ${{ inputs.cmake-args == '' && inputs.ninja }}
+        run: echo "cmake-args=-G Ninja ${{ env.cmake-args }}" >> $GITHUB_ENV
+      - id: set-output
+        name: Set resulting variable
+        run: echo "result=${{ env.cmake-args }}" >> "$GITHUB_OUTPUT"
+  build:
+    name: Build
+    needs: set-cmake-args
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.image }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Install como
+        uses: ./.github/actions/dep-artifact
+        with:
+          repo: winft/como
+          branch: master
+          dep-name: como
+          secret: ${{ secrets.GITHUB_TOKEN }}
+      - run: mkdir build
+      - name: Configure
+        run: cmake -S . -B build ${{ needs.set-cmake-args.outputs.args }}
+      - name: Build
+        run: cmake --build build
+      - name: Tar artifact (keep permissions)
+        run: tar -czf build-dir.tar build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: build-dir.tar
+          retention-days: 1

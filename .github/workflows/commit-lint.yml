@@ -1,0 +1,51 @@
+name: Commit Message Lint
+on:
+  workflow_call:
+    inputs:
+      upstream-repo:
+        description: 'The repo with the target branch to compare against'
+        required: true
+        type: string
+      upstream-branch:
+        description: 'The target branch we compare against'
+        required: false
+        type: string
+        default: 'master'
+jobs:
+  message-lint:
+    if: github.event_name != 'pull_request'
+    name: On Push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Add Commitlint CLI
+        run: yarn global add @commitlint/cli
+      - name: Add Conventional Changelog module
+        run: yarn add conventional-changelog-conventionalcommits
+
+      # We must unshallow the checkout. On GitHub it's by default only 1 commit deep.
+      - name: Unshallow
+        run: git fetch --unshallow origin ${{ github.head_ref || github.ref_name }}
+
+      - name: Add upstream remote
+        run: git remote add _upstream ${{ inputs.upstream-repo }}
+      - name: Fetch upstream
+        run: git fetch  --depth=1 -q _upstream ${{ inputs.upstream-branch }}
+      - name: Commitlint
+        run: >
+          commitlint --verbose --config=tooling/docs/commitlint.config.js
+          --from=_upstream/${{ inputs.upstream-branch }}
+
+  message-lint-pr:
+    if: github.event_name == 'pull_request'
+    name: On Pull Request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - uses: wagoid/commitlint-github-action@v5
+        with:
+          configFile: tooling/docs/commitlint.config.js
+          helpURL: https://github.com/winft/theseus-ship/blob/master/CONTRIBUTING.md#commit-message-guideline
