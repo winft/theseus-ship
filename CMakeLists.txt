@@ -176,8 +176,6 @@ option(KWIN_BUILD_KCMS "Enable building of KWin configuration modules." ON)
 configure_file(config-theseus-ship.h.cmake config-theseus-ship.h)
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
-add_subdirectory(kconf_update)
-
 if (KWIN_BUILD_KCMS)
     add_subdirectory(kcms)
 endif()
