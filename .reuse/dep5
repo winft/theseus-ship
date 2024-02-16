@@ -5,68 +5,7 @@ Source: https://gitlab.com/kwinft/kwinft.git
 
 Files:
   .versionrc.json
-  autotests/integration/fakes/org.kde.kdecoration2/fakedecoration_with_shadows.json
-  autotests/libkwineffects/data/glplatform/*
-  lib/data/icons/*
-  lib/data/org_kde_kwin.categories
-  lib/desktop/kde/dbus/org.kde.KWin.xml
-  lib/desktop/kde/org.kde.kwin.VirtualKeyboard.xml
-  lib/win/tabbox/switchers/thumbnail_grid/metadata.json
   docs/*
-  plugins/effects/backgroundcontrast/metadata.json
-  plugins/effects/blendchanges/metadata.json
-  plugins/effects/blur/metadata.json
-  plugins/effects/colorpicker/metadata.json
-  plugins/effects/cube/data/cubecap.png
-  plugins/effects/cube/metadata.json
-  plugins/effects/cubeslide/metadata.json
-  plugins/effects/dialogparent/package/metadata.json
-  plugins/effects/diminactive/metadata.json
-  plugins/effects/dimscreen/package/metadata.json
-  plugins/effects/eyeonscreen/package/metadata.json
-  plugins/effects/fade/package/metadata.json
-  plugins/effects/fadedesktop/package/metadata.json
-  plugins/effects/fadingpopups/package/metadata.json
-  plugins/effects/fallapart/metadata.json
-  plugins/effects/frozenapp/package/metadata.json
-  plugins/effects/fullscreen/package/metadata.json
-  plugins/effects/glide/metadata.json
-  plugins/effects/highlightwindow/metadata.json
-  plugins/effects/invert/metadata.json
-  plugins/effects/kscreen/metadata.json
-  plugins/effects/login/package/metadata.json
-  plugins/effects/logout/package/metadata.json
-  plugins/effects/lookingglass/metadata.json
-  plugins/effects/magiclamp/metadata.json
-  plugins/effects/magnifier/metadata.json
-  plugins/effects/maximize/package/metadata.json
-  plugins/effects/morphingpopups/package/metadata.json
-  plugins/effects/mouseclick/metadata.json
-  plugins/effects/mousemark/metadata.json
-  plugins/effects/overview/metadata.json
-  plugins/effects/resize/metadata.json
-  plugins/effects/scale/package/metadata.json
-  plugins/effects/screenedge/metadata.json
-  plugins/effects/screenshot/metadata.json
-  plugins/effects/sessionquit/package/metadata.json
-  plugins/effects/sheet/metadata.json
-  plugins/effects/showfps/metadata.json
-  plugins/effects/showpaint/metadata.json
-  plugins/effects/slide/metadata.json
-  plugins/effects/slideback/metadata.json
-  plugins/effects/slidingpopups/metadata.json
-  plugins/effects/snaphelper/metadata.json
-  plugins/effects/squash/package/metadata.json
-  plugins/effects/startupfeedback/metadata.json
-  plugins/effects/thumbnailaside/metadata.json
-  plugins/effects/touchpoints/metadata.json
-  plugins/effects/trackmouse/data/*
-  plugins/effects/trackmouse/metadata.json
-  plugins/effects/translucency/package/metadata.json
-  plugins/effects/windowaperture/package/metadata.json
-  plugins/effects/windowview/metadata.json
-  plugins/effects/wobblywindows/metadata.json
-  plugins/effects/zoom/metadata.json
   kcms/common/generic_scripted_config.json
   kcms/compositing/kwincompositing.json
   kcms/decoration/declarative-plugin/qmldir
@@ -80,30 +19,5 @@ Files:
   kcms/scripts/kcm_kwin_scripts.json
   kcms/tabbox/kcm_kwintabbox.json
   kcms/tabbox/thumbnails/*
-  plugins/idletime/kwin.json
-  plugins/kdecorations/aurorae/src/aurorae.json
-  plugins/kdecorations/aurorae/src/config/kcm_auroraeconfig.json
-  plugins/kdecorations/aurorae/src/qml/qmldir
-  plugins/kdecorations/aurorae/themes/plastik/code/qmldir
-  plugins/kdecorations/aurorae/themes/plastik/package/metadata.json
-  plugins/kglobalaccel/kwin.json
-  plugins/kpackage/aurorae/aurorae.json
-  plugins/kpackage/decoration/decoration.json
-  plugins/kpackage/effect/effect.json
-  plugins/kpackage/scripts/scripts.json
-  plugins/kpackage/windowswitcher/windowswitcher.json
-  plugins/qpa/kwin.json
-  plugins/windowsystem/kwindowsystem.json
-  lib/render/dbus/org.kde.kwin.ColorCorrect.xml
-  lib/render/dbus/org.kde.kwin.Compositing.xml
-  lib/render/effect/interface/org.kde.kwin.Effects.xml
-  lib/script/org.kde.kwin.Script.xml
-  plugins/scripts/desktopchangeosd/package/metadata.json
-  plugins/scripts/minimizeall/package/metadata.json
-  plugins/scripts/synchronizeskipswitcher/package/metadata.json
-  plugins/scripts/videowall/package/metadata.json
-  lib/win/dbus/org.kde.KWin.Session.xml
-  lib/win/dbus/org.kde.KWin.VirtualDesktopManager.xml
-  lib/win/dbus/org.kde.kappmenu.xml
 Copyright: 2023 Roman Gilg <subdiff@gmail.com>
 License: GPL-2.0-or-later
