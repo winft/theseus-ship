@@ -8,7 +8,7 @@
 
 #include "kwincompositing_setting.h"
 
-KWinCompositingData::KWinCompositingData(QObject *parent)
+KWinCompositingData::KWinCompositingData(QObject* parent)
     : KCModuleData(parent)
     , m_settings(new KWinCompositingSetting(this))
 
@@ -19,7 +19,7 @@ bool KWinCompositingData::isDefaults() const
 {
     bool defaults = true;
     auto const items = m_settings->items();
-    for (const auto &item : items) {
+    for (const auto& item : items) {
         if (item->key() != QStringLiteral("OpenGLIsUnsafe")) {
             defaults &= item->isDefault();
         }

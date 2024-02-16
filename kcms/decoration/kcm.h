@@ -33,25 +33,25 @@ class KWinDecorationData;
 class KCMKWinDecoration : public KQuickManagedConfigModule
 {
     Q_OBJECT
-    Q_PROPERTY(KWinDecorationSettings *settings READ settings CONSTANT)
-    Q_PROPERTY(QSortFilterProxyModel *themesModel READ themesModel CONSTANT)
+    Q_PROPERTY(KWinDecorationSettings* settings READ settings CONSTANT)
+    Q_PROPERTY(QSortFilterProxyModel* themesModel READ themesModel CONSTANT)
     Q_PROPERTY(QStringList borderSizesModel READ borderSizesModel NOTIFY themeChanged)
     Q_PROPERTY(int borderIndex READ borderIndex WRITE setBorderIndex NOTIFY borderIndexChanged)
     Q_PROPERTY(int borderSize READ borderSize NOTIFY borderSizeChanged)
     Q_PROPERTY(int recommendedBorderSize READ recommendedBorderSize CONSTANT)
     Q_PROPERTY(int theme READ theme WRITE setTheme NOTIFY themeChanged)
-    Q_PROPERTY(QAbstractListModel *leftButtonsModel READ leftButtonsModel NOTIFY buttonsChanged)
-    Q_PROPERTY(QAbstractListModel *rightButtonsModel READ rightButtonsModel NOTIFY buttonsChanged)
-    Q_PROPERTY(QAbstractListModel *availableButtonsModel READ availableButtonsModel CONSTANT)
+    Q_PROPERTY(QAbstractListModel* leftButtonsModel READ leftButtonsModel NOTIFY buttonsChanged)
+    Q_PROPERTY(QAbstractListModel* rightButtonsModel READ rightButtonsModel NOTIFY buttonsChanged)
+    Q_PROPERTY(QAbstractListModel* availableButtonsModel READ availableButtonsModel CONSTANT)
 
 public:
-    KCMKWinDecoration(QObject *parent, const KPluginMetaData &metaData);
+    KCMKWinDecoration(QObject* parent, const KPluginMetaData& metaData);
 
-    KWinDecorationSettings *settings() const;
-    QSortFilterProxyModel *themesModel() const;
-    QAbstractListModel *leftButtonsModel();
-    QAbstractListModel *rightButtonsModel();
-    QAbstractListModel *availableButtonsModel() const;
+    KWinDecorationSettings* settings() const;
+    QSortFilterProxyModel* themesModel() const;
+    QAbstractListModel* leftButtonsModel();
+    QAbstractListModel* rightButtonsModel();
+    QAbstractListModel* availableButtonsModel() const;
     QStringList borderSizesModel() const;
     int borderIndex() const;
     int borderSize() const;
@@ -81,16 +81,16 @@ private Q_SLOTS:
 private:
     bool isSaveNeeded() const override;
 
-    int borderSizeIndexFromString(const QString &size) const;
+    int borderSizeIndexFromString(const QString& size) const;
     QString borderSizeIndexToString(int index) const;
 
-    KDecoration2::Configuration::DecorationsModel *m_themesModel;
-    QSortFilterProxyModel *m_proxyThemesModel;
+    KDecoration2::Configuration::DecorationsModel* m_themesModel;
+    QSortFilterProxyModel* m_proxyThemesModel;
 
-    KDecoration2::Preview::ButtonsModel *m_leftButtonsModel;
-    KDecoration2::Preview::ButtonsModel *m_rightButtonsModel;
-    KDecoration2::Preview::ButtonsModel *m_availableButtonsModel;
+    KDecoration2::Preview::ButtonsModel* m_leftButtonsModel;
+    KDecoration2::Preview::ButtonsModel* m_rightButtonsModel;
+    KDecoration2::Preview::ButtonsModel* m_availableButtonsModel;
 
     int m_borderSizeIndex = -1;
-    KWinDecorationData *m_data;
+    KWinDecorationData* m_data;
 };

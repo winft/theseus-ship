@@ -22,7 +22,7 @@
 
 #include "kwinscriptsdata.h"
 
-Module::Module(QObject *parent, const KPluginMetaData &data)
+Module::Module(QObject* parent, const KPluginMetaData& data)
     : KQuickConfigModule(parent, data)
     , m_kwinScriptsData(new KWinScriptsData(this))
     , m_model(new KPluginModel(this))
@@ -46,7 +46,9 @@ void Module::onGHNSEntriesChanged()
 
 void Module::importScript()
 {
-    QString path = QFileDialog::getOpenFileName(nullptr, i18n("Import KWin Script"), QDir::homePath(),
+    QString path = QFileDialog::getOpenFileName(nullptr,
+                                                i18n("Import KWin Script"),
+                                                QDir::homePath(),
                                                 i18n("*.kwinscript|KWin scripts (*.kwinscript)"));
 
     if (path.isNull()) {
@@ -58,11 +60,15 @@ void Module::importScript()
     auto job = PackageJob::update(QStringLiteral("KWin/Script"), path);
     connect(job, &KJob::result, this, [job, this]() {
         if (job->error() != KJob::NoError) {
-            setErrorMessage(i18nc("Placeholder is error message returned from the install service", "Cannot import selected script.\n%1", job->errorString()));
+            setErrorMessage(i18nc("Placeholder is error message returned from the install service",
+                                  "Cannot import selected script.\n%1",
+                                  job->errorString()));
             return;
         }
 
-        m_infoMessage = i18nc("Placeholder is name of the script that was imported", "The script \"%1\" was successfully imported.", job->package().metadata().name());
+        m_infoMessage = i18nc("Placeholder is name of the script that was imported",
+                              "The script \"%1\" was successfully imported.",
+                              job->package().metadata().name());
         m_errorMessage.clear();
         Q_EMIT messageChanged();
 
@@ -73,7 +79,7 @@ void Module::importScript()
     });
 }
 
-void Module::configure(const KPluginMetaData &data)
+void Module::configure(const KPluginMetaData& data)
 {
     auto dialog = new KCMultiDialog();
     dialog->addModule(data, QVariantList{data.pluginId(), QStringLiteral("KWin/Script")});
@@ -81,7 +87,7 @@ void Module::configure(const KPluginMetaData &data)
     dialog->show();
 }
 
-void Module::togglePendingDeletion(const KPluginMetaData &data)
+void Module::togglePendingDeletion(const KPluginMetaData& data)
 {
     if (m_pendingDeletions.contains(data)) {
         m_pendingDeletions.removeOne(data);
@@ -114,14 +120,16 @@ void Module::load()
 void Module::save()
 {
     using namespace KPackage;
-    for (const KPluginMetaData &info : qAsConst(m_pendingDeletions)) {
+    for (const KPluginMetaData& info : qAsConst(m_pendingDeletions)) {
         // We can get the package root from the entry path
         QDir root = QFileInfo(info.fileName()).dir();
         root.cdUp();
-        KJob *uninstallJob = PackageJob::uninstall(QStringLiteral("KWin/Script"), info.pluginId(), root.absolutePath());
+        KJob* uninstallJob = PackageJob::uninstall(
+            QStringLiteral("KWin/Script"), info.pluginId(), root.absolutePath());
         connect(uninstallJob, &KJob::result, this, [this, uninstallJob]() {
             if (!uninstallJob->errorString().isEmpty()) {
-                setErrorMessage(i18n("Error when uninstalling KWin Script: %1", uninstallJob->errorString()));
+                setErrorMessage(
+                    i18n("Error when uninstalling KWin Script: %1", uninstallJob->errorString()));
             } else {
                 load(); // Make sure to reload the KCM to deleted entries to disappear
             }
@@ -134,14 +142,14 @@ void Module::save()
     Q_EMIT pendingDeletionsChanged();
 
     m_model->save();
-    QDBusMessage message = QDBusMessage::createMethodCall("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting", "start");
+    QDBusMessage message = QDBusMessage::createMethodCall(
+        "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting", "start");
     QDBusConnection::sessionBus().asyncCall(message);
 
     setNeedsSave(false);
 }
 
-K_PLUGIN_FACTORY_WITH_JSON(KcmKWinScriptsFactory, "kcm_kwin_scripts.json",
-                           registerPlugin<Module>();
+K_PLUGIN_FACTORY_WITH_JSON(KcmKWinScriptsFactory, "kcm_kwin_scripts.json", registerPlugin<Module>();
                            registerPlugin<KWinScriptsData>();)
 
 #include "module.moc"

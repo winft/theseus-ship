@@ -21,17 +21,17 @@ namespace theseus_ship
 class ShortcutSettings : public KConfigSkeleton
 {
 public:
-    explicit ShortcutSettings(QObject *parent);
+    explicit ShortcutSettings(QObject* parent);
 
-    KActionCollection *actionCollection() const;
+    KActionCollection* actionCollection() const;
 
-    QKeySequence shortcut(const QString &name) const;
-    void setShortcut(const QString &name, const QKeySequence &seq);
+    QKeySequence shortcut(const QString& name) const;
+    void setShortcut(const QString& name, const QKeySequence& seq);
 
-    bool isDefault(const QString &name) const;
+    bool isDefault(const QString& name) const;
 
 private:
-    KActionCollection *m_actionCollection = nullptr;
+    KActionCollection* m_actionCollection = nullptr;
 };
 
 }

@@ -5,8 +5,8 @@
 */
 #include "plugin.h"
 #include "buttonsmodel.h"
-#include "previewbutton.h"
 #include "previewbridge.h"
+#include "previewbutton.h"
 #include "previewclient.h"
 #include "previewitem.h"
 #include "previewsettings.h"
@@ -19,7 +19,7 @@ namespace KDecoration2
 namespace Preview
 {
 
-void Plugin::registerTypes(const char *uri)
+void Plugin::registerTypes(const char* uri)
 {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("org.kde.kwin.private.kdecoration"));
     qmlRegisterType<KDecoration2::Preview::BridgeItem>(uri, 1, 0, "Bridge");
@@ -35,5 +35,3 @@ void Plugin::registerTypes(const char *uri)
 
 }
 }
-
-

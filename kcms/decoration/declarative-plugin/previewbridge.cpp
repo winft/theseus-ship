@@ -16,9 +16,9 @@
 #include <KPluginFactory>
 #include <KPluginMetaData>
 
-#include <QDebug>
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDebug>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QPushButton>
@@ -36,7 +36,7 @@ namespace Preview
 static const QString s_pluginName = QStringLiteral("org.kde.kdecoration2");
 static const QString s_kcmName = QStringLiteral("org.kde.kdecoration2.kcm");
 
-PreviewBridge::PreviewBridge(QObject *parent)
+PreviewBridge::PreviewBridge(QObject* parent)
     : DecorationBridge(parent)
     , m_lastCreatedClient(nullptr)
     , m_lastCreatedSettings(nullptr)
@@ -47,31 +47,32 @@ PreviewBridge::PreviewBridge(QObject *parent)
 
 PreviewBridge::~PreviewBridge() = default;
 
-std::unique_ptr<DecoratedClientPrivate> PreviewBridge::createClient(DecoratedClient *client, Decoration *decoration)
+std::unique_ptr<DecoratedClientPrivate> PreviewBridge::createClient(DecoratedClient* client,
+                                                                    Decoration* decoration)
 {
     auto ptr = std::unique_ptr<PreviewClient>(new PreviewClient(client, decoration));
     m_lastCreatedClient = ptr.get();
     return ptr;
 }
 
-std::unique_ptr<DecorationSettingsPrivate> PreviewBridge::settings(DecorationSettings *parent)
+std::unique_ptr<DecorationSettingsPrivate> PreviewBridge::settings(DecorationSettings* parent)
 {
     auto ptr = std::unique_ptr<PreviewSettings>(new PreviewSettings(parent));
     m_lastCreatedSettings = ptr.get();
     return ptr;
 }
 
-void PreviewBridge::registerPreviewItem(PreviewItem *item)
+void PreviewBridge::registerPreviewItem(PreviewItem* item)
 {
     m_previewItems.append(item);
 }
 
-void PreviewBridge::unregisterPreviewItem(PreviewItem *item)
+void PreviewBridge::unregisterPreviewItem(PreviewItem* item)
 {
     m_previewItems.removeAll(item);
 }
 
-void PreviewBridge::setPlugin(const QString &plugin)
+void PreviewBridge::setPlugin(const QString& plugin)
 {
     if (m_plugin == plugin) {
         return;
@@ -85,7 +86,7 @@ QString PreviewBridge::theme() const
     return m_theme;
 }
 
-void PreviewBridge::setTheme(const QString &theme)
+void PreviewBridge::setTheme(const QString& theme)
 {
     if (m_theme == theme) {
         return;
@@ -99,7 +100,7 @@ QString PreviewBridge::kcmoduleName() const
     return m_kcmoduleName;
 }
 
-void PreviewBridge::setKcmoduleName(const QString &kcmoduleName)
+void PreviewBridge::setKcmoduleName(const QString& kcmoduleName)
 {
     if (m_kcmoduleName == kcmoduleName) {
         return;
@@ -124,7 +125,9 @@ void PreviewBridge::createFactory()
     }
 
     const auto offers = KPluginMetaData::findPlugins(s_pluginName);
-    auto item = std::find_if(offers.constBegin(), offers.constEnd(), [this](const auto &plugin) { return plugin.pluginId() == m_plugin; });
+    auto item = std::find_if(offers.constBegin(), offers.constEnd(), [this](const auto& plugin) {
+        return plugin.pluginId() == m_plugin;
+    });
     if (item != offers.constEnd()) {
         m_factory = KPluginFactory::loadFactory(*item).plugin;
     }
@@ -146,34 +149,37 @@ void PreviewBridge::setValid(bool valid)
     Q_EMIT validChanged();
 }
 
-Decoration *PreviewBridge::createDecoration(QObject *parent)
+Decoration* PreviewBridge::createDecoration(QObject* parent)
 {
     if (!m_valid) {
         return nullptr;
     }
-    QVariantMap args({ {QStringLiteral("bridge"), QVariant::fromValue(this)} });
+    QVariantMap args({{QStringLiteral("bridge"), QVariant::fromValue(this)}});
     if (!m_theme.isNull()) {
         args.insert(QStringLiteral("theme"), m_theme);
     }
     return m_factory->create<KDecoration2::Decoration>(parent, QVariantList({args}));
 }
 
-DecorationButton *PreviewBridge::createButton(KDecoration2::Decoration *decoration, KDecoration2::DecorationButtonType type, QObject *parent)
+DecorationButton* PreviewBridge::createButton(KDecoration2::Decoration* decoration,
+                                              KDecoration2::DecorationButtonType type,
+                                              QObject* parent)
 {
     if (!m_valid) {
         return nullptr;
     }
-    return m_factory->create<KDecoration2::DecorationButton>(parent, QVariantList({QVariant::fromValue(type), QVariant::fromValue(decoration)}));
+    return m_factory->create<KDecoration2::DecorationButton>(
+        parent, QVariantList({QVariant::fromValue(type), QVariant::fromValue(decoration)}));
 }
 
-void PreviewBridge::configure(QQuickItem *ctx)
+void PreviewBridge::configure(QQuickItem* ctx)
 {
     if (!m_valid) {
         qWarning() << "Cannot show an invalid decoration's configuration dialog";
         return;
     }
 
-    KCMultiDialog *dialog = new KCMultiDialog;
+    KCMultiDialog* dialog = new KCMultiDialog;
     dialog->setAttribute(Qt::WA_DeleteOnClose);
 
     if (m_lastCreatedClient) {
@@ -201,14 +207,15 @@ void PreviewBridge::configure(QQuickItem *ctx)
 
     if (ctx->window()) {
         dialog->winId(); // so it creates windowHandle
-        dialog->windowHandle()->setTransientParent(QQuickRenderControl::renderWindowFor(ctx->window()));
+        dialog->windowHandle()->setTransientParent(
+            QQuickRenderControl::renderWindowFor(ctx->window()));
         dialog->setModal(true);
     }
 
     dialog->show();
 }
 
-BridgeItem::BridgeItem(QObject *parent)
+BridgeItem::BridgeItem(QObject* parent)
     : QObject(parent)
     , m_bridge(new PreviewBridge())
 {

@@ -32,25 +32,23 @@ const QMap<KDecoration2::BorderSize, QString> s_borderSizeNames{
     {KDecoration2::BorderSize::VeryHuge, i18n("Very Huge Window Borders")},
     {KDecoration2::BorderSize::Oversized, i18n("Oversized Window Borders")}};
 
-const QHash<KDecoration2::DecorationButtonType, QChar> s_buttonNames {
-    {KDecoration2::DecorationButtonType::Menu, QChar('M') },
-    {KDecoration2::DecorationButtonType::ApplicationMenu, QChar('N') },
-    {KDecoration2::DecorationButtonType::OnAllDesktops, QChar('S') },
-    {KDecoration2::DecorationButtonType::ContextHelp, QChar('H') },
-    {KDecoration2::DecorationButtonType::Minimize, QChar('I') },
-    {KDecoration2::DecorationButtonType::Maximize, QChar('A') },
-    {KDecoration2::DecorationButtonType::Close, QChar('X') },
-    {KDecoration2::DecorationButtonType::KeepAbove, QChar('F') },
-    {KDecoration2::DecorationButtonType::KeepBelow, QChar('B') },
-    {KDecoration2::DecorationButtonType::Shade, QChar('L') }
-};
+const QHash<KDecoration2::DecorationButtonType, QChar> s_buttonNames{
+    {KDecoration2::DecorationButtonType::Menu, QChar('M')},
+    {KDecoration2::DecorationButtonType::ApplicationMenu, QChar('N')},
+    {KDecoration2::DecorationButtonType::OnAllDesktops, QChar('S')},
+    {KDecoration2::DecorationButtonType::ContextHelp, QChar('H')},
+    {KDecoration2::DecorationButtonType::Minimize, QChar('I')},
+    {KDecoration2::DecorationButtonType::Maximize, QChar('A')},
+    {KDecoration2::DecorationButtonType::Close, QChar('X')},
+    {KDecoration2::DecorationButtonType::KeepAbove, QChar('F')},
+    {KDecoration2::DecorationButtonType::KeepBelow, QChar('B')},
+    {KDecoration2::DecorationButtonType::Shade, QChar('L')}};
 }
-
 
 namespace Utils
 {
 
-QString buttonsToString(const DecorationButtonsList &buttons)
+QString buttonsToString(const DecorationButtonsList& buttons)
 {
     auto buttonToString = [](KDecoration2::DecorationButtonType button) -> QChar {
         const auto it = s_buttonNames.constFind(button);
@@ -66,7 +64,7 @@ QString buttonsToString(const DecorationButtonsList &buttons)
     return ret;
 }
 
-DecorationButtonsList buttonsFromString(const QString &buttons)
+DecorationButtonsList buttonsFromString(const QString& buttons)
 {
     DecorationButtonsList ret;
     for (auto it = buttons.begin(); it != buttons.end(); ++it) {
@@ -79,12 +77,14 @@ DecorationButtonsList buttonsFromString(const QString &buttons)
     return ret;
 }
 
-DecorationButtonsList readDecorationButtons(const KConfigGroup &config, const QString &key, const DecorationButtonsList &defaultValue)
+DecorationButtonsList readDecorationButtons(const KConfigGroup& config,
+                                            const QString& key,
+                                            const DecorationButtonsList& defaultValue)
 {
     return buttonsFromString(config.readEntry(key, buttonsToString(defaultValue)));
 }
 
-KDecoration2::BorderSize stringToBorderSize(const QString &name)
+KDecoration2::BorderSize stringToBorderSize(const QString& name)
 {
     auto it = s_borderSizes.constFind(name);
     if (it == s_borderSizes.constEnd()) {
@@ -99,7 +99,7 @@ QString borderSizeToString(KDecoration2::BorderSize size)
     return s_borderSizes.key(size);
 }
 
-const QMap<KDecoration2::BorderSize, QString> &getBorderSizeNames()
+const QMap<KDecoration2::BorderSize, QString>& getBorderSizeNames()
 {
     return s_borderSizeNames;
 }

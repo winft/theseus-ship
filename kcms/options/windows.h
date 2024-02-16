@@ -59,7 +59,7 @@ class KFocusConfig : public KCModule
 {
     Q_OBJECT
 public:
-    KFocusConfig(bool _standAlone, KWinOptionsSettings *settings, QWidget *parent);
+    KFocusConfig(bool _standAlone, KWinOptionsSettings* settings, QWidget* parent);
 
     void load() override;
     void save() override;
@@ -69,7 +69,7 @@ public:
     bool isSaveNeeded() const;
 
 protected:
-    void initialize(KWinOptionsSettings *settings);
+    void initialize(KWinOptionsSettings* settings);
 
 private Q_SLOTS:
     void focusPolicyChanged();
@@ -77,12 +77,12 @@ private Q_SLOTS:
     void updateDefaultIndicator();
 
 private:
-    bool     standAlone;
+    bool standAlone;
     bool m_unmanagedChangeState = false;
     bool m_unmanagedDefaultState = true;
 
-    KWinFocusConfigForm *m_ui;
-    KWinOptionsSettings *m_settings;
+    KWinFocusConfigForm* m_ui;
+    KWinOptionsSettings* m_settings;
 
     void updateFocusPolicyExplanatoryText();
 };
@@ -91,7 +91,7 @@ class KMovingConfig : public KCModule
 {
     Q_OBJECT
 public:
-    KMovingConfig(bool _standAlone, KWinOptionsSettings *settings, QWidget *parent);
+    KMovingConfig(bool _standAlone, KWinOptionsSettings* settings, QWidget* parent);
 
     void save() override;
 
@@ -99,19 +99,22 @@ public:
     bool isSaveNeeded() const;
 
 protected:
-    void initialize(KWinOptionsSettings *settings);
+    void initialize(KWinOptionsSettings* settings);
 
 private:
-    KWinOptionsSettings *m_settings;
-    bool     standAlone;
-    KWinMovingConfigForm *m_ui;
+    KWinOptionsSettings* m_settings;
+    bool standAlone;
+    KWinMovingConfigForm* m_ui;
 };
 
 class KAdvancedConfig : public KCModule
 {
     Q_OBJECT
 public:
-    KAdvancedConfig(bool _standAlone, KWinOptionsSettings *settings, KWinOptionsKDEGlobalsSettings *globalSettings, QWidget *parent);
+    KAdvancedConfig(bool _standAlone,
+                    KWinOptionsSettings* settings,
+                    KWinOptionsKDEGlobalsSettings* globalSettings,
+                    QWidget* parent);
 
     void save() override;
 
@@ -119,13 +122,12 @@ public:
     bool isSaveNeeded() const;
 
 protected:
-    void initialize(KWinOptionsSettings *settings, KWinOptionsKDEGlobalsSettings *globalSettings);
+    void initialize(KWinOptionsSettings* settings, KWinOptionsKDEGlobalsSettings* globalSettings);
 
 private:
-
-    bool     standAlone;
-    KWinAdvancedConfigForm *m_ui;
-    KWinOptionsSettings *m_settings{nullptr};
+    bool standAlone;
+    KWinAdvancedConfigForm* m_ui;
+    KWinOptionsSettings* m_settings{nullptr};
 };
 
 #endif // KKWMWINDOWS_H

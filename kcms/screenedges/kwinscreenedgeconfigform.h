@@ -23,7 +23,7 @@ class KWinScreenEdgesConfigForm : public KWinScreenEdge
     Q_OBJECT
 
 public:
-    KWinScreenEdgesConfigForm(QWidget *parent = nullptr);
+    KWinScreenEdgesConfigForm(QWidget* parent = nullptr);
     ~KWinScreenEdgesConfigForm() override;
 
     void setRemainActiveOnFullscreen(bool remainActive);
@@ -45,7 +45,7 @@ public Q_SLOTS:
     void setDefaultsIndicatorsVisible(bool visible);
 
 protected:
-    Monitor *monitor() const override;
+    Monitor* monitor() const override;
     bool isSaveNeeded() const override;
     bool isDefault() const override;
 
@@ -63,7 +63,7 @@ private:
 
     bool m_defaultIndicatorVisible = false;
 
-    Ui::KWinScreenEdgesConfigUI *ui;
+    Ui::KWinScreenEdgesConfigUI* ui;
 };
 
 } // namespace

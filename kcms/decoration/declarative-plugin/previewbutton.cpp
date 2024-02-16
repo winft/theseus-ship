@@ -44,12 +44,12 @@ KDecoration2::DecorationButtonType PreviewButtonItem::type() const
     return m_type;
 }
 
-PreviewBridge *PreviewButtonItem::bridge() const
+PreviewBridge* PreviewButtonItem::bridge() const
 {
     return m_bridge.data();
 }
 
-void PreviewButtonItem::setBridge(PreviewBridge *bridge)
+void PreviewButtonItem::setBridge(PreviewBridge* bridge)
 {
     if (m_bridge == bridge) {
         return;
@@ -58,12 +58,12 @@ void PreviewButtonItem::setBridge(PreviewBridge *bridge)
     Q_EMIT bridgeChanged();
 }
 
-Settings *PreviewButtonItem::settings() const
+Settings* PreviewButtonItem::settings() const
 {
     return m_settings.data();
 }
 
-void PreviewButtonItem::setSettings(Settings *settings)
+void PreviewButtonItem::setSettings(Settings* settings)
 {
     if (m_settings == settings) {
         return;
@@ -85,7 +85,8 @@ void PreviewButtonItem::componentComplete()
 
 void PreviewButtonItem::createButton()
 {
-    if (m_type == KDecoration2::DecorationButtonType::Custom || m_decoration || !m_settings || !m_bridge) {
+    if (m_type == KDecoration2::DecorationButtonType::Custom || m_decoration || !m_settings
+        || !m_bridge) {
         return;
     }
     m_decoration = m_bridge->createDecoration(this);
@@ -113,18 +114,18 @@ void PreviewButtonItem::syncGeometry()
     m_button->setGeometry(QRect(0, 0, width(), height()));
 }
 
-void PreviewButtonItem::paint(QPainter *painter)
+void PreviewButtonItem::paint(QPainter* painter)
 {
     if (!m_button) {
         return;
     }
-    QRect size { 0, 0, (int)width(), (int)height() };
+    QRect size{0, 0, (int)width(), (int)height()};
     m_button->paint(painter, size);
     painter->setCompositionMode(QPainter::CompositionMode_SourceAtop);
     painter->fillRect(size, m_color);
 }
 
-void PreviewButtonItem::setColor(const QColor &color)
+void PreviewButtonItem::setColor(const QColor& color)
 {
     m_color = color;
     m_color.setAlpha(127);

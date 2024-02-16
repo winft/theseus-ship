@@ -9,34 +9,34 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <kwin_effects_interface.h>
 
 // Qt
-#include <QtDBus>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QSpacerItem>
-#include <QTabWidget>
-#include <QStandardPaths>
 #include <QPointer>
+#include <QPushButton>
+#include <QSpacerItem>
 #include <QStandardItemModel>
+#include <QStandardPaths>
+#include <QTabWidget>
+#include <QVBoxLayout>
+#include <QtDBus>
 
 // KDE
 #include <KLocalizedString>
+#include <KNSWidgets/Button>
 #include <KPluginFactory>
 #include <KTitleWidget>
-#include <KNSWidgets/Button>
 // Plasma
 #include <KPackage/Package>
 #include <KPackage/PackageLoader>
 
 // own
+#include "kwinpluginssettings.h"
+#include "kwinswitcheffectsettings.h"
 #include "kwintabboxconfigform.h"
-#include "layoutpreview.h"
 #include "kwintabboxdata.h"
 #include "kwintabboxsettings.h"
-#include "kwinswitcheffectsettings.h"
-#include "kwinpluginssettings.h"
+#include "layoutpreview.h"
 #include "shortcutsettings.h"
 
 K_PLUGIN_FACTORY_WITH_JSON(KWinTabBoxConfigFactory,
@@ -47,12 +47,12 @@ K_PLUGIN_FACTORY_WITH_JSON(KWinTabBoxConfigFactory,
 namespace theseus_ship
 {
 
-KWinTabBoxConfig::KWinTabBoxConfig(QObject *parent, const KPluginMetaData &data)
+KWinTabBoxConfig::KWinTabBoxConfig(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
     , m_config(KSharedConfig::openConfig("kwinrc"))
     , m_data(new KWinTabboxData(this))
 {
-    QTabWidget *tabWidget = new QTabWidget(widget());
+    QTabWidget* tabWidget = new QTabWidget(widget());
     m_primaryTabBoxUi = new KWinTabBoxConfigForm(KWinTabBoxConfigForm::TabboxType::Main,
                                                  m_data->tabBoxConfig(),
                                                  m_data->shortcutConfig(),
@@ -64,7 +64,8 @@ KWinTabBoxConfig::KWinTabBoxConfig(QObject *parent, const KPluginMetaData &data)
     tabWidget->addTab(m_primaryTabBoxUi, i18n("Main"));
     tabWidget->addTab(m_alternativeTabBoxUi, i18n("Alternative"));
 
-    KNSWidgets::Button *ghnsButton = new KNSWidgets::Button(i18n("Get New Task Switchers..."), QStringLiteral("kwinswitcher.knsrc"), widget());
+    KNSWidgets::Button* ghnsButton = new KNSWidgets::Button(
+        i18n("Get New Task Switchers..."), QStringLiteral("kwinswitcher.knsrc"), widget());
     connect(ghnsButton, &KNSWidgets::Button::dialogFinished, this, [this](auto changedEntries) {
         if (!changedEntries.isEmpty()) {
             initLayoutLists();
@@ -72,17 +73,19 @@ KWinTabBoxConfig::KWinTabBoxConfig(QObject *parent, const KPluginMetaData &data)
     });
 
     QHBoxLayout* buttonBar = new QHBoxLayout();
-    QSpacerItem* buttonBarSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    QSpacerItem* buttonBarSpacer
+        = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
     buttonBar->addItem(buttonBarSpacer);
     buttonBar->addWidget(ghnsButton);
 
-    QVBoxLayout *layout = new QVBoxLayout(widget());
-    KTitleWidget *infoLabel = new KTitleWidget(tabWidget);
-    infoLabel->setText(i18n("Focus policy settings limit the functionality of navigating through windows."),
-                       KTitleWidget::InfoMessage);
+    QVBoxLayout* layout = new QVBoxLayout(widget());
+    KTitleWidget* infoLabel = new KTitleWidget(tabWidget);
+    infoLabel->setText(
+        i18n("Focus policy settings limit the functionality of navigating through windows."),
+        KTitleWidget::InfoMessage);
     infoLabel->setIcon(KTitleWidget::InfoMessage, KTitleWidget::ImageLeft);
-    layout->addWidget(infoLabel,0);
-    layout->addWidget(tabWidget,1);
+    layout->addWidget(infoLabel, 0);
+    layout->addWidget(tabWidget, 1);
     layout->addLayout(buttonBar);
     widget()->setLayout(layout);
 
@@ -113,16 +116,18 @@ static QList<KPackage::Package> availableLnFPackages()
 {
     QList<KPackage::Package> packages;
     QStringList paths;
-    const QStringList dataPaths = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
+    const QStringList dataPaths
+        = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
 
-    for (const QString &path : dataPaths) {
+    for (const QString& path : dataPaths) {
         QDir dir(path + QLatin1String("/plasma/look-and-feel"));
         paths << dir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
     }
 
-    const auto &p = paths;
-    for (const QString &path : p) {
-        KPackage::Package pkg = KPackage::PackageLoader::self()->loadPackage(QStringLiteral("Plasma/LookAndFeel"));
+    const auto& p = paths;
+    for (const QString& path : p) {
+        KPackage::Package pkg
+            = KPackage::PackageLoader::self()->loadPackage(QStringLiteral("Plasma/LookAndFeel"));
         pkg.setPath(path);
         pkg.setFallbackPackage(KPackage::Package());
         if (!pkg.filePath("defaults").isEmpty()) {
@@ -140,11 +145,12 @@ static QList<KPackage::Package> availableLnFPackages()
 
 void KWinTabBoxConfig::initLayoutLists()
 {
-    QList<KPluginMetaData> offers = KPackage::PackageLoader::self()->listPackages("KWin/WindowSwitcher");
-    QStandardItemModel *model = new QStandardItemModel;
+    QList<KPluginMetaData> offers
+        = KPackage::PackageLoader::self()->listPackages("KWin/WindowSwitcher");
+    QStandardItemModel* model = new QStandardItemModel;
 
-    auto addToModel = [model](const QString &name, const QString &pluginId, const QString &path) {
-        QStandardItem *item = new QStandardItem(name);
+    auto addToModel = [model](const QString& name, const QString& pluginId, const QString& path) {
+        QStandardItem* item = new QStandardItem(name);
         item->setData(pluginId, Qt::UserRole);
         item->setData(path, KWinTabBoxConfigForm::LayoutPath);
         item->setData(true, KWinTabBoxConfigForm::AddonEffect);
@@ -152,9 +158,10 @@ void KWinTabBoxConfig::initLayoutLists()
     };
 
     const auto lnfPackages = availableLnFPackages();
-    for (const auto &package : lnfPackages) {
-        const auto &metaData = package.metadata();
-        const QString switcherFile = package.filePath("windowswitcher", QStringLiteral("WindowSwitcher.qml"));
+    for (const auto& package : lnfPackages) {
+        const auto& metaData = package.metadata();
+        const QString switcherFile
+            = package.filePath("windowswitcher", QStringLiteral("WindowSwitcher.qml"));
         if (switcherFile.isEmpty()) {
             // Skip lnfs that don't actually ship a switcher
             continue;
@@ -163,10 +170,11 @@ void KWinTabBoxConfig::initLayoutLists()
         addToModel(metaData.name(), metaData.pluginId(), switcherFile);
     }
 
-    for (const auto &offer : offers) {
+    for (const auto& offer : offers) {
         const QString pluginName = offer.pluginId();
-        const QString scriptFile = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                                          QLatin1String("kwin/tabbox/") + pluginName + QLatin1String("/contents/ui/main.qml"));
+        const QString scriptFile = QStandardPaths::locate(
+            QStandardPaths::GenericDataLocation,
+            QLatin1String("kwin/tabbox/") + pluginName + QLatin1String("/contents/ui/main.qml"));
         if (scriptFile.isEmpty()) {
             qWarning() << "scriptfile is null" << pluginName;
             continue;
@@ -181,10 +189,14 @@ void KWinTabBoxConfig::initLayoutLists()
     m_alternativeTabBoxUi->setEffectComboModel(model);
 }
 
-void KWinTabBoxConfig::createConnections(KWinTabBoxConfigForm *form)
+void KWinTabBoxConfig::createConnections(KWinTabBoxConfigForm* form)
 {
-    connect(form, &KWinTabBoxConfigForm::effectConfigButtonClicked, this, &KWinTabBoxConfig::configureEffectClicked);
-    connect(form, &KWinTabBoxConfigForm::configChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
+    connect(form,
+            &KWinTabBoxConfigForm::effectConfigButtonClicked,
+            this,
+            &KWinTabBoxConfig::configureEffectClicked);
+    connect(
+        form, &KWinTabBoxConfigForm::configChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
 
     connect(this, &KWinTabBoxConfig::defaultsIndicatorsVisibleChanged, form, [form, this]() {
         form->setDefaultIndicatorVisible(defaultsIndicatorsVisible());
@@ -225,7 +237,8 @@ void KWinTabBoxConfig::load()
 void KWinTabBoxConfig::save()
 {
     // effects
-    const bool highlightWindows = m_primaryTabBoxUi->highlightWindows() || m_alternativeTabBoxUi->highlightWindows();
+    const bool highlightWindows
+        = m_primaryTabBoxUi->highlightWindows() || m_alternativeTabBoxUi->highlightWindows();
 
     // activate effects if they are used otherwise deactivate them.
     m_data->pluginsConfig()->setHighlightwindowEnabled(highlightWindows);
@@ -258,7 +271,7 @@ void KWinTabBoxConfig::defaults()
 
 void KWinTabBoxConfig::configureEffectClicked()
 {
-    auto form = qobject_cast<KWinTabBoxConfigForm *>(sender());
+    auto form = qobject_cast<KWinTabBoxConfigForm*>(sender());
     Q_ASSERT(form);
 
     if (form->effectComboCurrentData(KWinTabBoxConfigForm::AddonEffect).toBool()) {

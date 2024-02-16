@@ -30,16 +30,18 @@ public:
     };
 
 public:
-    explicit DecorationsModel(QObject *parent = nullptr);
+    explicit DecorationsModel(QObject* parent = nullptr);
     ~DecorationsModel() override;
 
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    QHash< int, QByteArray > roleNames() const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
-    QModelIndex findDecoration(const QString &pluginName, const QString &themeName = QString()) const;
+    QModelIndex findDecoration(const QString& pluginName,
+                               const QString& themeName = QString()) const;
 
-    QStringList knsProviders() const {
+    QStringList knsProviders() const
+    {
         return m_knsProviders;
     }
 

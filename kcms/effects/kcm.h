@@ -19,13 +19,13 @@ class EffectsModel;
 class DesktopEffectsKCM : public KQuickConfigModule
 {
     Q_OBJECT
-    Q_PROPERTY(QAbstractItemModel *effectsModel READ effectsModel CONSTANT)
+    Q_PROPERTY(QAbstractItemModel* effectsModel READ effectsModel CONSTANT)
 
 public:
-    explicit DesktopEffectsKCM(QObject *parent, const KPluginMetaData &metaData);
+    explicit DesktopEffectsKCM(QObject* parent, const KPluginMetaData& metaData);
     ~DesktopEffectsKCM() override;
 
-    QAbstractItemModel *effectsModel() const;
+    QAbstractItemModel* effectsModel() const;
 
 public Q_SLOTS:
     void load() override;
@@ -33,13 +33,13 @@ public Q_SLOTS:
     void defaults() override;
 
     void onGHNSEntriesChanged();
-    void configure(const QString &pluginId, QQuickItem *context);
+    void configure(const QString& pluginId, QQuickItem* context);
 
 private Q_SLOTS:
     void updateNeedsSave();
 
 private:
-    EffectsModel *m_model;
+    EffectsModel* m_model;
 
     Q_DISABLE_COPY(DesktopEffectsKCM)
 };

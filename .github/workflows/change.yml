@@ -8,8 +8,8 @@ jobs:
     with:
       upstream-repo: https://github.com/winft/theseus-ship.git
 
-  # clang-format:
-  #   uses: ./.github/workflows/clang-format.yml
+  clang-format:
+    uses: ./.github/workflows/clang-format.yml
 
   build:
     uses: ./.github/workflows/build.yml

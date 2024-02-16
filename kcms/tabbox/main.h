@@ -25,7 +25,7 @@ class KWinTabBoxConfig : public KCModule
     Q_OBJECT
 
 public:
-    explicit KWinTabBoxConfig(QObject *parent, const KPluginMetaData &data);
+    explicit KWinTabBoxConfig(QObject* parent, const KPluginMetaData& data);
     ~KWinTabBoxConfig() override;
 
 public Q_SLOTS:
@@ -39,14 +39,14 @@ private Q_SLOTS:
 
 private:
     void initLayoutLists();
-    void createConnections(KWinTabBoxConfigForm *form);
+    void createConnections(KWinTabBoxConfigForm* form);
 
 private:
-    KWinTabBoxConfigForm *m_primaryTabBoxUi = nullptr;
-    KWinTabBoxConfigForm *m_alternativeTabBoxUi = nullptr;
+    KWinTabBoxConfigForm* m_primaryTabBoxUi = nullptr;
+    KWinTabBoxConfigForm* m_alternativeTabBoxUi = nullptr;
     KSharedConfigPtr m_config;
 
-    KWinTabboxData *m_data;
+    KWinTabboxData* m_data;
 };
 
 } // namespace

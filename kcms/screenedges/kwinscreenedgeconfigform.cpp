@@ -11,22 +11,43 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace theseus_ship
 {
 
-KWinScreenEdgesConfigForm::KWinScreenEdgesConfigForm(QWidget *parent)
+KWinScreenEdgesConfigForm::KWinScreenEdgesConfigForm(QWidget* parent)
     : KWinScreenEdge(parent)
     , ui(new Ui::KWinScreenEdgesConfigUI)
 {
     ui->setupUi(this);
 
-    connect(ui->kcfg_ElectricBorderDelay, qOverload<int>(&QSpinBox::valueChanged), this, &KWinScreenEdgesConfigForm::sanitizeCooldown);
+    connect(ui->kcfg_ElectricBorderDelay,
+            qOverload<int>(&QSpinBox::valueChanged),
+            this,
+            &KWinScreenEdgesConfigForm::sanitizeCooldown);
 
     // Visual feedback of action group conflicts
-    connect(ui->kcfg_ElectricBorders, qOverload<int>(&QComboBox::currentIndexChanged), this, &KWinScreenEdgesConfigForm::groupChanged);
-    connect(ui->kcfg_ElectricBorderMaximize, &QCheckBox::stateChanged, this, &KWinScreenEdgesConfigForm::groupChanged);
-    connect(ui->kcfg_ElectricBorderTiling, &QCheckBox::stateChanged, this, &KWinScreenEdgesConfigForm::groupChanged);
+    connect(ui->kcfg_ElectricBorders,
+            qOverload<int>(&QComboBox::currentIndexChanged),
+            this,
+            &KWinScreenEdgesConfigForm::groupChanged);
+    connect(ui->kcfg_ElectricBorderMaximize,
+            &QCheckBox::stateChanged,
+            this,
+            &KWinScreenEdgesConfigForm::groupChanged);
+    connect(ui->kcfg_ElectricBorderTiling,
+            &QCheckBox::stateChanged,
+            this,
+            &KWinScreenEdgesConfigForm::groupChanged);
 
-    connect(ui->remainActiveOnFullscreen, &QCheckBox::stateChanged, this, &KWinScreenEdgesConfigForm::onChanged);
-    connect(ui->electricBorderCornerRatioSpin, qOverload<int>(&QSpinBox::valueChanged), this, &KWinScreenEdgesConfigForm::onChanged);
-    connect(ui->electricBorderCornerRatioSpin, qOverload<int>(&QSpinBox::valueChanged), this, &KWinScreenEdgesConfigForm::updateDefaultIndicators);
+    connect(ui->remainActiveOnFullscreen,
+            &QCheckBox::stateChanged,
+            this,
+            &KWinScreenEdgesConfigForm::onChanged);
+    connect(ui->electricBorderCornerRatioSpin,
+            qOverload<int>(&QSpinBox::valueChanged),
+            this,
+            &KWinScreenEdgesConfigForm::onChanged);
+    connect(ui->electricBorderCornerRatioSpin,
+            qOverload<int>(&QSpinBox::valueChanged),
+            this,
+            &KWinScreenEdgesConfigForm::updateDefaultIndicators);
 }
 
 KWinScreenEdgesConfigForm::~KWinScreenEdgesConfigForm()
@@ -89,19 +110,21 @@ bool KWinScreenEdgesConfigForm::remainActiveOnFullscreen() const
     return ui->remainActiveOnFullscreen->isChecked();
 }
 
-Monitor *KWinScreenEdgesConfigForm::monitor() const
+Monitor* KWinScreenEdgesConfigForm::monitor() const
 {
     return ui->monitor;
 }
 
 bool KWinScreenEdgesConfigForm::isSaveNeeded() const
 {
-    return m_referenceCornerRatio != electricBorderCornerRatio() || m_remainActiveOnFullscreen != remainActiveOnFullscreen();
+    return m_referenceCornerRatio != electricBorderCornerRatio()
+        || m_remainActiveOnFullscreen != remainActiveOnFullscreen();
 }
 
 bool KWinScreenEdgesConfigForm::isDefault() const
 {
-    return m_defaultCornerRatio == electricBorderCornerRatio() && m_remainActiveOnFullscreen == false;
+    return m_defaultCornerRatio == electricBorderCornerRatio()
+        && m_remainActiveOnFullscreen == false;
 }
 
 void KWinScreenEdgesConfigForm::sanitizeCooldown()
@@ -124,9 +147,12 @@ void KWinScreenEdgesConfigForm::groupChanged()
 
 void KWinScreenEdgesConfigForm::updateDefaultIndicators()
 {
-    ui->electricBorderCornerRatioSpin->setProperty("_kde_highlight_neutral", m_defaultIndicatorVisible && (electricBorderCornerRatio() != m_defaultCornerRatio));
+    ui->electricBorderCornerRatioSpin->setProperty(
+        "_kde_highlight_neutral",
+        m_defaultIndicatorVisible && (electricBorderCornerRatio() != m_defaultCornerRatio));
     ui->electricBorderCornerRatioSpin->update();
-    ui->remainActiveOnFullscreen->setProperty("_kde_highlight_neutral", m_defaultIndicatorVisible && remainActiveOnFullscreen() == false);
+    ui->remainActiveOnFullscreen->setProperty(
+        "_kde_highlight_neutral", m_defaultIndicatorVisible && remainActiveOnFullscreen() == false);
     ui->remainActiveOnFullscreen->update();
 }
 

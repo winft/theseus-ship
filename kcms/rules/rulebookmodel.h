@@ -11,7 +11,6 @@
 
 #include <QAbstractListModel>
 
-
 namespace theseus_ship
 {
 
@@ -24,23 +23,26 @@ public:
         DescriptionRole = Qt::DisplayRole,
     };
 
-    explicit RuleBookModel(QObject *parent = nullptr);
+    explicit RuleBookModel(QObject* parent = nullptr);
     ~RuleBookModel();
 
     QHash<int, QByteArray> roleNames() const override;
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    bool setData(const QModelIndex &index, const QVariant &value, int role) override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex& index, const QVariant& value, int role) override;
 
-    bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
-    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
-    bool moveRows(const QModelIndex &sourceParent, int sourceRow, int count,
-                  const QModelIndex &destinationParent, int destinationChild) override;
+    bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
+    bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
+    bool moveRows(const QModelIndex& sourceParent,
+                  int sourceRow,
+                  int count,
+                  const QModelIndex& destinationParent,
+                  int destinationChild) override;
 
     QString descriptionAt(int row) const;
-    void setDescriptionAt(int row, const QString &description);
+    void setDescriptionAt(int row, const QString& description);
 
-    como::win::rules::settings *ruleSettingsAt(int row) const;
+    como::win::rules::settings* ruleSettingsAt(int row) const;
     void setRuleSettingsAt(int row, como::win::rules::settings const& settings);
 
     void load();
@@ -48,10 +50,11 @@ public:
     bool isSaveNeeded();
 
     // Helper function to copy RuleSettings properties
-    static void copySettingsTo(como::win::rules::settings* dest, como::win::rules::settings const& source);
+    static void copySettingsTo(como::win::rules::settings* dest,
+                               como::win::rules::settings const& source);
 
 private:
-    como::win::rules::book_settings *m_ruleBook;
+    como::win::rules::book_settings* m_ruleBook;
 };
 
 } // namespace

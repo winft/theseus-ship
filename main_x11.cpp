@@ -183,7 +183,8 @@ int main(int argc, char* argv[])
         como::win::init_shortcuts(*base.mod.space);
         como::render::init_shortcuts(*base.mod.render);
 
-        base.mod.script = std::make_unique<como::scripting::platform<base_t::space_t>>(*base.mod.space);
+        base.mod.script
+            = std::make_unique<como::scripting::platform<base_t::space_t>>(*base.mod.space);
         render->start(*base.mod.space);
 
         // Trigger possible errors, there's still a chance to abort.

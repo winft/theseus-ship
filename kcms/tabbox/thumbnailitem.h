@@ -19,17 +19,18 @@ class WindowThumbnailItem : public QQuickItem
     Q_PROPERTY(qulonglong wId READ wId WRITE setWId NOTIFY wIdChanged SCRIPTABLE true)
     Q_PROPERTY(QSize sourceSize READ sourceSize WRITE setSourceSize NOTIFY sourceSizeChanged)
 public:
-    explicit WindowThumbnailItem(QQuickItem *parent = nullptr);
+    explicit WindowThumbnailItem(QQuickItem* parent = nullptr);
     ~WindowThumbnailItem() override;
 
-    qulonglong wId() const {
+    qulonglong wId() const
+    {
         return m_wId;
     }
 
     QSize sourceSize() const;
     void setWId(qulonglong wId);
-    void setSourceSize(const QSize &size);
-    QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *updatePaintNodeData) override;
+    void setSourceSize(const QSize& size);
+    QSGNode* updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData* updatePaintNodeData) override;
 
     enum Thumbnail {
         Konqueror = 1,
@@ -41,6 +42,7 @@ public:
 Q_SIGNALS:
     void wIdChanged(qulonglong wid);
     void sourceSizeChanged();
+
 private:
     void findImage();
     qulonglong m_wId;

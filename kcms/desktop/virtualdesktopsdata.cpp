@@ -6,14 +6,14 @@
 
 #include "virtualdesktopsdata.h"
 
-#include "desktopsmodel.h"
 #include "animationsmodel.h"
+#include "desktopsmodel.h"
 #include "virtualdesktopssettings.h"
 
 namespace theseus_ship
 {
 
-VirtualDesktopsData::VirtualDesktopsData(QObject *parent)
+VirtualDesktopsData::VirtualDesktopsData(QObject* parent)
     : KCModuleData(parent)
     , m_settings(new VirtualDesktopsSettings(this))
     , m_desktopsModel(new DesktopsModel(this))
@@ -31,20 +31,21 @@ VirtualDesktopsData::VirtualDesktopsData(QObject *parent)
 
 bool VirtualDesktopsData::isDefaults() const
 {
-    return m_animationsModel->isDefaults() && m_desktopsModel->isDefaults() && m_settings->isDefaults();
+    return m_animationsModel->isDefaults() && m_desktopsModel->isDefaults()
+        && m_settings->isDefaults();
 }
 
-VirtualDesktopsSettings *VirtualDesktopsData::settings() const
+VirtualDesktopsSettings* VirtualDesktopsData::settings() const
 {
     return m_settings;
 }
 
-DesktopsModel *VirtualDesktopsData::desktopsModel() const
+DesktopsModel* VirtualDesktopsData::desktopsModel() const
 {
     return m_desktopsModel;
 }
 
-AnimationsModel *VirtualDesktopsData::animationsModel() const
+AnimationsModel* VirtualDesktopsData::animationsModel() const
 {
     return m_animationsModel;
 }

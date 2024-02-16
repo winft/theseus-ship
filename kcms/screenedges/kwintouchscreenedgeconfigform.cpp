@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace theseus_ship
 {
 
-KWinTouchScreenEdgeConfigForm::KWinTouchScreenEdgeConfigForm(QWidget *parent)
+KWinTouchScreenEdgeConfigForm::KWinTouchScreenEdgeConfigForm(QWidget* parent)
     : KWinScreenEdge(parent)
     , ui(new Ui::KWinTouchScreenConfigUi)
 {
@@ -23,7 +23,7 @@ KWinTouchScreenEdgeConfigForm::~KWinTouchScreenEdgeConfigForm()
     delete ui;
 }
 
-Monitor *KWinTouchScreenEdgeConfigForm::monitor() const
+Monitor* KWinTouchScreenEdgeConfigForm::monitor() const
 {
     return ui->monitor;
 }

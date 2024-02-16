@@ -11,19 +11,20 @@
 
 #include <QVector>
 
-
 using DecorationButtonsList = QVector<KDecoration2::DecorationButtonType>;
 
 namespace Utils
 {
 
-QString buttonsToString(const DecorationButtonsList &buttons);
-DecorationButtonsList buttonsFromString(const QString &buttons);
-DecorationButtonsList readDecorationButtons(const KConfigGroup &config, const QString &key, const DecorationButtonsList &defaultValue);
+QString buttonsToString(const DecorationButtonsList& buttons);
+DecorationButtonsList buttonsFromString(const QString& buttons);
+DecorationButtonsList readDecorationButtons(const KConfigGroup& config,
+                                            const QString& key,
+                                            const DecorationButtonsList& defaultValue);
 
-KDecoration2::BorderSize stringToBorderSize(const QString &name);
+KDecoration2::BorderSize stringToBorderSize(const QString& name);
 QString borderSizeToString(KDecoration2::BorderSize size);
 
-const QMap<KDecoration2::BorderSize, QString> &getBorderSizeNames();
+const QMap<KDecoration2::BorderSize, QString>& getBorderSizeNames();
 
 }

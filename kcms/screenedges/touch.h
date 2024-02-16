@@ -27,7 +27,7 @@ class KWinScreenEdgesConfig : public KCModule
     Q_OBJECT
 
 public:
-    explicit KWinScreenEdgesConfig(QObject *parent, const KPluginMetaData &data);
+    explicit KWinScreenEdgesConfig(QObject* parent, const KPluginMetaData& data);
     ~KWinScreenEdgesConfig() override;
 
 public Q_SLOTS:
@@ -36,16 +36,17 @@ public Q_SLOTS:
     void defaults() override;
 
 private:
-    KWinTouchScreenEdgeConfigForm *m_form;
+    KWinTouchScreenEdgeConfigForm* m_form;
     KSharedConfigPtr m_config;
     QStringList m_effects; // list of effect IDs ordered in the list they are presented in the menu
-    QStringList m_scripts; //list of script IDs ordered in the list they are presented in the menu
+    QStringList m_scripts; // list of script IDs ordered in the list they are presented in the menu
     QHash<QString, KWinTouchScreenScriptSettings*> m_scriptSettings;
     QHash<QString, KWinTouchScreenEdgeEffectSettings*> m_effectSettings;
-    KWinTouchScreenData *m_data;
+    KWinTouchScreenData* m_data;
 
     enum EffectActions {
-        PresentWindowsAll = static_cast<int>(como::win::electric_border_action::count), // Start at the end of built in actions
+        PresentWindowsAll = static_cast<int>(
+            como::win::electric_border_action::count), // Start at the end of built in actions
         PresentWindowsCurrent,
         PresentWindowsClass,
         Cube,
@@ -62,7 +63,7 @@ private:
     void monitorSaveSettings();
     void monitorShowEvent();
 
-    static int electricBorderActionFromString(const QString &string);
+    static int electricBorderActionFromString(const QString& string);
     static QString electricBorderActionToString(int action);
 };
 

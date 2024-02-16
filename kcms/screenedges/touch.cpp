@@ -11,36 +11,45 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <KConfigGroup>
 #include <KLocalizedString>
-#include <KPluginFactory>
 #include <KPackage/Package>
 #include <KPackage/PackageLoader>
-#include <QtDBus>
+#include <KPluginFactory>
 #include <QVBoxLayout>
+#include <QtDBus>
 
+#include "kwintouchscreendata.h"
 #include "kwintouchscreenedgeconfigform.h"
 #include "kwintouchscreenedgeeffectsettings.h"
-#include "kwintouchscreendata.h"
-#include "kwintouchscreensettings.h"
 #include "kwintouchscreenscriptsettings.h"
+#include "kwintouchscreensettings.h"
 
-K_PLUGIN_FACTORY_WITH_JSON(KWinScreenEdgesConfigFactory, "kcm_kwintouchscreen.json", registerPlugin<theseus_ship::KWinScreenEdgesConfig>(); registerPlugin<theseus_ship::KWinTouchScreenData>();)
+K_PLUGIN_FACTORY_WITH_JSON(KWinScreenEdgesConfigFactory,
+                           "kcm_kwintouchscreen.json",
+                           registerPlugin<theseus_ship::KWinScreenEdgesConfig>();
+                           registerPlugin<theseus_ship::KWinTouchScreenData>();)
 
 namespace theseus_ship
 {
 
-KWinScreenEdgesConfig::KWinScreenEdgesConfig(QObject *parent, const KPluginMetaData &data)
+KWinScreenEdgesConfig::KWinScreenEdgesConfig(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
     , m_form(new KWinTouchScreenEdgeConfigForm(widget()))
     , m_config(KSharedConfig::openConfig("kwinrc"))
     , m_data(new KWinTouchScreenData(this))
 {
-    QVBoxLayout *layout = new QVBoxLayout(widget());
+    QVBoxLayout* layout = new QVBoxLayout(widget());
     layout->addWidget(m_form);
 
     monitorInit();
 
-    connect(m_form, &KWinTouchScreenEdgeConfigForm::saveNeededChanged, this, &KWinScreenEdgesConfig::unmanagedWidgetChangeState);
-    connect(m_form, &KWinTouchScreenEdgeConfigForm::defaultChanged, this, &KWinScreenEdgesConfig::unmanagedWidgetDefaultState);
+    connect(m_form,
+            &KWinTouchScreenEdgeConfigForm::saveNeededChanged,
+            this,
+            &KWinScreenEdgesConfig::unmanagedWidgetChangeState);
+    connect(m_form,
+            &KWinTouchScreenEdgeConfigForm::defaultChanged,
+            this,
+            &KWinScreenEdgesConfig::unmanagedWidgetDefaultState);
 }
 
 KWinScreenEdgesConfig::~KWinScreenEdgesConfig()
@@ -51,7 +60,7 @@ void KWinScreenEdgesConfig::load()
 {
     KCModule::load();
     m_data->settings()->load();
-    for (KWinTouchScreenScriptSettings *setting : qAsConst(m_scriptSettings)) {
+    for (KWinTouchScreenScriptSettings* setting : qAsConst(m_scriptSettings)) {
         setting->load();
     }
     for (KWinTouchScreenEdgeEffectSettings* setting : qAsConst(m_effectSettings)) {
@@ -67,10 +76,10 @@ void KWinScreenEdgesConfig::save()
 {
     monitorSaveSettings();
     m_data->settings()->save();
-    for (KWinTouchScreenScriptSettings *setting : qAsConst(m_scriptSettings)) {
+    for (KWinTouchScreenScriptSettings* setting : qAsConst(m_scriptSettings)) {
         setting->save();
     }
-    for (KWinTouchScreenEdgeEffectSettings *setting : qAsConst(m_effectSettings)) {
+    for (KWinTouchScreenEdgeEffectSettings* setting : qAsConst(m_effectSettings)) {
         setting->save();
     }
 
@@ -82,9 +91,8 @@ void KWinScreenEdgesConfig::save()
     QDBusMessage message = QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
     QDBusConnection::sessionBus().send(message);
     // and reconfigure the effects
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                             QStringLiteral("/Effects"),
-                                             QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("windowview"));
     interface.reconfigureEffect(QStringLiteral("cube"));
     for (auto const& effectId : qAsConst(m_effects)) {
@@ -132,35 +140,43 @@ void KWinScreenEdgesConfig::monitorInit()
     m_form->monitorAddItem(i18n("Toggle alternative window switching"));
 
     KConfigGroup config(m_config, QStringLiteral("Plugins"));
-    const auto effects = KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"), QStringLiteral("kwin/builtin-effects/")) << KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"), QStringLiteral("kwin/effects/"));
+    const auto effects = KPackage::PackageLoader::self()->listPackages(
+                             QStringLiteral("KWin/Script"), QStringLiteral("kwin/builtin-effects/"))
+        << KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"),
+                                                         QStringLiteral("kwin/effects/"));
 
     for (KPluginMetaData const& effect : effects) {
         if (!effect.value(QStringLiteral("X-KWin-Border-Activate"), false)) {
             continue;
         }
 
-        if (!config.readEntry(effect.pluginId() + QStringLiteral("Enabled"), effect.isEnabledByDefault())) {
+        if (!config.readEntry(effect.pluginId() + QStringLiteral("Enabled"),
+                              effect.isEnabledByDefault())) {
             continue;
         }
         m_effects << effect.pluginId();
         m_form->monitorAddItem(effect.name());
-        m_effectSettings[effect.pluginId()] = new KWinTouchScreenEdgeEffectSettings(effect.pluginId(), this);
+        m_effectSettings[effect.pluginId()]
+            = new KWinTouchScreenEdgeEffectSettings(effect.pluginId(), this);
     }
 
     const QString scriptFolder = QStringLiteral("kwin/scripts/");
-    const auto scripts = KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"), scriptFolder);
+    const auto scripts = KPackage::PackageLoader::self()->listPackages(
+        QStringLiteral("KWin/Script"), scriptFolder);
 
-    for (const KPluginMetaData &script: scripts) {
+    for (const KPluginMetaData& script : scripts) {
         if (!script.value(QStringLiteral("X-KWin-Border-Activate"), false)) {
             continue;
         }
 
-        if (!config.readEntry(script.pluginId() + QStringLiteral("Enabled"), script.isEnabledByDefault())) {
+        if (!config.readEntry(script.pluginId() + QStringLiteral("Enabled"),
+                              script.isEnabledByDefault())) {
             continue;
         }
         m_scripts << script.pluginId();
         m_form->monitorAddItem(script.name());
-        m_scriptSettings[script.pluginId()] = new KWinTouchScreenScriptSettings(script.pluginId(), this);
+        m_scriptSettings[script.pluginId()]
+            = new KWinTouchScreenScriptSettings(script.pluginId(), this);
     }
 
     monitorShowEvent();
@@ -169,17 +185,26 @@ void KWinScreenEdgesConfig::monitorInit()
 void KWinScreenEdgesConfig::monitorLoadSettings()
 {
     // Load ElectricBorderActions
-    m_form->monitorChangeEdge(como::win::electric_border::top, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->top()));
-    m_form->monitorChangeEdge(como::win::electric_border::right, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->right()));
-    m_form->monitorChangeEdge(como::win::electric_border::bottom, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->bottom()));
-    m_form->monitorChangeEdge(como::win::electric_border::left, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->left()));
+    m_form->monitorChangeEdge(
+        como::win::electric_border::top,
+        KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->top()));
+    m_form->monitorChangeEdge(
+        como::win::electric_border::right,
+        KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->right()));
+    m_form->monitorChangeEdge(
+        como::win::electric_border::bottom,
+        KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->bottom()));
+    m_form->monitorChangeEdge(
+        como::win::electric_border::left,
+        KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->left()));
 
     // Load effect-specific actions:
 
     // Present Windows BorderActivateAll
     m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateAll(), PresentWindowsAll);
     // PresentWindows BorderActivate
-    m_form->monitorChangeEdge(m_data->settings()->touchBorderActivatePresentWindows(), PresentWindowsCurrent);
+    m_form->monitorChangeEdge(m_data->settings()->touchBorderActivatePresentWindows(),
+                              PresentWindowsCurrent);
     // PresentWindows BorderActivateClass
     m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateClass(), PresentWindowsClass);
 
@@ -193,7 +218,8 @@ void KWinScreenEdgesConfig::monitorLoadSettings()
     // TabBox BorderActivate
     m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateTabBox(), TabBox);
     // Alternative TabBox
-    m_form->monitorChangeEdge(m_data->settings()->touchBorderAlternativeActivate(), TabBoxAlternative);
+    m_form->monitorChangeEdge(m_data->settings()->touchBorderAlternativeActivate(),
+                              TabBoxAlternative);
 
     // Dinamically loaded effects
     int lastIndex = EffectCount;
@@ -203,7 +229,7 @@ void KWinScreenEdgesConfig::monitorLoadSettings()
     }
 
     // Scripts
-    for (int i=0; i < m_scripts.size(); i++) {
+    for (int i = 0; i < m_scripts.size(); i++) {
         m_form->monitorChangeEdge(m_scriptSettings[m_scripts[i]]->touchBorderActivate(), lastIndex);
         ++lastIndex;
     }
@@ -211,65 +237,92 @@ void KWinScreenEdgesConfig::monitorLoadSettings()
 
 void KWinScreenEdgesConfig::monitorLoadDefaultSettings()
 {
-    m_form->monitorChangeDefaultEdge(como::win::electric_border::top, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultTopValue()));
-    m_form->monitorChangeDefaultEdge(como::win::electric_border::right, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultRightValue()));
-    m_form->monitorChangeDefaultEdge(como::win::electric_border::bottom, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultBottomValue()));
-    m_form->monitorChangeDefaultEdge(como::win::electric_border::left, KWinScreenEdgesConfig::electricBorderActionFromString(m_data->settings()->defaultLeftValue()));
+    m_form->monitorChangeDefaultEdge(como::win::electric_border::top,
+                                     KWinScreenEdgesConfig::electricBorderActionFromString(
+                                         m_data->settings()->defaultTopValue()));
+    m_form->monitorChangeDefaultEdge(como::win::electric_border::right,
+                                     KWinScreenEdgesConfig::electricBorderActionFromString(
+                                         m_data->settings()->defaultRightValue()));
+    m_form->monitorChangeDefaultEdge(como::win::electric_border::bottom,
+                                     KWinScreenEdgesConfig::electricBorderActionFromString(
+                                         m_data->settings()->defaultBottomValue()));
+    m_form->monitorChangeDefaultEdge(como::win::electric_border::left,
+                                     KWinScreenEdgesConfig::electricBorderActionFromString(
+                                         m_data->settings()->defaultLeftValue()));
 
     // Present Windows BorderActivateAll
-    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateAllValue(), PresentWindowsAll);
+    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateAllValue(),
+                                     PresentWindowsAll);
     // PresentWindows BorderActivate
-    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivatePresentWindowsValue(), PresentWindowsCurrent);
+    m_form->monitorChangeDefaultEdge(
+        m_data->settings()->defaultTouchBorderActivatePresentWindowsValue(), PresentWindowsCurrent);
     // PresentWindows BorderActivateClass
-    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateClassValue(), PresentWindowsClass);
+    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateClassValue(),
+                                     PresentWindowsClass);
 
     // Desktop Cube BorderActivate
-    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateCubeValue(), Cube);
+    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateCubeValue(),
+                                     Cube);
     // Desktop Cube BorderActivateCylinder
-    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateCylinderValue(), Cylinder);
+    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateCylinderValue(),
+                                     Cylinder);
     // Desktop Cube BorderActivateSphere
-    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateSphereValue(), Sphere);
+    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateSphereValue(),
+                                     Sphere);
 
     // TabBox BorderActivate
-    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateTabBoxValue(), TabBox);
+    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateTabBoxValue(),
+                                     TabBox);
     // Alternative TabBox
-    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderAlternativeActivateValue(), TabBoxAlternative);
+    m_form->monitorChangeDefaultEdge(
+        m_data->settings()->defaultTouchBorderAlternativeActivateValue(), TabBoxAlternative);
 }
 
 void KWinScreenEdgesConfig::monitorSaveSettings()
 {
     // Save ElectricBorderActions
-    m_data->settings()->setTop(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(como::win::electric_border::top)));
-    m_data->settings()->setRight(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(como::win::electric_border::right)));
-    m_data->settings()->setBottom(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(como::win::electric_border::bottom)));
-    m_data->settings()->setLeft(KWinScreenEdgesConfig::electricBorderActionToString(m_form->selectedEdgeItem(como::win::electric_border::left)));
+    m_data->settings()->setTop(KWinScreenEdgesConfig::electricBorderActionToString(
+        m_form->selectedEdgeItem(como::win::electric_border::top)));
+    m_data->settings()->setRight(KWinScreenEdgesConfig::electricBorderActionToString(
+        m_form->selectedEdgeItem(como::win::electric_border::right)));
+    m_data->settings()->setBottom(KWinScreenEdgesConfig::electricBorderActionToString(
+        m_form->selectedEdgeItem(como::win::electric_border::bottom)));
+    m_data->settings()->setLeft(KWinScreenEdgesConfig::electricBorderActionToString(
+        m_form->selectedEdgeItem(como::win::electric_border::left)));
 
     // Save effect-specific actions:
 
     // Present Windows
-    m_data->settings()->setTouchBorderActivateAll(m_form->monitorCheckEffectHasEdgeInt(PresentWindowsAll));
-    m_data->settings()->setTouchBorderActivatePresentWindows(m_form->monitorCheckEffectHasEdgeInt(PresentWindowsCurrent));
-    m_data->settings()->setTouchBorderActivateClass(m_form->monitorCheckEffectHasEdgeInt(PresentWindowsClass));
+    m_data->settings()->setTouchBorderActivateAll(
+        m_form->monitorCheckEffectHasEdgeInt(PresentWindowsAll));
+    m_data->settings()->setTouchBorderActivatePresentWindows(
+        m_form->monitorCheckEffectHasEdgeInt(PresentWindowsCurrent));
+    m_data->settings()->setTouchBorderActivateClass(
+        m_form->monitorCheckEffectHasEdgeInt(PresentWindowsClass));
 
     // Desktop Cube
     m_data->settings()->setTouchBorderActivateCube(m_form->monitorCheckEffectHasEdgeInt(Cube));
-    m_data->settings()->setTouchBorderActivateCylinder(m_form->monitorCheckEffectHasEdgeInt(Cylinder));
+    m_data->settings()->setTouchBorderActivateCylinder(
+        m_form->monitorCheckEffectHasEdgeInt(Cylinder));
     m_data->settings()->setTouchBorderActivateSphere(m_form->monitorCheckEffectHasEdgeInt(Sphere));
 
     // TabBox
     m_data->settings()->setTouchBorderActivateTabBox(m_form->monitorCheckEffectHasEdgeInt(TabBox));
-    m_data->settings()->setTouchBorderAlternativeActivate(m_form->monitorCheckEffectHasEdgeInt(TabBoxAlternative));
+    m_data->settings()->setTouchBorderAlternativeActivate(
+        m_form->monitorCheckEffectHasEdgeInt(TabBoxAlternative));
 
     // Dinamically loaded effects
     int lastIndex = EffectCount;
     for (int i = 0; i < m_effects.size(); i++) {
-        m_effectSettings[m_effects[i]]->setTouchBorderActivate(m_form->monitorCheckEffectHasEdgeInt(lastIndex));
+        m_effectSettings[m_effects[i]]->setTouchBorderActivate(
+            m_form->monitorCheckEffectHasEdgeInt(lastIndex));
         ++lastIndex;
     }
 
     // Scripts
     for (int i = 0; i < m_scripts.size(); i++) {
-        m_scriptSettings[m_scripts[i]]->setTouchBorderActivate(m_form->monitorCheckEffectHasEdgeInt(lastIndex));
+        m_scriptSettings[m_scripts[i]]->setTouchBorderActivate(
+            m_form->monitorCheckEffectHasEdgeInt(lastIndex));
         ++lastIndex;
     }
 }
@@ -298,13 +351,17 @@ void KWinScreenEdgesConfig::monitorShowEvent()
     m_form->monitorItemSetEnabled(TabBoxAlternative, reasonable);
 
     // Disable Edge if TouchEdges group entries are immutable
-    m_form->monitorEnableEdge(como::win::electric_border::top, !m_data->settings()->isTopImmutable());
-    m_form->monitorEnableEdge(como::win::electric_border::right, !m_data->settings()->isRightImmutable());
-    m_form->monitorEnableEdge(como::win::electric_border::bottom, !m_data->settings()->isBottomImmutable());
-    m_form->monitorEnableEdge(como::win::electric_border::left, !m_data->settings()->isLeftImmutable());
+    m_form->monitorEnableEdge(como::win::electric_border::top,
+                              !m_data->settings()->isTopImmutable());
+    m_form->monitorEnableEdge(como::win::electric_border::right,
+                              !m_data->settings()->isRightImmutable());
+    m_form->monitorEnableEdge(como::win::electric_border::bottom,
+                              !m_data->settings()->isBottomImmutable());
+    m_form->monitorEnableEdge(como::win::electric_border::left,
+                              !m_data->settings()->isLeftImmutable());
 }
 
-int KWinScreenEdgesConfig::electricBorderActionFromString(const QString &string)
+int KWinScreenEdgesConfig::electricBorderActionFromString(const QString& string)
 {
     QString lowerName = string.toLower();
     if (lowerName == QStringLiteral("showdesktop")) {

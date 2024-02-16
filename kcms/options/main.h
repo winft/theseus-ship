@@ -9,7 +9,6 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
@@ -29,7 +28,7 @@ class KWinOptions : public KCModule
     Q_OBJECT
 
 public:
-    explicit KWinOptions(QObject *parent, const KPluginMetaData &data);
+    explicit KWinOptions(QObject* parent, const KPluginMetaData& data);
 
     void load() override;
     void save() override;
@@ -39,16 +38,15 @@ protected Q_SLOTS:
     void updateUnmanagedState();
 
 private:
+    QTabWidget* tab;
 
-    QTabWidget   *tab;
+    KFocusConfig* mFocus;
+    KTitleBarActionsConfig* mTitleBarActions;
+    KWindowActionsConfig* mWindowActions;
+    KMovingConfig* mMoving;
+    KAdvancedConfig* mAdvanced;
 
-    KFocusConfig *mFocus;
-    KTitleBarActionsConfig *mTitleBarActions;
-    KWindowActionsConfig *mWindowActions;
-    KMovingConfig *mMoving;
-    KAdvancedConfig *mAdvanced;
-
-    KWinOptionsSettings *mSettings;
+    KWinOptionsSettings* mSettings;
 };
 
 class KActionsOptions : public KCModule
@@ -56,7 +54,7 @@ class KActionsOptions : public KCModule
     Q_OBJECT
 
 public:
-    KActionsOptions(QObject *parent, const KPluginMetaData &data);
+    KActionsOptions(QObject* parent, const KPluginMetaData& data);
 
     void load() override;
     void save() override;
@@ -67,13 +65,12 @@ protected Q_SLOTS:
     void moduleChanged(bool state);
 
 private:
+    QTabWidget* tab;
 
-    QTabWidget   *tab;
+    KTitleBarActionsConfig* mTitleBarActions;
+    KWindowActionsConfig* mWindowActions;
 
-    KTitleBarActionsConfig *mTitleBarActions;
-    KWindowActionsConfig *mWindowActions;
-
-    KWinOptionsSettings *mSettings;
+    KWinOptionsSettings* mSettings;
 };
 
 #endif

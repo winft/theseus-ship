@@ -6,15 +6,15 @@
 
 #include "kwintabboxdata.h"
 
-#include "kwintabboxsettings.h"
-#include "kwinswitcheffectsettings.h"
 #include "kwinpluginssettings.h"
+#include "kwinswitcheffectsettings.h"
+#include "kwintabboxsettings.h"
 #include "shortcutsettings.h"
 
 namespace theseus_ship
 {
 
-KWinTabboxData::KWinTabboxData(QObject *parent)
+KWinTabboxData::KWinTabboxData(QObject* parent)
     : KCModuleData(parent)
     , m_tabBoxConfig(new TabBoxSettings(QStringLiteral("TabBox"), this))
     , m_tabBoxAlternativeConfig(new TabBoxSettings(QStringLiteral("TabBoxAlternative"), this))
@@ -26,22 +26,22 @@ KWinTabboxData::KWinTabboxData(QObject *parent)
     registerSkeleton(m_shortcutConfig);
 }
 
-TabBoxSettings *KWinTabboxData::tabBoxConfig() const
+TabBoxSettings* KWinTabboxData::tabBoxConfig() const
 {
     return m_tabBoxConfig;
 }
 
-TabBoxSettings *KWinTabboxData::tabBoxAlternativeConfig() const
+TabBoxSettings* KWinTabboxData::tabBoxAlternativeConfig() const
 {
     return m_tabBoxAlternativeConfig;
 }
 
-PluginsSettings *KWinTabboxData::pluginsConfig() const
+PluginsSettings* KWinTabboxData::pluginsConfig() const
 {
     return m_pluginsConfig;
 }
 
-ShortcutSettings *KWinTabboxData::shortcutConfig() const
+ShortcutSettings* KWinTabboxData::shortcutConfig() const
 {
     return m_shortcutConfig;
 }

@@ -22,13 +22,13 @@ class KWinScreenEdge : public QWidget
     Q_OBJECT
 
 public:
-    explicit KWinScreenEdge(QWidget *parent = nullptr);
+    explicit KWinScreenEdge(QWidget* parent = nullptr);
     ~KWinScreenEdge() override;
 
     void monitorHideEdge(como::win::electric_border border, bool hidden);
     void monitorEnableEdge(como::win::electric_border border, bool enabled);
 
-    void monitorAddItem(const QString &item);
+    void monitorAddItem(const QString& item);
     void monitorItemSetEnabled(int index, bool enabled);
 
     QList<como::win::electric_border> monitorCheckEffectHasEdge(int index) const;
@@ -36,10 +36,10 @@ public:
     int selectedEdgeItem(como::win::electric_border border) const;
 
     void monitorChangeEdge(como::win::electric_border border, int index);
-    void monitorChangeEdge(const QList<int> &borderList, int index);
+    void monitorChangeEdge(const QList<int>& borderList, int index);
 
     void monitorChangeDefaultEdge(como::win::electric_border border, int index);
-    void monitorChangeDefaultEdge(const QList<int> &borderList, int index);
+    void monitorChangeDefaultEdge(const QList<int>& borderList, int index);
 
     // revert to reference settings and assess for saveNeeded and default changed
     virtual void reload();
@@ -55,7 +55,7 @@ Q_SIGNALS:
     void defaultChanged(bool isDefault);
 
 private:
-    virtual Monitor *monitor() const = 0;
+    virtual Monitor* monitor() const = 0;
     virtual bool isSaveNeeded() const;
     virtual bool isDefault() const;
 
@@ -64,7 +64,7 @@ private:
 
 private:
     QHash<como::win::electric_border, int> m_reference; // reference settings
-    QHash<como::win::electric_border, int> m_default; // default settings
+    QHash<como::win::electric_border, int> m_default;   // default settings
 };
 
 } // namespace
