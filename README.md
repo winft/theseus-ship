@@ -11,8 +11,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
   <h1>Theseus' Ship</h1>
 </div>
 
-Theseus' Ship is a robust, fast and versatile yet
-easy to use composited window manager for the
+Theseus' Ship is a robust, fast and versatile,
+yet easy to use composited window manager for the
 [Wayland](https://wayland.freedesktop.org/) and
 [X11](https://en.wikipedia.org/wiki/X_Window_System)
 windowing systems on Linux.
@@ -29,7 +29,7 @@ Theseus' Ship is intended to be used as part of a
 [KDE Plasma Desktop](https://kde.org/plasma-desktop/).
 Theseus' Ship is a reboot of KDE's
 [KWin](https://en.wikipedia.org/wiki/KWin).
-Theseus' Ship differentates itself from KWin in that it uses [the Compositor Modules](https://github.com/winft/como).
+It differentates itself from KWin in that it uses [The Compositor Modules](https://github.com/winft/como).
 
 ## Installation
 Theseus' Ship can be compiled from source.
