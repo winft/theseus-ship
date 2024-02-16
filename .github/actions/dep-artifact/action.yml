@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Roman Gilg <subdiff@gmail.com>
+#
+# SPDX-License-Identifier: MIT
 name: Install Dependency via Artifact
 description: Uses deb package from other workflow to install on Arch
 inputs:
