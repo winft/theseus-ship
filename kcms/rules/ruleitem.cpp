@@ -10,13 +10,13 @@
 namespace theseus_ship
 {
 
-RuleItem::RuleItem(const QString &key,
+RuleItem::RuleItem(const QString& key,
                    const RulePolicy::Type policyType,
                    const RuleItem::Type type,
-                   const QString &name,
-                   const QString &section,
-                   const QIcon &icon,
-                   const QString &description)
+                   const QString& name,
+                   const QString& section,
+                   const QIcon& icon,
+                   const QString& description)
     : m_key(key)
     , m_type(type)
     , m_name(name)
@@ -130,7 +130,7 @@ QVariant RuleItem::options() const
     return QVariant::fromValue(m_options.get());
 }
 
-void RuleItem::setOptionsData(const QList<OptionsModel::Data> &data)
+void RuleItem::setOptionsData(const QList<OptionsModel::Data>& data)
 {
     if (m_type != Option && m_type != OptionList && m_type != NetTypes) {
         return;
@@ -167,7 +167,7 @@ QString RuleItem::policyKey() const
     return m_policy->policyKey(m_key);
 }
 
-QVariant RuleItem::typedValue(const QVariant &value) const
+QVariant RuleItem::typedValue(const QVariant& value) const
 {
     switch (type()) {
     case Undefined:
@@ -179,9 +179,12 @@ QVariant RuleItem::typedValue(const QVariant &value) const
     case Percentage:
         return value.toInt();
     case NetTypes: {
-        const uint typesMask = m_options ? value.toUInt() & m_options->allOptionsMask() : 0; // filter by the allowed mask in the model
-        if (typesMask == 0 || typesMask == m_options->allOptionsMask()) { // if no types or all of them are selected
-            return 0U - 1; // return an all active mask (NET:AllTypesMask)
+        const uint typesMask = m_options ? value.toUInt() & m_options->allOptionsMask()
+                                         : 0; // filter by the allowed mask in the model
+        if (typesMask == 0
+            || typesMask
+                == m_options->allOptionsMask()) { // if no types or all of them are selected
+            return 0U - 1;                        // return an all active mask (NET:AllTypesMask)
         }
         return typesMask;
     }
@@ -204,4 +207,4 @@ QVariant RuleItem::typedValue(const QVariant &value) const
     return value;
 }
 
-}   //namespace
+} // namespace

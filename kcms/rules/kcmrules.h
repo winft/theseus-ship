@@ -11,7 +11,6 @@
 
 #include <KQuickConfigModule>
 
-
 namespace theseus_ship
 {
 
@@ -24,14 +23,16 @@ class KCMKWinRules : public KQuickConfigModule
 {
     Q_OBJECT
 
-    Q_PROPERTY(RuleBookModel *ruleBookModel MEMBER m_ruleBookModel CONSTANT)
-    Q_PROPERTY(RulesModel *rulesModel MEMBER m_rulesModel CONSTANT)
+    Q_PROPERTY(RuleBookModel* ruleBookModel MEMBER m_ruleBookModel CONSTANT)
+    Q_PROPERTY(RulesModel* rulesModel MEMBER m_rulesModel CONSTANT)
     Q_PROPERTY(int editIndex READ editIndex NOTIFY editIndexChanged)
 
 public:
-    explicit KCMKWinRules(QObject *parent, const KPluginMetaData &metaData, const QVariantList &arguments);
+    explicit KCMKWinRules(QObject* parent,
+                          const KPluginMetaData& metaData,
+                          const QVariantList& arguments);
 
-    Q_INVOKABLE void setRuleDescription(int index, const QString &description);
+    Q_INVOKABLE void setRuleDescription(int index, const QString& description);
     Q_INVOKABLE void editRule(int index);
 
     Q_INVOKABLE void createRule();
@@ -39,8 +40,8 @@ public:
     Q_INVOKABLE void moveRule(int sourceIndex, int destIndex);
     Q_INVOKABLE void duplicateRule(int index);
 
-    Q_INVOKABLE void exportToFile(const QUrl &path, const QList<int> &indexes);
-    Q_INVOKABLE void importFromFile(const QUrl &path);
+    Q_INVOKABLE void exportToFile(const QUrl& path, const QList<int>& indexes);
+    Q_INVOKABLE void importFromFile(const QUrl& path);
 
 public Q_SLOTS:
     void load() override;
@@ -54,16 +55,16 @@ private Q_SLOTS:
 
 private:
     int editIndex() const;
-    void parseArguments(const QStringList &args);
+    void parseArguments(const QStringList& args);
     void createRuleFromProperties();
 
-    QModelIndex findRuleWithProperties(const QVariantMap &info, bool wholeApp) const;
+    QModelIndex findRuleWithProperties(const QVariantMap& info, bool wholeApp) const;
     void fillSettingsFromProperties(como::win::rules::settings* settings,
                                     QVariantMap const& info,
                                     bool wholeApp) const;
 
 private:
-    RuleBookModel *m_ruleBookModel;
+    RuleBookModel* m_ruleBookModel;
     RulesModel* m_rulesModel;
 
     QPersistentModelIndex m_editIndex;

@@ -5,12 +5,12 @@
 */
 #include "previewitem.h"
 #include "previewbridge.h"
-#include "previewsettings.h"
 #include "previewclient.h"
+#include "previewsettings.h"
+#include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
 #include <KDecoration2/DecorationShadow>
-#include <KDecoration2/DecoratedClient>
 #include <QCoreApplication>
 #include <QCursor>
 #include <QPainter>
@@ -26,7 +26,7 @@ namespace KDecoration2
 namespace Preview
 {
 
-PreviewItem::PreviewItem(QQuickItem *parent)
+PreviewItem::PreviewItem(QQuickItem* parent)
     : QQuickPaintedItem(parent)
     , m_decoration(nullptr)
     , m_windowColor(QPalette().window().color())
@@ -42,7 +42,7 @@ PreviewItem::PreviewItem(QQuickItem *parent)
 PreviewItem::~PreviewItem()
 {
     m_decoration->deleteLater();
-    if (m_bridge){
+    if (m_bridge) {
         m_bridge->unregisterPreviewItem(this);
     }
 }
@@ -63,17 +63,17 @@ void PreviewItem::createDecoration()
     if (m_bridge.isNull() || m_settings.isNull() || m_decoration) {
         return;
     }
-    Decoration *decoration = m_bridge->createDecoration(nullptr);
+    Decoration* decoration = m_bridge->createDecoration(nullptr);
     m_client = m_bridge->lastCreatedClient();
     setDecoration(decoration);
 }
 
-Decoration *PreviewItem::decoration() const
+Decoration* PreviewItem::decoration() const
 {
     return m_decoration;
 }
 
-void PreviewItem::setDecoration(Decoration *deco)
+void PreviewItem::setDecoration(Decoration* deco)
 {
     if (!deco || m_decoration == deco) {
         return;
@@ -93,7 +93,7 @@ QColor PreviewItem::windowColor() const
     return m_windowColor;
 }
 
-void PreviewItem::setWindowColor(const QColor &color)
+void PreviewItem::setWindowColor(const QColor& color)
 {
     if (m_windowColor == color) {
         return;
@@ -103,35 +103,42 @@ void PreviewItem::setWindowColor(const QColor &color)
     update();
 }
 
-void PreviewItem::paint(QPainter *painter)
+void PreviewItem::paint(QPainter* painter)
 {
     if (!m_decoration) {
         return;
     }
-    int paddingLeft   = 0;
-    int paddingTop    = 0;
-    int paddingRight  = 0;
+    int paddingLeft = 0;
+    int paddingTop = 0;
+    int paddingRight = 0;
     int paddingBottom = 0;
     paintShadow(painter, paddingLeft, paddingRight, paddingTop, paddingBottom);
     m_decoration->paint(painter, QRect(0, 0, width(), height()));
     if (m_drawBackground) {
-        painter->fillRect(m_decoration->borderLeft(), m_decoration->borderTop(),
-                        width() - m_decoration->borderLeft() - m_decoration->borderRight() - paddingLeft - paddingRight,
-                        height() - m_decoration->borderTop() - m_decoration->borderBottom() - paddingTop - paddingBottom,
-                        m_windowColor);
+        painter->fillRect(m_decoration->borderLeft(),
+                          m_decoration->borderTop(),
+                          width() - m_decoration->borderLeft() - m_decoration->borderRight()
+                              - paddingLeft - paddingRight,
+                          height() - m_decoration->borderTop() - m_decoration->borderBottom()
+                              - paddingTop - paddingBottom,
+                          m_windowColor);
     }
 }
 
-void PreviewItem::paintShadow(QPainter *painter, int &paddingLeft, int &paddingRight, int &paddingTop, int &paddingBottom)
+void PreviewItem::paintShadow(QPainter* painter,
+                              int& paddingLeft,
+                              int& paddingRight,
+                              int& paddingTop,
+                              int& paddingBottom)
 {
-    const auto &shadow = m_decoration->shadow();
+    const auto& shadow = m_decoration->shadow();
     if (!shadow) {
         return;
     }
 
-    paddingLeft   = shadow->paddingLeft();
-    paddingTop    = shadow->paddingTop();
-    paddingRight  = shadow->paddingRight();
+    paddingLeft = shadow->paddingLeft();
+    paddingTop = shadow->paddingTop();
+    paddingRight = shadow->paddingRight();
     paddingBottom = shadow->paddingBottom();
 
     const QImage shadowPixmap = shadow->shadow();
@@ -143,26 +150,21 @@ void PreviewItem::paintShadow(QPainter *painter, int &paddingLeft, int &paddingR
     const QRect shadowRect(shadowPixmap.rect());
 
     const QSize topLeftSize(shadow->topLeftGeometry().size());
-    QRect topLeftTarget(
-        QPoint(outerRect.x(), outerRect.y()),
-        topLeftSize);
+    QRect topLeftTarget(QPoint(outerRect.x(), outerRect.y()), topLeftSize);
 
     const QSize topRightSize(shadow->topRightGeometry().size());
     QRect topRightTarget(
-        QPoint(outerRect.x() + outerRect.width() - topRightSize.width(),
-               outerRect.y()),
+        QPoint(outerRect.x() + outerRect.width() - topRightSize.width(), outerRect.y()),
         topRightSize);
 
     const QSize bottomRightSize(shadow->bottomRightGeometry().size());
-    QRect bottomRightTarget(
-        QPoint(outerRect.x() + outerRect.width() - bottomRightSize.width(),
-               outerRect.y() + outerRect.height() - bottomRightSize.height()),
-        bottomRightSize);
+    QRect bottomRightTarget(QPoint(outerRect.x() + outerRect.width() - bottomRightSize.width(),
+                                   outerRect.y() + outerRect.height() - bottomRightSize.height()),
+                            bottomRightSize);
 
     const QSize bottomLeftSize(shadow->bottomLeftGeometry().size());
     QRect bottomLeftTarget(
-        QPoint(outerRect.x(),
-               outerRect.y() + outerRect.height() - bottomLeftSize.height()),
+        QPoint(outerRect.x(), outerRect.y() + outerRect.height() - bottomLeftSize.height()),
         bottomLeftSize);
 
     // Re-distribute the corner tiles so no one of them is overlapping with others.
@@ -174,7 +176,8 @@ void PreviewItem::paintShadow(QPainter *painter, int &paddingLeft, int &paddingR
     // tile won't be rendered.
     bool drawTop = true;
     if (topLeftTarget.x() + topLeftTarget.width() >= topRightTarget.x()) {
-        const float halfOverlap = qAbs(topLeftTarget.x() + topLeftTarget.width() - topRightTarget.x()) / 2.0f;
+        const float halfOverlap
+            = qAbs(topLeftTarget.x() + topLeftTarget.width() - topRightTarget.x()) / 2.0f;
         topLeftTarget.setRight(topLeftTarget.right() - std::floor(halfOverlap));
         topRightTarget.setLeft(topRightTarget.left() + std::ceil(halfOverlap));
         drawTop = false;
@@ -182,7 +185,8 @@ void PreviewItem::paintShadow(QPainter *painter, int &paddingLeft, int &paddingR
 
     bool drawRight = true;
     if (topRightTarget.y() + topRightTarget.height() >= bottomRightTarget.y()) {
-        const float halfOverlap = qAbs(topRightTarget.y() + topRightTarget.height() - bottomRightTarget.y()) / 2.0f;
+        const float halfOverlap
+            = qAbs(topRightTarget.y() + topRightTarget.height() - bottomRightTarget.y()) / 2.0f;
         topRightTarget.setBottom(topRightTarget.bottom() - std::floor(halfOverlap));
         bottomRightTarget.setTop(bottomRightTarget.top() + std::ceil(halfOverlap));
         drawRight = false;
@@ -190,7 +194,8 @@ void PreviewItem::paintShadow(QPainter *painter, int &paddingLeft, int &paddingR
 
     bool drawBottom = true;
     if (bottomLeftTarget.x() + bottomLeftTarget.width() >= bottomRightTarget.x()) {
-        const float halfOverlap = qAbs(bottomLeftTarget.x() + bottomLeftTarget.width() - bottomRightTarget.x()) / 2.0f;
+        const float halfOverlap
+            = qAbs(bottomLeftTarget.x() + bottomLeftTarget.width() - bottomRightTarget.x()) / 2.0f;
         bottomLeftTarget.setRight(bottomLeftTarget.right() - std::floor(halfOverlap));
         bottomRightTarget.setLeft(bottomRightTarget.left() + std::ceil(halfOverlap));
         drawBottom = false;
@@ -198,7 +203,8 @@ void PreviewItem::paintShadow(QPainter *painter, int &paddingLeft, int &paddingR
 
     bool drawLeft = true;
     if (topLeftTarget.y() + topLeftTarget.height() >= bottomLeftTarget.y()) {
-        const float halfOverlap = qAbs(topLeftTarget.y() + topLeftTarget.height() - bottomLeftTarget.y()) / 2.0f;
+        const float halfOverlap
+            = qAbs(topLeftTarget.y() + topLeftTarget.height() - bottomLeftTarget.y()) / 2.0f;
         topLeftTarget.setBottom(topLeftTarget.bottom() - std::floor(halfOverlap));
         bottomLeftTarget.setTop(bottomLeftTarget.top() + std::ceil(halfOverlap));
         drawLeft = false;
@@ -206,21 +212,23 @@ void PreviewItem::paintShadow(QPainter *painter, int &paddingLeft, int &paddingR
 
     painter->translate(paddingLeft, paddingTop);
 
-    painter->drawImage(topLeftTarget, shadowPixmap,
-                       QRect(QPoint(0, 0), topLeftTarget.size()));
+    painter->drawImage(topLeftTarget, shadowPixmap, QRect(QPoint(0, 0), topLeftTarget.size()));
 
-    painter->drawImage(topRightTarget, shadowPixmap,
-                      QRect(QPoint(shadowRect.width() - topRightTarget.width(), 0),
-                            topRightTarget.size()));
+    painter->drawImage(
+        topRightTarget,
+        shadowPixmap,
+        QRect(QPoint(shadowRect.width() - topRightTarget.width(), 0), topRightTarget.size()));
 
-    painter->drawImage(bottomRightTarget, shadowPixmap,
+    painter->drawImage(bottomRightTarget,
+                       shadowPixmap,
                        QRect(QPoint(shadowRect.width() - bottomRightTarget.width(),
                                     shadowRect.height() - bottomRightTarget.height()),
                              bottomRightTarget.size()));
 
-    painter->drawImage(bottomLeftTarget, shadowPixmap,
-                       QRect(QPoint(0, shadowRect.height() - bottomLeftTarget.height()),
-                             bottomLeftTarget.size()));
+    painter->drawImage(
+        bottomLeftTarget,
+        shadowPixmap,
+        QRect(QPoint(0, shadowRect.height() - bottomLeftTarget.height()), bottomLeftTarget.size()));
 
     if (drawTop) {
         QRect topTarget(topLeftTarget.x() + topLeftTarget.width(),
@@ -256,10 +264,10 @@ void PreviewItem::paintShadow(QPainter *painter, int &paddingLeft, int &paddingR
     }
 
     if (drawLeft) {
-       QRect leftTarget(topLeftTarget.x(),
-                        topLeftTarget.y() + topLeftTarget.height(),
-                        topLeftTarget.width(),
-                        bottomLeftTarget.y() - topLeftTarget.y() - topLeftTarget.height());
+        QRect leftTarget(topLeftTarget.x(),
+                         topLeftTarget.y() + topLeftTarget.height(),
+                         topLeftTarget.width(),
+                         bottomLeftTarget.y() - topLeftTarget.y() - topLeftTarget.height());
         QRect leftSource(shadow->leftGeometry());
         leftSource.setWidth(leftTarget.width());
         leftSource.moveLeft(shadowRect.left());
@@ -267,29 +275,27 @@ void PreviewItem::paintShadow(QPainter *painter, int &paddingLeft, int &paddingR
     }
 }
 
-static QMouseEvent cloneEventWithPadding(QMouseEvent *event, int paddingLeft, int paddingTop)
+static QMouseEvent cloneEventWithPadding(QMouseEvent* event, int paddingLeft, int paddingTop)
 {
-    return QMouseEvent(
-        event->type(),
-        event->localPos() - QPointF(paddingLeft, paddingTop),
-        event->button(),
-        event->buttons(),
-        event->modifiers());
+    return QMouseEvent(event->type(),
+                       event->localPos() - QPointF(paddingLeft, paddingTop),
+                       event->button(),
+                       event->buttons(),
+                       event->modifiers());
 }
 
-static QHoverEvent cloneEventWithPadding(QHoverEvent *event, int paddingLeft, int paddingTop)
+static QHoverEvent cloneEventWithPadding(QHoverEvent* event, int paddingLeft, int paddingTop)
 {
-    return QHoverEvent(
-        event->type(),
-        event->posF() - QPointF(paddingLeft, paddingTop),
-        event->oldPosF() - QPointF(paddingLeft, paddingTop),
-        event->modifiers());
+    return QHoverEvent(event->type(),
+                       event->posF() - QPointF(paddingLeft, paddingTop),
+                       event->oldPosF() - QPointF(paddingLeft, paddingTop),
+                       event->modifiers());
 }
 
-template <typename E>
-void PreviewItem::proxyPassEvent(E *event) const
+template<typename E>
+void PreviewItem::proxyPassEvent(E* event) const
 {
-    const auto &shadow = m_decoration->shadow();
+    const auto& shadow = m_decoration->shadow();
     if (shadow) {
         E e = cloneEventWithPadding(event, shadow->paddingLeft(), shadow->paddingTop());
         QCoreApplication::instance()->sendEvent(decoration(), &e);
@@ -300,37 +306,37 @@ void PreviewItem::proxyPassEvent(E *event) const
     event->ignore();
 }
 
-void PreviewItem::mouseDoubleClickEvent(QMouseEvent *event)
+void PreviewItem::mouseDoubleClickEvent(QMouseEvent* event)
 {
     proxyPassEvent(event);
 }
 
-void PreviewItem::mousePressEvent(QMouseEvent *event)
+void PreviewItem::mousePressEvent(QMouseEvent* event)
 {
     proxyPassEvent(event);
 }
 
-void PreviewItem::mouseReleaseEvent(QMouseEvent *event)
+void PreviewItem::mouseReleaseEvent(QMouseEvent* event)
 {
     proxyPassEvent(event);
 }
 
-void PreviewItem::mouseMoveEvent(QMouseEvent *event)
+void PreviewItem::mouseMoveEvent(QMouseEvent* event)
 {
     proxyPassEvent(event);
 }
 
-void PreviewItem::hoverEnterEvent(QHoverEvent *event)
+void PreviewItem::hoverEnterEvent(QHoverEvent* event)
 {
     proxyPassEvent(event);
 }
 
-void PreviewItem::hoverLeaveEvent(QHoverEvent *event)
+void PreviewItem::hoverLeaveEvent(QHoverEvent* event)
 {
     proxyPassEvent(event);
 }
 
-void PreviewItem::hoverMoveEvent(QHoverEvent *event)
+void PreviewItem::hoverMoveEvent(QHoverEvent* event)
 {
     proxyPassEvent(event);
 }
@@ -349,12 +355,12 @@ void PreviewItem::setDrawingBackground(bool set)
     Q_EMIT drawingBackgroundChanged(set);
 }
 
-PreviewBridge *PreviewItem::bridge() const
+PreviewBridge* PreviewItem::bridge() const
 {
     return m_bridge.data();
 }
 
-void PreviewItem::setBridge(PreviewBridge *bridge)
+void PreviewItem::setBridge(PreviewBridge* bridge)
 {
     if (m_bridge == bridge) {
         return;
@@ -369,12 +375,12 @@ void PreviewItem::setBridge(PreviewBridge *bridge)
     Q_EMIT bridgeChanged();
 }
 
-Settings *PreviewItem::settings() const
+Settings* PreviewItem::settings() const
 {
     return m_settings.data();
 }
 
-void PreviewItem::setSettings(Settings *settings)
+void PreviewItem::setSettings(Settings* settings)
 {
     if (m_settings == settings) {
         return;
@@ -383,7 +389,7 @@ void PreviewItem::setSettings(Settings *settings)
     Q_EMIT settingsChanged();
 }
 
-PreviewClient *PreviewItem::client()
+PreviewClient* PreviewItem::client()
 {
     return m_client.data();
 }
@@ -400,11 +406,13 @@ void PreviewItem::syncSize()
         widthOffset = shadow->paddingLeft() + shadow->paddingRight();
         heightOffset = shadow->paddingTop() + shadow->paddingBottom();
     }
-    m_client->setWidth(width() - m_decoration->borderLeft() - m_decoration->borderRight() - widthOffset);
-    m_client->setHeight(height() - m_decoration->borderTop() - m_decoration->borderBottom() - heightOffset);
+    m_client->setWidth(width() - m_decoration->borderLeft() - m_decoration->borderRight()
+                       - widthOffset);
+    m_client->setHeight(height() - m_decoration->borderTop() - m_decoration->borderBottom()
+                        - heightOffset);
 }
 
-DecorationShadow *PreviewItem::shadow() const
+DecorationShadow* PreviewItem::shadow() const
 {
     if (!m_decoration) {
         return nullptr;

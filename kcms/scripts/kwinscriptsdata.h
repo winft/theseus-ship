@@ -19,7 +19,7 @@ class KWinScriptsData : public KCModuleData
     Q_OBJECT
 
 public:
-    KWinScriptsData(QObject *parent);
+    KWinScriptsData(QObject* parent);
 
     bool isDefaults() const override;
 

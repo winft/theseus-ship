@@ -19,40 +19,41 @@
 #include <KWindowSystem>
 #include <netwm_def.h>
 
-
 namespace theseus_ship
 {
 
-KCMKWinRules::KCMKWinRules(QObject *parent, const KPluginMetaData &metaData, const QVariantList &arguments)
+KCMKWinRules::KCMKWinRules(QObject* parent,
+                           const KPluginMetaData& metaData,
+                           const QVariantList& arguments)
     : KQuickConfigModule(parent, metaData)
     , m_ruleBookModel(new RuleBookModel(this))
     , m_rulesModel(new RulesModel(this))
 {
     QStringList argList;
-    for (const QVariant &arg : arguments) {
+    for (const QVariant& arg : arguments) {
         argList << arg.toString();
     }
     parseArguments(argList);
 
-    connect(m_rulesModel, &RulesModel::descriptionChanged, this, [this]{
+    connect(m_rulesModel, &RulesModel::descriptionChanged, this, [this] {
         if (m_editIndex.isValid()) {
             m_ruleBookModel->setDescriptionAt(m_editIndex.row(), m_rulesModel->description());
         }
-    } );
-    connect(m_rulesModel, &RulesModel::dataChanged, this, [this]{
+    });
+    connect(m_rulesModel, &RulesModel::dataChanged, this, [this] {
         Q_EMIT m_ruleBookModel->dataChanged(m_editIndex, m_editIndex, {});
-    } );
+    });
     connect(m_ruleBookModel, &RuleBookModel::dataChanged, this, &KCMKWinRules::updateNeedsSave);
 }
 
-void KCMKWinRules::parseArguments(const QStringList &args)
+void KCMKWinRules::parseArguments(const QStringList& args)
 {
     // When called from window menu, "uuid" and "whole-app" are set in arguments list
     bool nextArgIsUuid = false;
     QUuid uuid = QUuid();
 
     // TODO: Use a better argument parser
-    for (const QString &arg : args) {
+    for (const QString& arg : args) {
         if (arg == QLatin1String("uuid")) {
             nextArgIsUuid = true;
         } else if (nextArgIsUuid) {
@@ -78,21 +79,24 @@ void KCMKWinRules::parseArguments(const QStringList &args)
     message.setArguments({uuid.toString()});
     QDBusPendingReply<QVariantMap> async = QDBusConnection::sessionBus().asyncCall(message);
 
-    QDBusPendingCallWatcher *callWatcher = new QDBusPendingCallWatcher(async, this);
-    connect(callWatcher, &QDBusPendingCallWatcher::finished, this, [this, uuid](QDBusPendingCallWatcher *self) {
-        QDBusPendingReply<QVariantMap> reply = *self;
-        self->deleteLater();
-        if (!reply.isValid() || reply.value().isEmpty()) {
-            qDebug() << "Error retrieving properties for window" << uuid;
-            return;
-        }
-        qDebug() << "Retrieved properties for window" << uuid;
-        m_winProperties = reply.value();
+    QDBusPendingCallWatcher* callWatcher = new QDBusPendingCallWatcher(async, this);
+    connect(callWatcher,
+            &QDBusPendingCallWatcher::finished,
+            this,
+            [this, uuid](QDBusPendingCallWatcher* self) {
+                QDBusPendingReply<QVariantMap> reply = *self;
+                self->deleteLater();
+                if (!reply.isValid() || reply.value().isEmpty()) {
+                    qDebug() << "Error retrieving properties for window" << uuid;
+                    return;
+                }
+                qDebug() << "Retrieved properties for window" << uuid;
+                m_winProperties = reply.value();
 
-        if (m_alreadyLoaded) {
-            createRuleFromProperties();
-        }
-    });
+                if (m_alreadyLoaded) {
+                    createRuleFromProperties();
+                }
+            });
 }
 
 void KCMKWinRules::load()
@@ -154,8 +158,7 @@ int KCMKWinRules::editIndex() const
     return m_editIndex.row();
 }
 
-
-void KCMKWinRules::setRuleDescription(int index, const QString &description)
+void KCMKWinRules::setRuleDescription(int index, const QString& description)
 {
     if (index < 0 || index >= m_ruleBookModel->rowCount()) {
         return;
@@ -169,7 +172,6 @@ void KCMKWinRules::setRuleDescription(int index, const QString &description)
 
     updateNeedsSave();
 }
-
 
 void KCMKWinRules::editRule(int index)
 {
@@ -211,9 +213,8 @@ void KCMKWinRules::removeRule(int index)
 void KCMKWinRules::moveRule(int sourceIndex, int destIndex)
 {
     const int lastIndex = m_ruleBookModel->rowCount() - 1;
-    if (sourceIndex == destIndex
-            || (sourceIndex < 0 || sourceIndex > lastIndex)
-            || (destIndex < 0 || destIndex > lastIndex)) {
+    if (sourceIndex == destIndex || (sourceIndex < 0 || sourceIndex > lastIndex)
+        || (destIndex < 0 || destIndex > lastIndex)) {
         return;
     }
 
@@ -239,7 +240,7 @@ void KCMKWinRules::duplicateRule(int index)
     updateNeedsSave();
 }
 
-void KCMKWinRules::exportToFile(const QUrl &path, const QList<int> &indexes)
+void KCMKWinRules::exportToFile(const QUrl& path, const QList<int>& indexes)
 {
     if (indexes.isEmpty()) {
         return;
@@ -248,7 +249,7 @@ void KCMKWinRules::exportToFile(const QUrl &path, const QList<int> &indexes)
     const auto config = KSharedConfig::openConfig(path.toLocalFile(), KConfig::SimpleConfig);
 
     auto const groups = config->groupList();
-    for (const QString &groupName : groups) {
+    for (const QString& groupName : groups) {
         config->deleteGroup(groupName);
     }
 
@@ -264,7 +265,7 @@ void KCMKWinRules::exportToFile(const QUrl &path, const QList<int> &indexes)
     }
 }
 
-void KCMKWinRules::importFromFile(const QUrl &path)
+void KCMKWinRules::importFromFile(const QUrl& path)
 {
     const auto config = KSharedConfig::openConfig(path.toLocalFile(), KConfig::SimpleConfig);
     const QStringList groups = config->groupList();
@@ -272,7 +273,7 @@ void KCMKWinRules::importFromFile(const QUrl &path)
         return;
     }
 
-    for (const QString &groupName : groups) {
+    for (const QString& groupName : groups) {
         como::win::rules::settings settings(config, groupName);
 
         const bool remove = settings.deleteRule();
@@ -312,7 +313,7 @@ void KCMKWinRules::importFromFile(const QUrl &path)
 }
 
 // Code adapted from original `findRule()` method in `kwin_rules_dialog::main.cpp`
-QModelIndex KCMKWinRules::findRuleWithProperties(const QVariantMap &info, bool wholeApp) const
+QModelIndex KCMKWinRules::findRuleWithProperties(const QVariantMap& info, bool wholeApp) const
 {
     const QByteArray wmclass_class = info.value("resourceClass").toByteArray();
     const QByteArray wmclass_name = info.value("resourceName").toByteArray();
@@ -355,12 +356,20 @@ QModelIndex KCMKWinRules::findRuleWithProperties(const QVariantMap &info, bool w
             generic = false; // this can be considered specific enough (old X apps)
         }
         if (!wholeApp) {
-            if (settings->windowrolematch() != como::enum_index(como::win::rules::name_match::unimportant)) {
-                score += settings->windowrolematch() == como::enum_index(como::win::rules::name_match::exact) ? 5 : 1;
+            if (settings->windowrolematch()
+                != como::enum_index(como::win::rules::name_match::unimportant)) {
+                score += settings->windowrolematch()
+                        == como::enum_index(como::win::rules::name_match::exact)
+                    ? 5
+                    : 1;
                 generic = false;
             }
-            if (settings->titlematch() != como::enum_index(como::win::rules::name_match::unimportant)) {
-                score += settings->titlematch() == como::enum_index(como::win::rules::name_match::exact) ? 3 : 1;
+            if (settings->titlematch()
+                != como::enum_index(como::win::rules::name_match::unimportant)) {
+                score += settings->titlematch()
+                        == como::enum_index(como::win::rules::name_match::exact)
+                    ? 3
+                    : 1;
                 generic = false;
             }
             if (settings->types() != NET::AllTypesMask) {
@@ -412,13 +421,15 @@ void KCMKWinRules::fillSettingsFromProperties(como::win::rules::settings* settin
 
     if (wholeApp) {
         if (!wmclass_class.isEmpty()) {
-            settings->setDescription(i18n("Application settings for %1", QString::fromLatin1(wmclass_class)));
+            settings->setDescription(
+                i18n("Application settings for %1", QString::fromLatin1(wmclass_class)));
         }
         // TODO maybe exclude some types? If yes, then also exclude them when searching.
         settings->setTypes(NET::AllTypesMask);
         settings->setTitlematch(como::enum_index(como::win::rules::name_match::unimportant));
         settings->setClientmachine(machine); // set, but make unimportant
-        settings->setClientmachinematch(como::enum_index(como::win::rules::name_match::unimportant));
+        settings->setClientmachinematch(
+            como::enum_index(como::win::rules::name_match::unimportant));
         settings->setWindowrolematch(como::enum_index(como::win::rules::name_match::unimportant));
         if (wmclass_name == wmclass_class) {
             settings->setWmclasscomplete(false);
@@ -434,7 +445,8 @@ void KCMKWinRules::fillSettingsFromProperties(como::win::rules::settings* settin
     }
 
     if (!wmclass_class.isEmpty()) {
-        settings->setDescription(i18n("Window settings for %1", QString::fromLatin1(wmclass_class)));
+        settings->setDescription(
+            i18n("Window settings for %1", QString::fromLatin1(wmclass_class)));
     }
     if (type == NET::Unknown) {
         settings->setTypes(NET::NormalMask);
@@ -445,7 +457,8 @@ void KCMKWinRules::fillSettingsFromProperties(como::win::rules::settings* settin
     settings->setTitlematch(como::enum_index(como::win::rules::name_match::unimportant));
     settings->setClientmachine(machine); // set, but make unimportant
     settings->setClientmachinematch(como::enum_index(como::win::rules::name_match::unimportant));
-    if (!role.isEmpty() && role != "unknown" && role != "unnamed") { // Qt sets this if not specified
+    if (!role.isEmpty() && role != "unknown"
+        && role != "unnamed") { // Qt sets this if not specified
         settings->setWindowrole(role);
         settings->setWindowrolematch(como::enum_index(como::win::rules::name_match::exact));
         if (wmclass_name == wmclass_class) {

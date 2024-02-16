@@ -23,18 +23,18 @@ class VirtualDesktopsData : public KCModuleData
     Q_OBJECT
 
 public:
-    explicit VirtualDesktopsData(QObject *parent);
+    explicit VirtualDesktopsData(QObject* parent);
 
     bool isDefaults() const override;
 
-    VirtualDesktopsSettings *settings() const;
-    DesktopsModel *desktopsModel() const;
-    AnimationsModel *animationsModel() const;
+    VirtualDesktopsSettings* settings() const;
+    DesktopsModel* desktopsModel() const;
+    AnimationsModel* animationsModel() const;
 
 private:
-    VirtualDesktopsSettings *m_settings;
-    DesktopsModel *m_desktopsModel;
-    AnimationsModel *m_animationsModel;
+    VirtualDesktopsSettings* m_settings;
+    DesktopsModel* m_desktopsModel;
+    AnimationsModel* m_animationsModel;
 };
 
 }

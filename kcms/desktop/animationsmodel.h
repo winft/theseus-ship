@@ -14,14 +14,18 @@ namespace theseus_ship
 class AnimationsModel : public EffectsModel
 {
     Q_OBJECT
-    Q_PROPERTY(bool animationEnabled READ animationEnabled WRITE setAnimationEnabled NOTIFY animationEnabledChanged)
-    Q_PROPERTY(int animationIndex READ animationIndex WRITE setAnimationIndex NOTIFY animationIndexChanged)
+    Q_PROPERTY(bool animationEnabled READ animationEnabled WRITE setAnimationEnabled NOTIFY
+                   animationEnabledChanged)
+    Q_PROPERTY(
+        int animationIndex READ animationIndex WRITE setAnimationIndex NOTIFY animationIndexChanged)
     Q_PROPERTY(bool currentConfigurable READ currentConfigurable NOTIFY currentConfigurableChanged)
-    Q_PROPERTY(bool defaultAnimationEnabled READ defaultAnimationEnabled NOTIFY defaultAnimationEnabledChanged)
-    Q_PROPERTY(int defaultAnimationIndex READ defaultAnimationIndex NOTIFY defaultAnimationIndexChanged)
+    Q_PROPERTY(bool defaultAnimationEnabled READ defaultAnimationEnabled NOTIFY
+                   defaultAnimationEnabledChanged)
+    Q_PROPERTY(
+        int defaultAnimationIndex READ defaultAnimationIndex NOTIFY defaultAnimationIndexChanged)
 
 public:
-    explicit AnimationsModel(QObject *parent = nullptr);
+    explicit AnimationsModel(QObject* parent = nullptr);
 
     bool animationEnabled() const;
     void setAnimationEnabled(bool enabled);
@@ -48,7 +52,7 @@ Q_SIGNALS:
     void defaultAnimationIndexChanged();
 
 protected:
-    bool shouldStore(const EffectData &data) const override;
+    bool shouldStore(const EffectData& data) const override;
 
 private:
     Status status(int row) const;

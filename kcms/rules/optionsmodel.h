@@ -13,8 +13,8 @@
 #include <QIcon>
 #include <QVariant>
 
-
-namespace theseus_ship {
+namespace theseus_ship
+{
 
 class OptionsModel : public QAbstractListModel
 {
@@ -34,13 +34,18 @@ public:
 
     enum OptionType {
         NormalOption = 0, /**< Normal option */
-        ExclusiveOption, /**< An exclusive option, so all other option items are deselected when this one is selected */
-        SelectAllOption, /**< All option items are selected when this option item is selected */
+        ExclusiveOption,  /**< An exclusive option, so all other option items are deselected when
+                             this one is selected */
+        SelectAllOption,  /**< All option items are selected when this option item is selected */
     };
     Q_ENUM(OptionType)
 
     struct Data {
-        Data(const QVariant &value, const QString &text, const QIcon &icon = {}, const QString &description = {}, OptionType optionType = NormalOption)
+        Data(const QVariant& value,
+             const QString& text,
+             const QIcon& icon = {},
+             const QString& description = {},
+             OptionType optionType = NormalOption)
             : value(value)
             , text(text)
             , icon(icon)
@@ -48,11 +53,12 @@ public:
             , optionType(optionType)
         {
         }
-        Data(const QVariant &value, const QString &text, const QString &description)
+        Data(const QVariant& value, const QString& text, const QString& description)
             : value(value)
             , text(text)
             , description(description)
-            {}
+        {
+        }
 
         QVariant value;
         QString text;
@@ -66,11 +72,13 @@ public:
         : QAbstractListModel()
         , m_data(data)
         , m_index(0)
-        , m_useFlags(useFlags){}
+        , m_useFlags(useFlags)
+    {
+    }
 
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QHash<int, QByteArray> roleNames() const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 
     QVariant value() const;
     void setValue(QVariant value);
@@ -80,7 +88,7 @@ public:
     QVariant allValues() const;
     uint allOptionsMask() const;
 
-    void updateModelData(const QList<Data> &data);
+    void updateModelData(const QList<Data>& data);
 
     Q_INVOKABLE int indexOf(QVariant value) const;
     Q_INVOKABLE QString textOfValue(QVariant value) const;
@@ -102,22 +110,16 @@ protected:
 class RulePolicy : public OptionsModel
 {
 public:
-    enum Type {
-        NoPolicy,
-        StringMatch,
-        SetRule,
-        ForceRule
-    };
+    enum Type { NoPolicy, StringMatch, SetRule, ForceRule };
 
 public:
     RulePolicy(Type type)
         : OptionsModel(policyOptions(type))
-        , m_type(type)
-        {};
+        , m_type(type){};
 
     Type type() const;
     int value() const;
-    QString policyKey(const QString &key) const;
+    QString policyKey(const QString& key) const;
 
 private:
     static QList<Data> policyOptions(RulePolicy::Type type);
@@ -126,6 +128,6 @@ private:
     Type m_type;
 };
 
-}   //namespace
+} // namespace
 
-#endif  //KWIN_OPTIONS_MODEL_H
+#endif // KWIN_OPTIONS_MODEL_H

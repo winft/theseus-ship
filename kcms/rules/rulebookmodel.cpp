@@ -10,7 +10,7 @@
 namespace theseus_ship
 {
 
-RuleBookModel::RuleBookModel(QObject *parent)
+RuleBookModel::RuleBookModel(QObject* parent)
     : QAbstractListModel(parent)
     , m_ruleBook(new como::win::rules::book_settings(this))
 {
@@ -27,13 +27,13 @@ QHash<int, QByteArray> RuleBookModel::roleNames() const
     return roles;
 }
 
-int RuleBookModel::rowCount(const QModelIndex &parent) const
+int RuleBookModel::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent)
     return m_ruleBook->ruleCount();
 }
 
-QVariant RuleBookModel::data(const QModelIndex &index, int role) const
+QVariant RuleBookModel::data(const QModelIndex& index, int role) const
 {
     if (!checkIndex(index, CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid)) {
         return QVariant();
@@ -53,7 +53,7 @@ QVariant RuleBookModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-bool RuleBookModel::setData(const QModelIndex &index, const QVariant &value, int role)
+bool RuleBookModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     if (!checkIndex(index, CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid)) {
         return false;
@@ -77,7 +77,7 @@ bool RuleBookModel::setData(const QModelIndex &index, const QVariant &value, int
     return true;
 }
 
-bool RuleBookModel::insertRows(int row, int count, const QModelIndex &parent)
+bool RuleBookModel::insertRows(int row, int count, const QModelIndex& parent)
 {
     if (row < 0 || row > rowCount() || parent.isValid()) {
         return false;
@@ -95,7 +95,7 @@ bool RuleBookModel::insertRows(int row, int count, const QModelIndex &parent)
     return true;
 }
 
-bool RuleBookModel::removeRows(int row, int count, const QModelIndex &parent)
+bool RuleBookModel::removeRows(int row, int count, const QModelIndex& parent)
 {
     if (row < 0 || row > rowCount() || parent.isValid()) {
         return false;
@@ -110,18 +110,24 @@ bool RuleBookModel::removeRows(int row, int count, const QModelIndex &parent)
     return true;
 }
 
-bool RuleBookModel::moveRows(const QModelIndex &sourceParent, int sourceRow, int count,
-                             const QModelIndex &destinationParent, int destinationChild)
+bool RuleBookModel::moveRows(const QModelIndex& sourceParent,
+                             int sourceRow,
+                             int count,
+                             const QModelIndex& destinationParent,
+                             int destinationChild)
 {
-    if (sourceParent != destinationParent || sourceParent != QModelIndex()){
+    if (sourceParent != destinationParent || sourceParent != QModelIndex()) {
         return false;
     }
 
     const bool isMoveDown = destinationChild > sourceRow;
     // QAbstractItemModel::beginMoveRows(): when moving rows down in the same parent,
     // the rows will be placed before the destinationChild index.
-    if (!beginMoveRows(sourceParent, sourceRow, sourceRow + count - 1,
-                       destinationParent, isMoveDown ? destinationChild + 1 : destinationChild)) {
+    if (!beginMoveRows(sourceParent,
+                       sourceRow,
+                       sourceRow + count - 1,
+                       destinationParent,
+                       isMoveDown ? destinationChild + 1 : destinationChild)) {
         return false;
     }
 
@@ -133,20 +139,19 @@ bool RuleBookModel::moveRows(const QModelIndex &sourceParent, int sourceRow, int
     return true;
 }
 
-
 QString RuleBookModel::descriptionAt(int row) const
 {
     Q_ASSERT(row >= 0 && row < rowCount());
     return m_ruleBook->ruleSettingsAt(row)->description();
 }
 
-como::win::rules::settings *RuleBookModel::ruleSettingsAt(int row) const
+como::win::rules::settings* RuleBookModel::ruleSettingsAt(int row) const
 {
     Q_ASSERT(row >= 0 && row < rowCount());
     return m_ruleBook->ruleSettingsAt(row);
 }
 
-void RuleBookModel::setDescriptionAt(int row, const QString &description)
+void RuleBookModel::setDescriptionAt(int row, const QString& description)
 {
     Q_ASSERT(row >= 0 && row < rowCount());
     if (description == m_ruleBook->ruleSettingsAt(row)->description()) {
@@ -186,11 +191,12 @@ bool RuleBookModel::isSaveNeeded()
     return m_ruleBook->usrIsSaveNeeded();
 }
 
-void RuleBookModel::copySettingsTo(como::win::rules::settings *dest, como::win::rules::settings const& source)
+void RuleBookModel::copySettingsTo(como::win::rules::settings* dest,
+                                   como::win::rules::settings const& source)
 {
     dest->setDefaults();
     auto const items = source.items();
-    for (const KConfigSkeletonItem *item : items) {
+    for (const KConfigSkeletonItem* item : items) {
         dest->findItem(item->name())->setProperty(item->property());
     }
 }

@@ -27,8 +27,7 @@ class FrameSvg;
 namespace theseus_ship
 {
 
-class Monitor
-    : public ScreenPreviewWidget
+class Monitor : public ScreenPreviewWidget
 {
     Q_OBJECT
 public:
@@ -45,20 +44,11 @@ public:
     void selectEdgeItem(int edge, int index);
     int selectedEdgeItem(int edge) const;
 
-    enum Edges {
-        Left,
-        Right,
-        Top,
-        Bottom,
-        TopLeft,
-        TopRight,
-        BottomLeft,
-        BottomRight,
-        None
-    };
+    enum Edges { Left, Right, Top, Bottom, TopLeft, TopRight, BottomLeft, BottomRight, None };
 Q_SIGNALS:
     void changed();
     void edgeSelectionChanged(int edge, int index);
+
 protected:
     void resizeEvent(QResizeEvent* e) override;
     bool event(QEvent* event) override;
@@ -70,30 +60,33 @@ private:
     void checkSize();
     QGraphicsView* view;
     QGraphicsScene* scene;
-    Corner* items[ 8 ];
-    bool hidden[ 8 ];
-    QMenu* popups[ 8 ];
-    QVector< QAction* > popup_actions[ 8 ];
-    QActionGroup* grp[ 8 ];
+    Corner* items[8];
+    bool hidden[8];
+    QMenu* popups[8];
+    QVector<QAction*> popup_actions[8];
+    QActionGroup* grp[8];
 };
 
-class Monitor::Corner
-    : public QGraphicsRectItem
+class Monitor::Corner : public QGraphicsRectItem
 {
 public:
     Corner(Monitor* m);
     ~Corner() override;
     void setActive(bool active);
     bool active() const;
+
 protected:
     void contextMenuEvent(QGraphicsSceneContextMenuEvent* e) override;
     void mousePressEvent(QGraphicsSceneMouseEvent* e) override;
-    void hoverEnterEvent(QGraphicsSceneHoverEvent * e) override;
-    void hoverLeaveEvent(QGraphicsSceneHoverEvent * e) override;
-    void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
+    void hoverEnterEvent(QGraphicsSceneHoverEvent* e) override;
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent* e) override;
+    void paint(QPainter* painter,
+               const QStyleOptionGraphicsItem* option,
+               QWidget* widget = nullptr) override;
+
 private:
     Monitor* monitor;
-    KSvg::FrameSvg *button;
+    KSvg::FrameSvg* button;
     bool m_active;
     bool m_hover;
 };

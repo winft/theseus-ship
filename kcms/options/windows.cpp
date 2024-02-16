@@ -11,33 +11,33 @@
 
 #include <QApplication>
 #include <QCheckBox>
-#include <QRadioButton>
-#include <QLabel>
-#include <QHBoxLayout>
 #include <QFormLayout>
-#include <QtDBus>
 #include <QGroupBox>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QRadioButton>
 #include <QScreen>
+#include <QtDBus>
 
 #include <KConfig>
 #include <KConfigGroup>
 #include <KLocalizedString>
 #include <KWindowSystem>
 
-#include "windows.h"
 #include "kwinoptions_settings.h"
+#include "windows.h"
 #include <kwin_effects_interface.h>
 
-#include "kwinoptions_settings.h"
 #include "kwinoptions_kdeglobals_settings.h"
+#include "kwinoptions_settings.h"
 #include <KConfigDialogManager>
 
-#define  CLICK_TO_FOCUS                 0
-#define  CLICK_TO_FOCUS_MOUSE_PRECEDENT 1
-#define  FOCUS_FOLLOWS_MOUSE            2
-#define  FOCUS_FOLLOWS_MOUSE_PRECEDENT  3
-#define  FOCUS_UNDER_MOUSE              4
-#define  FOCUS_STRICTLY_UNDER_MOUSE     5
+#define CLICK_TO_FOCUS 0
+#define CLICK_TO_FOCUS_MOUSE_PRECEDENT 1
+#define FOCUS_FOLLOWS_MOUSE 2
+#define FOCUS_FOLLOWS_MOUSE_PRECEDENT 3
+#define FOCUS_UNDER_MOUSE 4
+#define FOCUS_STRICTLY_UNDER_MOUSE 5
 
 namespace
 {
@@ -50,7 +50,7 @@ KWinFocusConfigForm::KWinFocusConfigForm(QWidget* parent)
     setupUi(parent);
 }
 
-KFocusConfig::KFocusConfig(bool _standAlone, KWinOptionsSettings *settings, QWidget *parent)
+KFocusConfig::KFocusConfig(bool _standAlone, KWinOptionsSettings* settings, QWidget* parent)
     : KCModule(parent, KPluginMetaData())
     , standAlone(_standAlone)
     , m_ui(new KWinFocusConfigForm(widget()))
@@ -60,14 +60,21 @@ KFocusConfig::KFocusConfig(bool _standAlone, KWinOptionsSettings *settings, QWid
     }
 }
 
-void KFocusConfig::initialize(KWinOptionsSettings *settings)
+void KFocusConfig::initialize(KWinOptionsSettings* settings)
 {
     m_settings = settings;
     addConfig(m_settings, widget());
 
-    connect(m_ui->windowFocusPolicy, qOverload<int>(&QComboBox::currentIndexChanged), this, &KFocusConfig::focusPolicyChanged);
-    connect(m_ui->windowFocusPolicy, qOverload<int>(&QComboBox::currentIndexChanged), this, &KFocusConfig::updateDefaultIndicator);
-    connect(this, SIGNAL(defaultsIndicatorsVisibleChanged(bool)), this, SLOT(updateDefaultIndicator()));
+    connect(m_ui->windowFocusPolicy,
+            qOverload<int>(&QComboBox::currentIndexChanged),
+            this,
+            &KFocusConfig::focusPolicyChanged);
+    connect(m_ui->windowFocusPolicy,
+            qOverload<int>(&QComboBox::currentIndexChanged),
+            this,
+            &KFocusConfig::updateDefaultIndicator);
+    connect(
+        this, SIGNAL(defaultsIndicatorsVisibleChanged(bool)), this, SLOT(updateDefaultIndicator()));
 
     connect(qApp, &QGuiApplication::screenAdded, this, &KFocusConfig::updateMultiScreen);
     connect(qApp, &QGuiApplication::screenRemoved, this, &KFocusConfig::updateMultiScreen);
@@ -84,7 +91,8 @@ void KFocusConfig::updateMultiScreen()
 void KFocusConfig::updateDefaultIndicator()
 {
     const bool isDefault = m_ui->windowFocusPolicy->currentIndex() == defaultFocusPolicyIndex;
-    m_ui->windowFocusPolicy->setProperty("_kde_highlight_neutral", defaultsIndicatorsVisible() && !isDefault);
+    m_ui->windowFocusPolicy->setProperty("_kde_highlight_neutral",
+                                         defaultsIndicatorsVisible() && !isDefault);
     m_ui->windowFocusPolicy->update();
 }
 
@@ -93,22 +101,45 @@ void KFocusConfig::updateFocusPolicyExplanatoryText()
     const int focusPolicy = m_ui->windowFocusPolicy->currentIndex();
     switch (focusPolicy) {
     case CLICK_TO_FOCUS:
-        m_ui->windowFocusPolicyDescriptionLabel->setText(i18n("<em>Click to focus:</em> A window becomes active when you click into it. This behavior is common on other operating systems and likely what you want."));
+        m_ui->windowFocusPolicyDescriptionLabel->setText(
+            i18n("<em>Click to focus:</em> A window becomes active when you click into it. This "
+                 "behavior is common on other operating systems and likely what you want."));
         break;
     case CLICK_TO_FOCUS_MOUSE_PRECEDENT:
-        m_ui->windowFocusPolicyDescriptionLabel->setText(i18n("<em>Click to focus (mouse precedence):</em> Mostly the same as <em>Click to focus</em>. If an active window has to be chosen by the system (eg. because the currently active one was closed) the window under the mouse is the preferred candidate. Unusual, but possible variant of <em>Click to focus</em>."));
+        m_ui->windowFocusPolicyDescriptionLabel->setText(
+            i18n("<em>Click to focus (mouse precedence):</em> Mostly the same as <em>Click to "
+                 "focus</em>. If an active window has to be chosen by the system (eg. because the "
+                 "currently active one was closed) the window under the mouse is the preferred "
+                 "candidate. Unusual, but possible variant of <em>Click to focus</em>."));
         break;
     case FOCUS_FOLLOWS_MOUSE:
-        m_ui->windowFocusPolicyDescriptionLabel->setText(i18n("<em>Focus follows mouse:</em> Moving the mouse onto a window will activate it. Eg. windows randomly appearing under the mouse will not gain the focus. <em>Focus stealing prevention</em> takes place as usual. Think as <em>Click to focus</em> just without having to actually click."));
+        m_ui->windowFocusPolicyDescriptionLabel->setText(
+            i18n("<em>Focus follows mouse:</em> Moving the mouse onto a window will activate it. "
+                 "Eg. windows randomly appearing under the mouse will not gain the focus. "
+                 "<em>Focus stealing prevention</em> takes place as usual. Think as <em>Click to "
+                 "focus</em> just without having to actually click."));
         break;
     case FOCUS_FOLLOWS_MOUSE_PRECEDENT:
-        m_ui->windowFocusPolicyDescriptionLabel->setText(i18n("This is mostly the same as <em>Focus follows mouse</em>. If an active window has to be chosen by the system (eg. because the currently active one was closed) the window under the mouse is the preferred candidate. Choose this, if you want a hover controlled focus."));
+        m_ui->windowFocusPolicyDescriptionLabel->setText(
+            i18n("This is mostly the same as <em>Focus follows mouse</em>. If an active window has "
+                 "to be chosen by the system (eg. because the currently active one was closed) the "
+                 "window under the mouse is the preferred candidate. Choose this, if you want a "
+                 "hover controlled focus."));
         break;
     case FOCUS_UNDER_MOUSE:
-        m_ui->windowFocusPolicyDescriptionLabel->setText(i18n("<em>Focus under mouse:</em> The focus always remains on the window under the mouse.<br/><strong>Warning:</strong> <em>Focus stealing prevention</em> and the <em>tabbox ('Alt+Tab')</em> contradict the activation policy and will not work. You very likely want to use <em>Focus follows mouse (mouse precedence)</em> instead!"));
+        m_ui->windowFocusPolicyDescriptionLabel->setText(i18n(
+            "<em>Focus under mouse:</em> The focus always remains on the window under the "
+            "mouse.<br/><strong>Warning:</strong> <em>Focus stealing prevention</em> and the "
+            "<em>tabbox ('Alt+Tab')</em> contradict the activation policy and will not work. You "
+            "very likely want to use <em>Focus follows mouse (mouse precedence)</em> instead!"));
         break;
     case FOCUS_STRICTLY_UNDER_MOUSE:
-        m_ui->windowFocusPolicyDescriptionLabel->setText(i18n("<em>Focus strictly under mouse:</em> The focus is always on the window under the mouse (in doubt nowhere) very much like the focus behavior in an unmanaged legacy X11 environment.<br/><strong>Warning:</strong> <em>Focus stealing prevention</em> and the <em>tabbox ('Alt+Tab')</em> contradict the activation policy and will not work. You very likely want to use <em>Focus follows mouse (mouse precedence)</em> instead!"));
+        m_ui->windowFocusPolicyDescriptionLabel->setText(i18n(
+            "<em>Focus strictly under mouse:</em> The focus is always on the window under the "
+            "mouse (in doubt nowhere) very much like the focus behavior in an unmanaged legacy X11 "
+            "environment.<br/><strong>Warning:</strong> <em>Focus stealing prevention</em> and the "
+            "<em>tabbox ('Alt+Tab')</em> contradict the activation policy and will not work. You "
+            "very likely want to use <em>Focus follows mouse (mouse precedence)</em> instead!"));
         break;
     }
 }
@@ -145,16 +176,19 @@ void KFocusConfig::focusPolicyChanged()
         break;
     }
 
-    m_unmanagedChangeState = m_settings->focusPolicy() != selectedFocusPolicy || loadedNextFocusPrefersMouseItem != selectedNextFocusPrefersMouseItem;
+    m_unmanagedChangeState = m_settings->focusPolicy() != selectedFocusPolicy
+        || loadedNextFocusPrefersMouseItem != selectedNextFocusPrefersMouseItem;
     unmanagedWidgetChangeState(m_unmanagedChangeState);
 
     m_unmanagedDefaultState = focusPolicy == defaultFocusPolicyIndex;
     unmanagedWidgetDefaultState(m_unmanagedDefaultState);
 
     // the auto raise related widgets are: autoRaise
-    m_ui->kcfg_AutoRaise->setEnabled(focusPolicy != CLICK_TO_FOCUS && focusPolicy != CLICK_TO_FOCUS_MOUSE_PRECEDENT);
+    m_ui->kcfg_AutoRaise->setEnabled(focusPolicy != CLICK_TO_FOCUS
+                                     && focusPolicy != CLICK_TO_FOCUS_MOUSE_PRECEDENT);
 
-    m_ui->kcfg_FocusStealingPreventionLevel->setDisabled(focusPolicy == FOCUS_UNDER_MOUSE || focusPolicy == FOCUS_STRICTLY_UNDER_MOUSE);
+    m_ui->kcfg_FocusStealingPreventionLevel->setDisabled(
+        focusPolicy == FOCUS_UNDER_MOUSE || focusPolicy == FOCUS_STRICTLY_UNDER_MOUSE);
 
     // the delayed focus related widgets are: delayFocus
     m_ui->delayFocusOnLabel->setEnabled(focusPolicy != CLICK_TO_FOCUS);
@@ -162,7 +196,8 @@ void KFocusConfig::focusPolicyChanged()
 
     // on by default for non click to focus policies
     if (m_settings->activeMouseScreen() == m_settings->defaultActiveMouseScreenValue()) {
-        m_ui->kcfg_ActiveMouseScreen->setChecked(focusPolicy != CLICK_TO_FOCUS && focusPolicy != CLICK_TO_FOCUS_MOUSE_PRECEDENT);
+        m_ui->kcfg_ActiveMouseScreen->setChecked(focusPolicy != CLICK_TO_FOCUS
+                                                 && focusPolicy != CLICK_TO_FOCUS_MOUSE_PRECEDENT);
     }
 }
 
@@ -181,7 +216,8 @@ void KFocusConfig::load(void)
         m_ui->windowFocusPolicy->setCurrentIndex(CLICK_TO_FOCUS + loadedNextFocusPrefersMouseItem);
         break;
     case KWinOptionsSettings::EnumFocusPolicy::FocusFollowsMouse:
-        m_ui->windowFocusPolicy->setCurrentIndex(FOCUS_FOLLOWS_MOUSE + loadedNextFocusPrefersMouseItem);
+        m_ui->windowFocusPolicy->setCurrentIndex(FOCUS_FOLLOWS_MOUSE
+                                                 + loadedNextFocusPrefersMouseItem);
         break;
     default:
         // +2 to ignore the two special values
@@ -214,14 +250,14 @@ void KFocusConfig::save(void)
         m_settings->setFocusPolicy(KWinOptionsSettings::EnumFocusPolicy::FocusStrictlyUnderMouse);
         break;
     }
-    m_settings->setNextFocusPrefersMouse(idxFocusPolicy == CLICK_TO_FOCUS_MOUSE_PRECEDENT || idxFocusPolicy == FOCUS_FOLLOWS_MOUSE_PRECEDENT);
+    m_settings->setNextFocusPrefersMouse(idxFocusPolicy == CLICK_TO_FOCUS_MOUSE_PRECEDENT
+                                         || idxFocusPolicy == FOCUS_FOLLOWS_MOUSE_PRECEDENT);
 
     m_settings->save();
 
     if (standAlone) {
         // Send signal to all kwin instances
-        QDBusMessage message =
-            QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
+        QDBusMessage message = QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
         QDBusConnection::sessionBus().send(message);
     }
 }
@@ -248,7 +284,10 @@ KWinAdvancedConfigForm::KWinAdvancedConfigForm(QWidget* parent)
     setupUi(parent);
 }
 
-KAdvancedConfig::KAdvancedConfig(bool _standAlone, KWinOptionsSettings *settings, KWinOptionsKDEGlobalsSettings *globalSettings, QWidget *parent)
+KAdvancedConfig::KAdvancedConfig(bool _standAlone,
+                                 KWinOptionsSettings* settings,
+                                 KWinOptionsKDEGlobalsSettings* globalSettings,
+                                 QWidget* parent)
     : KCModule(parent, KPluginMetaData())
     , standAlone(_standAlone)
     , m_ui(new KWinAdvancedConfigForm(widget()))
@@ -258,18 +297,22 @@ KAdvancedConfig::KAdvancedConfig(bool _standAlone, KWinOptionsSettings *settings
     }
 }
 
-void KAdvancedConfig::initialize(KWinOptionsSettings *settings, KWinOptionsKDEGlobalsSettings *globalSettings)
+void KAdvancedConfig::initialize(KWinOptionsSettings* settings,
+                                 KWinOptionsKDEGlobalsSettings* globalSettings)
 {
     m_settings = settings;
     addConfig(m_settings, widget());
     addConfig(globalSettings, widget());
 
     m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::Smart, "Smart");
-    m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::Maximizing, "Maximizing");
+    m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::Maximizing,
+                                      "Maximizing");
     m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::Random, "Random");
     m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::Centered, "Centered");
-    m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::ZeroCornered, "ZeroCornered");
-    m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::UnderMouse, "UnderMouse");
+    m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::ZeroCornered,
+                                      "ZeroCornered");
+    m_ui->kcfg_Placement->setItemData(KWinOptionsSettings::PlacementChoices::UnderMouse,
+                                      "UnderMouse");
 
     // Don't show the option to prevent apps from remembering their window
     // positions on Wayland because it doesn't work on Wayland and the feature
@@ -285,10 +328,8 @@ void KAdvancedConfig::save(void)
 
     if (standAlone) {
         // Send signal to all kwin instances
-        QDBusMessage message =
-            QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
+        QDBusMessage message = QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
         QDBusConnection::sessionBus().send(message);
-
     }
 }
 
@@ -308,7 +349,7 @@ KWinMovingConfigForm::KWinMovingConfigForm(QWidget* parent)
     setupUi(parent);
 }
 
-KMovingConfig::KMovingConfig(bool _standAlone, KWinOptionsSettings *settings, QWidget *parent)
+KMovingConfig::KMovingConfig(bool _standAlone, KWinOptionsSettings* settings, QWidget* parent)
     : KCModule(parent, KPluginMetaData())
     , standAlone(_standAlone)
     , m_ui(new KWinMovingConfigForm(widget()))
@@ -318,7 +359,7 @@ KMovingConfig::KMovingConfig(bool _standAlone, KWinOptionsSettings *settings, QW
     }
 }
 
-void KMovingConfig::initialize(KWinOptionsSettings *settings)
+void KMovingConfig::initialize(KWinOptionsSettings* settings)
 {
     m_settings = settings;
     addConfig(m_settings, widget());
@@ -330,8 +371,7 @@ void KMovingConfig::save(void)
 
     if (standAlone) {
         // Send signal to all kwin instances
-        QDBusMessage message =
-            QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
+        QDBusMessage message = QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
         QDBusConnection::sessionBus().send(message);
     }
 }

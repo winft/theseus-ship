@@ -4,11 +4,11 @@
     SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 */
 #include "previewclient.h"
-#include <KDecoration2/Decoration>
 #include <KDecoration2/DecoratedClient>
+#include <KDecoration2/Decoration>
 
-#include <QDebug>
 #include <QCoreApplication>
+#include <QDebug>
 #include <QEvent>
 #include <QModelIndex>
 
@@ -17,7 +17,7 @@ namespace KDecoration2
 namespace Preview
 {
 
-PreviewClient::PreviewClient(DecoratedClient *c, Decoration *decoration)
+PreviewClient::PreviewClient(DecoratedClient* c, Decoration* decoration)
     : QObject(decoration)
     , ApplicationMenuEnabledDecoratedClientPrivate(c, decoration)
     , m_icon(QIcon::fromTheme(QStringLiteral("start-here-kde")))
@@ -43,53 +43,53 @@ PreviewClient::PreviewClient(DecoratedClient *c, Decoration *decoration)
     , m_bordersRightEdge(false)
     , m_bordersBottomEdge(false)
 {
-    connect(this, &PreviewClient::captionChanged,               c, &DecoratedClient::captionChanged);
-    connect(this, &PreviewClient::activeChanged,                c, &DecoratedClient::activeChanged);
-    connect(this, &PreviewClient::closeableChanged,             c, &DecoratedClient::closeableChanged);
-    connect(this, &PreviewClient::keepAboveChanged,             c, &DecoratedClient::keepAboveChanged);
-    connect(this, &PreviewClient::keepBelowChanged,             c, &DecoratedClient::keepBelowChanged);
-    connect(this, &PreviewClient::maximizableChanged,           c, &DecoratedClient::maximizeableChanged);
-    connect(this, &PreviewClient::maximizedChanged,             c, &DecoratedClient::maximizedChanged);
-    connect(this, &PreviewClient::maximizedVerticallyChanged,   c, &DecoratedClient::maximizedVerticallyChanged);
-    connect(this, &PreviewClient::maximizedHorizontallyChanged, c, &DecoratedClient::maximizedHorizontallyChanged);
-    connect(this, &PreviewClient::minimizableChanged,           c, &DecoratedClient::minimizeableChanged);
-    connect(this, &PreviewClient::movableChanged,               c, &DecoratedClient::moveableChanged);
-    connect(this, &PreviewClient::onAllDesktopsChanged,         c, &DecoratedClient::onAllDesktopsChanged);
-    connect(this, &PreviewClient::resizableChanged,             c, &DecoratedClient::resizeableChanged);
-    connect(this, &PreviewClient::providesContextHelpChanged,   c, &DecoratedClient::providesContextHelpChanged);
-    connect(this, &PreviewClient::widthChanged,                 c, &DecoratedClient::widthChanged);
-    connect(this, &PreviewClient::heightChanged,                c, &DecoratedClient::heightChanged);
-    connect(this, &PreviewClient::iconChanged,                  c, &DecoratedClient::iconChanged);
-    connect(this, &PreviewClient::paletteChanged,               c, &DecoratedClient::paletteChanged);
-    connect(this, &PreviewClient::maximizedVerticallyChanged, this,
-        [this]() {
-            Q_EMIT maximizedChanged(isMaximized());
-        }
-    );
-    connect(this, &PreviewClient::maximizedHorizontallyChanged, this,
-        [this]() {
-            Q_EMIT maximizedChanged(isMaximized());
-        }
-    );
-    connect(this, &PreviewClient::iconNameChanged, this,
-        [this]() {
-            m_icon = QIcon::fromTheme(m_iconName);
-            Q_EMIT iconChanged(m_icon);
-        }
-    );
+    connect(this, &PreviewClient::captionChanged, c, &DecoratedClient::captionChanged);
+    connect(this, &PreviewClient::activeChanged, c, &DecoratedClient::activeChanged);
+    connect(this, &PreviewClient::closeableChanged, c, &DecoratedClient::closeableChanged);
+    connect(this, &PreviewClient::keepAboveChanged, c, &DecoratedClient::keepAboveChanged);
+    connect(this, &PreviewClient::keepBelowChanged, c, &DecoratedClient::keepBelowChanged);
+    connect(this, &PreviewClient::maximizableChanged, c, &DecoratedClient::maximizeableChanged);
+    connect(this, &PreviewClient::maximizedChanged, c, &DecoratedClient::maximizedChanged);
+    connect(this,
+            &PreviewClient::maximizedVerticallyChanged,
+            c,
+            &DecoratedClient::maximizedVerticallyChanged);
+    connect(this,
+            &PreviewClient::maximizedHorizontallyChanged,
+            c,
+            &DecoratedClient::maximizedHorizontallyChanged);
+    connect(this, &PreviewClient::minimizableChanged, c, &DecoratedClient::minimizeableChanged);
+    connect(this, &PreviewClient::movableChanged, c, &DecoratedClient::moveableChanged);
+    connect(this, &PreviewClient::onAllDesktopsChanged, c, &DecoratedClient::onAllDesktopsChanged);
+    connect(this, &PreviewClient::resizableChanged, c, &DecoratedClient::resizeableChanged);
+    connect(this,
+            &PreviewClient::providesContextHelpChanged,
+            c,
+            &DecoratedClient::providesContextHelpChanged);
+    connect(this, &PreviewClient::widthChanged, c, &DecoratedClient::widthChanged);
+    connect(this, &PreviewClient::heightChanged, c, &DecoratedClient::heightChanged);
+    connect(this, &PreviewClient::iconChanged, c, &DecoratedClient::iconChanged);
+    connect(this, &PreviewClient::paletteChanged, c, &DecoratedClient::paletteChanged);
+    connect(this, &PreviewClient::maximizedVerticallyChanged, this, [this]() {
+        Q_EMIT maximizedChanged(isMaximized());
+    });
+    connect(this, &PreviewClient::maximizedHorizontallyChanged, this, [this]() {
+        Q_EMIT maximizedChanged(isMaximized());
+    });
+    connect(this, &PreviewClient::iconNameChanged, this, [this]() {
+        m_icon = QIcon::fromTheme(m_iconName);
+        Q_EMIT iconChanged(m_icon);
+    });
     connect(&m_palette, &como::win::deco::palette::changed, [this]() {
         Q_EMIT paletteChanged(m_palette.get_qt_palette());
     });
-    auto emitEdgesChanged = [this, c]() {
-        Q_EMIT c->adjacentScreenEdgesChanged(adjacentScreenEdges());
-    };
-    connect(this, &PreviewClient::bordersTopEdgeChanged,    this, emitEdgesChanged);
-    connect(this, &PreviewClient::bordersLeftEdgeChanged,   this, emitEdgesChanged);
-    connect(this, &PreviewClient::bordersRightEdgeChanged,  this, emitEdgesChanged);
+    auto emitEdgesChanged
+        = [this, c]() { Q_EMIT c->adjacentScreenEdgesChanged(adjacentScreenEdges()); };
+    connect(this, &PreviewClient::bordersTopEdgeChanged, this, emitEdgesChanged);
+    connect(this, &PreviewClient::bordersLeftEdgeChanged, this, emitEdgesChanged);
+    connect(this, &PreviewClient::bordersRightEdgeChanged, this, emitEdgesChanged);
     connect(this, &PreviewClient::bordersBottomEdgeChanged, this, emitEdgesChanged);
-    auto emitSizeChanged = [c]() {
-        Q_EMIT c->sizeChanged(c->size());
-    };
+    auto emitSizeChanged = [c]() { Q_EMIT c->sizeChanged(c->size()); };
     connect(this, &PreviewClient::widthChanged, this, emitSizeChanged);
     connect(this, &PreviewClient::heightChanged, this, emitSizeChanged);
 
@@ -98,7 +98,7 @@ PreviewClient::PreviewClient(DecoratedClient *c, Decoration *decoration)
 
 PreviewClient::~PreviewClient() = default;
 
-void PreviewClient::setIcon(const QIcon &pixmap)
+void PreviewClient::setIcon(const QIcon& pixmap)
 {
     m_icon = pixmap;
     Q_EMIT iconChanged(m_icon);
@@ -313,7 +313,7 @@ void PreviewClient::setBordersTopEdge(bool enabled)
     Q_EMIT bordersTopEdgeChanged(enabled);
 }
 
-void PreviewClient::requestShowToolTip(const QString &text)
+void PreviewClient::requestShowToolTip(const QString& text)
 {
     Q_UNUSED(text);
 }
@@ -364,7 +364,7 @@ void PreviewClient::requestShowWindowMenu([[maybe_unused]] QRect const& rect)
     Q_EMIT showWindowMenuRequested();
 }
 
-void PreviewClient::requestShowApplicationMenu(const QRect &rect, int actionId)
+void PreviewClient::requestShowApplicationMenu(const QRect& rect, int actionId)
 {
     Q_UNUSED(rect);
     Q_UNUSED(actionId);
@@ -381,20 +381,20 @@ void PreviewClient::requestToggleOnAllDesktops()
     Q_EMIT onAllDesktopsChanged(m_onAllDesktops);
 }
 
-#define SETTER(type, name, variable) \
-void PreviewClient::name(type variable) \
-{ \
-    if (m_##variable == variable) { \
-        return; \
-    } \
-    m_##variable = variable; \
-    Q_EMIT variable##Changed(m_##variable); \
-}
+#define SETTER(type, name, variable)                                                               \
+    void PreviewClient::name(type variable)                                                        \
+    {                                                                                              \
+        if (m_##variable == variable) {                                                            \
+            return;                                                                                \
+        }                                                                                          \
+        m_##variable = variable;                                                                   \
+        Q_EMIT variable##Changed(m_##variable);                                                    \
+    }
 
 #define SETTER2(name, variable) SETTER(bool, name, variable)
 
-SETTER(const QString &, setCaption, caption)
-SETTER(const QString &, setIconName, iconName)
+SETTER(const QString&, setCaption, caption)
+SETTER(const QString&, setIconName, iconName)
 SETTER(int, setWidth, width)
 SETTER(int, setHeight, height)
 

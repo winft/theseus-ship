@@ -227,7 +227,8 @@ int main(int argc, char* argv[])
 
     base.mod.render = std::make_unique<base_t::render_t>(base);
 
-    base.mod.input = std::make_unique<base_t::input_t>(base, como::input::config(KConfig::NoGlobals));
+    base.mod.input
+        = std::make_unique<base_t::input_t>(base, como::input::config(KConfig::NoGlobals));
     base.mod.input->mod.dbus
         = std::make_unique<como::input::dbus::device_manager<base_t::input_t>>(*base.mod.input);
 
@@ -250,7 +251,8 @@ int main(int argc, char* argv[])
 
     if (base.operation_mode == como::base::operation_mode::xwayland) {
         try {
-            base.mod.xwayland = std::make_unique<como::xwl::xwayland<base_t::space_t>>(*base.mod.space);
+            base.mod.xwayland
+                = std::make_unique<como::xwl::xwayland<base_t::space_t>>(*base.mod.space);
         } catch (std::system_error const& exc) {
             std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
             exit(exc.code().value());

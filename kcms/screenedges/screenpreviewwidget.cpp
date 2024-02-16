@@ -7,9 +7,9 @@
 
 #include "screenpreviewwidget.h"
 
-#include <QResizeEvent>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QResizeEvent>
 
 #include <QDebug>
 #include <QMimeData>
@@ -21,7 +21,7 @@
 class ScreenPreviewWidgetPrivate
 {
 public:
-    ScreenPreviewWidgetPrivate(ScreenPreviewWidget *screen)
+    ScreenPreviewWidgetPrivate(ScreenPreviewWidget* screen)
         : q(screen)
         , ratio(1)
         , minimumContentWidth(0)
@@ -29,7 +29,8 @@ public:
     }
 
     ~ScreenPreviewWidgetPrivate()
-    {}
+    {
+    }
 
     void updateRect(const QRectF& rect)
     {
@@ -38,7 +39,8 @@ public:
 
     void updateScreenGraphics()
     {
-        int bottomElements = screenGraphics->elementSize("base").height() + screenGraphics->marginSize(KSvg::FrameSvg::BottomMargin);
+        int bottomElements = screenGraphics->elementSize("base").height()
+            + screenGraphics->marginSize(KSvg::FrameSvg::BottomMargin);
         QRect bounds(QPoint(0, 0), QSize(q->width(), q->height() - bottomElements));
 
         QSizeF monitorSize(1.0, 1.0 / ratio);
@@ -48,7 +50,9 @@ public:
             return;
         }
 
-        const auto minFrameWidth = minimumContentWidth + screenGraphics->marginSize(KSvg::FrameSvg::LeftMargin) + screenGraphics->marginSize(KSvg::FrameSvg::RightMargin);
+        const auto minFrameWidth = minimumContentWidth
+            + screenGraphics->marginSize(KSvg::FrameSvg::LeftMargin)
+            + screenGraphics->marginSize(KSvg::FrameSvg::RightMargin);
         if (monitorSize.width() < minFrameWidth) {
             monitorSize.setWidth(minFrameWidth);
         }
@@ -62,9 +66,9 @@ public:
         previewRect.moveCenter(bounds.center());
     }
 
-    ScreenPreviewWidget *q;
+    ScreenPreviewWidget* q;
     std::unique_ptr<KSvg::ImageSet> svgImageSet;
-    KSvg::FrameSvg *screenGraphics;
+    KSvg::FrameSvg* screenGraphics;
     QPixmap preview;
     QRect monitorRect;
     qreal ratio;
@@ -72,9 +76,9 @@ public:
     QRect previewRect;
 };
 
-ScreenPreviewWidget::ScreenPreviewWidget(QWidget *parent)
-    : QWidget(parent),
-      d(new ScreenPreviewWidgetPrivate(this))
+ScreenPreviewWidget::ScreenPreviewWidget(QWidget* parent)
+    : QWidget(parent)
+    , d(new ScreenPreviewWidgetPrivate(this))
 {
     d->svgImageSet = std::make_unique<KSvg::ImageSet>();
     d->svgImageSet->setBasePath("plasma/desktoptheme");
@@ -86,10 +90,10 @@ ScreenPreviewWidget::ScreenPreviewWidget(QWidget *parent)
 
 ScreenPreviewWidget::~ScreenPreviewWidget()
 {
-   delete d;
+    delete d;
 }
 
-void ScreenPreviewWidget::setPreview(const QPixmap &preview)
+void ScreenPreviewWidget::setPreview(const QPixmap& preview)
 {
     d->preview = preview;
 
@@ -128,18 +132,18 @@ QRect ScreenPreviewWidget::previewRect() const
     return d->previewRect;
 }
 
-KSvg::ImageSet *ScreenPreviewWidget::svgImageSet() const
+KSvg::ImageSet* ScreenPreviewWidget::svgImageSet() const
 {
     return d->svgImageSet.get();
 }
 
-void ScreenPreviewWidget::resizeEvent(QResizeEvent *e)
+void ScreenPreviewWidget::resizeEvent(QResizeEvent* e)
 {
     Q_UNUSED(e)
     d->updateScreenGraphics();
 }
 
-void ScreenPreviewWidget::paintEvent(QPaintEvent *event)
+void ScreenPreviewWidget::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event)
     if (d->monitorRect.size().isEmpty()) {
@@ -147,9 +151,12 @@ void ScreenPreviewWidget::paintEvent(QPaintEvent *event)
     }
 
     QPainter painter(this);
-    QPoint standPosition(d->monitorRect.center().x() - d->screenGraphics->elementSize("base").width()/2, d->previewRect.bottom());
+    QPoint standPosition(d->monitorRect.center().x()
+                             - d->screenGraphics->elementSize("base").width() / 2,
+                         d->previewRect.bottom());
 
-    d->screenGraphics->paint(&painter, QRect(standPosition, d->screenGraphics->elementSize("base").toSize()), "base");
+    d->screenGraphics->paint(
+        &painter, QRect(standPosition, d->screenGraphics->elementSize("base").toSize()), "base");
     d->screenGraphics->paintFrame(&painter, d->monitorRect.topLeft());
 
     painter.save();

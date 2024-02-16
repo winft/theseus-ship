@@ -128,16 +128,16 @@ public:
         Enabled = Qt::Checked
     };
 
-    explicit EffectsModel(QObject *parent = nullptr);
+    explicit EffectsModel(QObject* parent = nullptr);
 
     // Reimplemented from QAbstractItemModel.
     QHash<int, QByteArray> roleNames() const override;
-    QModelIndex index(int row, int column, const QModelIndex &parent = {}) const override;
-    QModelIndex parent(const QModelIndex &child) const override;
-    int rowCount(const QModelIndex &parent = {}) const override;
-    int columnCount(const QModelIndex &parent = {}) const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+    QModelIndex index(int row, int column, const QModelIndex& parent = {}) const override;
+    QModelIndex parent(const QModelIndex& child) const override;
+    int rowCount(const QModelIndex& parent = {}) const override;
+    int columnCount(const QModelIndex& parent = {}) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
 
     /**
      * Changes the status of a given effect.
@@ -146,7 +146,7 @@ public:
      * @param effectState The new state.
      * @note In order to actually apply the change, you have to call save().
      */
-    void updateEffectStatus(const QModelIndex &rowIndex, Status effectState);
+    void updateEffectStatus(const QModelIndex& rowIndex, Status effectState);
 
     /**
      * This enum type is used to specify load options.
@@ -191,7 +191,7 @@ public:
     /**
      * Finds an effect with the given plugin id.
      */
-    QModelIndex findByPluginId(const QString &pluginId) const;
+    QModelIndex findByPluginId(const QString& pluginId) const;
 
     /**
      * Shows a configuration dialog for a given effect.
@@ -199,7 +199,7 @@ public:
      * @param index An effect represented by the given index.
      * @param transientParent The transient parent of the configuration dialog.
      */
-    void requestConfigure(const QModelIndex &index, QWindow *transientParent);
+    void requestConfigure(const QModelIndex& index, QWindow* transientParent);
 
 Q_SIGNALS:
     /**
@@ -210,8 +210,7 @@ Q_SIGNALS:
     void loaded();
 
 protected:
-    struct EffectData
-    {
+    struct EffectData {
         QString name;
         QString description;
         QString authorName;
@@ -242,12 +241,12 @@ protected:
      * @param data The effect.
      * @returns @c true if the effect should be stored, otherwise @c false.
      */
-    virtual bool shouldStore(const EffectData &data) const;
+    virtual bool shouldStore(const EffectData& data) const;
 
 private:
-    void loadBuiltInEffects(const KConfigGroup &kwinConfig);
-    void loadJavascriptEffects(const KConfigGroup &kwinConfig);
-    void loadPluginEffects(const KConfigGroup &kwinConfig);
+    void loadBuiltInEffects(const KConfigGroup& kwinConfig);
+    void loadJavascriptEffects(const KConfigGroup& kwinConfig);
+    void loadPluginEffects(const KConfigGroup& kwinConfig);
 
     QVector<EffectData> m_effects;
     QVector<EffectData> m_pendingEffects;

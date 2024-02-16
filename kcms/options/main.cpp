@@ -8,21 +8,21 @@
 #include "main.h"
 
 #include <QLayout>
-//Added by qt3to4:
+// Added by qt3to4:
 #include <QVBoxLayout>
 
 #include <QtDBus>
 
 #include <KLocalizedString>
-#include <kconfig.h>
-#include <kaboutdata.h>
 #include <KPluginFactory>
+#include <kaboutdata.h>
+#include <kconfig.h>
 
+#include "kwinoptions_kdeglobals_settings.h"
+#include "kwinoptions_settings.h"
+#include "kwinoptionsdata.h"
 #include "mouse.h"
 #include "windows.h"
-#include "kwinoptions_settings.h"
-#include "kwinoptions_kdeglobals_settings.h"
-#include "kwinoptionsdata.h"
 
 K_PLUGIN_CLASS_WITH_JSON(KWinOptions, "kcm_kwinoptions.json")
 
@@ -30,7 +30,7 @@ class KFocusConfigStandalone : public KFocusConfig
 {
     Q_OBJECT
 public:
-    KFocusConfigStandalone(QWidget* parent, const QVariantList &)
+    KFocusConfigStandalone(QWidget* parent, const QVariantList&)
         : KFocusConfig(true, nullptr, parent)
     {
         initialize(new KWinOptionsSettings(this));
@@ -41,7 +41,7 @@ class KMovingConfigStandalone : public KMovingConfig
 {
     Q_OBJECT
 public:
-    KMovingConfigStandalone(QWidget* parent, const QVariantList &)
+    KMovingConfigStandalone(QWidget* parent, const QVariantList&)
         : KMovingConfig(true, nullptr, parent)
     {
         initialize(new KWinOptionsSettings(this));
@@ -52,24 +52,24 @@ class KAdvancedConfigStandalone : public KAdvancedConfig
 {
     Q_OBJECT
 public:
-    KAdvancedConfigStandalone(QWidget* parent, const QVariantList &)
+    KAdvancedConfigStandalone(QWidget* parent, const QVariantList&)
         : KAdvancedConfig(true, nullptr, nullptr, parent)
     {
         initialize(new KWinOptionsSettings(this), new KWinOptionsKDEGlobalsSettings(this));
     }
 };
 
-KWinOptions::KWinOptions(QObject *parent, const KPluginMetaData &data)
+KWinOptions::KWinOptions(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
 {
     mSettings = new KWinOptionsSettings(this);
 
-    QVBoxLayout *layout = new QVBoxLayout(widget());
+    QVBoxLayout* layout = new QVBoxLayout(widget());
     layout->setContentsMargins(0, 0, 0, 0);
     tab = new QTabWidget(widget());
     layout->addWidget(tab);
 
-    const auto connectKCM = [this](KCModule *mod) {
+    const auto connectKCM = [this](KCModule* mod) {
         connect(mod, &KCModule::needsSaveChanged, this, &KWinOptions::updateUnmanagedState);
         connect(this, &KCModule::defaultsIndicatorsVisibleChanged, mod, [mod, this]() {
             mod->setDefaultsIndicatorsVisible(defaultsIndicatorsVisible());
@@ -96,7 +96,8 @@ KWinOptions::KWinOptions(QObject *parent, const KPluginMetaData &data)
     tab->addTab(mMoving->widget(), i18n("Mo&vement"));
     connectKCM(mMoving);
 
-    mAdvanced = new KAdvancedConfig(false, mSettings, new KWinOptionsKDEGlobalsSettings(this), widget());
+    mAdvanced
+        = new KAdvancedConfig(false, mSettings, new KWinOptionsKDEGlobalsSettings(this), widget());
     mAdvanced->setObjectName(QLatin1String("KWin Advanced"));
     tab->addTab(mAdvanced->widget(), i18n("Adva&nced"));
     connectKCM(mAdvanced);
@@ -126,11 +127,9 @@ void KWinOptions::save()
     mAdvanced->save();
 
     // Send signal to all kwin instances
-    QDBusMessage message =
-        QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
+    QDBusMessage message = QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
     QDBusConnection::sessionBus().send(message);
 }
-
 
 void KWinOptions::defaults()
 {
@@ -166,12 +165,12 @@ void KWinOptions::updateUnmanagedState()
     unmanagedWidgetDefaultState(isDefault);
 }
 
-KActionsOptions::KActionsOptions(QObject *parent, const KPluginMetaData &data)
+KActionsOptions::KActionsOptions(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
 {
     mSettings = new KWinOptionsSettings(this);
 
-    QVBoxLayout *layout = new QVBoxLayout(widget());
+    QVBoxLayout* layout = new QVBoxLayout(widget());
     layout->setContentsMargins(0, 0, 0, 0);
     tab = new QTabWidget(widget());
     layout->addWidget(tab);

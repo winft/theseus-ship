@@ -21,7 +21,7 @@ namespace Preview
 class PreviewClient : public QObject, public ApplicationMenuEnabledDecoratedClientPrivate
 {
     Q_OBJECT
-    Q_PROPERTY(KDecoration2::Decoration *decoration READ decoration CONSTANT)
+    Q_PROPERTY(KDecoration2::Decoration* decoration READ decoration CONSTANT)
     Q_PROPERTY(QString caption READ caption WRITE setCaption NOTIFY captionChanged)
     Q_PROPERTY(QIcon icon READ icon WRITE setIcon NOTIFY iconChanged)
     Q_PROPERTY(QString iconName READ iconName WRITE setIconName NOTIFY iconNameChanged)
@@ -31,22 +31,29 @@ class PreviewClient : public QObject, public ApplicationMenuEnabledDecoratedClie
     Q_PROPERTY(bool keepBelow READ isKeepBelow WRITE setKeepBelow NOTIFY keepBelowChanged)
     Q_PROPERTY(bool maximizable READ isMaximizeable WRITE setMaximizable NOTIFY maximizableChanged)
     Q_PROPERTY(bool maximized READ isMaximized NOTIFY maximizedChanged)
-    Q_PROPERTY(bool maximizedVertically READ isMaximizedVertically WRITE setMaximizedVertically NOTIFY maximizedVerticallyChanged)
-    Q_PROPERTY(bool maximizedHorizontally READ isMaximizedHorizontally WRITE setMaximizedHorizontally NOTIFY maximizedHorizontallyChanged)
+    Q_PROPERTY(bool maximizedVertically READ isMaximizedVertically WRITE setMaximizedVertically
+                   NOTIFY maximizedVerticallyChanged)
+    Q_PROPERTY(bool maximizedHorizontally READ isMaximizedHorizontally WRITE
+                   setMaximizedHorizontally NOTIFY maximizedHorizontallyChanged)
     Q_PROPERTY(bool minimizable READ isMinimizeable WRITE setMinimizable NOTIFY minimizableChanged)
     Q_PROPERTY(bool modal READ isModal WRITE setModal NOTIFY modalChanged)
     Q_PROPERTY(bool movable READ isMoveable WRITE setMovable NOTIFY movableChanged)
     Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops NOTIFY onAllDesktopsChanged)
     Q_PROPERTY(bool resizable READ isResizeable WRITE setResizable NOTIFY resizableChanged)
-    Q_PROPERTY(bool providesContextHelp READ providesContextHelp WRITE setProvidesContextHelp NOTIFY providesContextHelpChanged)
+    Q_PROPERTY(bool providesContextHelp READ providesContextHelp WRITE setProvidesContextHelp NOTIFY
+                   providesContextHelpChanged)
     Q_PROPERTY(int width READ width WRITE setWidth NOTIFY widthChanged)
     Q_PROPERTY(int height READ height WRITE setHeight NOTIFY heightChanged)
-    Q_PROPERTY(bool bordersTopEdge    READ bordersTopEdge    WRITE setBordersTopEdge    NOTIFY bordersTopEdgeChanged)
-    Q_PROPERTY(bool bordersLeftEdge   READ bordersLeftEdge   WRITE setBordersLeftEdge   NOTIFY bordersLeftEdgeChanged)
-    Q_PROPERTY(bool bordersRightEdge  READ bordersRightEdge  WRITE setBordersRightEdge  NOTIFY bordersRightEdgeChanged)
-    Q_PROPERTY(bool bordersBottomEdge READ bordersBottomEdge WRITE setBordersBottomEdge NOTIFY bordersBottomEdgeChanged)
+    Q_PROPERTY(bool bordersTopEdge READ bordersTopEdge WRITE setBordersTopEdge NOTIFY
+                   bordersTopEdgeChanged)
+    Q_PROPERTY(bool bordersLeftEdge READ bordersLeftEdge WRITE setBordersLeftEdge NOTIFY
+                   bordersLeftEdgeChanged)
+    Q_PROPERTY(bool bordersRightEdge READ bordersRightEdge WRITE setBordersRightEdge NOTIFY
+                   bordersRightEdgeChanged)
+    Q_PROPERTY(bool bordersBottomEdge READ bordersBottomEdge WRITE setBordersBottomEdge NOTIFY
+                   bordersBottomEdgeChanged)
 public:
-    explicit PreviewClient(DecoratedClient *client, Decoration *decoration);
+    explicit PreviewClient(DecoratedClient* client, Decoration* decoration);
     ~PreviewClient() override;
 
     QString caption() const override;
@@ -69,8 +76,14 @@ public:
     bool isResizeable() const override;
 
     // Deprecated
-    bool isShadeable() const override { return false; }
-    bool isShaded() const override { return false; }
+    bool isShadeable() const override
+    {
+        return false;
+    }
+    bool isShaded() const override
+    {
+        return false;
+    }
 
     bool providesContextHelp() const override;
 
@@ -84,7 +97,7 @@ public:
     bool hasApplicationMenu() const override;
     bool isApplicationMenuActive() const override;
 
-    void requestShowToolTip(const QString &text) override;
+    void requestShowToolTip(const QString& text) override;
     void requestHideToolTip() override;
     void requestClose() override;
     void requestContextHelp() override;
@@ -94,15 +107,17 @@ public:
     void requestToggleKeepBelow() override;
 
     // Deprecated
-    void requestToggleShade() override {}
+    void requestToggleShade() override
+    {
+    }
 
     void requestShowWindowMenu(QRect const& rect) override;
-    void requestShowApplicationMenu(const QRect &rect, int actionId) override;
+    void requestShowApplicationMenu(const QRect& rect, int actionId) override;
     void requestToggleOnAllDesktops() override;
 
     void showApplicationMenu(int actionId) override;
 
-    void setCaption(const QString &caption);
+    void setCaption(const QString& caption);
     void setActive(bool active);
     void setCloseable(bool closeable);
     void setMaximizable(bool maximizable);
@@ -120,8 +135,8 @@ public:
     void setHeight(int height);
 
     QString iconName() const;
-    void setIconName(const QString &icon);
-    void setIcon(const QIcon &icon);
+    void setIconName(const QString& icon);
+    void setIcon(const QIcon& icon);
 
     bool bordersTopEdge() const;
     bool bordersLeftEdge() const;
@@ -134,9 +149,9 @@ public:
     void setBordersBottomEdge(bool enabled);
 
 Q_SIGNALS:
-    void captionChanged(const QString &);
-    void iconChanged(const QIcon &);
-    void iconNameChanged(const QString &);
+    void captionChanged(const QString&);
+    void iconChanged(const QIcon&);
+    void iconNameChanged(const QString&);
     void activeChanged(bool);
     void closeableChanged(bool);
     void keepAboveChanged(bool);

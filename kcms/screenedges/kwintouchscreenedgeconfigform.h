@@ -23,14 +23,14 @@ class KWinTouchScreenEdgeConfigForm : public KWinScreenEdge
     Q_OBJECT
 
 public:
-    KWinTouchScreenEdgeConfigForm(QWidget *parent = nullptr);
+    KWinTouchScreenEdgeConfigForm(QWidget* parent = nullptr);
     ~KWinTouchScreenEdgeConfigForm() override;
 
 protected:
-    Monitor *monitor() const override;
+    Monitor* monitor() const override;
 
 private:
-    Ui::KWinTouchScreenConfigUi *ui;
+    Ui::KWinTouchScreenConfigUi* ui;
 };
 
 } // namespace

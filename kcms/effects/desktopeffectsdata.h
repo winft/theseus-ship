@@ -20,13 +20,13 @@ class DesktopEffectsData : public KCModuleData
     Q_OBJECT
 
 public:
-    explicit DesktopEffectsData(QObject *parent);
+    explicit DesktopEffectsData(QObject* parent);
     ~DesktopEffectsData() override;
 
     bool isDefaults() const override;
 
 private:
-    EffectsModel *m_model;
+    EffectsModel* m_model;
 };
 
 }

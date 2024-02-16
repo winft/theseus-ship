@@ -8,13 +8,13 @@
 #define KWIN_RULES_MODEL_H
 
 #include "ruleitem.h"
-#include <como/win/rules/rules_settings.h>
 #include <como/win/dbus/virtual_desktop_types.h>
+#include <como/win/rules/rules_settings.h>
 #include <como/win/rules/ruling.h>
 
 #include <QAbstractListModel>
-#include <QSortFilterProxyModel>
 #include <QObject>
+#include <QSortFilterProxyModel>
 
 namespace theseus_ship
 {
@@ -46,25 +46,25 @@ public:
     Q_ENUM(RulesRole)
 
 public:
-    explicit RulesModel(QObject *parent = nullptr);
+    explicit RulesModel(QObject* parent = nullptr);
     ~RulesModel();
 
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QHash<int, QByteArray> roleNames() const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    bool setData(const QModelIndex & index, const QVariant & value, int role) override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex& index, const QVariant& value, int role) override;
 
-    QModelIndex indexOf(const QString &key) const;
-    bool hasRule(const QString &key) const;
-    RuleItem *ruleItem(const QString &key) const;
+    QModelIndex indexOf(const QString& key) const;
+    bool hasRule(const QString& key) const;
+    RuleItem* ruleItem(const QString& key) const;
 
     como::win::rules::settings* settings() const;
     void setSettings(como::win::rules::settings* settings);
 
-    void setSuggestedProperties(const QVariantMap &info);
+    void setSuggestedProperties(const QVariantMap& info);
 
     QString description() const;
-    void setDescription(const QString &description);
+    void setDescription(const QString& description);
     QStringList warningMessages() const;
 
     Q_INVOKABLE void detectWindowProperties(int miliseconds);
@@ -74,17 +74,17 @@ Q_SIGNALS:
     void warningMessagesChanged();
 
     void showSuggestions();
-    void showErrorMessage(const QString &title, const QString &message);
+    void showErrorMessage(const QString& title, const QString& message);
 
     void virtualDesktopsUpdated();
 
 private:
     void populateRuleList();
-    RuleItem *addRule(RuleItem *rule);
-    void writeToSettings(RuleItem *rule);
+    RuleItem* addRule(RuleItem* rule);
+    void writeToSettings(RuleItem* rule);
 
     QString defaultDescription() const;
-    void processSuggestion(const QString &key, const QVariant &value);
+    void processSuggestion(const QString& key, const QVariant& value);
 
     bool wmclassWarning() const;
     bool geometryWarning() const;
@@ -103,8 +103,8 @@ private Q_SLOTS:
     void selectX11Window();
 
 private:
-    QList<RuleItem *> m_ruleList;
-    QHash<QString, RuleItem *> m_rules;
+    QList<RuleItem*> m_ruleList;
+    QHash<QString, RuleItem*> m_rules;
     como::win::dbus::subspace_data_vector m_virtualDesktops;
     como::win::rules::settings* m_settings{nullptr};
 };

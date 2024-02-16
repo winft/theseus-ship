@@ -18,12 +18,12 @@ class KWinCompositingData : public KCModuleData
     Q_OBJECT
 
 public:
-    explicit KWinCompositingData(QObject *parent);
+    explicit KWinCompositingData(QObject* parent);
 
     bool isDefaults() const override;
 
 private:
-    KWinCompositingSetting *m_settings;
+    KWinCompositingSetting* m_settings;
 };
 
 #endif // KWINCOMPOSITINGDATA_H

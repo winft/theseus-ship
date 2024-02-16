@@ -21,31 +21,28 @@ class LayoutPreview : public QObject
 {
     Q_OBJECT
 public:
-    explicit LayoutPreview(const QString &path, bool showDesktopThumbnail = false, QObject *parent = nullptr);
+    explicit LayoutPreview(const QString& path,
+                           bool showDesktopThumbnail = false,
+                           QObject* parent = nullptr);
     ~LayoutPreview() override;
 
-    bool eventFilter(QObject *object, QEvent *event) override;
+    bool eventFilter(QObject* object, QEvent* event) override;
+
 private:
-    SwitcherItem *m_item;
+    SwitcherItem* m_item;
 };
 
 class ExampleClientModel : public QAbstractListModel
 {
     Q_OBJECT
 public:
-    enum {
-        CaptionRole = Qt::UserRole + 1,
-        MinimizedRole,
-        DesktopNameRole,
-        IconRole,
-        WindowIdRole
-    };
+    enum { CaptionRole = Qt::UserRole + 1, MinimizedRole, DesktopNameRole, IconRole, WindowIdRole };
 
-    explicit ExampleClientModel(QObject *parent = nullptr);
+    explicit ExampleClientModel(QObject* parent = nullptr);
     ~ExampleClientModel() override;
 
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QHash<int, QByteArray> roleNames() const override;
     Q_INVOKABLE QString longestCaption() const;
 
@@ -57,7 +54,8 @@ private:
         QString caption;
         QString icon;
 
-        bool operator==(const ThumbnailInfo &other) const {
+        bool operator==(const ThumbnailInfo& other) const
+        {
             return wId == other.wId;
         }
     };
@@ -66,11 +64,10 @@ private:
     QList<ThumbnailInfo> m_thumbnails;
 };
 
-
 class SwitcherItem : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QAbstractItemModel *model READ model NOTIFY modelChanged)
+    Q_PROPERTY(QAbstractItemModel* model READ model NOTIFY modelChanged)
     Q_PROPERTY(QRect screenGeometry READ screenGeometry NOTIFY screenGeometryChanged)
     Q_PROPERTY(bool visible READ isVisible NOTIFY visibleChanged)
     Q_PROPERTY(bool allDesktops READ isAllDesktops NOTIFY allDesktopsChanged)
@@ -79,21 +76,21 @@ class SwitcherItem : public QObject
     /**
      * The main QML item that will be displayed in the Dialog
      */
-    Q_PROPERTY(QObject *item READ item WRITE setItem NOTIFY itemChanged)
+    Q_PROPERTY(QObject* item READ item WRITE setItem NOTIFY itemChanged)
 
     Q_CLASSINFO("DefaultProperty", "item")
 public:
-    SwitcherItem(QObject *parent = nullptr);
+    SwitcherItem(QObject* parent = nullptr);
     ~SwitcherItem() override;
 
-    QAbstractItemModel *model() const;
+    QAbstractItemModel* model() const;
     QRect screenGeometry() const;
     bool isVisible() const;
     bool isAllDesktops() const;
     int currentIndex() const;
     void setCurrentIndex(int index);
-    QObject *item() const;
-    void setItem(QObject *item);
+    QObject* item() const;
+    void setItem(QObject* item);
 
     void setVisible(bool visible);
     void incrementIndex();
@@ -111,13 +108,13 @@ Q_SIGNALS:
     void aboutToHide();
 
 private:
-    QAbstractItemModel *m_model;
-    QObject *m_item;
+    QAbstractItemModel* m_model;
+    QObject* m_item;
     int m_currentIndex;
     bool m_visible;
 };
 
-inline QAbstractItemModel *SwitcherItem::model() const
+inline QAbstractItemModel* SwitcherItem::model() const
 {
     return m_model;
 }
@@ -137,7 +134,7 @@ inline int SwitcherItem::currentIndex() const
     return m_currentIndex;
 }
 
-inline QObject *SwitcherItem::item() const
+inline QObject* SwitcherItem::item() const
 {
     return m_item;
 }

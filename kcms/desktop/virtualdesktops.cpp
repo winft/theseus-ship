@@ -8,8 +8,8 @@
 #include "virtualdesktops.h"
 #include "animationsmodel.h"
 #include "desktopsmodel.h"
-#include "virtualdesktopssettings.h"
 #include "virtualdesktopsdata.h"
+#include "virtualdesktopssettings.h"
 
 #include <KAboutApplicationDialog>
 #include <KAboutData>
@@ -19,7 +19,6 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 
-
 K_PLUGIN_FACTORY_WITH_JSON(VirtualDesktopsFactory,
                            "kcm_kwin_virtualdesktops.json",
                            registerPlugin<theseus_ship::VirtualDesktops>();
@@ -28,7 +27,7 @@ K_PLUGIN_FACTORY_WITH_JSON(VirtualDesktopsFactory,
 namespace theseus_ship
 {
 
-VirtualDesktops::VirtualDesktops(QObject *parent, const KPluginMetaData &metaData)
+VirtualDesktops::VirtualDesktops(QObject* parent, const KPluginMetaData& metaData)
     : KQuickManagedConfigModule(parent, metaData)
     , m_data(new VirtualDesktopsData(this))
 {
@@ -36,29 +35,35 @@ VirtualDesktops::VirtualDesktops(QObject *parent, const KPluginMetaData &metaDat
 
     setButtons(Apply | Default | Help);
 
-    QObject::connect(m_data->desktopsModel(), &theseus_ship::DesktopsModel::userModifiedChanged,
-        this, &VirtualDesktops::settingsChanged);
-    connect(m_data->animationsModel(), &AnimationsModel::animationEnabledChanged,
-        this, &VirtualDesktops::settingsChanged);
-    connect(m_data->animationsModel(), &AnimationsModel::animationIndexChanged,
-        this, &VirtualDesktops::settingsChanged);
+    QObject::connect(m_data->desktopsModel(),
+                     &theseus_ship::DesktopsModel::userModifiedChanged,
+                     this,
+                     &VirtualDesktops::settingsChanged);
+    connect(m_data->animationsModel(),
+            &AnimationsModel::animationEnabledChanged,
+            this,
+            &VirtualDesktops::settingsChanged);
+    connect(m_data->animationsModel(),
+            &AnimationsModel::animationIndexChanged,
+            this,
+            &VirtualDesktops::settingsChanged);
 }
 
 VirtualDesktops::~VirtualDesktops()
 {
 }
 
-QAbstractItemModel *VirtualDesktops::desktopsModel() const
+QAbstractItemModel* VirtualDesktops::desktopsModel() const
 {
     return m_data->desktopsModel();
 }
 
-QAbstractItemModel *VirtualDesktops::animationsModel() const
+QAbstractItemModel* VirtualDesktops::animationsModel() const
 {
     return m_data->animationsModel();
 }
 
-VirtualDesktopsSettings *VirtualDesktops::virtualDesktopsSettings() const
+VirtualDesktopsSettings* VirtualDesktops::virtualDesktopsSettings() const
 {
     return m_data->settings();
 }
@@ -78,8 +83,8 @@ void VirtualDesktops::save()
     m_data->desktopsModel()->syncWithServer();
     m_data->animationsModel()->save();
 
-    QDBusMessage message = QDBusMessage::createSignal(QStringLiteral("/KWin"),
-        QStringLiteral("org.kde.KWin"), QStringLiteral("reloadConfig"));
+    QDBusMessage message = QDBusMessage::createSignal(
+        QStringLiteral("/KWin"), QStringLiteral("org.kde.KWin"), QStringLiteral("reloadConfig"));
     QDBusConnection::sessionBus().send(message);
 }
 
@@ -98,7 +103,8 @@ bool VirtualDesktops::isDefaults() const
 
 void VirtualDesktops::configureAnimation()
 {
-    const QModelIndex index = m_data->animationsModel()->index(m_data->animationsModel()->animationIndex(), 0);
+    const QModelIndex index
+        = m_data->animationsModel()->index(m_data->animationsModel()->animationIndex(), 0);
     if (!index.isValid()) {
         return;
     }
@@ -108,31 +114,31 @@ void VirtualDesktops::configureAnimation()
 
 void VirtualDesktops::showAboutAnimation()
 {
-    const QModelIndex index = m_data->animationsModel()->index(m_data->animationsModel()->animationIndex(), 0);
+    const QModelIndex index
+        = m_data->animationsModel()->index(m_data->animationsModel()->animationIndex(), 0);
     if (!index.isValid()) {
         return;
     }
 
-    const QString name    = index.data(AnimationsModel::NameRole).toString();
+    const QString name = index.data(AnimationsModel::NameRole).toString();
     const QString comment = index.data(AnimationsModel::DescriptionRole).toString();
-    const QString author  = index.data(AnimationsModel::AuthorNameRole).toString();
-    const QString email   = index.data(AnimationsModel::AuthorEmailRole).toString();
+    const QString author = index.data(AnimationsModel::AuthorNameRole).toString();
+    const QString email = index.data(AnimationsModel::AuthorEmailRole).toString();
     const QString website = index.data(AnimationsModel::WebsiteRole).toString();
     const QString version = index.data(AnimationsModel::VersionRole).toString();
     const QString license = index.data(AnimationsModel::LicenseRole).toString();
-    const QString icon    = index.data(AnimationsModel::IconNameRole).toString();
+    const QString icon = index.data(AnimationsModel::IconNameRole).toString();
 
     const KAboutLicense::LicenseKey licenseType = KAboutLicense::byKeyword(license).key();
 
-    KAboutData aboutData(
-        name,              // Plugin name
-        name,              // Display name
-        version,           // Version
-        comment,           // Short description
-        licenseType,       // License
-        QString(),         // Copyright statement
-        QString(),         // Other text
-        website.toLatin1() // Home page
+    KAboutData aboutData(name,              // Plugin name
+                         name,              // Display name
+                         version,           // Version
+                         comment,           // Short description
+                         licenseType,       // License
+                         QString(),         // Copyright statement
+                         QString(),         // Other text
+                         website.toLatin1() // Home page
     );
     aboutData.setProgramLogo(icon);
 
@@ -141,7 +147,7 @@ void VirtualDesktops::showAboutAnimation()
 
     if (authors.count() == emails.count()) {
         int i = 0;
-        for (const QString &author : authors) {
+        for (const QString& author : authors) {
             if (!author.isEmpty()) {
                 aboutData.addAuthor(i18n(author.toUtf8()), QString(), emails[i]);
             }
@@ -162,5 +168,5 @@ bool VirtualDesktops::isSaveNeeded() const
 
 }
 
-#include "virtualdesktops.moc"
 #include "moc_virtualdesktops.cpp"
+#include "virtualdesktops.moc"

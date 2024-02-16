@@ -10,25 +10,24 @@
 
 #include <KLocalizedString>
 
-
 namespace theseus_ship
 {
 
 QHash<int, QByteArray> OptionsModel::roleNames() const
 {
     return {
-        {Qt::DisplayRole,    QByteArrayLiteral("display")},
+        {Qt::DisplayRole, QByteArrayLiteral("display")},
         {Qt::DecorationRole, QByteArrayLiteral("decoration")},
-        {Qt::ToolTipRole,    QByteArrayLiteral("tooltip")},
-        {ValueRole,          QByteArrayLiteral("value")},
-        {IconNameRole,       QByteArrayLiteral("iconName")},
-        {OptionTypeRole,     QByteArrayLiteral("optionType")},
-        {BitMaskRole,        QByteArrayLiteral("bitMask")},
+        {Qt::ToolTipRole, QByteArrayLiteral("tooltip")},
+        {ValueRole, QByteArrayLiteral("value")},
+        {IconNameRole, QByteArrayLiteral("iconName")},
+        {OptionTypeRole, QByteArrayLiteral("optionType")},
+        {BitMaskRole, QByteArrayLiteral("bitMask")},
 
     };
 }
 
-int OptionsModel::rowCount(const QModelIndex &parent) const
+int OptionsModel::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) {
         return 0;
@@ -36,7 +35,7 @@ int OptionsModel::rowCount(const QModelIndex &parent) const
     return m_data.size();
 }
 
-QVariant OptionsModel::data(const QModelIndex &index, int role) const
+QVariant OptionsModel::data(const QModelIndex& index, int role) const
 {
     if (!checkIndex(index, CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid)) {
         return QVariant();
@@ -141,7 +140,7 @@ QVariant OptionsModel::allValues() const
     }
 
     QVariantList list;
-    for (const Data &item : qAsConst(m_data)) {
+    for (const Data& item : qAsConst(m_data)) {
         if (item.optionType == NormalOption) {
             list << item.value;
         }
@@ -160,14 +159,13 @@ uint OptionsModel::allOptionsMask() const
     return mask;
 }
 
-
-void OptionsModel::updateModelData(const QList<Data> &data) {
+void OptionsModel::updateModelData(const QList<Data>& data)
+{
     beginResetModel();
     m_data = data;
     endResetModel();
     Q_EMIT modelUpdated();
 }
-
 
 RulePolicy::Type RulePolicy::type() const
 {
@@ -183,16 +181,16 @@ int RulePolicy::value() const
     return OptionsModel::value().toInt();
 }
 
-QString RulePolicy::policyKey(const QString &key) const
+QString RulePolicy::policyKey(const QString& key) const
 {
     switch (m_type) {
-        case NoPolicy:
-            return QString();
-        case StringMatch:
-            return QStringLiteral("%1match").arg(key);
-        case SetRule:
-        case ForceRule:
-            return QStringLiteral("%1rule").arg(key);
+    case NoPolicy:
+        return QString();
+    case StringMatch:
+        return QStringLiteral("%1match").arg(key);
+    case SetRule:
+    case ForceRule:
+        return QStringLiteral("%1rule").arg(key);
     }
 
     return QString();
@@ -200,43 +198,43 @@ QString RulePolicy::policyKey(const QString &key) const
 
 QList<RulePolicy::Data> RulePolicy::policyOptions(RulePolicy::Type type)
 {
-    static const auto stringMatchOptions = QList<RulePolicy::Data> {
+    static const auto stringMatchOptions = QList<RulePolicy::Data>{
         {como::enum_index(como::win::rules::name_match::unimportant), i18n("Unimportant")},
-        {como::enum_index(como::win::rules::name_match::exact),       i18n("Exact Match")},
-        {como::enum_index(como::win::rules::name_match::substring),   i18n("Substring Match")},
-        {como::enum_index(como::win::rules::name_match::regex),      i18n("Regular Expression")}
-    };
+        {como::enum_index(como::win::rules::name_match::exact), i18n("Exact Match")},
+        {como::enum_index(como::win::rules::name_match::substring), i18n("Substring Match")},
+        {como::enum_index(como::win::rules::name_match::regex), i18n("Regular Expression")}};
 
-    static const auto setRuleOptions = QList<RulePolicy::Data> {
+    static const auto setRuleOptions = QList<RulePolicy::Data>{
         {como::enum_index(como::win::rules::action::apply),
-            i18n("Apply Initially"),
-            i18n("The window property will be only set to the given value after the window is created."
-                 "\nNo further changes will be affected.")},
+         i18n("Apply Initially"),
+         i18n("The window property will be only set to the given value after the window is created."
+              "\nNo further changes will be affected.")},
         {como::enum_index(como::win::rules::action::apply_now),
-            i18n("Apply Now"),
-            i18n("The window property will be set to the given value immediately and will not be affected later"
-                 "\n(this action will be deleted afterwards).")},
+         i18n("Apply Now"),
+         i18n("The window property will be set to the given value immediately and will not be "
+              "affected later"
+              "\n(this action will be deleted afterwards).")},
         {como::enum_index(como::win::rules::action::remember),
-            i18n("Remember"),
-            i18n("The value of the window property will be remembered and, every time the window"
-                 " is created, the last remembered value will be applied.")},
+         i18n("Remember"),
+         i18n("The value of the window property will be remembered and, every time the window"
+              " is created, the last remembered value will be applied.")},
         {como::enum_index(como::win::rules::action::dont_affect),
-            i18n("Do Not Affect"),
-            i18n("The window property will not be affected and therefore the default handling for it will be used."
-                 "\nSpecifying this will block more generic window settings from taking effect.")},
+         i18n("Do Not Affect"),
+         i18n("The window property will not be affected and therefore the default handling for it "
+              "will be used."
+              "\nSpecifying this will block more generic window settings from taking effect.")},
         {como::enum_index(como::win::rules::action::force),
-            i18n("Force"),
-            i18n("The window property will be always forced to the given value.")},
+         i18n("Force"),
+         i18n("The window property will be always forced to the given value.")},
         {como::enum_index(como::win::rules::action::force_temporarily),
-            i18n("Force Temporarily"),
-            i18n("The window property will be forced to the given value until it is hidden"
-                 "\n(this action will be deleted after the window is hidden).")}
-    };
+         i18n("Force Temporarily"),
+         i18n("The window property will be forced to the given value until it is hidden"
+              "\n(this action will be deleted after the window is hidden).")}};
 
-    static auto forceRuleOptions = QList<RulePolicy::Data> {
-        setRuleOptions.at(4),  // como::win::rules::action::force
-        setRuleOptions.at(5),  // como::win::rules::action::force_temporarily
-        setRuleOptions.at(3),  // como::win::rules::action::dont_affect
+    static auto forceRuleOptions = QList<RulePolicy::Data>{
+        setRuleOptions.at(4), // como::win::rules::action::force
+        setRuleOptions.at(5), // como::win::rules::action::force_temporarily
+        setRuleOptions.at(3), // como::win::rules::action::dont_affect
     };
 
     switch (type) {
@@ -252,4 +250,4 @@ QList<RulePolicy::Data> RulePolicy::policyOptions(RulePolicy::Type type)
     return {};
 }
 
-}   //namespace
+} // namespace

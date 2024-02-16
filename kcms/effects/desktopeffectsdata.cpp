@@ -10,7 +10,7 @@
 namespace theseus_ship
 {
 
-DesktopEffectsData::DesktopEffectsData(QObject *parent)
+DesktopEffectsData::DesktopEffectsData(QObject* parent)
     : KCModuleData(parent)
     , m_model(new EffectsModel(this))
 

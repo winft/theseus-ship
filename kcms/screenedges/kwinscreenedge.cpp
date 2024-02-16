@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace theseus_ship
 {
 
-KWinScreenEdge::KWinScreenEdge(QWidget *parent)
+KWinScreenEdge::KWinScreenEdge(QWidget* parent)
     : QWidget(parent)
 {
     QMetaObject::invokeMethod(this, "createConnection", Qt::QueuedConnection);
@@ -26,7 +26,7 @@ void KWinScreenEdge::monitorHideEdge(como::win::electric_border border, bool hid
 {
     auto const edge = KWinScreenEdge::electricBorderToMonitorEdge(border);
     monitor()->setEdgeHidden(edge, hidden);
-    if(edge != Monitor::None) {
+    if (edge != Monitor::None) {
         monitor()->setEdgeHidden(edge, hidden);
     }
 }
@@ -37,7 +37,7 @@ void KWinScreenEdge::monitorEnableEdge(como::win::electric_border border, bool e
     monitor()->setEdgeEnabled(edge, enabled);
 }
 
-void KWinScreenEdge::monitorAddItem(const QString &item)
+void KWinScreenEdge::monitorAddItem(const QString& item)
 {
     for (int i = 0; i < 8; i++) {
         monitor()->addEdgeItem(i, item);
@@ -51,7 +51,7 @@ void KWinScreenEdge::monitorItemSetEnabled(int index, bool enabled)
     }
 }
 
-void KWinScreenEdge::monitorChangeEdge(const QList<int> &borderList, int index)
+void KWinScreenEdge::monitorChangeEdge(const QList<int>& borderList, int index)
 {
     for (int border : borderList) {
         monitorChangeEdge(static_cast<como::win::electric_border>(border), index);
@@ -60,7 +60,8 @@ void KWinScreenEdge::monitorChangeEdge(const QList<int> &borderList, int index)
 
 void KWinScreenEdge::monitorChangeEdge(como::win::electric_border border, int index)
 {
-    if (como::win::electric_border::_COUNT == border || como::win::electric_border::none == border) {
+    if (como::win::electric_border::_COUNT == border
+        || como::win::electric_border::none == border) {
         return;
     }
     m_reference[border] = index;
@@ -118,13 +119,14 @@ int KWinScreenEdge::selectedEdgeItem(como::win::electric_border border) const
 
 void KWinScreenEdge::monitorChangeDefaultEdge(como::win::electric_border border, int index)
 {
-    if (como::win::electric_border::_COUNT == border || como::win::electric_border::none == border) {
+    if (como::win::electric_border::_COUNT == border
+        || como::win::electric_border::none == border) {
         return;
     }
     m_default[border] = index;
 }
 
-void KWinScreenEdge::monitorChangeDefaultEdge(const QList<int> &borderList, int index)
+void KWinScreenEdge::monitorChangeDefaultEdge(const QList<int>& borderList, int index)
 {
     for (int border : borderList) {
         monitorChangeDefaultEdge(static_cast<como::win::electric_border>(border), index);
@@ -134,7 +136,8 @@ void KWinScreenEdge::monitorChangeDefaultEdge(const QList<int> &borderList, int 
 void KWinScreenEdge::reload()
 {
     for (auto it = m_reference.cbegin(); it != m_reference.cend(); ++it) {
-        monitor()->selectEdgeItem(KWinScreenEdge::electricBorderToMonitorEdge(it.key()), it.value());
+        monitor()->selectEdgeItem(KWinScreenEdge::electricBorderToMonitorEdge(it.key()),
+                                  it.value());
     }
     onChanged();
 }
@@ -142,14 +145,15 @@ void KWinScreenEdge::reload()
 void KWinScreenEdge::setDefaults()
 {
     for (auto it = m_default.cbegin(); it != m_default.cend(); ++it) {
-        monitor()->selectEdgeItem(KWinScreenEdge::electricBorderToMonitorEdge(it.key()), it.value());
+        monitor()->selectEdgeItem(KWinScreenEdge::electricBorderToMonitorEdge(it.key()),
+                                  it.value());
     }
     onChanged();
 }
 
 int KWinScreenEdge::electricBorderToMonitorEdge(como::win::electric_border border)
 {
-    switch(border) {
+    switch (border) {
     case como::win::electric_border::top:
         return Monitor::Top;
     case como::win::electric_border::top_right:
@@ -176,7 +180,7 @@ void KWinScreenEdge::onChanged()
     bool needSave = isSaveNeeded();
     for (auto it = m_reference.cbegin(); it != m_reference.cend(); ++it) {
         auto const edge = KWinScreenEdge::electricBorderToMonitorEdge(it.key());
-        if(edge != Monitor::None) {
+        if (edge != Monitor::None) {
             needSave |= it.value() != monitor()->selectedEdgeItem(edge);
         }
     }
@@ -185,7 +189,7 @@ void KWinScreenEdge::onChanged()
     bool defaults = isDefault();
     for (auto it = m_default.cbegin(); it != m_default.cend(); ++it) {
         auto const edge = KWinScreenEdge::electricBorderToMonitorEdge(it.key());
-        if(edge != Monitor::None) {
+        if (edge != Monitor::None) {
             defaults &= it.value() == monitor()->selectedEdgeItem(edge);
         }
     }
@@ -194,10 +198,7 @@ void KWinScreenEdge::onChanged()
 
 void KWinScreenEdge::createConnection()
 {
-        connect(monitor(),
-                &Monitor::changed,
-                this,
-                &KWinScreenEdge::onChanged);
+    connect(monitor(), &Monitor::changed, this, &KWinScreenEdge::onChanged);
 }
 
 bool KWinScreenEdge::isSaveNeeded() const

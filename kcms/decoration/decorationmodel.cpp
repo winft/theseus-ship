@@ -21,14 +21,14 @@ namespace Configuration
 {
 static const QString s_pluginName = QStringLiteral("org.kde.kdecoration2");
 
-DecorationsModel::DecorationsModel(QObject *parent)
+DecorationsModel::DecorationsModel(QObject* parent)
     : QAbstractListModel(parent)
 {
 }
 
 DecorationsModel::~DecorationsModel() = default;
 
-int DecorationsModel::rowCount(const QModelIndex &parent) const
+int DecorationsModel::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) {
         return 0;
@@ -36,12 +36,13 @@ int DecorationsModel::rowCount(const QModelIndex &parent) const
     return m_plugins.size();
 }
 
-QVariant DecorationsModel::data(const QModelIndex &index, int role) const
+QVariant DecorationsModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || index.column() != 0 || index.row() < 0 || index.row() >= int(m_plugins.size())) {
+    if (!index.isValid() || index.column() != 0 || index.row() < 0
+        || index.row() >= int(m_plugins.size())) {
         return QVariant();
     }
-    const KDecoration2::DecorationThemeMetaData &d = m_plugins.at(index.row());
+    const KDecoration2::DecorationThemeMetaData& d = m_plugins.at(index.row());
     switch (role) {
     case Qt::DisplayRole:
         return d.visibleName();
@@ -59,18 +60,19 @@ QVariant DecorationsModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-QHash< int, QByteArray > DecorationsModel::roleNames() const
+QHash<int, QByteArray> DecorationsModel::roleNames() const
 {
-    QHash<int, QByteArray> roles({{Qt::DisplayRole, QByteArrayLiteral("display")},
-                                  {PluginNameRole, QByteArrayLiteral("plugin")},
-                                  {ThemeNameRole, QByteArrayLiteral("theme")},
-                                  {ConfigurationRole, QByteArrayLiteral("configureable")},
-                                  {KcmoduleNameRole, QByteArrayLiteral("kcmoduleName")},
-                                  {RecommendedBorderSizeRole, QByteArrayLiteral("recommendedbordersize")}});
+    QHash<int, QByteArray> roles(
+        {{Qt::DisplayRole, QByteArrayLiteral("display")},
+         {PluginNameRole, QByteArrayLiteral("plugin")},
+         {ThemeNameRole, QByteArrayLiteral("theme")},
+         {ConfigurationRole, QByteArrayLiteral("configureable")},
+         {KcmoduleNameRole, QByteArrayLiteral("kcmoduleName")},
+         {RecommendedBorderSizeRole, QByteArrayLiteral("recommendedbordersize")}});
     return roles;
 }
 
-static bool isThemeEngine(const QVariantMap &decoSettingsMap)
+static bool isThemeEngine(const QVariantMap& decoSettingsMap)
 {
     auto it = decoSettingsMap.find(QStringLiteral("themes"));
     if (it == decoSettingsMap.end()) {
@@ -79,7 +81,7 @@ static bool isThemeEngine(const QVariantMap &decoSettingsMap)
     return it.value().toBool();
 }
 
-static KDecoration2::BorderSize recommendedBorderSize(const QVariantMap &decoSettingsMap)
+static KDecoration2::BorderSize recommendedBorderSize(const QVariantMap& decoSettingsMap)
 {
     auto it = decoSettingsMap.find(QStringLiteral("recommendedBorderSize"));
     if (it == decoSettingsMap.end()) {
@@ -88,7 +90,7 @@ static KDecoration2::BorderSize recommendedBorderSize(const QVariantMap &decoSet
     return Utils::stringToBorderSize(it.value().toString());
 }
 
-static QString themeListKeyword(const QVariantMap &decoSettingsMap)
+static QString themeListKeyword(const QVariantMap& decoSettingsMap)
 {
     auto it = decoSettingsMap.find(QStringLiteral("themeListKeyword"));
     if (it == decoSettingsMap.end()) {
@@ -97,7 +99,7 @@ static QString themeListKeyword(const QVariantMap &decoSettingsMap)
     return it.value().toString();
 }
 
-static QString findKNewStuff(const QVariantMap &decoSettingsMap)
+static QString findKNewStuff(const QVariantMap& decoSettingsMap)
 {
     auto it = decoSettingsMap.find(QStringLiteral("KNewStuff"));
     if (it == decoSettingsMap.end()) {
@@ -111,13 +113,14 @@ void DecorationsModel::init()
     beginResetModel();
     m_plugins.clear();
     const auto plugins = KPluginMetaData::findPlugins(s_pluginName);
-    for (const auto &info : plugins) {
+    for (const auto& info : plugins) {
         QScopedPointer<KDecoration2::DecorationThemeProvider> themeFinder(
             KPluginFactory::instantiatePlugin<KDecoration2::DecorationThemeProvider>(info).plugin);
         KDecoration2::DecorationThemeMetaData data;
-        const auto decoSettingsMap = info.rawData().value("org.kde.kdecoration2").toObject().toVariantMap();
+        const auto decoSettingsMap
+            = info.rawData().value("org.kde.kdecoration2").toObject().toVariantMap();
         if (themeFinder) {
-            const QString &kns = findKNewStuff(decoSettingsMap);
+            const QString& kns = findKNewStuff(decoSettingsMap);
             if (!kns.isEmpty() && !m_knsProviders.contains(kns)) {
                 m_knsProviders.append(kns);
             }
@@ -128,7 +131,7 @@ void DecorationsModel::init()
                     continue;
                 }
                 const auto themesList = themeFinder->themes();
-                for (const KDecoration2::DecorationThemeMetaData &data : themesList) {
+                for (const KDecoration2::DecorationThemeMetaData& data : themesList) {
                     m_plugins.emplace_back(data);
                 }
 
@@ -138,7 +141,9 @@ void DecorationsModel::init()
         }
 
         if (decoSettingsMap.contains(QStringLiteral("kcmodule"))) {
-            qWarning() << "The use of 'kcmodule' is deprecated in favor of 'kcmoduleName', please update" << info.name();
+            qWarning()
+                << "The use of 'kcmodule' is deprecated in favor of 'kcmoduleName', please update"
+                << info.name();
         }
 
         data.setConfigurationName(info.value("X-KDE-ConfigModule"));
@@ -152,11 +157,14 @@ void DecorationsModel::init()
     endResetModel();
 }
 
-QModelIndex DecorationsModel::findDecoration(const QString &pluginName, const QString &themeName) const
+QModelIndex DecorationsModel::findDecoration(const QString& pluginName,
+                                             const QString& themeName) const
 {
-    auto it = std::find_if(m_plugins.cbegin(), m_plugins.cend(), [pluginName, themeName](const KDecoration2::DecorationThemeMetaData &d) {
-        return d.pluginId() == pluginName && d.themeName() == themeName;
-    });
+    auto it = std::find_if(m_plugins.cbegin(),
+                           m_plugins.cend(),
+                           [pluginName, themeName](const KDecoration2::DecorationThemeMetaData& d) {
+                               return d.pluginId() == pluginName && d.themeName() == themeName;
+                           });
     if (it == m_plugins.cend()) {
         return QModelIndex();
     }

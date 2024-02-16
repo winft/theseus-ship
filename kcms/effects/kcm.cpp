@@ -5,9 +5,9 @@
 */
 
 #include "kcm.h"
+#include "desktopeffectsdata.h"
 #include "effectsfilterproxymodel.h"
 #include "effectsmodel.h"
-#include "desktopeffectsdata.h"
 
 #include <KLocalizedString>
 #include <KPluginFactory>
@@ -23,11 +23,12 @@ K_PLUGIN_FACTORY_WITH_JSON(DesktopEffectsKCMFactory,
 namespace theseus_ship
 {
 
-DesktopEffectsKCM::DesktopEffectsKCM(QObject *parent, const KPluginMetaData &metaData)
+DesktopEffectsKCM::DesktopEffectsKCM(QObject* parent, const KPluginMetaData& metaData)
     : KQuickConfigModule(parent, metaData)
     , m_model(new EffectsModel(this))
 {
-    qmlRegisterType<EffectsFilterProxyModel>("org.kde.private.kcms.kwin.effects", 1, 0, "EffectsFilterProxyModel");
+    qmlRegisterType<EffectsFilterProxyModel>(
+        "org.kde.private.kcms.kwin.effects", 1, 0, "EffectsFilterProxyModel");
 
     setButtons(Apply | Default | Help);
 
@@ -39,7 +40,7 @@ DesktopEffectsKCM::~DesktopEffectsKCM()
 {
 }
 
-QAbstractItemModel *DesktopEffectsKCM::effectsModel() const
+QAbstractItemModel* DesktopEffectsKCM::effectsModel() const
 {
     return m_model;
 }
@@ -67,11 +68,11 @@ void DesktopEffectsKCM::onGHNSEntriesChanged()
     m_model->load(EffectsModel::LoadOptions::KeepDirty);
 }
 
-void DesktopEffectsKCM::configure(const QString &pluginId, QQuickItem *context)
+void DesktopEffectsKCM::configure(const QString& pluginId, QQuickItem* context)
 {
     const QModelIndex index = m_model->findByPluginId(pluginId);
 
-    QWindow *transientParent = nullptr;
+    QWindow* transientParent = nullptr;
     if (context && context->window()) {
         transientParent = context->window();
     }

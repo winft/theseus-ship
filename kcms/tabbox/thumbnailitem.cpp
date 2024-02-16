@@ -38,21 +38,27 @@ void WindowThumbnailItem::findImage()
     QString imagePath;
     switch (m_wId) {
     case Konqueror:
-        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kwin/kcm_kwintabbox/konqueror.png");
+        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
+                                           "kwin/kcm_kwintabbox/konqueror.png");
         break;
     case Systemsettings:
-        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kwin/kcm_kwintabbox/systemsettings.png");
+        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
+                                           "kwin/kcm_kwintabbox/systemsettings.png");
         break;
     case KMail:
-        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kwin/kcm_kwintabbox/kmail.png");
+        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
+                                           "kwin/kcm_kwintabbox/kmail.png");
         break;
     case Dolphin:
-        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kwin/kcm_kwintabbox/dolphin.png");
+        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
+                                           "kwin/kcm_kwintabbox/dolphin.png");
         break;
     case Desktop:
-        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "wallpapers/Next/contents/screenshot.png");
+        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
+                                           "wallpapers/Next/contents/screenshot.png");
         if (imagePath.isNull()) {
-            imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kwin/kcm_kwintabbox/desktop.png");
+            imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
+                                               "kwin/kcm_kwintabbox/desktop.png");
         }
         break;
     default:
@@ -68,7 +74,8 @@ void WindowThumbnailItem::findImage()
     setImplicitSize(m_image.width(), m_image.height());
 }
 
-QSGNode *WindowThumbnailItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *updatePaintNodeData)
+QSGNode* WindowThumbnailItem::updatePaintNode(QSGNode* oldNode,
+                                              UpdatePaintNodeData* updatePaintNodeData)
 {
     Q_UNUSED(updatePaintNodeData)
     auto node = static_cast<QSGImageNode*>(oldNode);
@@ -94,7 +101,7 @@ QSize WindowThumbnailItem::sourceSize() const
     return m_sourceSize;
 }
 
-void WindowThumbnailItem::setSourceSize(const QSize &size)
+void WindowThumbnailItem::setSourceSize(const QSize& size)
 {
     if (m_sourceSize == size) {
         return;

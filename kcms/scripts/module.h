@@ -21,24 +21,25 @@ class Module : public KQuickConfigModule
 {
     Q_OBJECT
 
-    Q_PROPERTY(QAbstractItemModel *model READ model CONSTANT)
-    Q_PROPERTY(QList<KPluginMetaData> pendingDeletions READ pendingDeletions NOTIFY pendingDeletionsChanged)
+    Q_PROPERTY(QAbstractItemModel* model READ model CONSTANT)
+    Q_PROPERTY(QList<KPluginMetaData> pendingDeletions READ pendingDeletions NOTIFY
+                   pendingDeletionsChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY messageChanged)
     Q_PROPERTY(QString infoMessage READ infoMessage NOTIFY messageChanged)
 public:
-    explicit Module(QObject *parent, const KPluginMetaData &data);
+    explicit Module(QObject* parent, const KPluginMetaData& data);
 
     void load() override;
     void save() override;
     void defaults() override;
 
-    QAbstractItemModel *model() const
+    QAbstractItemModel* model() const
     {
         return m_model;
     }
 
-    Q_INVOKABLE void togglePendingDeletion(const KPluginMetaData &data);
-    Q_INVOKABLE bool canDeleteEntry(const KPluginMetaData &data)
+    Q_INVOKABLE void togglePendingDeletion(const KPluginMetaData& data);
+    Q_INVOKABLE bool canDeleteEntry(const KPluginMetaData& data)
     {
         return QFileInfo(data.fileName()).isWritable();
     }
@@ -56,7 +57,7 @@ public:
     {
         return m_infoMessage;
     }
-    void setErrorMessage(const QString &message)
+    void setErrorMessage(const QString& message)
     {
         m_infoMessage.clear();
         m_errorMessage = message;
@@ -69,16 +70,16 @@ public:
     Q_INVOKABLE void importScript();
     Q_INVOKABLE void onGHNSEntriesChanged();
 
-    Q_INVOKABLE void configure(const KPluginMetaData &data);
+    Q_INVOKABLE void configure(const KPluginMetaData& data);
 
 Q_SIGNALS:
     void messageChanged();
     void pendingDeletionsChanged();
 
 private:
-    KWinScriptsData *m_kwinScriptsData;
+    KWinScriptsData* m_kwinScriptsData;
     QList<KPluginMetaData> m_pendingDeletions;
-    KPluginModel *m_model;
+    KPluginModel* m_model;
     QString m_errorMessage;
     QString m_infoMessage;
 };

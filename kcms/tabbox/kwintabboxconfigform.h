@@ -9,8 +9,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef __KWINTABBOXCONFIGFORM_H__
 #define __KWINTABBOXCONFIGFORM_H__
 
-#include <QWidget>
 #include <QStandardItemModel>
+#include <QWidget>
 
 #include <como/win/tabbox/tabbox_config.h>
 
@@ -30,30 +30,30 @@ class KWinTabBoxConfigForm : public QWidget
     Q_OBJECT
 
 public:
-    enum class TabboxType
-    {
+    enum class TabboxType {
         Main,
         Alternative,
     };
 
-
-    enum EffectComboRole
-    {
+    enum EffectComboRole {
         LayoutPath = Qt::UserRole + 1,
         AddonEffect, // i.e not builtin effects
     };
 
-    explicit KWinTabBoxConfigForm(TabboxType type, TabBoxSettings *config, ShortcutSettings *shortcutsConfig, QWidget *parent = nullptr);
+    explicit KWinTabBoxConfigForm(TabboxType type,
+                                  TabBoxSettings* config,
+                                  ShortcutSettings* shortcutsConfig,
+                                  QWidget* parent = nullptr);
     ~KWinTabBoxConfigForm() override;
 
-    TabBoxSettings *config() const;
+    TabBoxSettings* config() const;
     bool highlightWindows() const;
 
     void updateUiFromConfig();
     void setDefaultIndicatorVisible(bool visible);
 
     // EffectCombo Data Model
-    void setEffectComboModel(QStandardItemModel *model);
+    void setEffectComboModel(QStandardItemModel* model);
     QVariant effectComboCurrentData(int role = Qt::UserRole) const;
 
 Q_SIGNALS:
@@ -69,12 +69,12 @@ private Q_SLOTS:
     void onShowDesktopMode();
     void onSwitchingMode();
     void onEffectCombo();
-    void onShortcutChanged(const QKeySequence &seq);
+    void onShortcutChanged(const QKeySequence& seq);
     void updateDefaultIndicators();
 
 private:
     void setEnabledUi();
-    void applyDefaultIndicator(QList<QWidget *> widgets, bool visible);
+    void applyDefaultIndicator(QList<QWidget*> widgets, bool visible);
 
     // UI property getters
     bool showTabBox() const;
@@ -94,15 +94,15 @@ private:
     void setApplicationMode(como::win::tabbox_config::ClientApplicationsMode mode);
     void setShowDesktopMode(como::win::tabbox_config::ShowDesktopMode mode);
     void setSwitchingModeChanged(como::win::tabbox_config::ClientSwitchingMode mode);
-    void setLayoutName(const QString &layoutName);
+    void setLayoutName(const QString& layoutName);
 
 private:
-    TabBoxSettings *m_config = nullptr;
-    ShortcutSettings *m_shortcuts = nullptr;
+    TabBoxSettings* m_config = nullptr;
+    ShortcutSettings* m_shortcuts = nullptr;
     bool m_showDefaultIndicator = false;
 
     bool m_isHighlightWindowsEnabled = true;
-    Ui::KWinTabBoxConfigForm *ui;
+    Ui::KWinTabBoxConfigForm* ui;
 };
 
 } // namespace

@@ -24,18 +24,18 @@ class KWinTabboxData : public KCModuleData
     Q_OBJECT
 
 public:
-    explicit KWinTabboxData(QObject *parent);
+    explicit KWinTabboxData(QObject* parent);
 
-    TabBoxSettings *tabBoxConfig() const;
-    TabBoxSettings *tabBoxAlternativeConfig() const;
-    PluginsSettings *pluginsConfig() const;
-    ShortcutSettings *shortcutConfig() const;
+    TabBoxSettings* tabBoxConfig() const;
+    TabBoxSettings* tabBoxAlternativeConfig() const;
+    PluginsSettings* pluginsConfig() const;
+    ShortcutSettings* shortcutConfig() const;
 
 private:
-    TabBoxSettings *m_tabBoxConfig;
-    TabBoxSettings *m_tabBoxAlternativeConfig;
-    PluginsSettings *m_pluginsConfig;
-    ShortcutSettings *m_shortcutConfig;
+    TabBoxSettings* m_tabBoxConfig;
+    TabBoxSettings* m_tabBoxAlternativeConfig;
+    PluginsSettings* m_pluginsConfig;
+    ShortcutSettings* m_shortcutConfig;
 };
 
 }

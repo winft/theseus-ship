@@ -25,18 +25,19 @@ class VirtualDesktops : public KQuickManagedConfigModule
     Q_OBJECT
 
     Q_PROPERTY(QAbstractItemModel* desktopsModel READ desktopsModel CONSTANT)
-    Q_PROPERTY(QAbstractItemModel *animationsModel READ animationsModel CONSTANT)
-    Q_PROPERTY(VirtualDesktopsSettings *virtualDesktopsSettings READ virtualDesktopsSettings CONSTANT)
+    Q_PROPERTY(QAbstractItemModel* animationsModel READ animationsModel CONSTANT)
+    Q_PROPERTY(
+        VirtualDesktopsSettings* virtualDesktopsSettings READ virtualDesktopsSettings CONSTANT)
 
 public:
-    explicit VirtualDesktops(QObject *parent, const KPluginMetaData &metaData);
+    explicit VirtualDesktops(QObject* parent, const KPluginMetaData& metaData);
     ~VirtualDesktops() override;
 
-    QAbstractItemModel *desktopsModel() const;
+    QAbstractItemModel* desktopsModel() const;
 
-    QAbstractItemModel *animationsModel() const;
+    QAbstractItemModel* animationsModel() const;
 
-    VirtualDesktopsSettings *virtualDesktopsSettings() const;
+    VirtualDesktopsSettings* virtualDesktopsSettings() const;
 
     bool isDefaults() const override;
     bool isSaveNeeded() const override;
@@ -50,7 +51,7 @@ public Q_SLOTS:
     void showAboutAnimation();
 
 private:
-    VirtualDesktopsData *m_data;
+    VirtualDesktopsData* m_data;
 };
 
 }

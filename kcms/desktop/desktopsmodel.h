@@ -16,7 +16,6 @@ class QDBusArgument;
 class QDBusMessage;
 class QDBusServiceWatcher;
 
-
 namespace theseus_ship
 {
 
@@ -61,13 +60,13 @@ public:
     };
     Q_ENUM(AdditionalRoles)
 
-    explicit DesktopsModel(QObject *parent = nullptr);
+    explicit DesktopsModel(QObject* parent = nullptr);
     ~DesktopsModel() override;
 
     QHash<int, QByteArray> roleNames() const override;
 
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    int rowCount(const QModelIndex &parent = {}) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = {}) const override;
 
     bool ready() const;
     QString error() const;
@@ -82,8 +81,8 @@ public:
 
     QString createDesktopName() const;
     Q_INVOKABLE void createDesktop();
-    Q_INVOKABLE void removeDesktop(const QString &id);
-    Q_INVOKABLE void setDesktopName(const QString &id, const QString &name);
+    Q_INVOKABLE void removeDesktop(const QString& id);
+    Q_INVOKABLE void setDesktopName(const QString& id, const QString& name);
 
     Q_INVOKABLE void syncWithServer();
 
@@ -102,24 +101,24 @@ Q_SIGNALS:
 
 protected Q_SLOTS:
     void reset();
-    void getAllAndConnect(const QDBusMessage &msg);
-    void desktopCreated(const QString &id, const como::win::dbus::subspace_data &data);
-    void desktopRemoved(const QString &id);
-    void desktopDataChanged(const QString &id, const como::win::dbus::subspace_data &data);
+    void getAllAndConnect(const QDBusMessage& msg);
+    void desktopCreated(const QString& id, const como::win::dbus::subspace_data& data);
+    void desktopRemoved(const QString& id);
+    void desktopDataChanged(const QString& id, const como::win::dbus::subspace_data& data);
     void desktopRowsChanged(uint rows);
     void updateModifiedState(bool server = false);
     void handleCallError();
 
 private:
-    QDBusServiceWatcher *m_serviceWatcher;
+    QDBusServiceWatcher* m_serviceWatcher;
     QString m_error;
     bool m_userModified;
     bool m_serverModified;
     QStringList m_serverSideDesktops;
-    QHash<QString,QString> m_serverSideNames;
+    QHash<QString, QString> m_serverSideNames;
     int m_serverSideRows;
     QStringList m_desktops;
-    QHash<QString,QString> m_names;
+    QHash<QString, QString> m_names;
     int m_rows;
     int m_pendingCalls = 0;
 };
