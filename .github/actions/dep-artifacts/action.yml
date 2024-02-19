@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2024 Roman Gilg <subdiff@gmail.com>
+# SPDX-License-Identifier: MIT
+name: Specialized Install Dependency via Artifact
+description: Calls into more generic dep-artifact-generic to install dependency
+inputs:
+  secret:
+    description: Secret
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Install Wrapland
+      uses: ./.github/actions/dep-artifact-generic
+      with:
+        repo: winft/wrapland
+        dep-name: wrapland
+        secret: ${{ inputs.secret }}
+    - name: Install The Compositor Modules
+      uses: ./.github/actions/dep-artifact-generic
+      with:
+        repo: winft/como
+        dep-name: como
+        secret: ${{ inputs.secret }}

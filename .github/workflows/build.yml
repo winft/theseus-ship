@@ -69,12 +69,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: Install como
-        uses: ./.github/actions/dep-artifact
+      - name: Install Dependencies
+        uses: ./.github/actions/dep-artifacts
         with:
-          repo: winft/como
-          branch: master
-          dep-name: como
           secret: ${{ secrets.GITHUB_TOKEN }}
       - run: mkdir build
       - name: Configure
