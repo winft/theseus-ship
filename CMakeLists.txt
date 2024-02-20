@@ -36,6 +36,7 @@ find_package(KWinDBusInterface CONFIG REQUIRED)
 include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
+kde_enable_exceptions()
 
 include(ECMInstallIcons)
 include(ECMOptionalAddSubdirectory)
