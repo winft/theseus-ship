@@ -1,0 +1,70 @@
+# SPDX-FileCopyrightText: 2024 Roman Gilg <subdiff@gmail.com>
+# SPDX-License-Identifier: MIT
+name: Package
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: Image to package on
+        required: true
+        type: string
+      artifact-name:
+        description: Artifact name of build dir
+        required: false
+        type: string
+        default: 'build'
+      package-name:
+        description: Name of the resulting packages
+        required: true
+        type: string
+
+jobs:
+  deb:
+    name: Create deb
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.image }}
+    steps:
+      - name: Install dpkg
+        run: pacman -Sy --needed --quiet --noconfirm dpkg
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+      - name: Untar artifact
+        run: tar -xzf build-dir.tar
+      - name: Run CPack
+        run: cd build && cpack -G DEB -D CPACK_DEBIAN_FILE_NAME=${{ inputs.package-name }}.deb
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-package
+          path: build/_CPack_Packages/Linux/DEB/${{ inputs.package-name }}.deb
+          retention-days: 8
+
+  tar:
+    name: Create tar
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.image }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+      - name: Untar artifact
+        run: tar -xzf build-dir.tar
+      - name: Run CPack
+      # Need to use CPACK_PACKAGE_FILE_NAME instead of CPACK_ARCHIVE_FILE_NAME
+      # See: https://gitlab.kitware.com/cmake/cmake/-/issues/20419
+        run: cd build && cpack -G TGZ -D CPACK_PACKAGE_FILE_NAME=${{ inputs.package-name }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tar-package
+          path: build/_CPack_Packages/Linux/TGZ/${{ inputs.package-name }}.tar.gz
+          retention-days: 8
