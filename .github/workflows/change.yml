@@ -32,3 +32,10 @@ jobs:
     needs: build
     with:
       image: registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master
+
+  package:
+    uses: ./.github/workflows/package.yml
+    needs: build
+    with:
+      image: registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master
+      package-name: theseus-ship

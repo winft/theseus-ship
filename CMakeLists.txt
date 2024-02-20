@@ -227,3 +227,5 @@ install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/bin/kwin_wayland_wrapper
     DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
 )
+
+include(Packing)
