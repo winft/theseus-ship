@@ -20,7 +20,7 @@ add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0
 find_package(ECM ${KF6_MIN_VERSION} REQUIRED NO_MODULE)
 
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
-set(CMAKE_MODULE_PATH cmake/modules ${ECM_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${ECM_MODULE_PATH})
 
 include(FeatureSummary)
 include(WriteBasicConfigVersionFile)
