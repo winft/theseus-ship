@@ -17,7 +17,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <KPackage/PackageLoader>
 #include <KPluginFactory>
 #include <QVBoxLayout>
-#include <QtDBus>
 
 #include "kwinscreenedgeconfigform.h"
 #include "kwinscreenedgedata.h"
