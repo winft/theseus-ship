@@ -6,9 +6,22 @@ SPDX-FileCopyrightText: 2023 Ismael Asensio <isma.af@gmail.com>
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "main.h"
+
+#include "kwinpluginssettings.h"
+#include "kwinswitcheffectsettings.h"
+#include "kwintabboxconfigform.h"
+#include "kwintabboxdata.h"
+#include "kwintabboxsettings.h"
+#include "layoutpreview.h"
+#include "shortcutsettings.h"
 #include <kwin_effects_interface.h>
 
-// Qt
+#include <KLocalizedString>
+#include <KNSWidgets/Button>
+#include <KPackage/Package>
+#include <KPackage/PackageLoader>
+#include <KPluginFactory>
+#include <KTitleWidget>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
@@ -19,25 +32,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QStandardPaths>
 #include <QTabWidget>
 #include <QVBoxLayout>
-#include <QtDBus>
-
-// KDE
-#include <KLocalizedString>
-#include <KNSWidgets/Button>
-#include <KPluginFactory>
-#include <KTitleWidget>
-// Plasma
-#include <KPackage/Package>
-#include <KPackage/PackageLoader>
-
-// own
-#include "kwinpluginssettings.h"
-#include "kwinswitcheffectsettings.h"
-#include "kwintabboxconfigform.h"
-#include "kwintabboxdata.h"
-#include "kwintabboxsettings.h"
-#include "layoutpreview.h"
-#include "shortcutsettings.h"
 
 K_PLUGIN_FACTORY_WITH_JSON(KWinTabBoxConfigFactory,
                            "kcm_kwintabbox.json",

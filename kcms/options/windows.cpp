@@ -17,7 +17,6 @@
 #include <QLabel>
 #include <QRadioButton>
 #include <QScreen>
-#include <QtDBus>
 
 #include <KConfig>
 #include <KConfigGroup>

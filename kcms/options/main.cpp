@@ -7,16 +7,14 @@
 
 #include "main.h"
 
-#include <QLayout>
-// Added by qt3to4:
-#include <QVBoxLayout>
-
-#include <QtDBus>
-
+#include <KAboutData>
+#include <KConfig>
 #include <KLocalizedString>
 #include <KPluginFactory>
-#include <kaboutdata.h>
-#include <kconfig.h>
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QLayout>
+#include <QVBoxLayout>
 
 #include "kwinoptions_kdeglobals_settings.h"
 #include "kwinoptions_settings.h"

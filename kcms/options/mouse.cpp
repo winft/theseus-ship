@@ -7,13 +7,12 @@
 
 #include "mouse.h"
 
-#include <QtDBus>
-
-#include <cstdlib>
+#include "kwinoptions_settings.h"
 
 #include <KConfigDialogManager>
-
-#include "kwinoptions_settings.h"
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <cstdlib>
 
 KWinMouseConfigForm::KWinMouseConfigForm(QWidget* parent)
     : QWidget(parent)
