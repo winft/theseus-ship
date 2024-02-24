@@ -75,7 +75,7 @@ set_package_properties(KScreenLocker PROPERTIES
     PURPOSE "For screenlocker integration in kwin_wayland"
 )
 
-find_package(Breeze 5.9.0 CONFIG)
+find_package(Breeze 6.0.0 CONFIG)
 set_package_properties(Breeze PROPERTIES
     TYPE OPTIONAL
     PURPOSE "For setting the default window decoration plugin"
