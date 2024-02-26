@@ -51,6 +51,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
         <entry name="TouchBorderActivateOverview" key="TouchBorderActivate" type="IntList">
             <default>int(como::win::electric_border::none)</default>
         </entry>
+        <entry name="TouchBorderActivateGrid" key="GridTouchBorderActivate" type="IntList">
+            <default>int(como::win::electric_border::none)</default>
+        </entry>
     </group>
     <group name="TabBox">
         <entry name="TouchBorderActivateTabBox" key="TouchBorderActivate" type="IntList">

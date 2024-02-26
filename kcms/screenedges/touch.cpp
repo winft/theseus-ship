@@ -130,7 +130,9 @@ void KWinScreenEdgesConfig::monitorInit()
     m_form->monitorAddItem(i18n("%1 - All Desktops", presentWindowsName));
     m_form->monitorAddItem(i18n("%1 - Current Desktop", presentWindowsName));
     m_form->monitorAddItem(i18n("%1 - Current Application", presentWindowsName));
+
     m_form->monitorAddItem(i18n("Overview"));
+    m_form->monitorAddItem(i18n("Grid"));
 
     const QString cubeName = "Cube";
     m_form->monitorAddItem(i18n("%1 - Cube", cubeName));
@@ -211,6 +213,7 @@ void KWinScreenEdgesConfig::monitorLoadSettings()
 
     // Overview
     m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateOverview(), Overview);
+    m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateGrid(), Grid);
 
     // Desktop Cube BorderActivate
     m_form->monitorChangeEdge(m_data->settings()->touchBorderActivateCube(), Cube);
@@ -263,6 +266,12 @@ void KWinScreenEdgesConfig::monitorLoadDefaultSettings()
     // PresentWindows BorderActivateClass
     m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateClassValue(),
                                      PresentWindowsClass);
+
+    // Overview
+    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateOverviewValue(),
+                                     Overview);
+    m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateGridValue(),
+                                     Grid);
 
     // Desktop Cube BorderActivate
     m_form->monitorChangeDefaultEdge(m_data->settings()->defaultTouchBorderActivateCubeValue(),
@@ -346,7 +355,9 @@ void KWinScreenEdgesConfig::monitorShowEvent()
     m_form->monitorItemSetEnabled(PresentWindowsAll, enabled);
 
     // Overview
-    m_form->monitorItemSetEnabled(Overview, config.readEntry("overviewEnabled", true));
+    const bool overviewEnabled = config.readEntry("overviewEnabled", true);
+    m_form->monitorItemSetEnabled(Overview, overviewEnabled);
+    m_form->monitorItemSetEnabled(Grid, overviewEnabled);
 
     // Desktop Cube
     enabled = config.readEntry("cube", true);
