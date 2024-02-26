@@ -53,6 +53,7 @@ private:
         Cylinder,
         Sphere,
         Overview,
+        Grid,
         TabBox,
         TabBoxAlternative,
         EffectCount
