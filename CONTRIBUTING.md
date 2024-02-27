@@ -257,7 +257,7 @@ fdbuild --init-with-template kwinft-plasma-meta
 ```
 
 More information about this can be found in the
-[respective section](https://github.com/romangg/como/blob/lib-isolate/CONTRIBUTING.md#using-fdbuild)
+[respective section](https://github.com/winft/como/blob/master/CONTRIBUTING.md)
 of the Compositor Modules' contributing guide.
 
 #### Plasma Desktop Session Integration
