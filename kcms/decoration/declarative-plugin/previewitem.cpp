@@ -41,7 +41,9 @@ PreviewItem::PreviewItem(QQuickItem* parent)
 
 PreviewItem::~PreviewItem()
 {
-    m_decoration->deleteLater();
+    if (m_decoration) {
+        m_decoration->deleteLater();
+    }
     if (m_bridge) {
         m_bridge->unregisterPreviewItem(this);
     }
@@ -295,12 +297,14 @@ static QHoverEvent cloneEventWithPadding(QHoverEvent* event, int paddingLeft, in
 template<typename E>
 void PreviewItem::proxyPassEvent(E* event) const
 {
-    const auto& shadow = m_decoration->shadow();
-    if (shadow) {
-        E e = cloneEventWithPadding(event, shadow->paddingLeft(), shadow->paddingTop());
-        QCoreApplication::instance()->sendEvent(decoration(), &e);
-    } else {
-        QCoreApplication::instance()->sendEvent(decoration(), event);
+    if (m_decoration) {
+        auto const& shadow = m_decoration->shadow();
+        if (shadow) {
+            E e = cloneEventWithPadding(event, shadow->paddingLeft(), shadow->paddingTop());
+            QCoreApplication::instance()->sendEvent(decoration(), &e);
+        } else {
+            QCoreApplication::instance()->sendEvent(decoration(), event);
+        }
     }
     // Propagate events to parent
     event->ignore();
