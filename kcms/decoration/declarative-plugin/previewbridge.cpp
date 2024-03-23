@@ -13,7 +13,6 @@
 
 #include <KCModule>
 #include <KCMultiDialog>
-#include <KPluginFactory>
 #include <KPluginMetaData>
 
 #include <QDBusConnection>
@@ -22,7 +21,6 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QPushButton>
-#include <QQuickItem>
 #include <QQuickRenderControl>
 #include <QQuickWindow>
 #include <QVBoxLayout>

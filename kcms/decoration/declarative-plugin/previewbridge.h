@@ -8,13 +8,12 @@
 
 #include <KDecoration2/DecorationButton>
 #include <KDecoration2/Private/DecorationBridge>
+#include <KPluginFactory>
 
 #include <QList>
 #include <QPointer>
-
-class QQuickItem;
-
-class KPluginFactory;
+#include <QQmlEngine>
+#include <QQuickItem>
 
 namespace KDecoration2
 {
@@ -25,9 +24,11 @@ class PreviewClient;
 class PreviewItem;
 class PreviewSettings;
 
-class PreviewBridge : public DecorationBridge
+class PreviewBridge : public KDecoration2::DecorationBridge
 {
     Q_OBJECT
+    QML_ANONYMOUS
+
     Q_PROPERTY(QString plugin READ plugin WRITE setPlugin NOTIFY pluginChanged)
     Q_PROPERTY(QString theme READ theme WRITE setTheme NOTIFY themeChanged)
     Q_PROPERTY(
@@ -90,6 +91,7 @@ private:
 class BridgeItem : public QObject
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(Bridge)
     Q_PROPERTY(QString plugin READ plugin WRITE setPlugin NOTIFY pluginChanged)
     Q_PROPERTY(QString theme READ theme WRITE setTheme NOTIFY themeChanged)
     Q_PROPERTY(

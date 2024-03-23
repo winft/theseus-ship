@@ -1,19 +1,19 @@
 # SPDX-FileCopyrightText: 2023 Roman Gilg <subdiff@gmail.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+ecm_add_qml_module(kdecorationprivatedeclarative URI org.kde.kwin.private.kdecoration DEPENDENCIES QtCore QtQuick GENERATE_PLUGIN_SOURCE)
 
-set(plugin_SRCS
+target_sources(kdecorationprivatedeclarative PRIVATE
     previewbutton.cpp
     previewbridge.cpp
     previewclient.cpp
     previewitem.cpp
     previewsettings.cpp
-    plugin.cpp
     buttonsmodel.cpp
+    types.h
 )
 
-add_library(kdecorationprivatedeclarative SHARED ${plugin_SRCS})
-target_link_libraries(kdecorationprivatedeclarative
+target_link_libraries(kdecorationprivatedeclarative PRIVATE
   como::win
   KDecoration2::KDecoration
   KDecoration2::KDecoration2Private
@@ -25,5 +25,4 @@ target_link_libraries(kdecorationprivatedeclarative
   Qt::Quick
 )
 
-install(TARGETS kdecorationprivatedeclarative DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/kwin/private/kdecoration )
-install(FILES qmldir DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/kwin/private/kdecoration )
+ecm_finalize_qml_module(kdecorationprivatedeclarative)

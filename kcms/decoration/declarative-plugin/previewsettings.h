@@ -11,6 +11,7 @@
 #include <QAbstractListModel>
 #include <QObject>
 #include <QPointer>
+#include <QQmlEngine>
 
 namespace KDecoration2
 {
@@ -121,6 +122,7 @@ private:
 class Settings : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(KDecoration2::Preview::PreviewBridge* bridge READ bridge WRITE setBridge NOTIFY
                    bridgeChanged)
     Q_PROPERTY(
