@@ -45,6 +45,7 @@ Name[zh_CN]=窗口管理器效果
 Name[zh_TW]=視窗管理員效果
 
 ProvidersUrl=https://autoconfig.kde.org/ocs/providers.xml
+ContentWarning=Executables
 Categories=KWin Effects Plasma 6
 StandardResource=tmp
 Uncompress=kpackage
