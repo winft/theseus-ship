@@ -23,7 +23,9 @@ jobs:
         run: echo "result=${{ env.result }}" >> $GITHUB_OUTPUT
 
   message-lint:
+    if: endsWith(needs.get.outputs.image, '-master')
     uses: ./.github/workflows/commit-lint.yml
+    needs: get
     with:
       upstream-repo: https://github.com/winft/theseus-ship.git
 
