@@ -9,11 +9,11 @@ jobs:
     if: github.repository == 'winft/theseus-ship'
     uses: ./.github/workflows/build.yml
     with:
-      image: registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master
+      image: registry.gitlab.com/kwinft/ci-images/archlinux/como-base-master
 
   package:
     uses: ./.github/workflows/package.yml
     needs: build
     with:
-      image: registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master
+      image: registry.gitlab.com/kwinft/ci-images/archlinux/como-base-master
       package-name: theseus-ship

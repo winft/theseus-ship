@@ -6,6 +6,22 @@ on:
   - push
   - pull_request
 jobs:
+  get:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.setvar.outputs.result }}
+    env:
+      prefix: registry.gitlab.com/kwinft/ci-images/archlinux/como-base
+      result: ''
+      branch: ''
+    steps:
+      - run: echo "branch=${{ github.head_ref || github.ref_name }}" >> $GITHUB_ENV
+      - run: echo "result=${{ env.prefix }}-master" >> $GITHUB_ENV
+      - if: startsWith(env.branch, '6.') || github.ref_type == 'tag'
+        run: echo "result=${{ env.prefix }}-stable" >> $GITHUB_ENV
+      - id: setvar
+        run: echo "result=${{ env.result }}" >> $GITHUB_OUTPUT
+
   message-lint:
     uses: ./.github/workflows/commit-lint.yml
     with:
@@ -23,19 +39,20 @@ jobs:
 
   build:
     uses: ./.github/workflows/build.yml
+    needs: get
     with:
-      image: registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master
+      image: ${{ needs.get.outputs.image }}
     secrets: inherit
 
   install:
     uses: ./.github/workflows/install.yml
-    needs: build
+    needs: [build, get]
     with:
-      image: registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master
+      image: ${{ needs.get.outputs.image }}
 
   package:
     uses: ./.github/workflows/package.yml
-    needs: build
+    needs: [build, get]
     with:
-      image: registry.gitlab.com/kwinft/ci-images/archlinux/kwinft-base-master
+      image: ${{ needs.get.outputs.image }}
       package-name: theseus-ship
