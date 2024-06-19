@@ -4,6 +4,35 @@ SPDX-License-Identifier: GPL-2.0-or-later
 -->
 # Changelog
 All notable changes to Theseus' Ship will be documented in this file.
+## [6.1.0](https://github.com/winft/theseus-ship/compare/v6.0.0...v6.1.0) (2024-06-19)
+
+
+### Features
+
+* add keywords for edge/corner barriers to screenedges KCM ([e2bc7c1](https://github.com/winft/theseus-ship/commit/e2bc7c1554fb9f81de280954ac8a9beb2459d17c))
+* mark risky KNS content ([56b2f1d](https://github.com/winft/theseus-ship/commit/56b2f1dd91254137c47f28ab49fb31dec31b040c))
+* move kcm actions to top ([26fbe27](https://github.com/winft/theseus-ship/commit/26fbe27573bea741a2f36d7540c4f07e71a15e4c))
+* provide a way to reserve a screen edge for grid mode ([1a07e52](https://github.com/winft/theseus-ship/commit/1a07e5256592eab08996c9938ab9c10e0fc1de49))
+* update placeholder text and add icon ([9c416cb](https://github.com/winft/theseus-ship/commit/9c416cb29de19bf56e65d155abec12d405a37a32))
+
+
+### Bug Fixes
+
+* adapt to COMO screen locker change ([dc3906a](https://github.com/winft/theseus-ship/commit/dc3906a19297e0fd779d719458828bab14c825b3))
+* bring back decoration spacer buttons ([1ec81a9](https://github.com/winft/theseus-ship/commit/1ec81a9a09764f56a6bd034ddec40eb017a06acc))
+* change 'Include "Show Desktop" icon' to 'Include "Show Desktop" entry' ([5999d29](https://github.com/winft/theseus-ship/commit/5999d29bf0a09ce1485fec5c05ca14587b67fb1d))
+* expand button label from "Add" to "Add Desktop" ([fa25e81](https://github.com/winft/theseus-ship/commit/fa25e81dca8ea51e42451b4b84293f4cc615225b))
+* fix crash when preview cannot be generated ([50ee2ab](https://github.com/winft/theseus-ship/commit/50ee2abaf5c1fc26c91f8626caa6a0a65098b48f))
+* handle Escape key to exit Export mode ([d45c178](https://github.com/winft/theseus-ship/commit/d45c1780bbd6062f4eff0087ed4565731921bb46))
+* move "Add" button and row count to header actions ([93b984e](https://github.com/winft/theseus-ship/commit/93b984e4575172548f02871d349a74579656280f))
+* re-add separator line between scrollview and controls ([50d98fe](https://github.com/winft/theseus-ship/commit/50d98fec410883e98d06704b983f427bf85d0e7d))
+
+
+### Refactors
+
+* port to Kirigami version of ContextualHelpButton ([041a1bd](https://github.com/winft/theseus-ship/commit/041a1bd787329d6c992ca6a8fea186a166147967))
+* round all the things consistently ([b62f9d2](https://github.com/winft/theseus-ship/commit/b62f9d22e6715281d67599e23bb70218749f1c23))
+
 ## [6.0.0](https://github.com/winft/theseus-ship/compare/4703c2807e810b6357b16f45393c2b6071d840d1...v6.0.0) (2024-02-27)
 
 
