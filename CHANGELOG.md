@@ -1,9 +1,7 @@
 <!--
 SPDX-FileCopyrightText: 2024 Roman Gilg <subdiff@gmail.com>
-
 SPDX-License-Identifier: GPL-2.0-or-later
 -->
-
 # Changelog
 All notable changes to Theseus' Ship will be documented in this file.
 ## [6.0.0](https://github.com/winft/theseus-ship/compare/4703c2807e810b6357b16f45393c2b6071d840d1...v6.0.0) (2024-02-27)

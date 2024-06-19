@@ -1,5 +1,5 @@
 {
-  "header": "# Changelog\nAll notable changes to KWinFT will be documented in this file.",
+  "header": "<!--\nSPDX-FileCopyrightText: 2024 Roman Gilg <subdiff@gmail.com>\nSPDX-License-Identifier: GPL-2.0-or-later\n-->\n# Changelog\nAll notable changes to Theseus' Ship will be documented in this file.",
   "types": [
     {"type": "feat", "section": "Features"},
     {"type": "fix", "section": "Bug Fixes"},
