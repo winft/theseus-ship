@@ -34,20 +34,6 @@ void EffectsFilterProxyModel::setQuery(const QString& query)
     }
 }
 
-bool EffectsFilterProxyModel::excludeInternal() const
-{
-    return m_excludeInternal;
-}
-
-void EffectsFilterProxyModel::setExcludeInternal(bool exclude)
-{
-    if (m_excludeInternal != exclude) {
-        m_excludeInternal = exclude;
-        Q_EMIT excludeInternalChanged();
-        invalidateFilter();
-    }
-}
-
 bool EffectsFilterProxyModel::excludeUnsupported() const
 {
     return m_excludeUnsupported;
@@ -76,12 +62,6 @@ bool EffectsFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex&
                    .toString()
                    .contains(m_query, Qt::CaseInsensitive);
         if (!matches) {
-            return false;
-        }
-    }
-
-    if (m_excludeInternal) {
-        if (idx.data(EffectsModel::InternalRole).toBool()) {
             return false;
         }
     }

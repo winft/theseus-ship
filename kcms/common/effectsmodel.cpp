@@ -622,8 +622,7 @@ void EffectsModel::requestConfigure(const QModelIndex& index, QWindow* transient
 
 bool EffectsModel::shouldStore(const EffectData& data) const
 {
-    Q_UNUSED(data)
-    return true;
+    return !data.internal;
 }
 
 }
