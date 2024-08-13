@@ -47,6 +47,7 @@ include(ECMGenerateQmlTypes)
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
   Crash
   DBusAddons
+  WidgetsAddons
 )
 
 find_package(KF6Kirigami ${KF6_MIN_VERSION} CONFIG)

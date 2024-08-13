@@ -20,6 +20,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QGroupBox" name="groupBox_1">
+     <property name="flat">
+      <bool>true</bool>
+     </property>
      <property name="title">
       <string>Inactive Inner Window Actions</string>
      </property>
@@ -187,6 +190,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox_2">
+     <property name="flat">
+      <bool>true</bool>
+     </property>
      <property name="title">
       <string>Inner Window, Titlebar and Frame Actions</string>
      </property>
