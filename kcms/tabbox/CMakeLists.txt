@@ -33,6 +33,7 @@ target_link_libraries(kcm_kwintabbox
   KF6::NewStuffWidgets
   KF6::Package
   KF6::Service
+  KF6::WidgetsAddons
   KF6::XmlGui
   Qt::Quick
   XCB::XCB
