@@ -115,7 +115,7 @@ public:
 public:
     RulePolicy(Type type)
         : OptionsModel(policyOptions(type))
-        , m_type(type){};
+        , m_type(type) {};
 
     Type type() const;
     int value() const;

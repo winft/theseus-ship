@@ -199,7 +199,7 @@ void PreviewSettings::setBorderSizesIndex(int index)
     }
     m_borderSize = index;
     Q_EMIT borderSizesIndexChanged(index);
-    Q_EMIT decorationSettings()->borderSizeChanged(borderSize());
+    Q_EMIT decorationSettings() -> borderSizeChanged(borderSize());
 }
 
 BorderSize PreviewSettings::borderSize() const
