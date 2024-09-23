@@ -46,7 +46,7 @@ public:
     };
 
 public:
-    RuleItem(){};
+    RuleItem() {};
     RuleItem(const QString& key,
              const RulePolicy::Type policyType,
              const Type type,
