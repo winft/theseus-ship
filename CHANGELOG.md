@@ -4,6 +4,29 @@ SPDX-License-Identifier: GPL-2.0-or-later
 -->
 # Changelog
 All notable changes to Theseus' Ship will be documented in this file.
+## [6.2.0](https://github.com/winft/theseus-ship/compare/v6.1.0...v6.2.0) (2024-10-09)
+
+
+### Features
+
+* add a placeholder for properties filter ([1606e86](https://github.com/winft/theseus-ship/commit/1606e8604cf109bd6b2aea19f5472b5d40995e8f))
+* exclude internal effects ([2cb874c](https://github.com/winft/theseus-ship/commit/2cb874c9590d4c8a6b1a6e7911c437022e84f29e))
+* increase the default dialog size ([61ccfc4](https://github.com/winft/theseus-ship/commit/61ccfc4d40a3a396651814e947590297d852ed6b))
+* remove shake cursor keywords ([8ea111a](https://github.com/winft/theseus-ship/commit/8ea111acb00d9c667b097828793654b6b8cec347))
+* use "grab" and "grabbing" cursor to communicate dnd state ([f8724a8](https://github.com/winft/theseus-ship/commit/f8724a8594d4b18e08d336f2dfc5c78bdedd0545))
+* use flat QGroupBoxes and set documentMode on QTabWidgets ([604cfd0](https://github.com/winft/theseus-ship/commit/604cfd04fda523733f2127190789a82fd822fd49))
+
+
+### Bug Fixes
+
+* make list items conform to HIG ([8e1ea2c](https://github.com/winft/theseus-ship/commit/8e1ea2c6cc2fa414f91932b3e028a215008e281e))
+* make the "Add Property" button non-toggleable ([006c8ac](https://github.com/winft/theseus-ship/commit/006c8ac0ec3f874c8973c9ba1c4c0699351a4d06))
+
+
+### Refactors
+
+* some QML clean-ups ([351bad8](https://github.com/winft/theseus-ship/commit/351bad8f65103014b1525d477d2e39fb9aedac8e))
+
 ## [6.1.0](https://github.com/winft/theseus-ship/compare/v6.0.0...v6.1.0) (2024-06-19)
 
 
