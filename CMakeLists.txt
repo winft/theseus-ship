@@ -4,7 +4,7 @@
 
 cmake_minimum_required(VERSION 3.23 FATAL_ERROR)
 
-project("Theseus' Ship" VERSION 6.2.0)
+project("Theseus' Ship" VERSION 6.2.80)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 20)
